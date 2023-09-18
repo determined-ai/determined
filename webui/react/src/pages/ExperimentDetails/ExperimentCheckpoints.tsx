@@ -22,7 +22,7 @@ import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
-import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
+import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
 import {
   checkpointAction,
@@ -193,7 +193,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
-      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.STATE) {
+      } else if (column.key === Checkpointv1SortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.isFiltered = (settings) => !!(settings as Settings).state;
         column.filters = Object.values(CheckpointState)
@@ -202,7 +202,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
-      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC) {
+      } else if (column.key === Checkpointv1SortBy.SEARCHERMETRIC) {
         column.render = HumanReadableNumberRenderer;
         column.title = `Searcher Metric (${experiment.config.searcher.metric})`;
       } else if (column.key === 'actions') {
@@ -230,7 +230,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           limit: settings.tableLimit,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetExperimentCheckpointsRequestSortBy, settings.sortKey),
+          sortBy: validateDetApiEnum(Checkpointv1SortBy, settings.sortKey),
           states: validateDetApiEnumList(Checkpointv1State, states),
         },
         { signal: canceler.signal },

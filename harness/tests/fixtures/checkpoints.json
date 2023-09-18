@@ -1,0 +1,4592 @@
+{
+  "checkpoints": [
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "eee1423a-2389-4536-baf0-c99b5b3b2f6c",
+      "reportTime": "2023-08-08T21:10:39.834658Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 700
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.12173256278038025
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.134736567735672
+            },
+            {
+              "loss": 0.14629778265953064
+            },
+            {
+              "loss": 0.07082821428775787
+            },
+            {
+              "loss": 0.24587130546569824
+            },
+            {
+              "loss": 0.1531095653772354
+            },
+            {
+              "loss": 0.07933153212070465
+            },
+            {
+              "loss": 0.08399595320224762
+            },
+            {
+              "loss": 0.02663111314177513
+            },
+            {
+              "loss": 0.04069386050105095
+            },
+            {
+              "loss": 0.054826803505420685
+            },
+            {
+              "loss": 0.024342957884073257
+            },
+            {
+              "loss": 0.06699741631746292
+            },
+            {
+              "loss": 0.13297612965106964
+            },
+            {
+              "loss": 0.08622653037309647
+            },
+            {
+              "loss": 0.4733608663082123
+            },
+            {
+              "loss": 0.26869964599609375
+            },
+            {
+              "loss": 0.14701740443706512
+            },
+            {
+              "loss": 0.1047535315155983
+            },
+            {
+              "loss": 0.19231362640857697
+            },
+            {
+              "loss": 0.26890212297439575
+            },
+            {
+              "loss": 0.0801713690161705
+            },
+            {
+              "loss": 0.1957903951406479
+            },
+            {
+              "loss": 0.061447445303201675
+            },
+            {
+              "loss": 0.06279777735471725
+            },
+            {
+              "loss": 0.16217736899852753
+            },
+            {
+              "loss": 0.1524685025215149
+            },
+            {
+              "loss": 0.161040797829628
+            },
+            {
+              "loss": 0.12777750194072723
+            },
+            {
+              "loss": 0.08772013336420059
+            },
+            {
+              "loss": 0.05445406585931778
+            },
+            {
+              "loss": 0.06777017563581467
+            },
+            {
+              "loss": 0.05811872333288193
+            },
+            {
+              "loss": 0.04815236106514931
+            },
+            {
+              "loss": 0.08983275294303894
+            },
+            {
+              "loss": 0.04530065879225731
+            },
+            {
+              "loss": 0.19605082273483276
+            },
+            {
+              "loss": 0.1928645521402359
+            },
+            {
+              "loss": 0.06316954642534256
+            },
+            {
+              "loss": 0.09471455961465836
+            },
+            {
+              "loss": 0.0862274095416069
+            },
+            {
+              "loss": 0.14114245772361755
+            },
+            {
+              "loss": 0.15897521376609802
+            },
+            {
+              "loss": 0.0447714738547802
+            },
+            {
+              "loss": 0.15927639603614807
+            },
+            {
+              "loss": 0.09818976372480392
+            },
+            {
+              "loss": 0.2645992934703827
+            },
+            {
+              "loss": 0.19376520812511444
+            },
+            {
+              "loss": 0.27066588401794434
+            },
+            {
+              "loss": 0.13408252596855164
+            },
+            {
+              "loss": 0.1484096646308899
+            },
+            {
+              "loss": 0.10558578372001648
+            },
+            {
+              "loss": 0.03316827490925789
+            },
+            {
+              "loss": 0.09035123139619827
+            },
+            {
+              "loss": 0.06846500933170319
+            },
+            {
+              "loss": 0.16216325759887695
+            },
+            {
+              "loss": 0.11876417696475983
+            },
+            {
+              "loss": 0.21873211860656738
+            },
+            {
+              "loss": 0.07161591947078705
+            },
+            {
+              "loss": 0.10043010860681534
+            },
+            {
+              "loss": 0.0973714292049408
+            },
+            {
+              "loss": 0.025432348251342773
+            },
+            {
+              "loss": 0.17765435576438904
+            },
+            {
+              "loss": 0.12936407327651978
+            },
+            {
+              "loss": 0.23771734535694122
+            },
+            {
+              "loss": 0.1111408993601799
+            },
+            {
+              "loss": 0.03665345907211304
+            },
+            {
+              "loss": 0.11976342648267746
+            },
+            {
+              "loss": 0.11400431394577026
+            },
+            {
+              "loss": 0.07083166390657425
+            },
+            {
+              "loss": 0.3500359356403351
+            },
+            {
+              "loss": 0.30552735924720764
+            },
+            {
+              "loss": 0.10587293654680252
+            },
+            {
+              "loss": 0.2086765170097351
+            },
+            {
+              "loss": 0.1300947517156601
+            },
+            {
+              "loss": 0.06978673487901688
+            },
+            {
+              "loss": 0.18525756895542145
+            },
+            {
+              "loss": 0.022226734086871147
+            },
+            {
+              "loss": 0.07522164285182953
+            },
+            {
+              "loss": 0.14668308198451996
+            },
+            {
+              "loss": 0.0774494931101799
+            },
+            {
+              "loss": 0.1985897570848465
+            },
+            {
+              "loss": 0.055353645235300064
+            },
+            {
+              "loss": 0.12099558115005493
+            },
+            {
+              "loss": 0.04209434986114502
+            },
+            {
+              "loss": 0.08268093317747116
+            },
+            {
+              "loss": 0.09653954207897186
+            },
+            {
+              "loss": 0.1646689474582672
+            },
+            {
+              "loss": 0.1581747680902481
+            },
+            {
+              "loss": 0.1107768788933754
+            },
+            {
+              "loss": 0.07975707948207855
+            },
+            {
+              "loss": 0.05403410270810127
+            },
+            {
+              "loss": 0.14051295816898346
+            },
+            {
+              "loss": 0.10432127863168716
+            },
+            {
+              "loss": 0.07449818402528763
+            },
+            {
+              "loss": 0.2393459677696228
+            },
+            {
+              "loss": 0.043965164572000504
+            },
+            {
+              "loss": 0.035188548266887665
+            },
+            {
+              "loss": 0.033487509936094284
+            },
+            {
+              "loss": 0.035701263695955276
+            },
+            {
+              "loss": 0.03268977999687195
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9830812101910829,
+            "validation_loss": 0.051794371442723974
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.051794371442724
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "e38fa646-33ba-4d44-bc6b-99d629923c5e",
+      "reportTime": "2023-08-08T21:10:12.890100Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 600
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.12070812284946442
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.1209179013967514
+            },
+            {
+              "loss": 0.19768743216991425
+            },
+            {
+              "loss": 0.15481142699718475
+            },
+            {
+              "loss": 0.06618496030569077
+            },
+            {
+              "loss": 0.13197024166584015
+            },
+            {
+              "loss": 0.22889164090156555
+            },
+            {
+              "loss": 0.15704070031642914
+            },
+            {
+              "loss": 0.22001485526561737
+            },
+            {
+              "loss": 0.04007715731859207
+            },
+            {
+              "loss": 0.01797601580619812
+            },
+            {
+              "loss": 0.18624110519886017
+            },
+            {
+              "loss": 0.1115957498550415
+            },
+            {
+              "loss": 0.33783161640167236
+            },
+            {
+              "loss": 0.15790759027004242
+            },
+            {
+              "loss": 0.0757521539926529
+            },
+            {
+              "loss": 0.013722174800932407
+            },
+            {
+              "loss": 0.22469986975193024
+            },
+            {
+              "loss": 0.1675880253314972
+            },
+            {
+              "loss": 0.022974660620093346
+            },
+            {
+              "loss": 0.04530736804008484
+            },
+            {
+              "loss": 0.08845113217830658
+            },
+            {
+              "loss": 0.11303804069757462
+            },
+            {
+              "loss": 0.04806660860776901
+            },
+            {
+              "loss": 0.1117868423461914
+            },
+            {
+              "loss": 0.17913542687892914
+            },
+            {
+              "loss": 0.06469684094190598
+            },
+            {
+              "loss": 0.12294264137744904
+            },
+            {
+              "loss": 0.22779124975204468
+            },
+            {
+              "loss": 0.04858499765396118
+            },
+            {
+              "loss": 0.03629171848297119
+            },
+            {
+              "loss": 0.00931117869913578
+            },
+            {
+              "loss": 0.02278961054980755
+            },
+            {
+              "loss": 0.1887078881263733
+            },
+            {
+              "loss": 0.009826996363699436
+            },
+            {
+              "loss": 0.08689583092927933
+            },
+            {
+              "loss": 0.04972270876169205
+            },
+            {
+              "loss": 0.10524526238441467
+            },
+            {
+              "loss": 0.19422826170921326
+            },
+            {
+              "loss": 0.032466765493154526
+            },
+            {
+              "loss": 0.08336791396141052
+            },
+            {
+              "loss": 0.019242342561483383
+            },
+            {
+              "loss": 0.21654820442199707
+            },
+            {
+              "loss": 0.2338748723268509
+            },
+            {
+              "loss": 0.2523348927497864
+            },
+            {
+              "loss": 0.2758997082710266
+            },
+            {
+              "loss": 0.19186925888061523
+            },
+            {
+              "loss": 0.09005223959684372
+            },
+            {
+              "loss": 0.1442549228668213
+            },
+            {
+              "loss": 0.04361186549067497
+            },
+            {
+              "loss": 0.08447135239839554
+            },
+            {
+              "loss": 0.11189715564250946
+            },
+            {
+              "loss": 0.1436651200056076
+            },
+            {
+              "loss": 0.04418044164776802
+            },
+            {
+              "loss": 0.09098273515701294
+            },
+            {
+              "loss": 0.3816574215888977
+            },
+            {
+              "loss": 0.07739439606666565
+            },
+            {
+              "loss": 0.16539514064788818
+            },
+            {
+              "loss": 0.04728828743100166
+            },
+            {
+              "loss": 0.026251673698425293
+            },
+            {
+              "loss": 0.055688053369522095
+            },
+            {
+              "loss": 0.1808503121137619
+            },
+            {
+              "loss": 0.08739306777715683
+            },
+            {
+              "loss": 0.05307063087821007
+            },
+            {
+              "loss": 0.13277599215507507
+            },
+            {
+              "loss": 0.10192534327507019
+            },
+            {
+              "loss": 0.039320722222328186
+            },
+            {
+              "loss": 0.14443768560886383
+            },
+            {
+              "loss": 0.01906694285571575
+            },
+            {
+              "loss": 0.09809064865112305
+            },
+            {
+              "loss": 0.24982483685016632
+            },
+            {
+              "loss": 0.0379721038043499
+            },
+            {
+              "loss": 0.13518433272838593
+            },
+            {
+              "loss": 0.14428217709064484
+            },
+            {
+              "loss": 0.0782795399427414
+            },
+            {
+              "loss": 0.20891451835632324
+            },
+            {
+              "loss": 0.23111897706985474
+            },
+            {
+              "loss": 0.08278600126504898
+            },
+            {
+              "loss": 0.04013499617576599
+            },
+            {
+              "loss": 0.26244106888771057
+            },
+            {
+              "loss": 0.3479934334754944
+            },
+            {
+              "loss": 0.06525947898626328
+            },
+            {
+              "loss": 0.09646319597959518
+            },
+            {
+              "loss": 0.17619739472866058
+            },
+            {
+              "loss": 0.08451946824789047
+            },
+            {
+              "loss": 0.09507132321596146
+            },
+            {
+              "loss": 0.18592694401741028
+            },
+            {
+              "loss": 0.1159830167889595
+            },
+            {
+              "loss": 0.060576170682907104
+            },
+            {
+              "loss": 0.03838248550891876
+            },
+            {
+              "loss": 0.11810088157653809
+            },
+            {
+              "loss": 0.1597518026828766
+            },
+            {
+              "loss": 0.2612226605415344
+            },
+            {
+              "loss": 0.10361741483211517
+            },
+            {
+              "loss": 0.05648123472929001
+            },
+            {
+              "loss": 0.1291038542985916
+            },
+            {
+              "loss": 0.033951666206121445
+            },
+            {
+              "loss": 0.04115743935108185
+            },
+            {
+              "loss": 0.0994732603430748
+            },
+            {
+              "loss": 0.1627994179725647
+            },
+            {
+              "loss": 0.1118083968758583
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9769108280254777,
+            "validation_loss": 0.07980470595854278
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0798047059585428
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "b5757010-383a-43d9-9677-274b9813b430",
+      "reportTime": "2023-08-08T21:11:54.666637Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 800
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.11902464926242828
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.20220576226711273
+            },
+            {
+              "loss": 0.030691368505358696
+            },
+            {
+              "loss": 0.06486181914806366
+            },
+            {
+              "loss": 0.07538030296564102
+            },
+            {
+              "loss": 0.14446482062339783
+            },
+            {
+              "loss": 0.1987232267856598
+            },
+            {
+              "loss": 0.03114422783255577
+            },
+            {
+              "loss": 0.07506822049617767
+            },
+            {
+              "loss": 0.17062023282051086
+            },
+            {
+              "loss": 0.08014822751283646
+            },
+            {
+              "loss": 0.21718797087669373
+            },
+            {
+              "loss": 0.08793868869543076
+            },
+            {
+              "loss": 0.08940644562244415
+            },
+            {
+              "loss": 0.1343335062265396
+            },
+            {
+              "loss": 0.03737107291817665
+            },
+            {
+              "loss": 0.19458669424057007
+            },
+            {
+              "loss": 0.15047244727611542
+            },
+            {
+              "loss": 0.22668878734111786
+            },
+            {
+              "loss": 0.2524367570877075
+            },
+            {
+              "loss": 0.12754637002944946
+            },
+            {
+              "loss": 0.1414031833410263
+            },
+            {
+              "loss": 0.10695585608482361
+            },
+            {
+              "loss": 0.10796547681093216
+            },
+            {
+              "loss": 0.2059030681848526
+            },
+            {
+              "loss": 0.06641076505184174
+            },
+            {
+              "loss": 0.17645807564258575
+            },
+            {
+              "loss": 0.06769111752510071
+            },
+            {
+              "loss": 0.021251268684864044
+            },
+            {
+              "loss": 0.028290750458836555
+            },
+            {
+              "loss": 0.11906173825263977
+            },
+            {
+              "loss": 0.22720418870449066
+            },
+            {
+              "loss": 0.027656767517328262
+            },
+            {
+              "loss": 0.07985956221818924
+            },
+            {
+              "loss": 0.04263012483716011
+            },
+            {
+              "loss": 0.15758326649665833
+            },
+            {
+              "loss": 0.160565584897995
+            },
+            {
+              "loss": 0.1169918030500412
+            },
+            {
+              "loss": 0.0978040099143982
+            },
+            {
+              "loss": 0.39379435777664185
+            },
+            {
+              "loss": 0.12055910378694534
+            },
+            {
+              "loss": 0.1389026641845703
+            },
+            {
+              "loss": 0.2542462944984436
+            },
+            {
+              "loss": 0.08762551844120026
+            },
+            {
+              "loss": 0.3154260814189911
+            },
+            {
+              "loss": 0.07350456714630127
+            },
+            {
+              "loss": 0.13953782618045807
+            },
+            {
+              "loss": 0.10552632063627243
+            },
+            {
+              "loss": 0.14938654005527496
+            },
+            {
+              "loss": 0.16958916187286377
+            },
+            {
+              "loss": 0.08719217777252197
+            },
+            {
+              "loss": 0.11533702909946442
+            },
+            {
+              "loss": 0.10261727124452591
+            },
+            {
+              "loss": 0.015233641490340233
+            },
+            {
+              "loss": 0.01891668140888214
+            },
+            {
+              "loss": 0.23001454770565033
+            },
+            {
+              "loss": 0.1334061473608017
+            },
+            {
+              "loss": 0.0503816194832325
+            },
+            {
+              "loss": 0.042659129947423935
+            },
+            {
+              "loss": 0.02121010608971119
+            },
+            {
+              "loss": 0.09117317199707031
+            },
+            {
+              "loss": 0.07744608074426651
+            },
+            {
+              "loss": 0.008494140580296516
+            },
+            {
+              "loss": 0.09172825515270233
+            },
+            {
+              "loss": 0.024803588166832924
+            },
+            {
+              "loss": 0.32113727927207947
+            },
+            {
+              "loss": 0.2961934506893158
+            },
+            {
+              "loss": 0.14252905547618866
+            },
+            {
+              "loss": 0.14427877962589264
+            },
+            {
+              "loss": 0.14547638595104218
+            },
+            {
+              "loss": 0.09130162745714188
+            },
+            {
+              "loss": 0.051175668835639954
+            },
+            {
+              "loss": 0.02025342360138893
+            },
+            {
+              "loss": 0.0720975250005722
+            },
+            {
+              "loss": 0.2058989256620407
+            },
+            {
+              "loss": 0.38168713450431824
+            },
+            {
+              "loss": 0.12025108188390732
+            },
+            {
+              "loss": 0.04483983665704727
+            },
+            {
+              "loss": 0.09219899773597717
+            },
+            {
+              "loss": 0.04965886473655701
+            },
+            {
+              "loss": 0.17987343668937683
+            },
+            {
+              "loss": 0.09457608312368393
+            },
+            {
+              "loss": 0.018416093662381172
+            },
+            {
+              "loss": 0.10092897713184357
+            },
+            {
+              "loss": 0.09237327426671982
+            },
+            {
+              "loss": 0.269790917634964
+            },
+            {
+              "loss": 0.04653634503483772
+            },
+            {
+              "loss": 0.18497037887573242
+            },
+            {
+              "loss": 0.305497407913208
+            },
+            {
+              "loss": 0.1549461930990219
+            },
+            {
+              "loss": 0.1122041717171669
+            },
+            {
+              "loss": 0.09413038194179535
+            },
+            {
+              "loss": 0.04395316541194916
+            },
+            {
+              "loss": 0.08120077103376389
+            },
+            {
+              "loss": 0.05116763338446617
+            },
+            {
+              "loss": 0.05734369903802872
+            },
+            {
+              "loss": 0.10047481954097748
+            },
+            {
+              "loss": 0.00878414697945118
+            },
+            {
+              "loss": 0.01768055371940136
+            },
+            {
+              "loss": 0.017644105479121208
+            },
+            {
+              "loss": 0.08931934088468552
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.98328025477707,
+            "validation_loss": 0.053359068281418676
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0533590682814187
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "aae1cb71-9f54-4c15-a094-4c5824935cc1",
+      "reportTime": "2023-08-08T21:13:00.991196Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 900
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.09875026345252991
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.3425133526325226
+            },
+            {
+              "loss": 0.03641335666179657
+            },
+            {
+              "loss": 0.11623288691043854
+            },
+            {
+              "loss": 0.05516417324542999
+            },
+            {
+              "loss": 0.09771880507469177
+            },
+            {
+              "loss": 0.07439418137073517
+            },
+            {
+              "loss": 0.019329171627759933
+            },
+            {
+              "loss": 0.1120196208357811
+            },
+            {
+              "loss": 0.15148159861564636
+            },
+            {
+              "loss": 0.034000515937805176
+            },
+            {
+              "loss": 0.09089572727680206
+            },
+            {
+              "loss": 0.16856426000595093
+            },
+            {
+              "loss": 0.1766728013753891
+            },
+            {
+              "loss": 0.09125281125307083
+            },
+            {
+              "loss": 0.24890878796577454
+            },
+            {
+              "loss": 0.14793430268764496
+            },
+            {
+              "loss": 0.16406743228435516
+            },
+            {
+              "loss": 0.13454566895961761
+            },
+            {
+              "loss": 0.025589194148778915
+            },
+            {
+              "loss": 0.04003129154443741
+            },
+            {
+              "loss": 0.022585470229387283
+            },
+            {
+              "loss": 0.14006777107715607
+            },
+            {
+              "loss": 0.08434460312128067
+            },
+            {
+              "loss": 0.19199416041374207
+            },
+            {
+              "loss": 0.03793499246239662
+            },
+            {
+              "loss": 0.14355772733688354
+            },
+            {
+              "loss": 0.2327130138874054
+            },
+            {
+              "loss": 0.4414026439189911
+            },
+            {
+              "loss": 0.09374867379665375
+            },
+            {
+              "loss": 0.1362772434949875
+            },
+            {
+              "loss": 0.2181791216135025
+            },
+            {
+              "loss": 0.17080079019069672
+            },
+            {
+              "loss": 0.01929125003516674
+            },
+            {
+              "loss": 0.03194157034158707
+            },
+            {
+              "loss": 0.07196806371212006
+            },
+            {
+              "loss": 0.08708862960338593
+            },
+            {
+              "loss": 0.09851802885532379
+            },
+            {
+              "loss": 0.08507633954286575
+            },
+            {
+              "loss": 0.15516677498817444
+            },
+            {
+              "loss": 0.04073271155357361
+            },
+            {
+              "loss": 0.15246061980724335
+            },
+            {
+              "loss": 0.1668226569890976
+            },
+            {
+              "loss": 0.08242559432983398
+            },
+            {
+              "loss": 0.16712868213653564
+            },
+            {
+              "loss": 0.04466418921947479
+            },
+            {
+              "loss": 0.07282088696956635
+            },
+            {
+              "loss": 0.02931717038154602
+            },
+            {
+              "loss": 0.04155910760164261
+            },
+            {
+              "loss": 0.03526756167411804
+            },
+            {
+              "loss": 0.05671161413192749
+            },
+            {
+              "loss": 0.020030898973345757
+            },
+            {
+              "loss": 0.07069709151983261
+            },
+            {
+              "loss": 0.14749206602573395
+            },
+            {
+              "loss": 0.013547422364354134
+            },
+            {
+              "loss": 0.03475033864378929
+            },
+            {
+              "loss": 0.06306372582912445
+            },
+            {
+              "loss": 0.04948320612311363
+            },
+            {
+              "loss": 0.11245984584093094
+            },
+            {
+              "loss": 0.06704860925674438
+            },
+            {
+              "loss": 0.030737703666090965
+            },
+            {
+              "loss": 0.044895708560943604
+            },
+            {
+              "loss": 0.016708524897694588
+            },
+            {
+              "loss": 0.05938907712697983
+            },
+            {
+              "loss": 0.13166867196559906
+            },
+            {
+              "loss": 0.1920362263917923
+            },
+            {
+              "loss": 0.0184685830026865
+            },
+            {
+              "loss": 0.15085087716579437
+            },
+            {
+              "loss": 0.2047964185476303
+            },
+            {
+              "loss": 0.11142601817846298
+            },
+            {
+              "loss": 0.06468813866376877
+            },
+            {
+              "loss": 0.06598269939422607
+            },
+            {
+              "loss": 0.07430025190114975
+            },
+            {
+              "loss": 0.1473161280155182
+            },
+            {
+              "loss": 0.07629984617233276
+            },
+            {
+              "loss": 0.02748134732246399
+            },
+            {
+              "loss": 0.15951724350452423
+            },
+            {
+              "loss": 0.0460459403693676
+            },
+            {
+              "loss": 0.022802283987402916
+            },
+            {
+              "loss": 0.2403395026922226
+            },
+            {
+              "loss": 0.12047778069972992
+            },
+            {
+              "loss": 0.05780453607439995
+            },
+            {
+              "loss": 0.062281135469675064
+            },
+            {
+              "loss": 0.1904551088809967
+            },
+            {
+              "loss": 0.0441732332110405
+            },
+            {
+              "loss": 0.2352127879858017
+            },
+            {
+              "loss": 0.029123999178409576
+            },
+            {
+              "loss": 0.019214391708374023
+            },
+            {
+              "loss": 0.11653421819210052
+            },
+            {
+              "loss": 0.12684689462184906
+            },
+            {
+              "loss": 0.058908432722091675
+            },
+            {
+              "loss": 0.01704634539783001
+            },
+            {
+              "loss": 0.09424640983343124
+            },
+            {
+              "loss": 0.008452077396214008
+            },
+            {
+              "loss": 0.0347522608935833
+            },
+            {
+              "loss": 0.11222110688686371
+            },
+            {
+              "loss": 0.21497836709022522
+            },
+            {
+              "loss": 0.024779673665761948
+            },
+            {
+              "loss": 0.03397879749536514
+            },
+            {
+              "loss": 0.10249614715576172
+            },
+            {
+              "loss": 0.026421645656228065
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9838773885350318,
+            "validation_loss": 0.052307237081387625
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0523072370813876
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "912d337a-f198-48c4-93cc-7e0d2e173418",
+      "reportTime": "2023-08-08T21:08:40.838696Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 400
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.14300847053527832
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.2488722801208496
+            },
+            {
+              "loss": 0.09371936321258545
+            },
+            {
+              "loss": 0.4324072301387787
+            },
+            {
+              "loss": 0.16223005950450897
+            },
+            {
+              "loss": 0.12395388633012772
+            },
+            {
+              "loss": 0.11439822614192963
+            },
+            {
+              "loss": 0.03626401349902153
+            },
+            {
+              "loss": 0.04080744460225105
+            },
+            {
+              "loss": 0.06154127046465874
+            },
+            {
+              "loss": 0.17103782296180725
+            },
+            {
+              "loss": 0.24911169707775116
+            },
+            {
+              "loss": 0.10325253009796143
+            },
+            {
+              "loss": 0.22401393949985504
+            },
+            {
+              "loss": 0.2028605341911316
+            },
+            {
+              "loss": 0.18330435454845428
+            },
+            {
+              "loss": 0.37935948371887207
+            },
+            {
+              "loss": 0.06045692414045334
+            },
+            {
+              "loss": 0.17857494950294495
+            },
+            {
+              "loss": 0.032494720071554184
+            },
+            {
+              "loss": 0.0759936049580574
+            },
+            {
+              "loss": 0.04504045471549034
+            },
+            {
+              "loss": 0.07783428579568863
+            },
+            {
+              "loss": 0.19641195237636566
+            },
+            {
+              "loss": 0.16100814938545227
+            },
+            {
+              "loss": 0.16813910007476807
+            },
+            {
+              "loss": 0.24280060827732086
+            },
+            {
+              "loss": 0.2351146787405014
+            },
+            {
+              "loss": 0.21496538817882538
+            },
+            {
+              "loss": 0.17709922790527344
+            },
+            {
+              "loss": 0.17731456458568573
+            },
+            {
+              "loss": 0.1654500961303711
+            },
+            {
+              "loss": 0.038824569433927536
+            },
+            {
+              "loss": 0.04917209967970848
+            },
+            {
+              "loss": 0.12043514847755432
+            },
+            {
+              "loss": 0.0917912945151329
+            },
+            {
+              "loss": 0.12722817063331604
+            },
+            {
+              "loss": 0.03183109313249588
+            },
+            {
+              "loss": 0.09248572587966919
+            },
+            {
+              "loss": 0.09236951917409897
+            },
+            {
+              "loss": 0.05725633352994919
+            },
+            {
+              "loss": 0.022593904286623
+            },
+            {
+              "loss": 0.029888680204749107
+            },
+            {
+              "loss": 0.13760524988174438
+            },
+            {
+              "loss": 0.1511433869600296
+            },
+            {
+              "loss": 0.039928629994392395
+            },
+            {
+              "loss": 0.2562768757343292
+            },
+            {
+              "loss": 0.14375562965869904
+            },
+            {
+              "loss": 0.22224368155002594
+            },
+            {
+              "loss": 0.20412075519561768
+            },
+            {
+              "loss": 0.15539881587028503
+            },
+            {
+              "loss": 0.21569031476974487
+            },
+            {
+              "loss": 0.2949441373348236
+            },
+            {
+              "loss": 0.3868478536605835
+            },
+            {
+              "loss": 0.14409682154655457
+            },
+            {
+              "loss": 0.05883674696087837
+            },
+            {
+              "loss": 0.3235462009906769
+            },
+            {
+              "loss": 0.11541964113712311
+            },
+            {
+              "loss": 0.1371898651123047
+            },
+            {
+              "loss": 0.08284850418567657
+            },
+            {
+              "loss": 0.06034795567393303
+            },
+            {
+              "loss": 0.17726564407348633
+            },
+            {
+              "loss": 0.08877773582935333
+            },
+            {
+              "loss": 0.17079703509807587
+            },
+            {
+              "loss": 0.043359268456697464
+            },
+            {
+              "loss": 0.15049564838409424
+            },
+            {
+              "loss": 0.1736898273229599
+            },
+            {
+              "loss": 0.064475417137146
+            },
+            {
+              "loss": 0.040957361459732056
+            },
+            {
+              "loss": 0.11969763785600662
+            },
+            {
+              "loss": 0.11211642622947693
+            },
+            {
+              "loss": 0.1509183794260025
+            },
+            {
+              "loss": 0.05008251592516899
+            },
+            {
+              "loss": 0.1089974194765091
+            },
+            {
+              "loss": 0.12504491209983826
+            },
+            {
+              "loss": 0.26658639311790466
+            },
+            {
+              "loss": 0.2238582819700241
+            },
+            {
+              "loss": 0.054867420345544815
+            },
+            {
+              "loss": 0.09736941009759903
+            },
+            {
+              "loss": 0.1453608274459839
+            },
+            {
+              "loss": 0.05051187425851822
+            },
+            {
+              "loss": 0.02900099754333496
+            },
+            {
+              "loss": 0.05313265323638916
+            },
+            {
+              "loss": 0.06057679280638695
+            },
+            {
+              "loss": 0.12406332790851593
+            },
+            {
+              "loss": 0.36029481887817383
+            },
+            {
+              "loss": 0.1839081197977066
+            },
+            {
+              "loss": 0.17618317902088165
+            },
+            {
+              "loss": 0.325573593378067
+            },
+            {
+              "loss": 0.27519264817237854
+            },
+            {
+              "loss": 0.12297610193490982
+            },
+            {
+              "loss": 0.08943958580493927
+            },
+            {
+              "loss": 0.06125354766845703
+            },
+            {
+              "loss": 0.08861437439918518
+            },
+            {
+              "loss": 0.11961448937654495
+            },
+            {
+              "loss": 0.20738446712493896
+            },
+            {
+              "loss": 0.1770649552345276
+            },
+            {
+              "loss": 0.02370937541127205
+            },
+            {
+              "loss": 0.04741315171122551
+            },
+            {
+              "loss": 0.24994154274463654
+            },
+            {
+              "loss": 0.19032959640026093
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9745222929936306,
+            "validation_loss": 0.08291248145519169
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0829124814551917
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "8ee1bcc4-5c53-4fcf-b7d2-dc5ae3bcbd23",
+      "reportTime": "2023-08-08T21:07:32.801050Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "108"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 200
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.25998997688293457
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.23777489364147186
+            },
+            {
+              "loss": 0.39423996210098267
+            },
+            {
+              "loss": 0.1357855200767517
+            },
+            {
+              "loss": 0.17375671863555908
+            },
+            {
+              "loss": 0.17356827855110168
+            },
+            {
+              "loss": 0.12333575636148453
+            },
+            {
+              "loss": 0.3593370020389557
+            },
+            {
+              "loss": 0.5550428032875061
+            },
+            {
+              "loss": 0.45969873666763306
+            },
+            {
+              "loss": 0.39264512062072754
+            },
+            {
+              "loss": 0.2791763246059418
+            },
+            {
+              "loss": 0.2306695133447647
+            },
+            {
+              "loss": 0.32633477449417114
+            },
+            {
+              "loss": 0.5949020981788635
+            },
+            {
+              "loss": 0.4830428659915924
+            },
+            {
+              "loss": 0.21898360550403595
+            },
+            {
+              "loss": 0.1952909678220749
+            },
+            {
+              "loss": 0.27226102352142334
+            },
+            {
+              "loss": 0.19483639299869537
+            },
+            {
+              "loss": 0.22684124112129211
+            },
+            {
+              "loss": 0.2740687131881714
+            },
+            {
+              "loss": 0.16799795627593994
+            },
+            {
+              "loss": 0.2545117437839508
+            },
+            {
+              "loss": 0.30509424209594727
+            },
+            {
+              "loss": 0.4616449773311615
+            },
+            {
+              "loss": 0.36349567770957947
+            },
+            {
+              "loss": 0.3076375126838684
+            },
+            {
+              "loss": 0.18691885471343994
+            },
+            {
+              "loss": 0.47186633944511414
+            },
+            {
+              "loss": 0.3625643253326416
+            },
+            {
+              "loss": 0.17299656569957733
+            },
+            {
+              "loss": 0.17035378515720367
+            },
+            {
+              "loss": 0.5019996762275696
+            },
+            {
+              "loss": 0.1224827989935875
+            },
+            {
+              "loss": 0.2596311569213867
+            },
+            {
+              "loss": 0.3905068635940552
+            },
+            {
+              "loss": 0.6758872866630554
+            },
+            {
+              "loss": 0.4101945757865906
+            },
+            {
+              "loss": 0.3456941246986389
+            },
+            {
+              "loss": 0.45780545473098755
+            },
+            {
+              "loss": 0.2243906408548355
+            },
+            {
+              "loss": 0.07653771340847015
+            },
+            {
+              "loss": 0.29702895879745483
+            },
+            {
+              "loss": 0.16217473149299622
+            },
+            {
+              "loss": 0.21328464150428772
+            },
+            {
+              "loss": 0.18293942511081696
+            },
+            {
+              "loss": 0.35331714153289795
+            },
+            {
+              "loss": 0.28258371353149414
+            },
+            {
+              "loss": 0.3804577589035034
+            },
+            {
+              "loss": 0.3079911768436432
+            },
+            {
+              "loss": 0.1341814398765564
+            },
+            {
+              "loss": 0.06907784938812256
+            },
+            {
+              "loss": 0.16118976473808289
+            },
+            {
+              "loss": 0.05498955398797989
+            },
+            {
+              "loss": 0.08395352959632874
+            },
+            {
+              "loss": 0.10585959255695343
+            },
+            {
+              "loss": 0.1368967741727829
+            },
+            {
+              "loss": 0.18049252033233643
+            },
+            {
+              "loss": 0.21992279589176178
+            },
+            {
+              "loss": 0.5909488201141357
+            },
+            {
+              "loss": 0.3199675679206848
+            },
+            {
+              "loss": 0.07702649384737015
+            },
+            {
+              "loss": 0.11867144703865051
+            },
+            {
+              "loss": 0.13782137632369995
+            },
+            {
+              "loss": 0.05692446976900101
+            },
+            {
+              "loss": 0.042247094213962555
+            },
+            {
+              "loss": 0.06846538931131363
+            },
+            {
+              "loss": 0.30820199847221375
+            },
+            {
+              "loss": 0.3043423891067505
+            },
+            {
+              "loss": 0.22749246656894684
+            },
+            {
+              "loss": 0.15296529233455658
+            },
+            {
+              "loss": 0.17389997839927673
+            },
+            {
+              "loss": 0.19618672132492065
+            },
+            {
+              "loss": 0.2374332845211029
+            },
+            {
+              "loss": 0.10208592563867569
+            },
+            {
+              "loss": 0.2346581518650055
+            },
+            {
+              "loss": 0.12842760980129242
+            },
+            {
+              "loss": 0.22470271587371826
+            },
+            {
+              "loss": 0.09078866988420486
+            },
+            {
+              "loss": 0.2268143594264984
+            },
+            {
+              "loss": 0.5531312823295593
+            },
+            {
+              "loss": 0.5741292238235474
+            },
+            {
+              "loss": 0.4475630819797516
+            },
+            {
+              "loss": 0.4360705018043518
+            },
+            {
+              "loss": 0.18630637228488922
+            },
+            {
+              "loss": 0.3085208237171173
+            },
+            {
+              "loss": 0.19062091410160065
+            },
+            {
+              "loss": 0.13897274434566498
+            },
+            {
+              "loss": 0.250900536775589
+            },
+            {
+              "loss": 0.11936376243829727
+            },
+            {
+              "loss": 0.24827830493450165
+            },
+            {
+              "loss": 0.28513452410697937
+            },
+            {
+              "loss": 0.12309490889310837
+            },
+            {
+              "loss": 0.23243367671966553
+            },
+            {
+              "loss": 0.11305727064609528
+            },
+            {
+              "loss": 0.2052583396434784
+            },
+            {
+              "loss": 0.2627987563610077
+            },
+            {
+              "loss": 0.43718478083610535
+            },
+            {
+              "loss": 0.3694286644458771
+            },
+            {
+              "loss": 0.17853398621082306
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9681528662420382,
+            "validation_loss": 0.10521410853501148
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.105214108535011
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "889265e1-7a9b-4b55-914a-28e60f4f003c",
+      "reportTime": "2023-08-08T21:08:09.194192Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 300
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.17869658768177032
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.14840289950370789
+            },
+            {
+              "loss": 0.12931598722934723
+            },
+            {
+              "loss": 0.23933789134025574
+            },
+            {
+              "loss": 0.2394951432943344
+            },
+            {
+              "loss": 0.2830604910850525
+            },
+            {
+              "loss": 0.15099424123764038
+            },
+            {
+              "loss": 0.14319957792758942
+            },
+            {
+              "loss": 0.1809253692626953
+            },
+            {
+              "loss": 0.2918773591518402
+            },
+            {
+              "loss": 0.19928130507469177
+            },
+            {
+              "loss": 0.07872078567743301
+            },
+            {
+              "loss": 0.24088840186595917
+            },
+            {
+              "loss": 0.1097835972905159
+            },
+            {
+              "loss": 0.1610189527273178
+            },
+            {
+              "loss": 0.3408728837966919
+            },
+            {
+              "loss": 0.07151566445827484
+            },
+            {
+              "loss": 0.23243287205696106
+            },
+            {
+              "loss": 0.21072524785995483
+            },
+            {
+              "loss": 0.29971015453338623
+            },
+            {
+              "loss": 0.1473066806793213
+            },
+            {
+              "loss": 0.13443562388420105
+            },
+            {
+              "loss": 0.17140692472457886
+            },
+            {
+              "loss": 0.16077224910259247
+            },
+            {
+              "loss": 0.21634791791439056
+            },
+            {
+              "loss": 0.25501489639282227
+            },
+            {
+              "loss": 0.11829657107591629
+            },
+            {
+              "loss": 0.07157107442617416
+            },
+            {
+              "loss": 0.27498745918273926
+            },
+            {
+              "loss": 0.21363985538482666
+            },
+            {
+              "loss": 0.1644001305103302
+            },
+            {
+              "loss": 0.4365149438381195
+            },
+            {
+              "loss": 0.24460744857788086
+            },
+            {
+              "loss": 0.11349793523550034
+            },
+            {
+              "loss": 0.13032467663288116
+            },
+            {
+              "loss": 0.09903733432292938
+            },
+            {
+              "loss": 0.12668508291244507
+            },
+            {
+              "loss": 0.39979609847068787
+            },
+            {
+              "loss": 0.28411564230918884
+            },
+            {
+              "loss": 0.18401120603084564
+            },
+            {
+              "loss": 0.19159814715385437
+            },
+            {
+              "loss": 0.23895560204982758
+            },
+            {
+              "loss": 0.3057548701763153
+            },
+            {
+              "loss": 0.19539932906627655
+            },
+            {
+              "loss": 0.13591167330741882
+            },
+            {
+              "loss": 0.07032526284456253
+            },
+            {
+              "loss": 0.1931210160255432
+            },
+            {
+              "loss": 0.19551172852516174
+            },
+            {
+              "loss": 0.1712142676115036
+            },
+            {
+              "loss": 0.16578488051891327
+            },
+            {
+              "loss": 0.3335218131542206
+            },
+            {
+              "loss": 0.294801265001297
+            },
+            {
+              "loss": 0.08474269509315491
+            },
+            {
+              "loss": 0.06332343071699142
+            },
+            {
+              "loss": 0.16650769114494324
+            },
+            {
+              "loss": 0.13790112733840942
+            },
+            {
+              "loss": 0.05662951245903969
+            },
+            {
+              "loss": 0.08439511805772781
+            },
+            {
+              "loss": 0.19056566059589386
+            },
+            {
+              "loss": 0.2000504583120346
+            },
+            {
+              "loss": 0.054462507367134094
+            },
+            {
+              "loss": 0.13231560587882996
+            },
+            {
+              "loss": 0.13381999731063843
+            },
+            {
+              "loss": 0.08182989060878754
+            },
+            {
+              "loss": 0.11416272819042206
+            },
+            {
+              "loss": 0.16573961079120636
+            },
+            {
+              "loss": 0.2350143939256668
+            },
+            {
+              "loss": 0.1454540491104126
+            },
+            {
+              "loss": 0.11702188104391098
+            },
+            {
+              "loss": 0.347322553396225
+            },
+            {
+              "loss": 0.18077035248279572
+            },
+            {
+              "loss": 0.11389034241437912
+            },
+            {
+              "loss": 0.18820922076702118
+            },
+            {
+              "loss": 0.11497759819030762
+            },
+            {
+              "loss": 0.24118030071258545
+            },
+            {
+              "loss": 0.3571220934391022
+            },
+            {
+              "loss": 0.11759454756975174
+            },
+            {
+              "loss": 0.3021848499774933
+            },
+            {
+              "loss": 0.2810307741165161
+            },
+            {
+              "loss": 0.2437179684638977
+            },
+            {
+              "loss": 0.15549162030220032
+            },
+            {
+              "loss": 0.08566182851791382
+            },
+            {
+              "loss": 0.14856432378292084
+            },
+            {
+              "loss": 0.24203352630138397
+            },
+            {
+              "loss": 0.13962917029857635
+            },
+            {
+              "loss": 0.06329530477523804
+            },
+            {
+              "loss": 0.15805505216121674
+            },
+            {
+              "loss": 0.2410639524459839
+            },
+            {
+              "loss": 0.21885409951210022
+            },
+            {
+              "loss": 0.12950758635997772
+            },
+            {
+              "loss": 0.09882678836584091
+            },
+            {
+              "loss": 0.16772028803825378
+            },
+            {
+              "loss": 0.21309426426887512
+            },
+            {
+              "loss": 0.17967630922794342
+            },
+            {
+              "loss": 0.037241846323013306
+            },
+            {
+              "loss": 0.0802157074213028
+            },
+            {
+              "loss": 0.031195100396871567
+            },
+            {
+              "loss": 0.08584744483232498
+            },
+            {
+              "loss": 0.11845795065164566
+            },
+            {
+              "loss": 0.32207009196281433
+            },
+            {
+              "loss": 0.11099191009998322
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9719347133757962,
+            "validation_loss": 0.08711651818949884
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0871165181894988
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "2db6eed3-c86e-4720-876d-eae2af9a1aca",
+      "reportTime": "2023-08-08T21:07:07.024887Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "108"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 100
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.5983898043632507
+          },
+          "batchMetrics": [
+            {
+              "loss": 2.315619945526123
+            },
+            {
+              "loss": 2.1721351146698
+            },
+            {
+              "loss": 2.509854316711426
+            },
+            {
+              "loss": 2.1235623359680176
+            },
+            {
+              "loss": 1.791078805923462
+            },
+            {
+              "loss": 1.4856748580932617
+            },
+            {
+              "loss": 1.4275885820388794
+            },
+            {
+              "loss": 1.5892515182495117
+            },
+            {
+              "loss": 1.5315109491348267
+            },
+            {
+              "loss": 1.510405421257019
+            },
+            {
+              "loss": 1.1651331186294556
+            },
+            {
+              "loss": 1.5538264513015747
+            },
+            {
+              "loss": 1.3308771848678589
+            },
+            {
+              "loss": 1.1709223985671997
+            },
+            {
+              "loss": 0.9955692887306213
+            },
+            {
+              "loss": 0.8800036907196045
+            },
+            {
+              "loss": 0.9138495922088623
+            },
+            {
+              "loss": 1.0297375917434692
+            },
+            {
+              "loss": 0.5385386347770691
+            },
+            {
+              "loss": 0.9832097887992859
+            },
+            {
+              "loss": 1.0481973886489868
+            },
+            {
+              "loss": 0.9322750568389893
+            },
+            {
+              "loss": 0.7604941725730896
+            },
+            {
+              "loss": 0.5296440720558167
+            },
+            {
+              "loss": 0.468957781791687
+            },
+            {
+              "loss": 0.42414963245391846
+            },
+            {
+              "loss": 0.41187307238578796
+            },
+            {
+              "loss": 0.3325490355491638
+            },
+            {
+              "loss": 0.6099460124969482
+            },
+            {
+              "loss": 0.6721822619438171
+            },
+            {
+              "loss": 0.5419431328773499
+            },
+            {
+              "loss": 0.5224212408065796
+            },
+            {
+              "loss": 0.48971906304359436
+            },
+            {
+              "loss": 0.3836058974266052
+            },
+            {
+              "loss": 0.39867931604385376
+            },
+            {
+              "loss": 0.5257176756858826
+            },
+            {
+              "loss": 0.463149756193161
+            },
+            {
+              "loss": 0.5377570390701294
+            },
+            {
+              "loss": 0.6045882105827332
+            },
+            {
+              "loss": 0.23654228448867798
+            },
+            {
+              "loss": 0.30623236298561096
+            },
+            {
+              "loss": 0.5787944197654724
+            },
+            {
+              "loss": 0.5791947245597839
+            },
+            {
+              "loss": 0.3078601360321045
+            },
+            {
+              "loss": 0.25518807768821716
+            },
+            {
+              "loss": 0.46661266684532166
+            },
+            {
+              "loss": 0.27086079120635986
+            },
+            {
+              "loss": 0.6127304434776306
+            },
+            {
+              "loss": 0.22423726320266724
+            },
+            {
+              "loss": 0.18464697897434235
+            },
+            {
+              "loss": 0.3268192410469055
+            },
+            {
+              "loss": 0.3521574139595032
+            },
+            {
+              "loss": 0.4349382519721985
+            },
+            {
+              "loss": 0.44754207134246826
+            },
+            {
+              "loss": 0.3541872203350067
+            },
+            {
+              "loss": 0.28419244289398193
+            },
+            {
+              "loss": 0.2520524859428406
+            },
+            {
+              "loss": 0.2994208037853241
+            },
+            {
+              "loss": 0.49207767844200134
+            },
+            {
+              "loss": 0.265327125787735
+            },
+            {
+              "loss": 0.19330213963985443
+            },
+            {
+              "loss": 0.34506282210350037
+            },
+            {
+              "loss": 0.43242546916007996
+            },
+            {
+              "loss": 0.5057482719421387
+            },
+            {
+              "loss": 0.4259978234767914
+            },
+            {
+              "loss": 0.39397886395454407
+            },
+            {
+              "loss": 0.31611084938049316
+            },
+            {
+              "loss": 0.2703038454055786
+            },
+            {
+              "loss": 0.3195490539073944
+            },
+            {
+              "loss": 0.2384459525346756
+            },
+            {
+              "loss": 0.47444093227386475
+            },
+            {
+              "loss": 0.2153882086277008
+            },
+            {
+              "loss": 0.366534948348999
+            },
+            {
+              "loss": 0.36681845784187317
+            },
+            {
+              "loss": 0.42832592129707336
+            },
+            {
+              "loss": 0.26488298177719116
+            },
+            {
+              "loss": 0.21970751881599426
+            },
+            {
+              "loss": 0.5879179239273071
+            },
+            {
+              "loss": 0.18359029293060303
+            },
+            {
+              "loss": 0.19080603122711182
+            },
+            {
+              "loss": 0.588058590888977
+            },
+            {
+              "loss": 0.2861879765987396
+            },
+            {
+              "loss": 0.2715606689453125
+            },
+            {
+              "loss": 0.23465076088905334
+            },
+            {
+              "loss": 0.2044602483510971
+            },
+            {
+              "loss": 0.26576292514801025
+            },
+            {
+              "loss": 0.44851765036582947
+            },
+            {
+              "loss": 0.3065412938594818
+            },
+            {
+              "loss": 0.27013635635375977
+            },
+            {
+              "loss": 0.26117414236068726
+            },
+            {
+              "loss": 0.34706050157546997
+            },
+            {
+              "loss": 0.4228246510028839
+            },
+            {
+              "loss": 0.30497288703918457
+            },
+            {
+              "loss": 0.3641539216041565
+            },
+            {
+              "loss": 0.24282251298427582
+            },
+            {
+              "loss": 0.3164789378643036
+            },
+            {
+              "loss": 0.1387174427509308
+            },
+            {
+              "loss": 0.20051491260528564
+            },
+            {
+              "loss": 0.2199055403470993
+            },
+            {
+              "loss": 0.19732525944709778
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9404856687898089,
+            "validation_loss": 0.18798808317489116
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.187988083174891
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "270bd950-d634-4b8f-82d7-21abe2971051",
+      "reportTime": "2023-08-08T21:09:41.952997Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 500
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.14138802886009216
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.058444757014513016
+            },
+            {
+              "loss": 0.15047557651996613
+            },
+            {
+              "loss": 0.11473505198955536
+            },
+            {
+              "loss": 0.15797854959964752
+            },
+            {
+              "loss": 0.0766221210360527
+            },
+            {
+              "loss": 0.11263397336006165
+            },
+            {
+              "loss": 0.07089406996965408
+            },
+            {
+              "loss": 0.033576708287000656
+            },
+            {
+              "loss": 0.04597499594092369
+            },
+            {
+              "loss": 0.09774192422628403
+            },
+            {
+              "loss": 0.055613938719034195
+            },
+            {
+              "loss": 0.021910689771175385
+            },
+            {
+              "loss": 0.3020898997783661
+            },
+            {
+              "loss": 0.2518189251422882
+            },
+            {
+              "loss": 0.20112159848213196
+            },
+            {
+              "loss": 0.22587719559669495
+            },
+            {
+              "loss": 0.3902438282966614
+            },
+            {
+              "loss": 0.2146935611963272
+            },
+            {
+              "loss": 0.1309896856546402
+            },
+            {
+              "loss": 0.2011088728904724
+            },
+            {
+              "loss": 0.21212069690227509
+            },
+            {
+              "loss": 0.09777041524648666
+            },
+            {
+              "loss": 0.08188287913799286
+            },
+            {
+              "loss": 0.1736334264278412
+            },
+            {
+              "loss": 0.2036336064338684
+            },
+            {
+              "loss": 0.2655395567417145
+            },
+            {
+              "loss": 0.14660967886447906
+            },
+            {
+              "loss": 0.08068206906318665
+            },
+            {
+              "loss": 0.08854658156633377
+            },
+            {
+              "loss": 0.25384700298309326
+            },
+            {
+              "loss": 0.16197267174720764
+            },
+            {
+              "loss": 0.16963672637939453
+            },
+            {
+              "loss": 0.15520340204238892
+            },
+            {
+              "loss": 0.08960341662168503
+            },
+            {
+              "loss": 0.0934598371386528
+            },
+            {
+              "loss": 0.08359192311763763
+            },
+            {
+              "loss": 0.06704356521368027
+            },
+            {
+              "loss": 0.1372693032026291
+            },
+            {
+              "loss": 0.0420667938888073
+            },
+            {
+              "loss": 0.19896265864372253
+            },
+            {
+              "loss": 0.12877565622329712
+            },
+            {
+              "loss": 0.0938296690583229
+            },
+            {
+              "loss": 0.08834148198366165
+            },
+            {
+              "loss": 0.24926237761974335
+            },
+            {
+              "loss": 0.1954200118780136
+            },
+            {
+              "loss": 0.1844223588705063
+            },
+            {
+              "loss": 0.21520669758319855
+            },
+            {
+              "loss": 0.4014355540275574
+            },
+            {
+              "loss": 0.1299373358488083
+            },
+            {
+              "loss": 0.18732482194900513
+            },
+            {
+              "loss": 0.11504937708377838
+            },
+            {
+              "loss": 0.06133732572197914
+            },
+            {
+              "loss": 0.07111939042806625
+            },
+            {
+              "loss": 0.09831199049949646
+            },
+            {
+              "loss": 0.13277573883533478
+            },
+            {
+              "loss": 0.1300293207168579
+            },
+            {
+              "loss": 0.07334024459123611
+            },
+            {
+              "loss": 0.14006096124649048
+            },
+            {
+              "loss": 0.07001938670873642
+            },
+            {
+              "loss": 0.2509746551513672
+            },
+            {
+              "loss": 0.07086937874555588
+            },
+            {
+              "loss": 0.04597380384802818
+            },
+            {
+              "loss": 0.15928643941879272
+            },
+            {
+              "loss": 0.19707855582237244
+            },
+            {
+              "loss": 0.22698776423931122
+            },
+            {
+              "loss": 0.11739221215248108
+            },
+            {
+              "loss": 0.13486650586128235
+            },
+            {
+              "loss": 0.16372275352478027
+            },
+            {
+              "loss": 0.06450170278549194
+            },
+            {
+              "loss": 0.19444286823272705
+            },
+            {
+              "loss": 0.11115716397762299
+            },
+            {
+              "loss": 0.04060648754239082
+            },
+            {
+              "loss": 0.08100587874650955
+            },
+            {
+              "loss": 0.014265332370996475
+            },
+            {
+              "loss": 0.022047311067581177
+            },
+            {
+              "loss": 0.08183375746011734
+            },
+            {
+              "loss": 0.15682853758335114
+            },
+            {
+              "loss": 0.16128452122211456
+            },
+            {
+              "loss": 0.13374482095241547
+            },
+            {
+              "loss": 0.05018283799290657
+            },
+            {
+              "loss": 0.09098057448863983
+            },
+            {
+              "loss": 0.18877720832824707
+            },
+            {
+              "loss": 0.05098576471209526
+            },
+            {
+              "loss": 0.10342982411384583
+            },
+            {
+              "loss": 0.09071074426174164
+            },
+            {
+              "loss": 0.07383433729410172
+            },
+            {
+              "loss": 0.24962441623210907
+            },
+            {
+              "loss": 0.2344418168067932
+            },
+            {
+              "loss": 0.3037407100200653
+            },
+            {
+              "loss": 0.1796262562274933
+            },
+            {
+              "loss": 0.09523404389619827
+            },
+            {
+              "loss": 0.08368907123804092
+            },
+            {
+              "loss": 0.29214370250701904
+            },
+            {
+              "loss": 0.13187430799007416
+            },
+            {
+              "loss": 0.28563278913497925
+            },
+            {
+              "loss": 0.3259006440639496
+            },
+            {
+              "loss": 0.09650425612926483
+            },
+            {
+              "loss": 0.16938354074954987
+            },
+            {
+              "loss": 0.05985528975725174
+            },
+            {
+              "loss": 0.06975860148668289
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9784036624203821,
+            "validation_loss": 0.06195811560360053
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0619581156036005
+      }
+    },
+    {
+      "taskId": "324.a45394e4-0017-4d20-b40f-28d75b972880",
+      "allocationId": "324.a45394e4-0017-4d20-b40f-28d75b972880.1",
+      "uuid": "1755626d-924f-463d-a8f7-844a751c1825",
+      "reportTime": "2023-08-08T21:13:27.409242Z",
+      "resources": {
+        "code/": "0",
+        "code/README.md": "1407",
+        "code/adaptive.yaml": "678",
+        "code/const.yaml": "571",
+        "code/data.py": "1443",
+        "code/dist_random.yaml": "725",
+        "code/distributed.yaml": "499",
+        "code/layers.py": "568",
+        "code/model_def.py": "3939",
+        "load_data.json": "2594",
+        "metadata.json": "124",
+        "state_dict.pth": "14418394",
+        "trial_state.pkl": "111"
+      },
+      "metadata": {
+        "determined_version": "0.23.5-dev0",
+        "format": "pickle",
+        "framework": "torch-1.12.0+cpu",
+        "steps_completed": 937
+      },
+      "state": "STATE_COMPLETED",
+      "training": {
+        "trialId": 319,
+        "experimentId": 324,
+        "experimentConfig": {
+          "bind_mounts": [],
+          "checkpoint_policy": "best",
+          "checkpoint_storage": {
+            "access_key": "******",
+            "bucket": "anda-dev",
+            "endpoint_url": null,
+            "prefix": null,
+            "save_experiment_best": 0,
+            "save_trial_best": 1,
+            "save_trial_latest": 100,
+            "secret_key": "******",
+            "type": "s3"
+          },
+          "data": {
+            "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+          },
+          "debug": false,
+          "description": null,
+          "entrypoint": "model_def:MNistTrial",
+          "environment": {
+            "add_capabilities": [],
+            "drop_capabilities": [],
+            "environment_variables": {
+              "cpu": [],
+              "cuda": [],
+              "rocm": []
+            },
+            "force_pull_image": false,
+            "image": {
+              "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-6eceaca",
+              "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-6eceaca",
+              "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-6eceaca"
+            },
+            "pod_spec": null,
+            "ports": {},
+            "proxy_ports": [],
+            "registry_auth": null
+          },
+          "hyperparameters": {
+            "dropout1": {
+              "type": "const",
+              "val": 0.25
+            },
+            "dropout2": {
+              "type": "const",
+              "val": 0.5
+            },
+            "global_batch_size": {
+              "type": "const",
+              "val": 64
+            },
+            "learning_rate": {
+              "type": "const",
+              "val": 1
+            },
+            "n_filters1": {
+              "type": "const",
+              "val": 32
+            },
+            "n_filters2": {
+              "type": "const",
+              "val": 64
+            }
+          },
+          "labels": [],
+          "max_restarts": 0,
+          "min_checkpoint_period": {
+            "batches": 100
+          },
+          "min_validation_period": {
+            "batches": 100
+          },
+          "name": "mnist_pytorch_const",
+          "optimizations": {
+            "aggregation_frequency": 1,
+            "auto_tune_tensor_fusion": false,
+            "average_aggregated_gradients": true,
+            "average_training_metrics": true,
+            "grad_updates_size_file": null,
+            "gradient_compression": false,
+            "mixed_precision": "O0",
+            "tensor_fusion_cycle_time": 5,
+            "tensor_fusion_threshold": 64
+          },
+          "pbs": {},
+          "perform_initial_validation": false,
+          "profiling": {
+            "begin_on_batch": 0,
+            "enabled": false,
+            "end_after_batch": null,
+            "sync_timings": true
+          },
+          "project": "",
+          "records_per_epoch": 0,
+          "reproducibility": {
+            "experiment_seed": 1691528778
+          },
+          "resources": {
+            "devices": [],
+            "max_slots": null,
+            "native_parallel": false,
+            "priority": null,
+            "resource_pool": "default",
+            "shm_size": null,
+            "slots_per_trial": 1,
+            "weight": 1
+          },
+          "scheduling_unit": 100,
+          "searcher": {
+            "max_length": {
+              "batches": 937
+            },
+            "metric": "validation_loss",
+            "name": "single",
+            "smaller_is_better": true,
+            "source_checkpoint_uuid": null,
+            "source_trial_id": null
+          },
+          "slurm": {},
+          "workspace": ""
+        },
+        "hparams": {
+          "dropout1": 0.25,
+          "dropout2": 0.5,
+          "global_batch_size": 64,
+          "learning_rate": 1,
+          "n_filters1": 32,
+          "n_filters2": 64
+        },
+        "trainingMetrics": {
+          "avgMetrics": {
+            "loss": 0.07466091215610504
+          },
+          "batchMetrics": [
+            {
+              "loss": 0.16262631118297577
+            },
+            {
+              "loss": 0.08760011941194534
+            },
+            {
+              "loss": 0.24679897725582123
+            },
+            {
+              "loss": 0.012605847790837288
+            },
+            {
+              "loss": 0.07866627722978592
+            },
+            {
+              "loss": 0.08844909816980362
+            },
+            {
+              "loss": 0.018139300867915154
+            },
+            {
+              "loss": 0.07939347624778748
+            },
+            {
+              "loss": 0.008838627487421036
+            },
+            {
+              "loss": 0.022130753844976425
+            },
+            {
+              "loss": 0.04238435998558998
+            },
+            {
+              "loss": 0.017103997990489006
+            },
+            {
+              "loss": 0.022644536569714546
+            },
+            {
+              "loss": 0.035433780401945114
+            },
+            {
+              "loss": 0.007979307323694229
+            },
+            {
+              "loss": 0.0031139198690652847
+            },
+            {
+              "loss": 0.021998636424541473
+            },
+            {
+              "loss": 0.007312020752578974
+            },
+            {
+              "loss": 0.06023188307881355
+            },
+            {
+              "loss": 0.07657673954963684
+            },
+            {
+              "loss": 0.004808497149497271
+            },
+            {
+              "loss": 0.002421892248094082
+            },
+            {
+              "loss": 0.0058216433972120285
+            },
+            {
+              "loss": 0.001338366069830954
+            },
+            {
+              "loss": 0.0009106642683036625
+            },
+            {
+              "loss": 0.07586048543453217
+            },
+            {
+              "loss": 0.19039839506149292
+            },
+            {
+              "loss": 0.05164262652397156
+            },
+            {
+              "loss": 0.06445617973804474
+            },
+            {
+              "loss": 0.061094217002391815
+            },
+            {
+              "loss": 0.002539917826652527
+            },
+            {
+              "loss": 0.01634320616722107
+            },
+            {
+              "loss": 0.17246437072753906
+            },
+            {
+              "loss": 0.6121779680252075
+            },
+            {
+              "loss": 0.04746692627668381
+            },
+            {
+              "loss": 0.007583892438560724
+            },
+            {
+              "loss": 0.3450966477394104
+            }
+          ]
+        },
+        "validationMetrics": {
+          "avgMetrics": {
+            "accuracy": 0.9840764331210191,
+            "validation_loss": 0.04799082219674086
+          },
+          "batchMetrics": []
+        },
+        "searcherMetric": 0.0479908221967409
+      }
+    }
+  ],
+  "pagination": {
+    "offset": 0,
+    "limit": 15,
+    "startIndex": 0,
+    "endIndex": 10,
+    "total": 10
+  }
+}

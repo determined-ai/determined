@@ -424,35 +424,22 @@ message PatchExperimentResponse {
 
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {
-  // Sorts checkpoints by the given field.
-  enum SortBy {
-    // Returns checkpoints in an unsorted list.
-    SORT_BY_UNSPECIFIED = 0;
-    // Returns checkpoints sorted by UUID.
-    SORT_BY_UUID = 1;
-    // Returns checkpoints sorted by trial id.
-    SORT_BY_TRIAL_ID = 2;
-    // Returns checkpoints sorted by batch number.
-    SORT_BY_BATCH_NUMBER = 3;
-    // Returns checkpoints sorted by end time.
-    SORT_BY_END_TIME = 4;
-    // Returns checkpoints sorted by state.
-    SORT_BY_STATE = 5;
-    // Returns checkpoints sorted by the experiment's `searcher.metric`
-    // configuration setting.
-    SORT_BY_SEARCHER_METRIC = 6;
-  }
   // The experiment id.
   int32 id = 1;
   // Sort checkpoints by the given field.
-  SortBy sort_by = 2;
+  oneof sort_by {
+    // Sort by preset checkpoint attribute.
+    determined.checkpoint.v1.SortBy sort_by_attr = 2;
+    // Sort by custom validation metric name.
+    string sort_by_metric = 3;
+  }
   // Order checkpoints in either ascending or descending order.
-  OrderBy order_by = 3;
+  OrderBy order_by = 4;
   // Skip the number of checkpoints before returning results. Negative values
   // denote number of checkpoints to skip from the end before returning results.
-  int32 offset = 4;
+  int32 offset = 5;
   // Limit the number of checkpoints. A value of 0 denotes no limit.
-  int32 limit = 5;
+  int32 limit = 6;
 
   // Limit the checkpoints to those that match the states.
   repeated determined.checkpoint.v1.State states = 7;

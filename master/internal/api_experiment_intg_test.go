@@ -12,6 +12,8 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+
 	"github.com/uptrace/bun"
 
 	"github.com/ghodss/yaml"
@@ -736,8 +738,10 @@ func TestLegacyExperiments(t *testing.T) {
 
 	t.Run("GetExperimentCheckpoints", func(t *testing.T) {
 		req := &apiv1.GetExperimentCheckpointsRequest{
-			Id:     prse.CompletedPBTExpID,
-			SortBy: apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC,
+			Id: prse.CompletedPBTExpID,
+			SortBy: &apiv1.GetExperimentCheckpointsRequest_SortByAttr{
+				SortByAttr: checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC,
+			},
 		}
 		_, err = api.GetExperimentCheckpoints(ctx, req)
 		require.NoError(t, err)

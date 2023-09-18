@@ -50,6 +50,18 @@ def sample_get_experiment_trials() -> bindings.v1GetExperimentTrialsResponse:
         return resp
 
 
+def sample_get_experiment_checkpoints() -> bindings.v1GetExperimentCheckpointsResponse:
+    with open(FIXTURES_DIR / "checkpoints.json") as f:
+        resp = bindings.v1GetExperimentCheckpointsResponse.from_json(json.load(f))
+        return resp
+
+
+def sample_get_trial_checkpoints() -> bindings.v1GetTrialCheckpointsResponse:
+    with open(FIXTURES_DIR / "checkpoints.json") as f:
+        resp = bindings.v1GetTrialCheckpointsResponse.from_json(json.load(f))
+        return resp
+
+
 def sample_get_trial(**kwargs: Any) -> bindings.v1GetTrialResponse:
     with open(FIXTURES_DIR / "trial.json") as f:
         resp = bindings.v1GetTrialResponse.from_json(json.load(f))
