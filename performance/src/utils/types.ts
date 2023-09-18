@@ -11,7 +11,7 @@ interface Experiment {
 }
 
 interface Task {
-    id?: string;
+    id: string;
 }
 
 interface TestConfiguration {
@@ -26,12 +26,12 @@ interface TestGroup {
 }
 
 interface Trial {
-    id?: string;
+    id: string;
 }
 
 interface Model {
-    name?: string;
-    versionNum?: string;
+    name: string;
+    versionNum: string;
 }
 
 interface SeededData {
@@ -43,6 +43,6 @@ interface SeededData {
 }
 
 interface Workspace {
-    id?: string;
-    projectId?: string;
+    id: string;
+    projectId: string;
 }
