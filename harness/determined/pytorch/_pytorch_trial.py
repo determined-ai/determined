@@ -739,7 +739,6 @@ class _PyTorchTrialController:
     def _train_for_op(
         self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
     ) -> None:
-        searcher_complete = op._completed
         if self.local_training:
             searcher_length = self.max_length
         else:
@@ -769,7 +768,6 @@ class _PyTorchTrialController:
                 if train_boundary.step_type == _TrainBoundaryType.TRAIN:
                     if not op._completed and self.is_chief:
                         self._report_searcher_progress(op, self.searcher_unit)
-                    searcher_complete = train_boundary.limit_reached
                 elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
                         self._validate(op)
@@ -784,14 +782,6 @@ class _PyTorchTrialController:
                 if self.context.get_enable_tensorboard_logging():
                     self._upload_tb_files()
                 self._stop_requested()
-
-                # Test mode will break after one batch despite not completing op.
-                if self.is_chief and not self.test_mode:
-                    if not op._completed:
-                        # The only case where op isn't reported as completed is if we restarted but
-                        # op.length was already trained for and validated on; in that case just break
-                        # out of the operations loop; we have nothing to do.
-                        break
 
         # Finished training for op. Perform final checkpoint/validation if necessary.
         if not self._validation_is_current():
