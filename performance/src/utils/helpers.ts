@@ -19,7 +19,7 @@ export const generateEndpointUrl = (
     clusterURL: string,
 ): string => `${clusterURL}${endpoint}`;
 
-export const authenticateVU = (clusterURL: string) => {
+export const authenticateVU = (clusterURL: string): string => {
     const loginCredentials = {
         username: __ENV.DET_ADMIN_USERNAME,
         password: __ENV.DET_ADMIN_PASSWORD,
@@ -43,7 +43,7 @@ export const testGetRequest = (
     url: string,
     clusterURL: string,
     testConfig?: TestConfiguration,
-) => {
+): void => {
     const params = {
         headers: {
             "Content-Type": "application/json",
