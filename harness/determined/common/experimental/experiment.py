@@ -4,7 +4,7 @@ import pathlib
 import sys
 import time
 import warnings
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 from determined.common import api
 from determined.common.api import bindings
@@ -327,14 +327,82 @@ class Experiment:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        checkpoints = self.top_n_checkpoints(
-            1, sort_by=sort_by, smaller_is_better=smaller_is_better
+        warnings.warn(
+            "Experiment.top_checkpoint() has been deprecated and will be removed in a future "
+            "version."
+            "Please call Experiment.list_checkpoints(...,limit=1) instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        order_by = None
+        if sort_by:
+            order_by = (
+                checkpoint.CheckpointOrderBy.ASC
+                if smaller_is_better
+                else checkpoint.CheckpointOrderBy.DESC
+            )
+        checkpoints = self.list_checkpoints(
+            sort_by=sort_by,
+            order_by=order_by,
+            limit=1,
         )
 
         if not checkpoints:
             raise AssertionError("No checkpoints found for experiment {}".format(self.id))
 
         return checkpoints[0]
+
+    def list_checkpoints(
+        self,
+        sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
+        order_by: Optional[checkpoint.CheckpointOrderBy] = None,
+        limit: Optional[int] = None,
+    ) -> List[checkpoint.Checkpoint]:
+        """Returns a list of sorted :class:`~determined.experimental.Checkpoint` instances.
+
+        Requires either both `sort_by` and `order_by` to be defined, or neither. If neither are
+        specified, will default to sorting by the experiment's configured searcher metric, and
+        ordering by `smaller_is_better`.
+
+        Only checkpoints in a ``COMPLETED`` state with a matching ``COMPLETED`` validation
+        are considered.
+
+        Arguments:
+            sort_by: (Optional) Parameter to sort checkpoints by. Accepts either
+                ``checkpoint.CheckpointSortBy`` or a string representing a validation metric name.
+            order_by: (Optional) Order of sorted checkpoints (ascending or descending).
+            limit: (Optional) Maximum number of results to return. Defaults to no maximum.
+
+        Returns:
+            A list of sorted and ordered checkpoints.
+        """
+        if (sort_by is None) != (order_by is None):
+            raise AssertionError("sort_by and order_by must be either both set, or neither.")
+
+        if sort_by and not isinstance(sort_by, (checkpoint.CheckpointSortBy, str)):
+            raise ValueError("sort_by must be of type CheckpointSortBy or str")
+
+        def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
+            return bindings.get_GetExperimentCheckpoints(
+                self._session,
+                id=self._id,
+                limit=limit,
+                offset=offset,
+                orderBy=order_by._to_bindings() if order_by else None,
+                sortByAttr=sort_by._to_bindings()
+                if isinstance(sort_by, checkpoint.CheckpointSortBy)
+                else None,
+                sortByMetric=sort_by if isinstance(sort_by, str) else None,
+                states=[bindings.checkpointv1State.COMPLETED],
+            )
+
+        resps = api.read_paginated(get_with_offset)
+
+        return [
+            checkpoint.Checkpoint._from_bindings(c, self._session)
+            for r in resps
+            for c in r.checkpoints
+        ]
 
     def top_n_checkpoints(
         self,
@@ -362,6 +430,13 @@ class Experiment:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
+        warnings.warn(
+            "Experiment.top_n_checkpoints() has been deprecated and will be removed in a future "
+            "version."
+            "Please call Experiment.list_checkpoints(...,limit=n) instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
             return bindings.get_GetExperimentCheckpoints(

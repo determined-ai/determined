@@ -88,6 +88,76 @@ func (State) EnumDescriptor() ([]byte, []int) {
 	return file_determined_checkpoint_v1_checkpoint_proto_rawDescGZIP(), []int{0}
 }
 
+// Sorts options for checkpoints by the given field.
+type SortBy int32
+
+const (
+	// Returns checkpoints in an unsorted list.
+	SortBy_SORT_BY_UNSPECIFIED SortBy = 0
+	// Returns checkpoints sorted by UUID.
+	SortBy_SORT_BY_UUID SortBy = 1
+	// Returns checkpoints sorted by trial id.
+	SortBy_SORT_BY_TRIAL_ID SortBy = 2
+	// Returns checkpoints sorted by batch number.
+	SortBy_SORT_BY_BATCH_NUMBER SortBy = 3
+	// Returns checkpoints sorted by end time.
+	SortBy_SORT_BY_END_TIME SortBy = 4
+	// Returns checkpoints sorted by state.
+	SortBy_SORT_BY_STATE SortBy = 5
+	// Returns checkpoints sorted by the experiment's `searcher.metric`
+	// configuration setting.
+	SortBy_SORT_BY_SEARCHER_METRIC SortBy = 6
+)
+
+// Enum value maps for SortBy.
+var (
+	SortBy_name = map[int32]string{
+		0: "SORT_BY_UNSPECIFIED",
+		1: "SORT_BY_UUID",
+		2: "SORT_BY_TRIAL_ID",
+		3: "SORT_BY_BATCH_NUMBER",
+		4: "SORT_BY_END_TIME",
+		5: "SORT_BY_STATE",
+		6: "SORT_BY_SEARCHER_METRIC",
+	}
+	SortBy_value = map[string]int32{
+		"SORT_BY_UNSPECIFIED":     0,
+		"SORT_BY_UUID":            1,
+		"SORT_BY_TRIAL_ID":        2,
+		"SORT_BY_BATCH_NUMBER":    3,
+		"SORT_BY_END_TIME":        4,
+		"SORT_BY_STATE":           5,
+		"SORT_BY_SEARCHER_METRIC": 6,
+	}
+)
+
+func (x SortBy) Enum() *SortBy {
+	p := new(SortBy)
+	*p = x
+	return p
+}
+
+func (x SortBy) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SortBy) Descriptor() protoreflect.EnumDescriptor {
+	return file_determined_checkpoint_v1_checkpoint_proto_enumTypes[1].Descriptor()
+}
+
+func (SortBy) Type() protoreflect.EnumType {
+	return &file_determined_checkpoint_v1_checkpoint_proto_enumTypes[1]
+}
+
+func (x SortBy) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SortBy.Descriptor instead.
+func (SortBy) EnumDescriptor() ([]byte, []int) {
+	return file_determined_checkpoint_v1_checkpoint_proto_rawDescGZIP(), []int{1}
+}
+
 // CheckpointTrainingMetadata is specifically metadata about training.
 type CheckpointTrainingMetadata struct {
 	state         protoimpl.MessageState
@@ -533,11 +603,22 @@ var file_determined_checkpoint_v1_checkpoint_proto_rawDesc = []byte{
 	0x4f, 0x52, 0x10, 0x03, 0x12, 0x11, 0x0a, 0x0d, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x44, 0x45,
 	0x4c, 0x45, 0x54, 0x45, 0x44, 0x10, 0x04, 0x12, 0x1b, 0x0a, 0x17, 0x53, 0x54, 0x41, 0x54, 0x45,
 	0x5f, 0x50, 0x41, 0x52, 0x54, 0x49, 0x41, 0x4c, 0x4c, 0x59, 0x5f, 0x44, 0x45, 0x4c, 0x45, 0x54,
-	0x45, 0x44, 0x10, 0x05, 0x42, 0x3c, 0x5a, 0x3a, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69,
-	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x45, 0x44, 0x10, 0x05, 0x2a, 0xa9, 0x01, 0x0a, 0x06, 0x53, 0x6f, 0x72, 0x74, 0x42, 0x79, 0x12,
+	0x17, 0x0a, 0x13, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45,
+	0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x10, 0x0a, 0x0c, 0x53, 0x4f, 0x52, 0x54,
+	0x5f, 0x42, 0x59, 0x5f, 0x55, 0x55, 0x49, 0x44, 0x10, 0x01, 0x12, 0x14, 0x0a, 0x10, 0x53, 0x4f,
+	0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x54, 0x52, 0x49, 0x41, 0x4c, 0x5f, 0x49, 0x44, 0x10, 0x02,
+	0x12, 0x18, 0x0a, 0x14, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x42, 0x41, 0x54, 0x43,
+	0x48, 0x5f, 0x4e, 0x55, 0x4d, 0x42, 0x45, 0x52, 0x10, 0x03, 0x12, 0x14, 0x0a, 0x10, 0x53, 0x4f,
+	0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x45, 0x4e, 0x44, 0x5f, 0x54, 0x49, 0x4d, 0x45, 0x10, 0x04,
+	0x12, 0x11, 0x0a, 0x0d, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x53, 0x54, 0x41, 0x54,
+	0x45, 0x10, 0x05, 0x12, 0x1b, 0x0a, 0x17, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x53,
+	0x45, 0x41, 0x52, 0x43, 0x48, 0x45, 0x52, 0x5f, 0x4d, 0x45, 0x54, 0x52, 0x49, 0x43, 0x10, 0x06,
+	0x42, 0x3c, 0x5a, 0x3a, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64,
+	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b,
+	0x67, 0x2f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x76, 0x31, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -552,37 +633,38 @@ func file_determined_checkpoint_v1_checkpoint_proto_rawDescGZIP() []byte {
 	return file_determined_checkpoint_v1_checkpoint_proto_rawDescData
 }
 
-var file_determined_checkpoint_v1_checkpoint_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_determined_checkpoint_v1_checkpoint_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_determined_checkpoint_v1_checkpoint_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_determined_checkpoint_v1_checkpoint_proto_goTypes = []interface{}{
 	(State)(0),                         // 0: determined.checkpoint.v1.State
-	(*CheckpointTrainingMetadata)(nil), // 1: determined.checkpoint.v1.CheckpointTrainingMetadata
-	(*Checkpoint)(nil),                 // 2: determined.checkpoint.v1.Checkpoint
-	(*PatchCheckpoint)(nil),            // 3: determined.checkpoint.v1.PatchCheckpoint
-	nil,                                // 4: determined.checkpoint.v1.Checkpoint.ResourcesEntry
-	(*PatchCheckpoint_OptionalResources)(nil), // 5: determined.checkpoint.v1.PatchCheckpoint.OptionalResources
-	nil,                          // 6: determined.checkpoint.v1.PatchCheckpoint.OptionalResources.ResourcesEntry
-	(*wrappers.Int32Value)(nil),  // 7: google.protobuf.Int32Value
-	(*_struct.Struct)(nil),       // 8: google.protobuf.Struct
-	(*commonv1.Metrics)(nil),     // 9: determined.common.v1.Metrics
-	(*wrappers.DoubleValue)(nil), // 10: google.protobuf.DoubleValue
-	(*timestamp.Timestamp)(nil),  // 11: google.protobuf.Timestamp
+	(SortBy)(0),                        // 1: determined.checkpoint.v1.SortBy
+	(*CheckpointTrainingMetadata)(nil), // 2: determined.checkpoint.v1.CheckpointTrainingMetadata
+	(*Checkpoint)(nil),                 // 3: determined.checkpoint.v1.Checkpoint
+	(*PatchCheckpoint)(nil),            // 4: determined.checkpoint.v1.PatchCheckpoint
+	nil,                                // 5: determined.checkpoint.v1.Checkpoint.ResourcesEntry
+	(*PatchCheckpoint_OptionalResources)(nil), // 6: determined.checkpoint.v1.PatchCheckpoint.OptionalResources
+	nil,                          // 7: determined.checkpoint.v1.PatchCheckpoint.OptionalResources.ResourcesEntry
+	(*wrappers.Int32Value)(nil),  // 8: google.protobuf.Int32Value
+	(*_struct.Struct)(nil),       // 9: google.protobuf.Struct
+	(*commonv1.Metrics)(nil),     // 10: determined.common.v1.Metrics
+	(*wrappers.DoubleValue)(nil), // 11: google.protobuf.DoubleValue
+	(*timestamp.Timestamp)(nil),  // 12: google.protobuf.Timestamp
 }
 var file_determined_checkpoint_v1_checkpoint_proto_depIdxs = []int32{
-	7,  // 0: determined.checkpoint.v1.CheckpointTrainingMetadata.trial_id:type_name -> google.protobuf.Int32Value
-	7,  // 1: determined.checkpoint.v1.CheckpointTrainingMetadata.experiment_id:type_name -> google.protobuf.Int32Value
-	8,  // 2: determined.checkpoint.v1.CheckpointTrainingMetadata.experiment_config:type_name -> google.protobuf.Struct
-	8,  // 3: determined.checkpoint.v1.CheckpointTrainingMetadata.hparams:type_name -> google.protobuf.Struct
-	9,  // 4: determined.checkpoint.v1.CheckpointTrainingMetadata.training_metrics:type_name -> determined.common.v1.Metrics
-	9,  // 5: determined.checkpoint.v1.CheckpointTrainingMetadata.validation_metrics:type_name -> determined.common.v1.Metrics
-	10, // 6: determined.checkpoint.v1.CheckpointTrainingMetadata.searcher_metric:type_name -> google.protobuf.DoubleValue
-	11, // 7: determined.checkpoint.v1.Checkpoint.report_time:type_name -> google.protobuf.Timestamp
-	4,  // 8: determined.checkpoint.v1.Checkpoint.resources:type_name -> determined.checkpoint.v1.Checkpoint.ResourcesEntry
-	8,  // 9: determined.checkpoint.v1.Checkpoint.metadata:type_name -> google.protobuf.Struct
+	8,  // 0: determined.checkpoint.v1.CheckpointTrainingMetadata.trial_id:type_name -> google.protobuf.Int32Value
+	8,  // 1: determined.checkpoint.v1.CheckpointTrainingMetadata.experiment_id:type_name -> google.protobuf.Int32Value
+	9,  // 2: determined.checkpoint.v1.CheckpointTrainingMetadata.experiment_config:type_name -> google.protobuf.Struct
+	9,  // 3: determined.checkpoint.v1.CheckpointTrainingMetadata.hparams:type_name -> google.protobuf.Struct
+	10, // 4: determined.checkpoint.v1.CheckpointTrainingMetadata.training_metrics:type_name -> determined.common.v1.Metrics
+	10, // 5: determined.checkpoint.v1.CheckpointTrainingMetadata.validation_metrics:type_name -> determined.common.v1.Metrics
+	11, // 6: determined.checkpoint.v1.CheckpointTrainingMetadata.searcher_metric:type_name -> google.protobuf.DoubleValue
+	12, // 7: determined.checkpoint.v1.Checkpoint.report_time:type_name -> google.protobuf.Timestamp
+	5,  // 8: determined.checkpoint.v1.Checkpoint.resources:type_name -> determined.checkpoint.v1.Checkpoint.ResourcesEntry
+	9,  // 9: determined.checkpoint.v1.Checkpoint.metadata:type_name -> google.protobuf.Struct
 	0,  // 10: determined.checkpoint.v1.Checkpoint.state:type_name -> determined.checkpoint.v1.State
-	1,  // 11: determined.checkpoint.v1.Checkpoint.training:type_name -> determined.checkpoint.v1.CheckpointTrainingMetadata
-	5,  // 12: determined.checkpoint.v1.PatchCheckpoint.resources:type_name -> determined.checkpoint.v1.PatchCheckpoint.OptionalResources
-	6,  // 13: determined.checkpoint.v1.PatchCheckpoint.OptionalResources.resources:type_name -> determined.checkpoint.v1.PatchCheckpoint.OptionalResources.ResourcesEntry
+	2,  // 11: determined.checkpoint.v1.Checkpoint.training:type_name -> determined.checkpoint.v1.CheckpointTrainingMetadata
+	6,  // 12: determined.checkpoint.v1.PatchCheckpoint.resources:type_name -> determined.checkpoint.v1.PatchCheckpoint.OptionalResources
+	7,  // 13: determined.checkpoint.v1.PatchCheckpoint.OptionalResources.resources:type_name -> determined.checkpoint.v1.PatchCheckpoint.OptionalResources.ResourcesEntry
 	14, // [14:14] is the sub-list for method output_type
 	14, // [14:14] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
@@ -652,7 +734,7 @@ func file_determined_checkpoint_v1_checkpoint_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_checkpoint_v1_checkpoint_proto_rawDesc,
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,

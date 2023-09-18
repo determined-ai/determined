@@ -53,7 +53,11 @@ def test_trial_order_by() -> None:
 
 
 def test_checkpoint_state() -> None:
-    do_enum_test(client.CheckpointState, bindings.checkpointv1State)
+    do_enum_test(
+        client.CheckpointState,
+        bindings.checkpointv1State,
+        ignore=[bindings.checkpointv1State.UNSPECIFIED],
+    )
 
 
 def test_model_sort_by() -> None:

@@ -237,6 +237,15 @@ class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
     TIMING = "PROFILER_METRIC_TYPE_TIMING"
     MISC = "PROFILER_METRIC_TYPE_MISC"
 
+class checkpointv1SortBy(DetEnum):
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    UUID = "SORT_BY_UUID"
+    TRIAL_ID = "SORT_BY_TRIAL_ID"
+    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
+
 class checkpointv1State(DetEnum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
@@ -3747,15 +3756,6 @@ class v1GetCurrentTrialSearcherOperationResponse(Printable):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
 
-class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    UUID = "SORT_BY_UUID"
-    TRIAL_ID = "SORT_BY_TRIAL_ID"
-    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
-    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
-
 class v1GetExperimentCheckpointsResponse(Printable):
 
     def __init__(
@@ -5269,13 +5269,6 @@ class v1GetTrainingMetricsResponse(Printable):
             "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
-
-class v1GetTrialCheckpointsRequestSortBy(DetEnum):
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    UUID = "SORT_BY_UUID"
-    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse(Printable):
 
@@ -14865,14 +14858,16 @@ def get_GetExperimentCheckpoints(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
+    sortByAttr: "typing.Optional[checkpointv1SortBy]" = None,
+    sortByMetric: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
+        "sortByAttr": sortByAttr.value if sortByAttr is not None else None,
+        "sortByMetric": sortByMetric,
         "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
@@ -16048,14 +16043,16 @@ def get_GetTrialCheckpoints(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
+    sortByAttr: "typing.Optional[checkpointv1SortBy]" = None,
+    sortByMetric: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
+        "sortByAttr": sortByAttr.value if sortByAttr is not None else None,
+        "sortByMetric": sortByMetric,
         "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
