@@ -153,12 +153,3 @@ DROP TRIGGER IF EXISTS stream_trial_project_change_trigger ON experiments;
 CREATE TRIGGER stream_trial_project_change_trigger
 AFTER UPDATE OF project_id ON experiments
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_project_change_notify();
-
--- trigger function to notify when permission changes are detected. (unused in OSS)
-CREATE OR REPLACE FUNCTION permission_change_notify() RETURNS TRIGGER AS $$
-DECLARE
-BEGIN
-    PERFORM pg_notify('permission_change_chan', '');
-    return NULL;
-END;
-$$ LANGUAGE plpgsql;

@@ -17,6 +17,11 @@ func (a *StreamAuthZBasic) GetTrialStreamableScopes(
 	return model.AccessScopeSet{model.GlobalAccessScopeID: true}, nil
 }
 
+// WaitForPermissionChange always returns nil.
+func (a *StreamAuthZBasic) WaitForPermissionChange() error {
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &StreamAuthZBasic{})
 }

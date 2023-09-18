@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
@@ -24,10 +25,6 @@ type JSONB interface{}
 const (
 	minReconn = 1 * time.Second
 	maxReconn = 10 * time.Second
-
-	// Name of notify queue for permission changes.
-	permissionChannelName       = "permission_change_chan"
-	permissionChangeErrorString = "permission change detected while streaming updates"
 )
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
@@ -37,9 +34,8 @@ const (
 type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
-	socketLock               sync.Mutex
-	activeSockets            []*websocket.Conn
-	permissionChangeListener *pq.Listener
+	socketLock    sync.Mutex
+	activeSockets []*websocket.Conn
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -120,16 +116,11 @@ func newDBListener(channel string) (*pq.Listener, error) {
 }
 
 // NewPublisherSet constructor for PublisherSet.
-func NewPublisherSet() (PublisherSet, error) {
-	listener, err := newDBListener(permissionChannelName)
-	if err != nil {
-		return PublisherSet{}, errors.Wrap(err, "creating listener for publisher set")
-	}
+func NewPublisherSet() PublisherSet {
 	return PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
-		permissionChangeListener: listener,
-	}, nil
+	}
 }
 
 // StartupMsg is the first message a streaming client sends.
@@ -198,7 +189,6 @@ func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
 // Websocket is an Echo websocket endpoint.
 func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	ps.addSocket(socket)
-
 	ctx := c.Request().Context()
 	streamer := stream.NewStreamer()
 	user := c.(*detContext.DetContext).MustGetUser()
@@ -249,13 +239,22 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 		streamer.Close()
 	}()
 
-	// detect permission changes
+	// detect & handle permission change
 	go func() {
-		// start listening for permission changes
-		<-ps.permissionChangeListener.Notify
-		for _, err := range ps.Restart() {
-			if err != nil {
-				log.Errorf("error restarting publisher set: %v", err)
+		if err := AuthZProvider.Get().WaitForPermissionChange(); err != nil {
+			// failed to setup permission change detection, restarting publisher set
+			var errorPrefix string
+			switch {
+			case authz.IsPermissionChangeError(err):
+				errorPrefix = "permission change detected"
+			default:
+				errorPrefix = "error occurred while waiting for permission changes"
+			}
+			log.Errorf("%s, restarting publisher set: %s", errorPrefix, err)
+			for _, err := range ps.Restart() {
+				if err != nil {
+					log.Errorf("error restarting publisher set: %v", err)
+				}
 			}
 		}
 	}()

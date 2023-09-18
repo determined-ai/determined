@@ -11,6 +11,10 @@ import (
 type StreamAuthZ interface {
 	// GetTrialStreamableScopes returns a AccessScopeSet where the user has permission to view trials.
 	GetTrialStreamableScopes(ctx context.Context, curUser model.User) (model.AccessScopeSet, error)
+
+	// WaitForPermissionChange returns an error whenever
+	// a change that modifies permission scopes are detected.
+	WaitForPermissionChange() error
 }
 
 // AuthZProvider provides StreamAuthZ implementations.
