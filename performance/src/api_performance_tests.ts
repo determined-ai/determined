@@ -99,8 +99,8 @@ const getloadTests = (
             const res = http.post(
                 generateEndpointUrl("/api/v1/auth/login", CLUSTER_URL),
                 JSON.stringify({
-                    username: __ENV.DET_ADMIN_USERNAME ?? "admin",
-                    password: __ENV.DET_ADMIN_PASSWORD ?? "",
+                    username: __ENV.DET_ADMIN_USERNAME,
+                    password: __ENV.DET_ADMIN_PASSWORD,
                 }),
                 {
                     headers: { "Content-Type": "application/json" },
