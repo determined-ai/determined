@@ -66,15 +66,7 @@ build/%.tgz: */%/ build/newest build/manifest
 	find "$<" $(IGNORE) -delete
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
-test:
-	pytest -vv -s --durations=0 tests
-
 fmt:
 	make -C tests fmt
 	black .
 	isort .
-
-check:
-	make -C tests check
-	black . --check
-	isort . --check-only

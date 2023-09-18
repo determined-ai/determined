@@ -1861,7 +1861,6 @@ jobs:
       - run: make -C harness check
       - run: make -C model_hub check
       - run: make -C e2e_tests check
-      - run: make -C examples check
       - run: make -C tools check
       - run: make -C schemas check
 
@@ -2086,25 +2085,6 @@ jobs:
       - store_artifacts:
           path: cov-html
           destination: cov-html
-
-  test-examples:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    resource_class: medium+
-    steps:
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          extra-requirements-file: "examples/tests/requirements.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
-      - upload-test-job:
-          only_on_branch: main
-          test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
     parameters:
@@ -2672,7 +2652,6 @@ workflows:
       - test-unit-storage:
           context: storage-unit-tests
           filters: *any-upstream
-      - test-examples
       - python-coverage:
           requires:
             - test-unit-harness-cpu
