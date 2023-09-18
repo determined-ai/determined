@@ -44,6 +44,7 @@ class ModelVersion:
         self._session = session
         self.model_name = model_name
         self.model_version = model_version
+        # TODO: model_id will be removed in (MLG-629)
         self.model_id = model_id
 
         self.checkpoint: Optional[checkpoint.Checkpoint] = None
