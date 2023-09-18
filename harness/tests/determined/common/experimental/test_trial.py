@@ -1,5 +1,5 @@
 import datetime
-from typing import Callable, Union
+from typing import Callable
 from unittest import mock
 
 import pytest

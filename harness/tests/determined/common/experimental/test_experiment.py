@@ -1,7 +1,7 @@
 import base64
 import math
 import os
-from typing import Callable, Union
+from typing import Callable
 from unittest import mock
 
 import pytest

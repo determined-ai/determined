@@ -574,25 +574,3 @@ class TrialReference(Trial):
             stacklevel=2,
         )
         Trial.__init__(self, trial_id=trial_id, session=session)
-
-
-class TrialReference(Trial):
-    """A legacy class representing an Trial object.
-
-    This class was renamed to :class:`~determined.experimental.Trial` and will be removed
-    in a future release.
-    """
-
-    def __init__(
-        self,
-        trial_id: int,
-        session: api.Session,
-    ):
-        warnings.warn(
-            "'TrialReference' was renamed to 'Trial' and will be removed in a future "
-            "release. Please consider replacing any code references to 'TrialReference' "
-            "with 'Trial'.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        Trial.__init__(self, trial_id=trial_id, session=session)
