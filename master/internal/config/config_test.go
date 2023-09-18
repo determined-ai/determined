@@ -583,6 +583,7 @@ resource_pools:
 			configRaw: `
 resource_manager:
   type: kubernetes
+  max_slots_per_pod: 2
 `,
 			rpName:            "",
 			preemptionEnabled: false,
@@ -593,6 +594,7 @@ resource_manager:
 resource_manager:
   type: kubernetes
   default_scheduler: preemption
+  max_slots_per_pod: 54
 `,
 			rpName:            "default",
 			preemptionEnabled: true,

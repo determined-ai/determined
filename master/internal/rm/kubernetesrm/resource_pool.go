@@ -33,8 +33,6 @@ type getResourceSummary struct{}
 type kubernetesResourcePool struct {
 	maxSlotsPerPod int
 
-	// config     *config.KubernetesResourceManagerConfig
-
 	poolConfig *config.ResourcePoolConfig
 
 	reqList                   *tasklist.TaskList
