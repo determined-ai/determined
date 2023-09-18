@@ -48,8 +48,8 @@ export const authenticateVU = (clusterURL: string): string => {
 export const testGetRequestor = (
     clusterURL: string,
     testConfig?: TestConfiguration,
-): (url: string) => () => void =>
-    (url: string) => {
+): (url: string) => () => void => {
+    return (url: string) => {
         return () => {
             const params = {
                 headers: {
@@ -60,4 +60,5 @@ export const testGetRequestor = (
             const res = http.get(generateEndpointUrl(url, clusterURL), params);
             check(res, { "200 response": (r) => r.status == 200 });
         }
-    };
+    }
+};
