@@ -246,14 +246,14 @@
       command: chmod 777 /srv/enroot
 
     - name: Install cpu enroot image .sqsh
-      command: /usr/bin/manage-enroot-cache -s /srv/enroot {{ cpu_image_name }}
+      command: /usr/bin/manage-enroot-cache -s /srv/enroot --nocreate {{ cpu_image_name }}
       when: cpu_image_name != ""
       environment:
         ENROOT_RUNTIME_PATH: /srv/enroot
         ENROOT_TEMP_PATH: /srv/enroot
 
     - name: Install cuda enroot image .sqsh
-      command: /usr/bin/manage-enroot-cache -s /srv/enroot {{ cuda_image_name }}
+      command: /usr/bin/manage-enroot-cache -s /srv/enroot --nocreate {{ cuda_image_name }}
       when: cuda_image_name != ""
       environment:
         ENROOT_RUNTIME_PATH: /srv/enroot
