@@ -309,7 +309,7 @@ export class UserSettingsStore extends PollingStore {
       dbUpdates.push({ key: '_ROOT', storagePath: key, value: JSON.stringify(value) });
     }
     const promise = updateUserSetting({ settings: dbUpdates })
-      .then(() => {
+      .finally(() => {
         this.#updates = this.#updates.filter((p) => p !== promise);
       })
       .catch((e) =>
