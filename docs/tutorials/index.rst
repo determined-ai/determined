@@ -10,7 +10,7 @@
 ************
 
 To get started with your first experiment, visit the :ref:`Quickstart for Model Developers
-<qs-mldev>`.
+<qs-mdldev>`.
 
 *******************************************************
  Get Started with a :ref:`Trial API <high-level-apis>`
