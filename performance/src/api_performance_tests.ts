@@ -6,7 +6,7 @@ import {
     authenticateVU,
     generateEndpointUrl,
     test,
-    testGetRequest,
+    testGetRequestor,
 } from "./utils/helpers";
 
 const DEFAULT_CLUSTER_URL = "http://localhost:8080";
@@ -64,36 +64,27 @@ const getloadTests = (
     inSetupPhase: boolean = false,
 ): TestGroup[] => {
     const sD = testConfig?.seededData;
-
+    const getRequest = testGetRequestor(CLUSTER_URL, testConfig);
     const testSuite = [
         // Query the master endpoint
-        test("get master configuration", () =>
-            testGetRequest("/api/v1/master", CLUSTER_URL, testConfig)),
-        test("get agents", () =>
-            testGetRequest("/api/v1/agents", CLUSTER_URL, testConfig)),
-        test("get workspaces", () =>
-            testGetRequest("/api/v1/workspaces", CLUSTER_URL, testConfig)),
-        test("get user settings", () =>
-            testGetRequest("/api/v1/users/setting", CLUSTER_URL, testConfig)),
-        test("get resource pools", () =>
-            testGetRequest("/api/v1/resource-pools", CLUSTER_URL, testConfig)),
+        test("get master configuration", getRequest("/api/v1/master")),
+        test("get agents", getRequest("/api/v1/agents")),
+        test("get workspaces", getRequest("/api/v1/workspaces")),
+        test("get user settings", getRequest("/api/v1/users/setting")),
+        test("get resource pools", getRequest("/api/v1/resource-pools")),
         test(
             "get available workspace resource pools",
-            () =>
-                testGetRequest(
-                    `/api/v1/workspaces/${sD?.workspace.id}/available-resource-pools`,
-                    CLUSTER_URL,
-                    testConfig,
-                ),
+            getRequest
+                (
+                    `/api/v1/workspaces/${sD?.workspace.id}/available-resource-pools`),
+
             !!sD?.workspace.id,
         ),
-        test("get users", () =>
-            testGetRequest("/api/v1/users", CLUSTER_URL, testConfig)),
+        test("get users", getRequest("/api/v1/users")),
         test("get workspace bindings", () =>
-            testGetRequest(
+            getRequest(
                 "/api/v1/resource-pools/default/workspace-bindings",
-                CLUSTER_URL,
-                testConfig,
+
             )),
         test("login", () => {
             const res = http.post(
@@ -111,202 +102,183 @@ const getloadTests = (
         test(
             "get workspace model labels",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/model/labels?workspaceId=${sD?.workspace.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.id,
         ),
         test("get models", () =>
-            testGetRequest("/api/v1/models", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/models")),
         test("get telemetry", () =>
-            testGetRequest("/api/v1/master/telemetry", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/master/telemetry")),
         test("get tensorboards", () =>
-            testGetRequest("/api/v1/tensorboards", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/tensorboards")),
         test("get shells", () =>
-            testGetRequest("/api/v1/shells", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/shells")),
         test("get notebooks", () =>
-            testGetRequest("/api/v1/notebooks", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/notebooks")),
         test("get commands", () =>
-            testGetRequest("/api/v1/commands", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/commands")),
         test("get job queue stats", () =>
-            testGetRequest("/api/v1/job-queues/stats", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/job-queues/stats")),
         test("get v2 job queue", () =>
-            testGetRequest(
+            getRequest(
                 "/api/v1/job-queues-v2?resourcePool=default",
-                CLUSTER_URL,
-                testConfig,
+
             )),
         test(
             "get project",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/projects/${sD?.workspace.projectId}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.projectId,
         ),
         test("get user activity", () =>
-            testGetRequest(
+            getRequest(
                 "/api/v1/user/projects/activity",
-                CLUSTER_URL,
-                testConfig,
+
             )),
         test(
             "get workspace tensorboards",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/tensorboards?sortBy=SORT_BY_UNSPECIFIED&orderBy=ORDER_BY_UNSPECIFIED&workspaceId=${sD?.workspace.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.id,
         ),
         test(
             "get workspace shells",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/shells?sortBy=SORT_BY_UNSPECIFIED&orderBy=ORDER_BY_UNSPECIFIED&workspaceId=${sD?.workspace.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.id,
         ),
         test(
             "get workspace notebooks",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/notebooks?limit=1000&workspaceId=${sD?.workspace.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.id,
         ),
         test(
             "get workspace commands",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/shells?limit=1000&workspaceId=${sD?.workspace.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.id,
         ),
         test(
             "get workspace projects",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/workspaces/${sD?.workspace.id}/projects`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.id,
         ),
         test("get webhooks", () =>
-            testGetRequest("/api/v1/webhooks", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/webhooks")),
         test(
             "get project metric ranges",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/projects/${sD?.workspace.projectId}/experiments/metric-ranges`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.projectId,
         ),
         test("get project columns", () =>
-            testGetRequest(`/api/v1/projects/${sD?.workspace.projectId}/columns`, CLUSTER_URL, testConfig)),
+            getRequest(`/api/v1/projects/${sD?.workspace.projectId}/columns`)),
         test(
             "search experiments",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments-search?projectId=${sD?.workspace.projectId}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.workspace.projectId,
         ),
         test("get model labels", () =>
-            testGetRequest("/api/v1/model/labels", CLUSTER_URL, testConfig)),
+            getRequest("/api/v1/model/labels")),
         test(
             "get model versions",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/models/${sD?.model.name}/versions`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.model.name,
         ),
         test(
             "get model version",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/models/${sD?.model.name}/versions/${sD?.model.versionNum}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.model.versionNum && !!sD?.model.name,
         ),
         test(
             "get trial",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/trials/${sD?.trial.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.trial.id,
         ),
         test(
             "get trial workloads",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/trials/${sD?.trial.id}/workloads`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.trial.id,
         ),
         test(
             "get trial logs",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/trials/${sD?.trial.id}/logs/fields?`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.trial.id,
         ),
         test(
             "get experiment",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/${sD?.experiment.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id,
         ),
         test(
             "get experiment metric names",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/metrics-stream/metric-names?ids=${sD?.experiment.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id,
         ),
         test(
             "get experiment metric batches",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/${sD?.experiment.id}/metrics-stream/batches?metricName=${sD?.experiment.metricName}&metricType=${sD?.experiment.metricType}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id &&
             !!sD?.experiment.metricName &&
@@ -315,10 +287,9 @@ const getloadTests = (
         test(
             "get experiment trials sample",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/${sD?.experiment.id}/metrics-stream/trials-sample?metricName=${sD?.experiment.metricName}&metricType=${sD?.experiment.metricType}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id &&
             !!sD?.experiment.metricName &&
@@ -327,10 +298,9 @@ const getloadTests = (
         test(
             "get experiment trials snapshot",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/${sD?.experiment.id}/metrics-stream/trials-snapshot?metricName=${sD?.experiment.metricName}&metricType=${sD?.experiment.metricType}&batchesProcessed=${sD?.experiment.batches}&batchesMargin=${sD?.experiment.batchesMargin}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id &&
             !!sD?.experiment.metricName &&
@@ -341,136 +311,125 @@ const getloadTests = (
         test(
             "get experiment trials",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/${sD?.experiment.id}/trials`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id,
         ),
         test(
             "get trials time series",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/trials/time-series?trialIds=${sD?.trial.id}&startBatches=0&metricType=METRIC_TYPE_UNSPECIFIED`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.trial.id,
         ),
         test(
             "get experiment file tree",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/experiments/${sD?.experiment.id}/file_tree`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.experiment.id,
         ),
         test("get experiments", () =>
-            testGetRequest(
+            getRequest(
                 `/api/v1/experiments?showTrialData=true`,
-                CLUSTER_URL,
-                testConfig,
+
             )),
         test("get master logs", () =>
-            testGetRequest(
+            getRequest(
                 `/api/v1/master/logs?offset=-1&limit=0`,
-                CLUSTER_URL,
-                testConfig,
+
             )),
         test("get resource allocations", () =>
-            testGetRequest(
+            getRequest(
                 `/api/v1/resources/allocation/aggregated?startDate=2000-01-01&endDate=${new Date()
                     .toJSON()
                     .slice(0, 10)}&period=RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY`,
-                CLUSTER_URL,
-                testConfig,
+
             )),
         test("get tasks", () =>
-            testGetRequest(`/api/v1/tasks`, CLUSTER_URL, testConfig)),
+            getRequest(`/api/v1/tasks`)),
         test("get task count", () =>
-            testGetRequest(`/api/v1/tasks/count`, CLUSTER_URL, testConfig)),
+            getRequest(`/api/v1/tasks/count`)),
         test(
             "get task",
             () =>
-                testGetRequest(`/api/v1/tasks/${sD?.task.id}`, CLUSTER_URL, testConfig),
+                getRequest(`/api/v1/tasks/${sD?.task.id}`),
             !!sD?.task.id,
         ),
         test(
             "get task log fields",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/tasks/${sD?.task.id}/logs/fields`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.task.id,
         ),
         test(
             "get task logs",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/tasks/${sD?.task.id}/logs`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             !!sD?.task.id,
         ),
         test(
             "get permissions summary",
             () =>
-                testGetRequest("/api/v1/permissions-summary", CLUSTER_URL, testConfig),
+                getRequest("/api/v1/permissions-summary"),
             RBAC_ENABLED,
         ),
         test(
             "search groups",
-            () => testGetRequest("/api/groups/search", CLUSTER_URL, testConfig),
+            () => getRequest("/api/groups/search"),
             RBAC_ENABLED,
         ),
         test(
             "get workspace roles",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/roles/workspace/${sD?.workspace.id}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             RBAC_ENABLED && !!sD?.workspace.id,
         ),
         test(
             "get roles by assignability",
             () =>
-                testGetRequest(
+                getRequest(
                     "/api/v1/roles/search/by-assignability",
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             RBAC_ENABLED,
         ),
         test(
             "get group",
-            () => testGetRequest(`/v1/groups/{groupId}`, CLUSTER_URL, testConfig),
+            () => getRequest(`/v1/groups/{groupId}`),
             RBAC_ENABLED,
         ),
         test(
             "search groups",
-            () => testGetRequest("/api/v1/groups/search", CLUSTER_URL, testConfig),
+            () => getRequest("/api/v1/groups/search"),
             RBAC_ENABLED,
         ),
         test(
             "search roles",
-            () => testGetRequest(`/api/v1/roles-search`, CLUSTER_URL, testConfig),
+            () => getRequest(`/api/v1/roles-search`),
             RBAC_ENABLED,
         ),
         test(
             "search roles by group",
             () =>
-                testGetRequest(
+                getRequest(
                     `/api/v1/roles/search/by-group/{groupId}`,
-                    CLUSTER_URL,
-                    testConfig,
+
                 ),
             RBAC_ENABLED,
         ),

@@ -7,7 +7,7 @@ import http from "k6/http";
 // the name is used to build the appropriate group thresholds.
 export const test = (
     name: string,
-    test_function: () => unknown,
+    test_function: () => void,
     enabled: boolean = true,
 ): TestGroup => {
     return { name, group: () => group(name, test_function), enabled };
@@ -21,10 +21,10 @@ export const generateEndpointUrl = (
 
 export const authenticateVU = (clusterURL: string): string => {
     if (!__ENV.DET_ADMIN_USERNAME) {
-        throw new Error("Admin account username is required")
+        throw new Error("Username is required")
     }
     if (!__ENV.DET_ADMIN_PASSWORD) {
-        throw new Error("Admin account password is required")
+
     }
     const loginCredentials = {
         username: __ENV.DET_ADMIN_USERNAME,
@@ -45,17 +45,19 @@ export const authenticateVU = (clusterURL: string): string => {
     return token;
 };
 
-export const testGetRequest = (
-    url: string,
+export const testGetRequestor = (
     clusterURL: string,
     testConfig?: TestConfiguration,
-): void => {
-    const params = {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `${testConfig?.auth.token}`,
-        },
+): (url: string) => () => void =>
+    (url: string) => {
+        return () => {
+            const params = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `${testConfig?.auth.token}`,
+                },
+            };
+            const res = http.get(generateEndpointUrl(url, clusterURL), params);
+            check(res, { "200 response": (r) => r.status == 200 });
+        }
     };
-    const res = http.get(generateEndpointUrl(url, clusterURL), params);
-    check(res, { "200 response": (r) => r.status == 200 });
-};
