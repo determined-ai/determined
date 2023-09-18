@@ -109,6 +109,7 @@ data:
     resource_manager:
       type: "kubernetes"
       namespace: {{ .Release.Namespace }}
+      max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
       master_service_name: determined-master-service-{{ .Release.Name }}
       {{- if .Values.defaultScheduler}}
       {{- $schedulerType := .Values.defaultScheduler | trim}}
@@ -136,9 +137,6 @@ data:
 
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
-      kubernetes:
-        max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
-
       {{- if .Values.taskContainerDefaults.networkMode }}
       network_mode: {{ .Values.taskContainerDefaults.networkMode }}
       {{- end }}
