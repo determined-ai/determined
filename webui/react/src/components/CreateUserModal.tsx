@@ -91,7 +91,6 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
       const formData = await form.validateFields();
 
       const newRoles: Set<number> = new Set(formData[ROLE_NAME]);

@@ -96,6 +96,7 @@ export const Modal: React.FC<ModalProps> = ({
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
     try {
+      await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
       await submit?.handler();
       setIsSubmitting(false);
       setIsOpen(false);
