@@ -1074,7 +1074,7 @@ class TestPyTorchTrial:
         trial_controller_A.run()
 
         checkpoint_callback = trial_A.checkpoint_callback
-        assert len(checkpoint_callback.uuids) == 1  # , "trial did not return a checkpoint UUID"
+        assert len(checkpoint_callback.uuids) == 1, "trial did not return a checkpoint UUID"
 
         trial_B, trial_controller_B = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
