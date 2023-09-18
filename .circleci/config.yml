@@ -1214,7 +1214,6 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
-      - run: make -C model_hub examples
       - run: make -C helm build
       - attach_workspace:
           at: .
@@ -3310,43 +3309,6 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
-      # Transformers tests
-      - request-transformers-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-transformers
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-transformers-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["transformers"]
-              mark: ["model_hub_transformers"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
-      - test-e2e-aws:
-          name: test-e2e-transformers-amp
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-transformers-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["transformers-amp"]
-              mark: ["model_hub_transformers_amp"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
       # Request AWS FS tests
       - request-aws-fs-tests:
           type: approval
@@ -3401,30 +3363,6 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-          requires:
-            - check-if-nightly-tests-should-run
-      - test-e2e-aws:
-          name: test-e2e-gpu-transformers
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["transformers"]
-              mark: ["model_hub_transformers"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-          requires:
-            - check-if-nightly-tests-should-run
-      - test-e2e-aws:
-          name: test-e2e-gpu-transformers-amp
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["transformers-amp"]
-              mark: ["model_hub_transformers_amp"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]

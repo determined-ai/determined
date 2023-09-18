@@ -56,10 +56,6 @@ def features_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/features", path)
 
 
-def model_hub_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../model_hub/examples", path)
-
-
 def deepspeed_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/deepspeed", path)
 

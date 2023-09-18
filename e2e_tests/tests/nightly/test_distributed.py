@@ -35,13 +35,6 @@ def test_mnist_pytorch_set_stop_requested_distributed() -> None:
 
 
 @pytest.mark.distributed
-def test_fashion_mnist_tf_keras_distributed() -> None:
-    config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("fashion_mnist_tf_keras"), 1)
-
-@pytest.mark.distributed
 def test_mnist_estimator_distributed() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
