@@ -42,12 +42,35 @@ class ModelFramework(enum.Enum):
 
 
 class CheckpointState(enum.Enum):
-    UNSPECIFIED = bindings.checkpointv1State.UNSPECIFIED.value
     ACTIVE = bindings.checkpointv1State.ACTIVE.value
     COMPLETED = bindings.checkpointv1State.COMPLETED.value
     ERROR = bindings.checkpointv1State.ERROR.value
     DELETED = bindings.checkpointv1State.DELETED.value
     PARTIALLY_DELETED = bindings.checkpointv1State.PARTIALLY_DELETED.value
+
+
+class CheckpointOrderBy(enum.Enum):
+    """Specifies order of a sorted list of checkpoints."""
+
+    ASC = bindings.v1OrderBy.ASC.value
+    DESC = bindings.v1OrderBy.DESC.value
+
+    def _to_bindings(self) -> bindings.v1OrderBy:
+        return bindings.v1OrderBy(self.value)
+
+
+class CheckpointSortBy(enum.Enum):
+    """Specifies checkpoint parameters that can be used for sorting checkpoints."""
+
+    UUID = bindings.checkpointv1SortBy.UUID.value
+    TRIAL_ID = bindings.checkpointv1SortBy.TRIAL_ID.value
+    BATCH_NUMBER = bindings.checkpointv1SortBy.BATCH_NUMBER.value
+    END_TIME = bindings.checkpointv1SortBy.END_TIME.value
+    STATE = bindings.checkpointv1SortBy.STATE.value
+    SEARCHER_METRIC = bindings.checkpointv1SortBy.SEARCHER_METRIC.value
+
+    def _to_bindings(self) -> bindings.checkpointv1SortBy:
+        return bindings.checkpointv1SortBy(self.value)
 
 
 @dataclasses.dataclass

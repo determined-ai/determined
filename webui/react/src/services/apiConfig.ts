@@ -848,6 +848,7 @@ export const getExperimentCheckpoints: DetApi<
     detApi.Experiments.getExperimentCheckpoints(
       params.id,
       params.sortBy,
+      undefined,
       params.orderBy,
       params.offset,
       params.limit,

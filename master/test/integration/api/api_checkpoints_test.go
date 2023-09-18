@@ -218,7 +218,9 @@ func testGetExperimentCheckpoints(
 	assert.Equal(t, len(ckptsCl), 5)
 
 	// check sorting by assending end time
-	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME
+	req.SortBy = &apiv1.GetExperimentCheckpointsRequest_SortByAttr{
+		SortByAttr: checkpointv1.SortBy_SORT_BY_END_TIME,
+	}
 	req.OrderBy = apiv1.OrderBy_ORDER_BY_ASC
 	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetExperimentCheckpoints error")
@@ -230,7 +232,9 @@ func testGetExperimentCheckpoints(
 	}
 
 	// check sorting by searcher metric
-	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
+	req.SortBy = &apiv1.GetExperimentCheckpointsRequest_SortByAttr{
+		SortByAttr: checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC,
+	}
 	req.OrderBy = apiv1.OrderBy_ORDER_BY_UNSPECIFIED
 	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetExperimentCheckpoints error")
@@ -243,7 +247,9 @@ func testGetExperimentCheckpoints(
 	assert.Equal(t, ckptsCl[2].Uuid, uuids[1]) // metric(1) = 3.5
 
 	// check sorting by assending uuid
-	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID
+	req.SortBy = &apiv1.GetExperimentCheckpointsRequest_SortByAttr{
+		SortByAttr: checkpointv1.SortBy_SORT_BY_UUID,
+	}
 	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetExperimentCheckpoints error")
 	ckptsCl = resp.Checkpoints
@@ -312,7 +318,9 @@ func testGetTrialCheckpoints(
 	assert.Equal(t, len(ckptsCl), 5)
 
 	// check sorting by assending end time
-	req.SortBy = apiv1.GetTrialCheckpointsRequest_SORT_BY_END_TIME
+	req.SortBy = &apiv1.GetTrialCheckpointsRequest_SortByAttr{
+		SortByAttr: checkpointv1.SortBy_SORT_BY_END_TIME,
+	}
 	resp, err = cl.GetTrialCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetTrialCheckpoints error")
 	ckptsCl = resp.Checkpoints
@@ -323,7 +331,9 @@ func testGetTrialCheckpoints(
 	}
 
 	// check sorting by assending uuid
-	req.SortBy = apiv1.GetTrialCheckpointsRequest_SORT_BY_UUID
+	req.SortBy = &apiv1.GetTrialCheckpointsRequest_SortByAttr{
+		SortByAttr: checkpointv1.SortBy_SORT_BY_UUID,
+	}
 	resp, err = cl.GetTrialCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetTrialCheckpoints error")
 	ckptsCl = resp.Checkpoints

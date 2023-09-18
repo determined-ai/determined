@@ -1,11 +1,12 @@
 import datetime
 from typing import Callable
+from unittest import mock
 
 import pytest
 import responses
 
 from determined.common import api
-from determined.common.experimental import trial
+from determined.common.experimental import checkpoint, trial
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
@@ -93,3 +94,37 @@ def test_trial_logs_accepts_valid_timestamps(
     )
 
     list(trialref.logs(timestamp_before=None, timestamp_after=valid_timestamp))
+
+
+@mock.patch("determined.common.api.bindings.get_GetTrialCheckpoints")
+def test_list_checkpoints_calls_bindings_sortByMetric_with_sort_by_str(
+    mock_bindings: mock.MagicMock,
+    make_trialref: Callable[[int], trial.Trial],
+) -> None:
+    trialref = make_trialref(1)
+    ckpt_resp = api_responses.sample_get_trial_checkpoints()
+    mock_bindings.side_effect = [ckpt_resp]
+
+    sort_by_metric = "val_metric"
+    trialref.list_checkpoints(sort_by=sort_by_metric, order_by=checkpoint.CheckpointOrderBy.ASC)
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+
+    assert call_kwargs["sortByMetric"] == sort_by_metric
+
+
+@mock.patch("determined.common.api.bindings.get_GetTrialCheckpoints")
+def test_list_checkpoints_calls_bindings_sortByAttr_with_sort_by_attr(
+    mock_bindings: mock.MagicMock,
+    make_trialref: Callable[[int], trial.Trial],
+) -> None:
+    trialref = make_trialref(1)
+    ckpt_resp = api_responses.sample_get_trial_checkpoints()
+    mock_bindings.side_effect = [ckpt_resp]
+
+    sort_by_attr = checkpoint.CheckpointSortBy.SEARCHER_METRIC
+    trialref.list_checkpoints(sort_by=sort_by_attr, order_by=checkpoint.CheckpointOrderBy.ASC)
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+
+    assert call_kwargs["sortByAttr"] == sort_by_attr._to_bindings()
