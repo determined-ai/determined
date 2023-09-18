@@ -56,7 +56,8 @@ const summarizedMetricToSeries = (
           rawBatchValuesMap[metricKey]?.push([avgMetrics.batches, value]);
           if (avgMetrics.time)
             rawBatchTimesMap[metricKey]?.push([new Date(avgMetrics.time).getTime() / 1000, value]);
-          if (avgMetrics.epoch) rawBatchEpochMap[metricKey]?.push([avgMetrics.epoch, value]);
+          if (!_.isUndefined(avgMetrics.epoch))
+            rawBatchEpochMap[metricKey]?.push([avgMetrics.epoch, value]);
         }
       });
     });
