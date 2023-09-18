@@ -62,6 +62,11 @@ interface Props {
   project: Project;
 }
 
+export type handleSelectionChangeType = (
+  selectionType: 'add' | 'add-all' | 'remove' | 'remove-all' | 'set',
+  range: [number, number],
+) => void;
+
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
@@ -491,7 +496,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [experiments],
   );
 
-  const handleSelectionChange = useCallback(
+  const handleSelectionChange: handleSelectionChangeType = useCallback(
     (
       selectionType: 'add' | 'add-all' | 'remove' | 'remove-all' | 'set',
       range: [number, number],
@@ -757,6 +762,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
+        onSelectionChange={handleSelectionChange}
         onSortChange={handleSortChange}
         onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleVisibleColumnChange}
