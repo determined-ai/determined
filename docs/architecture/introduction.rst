@@ -491,17 +491,22 @@ scheduling behavior of an individual task is influenced by several task configur
    zero-slot tasks on a FIFO basis. The priority scheduler schedules zero-slot tasks based on
    priority.
 
-Fair-Share
-^^^^^^^^^^
+Fair-Share Scheduler
+^^^^^^^^^^^^^^^^^^^^
 
 The master allocates cluster resources (*slots*) among the active experiments using a weighted
-fair-share scheduling policy. Slots are divided among the active experiments according to the
-*demand* (number of desired concurrent tasks) of each experiment. For instance, in an eight-GPU
-cluster running two experiments with demands of ten and thirty, the scheduler assigns two slots and
-six slots respectively. As new experiments become active or the resource demand of an active
-experiment changes, the scheduler will adjust how slots are allocated to experiments as appropriate.
+fair-share scheduling policy. This policy aims for fair distribution of resources, taking into
+account each experiment's request. More specifically, slots are divided among the active experiments
+according to the demand of each experiment, where *demand* is the number of desired concurrent
+tasks.
 
-The behavior of the fair-share scheduler can be modified by changing the *weight* of a workload. A
+For example, in an eight-GPU cluster running two experiments with demands of 10 and 30 respectively,
+the fair-share scheduler allocates one slot to the first experiment while the second experiment
+receives the remaining seven slots. As new experiments become active or the resource demand of an
+active experiment changes, the scheduler appropriately adjusts how slots are allocated to
+experiments.
+
+You can modify the behavior of the fair-share scheduler by changing the *weight* of a workload. A
 workload demand for slots is multiplied by the workload weight for scheduling purposes. A workload
 with a higher weight will be assigned proportionally more resources than a workload with lower
 weight. The default weight is ``1``. For example, in the scenario above, if the weight of the first
