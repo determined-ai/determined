@@ -18,7 +18,7 @@ class ModelVersion:
 
     Attributes:
         session: HTTP request session.
-            model_version: (int) Version number assigned by the registry, starting from 1 and
+        model_version: (int) Version number assigned by the registry, starting from 1 and
         incrementing each time a new model version is registered.
         model_name: (str) Name of the parent model.
         checkpoint: (Mutable, Optional[checkpoint.Checkpoint]) Checkpoint associated with this
