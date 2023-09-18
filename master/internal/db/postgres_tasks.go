@@ -123,17 +123,13 @@ WHERE trial_id_task_id.task_id = tasks.task_id
 // the master restarts and the trial run ID increment is not persisted, but it is the same
 // allocation so this is OK.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
-	return db.namedExecOne(`
-INSERT INTO allocations
-	(task_id, allocation_id, slots, resource_pool, start_time, state, ports)
-VALUES
-	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state, :ports)
-ON CONFLICT
-	(allocation_id)
-DO UPDATE SET
-	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
-	start_time=EXCLUDED.start_time, state=EXCLUDED.state, ports=EXCLUDED.ports
-`, a)
+	_, err := Bun().NewInsert().Model(a).
+		Column("task_id", "allocation_id", "slots", "resource_pool", "start_time", "state", "ports").
+		On("CONFLICT (allocation_id) DO UPDATE").
+		Set(`task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
+				start_time=EXCLUDED.start_time, state=EXCLUDED.state, ports=EXCLUDED.ports, end_time=NULL`).
+		Exec(context.TODO())
+	return err
 }
 
 // CompleteAllocation persists the end of an allocation lifetime.
