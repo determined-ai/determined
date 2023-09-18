@@ -90,14 +90,14 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       return;
     }
 
+    const formData = await form.validateFields();
+
+    const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
+    const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
+    const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
+    const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
+
     try {
-      const formData = await form.validateFields();
-
-      const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
-      const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
-      const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
-      const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
-
       if (user) {
         await patchUser({ userId: user.id, userParams: formData });
         if (canModifyPermissions) {
