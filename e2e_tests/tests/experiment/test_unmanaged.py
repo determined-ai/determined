@@ -28,7 +28,7 @@ def test_unmanaged() -> None:
 @pytest.mark.timeout(10)
 def test_unmanaged_termination() -> None:
     # Ensure an erroring-out code does not hang due to a background thread.
-    exp_path = EXAMPLES_ROOT / "1_error.py"
+    exp_path = conf.fixtures_path("unmanaged/error_termination.py")
     with pytest.raises(subprocess.CalledProcessError):
         _run_unmanaged_script(["python", exp_path])
 

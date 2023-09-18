@@ -52,9 +52,23 @@ def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
             "type": "shared_fs",
             "host_path": p.path,
         }
+    elif scheme in ["s3", "gs"]:
+        bucket = p.netloc
+        prefix = p.path.lstrip("/")
+        storage_type = {
+            "s3": "s3",
+            "gs": "gcs",
+        }[scheme]
+
+        return {
+            "type": storage_type,
+            "bucket": bucket,
+            "prefix": prefix,
+        }
     else:
-        # TODO(ilia): add gs, s3 support.
-        raise NotImplementedError("tensorboard only supports shared_fs shortcuts at the moment")
+        raise NotImplementedError(
+            "tensorboard only supports shared_fs, s3, and gs " "shortcuts at the moment"
+        )
 
 
 def build(
