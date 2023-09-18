@@ -20,6 +20,12 @@ export const generateEndpointUrl = (
 ): string => `${clusterURL}${endpoint}`;
 
 export const authenticateVU = (clusterURL: string): string => {
+    if (!__ENV.DET_ADMIN_USERNAME) {
+        throw new Error("Admin account username is required")
+    }
+    if (!__ENV.DET_ADMIN_PASSWORD) {
+        throw new Error("Admin account password is required")
+    }
     const loginCredentials = {
         username: __ENV.DET_ADMIN_USERNAME,
         password: __ENV.DET_ADMIN_PASSWORD,
