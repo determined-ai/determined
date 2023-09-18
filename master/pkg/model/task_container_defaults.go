@@ -29,12 +29,13 @@ type TaskContainerDefaultsConfig struct {
 	GLOOPortRange          string                `json:"gloo_port_range,omitempty"`
 	ShmSizeBytes           int64                 `json:"shm_size_bytes,omitempty"`
 	NetworkMode            container.NetworkMode `json:"network_mode,omitempty"`
-	CPUPodSpec             *k8sV1.Pod            `json:"cpu_pod_spec"`
-	GPUPodSpec             *k8sV1.Pod            `json:"gpu_pod_spec"`
-	Image                  *RuntimeItem          `json:"image,omitempty"`
-	RegistryAuth           *types.AuthConfig     `json:"registry_auth,omitempty"`
-	ForcePullImage         bool                  `json:"force_pull_image,omitempty"`
-	EnvironmentVariables   *RuntimeItems         `json:"environment_variables,omitempty"`
+	// TODO we should move these over to KubernetesTaskContainerDefaults.
+	CPUPodSpec           *k8sV1.Pod        `json:"cpu_pod_spec"`
+	GPUPodSpec           *k8sV1.Pod        `json:"gpu_pod_spec"`
+	Image                *RuntimeItem      `json:"image,omitempty"`
+	RegistryAuth         *types.AuthConfig `json:"registry_auth,omitempty"`
+	ForcePullImage       bool              `json:"force_pull_image,omitempty"`
+	EnvironmentVariables *RuntimeItems     `json:"environment_variables,omitempty"`
 
 	AddCapabilities  []string      `json:"add_capabilities"`
 	DropCapabilities []string      `json:"drop_capabilities"`
@@ -44,6 +45,10 @@ type TaskContainerDefaultsConfig struct {
 	WorkDir    *string               `json:"work_dir"`
 	Slurm      expconf.SlurmConfigV0 `json:"slurm"`
 	Pbs        expconf.PbsConfigV0   `json:"pbs"`
+
+	// TODO we should probably eventually move this to expconf and allow setting
+	// on a per task level.
+	Kubernetes *KubernetesTaskContainerDefaults `json:"kubernetes"`
 }
 
 // DefaultTaskContainerDefaults returns the default for TaskContainerDefaultsConfig.
@@ -85,6 +90,12 @@ func (c *TaskContainerDefaultsConfig) Validate() []error {
 	errs = append(errs, validatePodSpec(c.GPUPodSpec)...)
 
 	return errs
+}
+
+// KubernetesTaskContainerDefaults is task container defaults specific to Kubernetes.
+// TODO eventually move podSpec here and eventually move this to expconf too.
+type KubernetesTaskContainerDefaults struct {
+	MaxSlotsPerPod int `json:"max_slots_per_pod"`
 }
 
 // MergeIntoExpConfig sets any unset ExperimentConfig values from TaskContainerDefaults.

@@ -272,9 +272,16 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		)
 
 		for _, poolConfig := range k.poolsConfig {
+			maxSlotsPerPod := k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+			if poolConfig.TaskContainerDefaults != nil &&
+				poolConfig.TaskContainerDefaults.Kubernetes != nil &&
+				poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != 0 {
+				maxSlotsPerPod = poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+			}
+
 			poolConfig := poolConfig
 			k.pools[poolConfig.PoolName] = ctx.MustActorOf(
-				poolConfig.PoolName, newResourcePool(k.config, &poolConfig, k.podsActor),
+				poolConfig.PoolName, newResourcePool(maxSlotsPerPod, &poolConfig, k.podsActor),
 			)
 		}
 
@@ -524,6 +531,14 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 		return &resourcepoolv1.ResourcePool{}, err
 	}
 
+	// TODO actor refactor, this is just getting resourcePool[poolName].maxSlotsPerPod
+	slotsPerAgent := k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+	if pool.TaskContainerDefaults != nil &&
+		pool.TaskContainerDefaults.Kubernetes != nil &&
+		pool.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != 0 {
+		slotsPerAgent = pool.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+	}
+
 	const na = "n/a"
 
 	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S
@@ -531,7 +546,6 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 	location := na
 	imageID := ""
 	instanceType := na
-	slotsPerAgent := k.config.MaxSlotsPerPod
 
 	accelerator := ""
 	schedulerType := resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES

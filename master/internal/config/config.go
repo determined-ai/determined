@@ -231,6 +231,38 @@ func (c *Config) Resolve() error {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
+	if c.ResourceManager.KubernetesRM != nil {
+		if c.TaskContainerDefaults.Kubernetes == nil {
+			c.TaskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
+		}
+
+		var rmMaxSlots *int
+		if c.ResourceManager.KubernetesRM.MaxSlotsPerPod != 0 {
+			rmMaxSlots = &c.ResourceManager.KubernetesRM.MaxSlotsPerPod
+		}
+
+		var taskMaxSlots *int
+		if c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != 0 {
+			taskMaxSlots = &c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+		}
+
+		if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
+			return fmt.Errorf("must provide exactly one of " +
+				"resource_manager.max_slots_per_pod and " +
+				"task_container_defaults.kubernetes.max_slots_per_pod")
+		}
+
+		if rmMaxSlots != nil {
+			c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod = *rmMaxSlots
+		}
+		if taskMaxSlots != nil {
+			c.ResourceManager.KubernetesRM.MaxSlotsPerPod = *taskMaxSlots
+		}
+		if maxSlotsPerPod := c.ResourceManager.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod <= 0 {
+			return fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
+		}
+	}
+
 	if c.Webhooks.SigningKey == "" {
 		b := make([]byte, 6)
 		if _, err := rand.Read(b); err != nil {

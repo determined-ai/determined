@@ -151,6 +151,12 @@ The default list of devices to pass to the Docker daemon. Ignored by resource ma
 The default bind mounts to pass to the Docker container. Ignored by resource managers of type
 ``kubernetes``. See :ref:`resources.devices <exp-bind-mounts>` for more details.
 
+``kubernetes``
+==============
+
+-  ``max_slots_per_pod`` See :ref:`resource_manager.max_slots
+   <master-config-reference-max-slots-per-pod>` for more details.
+
 ``slurm``
 =========
 
@@ -309,6 +315,8 @@ on using Determined with Kubernetes, see the :ref:`documentation <determined-on-
 
 The namespace where Determined will deploy Pods and ConfigMaps.
 
+.. _master-config-reference-max-slots-per-pod:
+
 ``max_slots_per_pod``
 ---------------------
 
@@ -319,6 +327,9 @@ you have a cluster of different size nodes, set ``max_slots_per_pod`` to the gre
 of all the sizes. For example, if you have some nodes with 4 GPUs and other nodes with 8 GPUs, set
 ``maxSlotsPerPod`` to ``4`` so that all distributed experiments will launch with 4 GPUs per pod
 (with two pods on 8-GPU nodes).
+
+This field can also be set in ``task_container_defaults.kubernetes.max_slots_per_pod`` to allow per
+resource pool ``max_slots_per_pod``.
 
 ``slot_type``
 -------------
