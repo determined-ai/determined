@@ -46,7 +46,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. code:: python
 
-   best_checkpoint = exp.top_checkpoint()
+   best_checkpoint = exp.list_checkpoints()[0]
    print(f"best checkpoint was {best_checkpoint.uuid}")
 
 .. _python-sdk-reference:

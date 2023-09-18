@@ -25,6 +25,25 @@ enum State {
   STATE_PARTIALLY_DELETED = 5;
 }
 
+// Sorts options for checkpoints by the given field.
+enum SortBy {
+  // Returns checkpoints in an unsorted list.
+  SORT_BY_UNSPECIFIED = 0;
+  // Returns checkpoints sorted by UUID.
+  SORT_BY_UUID = 1;
+  // Returns checkpoints sorted by trial id.
+  SORT_BY_TRIAL_ID = 2;
+  // Returns checkpoints sorted by batch number.
+  SORT_BY_BATCH_NUMBER = 3;
+  // Returns checkpoints sorted by end time.
+  SORT_BY_END_TIME = 4;
+  // Returns checkpoints sorted by state.
+  SORT_BY_STATE = 5;
+  // Returns checkpoints sorted by the experiment's `searcher.metric`
+  // configuration setting.
+  SORT_BY_SEARCHER_METRIC = 6;
+}
+
 // CheckpointTrainingMetadata is specifically metadata about training.
 message CheckpointTrainingMetadata {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

@@ -36,7 +36,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. code:: python
 
-   best_checkpoint = exp.top_checkpoint()
+   best_checkpoint = exp.list_checkpoints()[0]
    print(f"best checkpoint was {best_checkpoint.uuid}")
 
 
@@ -52,6 +52,8 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequ
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
+    CheckpointOrderBy,
+    CheckpointSortBy,
     CheckpointState,
     DownloadMode,
 )
@@ -60,13 +62,7 @@ from determined.common.experimental.experiment import Experiment, ExperimentStat
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
-from determined.common.experimental.trial import (  # noqa: F401
-    CheckpointOrderBy,
-    CheckpointSortBy,
-    Trial,
-    TrialOrderBy,
-    TrialSortBy,
-)
+from determined.common.experimental.trial import Trial, TrialOrderBy, TrialSortBy  # noqa: F401
 from determined.common.experimental.user import User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
