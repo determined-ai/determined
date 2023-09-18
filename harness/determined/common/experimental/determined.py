@@ -237,7 +237,7 @@ class Determined:
         resp = bindings.get_GetCheckpoint(self._session, checkpointUuid=uuid)
         return checkpoint.Checkpoint._from_bindings(resp.checkpoint, self._session)
 
-    def get_workspace(self, name: str) -> "workspace.Workspace":
+    def get_workspace(self, name: str) -> workspace.Workspace:
         resp = bindings.get_GetWorkspaces(self._session, name=name)
         if len(resp.workspaces) == 0:
             raise errors.NotFoundException(f"Workspace {name} not found.")
