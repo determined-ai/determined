@@ -23,6 +23,7 @@ class ModelVersion:
         model_name: (str) Name of the parent model.
         checkpoint: (Mutable, Optional[checkpoint.Checkpoint]) Checkpoint associated with this
             model version.
+        model_id: (int) ID of the model version.
         metadata: (Mutable, Optional[Dict]) Metadata of this model version.
         name: (Mutable, Optional[str]) Human-friendly name of this model version.
 
@@ -38,10 +39,12 @@ class ModelVersion:
         session: api.Session,
         model_version: int,
         model_name: str,
+        model_id: int,
     ):
         self._session = session
         self.model_name = model_name
         self.model_version = model_version
+        self.model_id = model_id
 
         self.checkpoint: Optional[checkpoint.Checkpoint] = None
         self.metadata: Optional[Dict[str, Any]] = None
@@ -113,6 +116,7 @@ class ModelVersion:
         self.comment = model_version.comment or ""
         self.notes = model_version.notes or ""
         self.model_version = model_version.version
+        self.model_id = model_version.id
 
     def reload(self) -> None:
         resp = bindings.get_GetModelVersion(
@@ -128,6 +132,7 @@ class ModelVersion:
             session,
             model_version=version_bindings.version,
             model_name=version_bindings.model.name,
+            model_id=version_bindings.id,
         )
         version._hydrate(version_bindings)
         return version
