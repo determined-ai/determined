@@ -1219,10 +1219,7 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	ps, err := stream.NewPublisherSet()
-	if err != nil {
-		return err
-	}
+	ps := stream.NewPublisherSet()
 	ps.Start(context.Background())
 	m.echo.GET("/stream", api.WebSocketRoute(ps.Websocket))
 
