@@ -14,6 +14,7 @@ import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { type handleSelectionChangeType } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
   archiveExperiments,
@@ -94,6 +95,7 @@ interface Props {
   onRowHeightChange?: (rowHeight: RowHeight) => void;
   onTableViewModeChange?: (mode: TableViewMode) => void;
   onSortChange?: (sorts: Sort[]) => void;
+  onSelectionChange?: handleSelectionChangeType;
   onVisibleColumnChange?: (newColumns: string[]) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
@@ -122,6 +124,7 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
+  onSelectionChange,
   onTableViewModeChange,
   onVisibleColumnChange,
   project,
@@ -155,7 +158,10 @@ const TableActionBar: React.FC<Props> = ({
   }, [experiments, project]);
 
   const selectedExperiments = useMemo(
-    () => Array.from(selectedExperimentIds).map((id) => experimentMap[id]),
+    () =>
+      Array.from(selectedExperimentIds).flatMap((id) =>
+        id in experimentMap ? [experimentMap[id]] : [],
+      ),
     [experimentMap, selectedExperimentIds],
   );
 
@@ -192,28 +198,38 @@ const TableActionBar: React.FC<Props> = ({
           return;
         }
         case ExperimentAction.Move:
-          return ExperimentMoveModal.open();
+          ExperimentMoveModal.open();
+          break;
         case ExperimentAction.Activate:
-          return await activateExperiments(params);
+          await activateExperiments(params);
+          break;
         case ExperimentAction.Archive:
-          return await archiveExperiments(params);
+          await archiveExperiments(params);
+          break;
         case ExperimentAction.Cancel:
-          return await cancelExperiments(params);
+          await cancelExperiments(params);
+          break;
         case ExperimentAction.Kill:
-          return await killExperiments(params);
+          await killExperiments(params);
+          break;
         case ExperimentAction.Pause:
-          return await pauseExperiments(params);
+          await pauseExperiments(params);
+          break;
         case ExperimentAction.Unarchive:
-          return await unarchiveExperiments(params);
+          await unarchiveExperiments(params);
+          break;
         case ExperimentAction.Delete:
-          return await deleteExperiments(params);
+          await deleteExperiments(params);
+          break;
       }
+      onSelectionChange?.('remove-all', [0, selectedExperiments.length]);
     },
     [
       selectedExperiments,
       selectAll,
       filters,
       excludedExperimentIds,
+      onSelectionChange,
       ExperimentMoveModal,
       openExperimentTensorBoardModal,
       project?.workspaceId,
