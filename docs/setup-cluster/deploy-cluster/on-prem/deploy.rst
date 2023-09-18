@@ -73,17 +73,17 @@ For single-agent clusters launched with:
 
 .. code::
 
-   det deploy local cluster-up --auto-bind-mount <absolute directory path>
+   det deploy local cluster-up --auto-work-dir <absolute directory path>
 
 the cluster will automatically make the specified directory available to tasks on the cluster as
-``./shared_fs``. If ``--auto-bind-mount`` is not specified, the cluster will default to mounting
-your home directory. This will allow you to access your local preferences and any relevant files
-stored in the specified directory with the cluster's notebooks, shells, and tensorboard tasks. To
-disable this feature, use:
+``./shared_fs``. If ``--auto-work-dir`` is not specified, the cluster will default to mounting your
+home directory. This will allow you to access your local preferences and any relevant files stored
+in the specified directory with the cluster's notebooks, shells, and tensorboard tasks. To disable
+this feature, use:
 
 .. code::
 
-   det deploy local cluster-up --no-auto-bind-mount
+   det deploy local cluster-up --no-auto-work-dir
 
 For production deployments, you'll want to :ref:`use a cluster configuration file
 <configuring-cluster-install>`. To provide this configuration file to ``det deploy``, use:
