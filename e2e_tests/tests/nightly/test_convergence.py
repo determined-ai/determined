@@ -29,25 +29,6 @@ def test_mnist_pytorch_accuracy(client: _client.Determined) -> None:
     )
 
 
-@pytest.mark.nightly
-def test_mnist_estimator_accuracy(client: _client.Determined) -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    validations = _get_validation_metrics(client, trials[0].trial.id)
-
-    validation_accuracies = [v["accuracy"] for v in validations]
-
-    target_accuracy = 0.95
-    assert max(validation_accuracies) > target_accuracy, (
-        "mnist_estimator did not reach minimum target accuracy {}."
-        " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
-    )
-
-
 @pytest.mark.nightly_quarantine
 def test_cifar10_tf_keras_accuracy(client: _client.Determined) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
