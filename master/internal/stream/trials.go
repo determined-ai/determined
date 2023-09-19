@@ -289,15 +289,13 @@ func TrialMakePermissionFilter(ctx context.Context, user model.User) (func(*Tria
 		return nil, err
 	}
 
-	var permissionFilter func(*TrialMsg) bool
 	switch {
 	case accessScopeSet[model.GlobalAccessScopeID]:
 		// user has global access for viewing trials
-		permissionFilter = func(msg *TrialMsg) bool { return true }
+		return func(msg *TrialMsg) bool { return true }, nil
 	default:
-		permissionFilter = func(msg *TrialMsg) bool {
+		return func(msg *TrialMsg) bool {
 			return accessScopeSet[model.AccessScopeID(msg.WorkspaceID)]
-		}
+		}, nil
 	}
-	return permissionFilter, nil
 }
