@@ -346,7 +346,6 @@ func publishLoop[T stream.Msg](
 	publisher *stream.Publisher[T],
 ) {
 	// XXX: is there a better recovery technique than this?
-	// XXX: at least boot all the connected streamers, they'll all be invalid now
 	for {
 		err := doPublishLoop(ctx, channelName, publisher)
 		if err != nil {
