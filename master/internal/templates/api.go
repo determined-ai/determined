@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/templatev1"
@@ -29,19 +30,17 @@ func (a *TemplateAPIServer) GetTemplates(
 ) (*apiv1.GetTemplatesResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+		return nil, err
 	}
 
 	scopes, err := AuthZProvider.Get().ViewableScopes(ctx, user, 0)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to check for permissions: %s", err)
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	}
 
 	var resp apiv1.GetTemplatesResponse
-	if err := db.Bun().NewRaw(`
-SELECT name, config, workspace_id
-FROM templates
-`).Scan(ctx, &resp.Templates); err != nil {
+	err = db.Bun().NewSelect().Table("templates").ColumnExpr("*").Scan(ctx, &resp.Templates)
+	if err != nil {
 		return nil, fmt.Errorf("fetching templates from database: %w", err)
 	}
 	api.Where(&resp.Templates, func(i int) bool {
@@ -61,18 +60,14 @@ func (a *TemplateAPIServer) GetTemplate(
 ) (*apiv1.GetTemplateResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+		return nil, err
 	}
 	if len(req.TemplateName) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
 
 	var t templatev1.Template
-	err = db.Bun().NewRaw(`
-SELECT name, config, workspace_id
-FROM templates
-WHERE name = ?
-`, req.TemplateName).Scan(ctx, &t)
+	err = db.Bun().NewSelect().Table("templates").Where("name = ?", req.TemplateName).Scan(ctx, &t)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, api.NotFoundErrs("template", req.TemplateName, true)
@@ -83,7 +78,7 @@ WHERE name = ?
 	permErr, err := AuthZProvider.Get().CanViewTemplate(ctx, user, model.AccessScopeID(t.WorkspaceId))
 	switch {
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check for permissions: %s", err)
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	case permErr != nil:
 		return nil, authz.SubIfUnauthorized(permErr, api.NotFoundErrs("template", req.TemplateName, true))
 	}
@@ -102,12 +97,15 @@ func (a *TemplateAPIServer) PutTemplate(
 		return nil, status.Errorf(codes.InvalidArgument, "setting workspace_id is not supported.")
 	}
 
-	if _, err := TemplateByName(ctx, req.Template.Name); err != nil {
+	switch _, err := TemplateByName(ctx, req.Template.Name); {
+	case errors.Is(err, db.ErrNotFound):
 		_, err := a.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: req.Template})
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	case err != nil:
+		return nil, err
+	default:
 		_, err = a.PatchTemplateConfig(
 			ctx,
 			&apiv1.PatchTemplateConfigRequest{
@@ -129,7 +127,7 @@ func (a *TemplateAPIServer) PostTemplate(
 ) (*apiv1.PostTemplateResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+		return nil, err
 	}
 	if len(req.Template.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "name is required")
@@ -140,12 +138,12 @@ func (a *TemplateAPIServer) PostTemplate(
 		workspaceID = model.DefaultWorkspaceID
 	}
 
-	// TODO(DET-9839): This random workspaces query should be in a workspaces package.
-	exists, err := db.Bun().NewSelect().Table("workspaces").
-		Where("id = ?", workspaceID).
-		Where("archived = false").
-		Limit(1).
-		Exists(ctx)
+	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(ctx, *user, req.Template.WorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	exists, err := workspace.Exists(ctx, workspaceID)
 	switch {
 	case err != nil:
 		return nil, fmt.Errorf("failed to check workspace %d: %w", workspaceID, err)
@@ -160,21 +158,21 @@ func (a *TemplateAPIServer) PostTemplate(
 	)
 	switch {
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check for permissions: %s", err)
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	case permErr != nil:
 		return nil, permErr
 	}
 
 	var inserted templatev1.Template
-	err = db.Bun().NewRaw(`
-INSERT INTO templates (name, config, workspace_id)
-VALUES (?, ?, ?)
-RETURNING name, config, workspace_id
-`, req.Template.Name, req.Template.Config.AsMap(), workspaceID).Scan(ctx, &inserted)
+	err = db.Bun().NewInsert().Model(&model.Template{}).
+		Column("name", "config", "workspace_id").
+		Value("name", "?", req.Template.Name).
+		Value("config", "?", req.Template.Config.AsMap()).
+		Value("workspace_id", "?", workspaceID).
+		Returning("name, config, workspace_id").
+		Scan(ctx, &inserted)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.Internal, "failed to create template %s: %s", req.Template.Name, err.Error(),
-		)
+		return nil, fmt.Errorf("failed to create template %s: %w", req.Template.Name, err)
 	}
 	return &apiv1.PostTemplateResponse{Template: &inserted}, nil
 }
@@ -186,7 +184,7 @@ func (a *TemplateAPIServer) PatchTemplateConfig(
 ) (*apiv1.PatchTemplateConfigResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+		return nil, err
 	}
 	if len(req.TemplateName) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "name is required")
@@ -201,23 +199,23 @@ func (a *TemplateAPIServer) PatchTemplateConfig(
 	)
 	switch {
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check for permissions: %s", err)
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	case permErr != nil:
 		return nil, permErr
 	}
 
 	var updated templatev1.Template
-	err = db.Bun().NewRaw(`
-UPDATE templates
-SET config = ?
-WHERE name = ?
-RETURNING name, config, workspace_id
-`, req.Config.AsMap(), req.TemplateName).Scan(ctx, &updated)
+	err = db.Bun().NewUpdate().Model(&model.Template{}).
+		Column("config").
+		Set("config = ?", req.Config.AsMap()).
+		Where("name = ?", req.TemplateName).
+		Returning("name, config, workspace_id").
+		Scan(ctx, &updated)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, api.NotFoundErrs("template", req.TemplateName, true)
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to update template: %s", err.Error())
+		return nil, fmt.Errorf("failed to update template: %w", err)
 	}
 	return &apiv1.PatchTemplateConfigResponse{Template: &updated}, nil
 }
@@ -228,7 +226,7 @@ func (a *TemplateAPIServer) DeleteTemplate(
 ) (*apiv1.DeleteTemplateResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+		return nil, err
 	}
 	if len(req.TemplateName) == 0 {
 		return nil, errors.New("error deleting template: empty name")
@@ -243,15 +241,12 @@ func (a *TemplateAPIServer) DeleteTemplate(
 	)
 	switch {
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check for permissions: %s", err)
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	case permErr != nil:
 		return nil, permErr
 	}
 
-	_, err = db.Bun().NewRaw(`
-DELETE FROM templates
-WHERE name=?
-`, req.TemplateName).Exec(ctx)
+	_, err = db.Bun().NewDelete().Table("templates").Where("name = ?", req.TemplateName).Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error deleting template '%v': %w", req.TemplateName, err)
 	}

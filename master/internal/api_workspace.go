@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -576,8 +577,7 @@ func (a *apiServer) DeleteWorkspace(
 	command.TellNTSC(a.m.system, req)
 
 	log.Debugf("deleting workspace %d templates", req.Id)
-	_, err = db.Bun().NewDelete().Model(&model.Template{}).
-		Where("workspace_id = ?", req.Id).Exec(ctx) // TODO(!!!): do
+	err = templates.DeleteWorkspaceTemplates(ctx, int(req.Id))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error deleting workspace (%d) templates", req.Id)
 	}

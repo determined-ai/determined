@@ -16,13 +16,13 @@ import (
 // TemplateByName looks up a config template by name in a database.
 func TemplateByName(ctx context.Context, name string) (model.Template, error) {
 	var dest model.Template
-	switch err := db.Bun().NewRaw(`
-SELECT name, config, workspace_id
-FROM templates
-WHERE name = ?
-`, name).Scan(ctx, &dest); {
+	err := db.Bun().NewSelect().Table("templates").
+		ColumnExpr("*").
+		Where("name = ?", name).
+		Scan(ctx, &dest)
+	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return dest, api.NotFoundErrs("template", name, true)
+		return model.Template{}, db.ErrNotFound
 	case err != nil:
 		return dest, fmt.Errorf("fetching template %s from database: %w", name, err)
 	}
@@ -38,8 +38,11 @@ func UnmarshalTemplateConfig(
 	disallowUnknownFields bool,
 ) error {
 	tpl, err := TemplateByName(ctx, name)
-	if err != nil {
+	switch {
+	case errors.Is(err, db.ErrNotFound):
 		return api.NotFoundErrs("template", name, true)
+	case err != nil:
+		return err
 	}
 
 	permErr, err := AuthZProvider.Get().CanViewTemplate(
@@ -63,4 +66,13 @@ func UnmarshalTemplateConfig(
 		return fmt.Errorf("yaml.Unmarshal(template=%s): %w", name, err)
 	}
 	return nil
+}
+
+// DeleteWorkspaceTemplates deletes all the templates in a workspace.
+func DeleteWorkspaceTemplates(ctx context.Context, workspaceID int) error {
+	_, err := db.Bun().NewDelete().
+		Model(&model.Template{}).
+		Where("workspace_id = ?", workspaceID).
+		Exec(ctx)
+	return err
 }

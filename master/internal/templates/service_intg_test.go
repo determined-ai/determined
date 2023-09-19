@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/test/testutils/apitest"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -60,4 +61,33 @@ func TestUnmarshalTemplateConfig(t *testing.T) {
 		require.Equal(t, "gcs", tCfg.CheckpointStorage.Type)
 		require.Equal(t, cfgBucket, tCfg.CheckpointStorage.Bucket)
 	})
+}
+
+func TestDeleteWorkspaceTemplates(t *testing.T) {
+	api := TemplateAPIServer{}
+	ctx := apitest.WithCredentials(context.Background())
+
+	_, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{
+		Template: &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 0,
+		},
+	})
+	require.NoError(t, err)
+
+	n, err := workspaceTemplatesCount(ctx, 1)
+	require.NoError(t, err)
+	require.Greater(t, n, 0)
+
+	err = DeleteWorkspaceTemplates(ctx, 1)
+	require.NoError(t, err)
+
+	n, err = workspaceTemplatesCount(ctx, 1)
+	require.NoError(t, err)
+	require.Equal(t, 0, n)
+}
+
+func workspaceTemplatesCount(ctx context.Context, workspaceID int) (int, error) {
+	return db.Bun().NewSelect().Table("templates").Where("workspace_id = ?", workspaceID).Count(ctx)
 }
