@@ -789,6 +789,14 @@ class _PyTorchTrialController:
         if not self._checkpoint_is_current():
             self._checkpoint(already_exiting=False)
 
+        # Test mode will break after one batch despite not completing op.
+        if self.is_chief and not self.test_mode:
+            # The only case where op isn't reported as completed is if we restarted but
+            # op.length was already trained for and validated on; in that case just raise
+            # ShouldExit; we have nothing to do.
+            if not op._completed:
+                raise ShouldExit(skip_exit_checkpoint=True)
+
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
         if self.searcher_metric_name not in val_metrics:
             raise RuntimeError(
