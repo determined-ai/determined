@@ -1,10 +1,11 @@
 import base64
 import enum
+import itertools
 import pathlib
 import sys
 import time
 import warnings
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Iterable
 
 from determined.common import api
 from determined.common.api import bindings
@@ -220,9 +221,9 @@ class Experiment:
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
-    ) -> Iterator[trial.Trial]:
+    ) -> List[trial.Trial]:
         """
-        Get an iterator of :class:`~determined.experimental.Trial` instances
+        Get a list of :class:`~determined.experimental.Trial` instances
         representing trials for an experiment.
 
         Arguments:
@@ -231,8 +232,7 @@ class Experiment:
                 :class:`~determined.experimental.TrialOrderBy`.
 
         Returns:
-            This method returns an Iterable type that lazily instantiates response objects. To
-            get all models at once, call list(list_trials()).
+            A list of trials.
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:
@@ -245,11 +245,11 @@ class Experiment:
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy(sort_by.value),
             )
 
-        resps = api.read_paginated(get_with_offset)
+        bindings_trials: Iterable[bindings.trialv1Trial] = itertools.chain.from_iterable(
+            r.trials for r in api.read_paginated(get_with_offset)
+        )
 
-        for r in resps:
-            for t in r.trials:
-                yield trial.Trial._from_bindings(t, self._session)
+        return [trial.Trial._from_bindings(t, self._session) for t in bindings_trials]
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
         """
