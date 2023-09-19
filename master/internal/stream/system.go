@@ -351,6 +351,7 @@ func publishLoop[T stream.Msg](
 		err := doPublishLoop(ctx, channelName, publisher)
 		if err != nil {
 			log.Errorf("publishLoop failed (will restart): %v", err.Error())
+			publisher.CloseAllStreamers()
 			continue
 		}
 		// exited without error
