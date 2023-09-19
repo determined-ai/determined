@@ -2,14 +2,14 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@5.0.0
-  slack: circleci/slack@3.4.2
-  kubernetes: circleci/kubernetes@0.11.0
-  helm: circleci/helm@1.2.0
-  gcloud: circleci/gcp-cli@2.1.0
-  queue: eddiewebb/queue@volatile
   codecov: codecov/codecov@3.0.0
+  gcloud: circleci/gcp-cli@2.1.0
   gh: circleci/github-cli@2.0
+  helm: circleci/helm@1.2.0
+  kubernetes: circleci/kubernetes@0.11.0
+  queue: eddiewebb/queue@volatile
+  slack: circleci/slack@3.4.2
+  win: circleci/windows@5.0.0
 
 executors:
   python-37:
