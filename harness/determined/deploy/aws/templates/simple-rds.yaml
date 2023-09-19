@@ -453,7 +453,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
-      DBInstanceClass: db.m7g.large
+      DBInstanceClass: !Ref DBInstanceClass
       Engine: postgres
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
@@ -462,7 +462,7 @@ Resources:
           Value: !Ref AWS::StackName
       VPCSecurityGroups:
         - !GetAtt DatabaseSecurityGroup.GroupId
-      AllocatedStorage: 20
+      AllocatedStorage: !Ref DBSize
       StorageType: gp2
 
   RetainedLogGroup:
