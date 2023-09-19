@@ -110,40 +110,22 @@ func (ps PublisherSet) Start(ctx context.Context) {
 	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
 }
 
-func writeAll(socketLike api.SocketLike, msgs []interface{}) error {
+func writeAll(socketLike api.ReadWriter, msgs []interface{}) error {
 	for _, msg := range msgs {
-		if socketLike.Target != nil {
-			err := socketLike.Target.Send(msg)
-			if err != nil {
-				return err
-			}
-		} else {
-			pm, ok := msg.(*websocket.PreparedMessage)
-			if !ok {
-				return fmt.Errorf("received message that is not a prepared message")
-			}
-			err := socketLike.WritePreparedMessage(pm)
-			if err != nil {
-				return err
-			}
+		err := socketLike.Write(msg)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-//type FakePreparedMessage struct {
-//	websocket.PreparedMessage
-//	Data []byte
-//}
-
-// Websocket is an Echo websocket endpoint.
-func (ps PublisherSet) Websocket(socket api.SocketLike, c echo.Context) error {
-	ctx := c.Request().Context()
+// XXX: entrypoint should be renamed
+func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) error {
 	streamer := stream.NewStreamer()
+	ss := NewSubscriptionSet(streamer, ps, upsertFunc, deleteFunc)
 
-	ss := NewSubscriptionSet(streamer, ps, nil, nil)
 	defer ss.UnsubscribeAll()
-
 	// First read the startup message.
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
@@ -252,8 +234,12 @@ func (ps PublisherSet) Websocket(socket api.SocketLike, c echo.Context) error {
 			}
 		}
 	}
+}
 
-	return nil
+// Websocket is an Echo websocket endpoint.
+func (ps PublisherSet) Websocket(socket api.ReadWriter, c echo.Context) error {
+	ctx := c.Request().Context()
+	return ps.entrypoint(ctx, socket, nil, nil)
 }
 
 func publishLoop[T stream.Msg](
