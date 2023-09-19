@@ -117,6 +117,13 @@ def sample_get_workspace() -> bindings.v1GetWorkspaceResponse:
         return resp
 
 
+def sample_get_project() -> bindings.v1GetProjectResponse:
+    with open(FIXTURES_DIR / "project.json") as f:
+        resp = bindings.v1GetProjectResponse.from_json(json.load(f))
+        print(resp)
+        return resp
+
+
 def sample_get_pagination() -> bindings.v1Pagination:
     with open(FIXTURES_DIR / "pagination.json") as f:
         resp = bindings.v1Pagination.from_json(json.load(f))
@@ -235,4 +242,7 @@ def iter_pages(
             limit=max_page_size,
         )
         yield page
-        offset = page.pagination.endIndex  # type: ignore
+
+        assert page.pagination is not None
+        assert page.pagination.endIndex is not None
+        offset = page.pagination.endIndex

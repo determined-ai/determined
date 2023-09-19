@@ -1,7 +1,9 @@
-from typing import List, Optional
+import itertools
+from typing import Iterable, List, Optional
 
 from determined.common import api
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
+from determined.common.experimental import project
 
 
 class Workspace:
@@ -77,12 +79,47 @@ class Workspace:
 
         return resource_pools
 
+    def get_project(self, project_name: str) -> project.Project:
+        """Gets a project that is a part of this workspace.
+
+        Args:
+            project_name: The name of the project to get.
+
+        Raises:
+            errors.NotFoundException: If the project with the passed name is not found.
+        """
+        projects = bindings.get_GetWorkspaceProjects(
+            session=self._session,
+            id=self.id,
+            name=project_name,
+        ).projects
+        if projects:
+            return project.Project._from_bindings(projects[0], self._session)
+        else:
+            raise errors.NotFoundException(f"Project '{project_name}' not found in this workspace.")
+
+    def list_projects(self) -> List[project.Project]:
+        """Lists all projects that are a part of this workspace."""
+
+        def get_with_offset(offset: int) -> bindings.v1GetWorkspaceProjectsResponse:
+            return bindings.get_GetWorkspaceProjects(
+                session=self._session,
+                offset=offset,
+                id=self.id,
+            )
+
+        bindings_projects: Iterable[bindings.v1Project] = itertools.chain.from_iterable(
+            r.projects for r in api.read_paginated(get_with_offset)
+        )
+
+        return [project.Project._from_bindings(p, self._session) for p in bindings_projects]
+
 
 def _get_workspace_id_from_name(session: api.Session, name: str) -> int:
     """Workspace lookup from master that relies on a workspace name."""
     resp = bindings.get_GetWorkspaces(session=session, name=name)
     if len(resp.workspaces) == 0:
-        raise ValueError(f"No workspace found with name {name}")
+        raise errors.NotFoundException(f"No workspace found with name {name}")
     assert len(resp.workspaces) < 2, f"Multiple workspaces found with name {name}"
 
     return resp.workspaces[0].id
