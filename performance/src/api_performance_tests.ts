@@ -290,7 +290,7 @@ const getloadTests = (
             getRequest("/api/v1/permissions-summary"),
             RBAC_ENABLED,
         ),
-        test("search groups", getRequest("/api/groups/search"), RBAC_ENABLED),
+        test("search groups", getRequest("/api/v1/groups/search"), RBAC_ENABLED),
         test(
             "get workspace roles",
             getRequest(`/api/v1/roles/workspace/${sD?.workspace.id}`),
@@ -301,7 +301,7 @@ const getloadTests = (
             getRequest("/api/v1/roles/search/by-assignability"),
             RBAC_ENABLED,
         ),
-        test("get group", getRequest(`/v1/groups/{groupId}`), RBAC_ENABLED),
+        test("get group", getRequest(`/api/v1/groups/{groupId}`), RBAC_ENABLED),
         test("search groups", getRequest("/api/v1/groups/search"), RBAC_ENABLED),
         test("search roles", getRequest(`/api/v1/roles-search`), RBAC_ENABLED),
         test(
