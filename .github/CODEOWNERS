@@ -5,10 +5,14 @@
 
 # team-specific repo segments
 /.github  @determined-ai/infrastructure
-/docs     @determined-ai/docs
 /master   @determined-ai/backend
 /agent    @determined-ai/backend
 /proto    @determined-ai/backend
+
+# anyone can approve docs, except for specific files
+/docs
+/docs/index.rst     @determined-ai/docs
+/docs/**/index.rst  @determined-ai/docs
 
 # Harness is mapped to ml-sys by default, except for `cli`, `deploy`,
 # and auto-generated bindings and version files.
