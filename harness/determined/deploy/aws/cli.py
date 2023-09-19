@@ -440,6 +440,18 @@ args_description = Cmd(
                     help="password for master database",
                 ),
                 Arg(
+                    "--db-class",
+                    type=str,
+                    default=constants.defaults.DB_CLASS,
+                    help="instance class for master database",
+                ),
+                Arg(
+                    "--db-size",
+                    type=int,
+                    default=constants.defaults.DB_SIZE,
+                    help="storage size for master database",
+                ),
+                Arg(
                     "--max-idle-agent-period",
                     type=str,
                     help="max agent idle time",
