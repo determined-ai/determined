@@ -96,6 +96,7 @@ export const Modal: React.FC<ModalProps> = ({
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
     try {
+      await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
       await submit?.handler();
       setIsSubmitting(false);
       setIsOpen(false);
@@ -136,6 +137,7 @@ export const Modal: React.FC<ModalProps> = ({
               danger={danger}
               disabled={!!submit?.disabled}
               form={submit?.form}
+              htmlType={submit?.form ? 'submit' : 'button'}
               key="submit"
               loading={isSubmitting}
               tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}

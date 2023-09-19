@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useId } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -8,7 +8,7 @@ import { createProject } from 'services/api';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
-const FORM_ID = 'new-project-form';
+const FORM_ID = 'create-project-form';
 
 interface FormInputs {
   description?: string;
@@ -21,6 +21,7 @@ interface Props {
 }
 
 const ProjectCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const projectName = Form.useWatch('projectName', form);
 
@@ -64,13 +65,14 @@ const ProjectCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: 
       size="small"
       submit={{
         disabled: !projectName,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Create Project',
       }}
       title="New Project"
       onClose={onClose}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="Project Name"
           name="projectName"

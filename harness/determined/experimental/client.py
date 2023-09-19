@@ -71,6 +71,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialSortBy,
 )
 from determined.common.experimental.user import User
+from determined.common.experimental.workspace import Workspace
 
 _determined = None  # type: Optional[Determined]
 
@@ -291,6 +292,19 @@ def get_checkpoint(uuid: str) -> Checkpoint:
     """
     assert _determined is not None
     return _determined.get_checkpoint(uuid)
+
+
+@_require_singleton
+def get_workspace(name: str) -> Workspace:
+    """
+    Get the :class:`~determined.experimental.client.Workspace` representing the
+    Workspace with the provided name.
+
+    Arguments:
+        name (string): The workspace name.
+    """
+    assert _determined is not None
+    return _determined.get_workspace(name)
 
 
 @_require_singleton

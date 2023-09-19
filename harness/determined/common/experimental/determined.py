@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import determined as det
 from determined.common import api, context, util, yaml
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import authentication, bindings, certs, errors
 from determined.common.experimental import (
     checkpoint,
     experiment,
@@ -14,6 +14,7 @@ from determined.common.experimental import (
     oauth2_scim_client,
     trial,
     user,
+    workspace,
 )
 
 
@@ -235,6 +236,13 @@ class Determined:
         """
         resp = bindings.get_GetCheckpoint(self._session, checkpointUuid=uuid)
         return checkpoint.Checkpoint._from_bindings(resp.checkpoint, self._session)
+
+    def get_workspace(self, name: str) -> workspace.Workspace:
+        resp = bindings.get_GetWorkspaces(self._session, name=name)
+        if len(resp.workspaces) == 0:
+            raise errors.NotFoundException(f"Workspace {name} not found.")
+        assert len(resp.workspaces) == 1, f"Multiple workspaces found with name {name}"
+        return workspace.Workspace._from_bindings(resp.workspaces[0], self._session)
 
     def create_model(
         self,

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import ActionDropdown, { Triggers } from 'components/ActionDropdown/ActionDropdown';
+import ActionDropdown, { Triggers } from 'components/ActionDropdown';
 import Icon from 'components/kit/Icon';
 import { DetError } from 'components/kit/internal/types';
 import Section from 'components/Section';

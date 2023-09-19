@@ -1,6 +1,6 @@
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useObservable } from 'micro-observables';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
@@ -39,6 +39,7 @@ interface Props {
 }
 
 const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
+  const idPrefix = useId();
   const { canCreateModelWorkspace } = usePermissions();
   const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
   const loadableWorkspaces = useObservable(workspaceStore.workspaces);
@@ -116,14 +117,14 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
       size="medium"
       submit={{
         disabled: isWorkspace && disableWorkspaceModelCreation,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: onCreateModel,
         text: 'Create',
       }}
       title="Create a new model"
       onClose={onCloseModal}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <p className={css.directions}>
           Create a registered model to organize important checkpoints.
         </p>

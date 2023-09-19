@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
+import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { patchExperiment } from 'services/api';
@@ -30,29 +30,28 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   description,
   fetchExperimentDetails,
 }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
+    const formData = await form.validateFields();
     try {
       await patchExperiment({
-        body: { description: values.description, name: values.experimentName },
+        body: { description: formData.description, name: formData.experimentName },
         experimentId,
       });
       fetchExperimentDetails();
     } catch (e) {
       handleError(e, {
-        publicMessage: 'Unable to update name',
+        publicMessage: 'Unable to update experiment',
         silent: false,
       });
     }
   };
 
   const handleChange = () => {
-    const fields = form.getFieldsError();
-    const hasError = fields.some((f) => f.errors.length);
-    setDisabled(hasError);
+    setDisabled(hasErrors(form));
   };
 
   return (
@@ -61,6 +60,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       size="small"
       submit={{
         disabled,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: BUTTON_TEXT,
@@ -70,7 +70,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       <Form
         autoComplete="off"
         form={form}
-        id={FORM_ID}
+        id={idPrefix + FORM_ID}
         layout="vertical"
         onFieldsChange={handleChange}>
         <Form.Item
