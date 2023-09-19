@@ -184,7 +184,7 @@ class Trial:
         sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
         order_by: Optional[checkpoint.CheckpointOrderBy] = None,
     ) -> List[checkpoint.Checkpoint]:
-        """Returns an iterator of sorted :class:`~determined.experimental.Checkpoint` instances.
+        """Returns a list of sorted :class:`~determined.experimental.Checkpoint` instances.
 
         Requires either both `sort_by` and `order_by` to be defined, or neither. If neither are
         specified, will default to sorting by the experiment's configured searcher metric, and
