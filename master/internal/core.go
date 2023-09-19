@@ -874,13 +874,13 @@ func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerCon
 	}
 	if rmConfig.PbsRM != nil {
 		if rmConfig.PbsRM.DefaultComputeResourcePool != nil {
-			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultComputeResourcePool)
+			err := db.CheckIfRPUnbound(*rmConfig.PbsRM.DefaultComputeResourcePool)
 			if err != nil {
 				return err
 			}
 		}
 		if rmConfig.PbsRM.DefaultAuxResourcePool != nil {
-			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultAuxResourcePool)
+			err := db.CheckIfRPUnbound(*rmConfig.PbsRM.DefaultAuxResourcePool)
 			if err != nil {
 				return err
 			}
