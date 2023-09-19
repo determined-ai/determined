@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id":1090,
+    "name":"CAPS",
+    "workspaceId":859,
+    "description":"",
+    "lastExperimentStartedAt":"None",
+    "notes":[
+      {
+        "name":"note name",
+        "contents":"note body line 1\nnote body line 2"
+      },
+      {
+        "name":"second note",
+        "contents":""
+      }
+    ],
+    "numExperiments":0,
+    "numActiveExperiments":0,
+    "archived":false,
+    "username":"determined",
+    "immutable":false,
+    "userId":2,
+    "workspaceName":"",
+    "state":"WORKSPACE_STATE_UNSPECIFIED",
+    "errorMessage":""
+  }
+}
