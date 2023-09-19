@@ -37,6 +37,7 @@ class cloudformation:
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
     DB_CLASS = "DBClass"
+    DB_SIZE = "DBSize"
     ENABLE_CORS = "EnableCORS"
     MASTER_TLS_CERT = "MasterTLSCert"
     MASTER_TLS_KEY = "MasterTLSKey"
