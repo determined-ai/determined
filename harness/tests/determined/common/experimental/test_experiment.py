@@ -119,7 +119,7 @@ def test_list_trials_iterates_through_all_trials(
         callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
     )
 
-    trials = expref.list_trials(limit=page_size)
+    trials = expref.list_trials()
 
     assert len(list(trials)) == len(tr_resp.trials)
 
@@ -143,7 +143,7 @@ def test_list_trials_requests_pages_lazily(
         callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
     )
 
-    trials = expref.list_trials(limit=page_size)
+    trials = expref.list_trials()
 
     # Iterate through each item in generator and ensure API is called to fetch new pages.
     for i, _ in enumerate(trials):
@@ -271,7 +271,7 @@ def test_list_checkpoints_errors_on_only_order_by_set(
     expref = make_expref(1)
 
     with pytest.raises(AssertionError):
-        expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5)
+        expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC)
 
 
 def test_list_checkpoints_errors_on_only_sort_by_set(
@@ -280,4 +280,4 @@ def test_list_checkpoints_errors_on_only_sort_by_set(
     expref = make_expref(1)
 
     with pytest.raises(AssertionError):
-        expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None, limit=5)
+        expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None)

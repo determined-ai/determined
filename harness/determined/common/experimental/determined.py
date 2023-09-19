@@ -197,7 +197,6 @@ class Determined:
         states: Optional[List[experiment.ExperimentState]] = None,
         name: Optional[str] = None,
         project_id: Optional[int] = None,
-        limit: Optional[int] = None,
     ) -> Iterator[experiment.Experiment]:
         """Get an iterable of experiments (:class:`~determined.experimental.Experiment`).
 
@@ -213,9 +212,6 @@ class Determined:
             users: Only return experiments belonging to these users. Defaults to all users.
             states: Only return experiments that are in these states.
             project_id: Only return experiments associated with this project ID.
-            limit: Specifies maximum page size of the response from the server. When there are
-                many experiments to return, a lower page size can result in shorter latency at the
-                expense of more HTTP requests to the server. Defaults to no maximum.
 
         Returns:
             An Iterator type that lazily instantiates response objects. To
@@ -232,7 +228,7 @@ class Determined:
                 labels=labels,
                 experimentIdFilter_incl=experiment_ids,
                 offset=offset,
-                limit=limit,
+                limit=None,
                 name=name,
                 states=[state._to_bindings() for state in states] if states else None,
                 users=users,
@@ -364,7 +360,6 @@ class Determined:
         model_id: Optional[int] = None,
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
-        limit: Optional[int] = None,
     ) -> Iterator[model.Model]:
         """
         Get an iterable of all models in the model registry.
@@ -381,9 +376,6 @@ class Determined:
                 only include the model with this unique numeric id.
             workspace_names: Only return models with names in this list.
             workspace_ids: Only return models with workspace IDs in this list.
-            limit: Optional field that sets maximum page size of the response from the server.
-                When there are many models to return, a lower page size can result in shorter
-                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
 
         Returns:
             An Iterator type that lazily instantiates response objects. To
@@ -406,7 +398,7 @@ class Determined:
                 offset=offset,
                 orderBy=order_by._to_bindings(),
                 sortBy=sort_by._to_bindings(),
-                limit=limit,
+                limit=None,
                 userIds=None,
                 users=None,
                 workspaceNames=workspace_names,

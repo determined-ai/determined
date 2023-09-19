@@ -183,7 +183,6 @@ class Trial:
         self,
         sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
         order_by: Optional[checkpoint.CheckpointOrderBy] = None,
-        limit: Optional[int] = None,
     ) -> List[checkpoint.Checkpoint]:
         """Returns an iterator of sorted :class:`~determined.experimental.Checkpoint` instances.
 
@@ -198,7 +197,6 @@ class Trial:
             sort_by: (Optional) Parameter to sort checkpoints by. Accepts either
                 ``checkpoint.CheckpointSortBy`` or a string representing a validation metric name.
             order_by: (Optional) Order of sorted checkpoints (ascending or descending).
-            limit: (Optional) Maximum number of results to return. Defaults to no maximum.
 
         Returns:
             A list of sorted and ordered checkpoints.
@@ -219,7 +217,7 @@ class Trial:
                 else None,
                 sortByMetric=sort_by if isinstance(sort_by, str) else None,
                 offset=offset,
-                limit=limit,
+                limit=None,
             )
 
         resps = api.read_paginated(get_trial_checkpoints)
@@ -254,7 +252,7 @@ class Trial:
         warnings.warn(
             "Trial.top_checkpoint() has been deprecated and will be removed in a future "
             "version."
-            "Please call Trial.list_checkpoints(...,limit=1) instead.",
+            "Please call Trial.list_checkpoints(...)[0] instead.",
             FutureWarning,
             stacklevel=2,
         )
@@ -269,7 +267,6 @@ class Trial:
         checkpoints = self.list_checkpoints(
             sort_by=sort_by,
             order_by=order_by,
-            limit=1,
         )
         if not checkpoints:
             raise ValueError("No checkpoints found for criteria.")
@@ -345,7 +342,7 @@ class Trial:
                 else checkpoint.CheckpointOrderBy.DESC
             )
 
-        checkpoints = self.list_checkpoints(sort_by=sort_by, order_by=order_by, limit=1)
+        checkpoints = self.list_checkpoints(sort_by=sort_by, order_by=order_by)
 
         if not checkpoints:
             raise ValueError("No checkpoints found for criteria.")
