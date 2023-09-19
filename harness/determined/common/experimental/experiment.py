@@ -5,7 +5,7 @@ import pathlib
 import sys
 import time
 import warnings
-from typing import Any, Dict, List, Optional, Union, Iterable
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api
 from determined.common.api import bindings
