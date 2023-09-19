@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
@@ -76,6 +75,17 @@ func (ps *PublisherSet) addSocket(socket *websocket.Conn) {
 	ps.activeSockets = append(ps.activeSockets, socket)
 }
 
+func (ps *PublisherSet) removeSocket(socket *websocket.Conn) {
+	ps.socketLock.Lock()
+	defer ps.socketLock.Unlock()
+	for i, s := range ps.activeSockets {
+		if s == socket {
+			ps.activeSockets = append(ps.activeSockets[:i], ps.activeSockets[i+1:]...)
+			break
+		}
+	}
+}
+
 // Restart restarts underlying publishers and closes all active websocket connections.
 func (ps *PublisherSet) Restart() (errs []error) {
 	ps.socketLock.Lock()
@@ -83,15 +93,7 @@ func (ps *PublisherSet) Restart() (errs []error) {
 	ps.Trials.CloseAllStreamers()
 	// ps.Experiments.CloseAllStreamers()
 
-	// close active websocket connections
-	var remainingSockets []*websocket.Conn
-	for _, socket := range ps.activeSockets {
-		if err := socket.Close(); err != nil {
-			errs = append(errs, err)
-			remainingSockets = append(remainingSockets, socket)
-		}
-	}
-	ps.activeSockets = remainingSockets
+	ps.activeSockets = nil
 	return errs
 }
 
@@ -169,8 +171,55 @@ type FilterMaker[T stream.Msg, S any] interface {
 	MakeFilter() func(T) bool
 }
 
+func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
+	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
+	switch {
+	case err != nil:
+		log.Errorf("error occurred while getting permission change listener: %s", err)
+		fallthrough
+	case permListener == nil:
+		// no need to loop if there's no listener
+		return
+	}
+	defer func() {
+		err := permListener.Close()
+		if err != nil {
+			log.Debugf("error occurred while closing permission listener: %s", err)
+		}
+	}()
+
+	for {
+		select {
+		// did permissions change?
+		case <-permListener.Notify:
+			log.Debugf("permission change detected, restarting publisher set")
+			for _, err := range ps.Restart() {
+				if err != nil {
+					log.Debugf("error restarting publisher set: %v", err)
+				}
+			}
+		// is the listener still alive?
+		case <-time.After(30 * time.Second):
+			pingErrChan := make(chan error)
+			go func() {
+				err = permListener.Ping()
+				pingErrChan <- errors.Wrap(err, "no active connection")
+			}()
+			if err := <-pingErrChan; err != nil {
+				log.Errorf("permission listener failed: %s", err)
+			}
+		// are we canceled?
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) {
+	// start listening for permission changes
+	go ps.permissionChangeLoop(ctx)
+
 	// start each publisher
 	go publishLoop(ctx, "stream_trial_chan", ps.Trials)
 	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
@@ -188,7 +237,16 @@ func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
 
 // Websocket is an Echo websocket endpoint.
 func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
+	// clean up socket
+	defer func() {
+		if err := socket.Close(); err != nil {
+			log.Debugf("error while cleaning up socket: %s", err)
+		}
+	}()
+
 	ps.addSocket(socket)
+	defer ps.removeSocket(socket)
+
 	ctx := c.Request().Context()
 	streamer := stream.NewStreamer()
 	user := c.(*detContext.DetContext).MustGetUser()
@@ -231,32 +289,12 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	//   - fallout
 	//
 	// (note that online appearances and disappearances are not supported; we'll detect those
-	// situations and just break the connection to the relevant streaming clients).
+	// situations and just break the connection to streaming clients).
 
 	// detect context cancelation, and bring it into the websocket thread
 	go func() {
 		<-ctx.Done()
 		streamer.Close()
-	}()
-
-	// detect & handle permission change
-	go func() {
-		if err := AuthZProvider.Get().WaitForPermissionChange(); err != nil {
-			// failed to setup permission change detection, restarting publisher set
-			var errorPrefix string
-			switch {
-			case authz.IsPermissionChangeError(err):
-				errorPrefix = "permission change detected"
-			default:
-				errorPrefix = "error occurred while waiting for permission changes"
-			}
-			log.Errorf("%s, restarting publisher set: %s", errorPrefix, err)
-			for _, err := range ps.Restart() {
-				if err != nil {
-					log.Errorf("error restarting publisher set: %v", err)
-				}
-			}
-		}
 	}()
 
 	// reads is where we collect SubscriptionModMsg messages we read from the websocket until

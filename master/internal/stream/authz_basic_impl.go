@@ -3,6 +3,8 @@ package stream
 import (
 	"context"
 
+	"github.com/lib/pq"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -17,9 +19,10 @@ func (a *StreamAuthZBasic) GetTrialStreamableScopes(
 	return model.AccessScopeSet{model.GlobalAccessScopeID: true}, nil
 }
 
-// WaitForPermissionChange always returns nil.
-func (a *StreamAuthZBasic) WaitForPermissionChange() error {
-	return nil
+// GetPermissionChangeListener always returns a nil pointer and a nil error.
+func (a *StreamAuthZBasic) GetPermissionChangeListener() (*pq.Listener, error) {
+	return newDBListener("perm_change_listener")
+	// return nil, nil
 }
 
 func init() {
