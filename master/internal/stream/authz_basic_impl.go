@@ -21,8 +21,7 @@ func (a *StreamAuthZBasic) GetTrialStreamableScopes(
 
 // GetPermissionChangeListener always returns a nil pointer and a nil error.
 func (a *StreamAuthZBasic) GetPermissionChangeListener() (*pq.Listener, error) {
-	return newDBListener("perm_change_listener")
-	// return nil, nil
+	return nil, nil
 }
 
 func init() {

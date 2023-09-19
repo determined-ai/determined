@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -33,8 +32,6 @@ const (
 type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
-	socketLock    sync.Mutex
-	activeSockets []*websocket.Conn
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -69,31 +66,10 @@ type CollectSubscriptionModMsgsFunc[S any] func(ctx context.Context, addSpec S) 
 	[]*websocket.PreparedMessage, error,
 )
 
-func (ps *PublisherSet) addSocket(socket *websocket.Conn) {
-	ps.socketLock.Lock()
-	defer ps.socketLock.Unlock()
-	ps.activeSockets = append(ps.activeSockets, socket)
-}
-
-func (ps *PublisherSet) removeSocket(socket *websocket.Conn) {
-	ps.socketLock.Lock()
-	defer ps.socketLock.Unlock()
-	for i, s := range ps.activeSockets {
-		if s == socket {
-			ps.activeSockets = append(ps.activeSockets[:i], ps.activeSockets[i+1:]...)
-			break
-		}
-	}
-}
-
 // Restart restarts underlying publishers and closes all active websocket connections.
 func (ps *PublisherSet) Restart() (errs []error) {
-	ps.socketLock.Lock()
-	defer ps.socketLock.Unlock()
 	ps.Trials.CloseAllStreamers()
 	// ps.Experiments.CloseAllStreamers()
-
-	ps.activeSockets = nil
 	return errs
 }
 
@@ -243,9 +219,6 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 			log.Debugf("error while cleaning up socket: %s", err)
 		}
 	}()
-
-	ps.addSocket(socket)
-	defer ps.removeSocket(socket)
 
 	ctx := c.Request().Context()
 	streamer := stream.NewStreamer()
