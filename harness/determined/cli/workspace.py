@@ -116,8 +116,8 @@ def list_workspace_projects(args: Namespace) -> None:
         session=sess, workspace_name=args.workspace_name
     ).list_projects()
 
-    sort_key = args.sort_by.lower()
-    sort_order = args.order_by.lower()
+    sort_key = args.sort_by
+    sort_order = args.order_by
     offset = args.offset
     limit = args.limit
 
