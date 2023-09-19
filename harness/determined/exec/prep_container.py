@@ -8,6 +8,7 @@ import socket
 import sys
 import tarfile
 import uuid
+import warnings
 from typing import List, Optional
 
 import psutil
@@ -20,20 +21,14 @@ from determined.common import api, util
 from determined.common.api import bindings, certs
 
 
-def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None:
-    cluster_info = det.ClusterInfo._from_env()
-    is_trial = cluster_info.task_type == "TRIAL"
-    if is_trial:
-        trial_info = det.TrialInfo._from_env()
-        trial_info._to_file()
-    else:
-        cluster_info._to_file()
+def is_trial(info: det.ClusterInfo) -> bool:
+    return info.task_type == "TRIAL"
 
+
+def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None:
     context_directory_resp = None
     try:
-        context_directory_resp = bindings.get_GetTaskContextDirectory(
-            sess, taskId=cluster_info.task_id
-        )
+        context_directory_resp = bindings.get_GetTaskContextDirectory(sess, taskId=info.task_id)
     except Exception as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
@@ -50,7 +45,7 @@ def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None
             "networking error.\n"
             "Debug information:\n"
             f"    master_url: {info.master_url}\n"
-            f"    endpoint: api/v1/tasks/{cluster_info.task_id}/context_directory\n"
+            f"    endpoint: api/v1/tasks/{info.task_id}/context_directory\n"
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
@@ -59,8 +54,8 @@ def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None
         )
         raise
 
-    b64_tgz = context_directory_resp.to_json()["b64Tgz"]
-    if not is_trial and len(b64_tgz) == 0:
+    b64_tgz = context_directory_resp.b64Tgz
+    if not is_trial(info) and len(b64_tgz) == 0:
         return  # Non trials can have empty model defs.
     assert len(b64_tgz) > 0
 
@@ -74,7 +69,10 @@ def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None
         context_directory.extractall(path=".")
 
     # pre-0.18.3 code wrote tensorboard stuff under /tmp/tensorboard
-    det.util.force_create_symlink(f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard")
+    if is_trial(info):
+        det.util.force_create_symlink(
+            f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard"
+        )
 
 
 def do_rendezvous_rm_provided(
@@ -301,7 +299,11 @@ if __name__ == "__main__":
     parser.add_argument("--rendezvous", action="store_true")
     parser.add_argument("--proxy", action="store_true")
     parser.add_argument("--notify_container_running", action="store_true")
-    parser.add_argument("--download_context_directory", action="store_true")
+    parser.add_argument(
+        "--download_context_directory",
+        action="store_true",
+        help="download the task's user files from master",
+    )
     args = parser.parse_args()
 
     # Avoid reading det.get_cluster_info(), which might (wrongly) set a singleton to None.
@@ -309,6 +311,11 @@ if __name__ == "__main__":
     if info is None:
         info = det.ClusterInfo._from_env()
         info._to_file()
+    if is_trial(info):
+        trial_info = det.TrialInfo._from_file()
+        if trial_info is None:
+            trial_info = det.TrialInfo._from_env()
+            trial_info._to_file()
 
     try:
         # See the ClusterInfo.trial property for explanation
@@ -321,6 +328,15 @@ if __name__ == "__main__":
         format=det.LOG_FORMAT,
     )
     logging.debug("running prep_container")
+
+    if args.trial:
+        warnings.warn(
+            "--trial has been deprecated and will be removed "
+            "in a future version.\n"
+            "Please use --download_context_directory instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
     cert = certs.default_load(info.master_url)
     sess = api.Session(
