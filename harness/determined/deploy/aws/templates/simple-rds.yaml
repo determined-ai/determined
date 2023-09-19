@@ -453,7 +453,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
-      DBInstanceClass: !Ref DBInstanceClass
+      DBInstanceClass: !Ref DBClass
       Engine: postgres
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword

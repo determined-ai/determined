@@ -198,6 +198,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.VERSION: args.det_version,
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
         constants.cloudformation.DB_PASSWORD: args.db_password,
+        constants.cloudformation.DB_CLASS: args.db_class,
+        constants.cloudformation.DB_SIZE: args.db_size,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
         constants.cloudformation.MAX_AUX_CONTAINERS_PER_AGENT: args.max_aux_containers_per_agent,
