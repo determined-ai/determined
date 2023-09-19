@@ -147,50 +147,6 @@ type FilterMaker[T stream.Msg, S any] interface {
 	MakeFilter() func(T) bool
 }
 
-func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
-	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
-	switch {
-	case err != nil:
-		log.Errorf("error occurred while getting permission change listener: %s", err)
-		fallthrough
-	case permListener == nil:
-		// no need to loop if there's no listener
-		return
-	}
-	defer func() {
-		err := permListener.Close()
-		if err != nil {
-			log.Debugf("error occurred while closing permission listener: %s", err)
-		}
-	}()
-
-	for {
-		select {
-		// did permissions change?
-		case <-permListener.Notify:
-			log.Debugf("permission change detected, restarting publisher set")
-			for _, err := range ps.Restart() {
-				if err != nil {
-					log.Debugf("error restarting publisher set: %v", err)
-				}
-			}
-		// is the listener still alive?
-		case <-time.After(30 * time.Second):
-			pingErrChan := make(chan error)
-			go func() {
-				err = permListener.Ping()
-				pingErrChan <- errors.Wrap(err, "no active connection")
-			}()
-			if err := <-pingErrChan; err != nil {
-				log.Errorf("permission listener failed: %s", err)
-			}
-		// are we canceled?
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) {
 	// start listening for permission changes
@@ -336,6 +292,50 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 			if err != nil {
 				return errors.Wrapf(err, "error writing to socket")
 			}
+		}
+	}
+}
+
+func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
+	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
+	switch {
+	case err != nil:
+		log.Errorf("error occurred while getting permission change listener: %s", err)
+		fallthrough
+	case permListener == nil:
+		// no need to loop if there's no listener
+		return
+	}
+	defer func() {
+		err := permListener.Close()
+		if err != nil {
+			log.Debugf("error occurred while closing permission listener: %s", err)
+		}
+	}()
+
+	for {
+		select {
+		// did permissions change?
+		case <-permListener.Notify:
+			log.Debugf("permission change detected, restarting publisher set")
+			for _, err := range ps.Restart() {
+				if err != nil {
+					log.Debugf("error restarting publisher set: %v", err)
+				}
+			}
+		// is the listener still alive?
+		case <-time.After(30 * time.Second):
+			pingErrChan := make(chan error)
+			go func() {
+				err = permListener.Ping()
+				pingErrChan <- errors.Wrap(err, "no active connection")
+			}()
+			if err := <-pingErrChan; err != nil {
+				log.Errorf("permission listener failed: %s", err)
+			}
+		// are we canceled?
+		case <-ctx.Done():
+			return
 		}
 	}
 }
