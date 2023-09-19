@@ -303,7 +303,7 @@ func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
 		log.Errorf("error occurred while getting permission change listener: %s", err)
 		fallthrough
 	case permListener == nil:
-		// no need to loop if there's no listener
+		// no need to loop or cleanup if there's no listener
 		return
 	}
 	defer func() {
@@ -367,6 +367,12 @@ func doPublishLoop[T stream.Msg](
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
+	defer func() {
+		err := listener.Close()
+		if err != nil {
+			log.Debugf("error while cleaning up %s event listener: %s", channelName, err)
+		}
+	}()
 
 	for {
 		var events []stream.Event[T]
