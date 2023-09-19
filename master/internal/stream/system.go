@@ -237,9 +237,9 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, up
 }
 
 // Websocket is an Echo websocket endpoint.
-func (ps PublisherSet) Websocket(socket api.ReadWriter, c echo.Context) error {
+func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	ctx := c.Request().Context()
-	return ps.entrypoint(ctx, socket, nil, nil)
+	return ps.entrypoint(ctx, &api.WrappedWebsocket{Conn: socket}, nil, nil)
 }
 
 func publishLoop[T stream.Msg](

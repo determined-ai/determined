@@ -39,14 +39,14 @@ func Route(handler func(c echo.Context) (interface{}, error)) echo.HandlerFunc {
 }
 
 // WebSocketRoute upgrades incoming requests to websocket requests.
-func WebSocketRoute(handler func(socket ReadWriter, c echo.Context) error) echo.HandlerFunc {
+func WebSocketRoute(handler func(socket *websocket.Conn, c echo.Context) error) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			c.Logger().Error("websocket connection error: ", err)
 			return nil
 		}
-		err = handler(&WrappedWebsocket{Conn: ws}, c)
+		err = handler(ws, c)
 		if err != nil && !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 			c.Logger().Error("websocket handler error: ", err)
 		}
