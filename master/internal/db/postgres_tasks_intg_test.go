@@ -4,7 +4,6 @@
 package db
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -52,10 +51,9 @@ func TestAddAllocationTimes(t *testing.T) {
 	_, err = db.AllocationByID(mockAllocation.AllocationID)
 	require.NoError(t, err)
 
-	// Update the allocation's end time manually.
-	_, err = Bun().NewUpdate().Table("allocations").
-		Where("allocation_id = ?", mockAllocation.AllocationID).
-		Set("end_time = ?", time.Now().UTC()).Exec(context.TODO())
+	// Update the allocation's end time.
+	mockAllocation.EndTime = ptrs.Ptr(time.Now().UTC())
+	err = db.CompleteAllocation(&mockAllocation)
 	require.NoError(t, err)
 
 	// Now check that the end time is greater than the start time.
