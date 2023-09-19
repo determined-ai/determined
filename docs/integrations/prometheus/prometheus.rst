@@ -121,10 +121,6 @@ This example startup script includes the default setup docker commands provided 
  Configure Prometheus
 **********************
 
-`**********************
- Configure Prometheus
-**********************
-
 #. `Install Prometheus <https://prometheus.io/docs/prometheus/latest/installation/>`__ on any node
    in the monitored cluster.
 
