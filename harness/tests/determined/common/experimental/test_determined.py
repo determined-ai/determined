@@ -1,3 +1,4 @@
+import math
 from typing import Callable, List
 from unittest import mock
 
@@ -182,3 +183,19 @@ def test_list_experiments_calls_bindings_with_params(
     ]
     assert call_kwargs["name"] == params["name"]
     assert call_kwargs["projectId"] == params["project_id"]
+
+
+@responses.activate
+@mock.patch("determined.common.api.bindings.get_GetExperiments")
+def test_list_experiments_iterates_through_pages(
+    mock_bindings: mock.MagicMock,
+    make_client: Callable[[], Determined],
+) -> None:
+    client = make_client()
+    exps_resp = api_responses.sample_get_experiments()
+    total_exps = len(exps_resp.experiments)
+    mock_bindings.side_effect = [exps_resp]
+
+    exps = client.list_experiments()
+
+    assert len(exps) == total_exps
