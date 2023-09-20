@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
 import { Modal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
 import { UserOrGroupWithRoleInfo } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { isUserWithRoleInfo } from 'utils/user';
 
@@ -33,7 +33,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
         ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       onClose?.();
-      message.success(`${name} removed from workspace`);
+      makeToast({ compact: true, severity: 'Confirm', title: `${name} removed from workspace` });
     } catch (e) {
       setIsDeleting(false);
       if (e instanceof DetError) {

@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import { makeToast } from 'components/kit/Toast';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
@@ -175,7 +175,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
           setMetricHasData(metricsHaveData);
         }
       } catch (e) {
-        message.error('Error fetching metrics');
+        makeToast({ compact: true, severity: 'Error', title: 'Error fetching metrics' });
       }
     }
   }, [loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);

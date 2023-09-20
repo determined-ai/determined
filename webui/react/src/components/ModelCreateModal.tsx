@@ -7,6 +7,7 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
+import { makeToast } from 'components/kit/Toast';
 import Link from 'components/Link';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
@@ -14,7 +15,6 @@ import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
-import { notification } from 'utils/dialogApi';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -72,16 +72,11 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         workspaceId,
       });
       if (!response?.id) return;
-
-      notification.open({
-        btn: null,
-        description: (
-          <div className={css.toast}>
-            <p>{`"${modelName}"`} created</p>
-            <Link path={paths.modelDetails(response.name)}>View Model</Link>
-          </div>
-        ),
-        message: '',
+      makeToast({
+        description: `${modelName} created`,
+        link: <Link path={paths.modelDetails(response.name)}>View Model</Link>,
+        severity: 'Info',
+        title: '',
       });
     } catch (e) {
       if (e instanceof DetError) {

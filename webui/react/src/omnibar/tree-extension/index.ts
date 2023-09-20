@@ -1,9 +1,9 @@
 import Fuse from 'fuse.js';
 
+import { makeToast } from 'components/kit/Toast';
 import root from 'omnibar/tree-extension/trees/index';
 import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';
 import { getNodeChildren, isLeafNode, isNLNode, traverseTree } from 'omnibar/tree-extension/utils';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { noOp } from 'utils/service';
 
@@ -89,7 +89,7 @@ export const onAction = async (
     await item.onAction(item);
     // if we opt to auto close the bar for user in some scenarios this
     // would be the place to check for it.
-    message.info('Action executed.', 1);
+    makeToast({ compact: true, title: 'Action executed.' });
   } else {
     // trigger the query.
     inputEl.value = inputEl.value + SEPARATOR;

@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
+import { notification } from 'components/kit/internal/dialogApi';
 import Spinner from 'components/kit/Spinner';
 import useUI, { UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
@@ -36,7 +37,6 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
-import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';

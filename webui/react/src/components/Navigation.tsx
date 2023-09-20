@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 
+import { useInitApi } from 'components/kit/internal/dialogApi';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import clusterStore from 'stores/cluster';
@@ -8,7 +9,6 @@ import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
-import { useInitApi } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 

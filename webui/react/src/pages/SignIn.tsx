@@ -9,6 +9,7 @@ import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
+import { notification } from 'components/kit/internal/dialogApi';
 import useUI from 'components/kit/Theme';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
@@ -21,7 +22,6 @@ import { routeAll } from 'routes/utils';
 import authStore from 'stores/auth';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import { RecordKey } from 'types';
-import { notification } from 'utils/dialogApi';
 import { locationToPath, routeToReactUrl } from 'utils/routes';
 import { capitalize } from 'utils/string';
 
