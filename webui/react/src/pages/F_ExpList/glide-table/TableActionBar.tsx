@@ -20,6 +20,7 @@ import {
   cancelExperiments,
   deleteExperiments,
   killExperiments,
+  openOrCreateTensorBoard,
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
@@ -41,6 +42,7 @@ import {
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
+import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
 import { TableViewMode } from './GlideTable';
@@ -170,8 +172,11 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      const managedExperimentIds = selectedExperiments
+        .filter((exp) => !exp.unmanaged)
+        .map((exp) => exp.id);
       const params = {
-        experimentIds,
+        experimentIds: managedExperimentIds,
         filters: selectAll ? filters : undefined,
       };
       if (excludedExperimentIds?.size) {
@@ -179,7 +184,14 @@ const TableActionBar: React.FC<Props> = ({
       }
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
-          openExperimentTensorBoardModal();
+          if (managedExperimentIds.length !== selectedExperiments.length) {
+            // if unmanaged experiments are selected, open experimentTensorBoardModal
+            openExperimentTensorBoardModal();
+          } else {
+            openCommandResponse(
+              await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+            );
+          }
           return;
         }
         case ExperimentAction.Move:
@@ -201,12 +213,13 @@ const TableActionBar: React.FC<Props> = ({
       }
     },
     [
-      experimentIds,
+      selectedExperiments,
       selectAll,
       filters,
       excludedExperimentIds,
       ExperimentMoveModal,
       openExperimentTensorBoardModal,
+      project?.workspaceId,
     ],
   );
 
@@ -407,6 +420,7 @@ const TableActionBar: React.FC<Props> = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
+          isUnmanagedIncluded={selectedExperiments.some((exp) => exp.unmanaged)}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
@@ -424,7 +438,7 @@ const TableActionBar: React.FC<Props> = ({
       />
       <ExperimentTensorBoardModalComponent
         filters={selectAll ? filters : undefined}
-        selectedExperimentIds={experimentIds}
+        selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />
     </Columns>
