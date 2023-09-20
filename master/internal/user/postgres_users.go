@@ -29,11 +29,26 @@ func StartSession(ctx context.Context, user *model.User) (string, error) {
 		Expiry: time.Now().Add(SessionDuration),
 	}
 
-	_, err := db.Bun().NewInsert().
-		Model(userSession).
-		Column("user_id", "expiry").
-		Returning("id").
-		Exec(ctx, &userSession.ID)
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := db.Bun().NewInsert().
+			Model(userSession).
+			Column("user_id", "expiry").
+			Returning("id").
+			Exec(ctx, &userSession.ID)
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Bun().NewUpdate().
+			Table("users").
+			SetColumn("last_login", "NOW()").
+			Where("id = (?)", user.ID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return "", err
 	}
