@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -287,7 +288,15 @@ func SortTasksWithPosition(
 ) []*sproto.AllocateRequest {
 	var reqs []*sproto.AllocateRequest
 	for it := taskList.Iterator(); it.Next(); {
-		reqs = append(reqs, it.Value())
+		req := it.Value()
+		if groups[req.Group] == nil {
+			log.Errorf(
+				`found an allocation (%s) without a group (%s) when trying to sort by priority; ignoring it`,
+				req.Name, req.Group.Address(),
+			)
+			continue
+		}
+		reqs = append(reqs, req)
 	}
 	sort.Slice(reqs, func(i, j int) bool {
 		p1 := *groups[reqs[i].Group].Priority
