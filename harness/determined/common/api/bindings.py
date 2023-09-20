@@ -14143,6 +14143,7 @@ class v1User(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     displayName: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
+    lastLogin: "typing.Optional[str]" = None
     modifiedAt: "typing.Optional[str]" = None
     remote: "typing.Optional[bool]" = None
 
@@ -14155,6 +14156,7 @@ class v1User(Printable):
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
+        lastLogin: "typing.Union[str, None, Unset]" = _unset,
         modifiedAt: "typing.Union[str, None, Unset]" = _unset,
         remote: "typing.Union[bool, None, Unset]" = _unset,
     ):
@@ -14167,6 +14169,8 @@ class v1User(Printable):
             self.displayName = displayName
         if not isinstance(id, Unset):
             self.id = id
+        if not isinstance(lastLogin, Unset):
+            self.lastLogin = lastLogin
         if not isinstance(modifiedAt, Unset):
             self.modifiedAt = modifiedAt
         if not isinstance(remote, Unset):
@@ -14185,6 +14189,8 @@ class v1User(Printable):
             kwargs["displayName"] = obj["displayName"]
         if "id" in obj:
             kwargs["id"] = obj["id"]
+        if "lastLogin" in obj:
+            kwargs["lastLogin"] = obj["lastLogin"]
         if "modifiedAt" in obj:
             kwargs["modifiedAt"] = obj["modifiedAt"]
         if "remote" in obj:
@@ -14203,6 +14209,8 @@ class v1User(Printable):
             out["displayName"] = self.displayName
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
+        if not omit_unset or "lastLogin" in vars(self):
+            out["lastLogin"] = self.lastLogin
         if not omit_unset or "modifiedAt" in vars(self):
             out["modifiedAt"] = self.modifiedAt
         if not omit_unset or "remote" in vars(self):

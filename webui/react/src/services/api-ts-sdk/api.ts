@@ -10396,6 +10396,12 @@ export interface V1User {
      * @memberof V1User
      */
     remote?: boolean;
+    /**
+     * when the user last logged in
+     * @type {Date}
+     * @memberof V1User
+     */
+    lastLogin?: Date;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
