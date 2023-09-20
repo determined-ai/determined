@@ -86,12 +86,11 @@ const setup = () =>
 describe('UserSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.clearAllTimers();
   });
 
   it('should render with correct values', async () => {
     setup();
-    expect(screen.getByText('Username')).toBeInTheDocument();
+    expect(await screen.findByText('Username')).toBeInTheDocument();
     expect(screen.getByText('Display Name')).toBeInTheDocument();
     expect(screen.getByText('Password')).toBeInTheDocument();
     expect(await screen.findByText(USERNAME)).toBeInTheDocument();
