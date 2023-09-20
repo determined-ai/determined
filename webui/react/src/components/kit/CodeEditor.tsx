@@ -158,7 +158,7 @@ const CodeEditor: React.FC<Props> = ({
     let fileDir = files;
     for (let dir = 0; dir < splitFilePath.length; dir++) {
       matchTopFileOrFolder = fileDir.find(
-        (f) => f.key === splitFilePath[dir] || f.key === selectedFilePath,
+        (f) => f.key === splitFilePath.slice(0, dir + 1).join('/') || f.key === selectedFilePath,
       );
       if (matchTopFileOrFolder?.children) {
         fileDir = matchTopFileOrFolder.children;
