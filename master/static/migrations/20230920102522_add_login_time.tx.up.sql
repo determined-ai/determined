@@ -1,3 +1,4 @@
+ALTER TABLE public.users ALTER COLUMN modified_at TYPE timestamptz;
 ALTER TABLE public.users ADD COLUMN last_login timestamptz NULL;
 
 -- backfill with sessions
