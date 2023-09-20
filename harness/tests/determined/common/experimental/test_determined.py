@@ -206,9 +206,6 @@ def test_list_experiments_iterates_through_pages(
 
     exps = client.list_experiments()
 
-    for i in range(total_pages):
-        _, call_kwargs = mock_bindings.call_args_list[i]
-        assert call_kwargs["offset"] == i * page_size
-
-    assert mock_bindings.call_count == total_pages
-    assert len(exps) == total_exps
+    exp_ids = [exp.id for exp in exps]
+    expected_exp_ids = [exp_b.id for exp_b in exps_resp.experiments]
+    assert exp_ids == expected_exp_ids
