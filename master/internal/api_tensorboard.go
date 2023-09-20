@@ -15,6 +15,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	petname "github.com/dustinkirkland/golang-petname"
 
@@ -463,12 +464,12 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 	var err error
 	var originalExpIDs []int32
 	if req.Filters == nil {
-		originalExpIDs = req.ExperimentIds
-	} else {
-		originalExpIDs, err = exputil.FilterToExperimentIds(ctx, req.Filters)
-		if err != nil {
-			return nil, err
-		}
+		req.Filters = &apiv1.BulkExperimentFilters{}
+	}
+	req.Filters.Managed = &wrapperspb.BoolValue{Value: true}
+	originalExpIDs, err = exputil.FilterToExperimentIds(ctx, req.Filters)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, expID := range originalExpIDs {

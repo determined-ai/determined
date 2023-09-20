@@ -145,6 +145,9 @@ func queryBulkExperiments(query *bun.SelectQuery,
 	if filters.ProjectId != 0 {
 		query = query.Where("project_id = ?", filters.ProjectId)
 	}
+	if filters.Managed != nil {
+		query = query.Where("unmanaged = ?", !filters.Managed.Value)
+	}
 	return query
 }
 

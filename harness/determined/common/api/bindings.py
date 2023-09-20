@@ -1670,6 +1670,7 @@ class v1BulkExperimentFilters(Printable):
     description: "typing.Optional[str]" = None
     excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
+    managed: "typing.Optional[bool]" = None
     name: "typing.Optional[str]" = None
     projectId: "typing.Optional[int]" = None
     states: "typing.Optional[typing.Sequence[experimentv1State]]" = None
@@ -1682,6 +1683,7 @@ class v1BulkExperimentFilters(Printable):
         description: "typing.Union[str, None, Unset]" = _unset,
         excludedExperimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        managed: "typing.Union[bool, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
         states: "typing.Union[typing.Sequence[experimentv1State], None, Unset]" = _unset,
@@ -1695,6 +1697,8 @@ class v1BulkExperimentFilters(Printable):
             self.excludedExperimentIds = excludedExperimentIds
         if not isinstance(labels, Unset):
             self.labels = labels
+        if not isinstance(managed, Unset):
+            self.managed = managed
         if not isinstance(name, Unset):
             self.name = name
         if not isinstance(projectId, Unset):
@@ -1716,6 +1720,8 @@ class v1BulkExperimentFilters(Printable):
             kwargs["excludedExperimentIds"] = obj["excludedExperimentIds"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
+        if "managed" in obj:
+            kwargs["managed"] = obj["managed"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
         if "projectId" in obj:
@@ -1737,6 +1743,8 @@ class v1BulkExperimentFilters(Printable):
             out["excludedExperimentIds"] = self.excludedExperimentIds
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
+        if not omit_unset or "managed" in vars(self):
+            out["managed"] = self.managed
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         if not omit_unset or "projectId" in vars(self):
