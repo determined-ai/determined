@@ -3,16 +3,19 @@ package templates
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -38,19 +41,26 @@ func (a *TemplateAPIServer) GetTemplates(
 		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	}
 
-	var resp apiv1.GetTemplatesResponse
-	err = db.Bun().NewSelect().Table("templates").ColumnExpr("*").Scan(ctx, &resp.Templates)
+	q := db.Bun().NewSelect().
+		Table("templates").
+		ColumnExpr("*").
+		Where("workspace_id IN (?)", bun.In(maps.Keys(scopes)))
+	if req.Name != "" {
+		q.Where("name ILIKE  ('%%' || ? || '%%')", req.Name)
+	}
+	q.Order(fmt.Sprintf("name %s", grpcutil.OrderBySQL[req.OrderBy])) // Only name is supported.
+	q, pagination, err := bunutils.Paginate(ctx, q, int(req.Offset), int(req.Limit))
+	if err != nil {
+		return nil, fmt.Errorf("failed to paginate query: %w", err)
+	}
+
+	var tpls []*templatev1.Template
+	err = q.Scan(ctx, &tpls)
 	if err != nil {
 		return nil, fmt.Errorf("fetching templates from database: %w", err)
 	}
-	api.Where(&resp.Templates, func(i int) bool {
-		if !scopes[model.AccessScopeID(resp.Templates[i].WorkspaceId)] {
-			return false
-		}
-		return strings.Contains(strings.ToLower(resp.Templates[i].Name), strings.ToLower(req.Name))
-	})
-	api.Sort(resp.Templates, req.OrderBy, req.SortBy, apiv1.GetTemplatesRequest_SORT_BY_NAME)
-	return &resp, api.Paginate(&resp.Pagination, &resp.Templates, req.Offset, req.Limit)
+
+	return &apiv1.GetTemplatesResponse{Templates: tpls, Pagination: pagination}, nil
 }
 
 // GetTemplate by name. Returns an error if the requested template does not exist.
@@ -66,8 +76,11 @@ func (a *TemplateAPIServer) GetTemplate(
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
 
-	var t templatev1.Template
-	err = db.Bun().NewSelect().Table("templates").Where("name = ?", req.TemplateName).Scan(ctx, &t)
+	var tpl templatev1.Template
+	err = db.Bun().NewSelect().
+		Table("templates").
+		Where("name = ?", req.TemplateName).
+		Scan(ctx, &tpl)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, api.NotFoundErrs("template", req.TemplateName, true)
@@ -75,14 +88,14 @@ func (a *TemplateAPIServer) GetTemplate(
 		return nil, fmt.Errorf("fetching template %s from database: %w", req.TemplateName, err)
 	}
 
-	permErr, err := AuthZProvider.Get().CanViewTemplate(ctx, user, model.AccessScopeID(t.WorkspaceId))
+	permErr, err := AuthZProvider.Get().CanViewTemplate(ctx, user, model.AccessScopeID(tpl.WorkspaceId))
 	switch {
 	case err != nil:
 		return nil, fmt.Errorf("failed to check for permissions: %w", err)
 	case permErr != nil:
 		return nil, authz.SubIfUnauthorized(permErr, api.NotFoundErrs("template", req.TemplateName, true))
 	}
-	return &apiv1.GetTemplateResponse{Template: &t}, nil
+	return &apiv1.GetTemplateResponse{Template: &tpl}, nil
 }
 
 // PutTemplate creates or updates a template.
@@ -106,13 +119,11 @@ func (a *TemplateAPIServer) PutTemplate(
 	case err != nil:
 		return nil, err
 	default:
-		_, err = a.PatchTemplateConfig(
-			ctx,
-			&apiv1.PatchTemplateConfigRequest{
-				TemplateName: req.Template.Name,
-				Config:       req.Template.Config,
-			},
-		)
+		req := &apiv1.PatchTemplateConfigRequest{
+			TemplateName: req.Template.Name,
+			Config:       req.Template.Config,
+		}
+		_, err = a.PatchTemplateConfig(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -163,17 +174,23 @@ func (a *TemplateAPIServer) PostTemplate(
 		return nil, permErr
 	}
 
+	// json.Marshal + AsMap is 2x faster than protojson.Marshal or just json.Marshal because
+	// marshaling structpb.Struct is really slow.
+	configBytes, err := json.Marshal(req.Template.Config.AsMap())
+	if err != nil {
+		return nil, err
+	}
+
 	var inserted templatev1.Template
-	err = db.Bun().NewInsert().Model(&model.Template{}).
-		Column("name", "config", "workspace_id").
-		Value("name", "?", req.Template.Name).
-		Value("config", "?", req.Template.Config.AsMap()).
-		Value("workspace_id", "?", workspaceID).
-		Returning("name, config, workspace_id").
+	err = db.Bun().NewInsert().
+		Model(&model.Template{Name: req.Template.Name, WorkspaceID: workspaceID}).
+		Value("config", "?", string(configBytes)).
+		Returning("*").
 		Scan(ctx, &inserted)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create template %s: %w", req.Template.Name, err)
 	}
+
 	return &apiv1.PostTemplateResponse{Template: &inserted}, nil
 }
 
@@ -204,12 +221,16 @@ func (a *TemplateAPIServer) PatchTemplateConfig(
 		return nil, permErr
 	}
 
+	configBytes, err := json.Marshal(req.Config.AsMap())
+	if err != nil {
+		return nil, err
+	}
+
 	var updated templatev1.Template
 	err = db.Bun().NewUpdate().Model(&model.Template{}).
-		Column("config").
-		Set("config = ?", req.Config.AsMap()).
+		Set("config = ?", string(configBytes)).
 		Where("name = ?", req.TemplateName).
-		Returning("name, config, workspace_id").
+		Returning("*").
 		Scan(ctx, &updated)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

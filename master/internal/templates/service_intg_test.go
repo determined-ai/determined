@@ -12,6 +12,9 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/test/testutils/apitest"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/templatev1"
@@ -49,17 +52,36 @@ func TestUnmarshalTemplateConfig(t *testing.T) {
 		require.NoError(t, err)
 		requireToJSONEq(t, input, resp.Template)
 
-		type testConfig struct {
-			CheckpointStorage struct {
-				Type   string `json:"type"`
-				Bucket string `json:"bucket"`
-			} `json:"checkpoint_storage"`
-		}
-		var tCfg testConfig
-		err = UnmarshalTemplateConfig(ctx, input.Name, u, &tCfg, false)
+		fakeConfig := schemas.WithDefaults(expconf.ExperimentConfigV0{
+			RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
+				RawSharedFSConfig: &expconf.SharedFSConfigV0{
+					RawHostPath: ptrs.Ptr("/home/ckpts"),
+				},
+			},
+			RawEntrypoint: &expconf.EntrypointV0{
+				RawEntrypoint: ptrs.Ptr("model.Classifier"),
+			},
+			RawHyperparameters: map[string]expconf.HyperparameterV0{
+				"global_batch_size": {
+					RawConstHyperparameter: &expconf.ConstHyperparameterV0{
+						RawVal: ptrs.Ptr(1),
+					},
+				},
+			},
+			RawSearcher: &expconf.SearcherConfigV0{
+				RawSingleConfig: &expconf.SingleConfigV0{
+					RawMaxLength: &expconf.LengthV0{
+						Unit:  expconf.Batches,
+						Units: 1,
+					},
+				},
+				RawMetric: ptrs.Ptr("loss_of_something"),
+			},
+		})
+		err = UnmarshalTemplateConfig(ctx, input.Name, u, &fakeConfig, false)
 		require.NoError(t, err)
-		require.Equal(t, "gcs", tCfg.CheckpointStorage.Type)
-		require.Equal(t, cfgBucket, tCfg.CheckpointStorage.Bucket)
+		require.NotNil(t, fakeConfig.CheckpointStorage().RawGCSConfig)
+		require.Equal(t, cfgBucket, fakeConfig.CheckpointStorage().RawGCSConfig.Bucket())
 	})
 }
 

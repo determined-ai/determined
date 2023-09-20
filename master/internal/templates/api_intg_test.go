@@ -113,6 +113,13 @@ func TestGetTemplates(t *testing.T) {
 		}
 	})
 
+	t.Run("GetTemplates like a name", func(t *testing.T) {
+		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{Name: "b"})
+		require.NoError(t, err)
+		require.Len(t, resp.Templates, 2)
+		require.ElementsMatch(t, inputNames[:2], templateNames(resp.Templates))
+	})
+
 	t.Run("GetTemplates sort and order by", func(t *testing.T) {
 		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{
 			SortBy:  apiv1.GetTemplatesRequest_SORT_BY_NAME,

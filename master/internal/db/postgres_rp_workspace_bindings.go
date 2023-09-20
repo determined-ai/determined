@@ -11,6 +11,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -110,7 +111,7 @@ func ReadWorkspacesBoundToRP(
 	query := Bun().NewSelect().Model(&rpWorkspaceBindings).Where("pool_name = ?",
 		poolName)
 
-	pagination, query, err := getPagedBunQuery(ctx, query, int(offset), int(limit))
+	query, pagination, err := bunutils.Paginate(ctx, query, int(offset), int(limit))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -130,52 +131,6 @@ func ReadWorkspacesBoundToRP(
 	}
 
 	return rpWorkspaceBindings, pagination, nil
-}
-
-// TODO find a good house for this function.
-func getPagedBunQuery(
-	ctx context.Context, query *bun.SelectQuery, offset, limit int,
-) (*apiv1.Pagination, *bun.SelectQuery, error) {
-	// Count number of items without any limits or offsets.
-	total, err := query.Count(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Calculate end and start indexes.
-	startIndex := offset
-	if offset > total || offset < -total {
-		startIndex = total
-	} else if offset < 0 {
-		startIndex = total + offset
-	}
-
-	endIndex := startIndex + limit
-	switch {
-	case limit == -2:
-		endIndex = startIndex
-	case limit == -1:
-		endIndex = total
-	case limit == 0:
-		endIndex = 100 + startIndex
-		if total < endIndex {
-			endIndex = total
-		}
-	case startIndex+limit > total:
-		endIndex = total
-	}
-
-	// Add start and end index to query.
-	query.Offset(startIndex)
-	query.Limit(endIndex - startIndex)
-
-	return &apiv1.Pagination{
-		Offset:     int32(offset),
-		Limit:      int32(limit),
-		Total:      int32(total),
-		StartIndex: int32(startIndex),
-		EndIndex:   int32(endIndex),
-	}, query, nil
 }
 
 // OverwriteRPWorkspaceBindings overwrites the bindings between workspaceIds and poolName.
@@ -293,7 +248,7 @@ func ReadRPsAvailableToWorkspace(
 			Where("workspace_id = ?", workspaceID)
 	}
 
-	pagination, query, err := getPagedBunQuery(ctx, query, int(offset), int(limit))
+	query, pagination, err := bunutils.Paginate(ctx, query, int(offset), int(limit))
 	if err != nil {
 		return nil, nil, err
 	}
