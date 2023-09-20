@@ -411,7 +411,7 @@ func (db *PgDB) _addTrialMetricsTx(
 					v,
 					v,
 				)
-				summaryMetrics[k] = make(map[string]any)
+				summaryMetrics[k] = model.JSONObj{}
 			}
 		}
 
