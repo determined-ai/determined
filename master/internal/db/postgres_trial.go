@@ -227,7 +227,9 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 	}
 
 	for k, v := range updatedSummaryMetrics {
-		if _, ok := v.(map[string]any); !ok {
+		switch v := v.(type) {
+		case model.JSONObj, map[string]any:
+		default:
 			log.Errorf("when full compute updating summary metric "+
 				"%+v path %s type %T value %+v is not a map, setting to empty map",
 				updatedSummaryMetrics,
@@ -235,7 +237,7 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 				v,
 				v,
 			)
-			updatedSummaryMetrics[k] = make(map[string]any)
+			updatedSummaryMetrics[k] = model.JSONObj{}
 		}
 	}
 
@@ -361,9 +363,12 @@ func (db *PgDB) _addTrialMetricsTx(
 		}
 
 		var summaryMetricsForGroup map[string]any
-		if g, ok := summaryMetrics[summaryMetricsJSONPath].(map[string]any); ok {
-			summaryMetricsForGroup = g
-		} else {
+		switch v := summaryMetrics[summaryMetricsJSONPath].(type) {
+		case model.JSONObj:
+			summaryMetricsForGroup = map[string]any(v)
+		case map[string]any:
+			summaryMetricsForGroup = v
+		default:
 			log.Errorf("summary metric "+
 				"%+v path %s type %T value %+v is not a map, setting to empty map",
 				summaryMetrics,
@@ -396,7 +401,9 @@ func (db *PgDB) _addTrialMetricsTx(
 		}
 
 		for k, v := range summaryMetrics {
-			if _, ok := v.(map[string]any); !ok {
+			switch v := v.(type) {
+			case model.JSONObj, map[string]any:
+			default:
 				log.Errorf("when updating summary metric "+
 					"%+v path %s type %T value %+v is not a map, setting to empty map",
 					summaryMetrics,
