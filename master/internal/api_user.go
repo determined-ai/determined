@@ -83,6 +83,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
 		ModifiedAt:     timestamppb.New(user.ModifiedAt),
+		LastLogin:      timestamppb.New(user.LastLogin),
 	}
 }
 
@@ -155,7 +156,7 @@ func (a *apiServer) GetUsers(
 	nameFilterExpr := "%" + req.Name + "%"
 	selectExpr := `
 		SELECT
-			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at, u.remote,
+			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at, u.remote, u.last_login,
 			h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group, 
 			COALESCE(u.display_name, u.username) AS name
 		FROM users u
