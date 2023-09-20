@@ -159,6 +159,7 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	query := db.Bun().NewSelect().
 		Model(&experimentIDList).
 		ModelTableExpr("experiments as e").
+		Where("unmanaged = false").
 		Column("e.id")
 	query = queryBulkExperiments(query, filters)
 

@@ -1553,12 +1553,6 @@ export interface V1BulkExperimentFilters {
      * @memberof V1BulkExperimentFilters
      */
     excludedExperimentIds?: Array<number>;
-    /**
-     * Limit experiments to those that are managed or unmanaged.
-     * @type {boolean}
-     * @memberof V1BulkExperimentFilters
-     */
-    managed?: boolean;
 }
 /**
  * Response to CancelExperimentRequest.

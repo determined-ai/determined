@@ -1140,7 +1140,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil).Once()
+			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(nil)
+			authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).Return(nil)
 			authZNSC.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
 				mock.Anything).Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{

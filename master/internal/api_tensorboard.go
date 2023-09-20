@@ -462,10 +462,6 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 
 	var err error
 	var originalExpIDs []int32
-	if req.Filters == nil {
-		req.Filters = &apiv1.BulkExperimentFilters{}
-	}
-	req.Filters.Managed = ptrs.Ptr(true)
 	originalExpIDs, err = exputil.FilterToExperimentIds(ctx, req.Filters)
 	if err != nil {
 		return nil, err
