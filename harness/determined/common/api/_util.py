@@ -20,6 +20,7 @@ RETRY_STATUSES = [502, 503, 504]  # Bad Gateway, Service Unavailable, Gateway Ti
 # Default max number of times to retry a request.
 MAX_RETRIES = 5
 
+
 # Not that read_paginated requires the output of get_with_offset to be a Paginated type to work.
 # The Paginated union type is generated based on response objects with a .pagination attribute.
 T = TypeVar("T", bound=bindings.Paginated)
@@ -37,6 +38,7 @@ def read_paginated(
     get_with_offset: Callable[[int], T],
     offset: int = 0,
     pages: PageOpts = PageOpts.all,
+    smart_flatten: bool = False,
 ) -> Iterator[T]:
     while True:
         resp = get_with_offset(offset)
@@ -44,7 +46,15 @@ def read_paginated(
         assert pagination is not None
         assert pagination.endIndex is not None
         assert pagination.total is not None
-        yield resp
+        if smart_flatten:
+            resp_attrs = set(resp.__dict__.keys())
+            resp_attrs.remove("pagination")
+            assert len(resp_attrs) == 1, "Responses contain only one attribute besides pagination"
+            paged_attr = getattr(resp, resp_attrs.pop())
+            for item in paged_attr:
+                yield item
+        else:
+            yield resp
         if pagination.endIndex >= pagination.total or pages == PageOpts.single:
             break
         assert pagination.endIndex is not None
