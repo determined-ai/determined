@@ -1,4 +1,5 @@
 import base64
+import math
 import os
 from typing import Callable
 from unittest import mock
@@ -97,6 +98,59 @@ def test_wait_raises_exception_when_experiment_is_paused(
 
     with pytest.raises(ValueError):
         expref.wait()
+
+
+@responses.activate
+def test_list_trials_iterates_through_all_trials(
+    make_expref: Callable[[int], experiment.Experiment]
+) -> None:
+    expref = make_expref(1)
+    page_size = 2
+
+    tr_resp = api_responses.sample_get_experiment_trials()
+
+    assert len(tr_resp.trials) >= 2, "Test expects sample trial response to contain >= 2 Trials."
+    for trial in tr_resp.trials:
+        trial.experimentId = expref.id
+
+    responses.add_callback(
+        responses.GET,
+        f"{_MASTER}/api/v1/experiments/{expref.id}/trials",
+        callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
+    )
+
+    trials = expref.list_trials(limit=page_size)
+
+    assert len(list(trials)) == len(tr_resp.trials)
+
+
+@responses.activate
+def test_list_trials_requests_pages_lazily(
+    make_expref: Callable[[int], experiment.Experiment]
+) -> None:
+    expref = make_expref(1)
+    page_size = 2
+
+    tr_resp = api_responses.sample_get_experiment_trials()
+
+    assert len(tr_resp.trials) >= 2, "Test expects sample trial response to contain >= 2 Trials."
+    for trial in tr_resp.trials:
+        trial.experimentId = expref.id
+
+    responses.add_callback(
+        responses.GET,
+        f"{_MASTER}/api/v1/experiments/{expref.id}/trials",
+        callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
+    )
+
+    trials = expref.list_trials(limit=page_size)
+
+    # Iterate through each item in generator and ensure API is called to fetch new pages.
+    for i, _ in enumerate(trials):
+        page_num = math.ceil((i + 1) / page_size)
+        assert len(responses.calls) == page_num
+    total_pages = math.ceil((len(tr_resp.trials)) / page_size)
+    assert len(responses.calls) == total_pages
 
 
 @pytest.mark.parametrize(
@@ -217,7 +271,7 @@ def test_list_checkpoints_errors_on_only_order_by_set(
     expref = make_expref(1)
 
     with pytest.raises(AssertionError):
-        expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC)
+        expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5)
 
 
 def test_list_checkpoints_errors_on_only_sort_by_set(
@@ -226,4 +280,4 @@ def test_list_checkpoints_errors_on_only_sort_by_set(
     expref = make_expref(1)
 
     with pytest.raises(AssertionError):
-        expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None)
+        expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None, limit=5)
