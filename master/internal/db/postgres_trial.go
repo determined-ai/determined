@@ -226,6 +226,19 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 		}
 	}
 
+	for k, v := range updatedSummaryMetrics {
+		if _, ok := v.(map[string]any); !ok {
+			log.Errorf("when full compute updating summary metric "+
+				"%+v path %s type %T value %+v is not a map, setting to empty map",
+				updatedSummaryMetrics,
+				k,
+				v,
+				v,
+			)
+			updatedSummaryMetrics[k] = make(map[string]any)
+		}
+	}
+
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
 	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, trialID); err != nil {
 		return fmt.Errorf("rollback updating trial summary metrics: %w", err)
@@ -346,8 +359,23 @@ func (db *PgDB) _addTrialMetricsTx(
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
+
+		var summaryMetricsForGroup map[string]any
+		if g, ok := summaryMetrics[summaryMetricsJSONPath].(map[string]any); ok {
+			summaryMetricsForGroup = g
+		} else {
+			log.Errorf("summary metric "+
+				"%+v path %s type %T value %+v is not a map, setting to empty map",
+				summaryMetrics,
+				summaryMetricsJSONPath,
+				summaryMetrics[summaryMetricsJSONPath],
+				summaryMetrics[summaryMetricsJSONPath],
+			)
+
+			summaryMetricsForGroup = make(map[string]any)
+		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
+			summaryMetricsForGroup,
 			addedMetrics.AvgMetrics,
 		)
 
@@ -364,6 +392,19 @@ func (db *PgDB) _addTrialMetricsTx(
 			if searcherMetric != nil &&
 				m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
 				latestValidationID = &metricRowID
+			}
+		}
+
+		for k, v := range summaryMetrics {
+			if _, ok := v.(map[string]any); !ok {
+				log.Errorf("when updating summary metric "+
+					"%+v path %s type %T value %+v is not a map, setting to empty map",
+					summaryMetrics,
+					k,
+					v,
+					v,
+				)
+				summaryMetrics[k] = make(map[string]any)
 			}
 		}
 
