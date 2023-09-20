@@ -19,12 +19,13 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	ws "github.com/determined-ai/determined/master/pkg/actor/api"
+	actorapi "github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ws"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -33,7 +34,7 @@ type (
 	agent struct {
 		address          string
 		resourcePool     *actor.Ref
-		socket           *actor.Ref
+		socket           *ws.WebSocket[*aproto.MasterMessage, aproto.AgentMessage]
 		slots            *actor.Ref
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
@@ -103,6 +104,8 @@ type (
 	deallocateContainer struct {
 		containerID cproto.ID
 	}
+
+	socketDisconnect struct{}
 )
 
 var errRecovering = errors.New("agent disconnected, wait for recovery")
@@ -129,10 +132,40 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
 		ctx.Respond(a.summarize(ctx))
-	case ws.WebSocketConnected:
-		check.Panic(check.True(a.socket == nil, "websocket already connected"))
-		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
-		check.Panic(check.True(ok, "failed to accept websocket connection"))
+	case actorapi.WebSocketRequest:
+		if a.socket != nil {
+			panic("websocket already connected")
+		}
+
+		conn, err := ws.UpgradeEchoConnection(msg.Ctx)
+		if err != nil {
+			ctx.Log().WithError(err).Panic("Error upgrading connection to WebSocket")
+		}
+
+		wsName := "master-agent-ws-" + ctx.Self().Address().String()
+		socket, err := ws.Wrap[*aproto.MasterMessage, aproto.AgentMessage](wsName, conn)
+		if err != nil {
+			ctx.Log().WithError(err).Panic("failed to accept websocket connection")
+		}
+
+		// spin up goroutine that sends messages to self
+		go func() {
+		InboxLoop:
+			for {
+				select {
+				case msg := <-socket.Inbox:
+					// If the Inbox has closed, we get a zero value
+					if msg == nil {
+						break InboxLoop
+					}
+					ctx.Tell(ctx.Self(), *msg)
+				case <-socket.Done:
+					break InboxLoop
+				}
+			}
+			ctx.Tell(ctx.Self(), socketDisconnect{})
+		}()
+
 		a.socket = socket
 		a.version = msg.Ctx.QueryParam("version")
 
@@ -158,10 +191,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.awaitingRestore = false
 		}
 
-		wsm := ws.WriteMessage{Message: masterSetAgentOptions}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			ctx.Log().WithError(err).Error("failed to write master set agent options")
-		}
+		a.socket.Outbox <- masterSetAgentOptions
 
 		if a.awaitingReconnect {
 			ctx.Log().Info("agent reconnected")
@@ -200,6 +230,39 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		}
 
+	// TODO(max): verify doing this as an actor message is necessary; does socketDisconnected mutate state that matters?
+	case socketDisconnect:
+		defer ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+		defer a.socketDisconnected(ctx)
+
+		err := a.socket.Close()
+		if err != nil {
+			if !a.started {
+				// If we happen to fail before the agent has started and been registered with
+				// the resource manager, then nothing can be running on it. In this case we
+				// just fail outright and make it restart.
+				return errors.Wrapf(err, "child failed: %s", a.socket.Name())
+			}
+
+			ctx.Log().
+				WithError(err).
+				Errorf("WebSocket failed, awaiting reconnect: %s", a.socket.Name())
+			break
+		}
+
+		// If the socket has closed gracefully, there are really two cases:
+		//  * the agent is being brought down temporarily (software or config update)
+		//  * the agent is being brought down permanently
+		// Since the former is more frequent and it doesn't really hurt the latter for the agent to
+		// hang around for a bit on our side, we always treat gracefully socket closures as
+		// temporary disconnects.
+		if !a.started {
+			ctx.Self().Stop()
+			return nil
+		}
+
+		ctx.Log().Infof("websocket closed gracefully, awaiting reconnect: %s", a.socket.Name())
+
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
 			a.bufferForRecovery(ctx, msg)
@@ -214,20 +277,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		killMsg := aproto.SignalContainer{
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
 		}
-		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			log.WithError(err).Error("failed to write kill task message")
-		}
+		a.socket.Outbox <- aproto.AgentMessage{SignalContainer: &killMsg}
 	case aproto.SignalContainer:
 		if a.awaitingReconnect {
 			a.bufferForRecovery(ctx, msg)
 			return nil
 		}
 
-		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			ctx.Log().WithError(err).Error("failed to write signal container message")
-		}
+		a.socket.Outbox <- aproto.AgentMessage{SignalContainer: &msg}
 	case sproto.StartTaskContainer:
 		if a.awaitingReconnect {
 			a.bufferForRecovery(ctx, msg)
@@ -239,12 +296,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			WithField("slots", len(msg.StartContainer.Container.Devices))
 		log.Infof("starting container")
 
-		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
-			log.WithError(err).Error("failed to write start container message")
-			ctx.Respond(sproto.NewResourcesFailure(sproto.AgentError, err.Error(), nil))
-		}
+		// TODO(DET-5862): After push arch, return and handle errors when starting allocations.
+		a.socket.Outbox <- aproto.AgentMessage{StartContainer: &msg.StartContainer}
 
 		if err := a.agentState.startContainer(ctx, msg); err != nil {
 			log.WithError(err).Error("failed to update agent state")
@@ -309,34 +362,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
-	case actor.ChildFailed:
-		if !a.started {
-			// If we happen to fail before the agent has started and been registered with
-			// the resource manager, then nothing can be running on it. In this case we
-			// just fail outright and make it restart.
-			return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
-		}
-
-		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
-
-		a.socketDisconnected(ctx)
-		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
-
-	case actor.ChildStopped:
-		// If the socket has closed gracefully, there are really two cases:
-		//  * the agent is being brought down temporarily (software or config update)
-		//  * the agent is being brought down permanently
-		// Since the former is more frequent and it doesn't really hurt the latter for the agent to
-		// hang around for a bit on our side, we always treat gracefully socket closures as
-		// temporary disconnects.
-		if !a.started {
-			ctx.Self().Stop()
-			return nil
-		}
-
-		ctx.Log().Infof("websocket closed gracefully, awaiting reconnect: %s", msg.Child.Address())
-		a.socketDisconnected(ctx)
-		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
@@ -398,9 +423,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		ctx.Respond(a.agentState.getSlotsSummary(ctx))
 	case actor.PostStop:
 		if a.started {
-			// This normally will run on agent WebSocketConnected to populate
+			// This normally will run on agent WebSocketRequest to populate
 			// agentState.containerAllocation. There is technically still race here
-			// (and also in calling this in WebSocketConnected). We have no synchronization
+			// (and also in calling this in WebSocketRequest). We have no synchronization
 			// between allocation actors starting and registering themselves in the
 			// allocationmap and the lookup of allocationmap in restoreContainersField().
 			// Though this will likely run after agentReconnectWait which should
@@ -426,8 +451,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			if err := a.agentState.delete(); err != nil {
 				ctx.Log().WithError(err).Warnf("failed to delete agent state")
 			}
+
+			if a.socket != nil {
+				if err := a.socket.Close(); err != nil {
+					ctx.Log().WithError(err).Warnf("error while shutting down agent WebSocket")
+				}
+			}
 		} else {
-			ctx.Log().Info("agent dsconnected but wasn't started")
+			ctx.Log().Info("agent disconnected but wasn't started")
 		}
 		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:
@@ -447,7 +478,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 // mechanism, this will work.
 func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
 	ctx *actor.Context,
-	msg ws.WebSocketConnected,
+	msg actorapi.WebSocketRequest,
 ) {
 	// Check if the address is a loopback address.
 	if addr := net.ParseIP(strings.Trim(a.address, "[]")); addr != nil && addr.IsLoopback() {
@@ -501,17 +532,12 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			if err != nil {
 				log.WithError(err).
 					Error("change in agent devices was detected")
-				wsm := ws.WriteMessage{
-					Message: aproto.AgentMessage{
-						AgentShutdown: &aproto.AgentShutdown{
-							ErrMsg: aproto.ErrAgentMustReconnect.Error(),
-						},
+				a.socket.Outbox <- aproto.AgentMessage{
+					AgentShutdown: &aproto.AgentShutdown{
+						ErrMsg: aproto.ErrAgentMustReconnect.Error(),
 					},
 				}
-				if err = ctx.Ask(a.socket, wsm).Error(); err != nil {
-					log.WithError(err).Error("failed to tell agent to reconnect")
-					panic(err)
-				}
+
 				ctx.Self().Stop()
 				return
 			}
