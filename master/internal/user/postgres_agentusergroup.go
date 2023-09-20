@@ -12,21 +12,21 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func getAgentUserGroupFromUser(userID model.UserID) (*model.AgentUserGroup, error) {
+func getAgentUserGroupFromUser(
+	ctx context.Context,
+	userID model.UserID,
+) (*model.AgentUserGroup, error) {
 	var aug model.AgentUserGroup
-	err := db.Bun().NewSelect().Model(&aug).
-		Relation("RelatedUser").
-		Where("related_user.id = ?", userID).
-		Scan(context.TODO())
-	if err != nil {
-		if errors.Cause(err) == sql.ErrNoRows {
-			return nil, nil
-		}
-
+	switch err := db.Bun().NewSelect().Table("agent_user_groups").
+		Where("user_id = ?", userID).
+		Scan(ctx, &aug); {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, nil
+	case err != nil:
 		return nil, err
+	default:
+		return &aug, nil
 	}
-
-	return &aug, nil
 }
 
 type optionalAgentUserGroup struct {
@@ -37,25 +37,30 @@ type optionalAgentUserGroup struct {
 	GID   *int
 }
 
-// TODO(ilia): Bun me.
-func getAgentUserGroupFromWorkspaceID(workspaceID int) (*optionalAgentUserGroup, error) {
-	aug := optionalAgentUserGroup{}
-	err := db.Bun().NewRaw(`
-SELECT
-	uid, user_ as user, gid, group_ as group
-FROM workspaces WHERE id = ?`,
-		workspaceID).Scan(context.TODO(), &aug)
+func getAgentUserGroupFromWorkspaceID(
+	ctx context.Context,
+	workspaceID int,
+) (*optionalAgentUserGroup, error) {
+	var aug optionalAgentUserGroup
+	err := db.Bun().NewSelect().Table("workspaces").
+		ColumnExpr("uid, user_ AS user, gid, group_ AS group").
+		Where("id = ?", workspaceID).Scan(ctx, &aug)
+
 	return &aug, err
 }
 
-// GetAgentUserGroup returns AgentUserGroup for a user + a workspace ID.
-func GetAgentUserGroup(userID model.UserID, workspaceID int) (*model.AgentUserGroup, error) {
-	workspaceAug, err := getAgentUserGroupFromWorkspaceID(workspaceID)
+// GetAgentUserGroup returns AgentUserGroup for a user + (optional) workspace.
+func GetAgentUserGroup(
+	ctx context.Context,
+	userID model.UserID,
+	workspaceID int,
+) (*model.AgentUserGroup, error) {
+	workspaceAug, err := getAgentUserGroupFromWorkspaceID(ctx, workspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent user group from experiment: %w", err)
 	}
 
-	userAug, err := getAgentUserGroupFromUser(userID)
+	userAug, err := getAgentUserGroupFromUser(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent user group from user: %w", err)
 	}
@@ -64,7 +69,7 @@ func GetAgentUserGroup(userID model.UserID, workspaceID int) (*model.AgentUserGr
 		userAug = &config.GetMasterConfig().Security.DefaultTask
 	}
 
-	// Merge exp AUG and user AUG.
+	// Merge workspace AUG and user AUG.
 	result := model.AgentUserGroup{
 		UID:   userAug.UID,
 		User:  userAug.User,

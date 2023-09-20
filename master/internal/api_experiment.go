@@ -469,7 +469,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			defer func() { <-sema }()
 			defer wg.Done()
 
-			agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, workspaceIDs[i])
+			agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceIDs[i])
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return
@@ -1281,7 +1281,7 @@ func (a *apiServer) PatchExperiment(
 			if err != nil {
 				return nil, err
 			}
-			agentUserGroup, err := user.GetAgentUserGroup(*modelExp.OwnerID, workspaceID[0])
+			agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *modelExp.OwnerID, workspaceID[0])
 			if err != nil {
 				return nil, err
 			}
