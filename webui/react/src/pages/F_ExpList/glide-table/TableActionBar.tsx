@@ -155,7 +155,10 @@ const TableActionBar: React.FC<Props> = ({
   }, [experiments, project]);
 
   const selectedExperiments = useMemo(
-    () => Array.from(selectedExperimentIds).map((id) => experimentMap[id]),
+    () =>
+      Array.from(selectedExperimentIds).flatMap((id) =>
+        id in experimentMap ? [experimentMap[id]] : [],
+      ),
     [experimentMap, selectedExperimentIds],
   );
 
