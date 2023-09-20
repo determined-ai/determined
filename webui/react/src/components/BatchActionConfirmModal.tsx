@@ -8,7 +8,6 @@ import handleError from 'utils/error';
 interface Props {
   batchAction: ExperimentAction;
   itemName?: string;
-  isUnmanagedIncluded?: boolean;
   onConfirm: () => Promise<void>;
   onClose?: () => void;
 }
@@ -24,7 +23,6 @@ const DANGEROUS_BATCH_ACTIONS: ExperimentAction[] = [
 const BatchActionConfirmModalComponent: React.FC<Props> = ({
   batchAction,
   itemName = 'experiment',
-  isUnmanagedIncluded,
   onConfirm,
   onClose,
 }: Props) => {
@@ -46,11 +44,9 @@ const BatchActionConfirmModalComponent: React.FC<Props> = ({
       <div>
         Are you sure you want to <b>{batchAction.toLocaleLowerCase()}</b> all selected {itemName}s?
       </div>
-      {isUnmanagedIncluded && (
-        <div>
-          <small>{UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE}</small>
-        </div>
-      )}
+      <div>
+        <small>{UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE}</small>
+      </div>
     </Modal>
   );
 };
