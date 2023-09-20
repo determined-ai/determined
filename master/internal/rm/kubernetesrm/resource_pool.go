@@ -601,6 +601,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 	}
 
 	ctx.Log().Infof("resources are released for %s", msg.AllocationID)
+
 	group := k.groups[req.Group]
 	if group != nil {
 		k.slotsUsedPerGroup[group] -= req.SlotsNeeded
@@ -616,6 +617,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 			break
 		}
 	}
+	rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 }
 
 func (k *kubernetesResourcePool) getOrCreateGroup(
