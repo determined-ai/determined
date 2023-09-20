@@ -269,7 +269,7 @@ message BulkExperimentFilters {
   // Experiment ids to exclude when filters are used.
   repeated int32 excluded_experiment_ids = 8;
   // Limit experiments to those that are managed or unmanaged.
-  google.protobuf.BoolValue managed = 9;
+  optional bool managed = 9;
 }
 
 // Pause multiple experiments.
