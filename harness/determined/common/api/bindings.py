@@ -17969,6 +17969,8 @@ def get_GetUserSetting(
 def get_GetUsers(
     session: "api.Session",
     *,
+    active: "typing.Optional[bool]" = None,
+    admin: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
@@ -17977,6 +17979,8 @@ def get_GetUsers(
 ) -> "v1GetUsersResponse":
     """Get a list of users.
 
+    - active: Filter by status.
+    - admin: Filter by roles.
     - limit: Limit the number of projects. A value of 0 denotes no limit.
     - name: Filter by username or display name.
     - offset: Skip the number of projects before returning results. Negative values
@@ -17997,6 +18001,8 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
     """
     _params = {
+        "active": str(active).lower() if active is not None else None,
+        "admin": str(admin).lower() if admin is not None else None,
         "limit": limit,
         "name": name,
         "offset": offset,

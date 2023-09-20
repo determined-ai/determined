@@ -152,19 +152,43 @@ func (a *apiServer) GetUsers(
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
 	users := []model.FullUser{}
-	nameFilterExpr := "%" + req.Name + "%"
-	selectExpr := `
-		SELECT
-			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at, u.remote,
-			h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group, 
-			COALESCE(u.display_name, u.username) AS name
-		FROM users u
-			LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
-		WHERE ((? = '') OR u.display_name ILIKE ? OR u.username ILIKE ?)
-	`
-	query := selectExpr + fmt.Sprintf(" ORDER BY %s", orderExpr)
-	err := db.Bun().NewRaw(query,
-		req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
+
+	query := db.Bun().NewSelect().Model(&users).
+		ModelTableExpr("users as u").
+		Join("LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)").
+		Column("u.id").
+		Column("u.display_name").
+		Column("u.username").
+		Column("u.admin").
+		Column("u.active").
+		Column("u.modified_at").
+		Column("u.remote").
+		ColumnExpr("h.uid AS agent_uid").
+		ColumnExpr("h.gid AS agent_gid").
+		ColumnExpr("h.user_ AS agent_user").
+		ColumnExpr("h.group_ AS agent_group").
+		ColumnExpr("COALESCE(u.display_name, u.username) AS name")
+
+	if req.Name != "" {
+		nameFilterExpr := "%" + req.Name + "%"
+		query.Where("u.display_name ILIKE ? OR u.username ILIKE ?", nameFilterExpr, nameFilterExpr)
+	}
+	if req.Admin != nil {
+		if *req.Admin {
+			query.Where("u.admin = true")
+		} else {
+			query.Where("u.admin = false")
+		}
+	}
+	if req.Active != nil {
+		if *req.Active {
+			query.Where("u.active = true")
+		} else {
+			query.Where("u.active = false")
+		}
+	}
+
+	err := query.Order(orderExpr).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
