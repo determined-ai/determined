@@ -211,7 +211,8 @@ service Determined {
   // Patch multiple users' activation status.
   rpc PatchUsers(PatchUsersRequest) returns (PatchUsersResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/users"
+      patch: "/api/v1/users",
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"

@@ -6655,6 +6655,25 @@ export interface V1PatchUserResponse {
     user: V1User;
 }
 /**
+ * Update activation status for multiple users.
+ * @export
+ * @interface V1PatchUsersRequest
+ */
+export interface V1PatchUsersRequest {
+    /**
+     * The updated user IDs.
+     * @type {Array<number>}
+     * @memberof V1PatchUsersRequest
+     */
+    userIds: Array<number>;
+    /**
+     * Intended status (true to activate, false to deactivate).
+     * @type {boolean}
+     * @memberof V1PatchUsersRequest
+     */
+    activate: boolean;
+}
+/**
  * Response to PatchUsersRequest.
  * @export
  * @interface V1PatchUsersResponse
@@ -29323,10 +29342,15 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUsers(options: any = {}): FetchArgs {
+        patchUsers(body: V1PatchUsersRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUsers.');
+            }
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
@@ -29341,9 +29365,12 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -29671,11 +29698,12 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUsers(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUsers(options);
+        patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUsers(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -29859,11 +29887,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUsers(options?: any) {
-            return UsersApiFp(configuration).patchUsers(options)(fetch, basePath);
+        patchUsers(body: V1PatchUsersRequest, options?: any) {
+            return UsersApiFp(configuration).patchUsers(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -30006,12 +30035,13 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Patch multiple users' activation status.
+     * @param {V1PatchUsersRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public patchUsers(options?: any) {
-        return UsersApiFp(this.configuration).patchUsers(options)(this.fetch, this.basePath)
+    public patchUsers(body: V1PatchUsersRequest, options?: any) {
+        return UsersApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
     }
     
     /**

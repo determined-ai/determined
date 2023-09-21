@@ -9122,6 +9122,33 @@ class v1PatchUserResponse(Printable):
         }
         return out
 
+class v1PatchUsersRequest(Printable):
+    """Update activation status for multiple users."""
+
+    def __init__(
+        self,
+        *,
+        activate: bool,
+        userIds: "typing.Sequence[int]",
+    ):
+        self.activate = activate
+        self.userIds = userIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchUsersRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "activate": obj["activate"],
+            "userIds": obj["userIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "activate": self.activate,
+            "userIds": self.userIds,
+        }
+        return out
+
 class v1PatchUsersResponse(Printable):
     """Response to PatchUsersRequest."""
 
@@ -19327,6 +19354,8 @@ def patch_PatchUser(
 
 def patch_PatchUsers(
     session: "api.Session",
+    *,
+    body: "v1PatchUsersRequest",
 ) -> "v1PatchUsersResponse":
     """Patch multiple users' activation status."""
     _params = None
@@ -19334,7 +19363,7 @@ def patch_PatchUsers(
         method="PATCH",
         path="/api/v1/users",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
