@@ -62,7 +62,7 @@ export const makeToast = ({
         description
       )
     ) : undefined,
-    duration: 0,
+    duration,
     message: (
       <div className={css.message}>
         <Icon decorative name={getIconName(severity)} />
