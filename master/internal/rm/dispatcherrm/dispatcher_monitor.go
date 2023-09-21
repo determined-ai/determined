@@ -32,8 +32,8 @@ const (
 	errorLinesToDisplay      = 15
 	slotsValueNotAvailable   = 0
 	notAvailable             = "Not Available"
-	keyMissingErrorMessage   = "The '%s' key is missing from the job details for external job id %s"
-	invalidValueErrorMessage = "Invalid '%s' value '%s' for external job id %s: %s"
+	keyMissingErrorMessage   = "The '%s' key is missing from the job details for external job"
+	invalidValueErrorMessage = "Invalid '%s' value '%s' for external job"
 )
 
 // Keys for External Job Details Map.
@@ -178,7 +178,8 @@ func (m *launcherMonitor) notifyJobLaunched(dispatchID string) {
 		return
 	}
 
-	m.syslog.Errorf("Could not find dispatchID %s to mark as launched", dispatchID)
+	m.syslog.WithField("dispatch-id", dispatchID).
+		Error("could not find dispatch to mark as launched")
 }
 
 // removeJob removes the specified job from the collection of jobs whose status is monitored.
@@ -209,14 +210,16 @@ func (m *launcherMonitor) watch() {
 	for {
 		select {
 		case msg := <-m.newLauncherJob:
-			m.syslog.Infof("Starting monitoring of dispatch with DispatchID %s", msg.dispatcherID)
+			m.syslog.WithField("dispatch-id", msg.dispatcherID).
+				Info("starting monitoring of dispatch")
 			// Add job to collection of those being monitored.
 			m.addJobToMonitoredJobs(msg)
 
 		case msg := <-m.removeLauncherJob:
 			// Don't think the "removeLauncherJob" message is ever sent, but
 			// leaving code here in case we had plans to use it at some point.
-			m.syslog.Infof("Received removeLauncherJob message for dispatchID %s", msg.dispatcherID)
+			m.syslog.WithField("dispatch-id", msg.dispatcherID).
+				Info("received removeLauncherJob message for dispatch")
 
 			job, ok := m.getJobByDispatchID(msg.dispatcherID)
 
@@ -262,7 +265,7 @@ func (m *launcherMonitor) watch() {
 				go m.processWatchedJobs()
 			} else {
 				//nolint:lll
-				m.syslog.Debugf("Skipping calling the processWatchedJobs() goroutine, as the previous goroutine is still running")
+				m.syslog.Debug("skipping calling the processWatchedJobs() goroutine, as the previous goroutine is still running")
 			}
 		}
 	}
@@ -329,7 +332,8 @@ func (m *launcherMonitor) notifyContainerRunning(
 	job, ok := m.monitoredJobs.Load(dispatchID)
 
 	if !ok {
-		m.syslog.Errorf("Could not find dispatchID %s in the monitored jobs", dispatchID)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Error("could not find dispatch in the monitored jobs")
 		return
 	}
 
@@ -373,12 +377,12 @@ func (m *launcherMonitor) notifyContainerRunning(
 		// Two different containers running on two different nodes
 		// reported the same rank number. That is unexpected, since
 		// each container is supposed to have a unique rank.
-		m.syslog.Errorf("For dispatchID %s, received a notification that the container "+
-			"is running for rank %d from two different nodes, %s and %s",
-			dispatchID,
-			rank,
-			existingEntry.nodeName,
-			nodeName)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Errorf("received a notification that the container "+
+				"is running for rank %d from two different nodes, %s and %s",
+				rank,
+				existingEntry.nodeName,
+				nodeName)
 
 	default:
 		// A container reported its rank more than once. This is
@@ -386,11 +390,11 @@ func (m *launcherMonitor) notifyContainerRunning(
 		// notification that it's running.  Unless, for some reason,
 		// the Workload Manager (e.g., Slurm, PBS, etc), restarted
 		// the job.
-		m.syslog.Warnf("For dispatchID %s, received multiple notifications that the "+
-			"container is running for rank %d from node %s",
-			dispatchID,
-			rank,
-			existingEntry.nodeName)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Warnf("received multiple notifications that the "+
+				"container is running for rank %d from node %s",
+				rank,
+				existingEntry.nodeName)
 	}
 }
 
@@ -458,7 +462,8 @@ func (m *launcherMonitor) processWatchedJobs() {
 	// Loop through the jobs in the monitoredJobs map and update status accordingly
 	for _, dispatchID := range sortedDispatchIDs {
 		if job, ok = m.getJobByDispatchID(dispatchID); !ok {
-			m.syslog.Warnf("dispatcher_monitor did not find job for dispatchID %s", dispatchID)
+			m.syslog.WithField("dispatch-id", dispatchID).
+				Warn("could not find launched job for dispatch")
 			continue
 		}
 
@@ -517,7 +522,7 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 		WithField("hpc-job-id", hpcJobID).
 		WithField("native-state", nativeState).
 		WithField("state-reason-code", reasonCode).
-		Debugf("job state from HPC queue stats")
+		Debug("job state from HPC queue stats")
 
 	switch {
 	case nativeState == "PD" || strings.ToLower(nativeState) == "pending":
@@ -618,11 +623,11 @@ func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
 	if m.monitoredJobs.Len() == 0 {
 		return result // Nothing to get of interest in this case
 	}
-	m.syslog.Debugf("Fetching HPC queue state")
+	m.syslog.Debug("fetching HPC queue state")
 
 	dispatchInfo, r, err := m.apiClient.launchHPCQueueJob() //nolint:bodyclose
 	if err != nil {
-		m.syslog.Errorf(m.apiClient.handleLauncherError(r,
+		m.syslog.Error(m.apiClient.handleLauncherError(r,
 			"Failed to retrieve HPC job queue from launcher", err))
 		return result
 	}
@@ -631,13 +636,15 @@ func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
 	defer func() {
 		_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
 		if err != nil {
-			m.syslog.WithError(err).Errorf("failed to terminate dispatchID {%s}", dispatchID)
+			m.syslog.WithField("dispatch-id", dispatchID).
+				WithError(err).Error("failed to terminate dispatch")
 			return
 		}
 
 		_, err = m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
 		if err != nil {
-			m.syslog.WithError(err).Errorf("failed to delete dispatchID {%s}", dispatchID)
+			m.syslog.WithField("dispatch-id", dispatchID).
+				WithError(err).Error("failed to delete dispatch")
 			return
 		}
 	}()
@@ -645,12 +652,14 @@ func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
 	resp, _, err := m.apiClient.loadEnvironmentLog( //nolint:bodyclose
 		owner, dispatchID, "slurm-queue-info")
 	if err != nil {
-		m.syslog.WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
 		return result
 	}
 	resourcesBytes := []byte(resp)
 	if err = yaml.Unmarshal(resourcesBytes, &result); err != nil {
-		m.syslog.WithError(err).Errorf("failed to parse HPC job queue details")
+		m.syslog.WithField("dispatch-id", dispatchID).
+			WithError(err).Error("failed to parse HPC job queue details")
 		return result
 	}
 	m.syslog.Debugf("HPC queue state done, size %d", len(result))
@@ -683,14 +692,15 @@ func (m *launcherMonitor) markJobAsTerminated(dispatchID string) {
 	if ok {
 		job.jobWasTerminated = true
 	} else {
-		m.syslog.Tracef("Cannot mark job with dispatchID %s for termination, "+
-			"because it is not found in the monitored jobs",
-			dispatchID)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Trace("cannot mark dispatch job for termination, " +
+				"because it is not found in the monitored jobs")
 	}
 }
 
 func (m *launcherMonitor) removeJobFromMonitoredList(dispatchID string) {
-	m.syslog.Infof("Stopping monitoring of %s", dispatchID)
+	m.syslog.WithField("dispatch-id", dispatchID).
+		Info("stopping monitoring of dispatch")
 	m.monitoredJobs.Delete(dispatchID)
 	m.jobsToRemove.Delete(dispatchID)
 }
@@ -803,17 +813,17 @@ func (m *launcherMonitor) updateJobStatus(job *launcherJob) bool {
 	dispatchID := job.dispatcherID
 	owner := job.user
 
-	m.syslog.WithField("dispatch-id", dispatchID).Debug("Checking status of launcher job")
+	m.syslog.WithField("dispatch-id", dispatchID).Debug("checking status of launcher job")
 
 	resp, ok := m.getDispatchStatus(owner, dispatchID, job.launchInProgress)
 
 	// Dispatch was not found.
 	if !ok {
-		missingDispatchMsg := "The job was canceled"
+		missingDispatchMsg := "job was canceled"
 		if job.jobWasTerminated {
 			m.syslog.WithField("dispatch-id", dispatchID).Info(missingDispatchMsg)
 		} else {
-			missingDispatchMsg = "The job was lost"
+			missingDispatchMsg = "job was lost"
 			m.syslog.WithField("dispatch-id", dispatchID).Error(missingDispatchMsg)
 		}
 
@@ -856,11 +866,10 @@ func (m *launcherMonitor) updateJobStatus(job *launcherJob) bool {
 			exitMessages = append(exitMessages, errMessages...)
 		}
 
-		//nolint:lll
-		m.syslog.Debugf("For dispatchID %s, sending job termination status to DAI: exitCode=%d, messages=%s",
-			dispatchID,
-			exitStatus,
-			exitMessages)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Debugf("sending job termination status to DAI: exitCode=%d, messages=%s",
+				exitStatus,
+				exitMessages)
 
 		m.outbox <- DispatchExited{
 			DispatchID: dispatchID,
@@ -906,10 +915,11 @@ func (m *launcherMonitor) publishJobState(
 ) {
 	isPullingImage := notifyState == launcher.RUNNING && !m.allContainersRunning(job)
 
-	m.syslog.Debugf("For dispatchID %s, sending DAI a job state of %s (pulling=%t)",
-		dispatchID,
-		notifyState,
-		isPullingImage)
+	m.syslog.WithField("dispatch-id", dispatchID).
+		WithField("hpc-job-id", job.hpcJobID).
+		WithField("state", notifyState).
+		WithField("pulling", isPullingImage).
+		Debug("sending DAI a job state")
 
 	m.outbox <- DispatchStateChange{
 		DispatchID:     dispatchID,
@@ -941,7 +951,7 @@ func (m *launcherMonitor) getDispatchStatus(
 		if r != nil && r.StatusCode == 404 {
 			//nolint:lll
 			m.syslog.WithField("dispatch-id", dispatchID).
-				Infof("The job status could not be obtained because the launcher returned HTTP code 404")
+				Info("the job status could not be obtained because the launcher returned HTTP code 404")
 
 			// No details, but we know dispatch does not exist (false unless ignoreNotFound)
 			return launcher.DispatchInfo{}, ignoreNotFound
@@ -966,7 +976,9 @@ func (m *launcherMonitor) getDispatchStatus(
 		return launcher.DispatchInfo{}, true
 	}
 
-	m.syslog.Debugf("DispatchID %s state: %s", dispatchID, *resp.State)
+	m.syslog.WithField("dispatch-id", dispatchID).
+		WithField("state", *resp.State).
+		Debug("dispatch state")
 	// We have details, need to process them
 	return resp, true
 }
@@ -1045,9 +1057,10 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 			GetEnvironmentDetails(m.apiClient.withAuth(context.TODO()), job.user, dispatchID).
 			Execute() //nolint:bodyclose
 		if err != nil {
-			m.syslog.WithError(err).Warnf(
-				"For dispatchID %s, unable to access environment details, response {%v}",
-				dispatchID, resp)
+			m.syslog.WithField("dispatch-id", dispatchID).
+				WithError(err).Warnf(
+				"Unable to access environment details, response {%v}",
+				resp)
 			return []string{}, err
 		}
 		for _, p := range *manifest.Payloads {
@@ -1063,8 +1076,10 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 		Range_(logRange).
 		Execute() //nolint:bodyclose
 	if err != nil {
-		m.syslog.WithError(err).Warnf("For dispatchID %s, unable to access %s, response {%v}",
-			dispatchID, logFileName, httpResponse)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			WithField("log-file-name", logFileName).
+			WithError(err).
+			Warnf("Unable to access log file, response {%v}", httpResponse)
 		return []string{}, err
 	}
 	return strings.Split(logFile, "\n"), nil
@@ -1102,11 +1117,14 @@ func (m *launcherMonitor) getRequestedSlots(qJobID string, qJobDetails map[strin
 	// Return the first valid value.
 	for _, key := range keys {
 		if len(qJobDetails[key]) == 0 {
-			m.syslog.Warnf(keyMissingErrorMessage, key, qJobID)
+			m.syslog.WithField("hpc-job-id", qJobID).
+				Warnf(keyMissingErrorMessage, key)
 		} else {
 			requestedSlots, err = strconv.ParseInt(qJobDetails[key], 10, 32)
 			if err != nil {
-				m.syslog.Warnf(invalidValueErrorMessage, key, qJobDetails[key], qJobID, err.Error())
+				m.syslog.WithField("hpc-job-id", qJobID).
+					WithError(err).
+					Warnf(invalidValueErrorMessage, key, qJobDetails[key])
 				requestedSlots = slotsValueNotAvailable
 			}
 			if requestedSlots != slotsValueNotAvailable {
@@ -1123,12 +1141,14 @@ func (m *launcherMonitor) getSubmitTime(qJobID string, qJobDetails map[string]st
 	submitTime := time.Time{}
 	var err error
 	if len(qJobDetails[jobSubmitTime]) == 0 {
-		m.syslog.Warnf(keyMissingErrorMessage, jobSubmitTime, qJobID)
+		m.syslog.WithField("hpc-job-id", qJobID).
+			Warnf(keyMissingErrorMessage, jobSubmitTime)
 	} else {
 		submitTime, err = time.Parse(time.RFC3339, qJobDetails[jobSubmitTime])
 		if err != nil {
-			m.syslog.Warnf(invalidValueErrorMessage, jobSubmitTime, qJobDetails[jobSubmitTime],
-				qJobID, err.Error())
+			m.syslog.WithField("hpc-job-id", qJobID).
+				WithError(err).
+				Warnf(invalidValueErrorMessage, jobSubmitTime, qJobDetails[jobSubmitTime])
 			submitTime = time.Time{}
 		}
 	}
@@ -1158,7 +1178,7 @@ func (m *launcherMonitor) getJobSummary(
 		State: jobv1.State_STATE_UNSPECIFIED,
 	}
 	if len(qJobDetails[jobState]) == 0 {
-		m.syslog.Warnf(keyMissingErrorMessage, jobState, qJobID)
+		m.syslog.WithField("hpc-job-id", qJobID).Warnf(keyMissingErrorMessage, jobState)
 	} else {
 		jobSummary = &jobv1.JobSummary{
 			State: m.convertHpcStatus(qJobDetails[jobState]),
@@ -1175,7 +1195,7 @@ func (m *launcherMonitor) getValueFromJobDetails(
 ) string {
 	value := notAvailable
 	if len(qJobDetails[key]) == 0 {
-		m.syslog.Warnf(keyMissingErrorMessage, key, qJobID)
+		m.syslog.WithField("hpc-job-id", qJobID).Warnf(keyMissingErrorMessage, key)
 	} else {
 		value = qJobDetails[key]
 	}
@@ -1188,11 +1208,11 @@ func (m *launcherMonitor) convertExternalJobs(
 	qJobID string, qJobDetails map[string]string,
 ) *jobv1.Job {
 	if len(qJobID) == 0 {
-		m.syslog.Warn("Cannot convert the external job. Job ID is missing.")
+		m.syslog.Warn("cannot convert the external job, job ID is missing")
 		return nil
 	}
 	if qJobDetails == nil {
-		m.syslog.Warn("Cannot convert the external job. Job Details are missing.")
+		m.syslog.Warn("cannot convert the external job, job details are missing")
 		return nil
 	}
 
