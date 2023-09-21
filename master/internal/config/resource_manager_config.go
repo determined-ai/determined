@@ -112,8 +112,13 @@ func (a AgentResourceManagerConfig) Validate() []error {
 
 // KubernetesResourceManagerConfig hosts configuration fields for the kubernetes resource manager.
 type KubernetesResourceManagerConfig struct {
-	Namespace                string                  `json:"namespace"`
-	MaxSlotsPerPod           int                     `json:"max_slots_per_pod"`
+	Namespace string `json:"namespace"`
+
+	// Deprecated: this can be per resource pool now on taskContainerDefaults.
+	// This will always be the same as global
+	// task_container_defaults.kubernetes.max_slots_per_pod so use that.
+	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
+
 	MasterServiceName        string                  `json:"master_service_name"`
 	LeaveKubernetesResources bool                    `json:"leave_kubernetes_resources"`
 	DefaultScheduler         string                  `json:"default_scheduler"`
@@ -181,7 +186,6 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 	return []error{
-		check.GreaterThanOrEqualTo(k.MaxSlotsPerPod, 0, "max_slots_per_pod must be >= 0"),
 		checkSlotType,
 		checkCPUResource,
 	}
