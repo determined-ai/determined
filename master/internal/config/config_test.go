@@ -341,6 +341,18 @@ resource_manager:
   type: kubernetes
   max_slots_per_pod: 17
 `
+	rmZero := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 0
+`
+
 	taskDefaults := `
 db:
   user: config_file_user
@@ -354,13 +366,36 @@ task_container_defaults:
   kubernetes:
     max_slots_per_pod: 17
 `
-	for _, config := range []string{rm, taskDefaults} {
+	taskDefaultsZero := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: 0
+`
+	for _, c := range []struct {
+		config   string
+		expected int
+	}{
+		{rm, 17},
+		{rmZero, 0},
+		{taskDefaults, 17},
+		{taskDefaultsZero, 0},
+	} {
 		var unmarshaled Config
-		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		err := yaml.Unmarshal([]byte(c.config), &unmarshaled, yaml.DisallowUnknownFields)
 		require.NoError(t, err)
 		require.NoError(t, unmarshaled.Resolve())
-		require.Equal(t, 17, unmarshaled.ResourceConfig.ResourceManager.KubernetesRM.MaxSlotsPerPod)
-		require.Equal(t, 17, unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
+		require.Equal(t, c.expected,
+			*unmarshaled.ResourceConfig.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+		require.Equal(t, c.expected,
+			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
 	}
 }
 

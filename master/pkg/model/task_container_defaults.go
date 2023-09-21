@@ -94,7 +94,7 @@ func (c *TaskContainerDefaultsConfig) Validate() []error {
 
 // KubernetesTaskContainerDefaults is task container defaults specific to Kubernetes.
 type KubernetesTaskContainerDefaults struct {
-	MaxSlotsPerPod int `json:"max_slots_per_pod"`
+	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
 }
 
 // MergeIntoExpConfig sets any unset ExperimentConfig values from TaskContainerDefaults.

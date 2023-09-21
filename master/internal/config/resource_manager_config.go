@@ -117,7 +117,7 @@ type KubernetesResourceManagerConfig struct {
 	// Deprecated: this can be per resource pool now on taskContainerDefaults.
 	// This will always be the same as global
 	// task_container_defaults.kubernetes.max_slots_per_pod so use that.
-	MaxSlotsPerPod int `json:"max_slots_per_pod"`
+	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
 
 	MasterServiceName        string                  `json:"master_service_name"`
 	LeaveKubernetesResources bool                    `json:"leave_kubernetes_resources"`
