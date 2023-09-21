@@ -226,6 +226,21 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 		}
 	}
 
+	for k, v := range updatedSummaryMetrics {
+		switch v := v.(type) {
+		case model.JSONObj, map[string]any:
+		default:
+			log.Errorf("when full compute updating summary metric "+
+				"%+v path %s type %T value %+v is not a map, setting to empty map",
+				updatedSummaryMetrics,
+				k,
+				v,
+				v,
+			)
+			updatedSummaryMetrics[k] = model.JSONObj{}
+		}
+	}
+
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
 	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, trialID); err != nil {
 		return fmt.Errorf("rollback updating trial summary metrics: %w", err)
@@ -347,8 +362,26 @@ func (db *PgDB) _addTrialMetricsTx(
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
+
+		var summaryMetricsForGroup map[string]any
+		switch v := summaryMetrics[summaryMetricsJSONPath].(type) {
+		case model.JSONObj:
+			summaryMetricsForGroup = map[string]any(v)
+		case map[string]any:
+			summaryMetricsForGroup = v
+		default:
+			log.Errorf("summary metric "+
+				"%+v path %s type %T value %+v is not a map, setting to empty map",
+				summaryMetrics,
+				summaryMetricsJSONPath,
+				summaryMetrics[summaryMetricsJSONPath],
+				summaryMetrics[summaryMetricsJSONPath],
+			)
+
+			summaryMetricsForGroup = make(map[string]any)
+		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
+			summaryMetricsForGroup,
 			addedMetrics.AvgMetrics,
 		)
 
@@ -365,6 +398,21 @@ func (db *PgDB) _addTrialMetricsTx(
 			if searcherMetric != nil &&
 				m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
 				latestValidationID = &metricRowID
+			}
+		}
+
+		for k, v := range summaryMetrics {
+			switch v := v.(type) {
+			case model.JSONObj, map[string]any:
+			default:
+				log.Errorf("when updating summary metric "+
+					"%+v path %s type %T value %+v is not a map, setting to empty map",
+					summaryMetrics,
+					k,
+					v,
+					v,
+				)
+				summaryMetrics[k] = model.JSONObj{}
 			}
 		}
 
