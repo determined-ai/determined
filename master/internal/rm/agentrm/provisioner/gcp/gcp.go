@@ -20,6 +20,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const MAX_INSTANCE_NAME_LENGTH = 63
+
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
 // 1. A specific key/value pair label.
 // 2. Names of agents that are equal to the instance names.
@@ -164,7 +166,13 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 }
 
 func (c *gcpCluster) generateInstanceNamePattern() string {
-	return c.config.NamePrefix + petname.Generate(2, "-") + "-#####"
+	gen_name := c.config.NamePrefix + petname.Generate(2, "-")
+	suffix := "-#####"
+	// We make sure that the generated name is less than the max length
+	if len(gen_name) > MAX_INSTANCE_NAME_LENGTH-len(suffix) {
+		return gen_name[:MAX_INSTANCE_NAME_LENGTH-len(suffix)] + suffix
+	}
+	return gen_name + suffix
 }
 
 func (c *gcpCluster) List() ([]*model.Instance, error) {
