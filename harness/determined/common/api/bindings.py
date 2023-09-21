@@ -9122,6 +9122,29 @@ class v1PatchUserResponse(Printable):
         }
         return out
 
+class v1PatchUsersResponse(Printable):
+    """Response to PatchUsersRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1UserActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchUsersResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1UserActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1PatchWorkspace(Printable):
     """PatchWorkspace is a partial update to a workspace with all optional fields."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -14304,6 +14327,33 @@ class v1User(Printable):
             out["remote"] = self.remote
         return out
 
+class v1UserActionResult(Printable):
+    """Message for results of individual users in a multi-user action."""
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
+        return out
+
 class v1UserRoleAssignment(Printable):
     """UserRoleAssignment contains information about the users
     belonging to a role.
@@ -19274,6 +19324,25 @@ def patch_PatchUser(
     if _resp.status_code == 200:
         return v1PatchUserResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUser", _resp)
+
+def patch_PatchUsers(
+    session: "api.Session",
+) -> "v1PatchUsersResponse":
+    """Patch multiple users' activation status."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/users",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchUsersResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchUsers", _resp)
 
 def patch_PatchWorkspace(
     session: "api.Session",

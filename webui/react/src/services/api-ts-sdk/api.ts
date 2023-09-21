@@ -6655,6 +6655,19 @@ export interface V1PatchUserResponse {
     user: V1User;
 }
 /**
+ * Response to PatchUsersRequest.
+ * @export
+ * @interface V1PatchUsersResponse
+ */
+export interface V1PatchUsersResponse {
+    /**
+     * Details on success or error for each user.
+     * @type {Array<V1UserActionResult>}
+     * @memberof V1PatchUsersResponse
+     */
+    results: Array<V1UserActionResult>;
+}
+/**
  * PatchWorkspace is a partial update to a workspace with all optional fields.
  * @export
  * @interface V1PatchWorkspace
@@ -10454,6 +10467,25 @@ export interface V1User {
      * @memberof V1User
      */
     lastLogin?: Date;
+}
+/**
+ * Message for results of individual users in a multi-user action.
+ * @export
+ * @interface V1UserActionResult
+ */
+export interface V1UserActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1UserActionResult
+     */
+    error: string;
+    /**
+     * User ID.
+     * @type {number}
+     * @memberof V1UserActionResult
+     */
+    id: number;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
@@ -29290,6 +29322,36 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29608,6 +29670,24 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUsers(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29778,6 +29858,15 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(options?: any) {
+            return UsersApiFp(configuration).patchUsers(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29912,6 +30001,17 @@ export class UsersApi extends BaseAPI {
      */
     public patchUser(userId: number, body: V1PatchUser, options?: any) {
         return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch multiple users' activation status.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public patchUsers(options?: any) {
+        return UsersApiFp(this.configuration).patchUsers(options)(this.fetch, this.basePath)
     }
     
     /**
