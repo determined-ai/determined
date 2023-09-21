@@ -7,12 +7,19 @@
   :global {
     .icon-error {
       color: var(--theme-status-critical);
+      font-weight: bold;
     }
     .icon-warning {
       color: var(--theme-status-warning);
+      font-weight: bold;
     }
     .icon-info {
       color: var(--theme-status-active);
+      font-weight: bold;
+    }
+    .icon-checkmark {
+      color: var(--theme-status-success);
+      font-weight: bold;
     }
   }
 }

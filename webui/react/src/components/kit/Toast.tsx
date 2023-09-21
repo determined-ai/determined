@@ -37,6 +37,11 @@ export type ToastArgs = {
   duration?: number;
 };
 
+const getIconName = (s: Severity): IconName => {
+  if (s === 'Confirm') return 'checkmark';
+  return s.toLowerCase() as IconName;
+};
+
 export const makeToast = ({
   title,
   severity = 'Info',
@@ -57,10 +62,10 @@ export const makeToast = ({
         description
       )
     ) : undefined,
-    duration,
+    duration: 0,
     message: (
       <div className={css.message}>
-        <Icon decorative name={severity.toLowerCase() as IconName} />
+        <Icon decorative name={getIconName(severity)} />
         {title}
       </div>
     ),
