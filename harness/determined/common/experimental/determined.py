@@ -1,7 +1,8 @@
+import itertools
 import logging
 import pathlib
 import warnings
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import determined as det
 from determined.common import api, context, util, yaml
@@ -116,13 +117,11 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> Iterator[user.User]:
+    def list_users(self) -> List[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
         if not users_bindings:
-            yield from ()
-        assert users_bindings  # mypy needs help.
-        for user_b in users_bindings:
-            yield user.User._from_bindings(user_b, self._session)
+            return []
+        return [user.User._from_bindings(user_b, self._session) for user_b in users_bindings]
 
     def create_experiment(
         self,
@@ -198,9 +197,8 @@ class Determined:
         states: Optional[List[experiment.ExperimentState]] = None,
         name: Optional[str] = None,
         project_id: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Iterator[experiment.Experiment]:
-        """Get an iterable of experiments (:class:`~determined.experimental.Experiment`).
+    ) -> List[experiment.Experiment]:
+        """Get a list of experiments (:class:`~determined.experimental.Experiment`).
 
         Arguments:
             sort_by: Which field to sort by. See
@@ -214,13 +212,9 @@ class Determined:
             users: Only return experiments belonging to these users. Defaults to all users.
             states: Only return experiments that are in these states.
             project_id: Only return experiments associated with this project ID.
-            limit: Specifies maximum page size of the response from the server. When there are
-                many experiments to return, a lower page size can result in shorter latency at the
-                expense of more HTTP requests to the server. Defaults to no maximum.
 
         Returns:
-            An Iterator type that lazily instantiates response objects. To
-            get all experiments at once, call list(list_experiments()).
+            A list of experiments.
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
@@ -233,17 +227,17 @@ class Determined:
                 labels=labels,
                 experimentIdFilter_incl=experiment_ids,
                 offset=offset,
-                limit=limit,
+                limit=None,
                 name=name,
                 states=[state._to_bindings() for state in states] if states else None,
                 users=users,
                 projectId=project_id,
             )
 
-        resps = api.read_paginated(get_with_offset)
-        for r in resps:
-            for e in r.experiments:
-                yield experiment.Experiment._from_bindings(e, self._session)
+        bindings_exps: Iterable[bindings.v1Experiment] = itertools.chain.from_iterable(
+            r.experiments for r in api.read_paginated(get_with_offset)
+        )
+        return [experiment.Experiment._from_bindings(b, self._session) for b in bindings_exps]
 
     def get_trial(self, trial_id: int) -> trial.Trial:
         """
@@ -372,10 +366,9 @@ class Determined:
         model_id: Optional[int] = None,
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
-        limit: Optional[int] = None,
-    ) -> Iterator[model.Model]:
+    ) -> List[model.Model]:
         """
-        Get an iterable of all models in the model registry.
+        Get a list of all models in the model registry.
 
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
@@ -389,13 +382,9 @@ class Determined:
                 only include the model with this unique numeric id.
             workspace_names: Only return models with names in this list.
             workspace_ids: Only return models with workspace IDs in this list.
-            limit: Optional field that sets maximum page size of the response from the server.
-                When there are many models to return, a lower page size can result in shorter
-                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
 
         Returns:
-            An Iterator type that lazily instantiates response objects. To
-            get all models at once, call list(list_models()).
+            A list of models.
         """
 
         # TODO: more parameters?
@@ -414,18 +403,18 @@ class Determined:
                 offset=offset,
                 orderBy=order_by._to_bindings(),
                 sortBy=sort_by._to_bindings(),
-                limit=limit,
+                limit=None,
                 userIds=None,
                 users=None,
                 workspaceNames=workspace_names,
                 workspaceIds=workspace_ids,
             )
 
-        resps = api.read_paginated(get_with_offset)
+        bindings_models: Iterable[bindings.v1Model] = itertools.chain.from_iterable(
+            r.models for r in api.read_paginated(get_with_offset)
+        )
 
-        for r in resps:
-            for m in r.models:
-                yield model.Model._from_bindings(m, self._session)
+        return [model.Model._from_bindings(m, self._session) for m in bindings_models]
 
     def get_model_labels(self) -> List[str]:
         """
