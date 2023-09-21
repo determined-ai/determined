@@ -361,6 +361,11 @@ export interface PatchUserParams {
   userParams: Api.V1PatchUser;
 }
 
+export interface PatchUsersParams {
+  activate: boolean;
+  userIds: number[];
+}
+
 export interface CreateGroupsParams {
   addUsers?: Array<number>;
   name: string;

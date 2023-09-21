@@ -26,7 +26,7 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import { getGroups, patchUser } from 'services/api';
+import { getGroups, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
@@ -76,7 +76,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
   const onToggleActive = useCallback(async () => {
     try {
-      await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
+      await patchUsers({ userIds: [user.id], activate: !user.isActive });
       makeToast({
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
