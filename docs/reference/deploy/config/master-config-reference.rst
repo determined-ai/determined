@@ -154,8 +154,8 @@ The default bind mounts to pass to the Docker container. Ignored by resource man
 ``kubernetes``
 ==============
 
--  ``max_slots_per_pod`` See :ref:`resource_manager.max_slots
-   <master-config-reference-max-slots-per-pod>` for more details.
+``max_slots_per_pod`` See :ref:`resource_manager.max_slots
+<master-config-reference-max-slots-per-pod>` for more details.
 
 ``slurm``
 =========

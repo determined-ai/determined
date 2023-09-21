@@ -312,10 +312,5 @@ telemetry:
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default
-
-  #- pool_name: second_pool
-  #  task_container_defaults:
-  #    kubernetes:
-  #        max_slots_per_pod: 4
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
