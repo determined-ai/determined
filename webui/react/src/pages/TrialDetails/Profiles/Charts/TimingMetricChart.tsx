@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
@@ -9,6 +8,7 @@ import {
   getScientificNotationTickValues,
   getUnitForMetricName,
 } from 'pages/TrialDetails/Profiles/utils';
+import { XAxisDomain } from 'types';
 import handleError from 'utils/error';
 
 export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {

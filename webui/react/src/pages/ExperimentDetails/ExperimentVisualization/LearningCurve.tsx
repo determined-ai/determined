@@ -2,8 +2,7 @@ import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { LineChart, Serie } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import { LineChart } from 'components/kit/LineChart';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import Message, { MessageType } from 'components/Message';
@@ -28,6 +27,8 @@ import {
   metricTypeParamMap,
   RunState,
   Scale,
+  Serie,
+  XAxisDomain,
 } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { flattenObject, isPrimitive } from 'utils/data';

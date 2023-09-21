@@ -25,9 +25,8 @@ import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
-import { LineChart, Serie } from 'components/kit/LineChart';
+import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
@@ -58,7 +57,7 @@ import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { BrandingType } from 'stores/determinedInfo';
-import { MetricType, Note, User, ValueOf } from 'types';
+import { MetricType, Note, User, ValueOf, XAxisDomain, Serie } from 'components/kit/internal/types';
 import {
   Background,
   Brand,
