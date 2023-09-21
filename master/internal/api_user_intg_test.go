@@ -100,7 +100,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	return api, *userModel, ctx
 }
 
-func fetchUserIds(t *testing.T, api *apiServer, ctx context.Context, req *apiv1.GetUsersRequest) []model.UserID {
+func fetchUserIds(ctx context.Context, t *testing.T, api *apiServer, req *apiv1.GetUsersRequest) []model.UserID {
 	resp, err := api.GetUsers(ctx, req)
 	require.NoError(t, err)
 	var ids []model.UserID
@@ -179,19 +179,19 @@ func TestFilterUser(t *testing.T) {
 		nil,
 	)
 
-	userIds := fetchUserIds(t, api, ctx, &apiv1.GetUsersRequest{})
+	userIds := fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{})
 	for _, u := range []model.UserID{userID1, userID2, userID3, userID4} {
 		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
-	userIds = fetchUserIds(t, api, ctx, &apiv1.GetUsersRequest{Admin: ptrs.Ptr(true)})
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Admin: ptrs.Ptr(true)})
 	for _, u := range []model.UserID{userID3, userID4} {
 		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
-	userIds = fetchUserIds(t, api, ctx, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true)})
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true)})
 	for _, u := range []model.UserID{userID2, userID3} {
 		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
-	userIds = fetchUserIds(t, api, ctx, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true), Admin: ptrs.Ptr(true)})
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true), Admin: ptrs.Ptr(true)})
 	for _, u := range []model.UserID{userID3} {
 		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
