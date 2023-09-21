@@ -174,18 +174,10 @@ func (a *apiServer) GetUsers(
 		query.Where("u.display_name ILIKE ? OR u.username ILIKE ?", nameFilterExpr, nameFilterExpr)
 	}
 	if req.Admin != nil {
-		if *req.Admin {
-			query.Where("u.admin = true")
-		} else {
-			query.Where("u.admin = false")
-		}
+		query.Where("u.admin = ?", *req.Admin)
 	}
 	if req.Active != nil {
-		if *req.Active {
-			query.Where("u.active = true")
-		} else {
-			query.Where("u.active = false")
-		}
+		query.Where("u.active = ?", *req.Active)
 	}
 
 	err := query.Order(orderExpr).Scan(ctx)

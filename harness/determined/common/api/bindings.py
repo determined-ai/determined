@@ -17975,7 +17975,6 @@ def get_GetUsers(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    roleId: "typing.Optional[int]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     """Get a list of users.
@@ -17991,7 +17990,6 @@ denote number of projects to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
-    - roleId: Filter by rabc cluster scoped roles.
     - sortBy: Sort users by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
@@ -18009,7 +18007,6 @@ denote number of projects to skip from the end before returning results.
         "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "roleId": roleId,
         "sortBy": sortBy.value if sortBy is not None else None,
     }
     _resp = session._do_request(

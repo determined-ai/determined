@@ -43,8 +43,6 @@ message GetUsersRequest {
   optional bool active = 6;
   // Filter by roles.
   optional bool admin = 7;
-  // Filter by rabc cluster scoped roles.
-  optional int32 roleId = 8;
 }
 // Response to GetUsersRequest.
 message GetUsersResponse {
