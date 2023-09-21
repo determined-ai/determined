@@ -9,13 +9,22 @@ data being transmitted from being modified or read while it is in transit and al
 verify the identity of the server (in this case, the Determined master). Determined can be
 configured to use TLS for all connections made to the master. That means that all CLI and WebUI
 connections will be secured by TLS, as well as connections from agents and tasks to the master.
-Communication between agents that occur as part of :ref:`distributed training <multi-gpu-training>`
-will not use TLS, nor will proxied connections from the master to a :ref:`TensorBoards
-<tensorboards>` or :ref:`notebook <notebooks>` instance.
+
+.. note::
+
+   Communication between agents that occur as part of :ref:`distributed training
+   <multi-gpu-training>` will not use TLS, nor will proxied connections from the master to a
+   :ref:`TensorBoards <tensorboards>` or :ref:`notebook <notebooks>` instance.
 
 After the master and agent are configured to use TLS, no additional configuration is needed for
 tasks run in the cluster. In shells and notebooks, the Determined Python libraries automatically
 make connections to the master using TLS with the appropriate certificate.
+
+.. note::
+
+   This guide shows you one way to configure TLS.
+
+.. _tls-master:
 
 **********************
  Master Configuration
@@ -30,6 +39,8 @@ When TLS is in use, the master will listen on TCP port 8443 by default, rather t
 
    If the master's certificate is not signed by a well-known CA, then the configured certificate
    file must contain a full certificate chain that goes all the way to a root certificate.
+
+.. _tls-agents:
 
 **********************
  Agents Configuration
@@ -53,6 +64,8 @@ the option should be set to the DNS name contained in the certificate.
 
 When :ref:`dynamic agents <elastic-infrastructure>` and TLS are both in use, the dynamic agents that
 the master creates will automatically be configured to connect securely to the master over TLS.
+
+.. _tls-cli:
 
 *******************
  CLI Configuration

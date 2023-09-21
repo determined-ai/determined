@@ -6,8 +6,10 @@
  Setting Up Clients
 ####################
 
-You can set up clients for interacting with the Determined Master through the Determined CLI. Follow
-these instructions to set up clients.
+Setting up clients for interacting with the Determined master through the CLI provides users with
+efficient access for task execution without having to go through the WebUI.
+
+Follow these step-by-step instructions to set up clients.
 
 **************************************************
  Step 1 - Set ``DET_MASTER`` Environment Variable

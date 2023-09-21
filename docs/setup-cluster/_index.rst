@@ -15,6 +15,11 @@ Install and set up Determined using the cluster deployment guide for your enviro
 
    To configure your cluster, visit :ref:`cluster-configuration`.
 
+.. note::
+
+   Administrators should first consult the :ref:`advanced-setup-checklist` when setting up
+   Determined for an organization.
+
 *******
  Local
 *******
@@ -74,6 +79,7 @@ Enable Determined to submit jobs to a Slurm cluster.
    :hidden:
 
    Quick Installation <../get-started/basic>
+   Advanced Installation <setup-checklists/_index>
    Deploy on Prem <on-prem/_index>
    Deploy on AWS <aws/_index>
    Deploy on GCP <gcp/_index>

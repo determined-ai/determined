@@ -1,3 +1,5 @@
+.. _configure-prometheus-grafana:
+
 .. _prometheus-grafana:
 
 ######################
