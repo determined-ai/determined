@@ -2637,7 +2637,7 @@ const ToastSection: React.FC = () => {
             Open a toast with link
           </Button>
           <Button onClick={() => makeToast({ severity: 'Info', title: 'Compact notification' })}>
-            Open a compact toast
+            Open a toast without description
           </Button>
         </Space>
       </AntDCard>
