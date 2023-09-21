@@ -168,16 +168,17 @@ func (c *launcherAPIClient) terminateDispatch(
 	defer recordAPITiming("terminate")()
 	defer recordAPIErr("terminate")(err)
 
+	log := c.log.WithField("dispatch-id", id)
 	info, resp, err = c.RunningApi.
 		TerminateRunning(c.withAuth(context.TODO()), owner, id).
 		Force(true).Execute() //nolint:bodyclose
 	switch {
 	case err != nil && resp != nil && resp.StatusCode == 404:
-		c.log.Debugf("call to terminate missing dispatch %s: %s", id, err)
+		log.WithError(err).Debug("attempt to terminate dispatch but it is gone")
 	case err != nil:
 		return launcher.DispatchInfo{}, nil, fmt.Errorf("terminating dispatch %s: %w", id, err)
 	default:
-		c.log.Debugf("terminated dispatch %s", id)
+		log.Debug("terminated dispatch")
 	}
 	return info, resp, nil
 }
@@ -185,18 +186,20 @@ func (c *launcherAPIClient) terminateDispatch(
 func (c *launcherAPIClient) deleteDispatch(owner, id string) (resp *http.Response, err error) {
 	defer recordAPITiming("delete_env")()
 	defer recordAPIErr("delete_env")(err)
-	c.log.Debugf("deleting environment with DispatchID %s", id)
+
+	log := c.log.WithField("dispatch-id", id)
+	log.Debug("deleting environment")
 
 	resp, err = c.MonitoringApi.
 		DeleteEnvironment(c.withAuth(context.TODO()), owner, id).
 		Execute() //nolint:bodyclose
 	switch {
 	case err != nil && resp != nil && resp.StatusCode == 404:
-		c.log.Debugf("try to delete environment with DispatchID %s but it is gone", id)
+		log.Debug("try to delete environment but it is gone")
 	case err != nil:
 		return nil, fmt.Errorf("removing environment for Dispatch ID %s: %w", id, err)
 	default:
-		c.log.Debugf("deleted environment with DispatchID %s", id)
+		log.Debug("deleted environment")
 	}
 	return resp, nil
 }

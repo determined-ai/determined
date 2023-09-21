@@ -186,7 +186,7 @@ func New(
 		jobWatcher: watcher,
 	}
 
-	m.syslog.Info("Starting dispatcher resource manager")
+	m.syslog.Info("starting dispatcher resource manager")
 	if err := checkVersionNow(context.TODO(), m.syslog, m.apiClient); err != nil {
 		log.Fatal(err)
 	}
@@ -227,20 +227,22 @@ func (m *DispatcherResourceManager) DeleteJob(
 	// Under normal conditions dispatches are removed on termination of the job
 	// This path allows the cleanup of dispatches associated with a job under
 	// exceptional conditions (debug mode, crashes, etc).
-	m.syslog.Infof("Delete job %s", string(msg.JobID))
+	m.syslog.WithField("job-id", msg.JobID).Info("delete job")
 
 	dispatches, err := db.ListDispatchesByJobID(context.TODO(), string(msg.JobID))
 	if err != nil {
-		m.syslog.WithError(err).Errorf(
-			"Failed to retrieve the DispatchIDs associated with Job %s",
-			msg.JobID)
+		m.syslog.WithField("job-id", msg.JobID).WithError(err).Error(
+			"failed to retrieve the dispatches associated with job")
 		return sproto.DeleteJobResponseOf(err), nil
 	}
 	for _, dispatch := range dispatches {
-		m.syslog.Debugf("Found dispatch %s associated with job %s", dispatch.DispatchID, msg.JobID)
+		m.syslog.
+			WithField("job-id", msg.JobID).
+			WithField("dispatch-id", dispatch.DispatchID).
+			Debug("found dispatch associated with job")
 		go m.removeDispatchEnvironment(dispatch.ImpersonatedUser, dispatch.DispatchID)
 	}
-	m.syslog.Debugf("Delete job successful %s", msg.JobID)
+	m.syslog.WithField("job-id", msg.JobID).Debug("delete job successful")
 	return sproto.EmptyDeleteJobResponse(), nil
 }
 
@@ -252,7 +254,8 @@ func (m *DispatcherResourceManager) ExternalPreemptionPending(
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.syslog.Infof("PendingPreemption of %s.  Terminating.", msg.AllocationID)
+	m.syslog.WithField("allocation-id", msg.AllocationID).
+		Info("pending preemption of allocation, terminating")
 	allocReq, ok := m.reqList.TaskByID(msg.AllocationID)
 	if ok {
 		rmevents.Publish(allocReq.AllocationID, &sproto.ReleaseResources{
@@ -260,7 +263,8 @@ func (m *DispatcherResourceManager) ExternalPreemptionPending(
 			ForcePreemption: true,
 		})
 	} else {
-		m.syslog.Errorf("unable to find Allocation actor for AllocationID %s", msg.AllocationID)
+		m.syslog.WithField("allocation-id", msg.AllocationID).
+			Errorf("unable to find allocation actor for allocation")
 	}
 	return nil
 }
@@ -349,8 +353,8 @@ func (m *DispatcherResourceManager) GetJobQ(
 	defer m.mu.Unlock()
 	if len(strings.TrimSpace(msg.ResourcePool)) == 0 {
 		msg.ResourcePool = *m.rmConfig.DefaultComputeResourcePool
-		m.syslog.Debugf("No resource pool name provided. Selected the default compute pool %s",
-			msg.ResourcePool)
+		m.syslog.WithField("resource-pool", msg.ResourcePool).
+			Trace("no resource pool name provided, selected the default compute pool")
 	}
 	var reqs []*sproto.AllocateRequest
 	for it := m.reqList.Iterator(); it.Next(); {
@@ -369,7 +373,8 @@ func (m *DispatcherResourceManager) GetJobQStats(
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.syslog.Debugf("GetJobQStats for resource pool %s", msg.ResourcePool)
+	m.syslog.WithField("resource-pool", msg.ResourcePool).
+		Debug("GetJobQStats for resource pool")
 	// TODO(HAL-2863): Fill this in for the given pool as discerned from the slurm resources
 	// info job.
 	return tasklist.JobStats(m.reqList), nil
@@ -385,7 +390,7 @@ func (m *DispatcherResourceManager) GetJobQueueStatsRequest(
 	defer m.mu.Unlock()
 
 	// TODO(HAL-2863): Fill this in per-pool as discerned from the slurm resources info job.
-	m.syslog.Debugf("GetJobQueueStatsRequest, pool count %d", len(msg.ResourcePools))
+	m.syslog.Tracef("GetJobQueueStatsRequest, pool count %d", len(msg.ResourcePools))
 
 	var resp apiv1.GetJobQueueStatsResponse
 	// If no list of resource pools has been specified, return data for all pools.
@@ -505,7 +510,7 @@ func (m *DispatcherResourceManager) getLauncherProvidedPools(
 			basePoolName := pool.Provider.HPC.Partition
 			basePool, found := poolNameMap[basePoolName]
 			if !found {
-				m.syslog.Errorf("Resource pool %s specifies provider.partition '%s' that does not exist",
+				m.syslog.Errorf("resource pool %s specifies provider.partition '%s' that does not exist",
 					pool.PoolName, basePoolName)
 				continue
 			}
@@ -875,7 +880,7 @@ func (m *DispatcherResourceManager) handleDispatchExited(msg DispatchExited) {
 	// remove it so that we don't send a request to the launcher to
 	// terminate a job that already completed.
 	if m.jobCancelQueue.Delete(string(allocationID)) {
-		log.Info("Job completed while still in cancelation queue. Removed job from cancelation queue.")
+		log.Info("job completed while still in cancelation queue, removed job from cancelation queue")
 	}
 
 	m.mu.Lock()
@@ -883,7 +888,7 @@ func (m *DispatcherResourceManager) handleDispatchExited(msg DispatchExited) {
 
 	task, ok := m.reqList.TaskByID(allocationID)
 	if !ok {
-		log.Warnf("received DispatchExited for dispatch unknown to task list: %s", allocationID)
+		log.Warn("received DispatchExited for dispatch unknown to task list")
 		return
 	}
 
@@ -934,14 +939,14 @@ func (m *DispatcherResourceManager) jobCancelQueueWorker(workerID int) {
 			m.syslog.WithField("worker-id", workerID).
 				WithField("allocation-id", msg.AllocationID).
 				WithField("queue-size", m.jobCancelQueue.Length()).
-				Debug("Job cancel queue worker found request")
+				Debug("job cancel queue worker found request")
 			m.stopLauncherJob(msg)
 			continue
 		}
 
 		// Should never hit this case, but log a warning if we do.
 		m.syslog.WithField("worker-id", workerID).
-			Warn("Job cancel queue worker did not find any requests")
+			Warn("job cancel queue worker did not find any requests")
 	}
 }
 
@@ -1179,8 +1184,7 @@ func (m *DispatcherResourceManager) DispatchStateChange(msg DispatchStateChange)
 
 	alloc := m.reqList.Allocation(task.AllocationID)
 	if len(alloc.Resources) != 1 {
-		log.WithField("allocation-id", task.AllocationID).
-			Warnf("allocation has malformed resources: %v", alloc)
+		log.Warnf("allocation has malformed resources: %v", alloc)
 		return
 	}
 
@@ -1191,7 +1195,7 @@ func (m *DispatcherResourceManager) DispatchStateChange(msg DispatchStateChange)
 		m.dispatchIDToHPCJobID.Store(msg.DispatchID, msg.HPCJobID)
 
 		log.WithField("hpc-job-id", msg.HPCJobID).
-			Debug("Received HPC job ID for job.")
+			Debug("received HPC job ID for dispatch")
 	}
 
 	r := maps.Values(alloc.Resources)[0]
@@ -1245,7 +1249,7 @@ func (m *DispatcherResourceManager) getAssociatedTask(
 				return task
 			}
 		}
-		log.Warnf("received message for dispatch unknown to task list: %s", allocationID)
+		log.WithField("dispatch-id", dispatchID).Warn("received message for dispatch unknown to task list")
 		return nil
 	}
 	return task
@@ -1286,7 +1290,7 @@ func (m *DispatcherResourceManager) dispatchExited(
 		)
 	}
 
-	log.Infof("Dispatch exited with exit code %d", msg.ExitCode)
+	log.Infof("dispatch exited with exit code %d", msg.ExitCode)
 
 	rmevents.Publish(task.AllocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:      rID,
@@ -1300,13 +1304,11 @@ func (m *DispatcherResourceManager) dispatchExited(
 	// Dispatch ID to clean up the dispatcher environments for the job.
 	dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), allocationID)
 	if err != nil {
-		m.syslog.WithError(err).Errorf(
-			"Failed to retrieve the DispatchIDs associated with AllocationID %s",
-			allocationID)
+		log.WithError(err).
+			Error("failed to retrieve the dispatches")
 		return
 	}
-	m.syslog.Debugf("Found %d jobs associated with AllocationID %s",
-		len(dispatches), allocationID)
+	log.Debugf("found %d dispatches", len(dispatches))
 
 	// Cleanup all the dispatcher environments associated with current allocation
 	for _, dispatch := range dispatches {
@@ -1314,9 +1316,8 @@ func (m *DispatcherResourceManager) dispatchExited(
 		impersonatedUser := dispatch.ImpersonatedUser
 
 		if m.syslog.Logger.Level < logrus.DebugLevel {
-			m.syslog.WithField("allocation-id", allocationID).Infof(
-				"Deleting dispatcher environment for job with DispatchID %s initiated by %s",
-				dispatchID, impersonatedUser)
+			log.WithField("impersonated-user", impersonatedUser).
+				Infof("deleting dispatcher environment")
 
 			// Cleanup the dispatcher environment
 			m.removeDispatchEnvironment(impersonatedUser, dispatchID)
@@ -1335,8 +1336,10 @@ func (m *DispatcherResourceManager) terminateAndDeleteDispatch(
 	dispatchID string,
 	impersonatedUser string,
 ) {
-	m.syslog.Infof(
-		"Terminating job with DispatchID %s initiated by %s", dispatchID, impersonatedUser)
+	log := m.syslog.WithField("dispatch-id", dispatchID)
+
+	log.WithField("impersonated-user", impersonatedUser).
+		Info("terminating dispatch job initiated by user")
 
 	if m.terminateDispatcherJob(dispatchID, impersonatedUser, false) {
 		// Do not remove the dispatch environment if the job is being
@@ -1350,9 +1353,7 @@ func (m *DispatcherResourceManager) terminateAndDeleteDispatch(
 		// gets a terminatal state from the launcher, it will take care
 		// of removing the dispatch environment at that time.
 		if m.jobWatcher.isJobBeingMonitored(dispatchID) {
-			m.syslog.Debugf(
-				"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
-				dispatchID)
+			log.Debug("not removing environment for dispatch because job is being monitored")
 		} else {
 			// If we are here, then we are likely being called from
 			// startup, as opposed to a user explicitly canceling
@@ -1370,15 +1371,17 @@ func (m *DispatcherResourceManager) terminateAndDeleteDispatch(
 func (m *DispatcherResourceManager) waitForDispatchTerminalState(
 	impersonatedUser string, dispatchID string,
 ) {
+	log := m.syslog.WithField("dispatch-id", dispatchID)
+
 	for i := 0; i < 20; i++ {
 		if m.jobWatcher.isDispatchInProgress(impersonatedUser, dispatchID) {
-			m.syslog.Debugf("Dispatch %s still active, waiting for termination.", dispatchID)
+			log.Debugf("dispatch still active, waiting for termination")
 			time.Sleep(6 * time.Second)
 		} else {
 			return
 		}
 	}
-	m.syslog.Warnf("Dispatch %s still active, but wait time exceeded.  Continuing...", dispatchID)
+	log.Warn("dispatch still active, but wait time exceeded, continuing...")
 }
 
 func (m *DispatcherResourceManager) startLauncherJob(
@@ -1399,7 +1402,7 @@ func (m *DispatcherResourceManager) startLauncherJob(
 	m.syslog.WithField("allocation-id", msg.AllocationID).
 		WithField("description", msg.Spec.Description).
 		WithField("scheduled-launches", m.scheduledLaunches.Len()).
-		Info("Received request to launch job")
+		Info("received request to launch job")
 
 	hpcDetails, err := m.hpcDetailsCache.load()
 	if err != nil {
@@ -1428,7 +1431,7 @@ func (m *DispatcherResourceManager) startLauncherJob(
 	tresSupported := m.rmConfig.TresSupported
 	gresSupported := m.rmConfig.GresSupported
 	if m.rmConfig.TresSupported && !m.rmConfig.GresSupported {
-		m.syslog.Warnf("tres_supported: true cannot be used when " +
+		m.syslog.Warn("tres_supported: true cannot be used when " +
 			"gres_supported: false is specified. Use tres_supported: false instead.")
 		tresSupported = false
 	}
@@ -1472,9 +1475,9 @@ func (m *DispatcherResourceManager) startLauncherJob(
 		})
 	}
 
-	m.syslog.WithField("allocation-id", msg.AllocationID).
+	m.syslog.WithField("dispatch-id", dispatchID).
 		WithField("description", msg.Spec.Description).
-		Infof("DispatchID is %s", dispatchID)
+		Info("dispatch created")
 
 	// Pre-register dispatchID (which is now the AllocationID) so we can
 	// handle events from the launched job and insert the dispatch into
@@ -1486,7 +1489,8 @@ func (m *DispatcherResourceManager) startLauncherJob(
 		AllocationID:     req.AllocationID,
 		ImpersonatedUser: impersonatedUser,
 	}); err != nil {
-		m.syslog.WithError(err).Errorf("failed to persist dispatch: %v", dispatchID)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			WithError(err).Errorf("failed to persist dispatch")
 	}
 
 	// Pre-register dispatchID (which is now the AllocationID) with the job
@@ -1499,13 +1503,14 @@ func (m *DispatcherResourceManager) startLauncherJob(
 
 	// Failed launch, clear pre-registered dispatchID==AllocationID
 	if err != nil {
-		m.syslog.WithField("allocation-id", msg.AllocationID).
+		m.syslog.WithField("dispatch-id", dispatchID).
 			WithField("description", msg.Spec.Description).
-			Infof("Remove DispatchID from failed launch %s", dispatchID)
+			Infof("remove dispatch from failed launch")
 
 		_, dberr := db.DeleteDispatch(context.TODO(), dispatchID)
 		if dberr != nil {
-			m.syslog.WithError(dberr).Errorf("Failed to delete DispatchID %s from DB", dispatchID)
+			m.syslog.WithField("dispatch-id", dispatchID).
+				WithError(dberr).Errorf("failed to delete dispatch from DB")
 		}
 
 		m.jobWatcher.removeJob(dispatchID)
@@ -1518,10 +1523,11 @@ func (m *DispatcherResourceManager) startLauncherJob(
 		if tempDispatchID != dispatchID {
 			incompMsg := "HPC Launcher version is below the minimum required. " +
 				"Update to version 3.3.1 or greater."
-			m.syslog.WithField("allocation-id", msg.AllocationID).
+			m.syslog.
+				WithField("dispatch-id", dispatchID).
 				WithField("description", msg.Spec.Description).
-				Errorf("Launcher did not honor DispatchID assignment of %s.  "+
-					incompMsg, dispatchID)
+				Errorf("launcher did not honor DispatchID assignment.  " +
+					incompMsg)
 			rmevents.Publish(req.AllocationID, &sproto.ContainerLog{
 				AuxMessage: &incompMsg,
 				Level:      ptrs.Ptr("ERROR"),
@@ -1537,7 +1543,7 @@ func (m *DispatcherResourceManager) stopLauncherJob(msg KillDispatcherResources)
 	// Log at INFO level to let us know that the dispatcher resource manager
 	// actually received the request to delete the job.
 	m.syslog.WithField("allocation-id", msg.AllocationID).
-		Info("Received request to terminate job")
+		Info("received request to terminate job")
 
 	// Make a note that there is a cancelation inflight for this job, so that
 	// if another cancelation request is received, we ignore it and don't queue
@@ -1550,7 +1556,7 @@ func (m *DispatcherResourceManager) stopLauncherJob(msg KillDispatcherResources)
 	dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), msg.AllocationID)
 	if err != nil {
 		m.syslog.WithField("allocation-id", msg.AllocationID).WithError(err).Errorf(
-			"Failed to retrieve the DispatchIDs for allocation.")
+			"failed to retrieve the dispatches")
 
 		return
 	}
@@ -1560,14 +1566,13 @@ func (m *DispatcherResourceManager) stopLauncherJob(msg KillDispatcherResources)
 	// return and wait for Determined to call us again for a retry.
 	if len(dispatches) == 0 {
 		m.syslog.WithField("allocation-id", msg.AllocationID).
-			Infof("Job termination handler found %d jobs associated with AllocationID",
-				len(dispatches))
+			Info("job termination handler found 0 jobs associated with allocation")
 
 		return
 	}
 
 	m.syslog.WithField("allocation-id", msg.AllocationID).
-		Debugf("Job termination handler found %d jobs associated with AllocationID",
+		Debugf("job termination handler found %d jobs associated with allocation",
 			len(dispatches))
 
 	for _, dispatch := range dispatches {
@@ -1578,9 +1583,9 @@ func (m *DispatcherResourceManager) stopLauncherJob(msg KillDispatcherResources)
 		hpcJobID, _ := m.dispatchIDToHPCJobID.Load(dispatchID)
 
 		m.syslog.WithField("dispatch-id", dispatchID).
-			WithField("allocation-id", msg.AllocationID).
 			WithField("hpc-job-id", hpcJobID).
-			Infof("Terminating job initiated by %s", impersonatedUser)
+			WithField("impersonated-user", impersonatedUser).
+			Infof("terminating job initiated by user")
 
 		// Terminate and cleanup, on failure leave Dispatch in DB for later retry
 		if m.terminateDispatcherJob(dispatchID, impersonatedUser, false) {
@@ -1595,9 +1600,8 @@ func (m *DispatcherResourceManager) stopLauncherJob(msg KillDispatcherResources)
 			// gets a terminatal state from the launcher, it will take care
 			// of removing the dispatch environment at that time.
 			if m.jobWatcher.isJobBeingMonitored(dispatchID) {
-				m.syslog.WithField("allocation-id", msg.AllocationID).Debugf(
-					"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
-					dispatchID)
+				m.syslog.WithField("dispatch-id", dispatchID).Debug(
+					"not removing dispatch environment because job is being monitored")
 			} else {
 				// If we are here, then we are likely being called from
 				// startup, as opposed to a user explicitly canceling
@@ -1732,20 +1736,21 @@ func (m *DispatcherResourceManager) terminateDispatcherJob(
 	dispatchID string, owner string, slurmResourcesPolling bool,
 ) bool {
 	if dispatchID == "" {
-		m.syslog.Warn("Missing dispatchID, so no environment clean-up")
+		m.syslog.Warn("missing dispatchID, so no environment clean-up")
 		return false
 	}
 
 	_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
 	if err != nil {
-		m.syslog.WithError(err).Errorf("failed to terminate job with DispatchID %s", dispatchID)
+		m.syslog.WithField("dispatch-id", dispatchID).
+			WithError(err).Errorf("failed to terminate dispatch job")
 		return false
 	}
 
 	if slurmResourcesPolling {
-		m.syslog.Debugf("Terminated job with DispatchID %s", dispatchID)
+		m.syslog.WithField("dispatch-id", dispatchID).Debug("terminated dispatch job")
 	} else {
-		m.syslog.Infof("Terminated job with DispatchID %s", dispatchID)
+		m.syslog.WithField("dispatch-id", dispatchID).Info("terminated dispatch job")
 	}
 
 	// Let the job monitor know that the job was terminated, otherwise it
@@ -1769,19 +1774,21 @@ func (m *DispatcherResourceManager) terminateDispatcherJob(
 func (m *DispatcherResourceManager) removeDispatchEnvironment(
 	owner string, dispatchID string,
 ) {
+	log := m.syslog.WithField("dispatch-id", dispatchID).WithField("owner", owner)
+
 	_, err := m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
 	if err != nil {
-		m.syslog.WithError(err).Errorf("Failed to delete dispatch with DispatchID %s", dispatchID)
+		log.WithError(err).Error("failed to delete dispatch")
 		return
 	}
 
 	count, err := db.DeleteDispatch(context.TODO(), dispatchID)
 	if err != nil {
-		m.syslog.WithError(err).Errorf("Failed to delete DispatchID %s from DB", dispatchID)
+		log.WithError(err).Error("failed to delete dispatch from DB")
 		return
 	}
 	// On Slurm resource query there may be no Dispatch in the DB, so only log as trace.
-	m.syslog.Tracef("Deleted DispatchID %s from DB, count %d", dispatchID, count)
+	log.Tracef("Deleted dispatch from DB, count %d", count)
 }
 
 // Sends the manifest to the launcher.
@@ -1838,7 +1845,9 @@ func (m *DispatcherResourceManager) addTask(msg sproto.AllocateRequest) {
 		msg.Name = "Unnamed-Launcher-Job"
 	}
 
-	m.syslog.Infof("resources are requested by %s (Allocation ID: %s)", msg.Name, msg.AllocationID)
+	m.syslog.WithField("name", msg.Name).
+		WithField("allocation-id", msg.AllocationID).
+		Info("resources are requested")
 	m.reqList.AddTask(&msg)
 }
 
@@ -1852,14 +1861,14 @@ func (m *DispatcherResourceManager) assignResources(req *sproto.AllocateRequest)
 		// Dispatch ID to reconnect with the existing allocation.
 		dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), req.AllocationID)
 		if err != nil {
-			m.syslog.WithError(err).Errorf(
-				"Failed to retrieve the DispatchIDs associated with AllocationID %s",
-				req.AllocationID)
+			m.syslog.WithField("allocation-id", req.AllocationID).
+				WithError(err).Errorf("failed to retrieve dispatches")
 			return
 		}
 
-		m.syslog.Debugf("Restore: Found %d jobs associated with AllocationID %s",
-			len(dispatches), req.AllocationID)
+		m.syslog.WithField("allocation-id", req.AllocationID).
+			Debugf("restore: found %d dispatches",
+				len(dispatches))
 
 		for _, dispatch := range dispatches {
 			dispatchID = dispatch.DispatchID
@@ -1889,7 +1898,7 @@ func (m *DispatcherResourceManager) assignResources(req *sproto.AllocateRequest)
 
 	if req.Restore {
 		if len(dispatchID) == 0 {
-			m.syslog.Infof("Restore request with no active DispatchID found.  Fail the allocation request.")
+			m.syslog.Info("restore request with no active dispatch found, fail the allocation request")
 			failed := sproto.NewResourcesFailure(sproto.ResourcesAborted,
 				"Unable to locate HPC job on restart.", nil)
 			stopped := sproto.ResourcesStopped{}
@@ -1901,9 +1910,10 @@ func (m *DispatcherResourceManager) assignResources(req *sproto.AllocateRequest)
 			})
 		} else {
 			// Simulate portions of Start() which will not be called on restore.
-			m.syslog.Infof("Reconnecting ResourceID %s, DispatchID %s, ImpersontatedUser: %s",
-				rID, dispatchID, impersonatedUser)
-
+			m.syslog.WithField("resource-id", rID).
+				WithField("dispatch-id", dispatchID).
+				WithField("impersonated-user", impersonatedUser).
+				Info("reconnecting")
 			m.jobWatcher.monitorJob(impersonatedUser, dispatchID, "", false)
 		}
 	} else {
@@ -1924,28 +1934,26 @@ func (m *DispatcherResourceManager) killAllInactiveDispatches() {
 	// Ticker with an initial pass through without delay
 	ticker := time.NewTicker(terminatedDispatchCleanupInterval)
 	for ; true; <-ticker.C {
-		m.syslog.Infof("Releasing all dispatches for terminated allocations.")
+		m.syslog.Info("releasing all dispatches for terminated allocations")
 
 		// Find the Dispatch IDs
 		dispatches, err := db.ListAllDispatches(context.TODO())
 		if err != nil {
-			m.syslog.WithError(err).Error("Failed to retrieve all Dispatches")
+			m.syslog.WithError(err).Error("failed to retrieve all dispatches")
 			return
 		}
-		m.syslog.Debugf("Found %d Dispatches to check", len(dispatches))
+		m.syslog.Debugf("found %d dispatches to check", len(dispatches))
 		for _, dispatch := range dispatches {
 			dispatchID := dispatch.DispatchID
 			impersonatedUser := dispatch.ImpersonatedUser
 			allocation, err := m.db.AllocationByID(dispatch.AllocationID)
 			if err != nil {
-				m.syslog.WithError(err).Errorf(
-					"Unexpected DB lookup error, dispatchID %s, allocationID %s.",
-					dispatchID, dispatch.AllocationID)
+				m.syslog.WithField("dispatch-id", dispatchID).
+					WithError(err).Errorf("unexpected DB lookup error")
 				continue
 			} else if allocation != nil && allocation.EndTime == nil {
-				m.syslog.Debugf(
-					"Not removing dispatch environment for dispatchID %s because allocationID %s is still active.",
-					dispatchID, dispatch.AllocationID)
+				m.syslog.WithField("dispatch-id", dispatchID).
+					Debug("not removing dispatch environment for dispatch because allocation is still active.")
 				continue
 			}
 
@@ -2013,7 +2021,7 @@ func (m *DispatcherResourceManager) SchedulePendingTasks() {
 					// every 10 seconds.
 					if numTimesScheduledPendingTasksCalled%20 == 0 {
 						m.syslog.WithField("scheduled-launches", count).
-							Info("Delaying start of task because the concurrent launch limit has been reached")
+							Info("delaying start of task because the concurrent launch limit has been reached")
 					}
 					return
 				}
@@ -2198,10 +2206,8 @@ func (m *DispatcherResourceManager) NotifyContainerRunning(
 ) error {
 	dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), msg.AllocationID)
 	if err != nil {
-		m.syslog.WithError(err).Errorf(
-			"Failed to retrieve the DispatchIDs associated with AllocationID %s",
-			msg.AllocationID,
-		)
+		m.syslog.WithField("allocation-id", msg.AllocationID).
+			WithError(err).Errorf("Failed to retrieve the dispatch associated with allocation")
 		return nil
 	}
 

@@ -145,7 +145,9 @@ func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 	}
 	dispatchID := dispatchInfo.GetDispatchId()
 	owner := dispatchInfo.GetLaunchingUser()
-	c.log.Debugf("Launched Manifest user %s with DispatchID %s", owner, dispatchID)
+	c.log.WithField("dispatch-id", dispatchID).
+		WithField("owner", owner).
+		Debug("launched manifest")
 	defer func() {
 		_, _, err := c.cl.terminateDispatch(owner, dispatchID) //nolint:bodyclose
 		if err != nil {
@@ -297,5 +299,5 @@ func (c *hpcResourceDetailsCache) hpcResourcesToDebugLog(resources hpcResources)
 		WithField("GPUs allocated", gpusAllocated).
 		WithField("CPUs", cpusFound).
 		WithField("CPUs allocated", cpusAllocated).
-		Debug("Node summary")
+		Debug("node summary")
 }
