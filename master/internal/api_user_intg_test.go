@@ -102,7 +102,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	require.NoError(t, err, "Couldn't create admin user")
 	userModel, err := user.ByUsername(context.TODO(), username)
 	require.NoError(t, err, "Couldn't get admin user")
-	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
+	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: username})
 	require.NoError(t, err, "Couldn't login")
 	ctx := metadata.NewIncomingContext(context.TODO(),
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
