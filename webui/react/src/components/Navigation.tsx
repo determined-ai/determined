@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 
-import { useInitApi } from 'components/kit/internal/dialogApi';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import { useInitApi } from 'components/kit/Toast';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';

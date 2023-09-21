@@ -117,7 +117,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           groupRoles.map((r) => r.id),
         );
         if (!nameUpdated && !usersUpdated && !rolesUpdated) {
-          makeToast({ compact: true, title: 'No changes to save.' });
+          makeToast({ title: 'No changes to save.' });
           return;
         }
 
@@ -149,19 +149,19 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
             }));
           await fetchGroupRoles();
         }
-        makeToast({ compact: true, severity: 'Confirm', title: API_SUCCESS_MESSAGE_EDIT });
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_EDIT });
       } else {
         if (formData[USERS_NAME]) formData[ADD_USERS] = formData[USERS_NAME];
         await createGroup(formData);
-        makeToast({ compact: true, severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
       }
       form.resetFields();
       onClose?.();
     } catch (e) {
       if (group) {
-        makeToast({ compact: true, severity: 'Error', title: 'Error editing group.' });
+        makeToast({ severity: 'Error', title: 'Error editing group.' });
       } else {
-        makeToast({ compact: true, severity: 'Error', title: 'Error creating new group.' });
+        makeToast({ severity: 'Error', title: 'Error creating new group.' });
       }
       handleError(e, { silent: true, type: ErrorType.Input });
 

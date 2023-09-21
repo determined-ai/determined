@@ -1,0 +1,18 @@
+.message {
+  display: flex;
+
+  span {
+    margin-right: 4px;
+  }
+  :global {
+    .icon-error {
+      color: var(--theme-status-critical);
+    }
+    .icon-warning {
+      color: var(--theme-status-warning);
+    }
+    .icon-info {
+      color: var(--theme-status-active);
+    }
+  }
+}

@@ -215,7 +215,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             await copyToClipboard((cell as any).displayData || cell?.copyData);
             makeToast({
-              compact: true,
               severity: 'Confirm',
               title: 'Value has been copied to clipboard.',
             });

@@ -114,7 +114,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
                 View Model Version
               </Link>
             ),
-            title: '',
+            title: 'Version Registered',
           });
         } else {
           for (const checkpointUuid of checkpoints) {
@@ -133,7 +133,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           makeToast({
             description: `${checkpoints.length} versions registered`,
             link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
-            title: '',
+            title: 'Versions Registered',
           });
         }
       } catch (e) {

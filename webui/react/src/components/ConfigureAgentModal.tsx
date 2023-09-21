@@ -41,7 +41,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       await patchUser({ userId: user.id, userParams: formData });
       onClose?.();
     } catch (e) {
-      makeToast({ compact: true, severity: 'Error', title: 'Error configuring agent' });
+      makeToast({ severity: 'Error', title: 'Error configuring agent' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

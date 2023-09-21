@@ -181,14 +181,13 @@ const GroupManagement: React.FC = () => {
       try {
         await updateGroup({ groupId, removeUsers: [userId] });
         makeToast({
-          compact: true,
           severity: 'Confirm',
           title: 'User has been removed from group.',
         });
         onExpand(true, record);
         fetchGroups();
       } catch (e) {
-        makeToast({ compact: true, severity: 'Error', title: 'Error deleting group.' });
+        makeToast({ severity: 'Error', title: 'Error deleting group.' });
         handleError(e, { silent: true, type: ErrorType.Input });
       }
     },

@@ -84,7 +84,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
           userParams: { displayName: newValue as string },
         });
         userStore.updateUsers(user);
-        makeToast({ compact: true, severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
+        makeToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
       } catch (e) {
         handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
@@ -101,9 +101,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
           userParams: { username: newValue as string },
         });
         userStore.updateUsers(user);
-        makeToast({ compact: true, severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
+        makeToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
       } catch (e) {
-        makeToast({ compact: true, severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
+        makeToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
         handleError(e, { silent: true, type: ErrorType.Input });
         return e as Error;
       }

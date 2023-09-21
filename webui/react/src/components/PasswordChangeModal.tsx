@@ -63,11 +63,11 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
     try {
       const password = newPassword;
       await setUserPassword({ password, userId: currentUser?.id ?? 0 });
-      makeToast({ compact: true, severity: 'Confirm', title: API_SUCCESS_MESSAGE });
+      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       form.resetFields();
       onSubmit?.();
     } catch (e) {
-      makeToast({ compact: true, severity: 'Error', title: API_ERROR_MESSAGE });
+      makeToast({ severity: 'Error', title: API_ERROR_MESSAGE });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

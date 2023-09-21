@@ -62,7 +62,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
         }
       }
     } catch (e) {
-      makeToast({ compact: true, severity: 'Error', title: 'Error adding user to groups' });
+      makeToast({ severity: 'Error', title: 'Error adding user to groups' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

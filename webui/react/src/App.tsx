@@ -8,9 +8,9 @@ import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
-import { notification } from 'components/kit/internal/dialogApi';
 import Spinner from 'components/kit/Spinner';
 import useUI, { UIProvider } from 'components/kit/Theme';
+import { notification } from 'components/kit/Toast';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';

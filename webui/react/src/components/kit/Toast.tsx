@@ -1,72 +1,69 @@
-import React from 'react';
+import { notification as antdNotification, App } from 'antd';
+import { useAppProps } from 'antd/es/app/context';
+import React, { useEffect } from 'react';
 
-import { message, notification } from 'components/kit/internal/dialogApi';
+import Icon, { IconName } from './Icon';
+import css from './Toast.module.scss';
 
-import Icon from './Icon';
+/**
+ * Wrapper for static dialog functionality from antd. Regular static instances
+ * are not responsive to the theming context, and will appear with the default
+ * styling, so we use the app context from antd which hooks into the context.
+ * This requires our code to call the `App.useApp` hook somewhere, so we do that
+ * in the AppView. We fall back to the vanilla static methods so testing
+ * functionality isn't broken.
+ */
+
+let notification: useAppProps['notification'] = antdNotification;
+
+export const useInitApi = (): void => {
+  const api = App.useApp();
+  // minimize reassignments
+  useEffect(() => {
+    ({ notification } = api);
+  }, [api]);
+};
+
+export { notification };
 
 export type Severity = 'Info' | 'Confirm' | 'Warning' | 'Error';
 
-type NotificationArgs = {
-  compact?: never;
+export type ToastArgs = {
   title: string;
   severity?: Severity;
-  description: string;
+  description?: string;
   link?: React.ReactNode;
   closeable?: boolean;
+  duration?: number;
 };
 
-type CompactNotificationArgs = {
-  compact: true;
-  title: string;
-  severity?: Severity;
-};
-
-export type ToastArgs = NotificationArgs | CompactNotificationArgs;
-
-export const makeToast = (toastArgs: ToastArgs): void => {
-  const { compact = false, title, severity = 'Info' } = toastArgs;
-  if (compact) {
-    switch (severity) {
-      case 'Info':
-        message.info(title);
-        return;
-      case 'Confirm':
-        message.success(title);
-        return;
-      case 'Warning':
-        message.warning(title);
-        return;
-      case 'Error':
-        message.error(title);
-        return;
-    }
-  } else {
-    const { description, link, closeable = false } = toastArgs as NotificationArgs;
-    const args = {
-      closeIcon: closeable ? <Icon decorative name="close-small" /> : null,
-      description: link ? (
+export const makeToast = ({
+  title,
+  severity = 'Info',
+  closeable = true,
+  duration = 4.5,
+  description,
+  link,
+}: ToastArgs): void => {
+  const args = {
+    closeIcon: closeable ? <Icon decorative name="close-small" /> : null,
+    description: description ? (
+      link ? (
         <div>
           <p>{description}</p>
           {link}
         </div>
       ) : (
         description
-      ),
-      message: title,
-    };
-    switch (severity) {
-      case 'Info':
-        notification.open(args);
-        return;
-      case 'Confirm':
-        notification.success(args);
-        return;
-      case 'Warning':
-        notification.warning(args);
-        return;
-      case 'Error':
-        notification.error(args);
-        return;
-    }
-  }
+      )
+    ) : undefined,
+    duration,
+    message: (
+      <div className={css.message}>
+        <Icon decorative name={severity.toLowerCase() as IconName} />
+        {title}
+      </div>
+    ),
+  };
+  notification.open(args);
 };

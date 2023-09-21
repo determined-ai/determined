@@ -89,7 +89,7 @@ export const onAction = async (
     await item.onAction(item);
     // if we opt to auto close the bar for user in some scenarios this
     // would be the place to check for it.
-    makeToast({ compact: true, title: 'Action executed.' });
+    makeToast({ title: 'Action executed.' });
   } else {
     // trigger the query.
     inputEl.value = inputEl.value + SEPARATOR;

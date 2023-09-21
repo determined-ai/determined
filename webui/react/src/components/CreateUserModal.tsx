@@ -108,7 +108,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         }
         fetchUserRoles();
         if (currentUser?.id === user.id) checkAuth();
-        makeToast({ compact: true, severity: 'Confirm', title: 'User has been updated' });
+        makeToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {
         formData[ACTIVE_NAME] = true;
         const u = await postUser({ user: formData });
@@ -116,13 +116,12 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
         }
-        makeToast({ compact: true, severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
         form.resetFields();
       }
       onClose?.();
     } catch (e) {
       makeToast({
-        compact: true,
         severity: 'Error',
         title: user ? 'Error updating user' : 'Error creating new user',
       });

@@ -33,7 +33,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
         ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       onClose?.();
-      makeToast({ compact: true, severity: 'Confirm', title: `${name} removed from workspace` });
+      makeToast({ severity: 'Confirm', title: `${name} removed from workspace` });
     } catch (e) {
       setIsDeleting(false);
       if (e instanceof DetError) {

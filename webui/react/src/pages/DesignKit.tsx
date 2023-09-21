@@ -2595,13 +2595,35 @@ const ToastSection: React.FC = () => {
           <Button
             onClick={() =>
               makeToast({
-                closeable: true,
+                description: "You've triggered an warning.",
+                severity: 'Warning',
+                title: 'Warning notification',
+              })
+            }>
+            Open an warning toast
+          </Button>
+          <Button
+            onClick={() =>
+              makeToast({
+                description: 'Action succed.',
+                severity: 'Confirm',
+                title: 'Success notification',
+              })
+            }>
+            Open an success toast
+          </Button>
+        </Space>
+        <Space>
+          <Button
+            onClick={() =>
+              makeToast({
+                closeable: false,
                 description: "You've triggered an error.",
                 severity: 'Error',
                 title: 'Error notification',
               })
             }>
-            Open a closable toast
+            Open a non-closable toast
           </Button>
           <Button
             onClick={() =>
@@ -2614,10 +2636,7 @@ const ToastSection: React.FC = () => {
             }>
             Open a toast with link
           </Button>
-          <Button
-            onClick={() =>
-              makeToast({ compact: true, severity: 'Info', title: 'Compact notification' })
-            }>
+          <Button onClick={() => makeToast({ severity: 'Info', title: 'Compact notification' })}>
             Open a compact toast
           </Button>
         </Space>

@@ -19,10 +19,10 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
-      makeToast({ compact: true, severity: 'Confirm', title: API_SUCCESS_MESSAGE });
+      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       onClose?.();
     } catch (e) {
-      makeToast({ compact: true, severity: 'Error', title: 'error deleting group' });
+      makeToast({ severity: 'Error', title: 'error deleting group' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

@@ -9,7 +9,7 @@ import { routeToReactUrl } from 'utils/routes';
 export const alertAction =
   (msg: string): FinalAction =>
   () => {
-    makeToast({ compact: true, title: msg });
+    makeToast({ title: msg });
   };
 export const visitAction = (url: string) => (): void => routeToReactUrl(url);
 export const noOp = (): void => undefined;

@@ -78,7 +78,6 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     try {
       await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
       makeToast({
-        compact: true,
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
       });

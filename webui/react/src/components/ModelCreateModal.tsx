@@ -73,10 +73,10 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
       });
       if (!response?.id) return;
       makeToast({
-        description: `${modelName} created`,
+        description: `${modelName} has been created`,
         link: <Link path={paths.modelDetails(response.name)}>View Model</Link>,
         severity: 'Info',
-        title: '',
+        title: 'Model Created',
       });
     } catch (e) {
       if (e instanceof DetError) {

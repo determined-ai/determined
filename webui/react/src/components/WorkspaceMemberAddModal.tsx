@@ -91,7 +91,6 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         setSelectedOption(undefined);
         onClose?.();
         makeToast({
-          compact: true,
           severity: 'Confirm',
           title: `${getName(selectedOption)} added to workspace.`,
         });

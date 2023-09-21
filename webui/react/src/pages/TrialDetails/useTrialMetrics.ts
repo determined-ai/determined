@@ -175,7 +175,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
           setMetricHasData(metricsHaveData);
         }
       } catch (e) {
-        makeToast({ compact: true, severity: 'Error', title: 'Error fetching metrics' });
+        makeToast({ severity: 'Error', title: 'Error fetching metrics' });
       }
     }
   }, [loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);

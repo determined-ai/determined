@@ -72,7 +72,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
   const handleSubmit = async () => {
     if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
-      makeToast({ compact: true, title: 'No changes to save.' });
+      makeToast({ title: 'No changes to save.' });
       return;
     }
     const values = await form.validateFields();
