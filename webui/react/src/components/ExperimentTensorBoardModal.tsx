@@ -33,9 +33,9 @@ const ExperimentTensorBoardModal = ({
       submit={{
         handleError,
         handler: handleSubmit,
-        text: 'confirm',
+        text: 'Confirm',
       }}
-      title="Tensorboard confirmation">
+      title="TensorBoard confirmation">
       {UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE}
     </Modal>
   );
