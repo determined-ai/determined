@@ -700,23 +700,24 @@ func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperime
 	return &experiment, nil
 }
 
-// LegacyExperimentConfigByID parses very old configs, returning a LegacyConfig which
+// LegacyExperimentConfigForTensorBoard parses very old configs, returning a LegacyConfig which
 // exposes a select subset of fields in a type-safe way.
-func (db *PgDB) LegacyExperimentConfigByID(
+func (db *PgDB) LegacyExperimentConfigForTensorBoard(
 	id int,
-) (expconf.LegacyConfig, error) {
+) (expconf.LegacyConfig, bool, error) {
 	var byts []byte
+	var unmanaged bool
 	if err := db.sql.QueryRow(
-		"SELECT config FROM experiments WHERE id = $1", id).Scan(&byts); err != nil {
-		return expconf.LegacyConfig{}, errors.Wrap(err, "querying legacy config bytes")
+		"SELECT config, unmanaged FROM experiments WHERE id = $1", id).Scan(&byts, &unmanaged); err != nil {
+		return expconf.LegacyConfig{}, false, errors.Wrap(err, "querying legacy config bytes")
 	}
 
 	config, err := expconf.ParseLegacyConfigJSON(byts)
 	if err != nil {
-		return expconf.LegacyConfig{}, errors.Wrap(err, "parsing legacy conf from database")
+		return expconf.LegacyConfig{}, unmanaged, errors.Wrap(err, "parsing legacy conf from database")
 	}
 
-	return config, nil
+	return config, unmanaged, nil
 }
 
 // ExperimentIDByTrialID looks up an experiment ID by a trial ID.

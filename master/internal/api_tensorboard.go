@@ -477,9 +477,13 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 			return nil, err
 		}
 
-		conf, err := db.LegacyExperimentConfigByID(int(expID))
+		conf, unmanaged, err := db.LegacyExperimentConfigForTensorBoard(int(expID))
 		if err != nil {
 			return nil, err
+		}
+		if unmanaged {
+			// cannot create TensorBoard for external/unmanaged experiment
+			continue
 		}
 
 		confByID[expID] = &tensorboardConfig{ExperimentID: expID, Config: conf}
@@ -496,9 +500,13 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 			return nil, err
 		}
 
-		conf, err := db.LegacyExperimentConfigByID(expID)
+		conf, unmanaged, err := db.LegacyExperimentConfigForTensorBoard(expID)
 		if err != nil {
 			return nil, err
+		}
+		if unmanaged {
+			// cannot create TensorBoard for external/unmanaged experiment
+			continue
 		}
 
 		if conf, ok := confByID[int32(expID)]; ok {
