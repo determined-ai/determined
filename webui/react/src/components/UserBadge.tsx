@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Nameplate from 'components/kit/Nameplate';
-import UserAvatar from 'components/kit/UserAvatar';
+import UserAvatar from 'components/UserAvatar';
 import { User } from 'types';
 
 export interface Props {

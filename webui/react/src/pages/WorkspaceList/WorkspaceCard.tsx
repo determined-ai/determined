@@ -6,7 +6,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Spinner from 'components/kit/Spinner';
-import Avatar from 'components/kit/UserAvatar';
+import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import userStore from 'stores/users';
 import { Workspace } from 'types';

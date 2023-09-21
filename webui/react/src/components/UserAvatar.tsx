@@ -1,8 +1,7 @@
 import React from 'react';
 
-import Avatar, { Props as AvatarProps } from 'components/kit/internal/Avatar';
+import Avatar, { Props as AvatarProps } from 'components/kit/Avatar';
 import { User } from 'components/kit/internal/types';
-import useUI from 'components/kit/Theme';
 import { getDisplayName } from 'utils/user';
 
 export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
@@ -10,10 +9,9 @@ export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
 }
 
 const UserAvatar: React.FC<Props> = ({ user, ...rest }) => {
-  const { ui } = useUI();
   const displayName = getDisplayName(user);
 
-  return <Avatar {...rest} darkLight={ui.darkLight} displayName={displayName} />;
+  return <Avatar {...rest} displayName={displayName} />;
 };
 
 export default UserAvatar;

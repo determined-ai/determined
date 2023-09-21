@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { DarkLight, UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'components/kit/Theme';
 
 import Avatar, { Props } from './Avatar';
 
@@ -10,19 +10,13 @@ vi.mock('components/kit/Tooltip');
 const user = userEvent.setup();
 
 const setup = ({
-  darkLight = DarkLight.Light,
   displayName = 'Anonymous',
   hideTooltip = false,
   ...props
 }: Partial<Props> = {}) => {
   render(
     <UIProvider>
-      <Avatar
-        darkLight={darkLight}
-        displayName={displayName}
-        hideTooltip={hideTooltip}
-        {...props}
-      />
+      <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
     </UIProvider>,
   );
 };
