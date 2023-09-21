@@ -230,7 +230,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		}
 
-	// TODO(max): verify doing this as an actor message is necessary; does socketDisconnected mutate state that matters?
 	case socketDisconnect:
 		defer ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		defer a.socketDisconnected(ctx)
