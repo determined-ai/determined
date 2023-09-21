@@ -28940,10 +28940,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
          * @param {boolean} [admin] Filter by roles.
+         * @param {number} [roleId] Filter by rabc cluster scoped roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options: any = {}): FetchArgs {
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -28984,6 +28985,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             if (admin !== undefined) {
                 localVarQueryParameter['admin'] = admin
+            }
+            
+            if (roleId !== undefined) {
+                localVarQueryParameter['roleId'] = roleId
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -29333,11 +29338,12 @@ export const UsersApiFp = function (configuration?: Configuration) {
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
          * @param {boolean} [admin] Filter by roles.
+         * @param {number} [roleId] Filter by rabc cluster scoped roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, roleId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -29529,11 +29535,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
          * @param {boolean} [admin] Filter by roles.
+         * @param {number} [roleId] Filter by rabc cluster scoped roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any) {
-            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options)(fetch, basePath);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleId?: number, options?: any) {
+            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, roleId, options)(fetch, basePath);
         },
         /**
          * 
@@ -29660,12 +29667,13 @@ export class UsersApi extends BaseAPI {
      * @param {string} [name] Filter by username or display name.
      * @param {boolean} [active] Filter by status.
      * @param {boolean} [admin] Filter by roles.
+     * @param {number} [roleId] Filter by rabc cluster scoped roles.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any) {
-        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options)(this.fetch, this.basePath)
+    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleId?: number, options?: any) {
+        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, roleId, options)(this.fetch, this.basePath)
     }
     
     /**
