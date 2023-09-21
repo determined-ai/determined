@@ -6,7 +6,9 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -89,7 +91,16 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
-	userModel, err := user.ByUsername(context.TODO(), "admin")
+	username := strconv.FormatInt(time.Now().UnixMilli(), 10)
+	newUserModel := &model.User{
+		Username:     username,
+		PasswordHash: null.NewString("", false),
+		Active:       true,
+		Admin:        true,
+	}
+	_, err := user.Add(context.TODO(), newUserModel, nil)
+	require.NoError(t, err, "Couldn't create admin user")
+	userModel, err := user.ByUsername(context.TODO(), username)
 	require.NoError(t, err, "Couldn't get admin user")
 	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
 	require.NoError(t, err, "Couldn't login")
