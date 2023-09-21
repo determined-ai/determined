@@ -3,8 +3,8 @@ import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import 'uplot/dist/uPlot.min.css';
 
+import 'uplot/dist/uPlot.min.css';
 import css from 'App.module.scss';
 import { UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';

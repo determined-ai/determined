@@ -194,7 +194,7 @@ func newExperiment(
 		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 	}
 
-	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, workspaceID)
+	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *expModel.OwnerID, workspaceID)
 	if err != nil {
 		return nil, launchWarnings, err
 	}
@@ -462,6 +462,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		jobservice.Default.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
+		if state == "" {
+			state = model.ErrorState
+		}
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
 		} else if !wasPatched {

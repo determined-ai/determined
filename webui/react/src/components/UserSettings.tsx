@@ -31,7 +31,6 @@ import {
 } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
 import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
-import { patchUser } from 'services/api';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -79,11 +78,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
-        const user = await patchUser({
-          userId: currentUser?.id || 0,
-          userParams: { displayName: newValue as string },
+        await userStore.patchUser(currentUser?.id || 0, {
+          displayName: newValue as string,
         });
-        userStore.updateUsers(user);
         makeToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
       } catch (e) {
         handleError(e, { silent: false, type: ErrorType.Input });
@@ -96,11 +93,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const handleSaveUsername = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
-        const user = await patchUser({
-          userId: currentUser?.id || 0,
-          userParams: { username: newValue as string },
+        await userStore.patchUser(currentUser?.id || 0, {
+          username: newValue as string,
         });
-        userStore.updateUsers(user);
         makeToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
       } catch (e) {
         makeToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });

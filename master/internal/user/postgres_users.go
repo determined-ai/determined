@@ -297,7 +297,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 	var session model.UserSession
 
 	if ext.JwtKey != "" {
-		return UserByExternalToken(token, ext)
+		return ByExternalToken(token, ext)
 	}
 
 	v2 := paseto.NewV2()

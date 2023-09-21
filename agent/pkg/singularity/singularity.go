@@ -208,7 +208,7 @@ func (s *SingularityClient) RunContainer(
 		case 0:
 			continue // Must be empty envvar.
 		case 1:
-			formattedEnv = env
+			formattedEnv = fmt.Sprintf("%s=", env)
 		case 2:
 			// Don't even attempt to escape quotes, strconv.Quote doesn't work - singularity seems
 			// to unescape it multiple times.

@@ -469,7 +469,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			defer func() { <-sema }()
 			defer wg.Done()
 
-			agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, workspaceIDs[i])
+			agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceIDs[i])
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return
@@ -1281,7 +1281,7 @@ func (a *apiServer) PatchExperiment(
 			if err != nil {
 				return nil, err
 			}
-			agentUserGroup, err := user.GetAgentUserGroup(*modelExp.OwnerID, workspaceID[0])
+			agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *modelExp.OwnerID, workspaceID[0])
 			if err != nil {
 				return nil, err
 			}
@@ -2397,7 +2397,7 @@ func (a *apiServer) SearchExperiments(
 				'num_inputs', bv.metrics->'num_inputs') AS best_validation`).
 		ColumnExpr("null::jsonb AS best_checkpoint").
 		ColumnExpr("null::jsonb AS wall_clock_time").
-		ColumnExpr("searcher_metric_value_signed AS searcher_metric_value").
+		Column("searcher_metric_value").
 		Column("trials.external_trial_id").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
