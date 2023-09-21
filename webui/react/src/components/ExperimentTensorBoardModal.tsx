@@ -2,12 +2,11 @@ import { Modal } from 'components/kit/Modal';
 import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { ProjectExperiment } from 'types';
 import handleError from 'utils/error';
 import { openCommandResponse } from 'utils/wait';
 
 interface Props {
-  selectedExperiments: ProjectExperiment[];
+  selectedExperiments: { id: number; unmanaged: boolean | undefined }[];
   filters?: V1BulkExperimentFilters;
   workspaceId?: number;
 }
