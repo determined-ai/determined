@@ -544,6 +544,47 @@ func (a *apiServer) PatchUser(
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
 
+func (a *apiServer) PatchUsers(
+	ctx context.Context, req *apiv1.PatchUsersRequest,
+) (*apiv1.PatchUsersResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var apiResults []*apiv1.UserActionResult
+	var editableUserIDs []model.UserID
+
+	for _, userID := range req.UserIds {
+		targetUser := model.User{ID: model.UserID(userID)}
+
+		if err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
+			apiResults = append(apiResults, &apiv1.UserActionResult{
+				Error: authz.SubIfUnauthorized(err, api.NotFoundErrs("user", "", true)).Error(),
+				Id:    userID,
+			})
+		} else if err = user.AuthZProvider.Get().
+			CanSetUsersActive(ctx, *curUser, targetUser, req.Activate); err != nil {
+			apiResults = append(apiResults, &apiv1.UserActionResult{
+				Error: err.Error(),
+				Id:    userID,
+			})
+		} else {
+			apiResults = append(apiResults, &apiv1.UserActionResult{
+				Error: "",
+				Id:    userID,
+			})
+			editableUserIDs = append(editableUserIDs, model.UserID(userID))
+		}
+	}
+
+	if err = user.SetActive(ctx, editableUserIDs, req.Activate); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PatchUsersResponse{Results: apiResults}, err
+}
+
 func (a *apiServer) GetUserSetting(
 	ctx context.Context, req *apiv1.GetUserSettingRequest,
 ) (*apiv1.GetUserSettingResponse, error) {

@@ -117,6 +117,26 @@ func Update(
 	})
 }
 
+// SetActive changes multiple users' activation status.
+func SetActive(
+	ctx context.Context,
+	updateIDs []model.UserID,
+	activate bool,
+) error {
+	return db.Bun().RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if len(updateIDs) > 0 {
+			if _, err := tx.NewUpdate().
+				Table("users").
+				Set("active = ?", activate).
+				Where("id IN (?)", bun.In(updateIDs)).Exec(ctx); err != nil {
+				return fmt.Errorf("error updating %q: %s", updateIDs, err)
+			}
+		}
+
+		return nil
+	})
+}
+
 // DeleteSessionByToken deletes user session if found
 // (externally managed sessions are not stored in the DB and will not be found).
 func DeleteSessionByToken(ctx context.Context, token string) error {
