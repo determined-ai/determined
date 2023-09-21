@@ -137,7 +137,7 @@ This example startup script includes the default setup docker commands provided 
 
    -  The ``PATH_TO_TOKEN`` specifies a path to an authorization token for the Determined master.
       This can be kept in a local file by running the ``token-refresh.sh`` script in the same
-      directory with a CRON job (set to run daily).`
+      directory with a CRON job (set to run daily).
 
 *******************
  Configure Grafana
