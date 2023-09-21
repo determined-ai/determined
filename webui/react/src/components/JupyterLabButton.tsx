@@ -2,6 +2,7 @@ import React from 'react';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
+import { shortcutToString } from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import shortCutSettingsConfig, {
@@ -9,7 +10,6 @@ import shortCutSettingsConfig, {
 } from 'components/UserSettings.settings';
 import { useSettings } from 'hooks/useSettings';
 import { Workspace } from 'types';
-import { shortcutToString } from 'utils/shortcut';
 interface Props {
   enabled?: boolean;
   workspace?: Workspace;

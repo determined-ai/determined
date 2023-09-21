@@ -23,7 +23,7 @@ import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
-import InputShortcut from 'components/kit/InputShortcut';
+import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
 import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
@@ -73,7 +73,6 @@ import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
-import { KeyboardShortcut } from 'utils/shortcut';
 
 import css from './DesignKit.module.scss';
 
