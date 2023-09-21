@@ -1024,6 +1024,11 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	authZNSC := setupNSCAuthZ()
 	exp := createTestExp(t, api, curUser)
 
+	// put/patch
+	mockUserArg := mock.MatchedBy(func(u model.User) bool {
+		return u.ID == curUser.ID
+	})
+
 	caseIndividualCalls := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error
@@ -1145,7 +1150,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			authZNSC.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+			authZNSC.On("CanGetTensorboard", mock.Anything, mockUserArg, mock.Anything, mock.Anything,
 				mock.Anything).Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				ExperimentIds: []int32{int32(id)},
@@ -1158,22 +1163,22 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		// Not found returns same as permission denied.
 		require.Equal(t, apiPkg.NotFoundErrs("experiment", "-999", true), curCase.IDToReqCall(-999))
 
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true),
 			curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(expectedErr).Once()
 		require.Equal(t, expectedErr, curCase.IDToReqCall(exp.ID))
 
 		// Deny returns error with PermissionDenied.
 		expectedErr = status.Errorf(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(nil).Once()
-		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
+		authZExp.On(curCase.DenyFuncName, mock.Anything, mockUserArg, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())
 	}
