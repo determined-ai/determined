@@ -6,9 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -91,7 +89,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
-	username := strconv.FormatInt(time.Now().UnixMilli(), 10)
+	username := uuid.New().String()
 	newUserModel := &model.User{
 		Username:     username,
 		PasswordHash: null.NewString("", false),
