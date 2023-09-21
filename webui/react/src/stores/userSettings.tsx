@@ -27,6 +27,7 @@ function isTypeC(codec: t.Encoder<any, any>): codec is t.TypeC<t.Props> {
  */
 export class UserSettingsStore extends PollingStore {
   readonly #settings: WritableObservable<Loadable<State>> = observable(NotLoaded);
+  #updates: Promise<void | DetError>[] = [];
 
   /**
    *
@@ -232,6 +233,11 @@ export class UserSettingsStore extends PollingStore {
 
   protected async poll(): Promise<void> {
     try {
+      // Wait 500ms for any in-flight updates to finish before getting new state
+      await Promise.race([
+        Promise.allSettled(this.#updates),
+        new Promise((resolve) => setTimeout(resolve, 500)),
+      ]);
       const response = await getUserSetting({ signal: this.canceler?.signal });
       this.updateSettingsFromResponse(response);
     } catch (error) {
@@ -302,15 +308,21 @@ export class UserSettingsStore extends PollingStore {
     } else {
       dbUpdates.push({ key: '_ROOT', storagePath: key, value: JSON.stringify(value) });
     }
-    return updateUserSetting({ settings: dbUpdates }).catch((e) =>
-      handleError(e, {
-        isUserTriggered: false,
-        publicMessage: `Unable to update user settings for key: ${key}.`,
-        publicSubject: 'Some POST user settings failed.',
-        silent: true,
-        type: ErrorType.Api,
-      }),
-    );
+    const promise = updateUserSetting({ settings: dbUpdates })
+      .finally(() => {
+        this.#updates = this.#updates.filter((p) => p !== promise);
+      })
+      .catch((e) =>
+        handleError(e, {
+          isUserTriggered: false,
+          publicMessage: `Unable to update user settings for key: ${key}.`,
+          publicSubject: 'Some POST user settings failed.',
+          silent: true,
+          type: ErrorType.Api,
+        }),
+      );
+    this.#updates = [...this.#updates, promise];
+    return promise;
   }
 
   /**
