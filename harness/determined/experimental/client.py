@@ -47,7 +47,7 @@ import functools
 import logging
 import pathlib
 import warnings
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
@@ -253,7 +253,7 @@ def logout() -> None:
 
 
 @_require_singleton
-def list_users() -> Iterator[User]:
+def list_users() -> List[User]:
     """
     Get the list :class:`~determined.experimental.client.User` of all Users.
     """
