@@ -6657,6 +6657,44 @@ export interface V1PatchUserResponse {
 /**
  * Update activation status for multiple users.
  * @export
+ * @interface V1PatchUsersAssignmentsRequest
+ */
+export interface V1PatchUsersAssignmentsRequest {
+    /**
+     * The user ids of users to edit group associations.
+     * @type {Array<number>}
+     * @memberof V1PatchUsersAssignmentsRequest
+     */
+    userIds: Array<number>;
+    /**
+     * The ids of groups to associate with users.
+     * @type {Array<number>}
+     * @memberof V1PatchUsersAssignmentsRequest
+     */
+    addGroups: Array<number>;
+    /**
+     * The ids of groups to disassociate from users.
+     * @type {Array<number>}
+     * @memberof V1PatchUsersAssignmentsRequest
+     */
+    removeGroups: Array<number>;
+}
+/**
+ * Response to PatchUsersAssignmentsRequest.
+ * @export
+ * @interface V1PatchUsersAssignmentsResponse
+ */
+export interface V1PatchUsersAssignmentsResponse {
+    /**
+     * Details on success or error for each user.
+     * @type {Array<V1UserActionResult>}
+     * @memberof V1PatchUsersAssignmentsResponse
+     */
+    results: Array<V1UserActionResult>;
+}
+/**
+ * Update activation status for multiple users.
+ * @export
  * @interface V1PatchUsersRequest
  */
 export interface V1PatchUsersRequest {
@@ -29379,6 +29417,44 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1PatchUsersAssignmentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsersAssignments(body: V1PatchUsersAssignmentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUsersAssignments.');
+            }
+            const localVarPath = `/api/v1/users/assignments`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29716,6 +29792,25 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1PatchUsersAssignmentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsersAssignments(body: V1PatchUsersAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersAssignmentsResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUsersAssignments(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29896,6 +29991,16 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1PatchUsersAssignmentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsersAssignments(body: V1PatchUsersAssignmentsRequest, options?: any) {
+            return UsersApiFp(configuration).patchUsersAssignments(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -30042,6 +30147,18 @@ export class UsersApi extends BaseAPI {
      */
     public patchUsers(body: V1PatchUsersRequest, options?: any) {
         return UsersApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Assign multiple users to multiple groups.
+     * @param {V1PatchUsersAssignmentsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public patchUsersAssignments(body: V1PatchUsersAssignmentsRequest, options?: any) {
+        return UsersApiFp(this.configuration).patchUsersAssignments(body, options)(this.fetch, this.basePath)
     }
     
     /**

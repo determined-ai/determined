@@ -218,6 +218,17 @@ service Determined {
       tags: "Users"
     };
   }
+  // Assign multiple users to multiple groups.
+  rpc PatchUsersAssignments(PatchUsersAssignmentsRequest)
+      returns (PatchUsersAssignmentsResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/assignments",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
   // Get telemetry information.
   rpc GetTelemetry(GetTelemetryRequest) returns (GetTelemetryResponse) {
     option (google.api.http) = {
