@@ -462,6 +462,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		jobservice.Default.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
+		if state == "" {
+			state = model.ErrorState
+		}
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
 		} else if !wasPatched {

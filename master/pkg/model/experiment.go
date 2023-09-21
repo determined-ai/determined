@@ -166,6 +166,7 @@ var ExperimentTransitions = map[State]map[State]bool{
 		StoppingCanceledState:  true,
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
+		ErrorState:             true,
 	},
 	PausedState: {
 		ActiveState:            true,
@@ -173,19 +174,23 @@ var ExperimentTransitions = map[State]map[State]bool{
 		StoppingCanceledState:  true,
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
+		ErrorState:             true,
 	},
 	StoppingCanceledState: {
 		CanceledState:       true,
 		StoppingKilledState: true,
 		StoppingErrorState:  true,
+		ErrorState:          true,
 	},
 	StoppingKilledState: {
 		CanceledState:      true,
 		StoppingErrorState: true,
+		ErrorState:         true,
 	},
 	StoppingCompletedState: {
 		CompletedState:     true,
 		StoppingErrorState: true,
+		ErrorState:         true,
 	},
 	StoppingErrorState: {
 		ActiveState: true,
