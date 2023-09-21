@@ -1,5 +1,6 @@
 import datetime
 import enum
+import itertools
 import json
 import warnings
 from typing import Any, Dict, Iterable, List, Optional
@@ -252,19 +253,15 @@ class Model:
         )
         return list(self.list_versions(order_by=order_by))
 
-    def list_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> Iterable[ModelVersion]:
+    def list_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[ModelVersion]:
         """
-        Get an iterable of ModelVersions with checkpoints of this model.
+        Get a list of ModelVersions with checkpoints of this model.
 
         The model versions are sorted by model version ID and are returned in descending
         order by default.
 
         Arguments:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
-
-        Note:
-            This method returns an Iterable type that lazily instantiates response objects. To
-            fetch all versions at once, call list(list_versions()).
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetModelVersionsResponse:
@@ -276,10 +273,10 @@ class Model:
                 orderBy=order_by._to_bindings(),
             )
 
-        resps = api.read_paginated(get_with_offset)
-        for r in resps:
-            for m in r.modelVersions:
-                yield ModelVersion._from_bindings(m, self._session)
+        bindings_models: Iterable[bindings.v1ModelVersion] = itertools.chain.from_iterable(
+            r.modelVersions for r in api.read_paginated(get_with_offset)
+        )
+        return [ModelVersion._from_bindings(m, self._session) for m in bindings_models]
 
     def register_version(self, checkpoint_uuid: str) -> ModelVersion:
         """
