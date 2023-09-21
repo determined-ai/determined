@@ -14,12 +14,17 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
 func TestTaskAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+
+	mockUserArg := mock.MatchedBy(func(u model.User) bool {
+		return u.ID == curUser.ID
+	})
 
 	_, task := createTestTrial(t, api, curUser)
 	taskID := string(task.TaskID)
@@ -56,13 +61,13 @@ func TestTaskAuthZ(t *testing.T) {
 		require.ErrorIs(t, curCase.IDToReqCall("-999"), apiPkg.NotFoundErrs("task", "-999", true))
 
 		// Can't view allocation's experiment gives same error.
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), apiPkg.NotFoundErrs("task", taskID, true))
 
 		// Experiment view error is returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), expectedErr)
 
@@ -70,7 +75,7 @@ func TestTaskAuthZ(t *testing.T) {
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 			Return(nil).Once()
-		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
+		authZExp.On(curCase.DenyFuncName, mock.Anything, mockUserArg, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), expectedErr)
 	}
