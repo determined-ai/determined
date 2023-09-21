@@ -187,7 +187,7 @@ def test_list_experiments_calls_bindings_with_params(
 
 @responses.activate
 @mock.patch("determined.common.api.bindings.get_GetExperiments")
-def test_list_experiments_iterates_through_pages(
+def test_list_experiments_returns_all_response_pages(
     mock_bindings: mock.MagicMock,
     make_client: Callable[[], Determined],
 ) -> None:
