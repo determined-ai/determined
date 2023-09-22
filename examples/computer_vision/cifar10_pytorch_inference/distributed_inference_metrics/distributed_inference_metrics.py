@@ -1,5 +1,9 @@
+import os
+from typing import Any
+
+import filelock
 import torch
-from model_def import download_dataset
+from torchvision import datasets, transforms
 
 from determined import pytorch
 from determined.experimental import client
@@ -51,6 +55,21 @@ class FrogCountingInferenceProcessor(experimental.TorchBatchProcessor):
             metrics={
                 "total_frogs": self.total_frogs[self.rank],
             },
+        )
+
+
+def download_dataset(train: bool) -> Any:
+    download_directory = "data"
+    os.makedirs(download_directory, exist_ok=True)
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    )
+    # Use a file lock so that workers on the same node attempt the download one at a time.
+    # The first worker will actually perform the download, while the subsequent workers will
+    # see that the dataset is downloaded and skip.
+    with filelock.FileLock(os.path.join(download_directory, "lock")):
+        return datasets.CIFAR10(
+            root=download_directory, train=train, download=True, transform=transform
         )
 
 

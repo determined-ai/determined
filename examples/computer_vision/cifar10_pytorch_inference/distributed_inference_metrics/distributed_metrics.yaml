@@ -1,7 +1,7 @@
 name: distributed_inference_example
 entrypoint: >-
   python3 -m determined.launch.torch_distributed
-  python3 inference_example.py
+  python3 distributed_inference_metrics.py
 
 resources:
   slots_per_trial: 2
@@ -12,7 +12,7 @@ searcher:
   max_length: 100
 hyperparameters:
   # Replace with the name of the model to run inference on
-  model_name: cifar_checkpoints
+  model_name: cifar_inference
   # Replace with the model versions to run inference on
   model_version:
     type: categorical
@@ -26,11 +26,6 @@ hyperparameters:
       - 7
       - 8
       - 9
-      - 10
-      - 11
-      - 12
-      - 13
-      - 14
 
 max_restarts: 0
 bind_mounts:
