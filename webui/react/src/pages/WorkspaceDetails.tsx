@@ -254,7 +254,7 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  if (Loadable.isLoading(loadableWorkspace) || Loadable.isLoading(loadableUsers)) {
+  if (Loadable.isNotLoaded(loadableWorkspace) || Loadable.isNotLoaded(loadableUsers)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;

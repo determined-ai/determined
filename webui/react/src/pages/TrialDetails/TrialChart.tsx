@@ -155,7 +155,7 @@ const TrialChart: React.FC<Props> = ({
       <div className={css.base}>
         <UPlotChart
           data={chartData}
-          isLoading={!trialId || Loadable.isLoading(trialSummary)}
+          isLoading={!trialId || Loadable.isNotLoaded(trialSummary)}
           options={chartOptions}
         />
       </div>

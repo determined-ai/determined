@@ -380,7 +380,7 @@ const ModelDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
-  } else if (!model || Loadable.isLoading(workspaces) || rbacLoading) {
+  } else if (!model || Loadable.isNotLoaded(workspaces) || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 

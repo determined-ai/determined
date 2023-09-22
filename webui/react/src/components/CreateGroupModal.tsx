@@ -209,7 +209,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
             <>
               <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
                 <Select
-                  loading={Loadable.isLoading(roles)}
+                  loading={Loadable.isNotLoaded(roles)}
                   mode="multiple"
                   optionFilterProp="children"
                   placeholder={'Add Roles'}

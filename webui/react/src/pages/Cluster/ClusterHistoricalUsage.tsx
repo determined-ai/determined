@@ -129,7 +129,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Space>
         <Section
           bodyBorder
-          loading={Loadable.isLoading(chartSeries)}
+          loading={Loadable.isNotLoaded(chartSeries)}
           title="Compute Hours Allocated">
           {Loadable.match(chartSeries, {
             Loaded: (series) => (
@@ -144,7 +144,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Section>
         <Section
           bodyBorder
-          loading={Loadable.isLoading(Loadable.all([loadableUsers, chartSeries]))}
+          loading={Loadable.isNotLoaded(Loadable.all([loadableUsers, chartSeries]))}
           title="Compute Hours by User">
           {Loadable.match(chartSeries, {
             Loaded: (series) => (
@@ -160,7 +160,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Section>
         <Section
           bodyBorder
-          loading={Loadable.isLoading(chartSeries)}
+          loading={Loadable.isNotLoaded(chartSeries)}
           title="Compute Hours by Label">
           {Loadable.match(chartSeries, {
             Loaded: (series) => (
@@ -176,7 +176,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Section>
         <Section
           bodyBorder
-          loading={Loadable.isLoading(chartSeries)}
+          loading={Loadable.isNotLoaded(chartSeries)}
           title="Compute Hours by Resource Pool">
           {Loadable.match(chartSeries, {
             Loaded: (series) => (

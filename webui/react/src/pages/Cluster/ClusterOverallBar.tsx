@@ -40,7 +40,7 @@ export const ClusterOverallBar: React.FC = () => {
     <Section hideTitle title="Overall Allocation">
       <Spinner
         conditionalRender
-        spinning={Loadable.isLoading(agents) || Loadable.isLoading(overview)}>
+        spinning={Loadable.isNotLoaded(agents) || Loadable.isNotLoaded(overview)}>
         {Loadable.isLoaded(agents) && Loadable.isLoaded(overview) ? ( // This is ok as the Spinner has conditionalRender active
           <>
             {overview.data.CUDA.total + overview.data.ROCM.total + overview.data.CPU.total === 0 ? (

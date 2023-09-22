@@ -139,7 +139,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(loadableUsers))
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isNotLoaded(loadableUsers))
       return;
 
     switch (settings.whose) {
@@ -363,7 +363,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading || Loadable.isLoading(loadableUsers)}
+            loading={isLoading || Loadable.isNotLoaded(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

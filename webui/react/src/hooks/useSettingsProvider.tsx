@@ -34,7 +34,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
-  const isLoading = Loadable.isLoading(useObservable(userSettings._forUseSettingsOnly()));
+  const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
 
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);

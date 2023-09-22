@@ -130,7 +130,7 @@ const WorkspaceList: React.FC = () => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(loadableUsers))
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isNotLoaded(loadableUsers))
       return;
 
     switch (settings.whose) {
@@ -149,7 +149,7 @@ const WorkspaceList: React.FC = () => {
   }, [currentUser, loadableUsers, prevWhose, settings.whose, updateSettings, users]);
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(loadableUsers)) return [];
+    if (Loadable.isNotLoaded(loadableUsers)) return [];
 
     const workspaceNameRenderer = (value: string, record: Workspace) => (
       <Link path={paths.workspaceDetails(record.id)}>{value}</Link>
@@ -288,7 +288,7 @@ const WorkspaceList: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={workspaces}
-            loading={isLoading || Loadable.isLoading(loadableUsers)}
+            loading={isLoading || Loadable.isNotLoaded(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

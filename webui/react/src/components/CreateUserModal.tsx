@@ -184,7 +184,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
               <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
                 <Select
                   disabled={(user !== undefined && userRoles === null) || viewOnly}
-                  loading={Loadable.isLoading(knownRoles)}
+                  loading={Loadable.isNotLoaded(knownRoles)}
                   mode="multiple"
                   optionFilterProp="children"
                   placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}

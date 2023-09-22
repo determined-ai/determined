@@ -340,7 +340,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={filteredUsers}
         interactiveColumns={false}
-        loading={Loadable.isLoading(loadableUsers)}
+        loading={Loadable.isNotLoaded(loadableUsers)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         settings={{

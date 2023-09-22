@@ -60,7 +60,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <Space>
-            <Spinner conditionalRender spinning={Loadable.isLoading(loadableUsers)}>
+            <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUsers)}>
               <>
                 <Avatar user={user} />
                 {`${getDisplayName(user)} on

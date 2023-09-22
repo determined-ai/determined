@@ -290,7 +290,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [isLoadingSettings]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (isLoadingSettings || Loadable.isLoading(loadableFormset)) return;
+    if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(

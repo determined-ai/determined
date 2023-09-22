@@ -232,7 +232,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       <ResponsiveTable<Step>
         columns={columns}
         dataSource={workloadSteps}
-        loading={Loadable.isLoading(workloads)}
+        loading={Loadable.isNotLoaded(workloads)}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
