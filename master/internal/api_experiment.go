@@ -475,6 +475,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return
 			}
 
+			// TODO CAROLINA: could this be why we don't delete any checkpoints?
 			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
 				exp.ID,
 				0,
@@ -494,6 +495,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 						true, agentUserGroup, userModel, nil,
 					)
 					if err != nil {
+						// TODO CAROLINA: this fails when you delete an experiment that hasn't been killed.
 						log.WithError(err).Errorf("failed to gc checkpoints for experiment")
 						return
 					}

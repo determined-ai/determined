@@ -745,6 +745,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 			})
 			a.tryExit("resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
+			// TODO CAROLINA: This is the error received if you try to delete an experiment (without killing it?)
 			// Avoid erroring out if we have killed our daemons gracefully.
 			// This occurs in the case of an early stop in dtrain. One resource
 			// will exit with a 0 exit code and kill the rest of the resources sending
@@ -835,6 +836,7 @@ func (a *allocation) recover() {
 
 // crash closes the allocation due to an error, beginning the kill flow.
 func (a *allocation) crash(err error) {
+	// TODO CAROLINA
 	a.syslog.WithError(err).Errorf("allocation encountered fatal error")
 	if a.exitErr == nil {
 		a.exitErr = err
@@ -1138,7 +1140,8 @@ func (a *allocation) terminated(reason string) {
 				panic(fmt.Errorf("unexpected allocation failure: %w", err))
 			}
 		default:
-			exitReason = fmt.Sprintf("allocation handler crashed due to error: %s", err)
+			// TODO CAROLINA
+			exitReason = fmt.Sprintf("allocation handler crashed due to error TYPE: %T", err)
 			a.syslog.Error(exitReason)
 			exit.Err = err
 			return

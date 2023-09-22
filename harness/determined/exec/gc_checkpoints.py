@@ -21,8 +21,10 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
     if info is None:
         info = det.ClusterInfo._from_env()
         info._to_file()
+    print("CAROLINA: info IS NOT none")
 
     cert = certs.default_load(info.master_url)
+    print("CAROLINA loaded cert")
     sess = api.Session(
         info.master_url,
         util.get_det_username_from_env(),
@@ -33,6 +35,7 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
             backoff_factor=0.5,
         ),
     )
+    print("CAROLINA defined sess")
 
     checkpoints = []
     for storage_id, resources in storage_ids_to_resources.items():
@@ -44,12 +47,16 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
                 ),
             )
         )
+        print("CAROLINA appended checkpoint")
+    print("CAROLINA finished appending checkpoints")
+    # Testing deleting this bc it says file not found.
+    # bindings.patch_PatchCheckpoints(
+    #    sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
+    # )
+    print("CAROLINA finished patch_checkpoints")
 
-    bindings.patch_PatchCheckpoints(
-        sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
-    )
 
-
+# TODO CAROLINA -- this is not working
 def delete_checkpoints(
     manager: storage.StorageManager, to_delete: List[str], globs: List[str], dry_run: bool
 ) -> Dict[str, Dict[str, int]]:
@@ -58,20 +65,30 @@ def delete_checkpoints(
     """
     logging.info(f"Deleting {len(to_delete)} checkpoints")
 
-    storage_id_to_resources: Dict[str, Dict[str, int]] = {}
-    for storage_id in to_delete:
-        if not dry_run:
-            logging.info(f"Deleting checkpoint {storage_id}")
-            try:
-                storage_id_to_resources[storage_id] = manager.delete(storage_id, globs)
-            except errors.CheckpointNotFound as e:
-                logging.warn(e)
-        else:
-            logging.info(f"Dry run: deleting checkpoint {storage_id}")
+    if "**/*" in globs and len(to_delete) > 0:
+        logging.info(f"Deleting ALL checkpoints in directory.")
+        try:
+            return manager.delete(to_delete[0], globs)  # TODO CAROLINA
+        except errors.CheckpointNotFound as e:
+            logging.warn(e)
+            return {}
+    else:
+        storage_id_to_resources: Dict[str, Dict[str, int]] = {}
+        for storage_id in to_delete:
+            if not dry_run:
+                logging.info(f"Deleting checkpoint {storage_id}")
+                try:
+                    storage_id_to_resources[storage_id] = manager.delete(
+                        storage_id, globs
+                    )  # TODO CAROLINA
+                except errors.CheckpointNotFound as e:
+                    logging.warn(e)
+            else:
+                logging.info(f"Dry run: deleting checkpoint {storage_id}")
+        return storage_id_to_resources
 
-    return storage_id_to_resources
 
-
+# TODO CAROLINA
 def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool = False) -> None:
     """
     Delete all Tensorboards associated with a single experiment.
@@ -81,6 +98,7 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
         return
 
     try:
+        logging.info("IN HERE! DELETING!!!")
         manager.delete()
     except errors.CheckpointNotFound as e:
         logging.warn(e)
@@ -154,13 +172,16 @@ def main(argv: List[str]) -> None:
     globs = [s.strip() for s in args.globs]
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
-
+    logging.info("CAROLINA: Made it to line 158, going to start deleting checkpoints.")
     if len(storage_ids) > 0:
         storage_ids_to_resources = delete_checkpoints(
             manager, storage_ids, globs, dry_run=args.dry_run
         )
+        logging.info("CAROLINA: Made it to line 163, going to patch checkpoints.")
         patch_checkpoints(storage_ids_to_resources)
+    logging.info("CAROLINA: Made it to line 165.")
 
+    # TODO CAROLINA: Look here?
     if args.delete_tensorboards:
         tb_manager = tensorboard.build(
             os.environ["DET_CLUSTER_ID"],

@@ -160,6 +160,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
+	// TODO CAROLINA: could this be it?
 	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
