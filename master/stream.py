@@ -9,8 +9,8 @@ url = "localhost:8080"
 
 
 # steal determined token
-subprocess.call(["det", "user", "login"])
 client.login(url)
+print(f"Logged in as: {client._determined._session._auth.session.username}")
 token = client._determined._session._auth.session.token
 
 trials = input("Submit array of trial_id values to subscribe to (default: [1]): ")
