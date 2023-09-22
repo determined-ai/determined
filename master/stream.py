@@ -17,6 +17,9 @@ trials = input("Submit array of trial_id values to subscribe to (default: [1]): 
 if trials == "":
     trials = "[1]"
 
+max_retries = 5
+num_retries = 0
+
 
 def stream_loop():
     ws = lomond.WebSocket(f"http://{url}/stream")
@@ -42,7 +45,11 @@ def stream_loop():
                 raise Exception(f"connection failed: {event}")
             elif isinstance(event, (events.Closing, events.Disconnected)):
                 print("Connection closed...attempting reconnect")
-                stream_loop()
+                num_retries += 1
+                if num_retries < max_retries:
+                    stream_loop()
+                else:
+                    print("exceeded max retries")
     except KeyboardInterrupt:
         print("")
     except Exception as e:
