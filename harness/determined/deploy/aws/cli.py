@@ -150,6 +150,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
                 f"deployment-type={args.deployment_type}."
             )
+    if args.deployment_type == constants.deployment_types.SIMPLE_RDS:
+        if args.db_size is not None and args.db_size < 20:
+            raise ValueError("The db-size must be greater than or equal to 20 GB")
 
     if args.deployment_type == constants.deployment_types.GOVCLOUD:
         if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
@@ -198,6 +201,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.VERSION: args.det_version,
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
         constants.cloudformation.DB_PASSWORD: args.db_password,
+        constants.cloudformation.DB_INSTANCE_TYPE: args.db_instance_type,
+        constants.cloudformation.DB_SIZE: args.db_size,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
         constants.cloudformation.MAX_AUX_CONTAINERS_PER_AGENT: args.max_aux_containers_per_agent,
@@ -436,6 +441,18 @@ args_description = Cmd(
                     type=str,
                     default=constants.defaults.DB_PASSWORD,
                     help="password for master database",
+                ),
+                Arg(
+                    "--db-instance-type",
+                    type=str,
+                    default=constants.defaults.DB_INSTANCE_TYPE,
+                    help="instance type for master database",
+                ),
+                Arg(
+                    "--db-size",
+                    type=int,
+                    default=constants.defaults.DB_SIZE,
+                    help="storage size in GB for master database",
                 ),
                 Arg(
                     "--max-idle-agent-period",
