@@ -363,9 +363,9 @@ OPT_DEFAULTIMAGE_sawmill=/scratch2/karlon/new/detAI-cuda-11.3-pytorch-1.10-tf-2.
 OPT_TASKCONTAINERDEFAULTS_sawmill=$(
     cat <<EOF
           environment_variables:
-            - USE_HOST_LIBFABRIC=y
+            #- USE_HOST_LIBFABRIC=y
             - NCCL_DEBUG=INFO
-            - OMPI_MCA_orte_tmpdir_base=/dev/shm/
+            #- OMPI_MCA_orte_tmpdir_base=/dev/shm/
 EOF
 )
 # Indentation of partition_overrides must match devcluster-slurm.yaml
@@ -373,6 +373,18 @@ OPT_PARTITIONOVERRIDES_sawmill=$(
     cat <<EOF
              grizzly:
                 slot_type: cuda
+             bard:
+                slot_type: rocm
+                task_container_defaults:
+                    # New image with different bind-mounts
+                    image:  /scratch2/beazley/rocm-5.6-pytorch-2.0-tf-2.10-rocm-0.24.0.1695406667.sif
+                    bind_mounts:
+                       - host_path: /
+                         container_path: /DET_host
+                       - host_path: /scratch2/crickett/lib/libfabric-1.21.1
+                         container_path: /DET_fabric
+                    environment_variables:
+                       - MIOPEN_DEBUG_SAVE_TEMP_DIR=1               
 EOF
 )
 
