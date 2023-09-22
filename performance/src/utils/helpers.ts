@@ -76,7 +76,7 @@ export const generateSlackResults = (results: Results): string => {
     Object.keys(results.metrics).filter((key) => key.includes("::")).forEach((key) => {
         resultString = resultString.concat(`${getGroupName(key)} \n`);
         const stats = results.metrics[key].values;
-        resultString = resultString.concat(...statNames.map((name) => `${name} = ${stats[name]} `), " \n\n");
+        resultString = resultString.concat(...statNames.map((name) => `${name} = ${Number(stats[name]).toFixed(2)}ms   `), " \n\n");
         if (results.metrics[key].thresholds["p(95)\u003c1000"]?.ok === false) testFailures++
     })
     const failures = `Test Failures: ${testFailures}`;
