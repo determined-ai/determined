@@ -1,5 +1,6 @@
 import { check, group, JSONObject } from "k6";
 import http from "k6/http";
+import { Results, MetricResults } from "./types";
 
 // k6 groups cannot be defined in the init methods of a k6 script
 // this method allows us to define a group name and function
@@ -62,3 +63,23 @@ export const testGetRequestor = (
         }
     }
 };
+
+const getGroupName = (resultName: string): string => "Group: " + resultName.substring(resultName.lastIndexOf(":") + 1, resultName.indexOf("}"))
+
+export const generateSlackResults = (results: Results): string => {
+    let resultString = "";
+    let testFailures = 0;
+    const failedRequests = `Failed HTTP Requests: ${results.metrics["http_req_failed"].values["fails"]} \n`
+    const failedRequestsPercent = `Percent Failed HTTP Requests: ${Number(results.metrics["http_req_failed"].values["rate"]) * 100}% \n`;
+    const statNames = ["avg", "min", "med", "max", "p(90)", "p(95)"];
+    resultString = resultString.concat(failedRequests, failedRequestsPercent)
+    Object.keys(results.metrics).filter((key) => key.includes("::")).forEach((key) => {
+        resultString = resultString.concat(`${getGroupName(key)} \n`);
+        const stats = results.metrics[key].values;
+        resultString = resultString.concat(...statNames.map((name) => `${name} = ${stats[name]} `), " \n");
+        if (results.metrics[key].thresholds["p(95)\u003c1000"]?.ok === false) testFailures++
+    })
+    const failures = `Test Failures: ${testFailures}`;
+    resultString = resultString.concat(failures);
+    return resultString
+}
