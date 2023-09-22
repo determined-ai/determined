@@ -45,9 +45,10 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
             )
         )
     # TODO/Need 2nd opinions: Testing deleting this bc it says file not found.
-    #bindings.patch_PatchCheckpoints(
-    #    sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
-    #)
+    bindings.patch_PatchCheckpoints(
+        sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
+    )
+
 
 def delete_checkpoints(
     manager: storage.StorageManager, to_delete: List[str], globs: List[str], dry_run: bool
@@ -70,7 +71,7 @@ def delete_checkpoints(
             if not dry_run:
                 logging.info(f"Deleting checkpoint {storage_id}")
                 try:
-                    storage_id_to_resources[storage_id] = manager.delete(storage_id, globs) 
+                    storage_id_to_resources[storage_id] = manager.delete(storage_id, globs)
                 except errors.CheckpointNotFound as e:
                     logging.warn(e)
             else:
@@ -85,7 +86,6 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
     if dry_run:
         logging.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
         return
-    
     try:
         manager.delete()
     except errors.CheckpointNotFound as e:
