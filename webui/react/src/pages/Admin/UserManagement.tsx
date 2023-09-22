@@ -76,7 +76,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
   const onToggleActive = useCallback(async () => {
     try {
-      await patchUsers({ userIds: [user.id], activate: !user.isActive });
+      await patchUsers({ activate: !user.isActive, userIds: [user.id] });
       makeToast({
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,

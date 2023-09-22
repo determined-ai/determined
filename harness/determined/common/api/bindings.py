@@ -1562,6 +1562,60 @@ class v1ArchiveExperimentsResponse(Printable):
         }
         return out
 
+class v1AssignMultipleGroupsRequest(Printable):
+    """Add and remove multiple users from multiple groups."""
+
+    def __init__(
+        self,
+        *,
+        addGroups: "typing.Sequence[int]",
+        removeGroups: "typing.Sequence[int]",
+        userIds: "typing.Sequence[int]",
+    ):
+        self.addGroups = addGroups
+        self.removeGroups = removeGroups
+        self.userIds = userIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AssignMultipleGroupsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "addGroups": obj["addGroups"],
+            "removeGroups": obj["removeGroups"],
+            "userIds": obj["userIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "addGroups": self.addGroups,
+            "removeGroups": self.removeGroups,
+            "userIds": self.userIds,
+        }
+        return out
+
+class v1AssignMultipleGroupsResponse(Printable):
+    """Response to AssignMultipleGroupsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1UserActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AssignMultipleGroupsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1UserActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1AssignRolesRequest(Printable):
     """AssignRolesRequest is the body of the request for the call to
     grant a user or group a role. It requires group_id, role_id,
@@ -9122,60 +9176,6 @@ class v1PatchUserResponse(Printable):
         }
         return out
 
-class v1PatchUsersAssignmentsRequest(Printable):
-    """Update activation status for multiple users."""
-
-    def __init__(
-        self,
-        *,
-        addGroups: "typing.Sequence[int]",
-        removeGroups: "typing.Sequence[int]",
-        userIds: "typing.Sequence[int]",
-    ):
-        self.addGroups = addGroups
-        self.removeGroups = removeGroups
-        self.userIds = userIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchUsersAssignmentsRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "addGroups": obj["addGroups"],
-            "removeGroups": obj["removeGroups"],
-            "userIds": obj["userIds"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "addGroups": self.addGroups,
-            "removeGroups": self.removeGroups,
-            "userIds": self.userIds,
-        }
-        return out
-
-class v1PatchUsersAssignmentsResponse(Printable):
-    """Response to PatchUsersAssignmentsRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1UserActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchUsersAssignmentsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1UserActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
 class v1PatchUsersRequest(Printable):
     """Update activation status for multiple users."""
 
@@ -15197,6 +15197,27 @@ def post_ArchiveWorkspace(
         return
     raise APIHttpError("post_ArchiveWorkspace", _resp)
 
+def patch_AssignMultipleGroups(
+    session: "api.Session",
+    *,
+    body: "v1AssignMultipleGroupsRequest",
+) -> "v1AssignMultipleGroupsResponse":
+    """Assign multiple users to multiple groups."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/users/assignments",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1AssignMultipleGroupsResponse.from_json(_resp.json())
+    raise APIHttpError("patch_AssignMultipleGroups", _resp)
+
 def post_AssignRoles(
     session: "api.Session",
     *,
@@ -19426,27 +19447,6 @@ def patch_PatchUsers(
     if _resp.status_code == 200:
         return v1PatchUsersResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUsers", _resp)
-
-def patch_PatchUsersAssignments(
-    session: "api.Session",
-    *,
-    body: "v1PatchUsersAssignmentsRequest",
-) -> "v1PatchUsersAssignmentsResponse":
-    """Assign multiple users to multiple groups."""
-    _params = None
-    _resp = session._do_request(
-        method="PATCH",
-        path="/api/v1/users/assignments",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1PatchUsersAssignmentsResponse.from_json(_resp.json())
-    raise APIHttpError("patch_PatchUsersAssignments", _resp)
 
 def patch_PatchWorkspace(
     session: "api.Session",

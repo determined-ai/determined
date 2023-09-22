@@ -171,29 +171,6 @@ message PatchUsersResponse {
   repeated UserActionResult results = 1;
 }
 
-// Update activation status for multiple users.
-message PatchUsersAssignmentsRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "add_groups", "remove_groups", "user_ids" ] }
-  };
-
-  // The user ids of users to edit group associations.
-  repeated int32 user_ids = 1;
-  // The ids of groups to associate with users.
-  repeated int32 add_groups = 2;
-  // The ids of groups to disassociate from users.
-  repeated int32 remove_groups = 3;
-}
-// Response to PatchUsersAssignmentsRequest.
-message PatchUsersAssignmentsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
-  };
-
-  // Details on success or error for each user.
-  repeated UserActionResult results = 1;
-}
-
 // Get user settings.
 message GetUserSettingRequest {}
 // Response to GetUserSettingRequest.

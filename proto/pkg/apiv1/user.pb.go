@@ -1043,122 +1043,6 @@ func (x *PatchUsersResponse) GetResults() []*UserActionResult {
 	return nil
 }
 
-// Update activation status for multiple users.
-type PatchUsersAssignmentsRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The user ids of users to edit group associations.
-	UserIds []int32 `protobuf:"varint,1,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	// The ids of groups to associate with users.
-	AddGroups []int32 `protobuf:"varint,2,rep,packed,name=add_groups,json=addGroups,proto3" json:"add_groups,omitempty"`
-	// The ids of groups to disassociate from users.
-	RemoveGroups []int32 `protobuf:"varint,3,rep,packed,name=remove_groups,json=removeGroups,proto3" json:"remove_groups,omitempty"`
-}
-
-func (x *PatchUsersAssignmentsRequest) Reset() {
-	*x = PatchUsersAssignmentsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PatchUsersAssignmentsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PatchUsersAssignmentsRequest) ProtoMessage() {}
-
-func (x *PatchUsersAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PatchUsersAssignmentsRequest.ProtoReflect.Descriptor instead.
-func (*PatchUsersAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *PatchUsersAssignmentsRequest) GetUserIds() []int32 {
-	if x != nil {
-		return x.UserIds
-	}
-	return nil
-}
-
-func (x *PatchUsersAssignmentsRequest) GetAddGroups() []int32 {
-	if x != nil {
-		return x.AddGroups
-	}
-	return nil
-}
-
-func (x *PatchUsersAssignmentsRequest) GetRemoveGroups() []int32 {
-	if x != nil {
-		return x.RemoveGroups
-	}
-	return nil
-}
-
-// Response to PatchUsersAssignmentsRequest.
-type PatchUsersAssignmentsResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Details on success or error for each user.
-	Results []*UserActionResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
-}
-
-func (x *PatchUsersAssignmentsResponse) Reset() {
-	*x = PatchUsersAssignmentsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[18]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PatchUsersAssignmentsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PatchUsersAssignmentsResponse) ProtoMessage() {}
-
-func (x *PatchUsersAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[18]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PatchUsersAssignmentsResponse.ProtoReflect.Descriptor instead.
-func (*PatchUsersAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *PatchUsersAssignmentsResponse) GetResults() []*UserActionResult {
-	if x != nil {
-		return x.Results
-	}
-	return nil
-}
-
 // Get user settings.
 type GetUserSettingRequest struct {
 	state         protoimpl.MessageState
@@ -1169,7 +1053,7 @@ type GetUserSettingRequest struct {
 func (x *GetUserSettingRequest) Reset() {
 	*x = GetUserSettingRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[19]
+		mi := &file_determined_api_v1_user_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1182,7 +1066,7 @@ func (x *GetUserSettingRequest) String() string {
 func (*GetUserSettingRequest) ProtoMessage() {}
 
 func (x *GetUserSettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[19]
+	mi := &file_determined_api_v1_user_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1195,7 +1079,7 @@ func (x *GetUserSettingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserSettingRequest.ProtoReflect.Descriptor instead.
 func (*GetUserSettingRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{19}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{17}
 }
 
 // Response to GetUserSettingRequest.
@@ -1211,7 +1095,7 @@ type GetUserSettingResponse struct {
 func (x *GetUserSettingResponse) Reset() {
 	*x = GetUserSettingResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[20]
+		mi := &file_determined_api_v1_user_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1224,7 +1108,7 @@ func (x *GetUserSettingResponse) String() string {
 func (*GetUserSettingResponse) ProtoMessage() {}
 
 func (x *GetUserSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[20]
+	mi := &file_determined_api_v1_user_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1237,7 +1121,7 @@ func (x *GetUserSettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserSettingResponse.ProtoReflect.Descriptor instead.
 func (*GetUserSettingResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{20}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetUserSettingResponse) GetSettings() []*userv1.UserWebSetting {
@@ -1260,7 +1144,7 @@ type PostUserSettingRequest struct {
 func (x *PostUserSettingRequest) Reset() {
 	*x = PostUserSettingRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[21]
+		mi := &file_determined_api_v1_user_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1273,7 +1157,7 @@ func (x *PostUserSettingRequest) String() string {
 func (*PostUserSettingRequest) ProtoMessage() {}
 
 func (x *PostUserSettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[21]
+	mi := &file_determined_api_v1_user_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1286,7 +1170,7 @@ func (x *PostUserSettingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserSettingRequest.ProtoReflect.Descriptor instead.
 func (*PostUserSettingRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{21}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *PostUserSettingRequest) GetSettings() []*userv1.UserWebSetting {
@@ -1306,7 +1190,7 @@ type PostUserSettingResponse struct {
 func (x *PostUserSettingResponse) Reset() {
 	*x = PostUserSettingResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[22]
+		mi := &file_determined_api_v1_user_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1319,7 +1203,7 @@ func (x *PostUserSettingResponse) String() string {
 func (*PostUserSettingResponse) ProtoMessage() {}
 
 func (x *PostUserSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[22]
+	mi := &file_determined_api_v1_user_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1332,7 +1216,7 @@ func (x *PostUserSettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserSettingResponse.ProtoReflect.Descriptor instead.
 func (*PostUserSettingResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{22}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{20}
 }
 
 // Reset user setting.
@@ -1345,7 +1229,7 @@ type ResetUserSettingRequest struct {
 func (x *ResetUserSettingRequest) Reset() {
 	*x = ResetUserSettingRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[23]
+		mi := &file_determined_api_v1_user_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1358,7 +1242,7 @@ func (x *ResetUserSettingRequest) String() string {
 func (*ResetUserSettingRequest) ProtoMessage() {}
 
 func (x *ResetUserSettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[23]
+	mi := &file_determined_api_v1_user_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1371,7 +1255,7 @@ func (x *ResetUserSettingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetUserSettingRequest.ProtoReflect.Descriptor instead.
 func (*ResetUserSettingRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{23}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{21}
 }
 
 // Response to ResetUserSettingRequest.
@@ -1384,7 +1268,7 @@ type ResetUserSettingResponse struct {
 func (x *ResetUserSettingResponse) Reset() {
 	*x = ResetUserSettingResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[24]
+		mi := &file_determined_api_v1_user_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1397,7 +1281,7 @@ func (x *ResetUserSettingResponse) String() string {
 func (*ResetUserSettingResponse) ProtoMessage() {}
 
 func (x *ResetUserSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[24]
+	mi := &file_determined_api_v1_user_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1294,7 @@ func (x *ResetUserSettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetUserSettingResponse.ProtoReflect.Descriptor instead.
 func (*ResetUserSettingResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{24}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{22}
 }
 
 // Update user activity.
@@ -1430,7 +1314,7 @@ type PostUserActivityRequest struct {
 func (x *PostUserActivityRequest) Reset() {
 	*x = PostUserActivityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[25]
+		mi := &file_determined_api_v1_user_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1443,7 +1327,7 @@ func (x *PostUserActivityRequest) String() string {
 func (*PostUserActivityRequest) ProtoMessage() {}
 
 func (x *PostUserActivityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[25]
+	mi := &file_determined_api_v1_user_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1456,7 +1340,7 @@ func (x *PostUserActivityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserActivityRequest.ProtoReflect.Descriptor instead.
 func (*PostUserActivityRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{25}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *PostUserActivityRequest) GetActivityType() userv1.ActivityType {
@@ -1490,7 +1374,7 @@ type PostUserActivityResponse struct {
 func (x *PostUserActivityResponse) Reset() {
 	*x = PostUserActivityResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[26]
+		mi := &file_determined_api_v1_user_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1503,7 +1387,7 @@ func (x *PostUserActivityResponse) String() string {
 func (*PostUserActivityResponse) ProtoMessage() {}
 
 func (x *PostUserActivityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[26]
+	mi := &file_determined_api_v1_user_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1516,7 +1400,7 @@ func (x *PostUserActivityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostUserActivityResponse.ProtoReflect.Descriptor instead.
 func (*PostUserActivityResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{26}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{24}
 }
 
 var File_determined_api_v1_user_proto protoreflect.FileDescriptor
@@ -1647,24 +1531,6 @@ var file_determined_api_v1_user_proto_rawDesc = []byte{
 	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
 	0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73,
 	0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x3a, 0x0f, 0x92, 0x41,
-	0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0xac, 0x01,
-	0x0a, 0x1c, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x41, 0x73, 0x73, 0x69,
-	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19,
-	0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x05,
-	0x52, 0x07, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x73, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x64, 0x64,
-	0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x05, 0x52, 0x09, 0x61,
-	0x64, 0x64, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6d, 0x6f,
-	0x76, 0x65, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x05, 0x52,
-	0x0c, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x3a, 0x2d, 0x92,
-	0x41, 0x2a, 0x0a, 0x28, 0xd2, 0x01, 0x0a, 0x61, 0x64, 0x64, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70,
-	0x73, 0xd2, 0x01, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70,
-	0x73, 0xd2, 0x01, 0x08, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x22, 0x6f, 0x0a, 0x1d,
-	0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
-	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3d, 0x0a,
-	0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23,
-	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73,
-	0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x3a, 0x0f, 0x92, 0x41,
 	0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x17, 0x0a,
 	0x15, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x6a, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65,
@@ -1722,68 +1588,65 @@ func file_determined_api_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_determined_api_v1_user_proto_goTypes = []interface{}{
-	(GetUsersRequest_SortBy)(0),           // 0: determined.api.v1.GetUsersRequest.SortBy
-	(*UserActionResult)(nil),              // 1: determined.api.v1.UserActionResult
-	(*GetUsersRequest)(nil),               // 2: determined.api.v1.GetUsersRequest
-	(*GetUsersResponse)(nil),              // 3: determined.api.v1.GetUsersResponse
-	(*GetUserRequest)(nil),                // 4: determined.api.v1.GetUserRequest
-	(*GetUserResponse)(nil),               // 5: determined.api.v1.GetUserResponse
-	(*GetUserByUsernameRequest)(nil),      // 6: determined.api.v1.GetUserByUsernameRequest
-	(*GetUserByUsernameResponse)(nil),     // 7: determined.api.v1.GetUserByUsernameResponse
-	(*GetMeRequest)(nil),                  // 8: determined.api.v1.GetMeRequest
-	(*GetMeResponse)(nil),                 // 9: determined.api.v1.GetMeResponse
-	(*PostUserRequest)(nil),               // 10: determined.api.v1.PostUserRequest
-	(*PostUserResponse)(nil),              // 11: determined.api.v1.PostUserResponse
-	(*SetUserPasswordRequest)(nil),        // 12: determined.api.v1.SetUserPasswordRequest
-	(*SetUserPasswordResponse)(nil),       // 13: determined.api.v1.SetUserPasswordResponse
-	(*PatchUserRequest)(nil),              // 14: determined.api.v1.PatchUserRequest
-	(*PatchUserResponse)(nil),             // 15: determined.api.v1.PatchUserResponse
-	(*PatchUsersRequest)(nil),             // 16: determined.api.v1.PatchUsersRequest
-	(*PatchUsersResponse)(nil),            // 17: determined.api.v1.PatchUsersResponse
-	(*PatchUsersAssignmentsRequest)(nil),  // 18: determined.api.v1.PatchUsersAssignmentsRequest
-	(*PatchUsersAssignmentsResponse)(nil), // 19: determined.api.v1.PatchUsersAssignmentsResponse
-	(*GetUserSettingRequest)(nil),         // 20: determined.api.v1.GetUserSettingRequest
-	(*GetUserSettingResponse)(nil),        // 21: determined.api.v1.GetUserSettingResponse
-	(*PostUserSettingRequest)(nil),        // 22: determined.api.v1.PostUserSettingRequest
-	(*PostUserSettingResponse)(nil),       // 23: determined.api.v1.PostUserSettingResponse
-	(*ResetUserSettingRequest)(nil),       // 24: determined.api.v1.ResetUserSettingRequest
-	(*ResetUserSettingResponse)(nil),      // 25: determined.api.v1.ResetUserSettingResponse
-	(*PostUserActivityRequest)(nil),       // 26: determined.api.v1.PostUserActivityRequest
-	(*PostUserActivityResponse)(nil),      // 27: determined.api.v1.PostUserActivityResponse
-	(OrderBy)(0),                          // 28: determined.api.v1.OrderBy
-	(*userv1.User)(nil),                   // 29: determined.user.v1.User
-	(*Pagination)(nil),                    // 30: determined.api.v1.Pagination
-	(*userv1.PatchUser)(nil),              // 31: determined.user.v1.PatchUser
-	(*userv1.UserWebSetting)(nil),         // 32: determined.user.v1.UserWebSetting
-	(userv1.ActivityType)(0),              // 33: determined.user.v1.ActivityType
-	(userv1.EntityType)(0),                // 34: determined.user.v1.EntityType
+	(GetUsersRequest_SortBy)(0),       // 0: determined.api.v1.GetUsersRequest.SortBy
+	(*UserActionResult)(nil),          // 1: determined.api.v1.UserActionResult
+	(*GetUsersRequest)(nil),           // 2: determined.api.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),          // 3: determined.api.v1.GetUsersResponse
+	(*GetUserRequest)(nil),            // 4: determined.api.v1.GetUserRequest
+	(*GetUserResponse)(nil),           // 5: determined.api.v1.GetUserResponse
+	(*GetUserByUsernameRequest)(nil),  // 6: determined.api.v1.GetUserByUsernameRequest
+	(*GetUserByUsernameResponse)(nil), // 7: determined.api.v1.GetUserByUsernameResponse
+	(*GetMeRequest)(nil),              // 8: determined.api.v1.GetMeRequest
+	(*GetMeResponse)(nil),             // 9: determined.api.v1.GetMeResponse
+	(*PostUserRequest)(nil),           // 10: determined.api.v1.PostUserRequest
+	(*PostUserResponse)(nil),          // 11: determined.api.v1.PostUserResponse
+	(*SetUserPasswordRequest)(nil),    // 12: determined.api.v1.SetUserPasswordRequest
+	(*SetUserPasswordResponse)(nil),   // 13: determined.api.v1.SetUserPasswordResponse
+	(*PatchUserRequest)(nil),          // 14: determined.api.v1.PatchUserRequest
+	(*PatchUserResponse)(nil),         // 15: determined.api.v1.PatchUserResponse
+	(*PatchUsersRequest)(nil),         // 16: determined.api.v1.PatchUsersRequest
+	(*PatchUsersResponse)(nil),        // 17: determined.api.v1.PatchUsersResponse
+	(*GetUserSettingRequest)(nil),     // 18: determined.api.v1.GetUserSettingRequest
+	(*GetUserSettingResponse)(nil),    // 19: determined.api.v1.GetUserSettingResponse
+	(*PostUserSettingRequest)(nil),    // 20: determined.api.v1.PostUserSettingRequest
+	(*PostUserSettingResponse)(nil),   // 21: determined.api.v1.PostUserSettingResponse
+	(*ResetUserSettingRequest)(nil),   // 22: determined.api.v1.ResetUserSettingRequest
+	(*ResetUserSettingResponse)(nil),  // 23: determined.api.v1.ResetUserSettingResponse
+	(*PostUserActivityRequest)(nil),   // 24: determined.api.v1.PostUserActivityRequest
+	(*PostUserActivityResponse)(nil),  // 25: determined.api.v1.PostUserActivityResponse
+	(OrderBy)(0),                      // 26: determined.api.v1.OrderBy
+	(*userv1.User)(nil),               // 27: determined.user.v1.User
+	(*Pagination)(nil),                // 28: determined.api.v1.Pagination
+	(*userv1.PatchUser)(nil),          // 29: determined.user.v1.PatchUser
+	(*userv1.UserWebSetting)(nil),     // 30: determined.user.v1.UserWebSetting
+	(userv1.ActivityType)(0),          // 31: determined.user.v1.ActivityType
+	(userv1.EntityType)(0),            // 32: determined.user.v1.EntityType
 }
 var file_determined_api_v1_user_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetUsersRequest.sort_by:type_name -> determined.api.v1.GetUsersRequest.SortBy
-	28, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
-	29, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
-	30, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
-	29, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
-	29, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
-	29, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
-	29, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
-	29, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
-	29, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
-	31, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
-	29, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
+	26, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
+	27, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
+	28, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
+	27, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
+	27, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
+	27, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
+	27, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
+	27, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
+	27, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
+	29, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
+	27, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
 	1,  // 12: determined.api.v1.PatchUsersResponse.results:type_name -> determined.api.v1.UserActionResult
-	1,  // 13: determined.api.v1.PatchUsersAssignmentsResponse.results:type_name -> determined.api.v1.UserActionResult
-	32, // 14: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
-	32, // 15: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
-	33, // 16: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
-	34, // 17: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	30, // 13: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
+	30, // 14: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
+	31, // 15: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
+	32, // 16: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_user_proto_init() }
@@ -1998,30 +1861,6 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PatchUsersAssignmentsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PatchUsersAssignmentsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetUserSettingRequest); i {
 			case 0:
 				return &v.state
@@ -2033,7 +1872,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetUserSettingResponse); i {
 			case 0:
 				return &v.state
@@ -2045,7 +1884,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserSettingRequest); i {
 			case 0:
 				return &v.state
@@ -2057,7 +1896,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserSettingResponse); i {
 			case 0:
 				return &v.state
@@ -2069,7 +1908,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResetUserSettingRequest); i {
 			case 0:
 				return &v.state
@@ -2081,7 +1920,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResetUserSettingResponse); i {
 			case 0:
 				return &v.state
@@ -2093,7 +1932,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserActivityRequest); i {
 			case 0:
 				return &v.state
@@ -2105,7 +1944,7 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostUserActivityResponse); i {
 			case 0:
 				return &v.state
@@ -2125,7 +1964,7 @@ func file_determined_api_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_user_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   27,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
