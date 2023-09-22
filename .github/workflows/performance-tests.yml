@@ -1,0 +1,98 @@
+---
+name: Run performance tests using latest published docker image
+on:
+  # uncomment to iterate on workflow during PR
+  # pull_request: {}
+  schedule:
+    - cron: '0 2 * * 0-4'
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.PERFORMANCE_AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.PERFORMANCE_AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+
+  IMAGE_TAG: main
+  CLUSTER_ID: nightly-performance-tests
+  KEYPAIR_ID: performance-tests
+
+  DET_ADMIN_USERNAME: admin
+  DET_ADMIN_PASSWORD: ""
+
+jobs:
+  run-performance-test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      checks: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10.13
+          cache: pip
+
+      - name: Install pip dependencies
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip --version
+          pip install determined
+          det -v
+
+      - name: Deploy cluster
+        id: deploy
+        continue-on-error: true
+        run: make -C performance up
+
+      - name: Run performance tests
+        id: tests
+        if: steps.deploy.outcome == 'success'
+        continue-on-error: true
+        run: make -C performance run
+
+      - name: Persist cluster if failure noticed
+        if: steps.deploy.outcome == 'success' && steps.tests.outcome != 'success'
+        run: make -C performance persist
+
+      - name: Unpersist cluster if tests passed
+        if: steps.tests.outcome == 'success'
+        run: make -C performance unpersist
+
+      - name: Save test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report.junit.xml
+          path: performance/reports/*.junit.xml
+          if-no-files-found: warn
+          retention-days: 1
+
+      # TODO(danh): get k6 generated Junit report format-compatible
+      # - name: Upload test report
+      #   uses: dorny/test-reporter@v1
+      #   if: steps.deploy.outcome == 'success'
+      #   with:
+      #     name: Nightly Performance Tests
+      #     path: performance/reports/*.junit.xml
+      #     reporter: jest-junit
+
+      - name: Tear-down cluster
+        if: steps.deploy.outcome == 'success' && steps.tests.outcome == 'success'
+        run: make -C performance down
+
+      # TODO(danh): get Slack report generated as part of k6 output
+      # - name: Post run report
+      #   if: always()
+      #   id: slack
+      #   uses: slackapi/slack-github-action@v1.24.0
+      #   with:
+      #     # goes to #ci-bots
+      #     channel-id: 'C9LFPNA3Y'
+      #     slack-message: NYI
+      #   env:
+      #     SLACK_BOT_TOKEN: ${{ secrets.PERFORMANCE_SLACK_BOT_TOKEN }}

@@ -14,15 +14,13 @@ RUN npm start
 
 FROM grafana/k6:0.46.0 as base
 
-WORKDIR /app
-
 # Pull just the test script and module
 COPY --from=builder \
 	/build/build/api_performance_tests.js \
 	/build/build/api_performance_tests.js.map \
-	/app/
+	/test_scripts/
 
 # When run, this should be overwritten to change the test target
 ENV DET_MASTER="http://localhost:8080"
 ENTRYPOINT ["k6"]
-CMD ["run", "/app/api_performance_tests.js"]
+CMD ["run", "/test_scripts/api_performance_tests.js"]
