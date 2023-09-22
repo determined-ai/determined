@@ -126,10 +126,10 @@ def main(argv: List[str]) -> None:
         help="Glob list to match against checkpoint list (JSON-formatted file)",
     )
     parser.add_argument(
-        "--delete-tensorboards",
+        "--deleted-experiment",
         action="store_true",
-        default=os.getenv("DET_DELETE_TENSORBOARDS", False),
-        help="Delete Tensorboards from storage",
+        default=os.getenv("DET_DELETED_EXPERIMENT", False),
+        help="Delete checkpoints via experiment deletion, also deletes Tensorboards from storage.",
     )
     parser.add_argument(
         "--dry-run",
@@ -160,7 +160,7 @@ def main(argv: List[str]) -> None:
             manager, storage_ids, globs, dry_run=args.dry_run
         )
 
-    if args.delete_tensorboards:
+    if args.deleted_experiment:
         logging.info("Deleting checkpoints via deleted experiment, will not patch checkpoints.")
         tb_manager = tensorboard.build(
             os.environ["DET_CLUSTER_ID"],

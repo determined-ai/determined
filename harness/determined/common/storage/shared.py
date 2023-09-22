@@ -183,9 +183,9 @@ class SharedFSStorageManager(storage.StorageManager):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
 
         # Optimize for the common case here. No need to iterate through files.
-        # if "**/*" in globs:
-        #    util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
-        #    return {}
+        if "**/*" in globs:
+            util.rmtree_nfs_safe(storage_dir, ignore_errors=False)
+            return {}
 
         to_delete_dirs = {}
         to_delete_files = {}

@@ -39,7 +39,7 @@ func runCheckpointGCTask(
 	legacyConfig expconf.LegacyConfig,
 	toDeleteCheckpoints []uuid.UUID,
 	checkpointGlobs []string,
-	deleteTensorboards bool,
+	deletedExperiment bool,
 	agentUserGroup *model.AgentUserGroup,
 	owner *model.User,
 	logCtx logger.Context,
@@ -48,7 +48,7 @@ func runCheckpointGCTask(
 	checkpointStrIDs := conv.ToStringList(toDeleteCheckpoints)
 	deleteCheckpointsStr := strings.Join(checkpointStrIDs, ",")
 
-	if len(deleteCheckpointsStr) == 0 && !deleteTensorboards {
+	if len(deleteCheckpointsStr) == 0 && !deletedExperiment {
 		// Early return as nothing to do
 		return nil
 	}
@@ -73,12 +73,12 @@ func runCheckpointGCTask(
 	taskSpec.Owner = owner
 
 	gcSpec := tasks.GCCkptSpec{
-		Base:               taskSpec,
-		ExperimentID:       expID,
-		LegacyConfig:       legacyConfig,
-		ToDelete:           deleteCheckpointsStr,
-		CheckpointGlobs:    checkpointGlobs,
-		DeleteTensorboards: deleteTensorboards,
+		Base:              taskSpec,
+		ExperimentID:      expID,
+		LegacyConfig:      legacyConfig,
+		ToDelete:          deleteCheckpointsStr,
+		CheckpointGlobs:   checkpointGlobs,
+		DeletedExperiment: deletedExperiment,
 	}
 
 	logCtx = logger.MergeContexts(logCtx, logger.Context{

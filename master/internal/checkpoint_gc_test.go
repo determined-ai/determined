@@ -35,7 +35,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 		as                  func(t *testing.T) *allocationmocks.AllocationService
 		toDeleteCheckpoints []uuid.UUID
 		checkpointGlobs     []string
-		deleteTensorboards  bool
+		deletedExperiment   bool
 	}
 	tests := []struct {
 		name    string
@@ -87,7 +87,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 								t.Error("to delete was not set")
 								ok = false
 							}
-							if !spec.DeleteTensorboards {
+							if !spec.DeletedExperiment {
 								t.Error("delete tensorboards was not set")
 								ok = false
 							}
@@ -110,7 +110,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 				},
 				toDeleteCheckpoints: []uuid.UUID{uuid.New()},
 				checkpointGlobs:     []string{"optimizer_state.pkl"},
-				deleteTensorboards:  true,
+				deletedExperiment:   true,
 			},
 			wantErr: false,
 		},
@@ -153,7 +153,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 				expconf.LegacyConfig{}, //nolint:exhaustivestruct
 				tt.args.toDeleteCheckpoints,
 				tt.args.checkpointGlobs,
-				tt.args.deleteTensorboards,
+				tt.args.deletedExperiment,
 				nil,
 				&user,
 				nil,
