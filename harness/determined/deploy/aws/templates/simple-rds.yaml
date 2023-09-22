@@ -106,7 +106,7 @@ Parameters:
   
   DBInstanceType:
     Type: String
-    Description: Instance class for database (eg. "db.m7g.large")
+    Description: Instance type for database (eg. "db.m7g.large")
 
   MaxAuxContainersPerAgent:
     Type: Number

@@ -446,7 +446,7 @@ args_description = Cmd(
                     "--db-instance-type",
                     type=str,
                     default=constants.defaults.DB_INSTANCE_TYPE,
-                    help="instance class for master database",
+                    help="instance type for master database",
                 ),
                 Arg(
                     "--db-size",
