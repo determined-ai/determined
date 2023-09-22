@@ -15,5 +15,3 @@ searcher:
       batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
-min_checkpoint_period:
-  batches: 1

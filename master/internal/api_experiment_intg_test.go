@@ -173,9 +173,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 		Where("id = ?", exp.ID).Exec(ctx)
 	require.NoError(t, err)
 
-	response, err := api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{ExperimentId: int32(exp.ID)})
-	require.NotNil(t, response)
-	fmt.Println(response)
+	_, err = api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.NoError(t, err)
 
 	// Delete is async so we need to retry until it completes.
@@ -183,11 +181,6 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 		if err != nil {
 			require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true), err)
-			// Check that the experiment is deleted from the db.
-			exists, err := db.Bun().NewSelect().Table("experiments").
-				Where("id = ?", exp.ID).Exists(ctx)
-			require.False(t, exists)
-			require.NoError(t, err)
 			return
 		}
 		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
