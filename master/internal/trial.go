@@ -65,7 +65,6 @@ type trial struct {
 	idSet             bool
 	experimentID      int
 	restored          bool
-	continued         bool
 
 	// System dependencies.
 	db     db.DB
@@ -118,6 +117,7 @@ func newTrial(
 	generatedKeys ssh.PrivateAndPublicKeys,
 	restored bool,
 	id *int,
+	continueFromTrialID *int,
 	system *actor.System,
 	parent *actor.Ref,
 	exitCallback trialExitCallback,
@@ -151,29 +151,21 @@ func newTrial(
 
 		exitCallback: exitCallback,
 	}
-	if id != nil {
+	switch {
+	case id != nil:
 		t.id = *id
 		t.idSet = true
 		if err := t.recover(); err != nil {
 			return nil, fmt.Errorf("recovering trial in prestart: %w", err)
 		}
-	} else {
+	case continueFromTrialID != nil:
+		if err := t.continueSetup(continueFromTrialID); err != nil {
+			return nil, fmt.Errorf("continue trial in prestart: %w", err)
+		}
+
+	default:
 		if err := t.create(); err != nil {
 			return nil, fmt.Errorf("persisting trial in prestart: %w", err)
-		}
-	}
-
-	if t.continued {
-		// TODO(DET-9857) these should be in a transaction eventually.
-		err := t.addTask()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := db.Bun().
-			NewInsert().
-			Model(&model.TrialTaskID{TrialID: t.id, TaskID: t.taskID}).
-			Exec(context.TODO()); err != nil {
-			return nil, fmt.Errorf("adding trial ID task ID relationship: %w", err)
 		}
 	}
 
@@ -335,6 +327,37 @@ func (t *trial) recover() error {
 	}
 	t.runID = runID
 	t.restarts = restarts
+	return nil
+}
+
+// / continueSetup sets trial state up so that it will continue training.
+func (t *trial) continueSetup(continueFromTrialID *int) error {
+	if continueFromTrialID == nil {
+		return fmt.Errorf("continueFromTrialID is nil trial %+v", t)
+	}
+
+	t.id = *continueFromTrialID
+	t.idSet = true
+
+	// Get taskID
+	trialIDTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), t.id)
+	if err != nil {
+		return fmt.Errorf("getting previous task IDs for trial: %w", err)
+	}
+
+	cutTaskID, _, _ := strings.Cut(string(t.taskID), "-")
+	t.taskID = model.TaskID(fmt.Sprintf("%s-%d", cutTaskID, len(trialIDTaskIDs)))
+
+	err = t.addTask()
+	if err != nil {
+		return err
+	}
+	if _, err := db.Bun().
+		NewInsert().
+		Model(&model.TrialTaskID{TrialID: t.id, TaskID: t.taskID}).
+		Exec(context.TODO()); err != nil {
+		return fmt.Errorf("adding trial ID task ID relationship: %w", err)
+	}
 	return nil
 }
 

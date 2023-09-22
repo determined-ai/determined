@@ -789,35 +789,16 @@ func (e *experiment) processOperations(
 			if e.self == nil {
 				panic("experiment actor not started")
 			}
+
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, e.system, e.self, e.TrialClosed,
+				nil, e.continueFromTrialID, e.system, e.self, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
 				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 				continue
-			}
-
-			if e.continueFromTrialID != nil {
-				t.id = *e.continueFromTrialID
-				t.idSet = true
-
-				trialIDTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), t.id)
-				if err != nil {
-					e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
-					e.updateState(model.StateWithReason{
-						State: model.StoppingErrorState,
-						InformationalReason: fmt.Sprintf(
-							"can not get number of times trial was continued %v", err),
-					})
-					e.syslog.Error(err)
-					continue
-				}
-
-				t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, len(trialIDTaskIDs)))
-				t.continued = true
 			}
 
 			e.trialCreated(t)

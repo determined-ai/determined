@@ -268,7 +268,7 @@ def test_continue_batches() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.parametrize("continue_max_length", [405, 500])
+@pytest.mark.parametrize("continue_max_length", [499, 500])
 def test_continue_workloads_searcher(continue_max_length: int) -> None:
     exp_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
@@ -283,7 +283,7 @@ def test_continue_workloads_searcher(continue_max_length: int) -> None:
             "continue",
             str(exp_id),
             "--config",
-            "searcher.max_length.batches={continue_max_length}",
+            f"searcher.max_length.batches={continue_max_length}",
             "--config",
             "searcher.name=single",
         ],
