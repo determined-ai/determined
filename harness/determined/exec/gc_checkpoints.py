@@ -59,17 +59,8 @@ def delete_checkpoints(
     logging.info(f"Deleting {len(to_delete)} checkpoints")
 
     storage_id_to_resources: Dict[str, Dict[str, int]] = {}
-
     for storage_id in to_delete:
         if not dry_run:
-            if "**/*" in globs and len(to_delete) > 0:
-                logging.info("Deleting ALL checkpoints in directory.")
-                try:
-                    manager.delete(to_delete[0], globs)
-                    return {}
-                except errors.CheckpointNotFound as e:
-                    logging.warn(e)
-
             logging.info(f"Deleting checkpoint {storage_id}")
             try:
                 storage_id_to_resources[storage_id] = manager.delete(storage_id, globs)
