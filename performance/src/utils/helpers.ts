@@ -72,11 +72,11 @@ export const generateSlackResults = (results: Results): string => {
     const failedRequests = `Failed HTTP Requests: ${results.metrics["http_req_failed"].values["fails"]} \n`
     const failedRequestsPercent = `Percent Failed HTTP Requests: ${Number(results.metrics["http_req_failed"].values["rate"]) * 100}% \n`;
     const statNames = ["avg", "min", "med", "max", "p(90)", "p(95)"];
-    resultString = resultString.concat(failedRequests, failedRequestsPercent)
+    resultString = resultString.concat(failedRequests, failedRequestsPercent, " \n")
     Object.keys(results.metrics).filter((key) => key.includes("::")).forEach((key) => {
         resultString = resultString.concat(`${getGroupName(key)} \n`);
         const stats = results.metrics[key].values;
-        resultString = resultString.concat(...statNames.map((name) => `${name} = ${stats[name]} `), " \n");
+        resultString = resultString.concat(...statNames.map((name) => `${name} = ${stats[name]} `), " \n\n");
         if (results.metrics[key].thresholds["p(95)\u003c1000"]?.ok === false) testFailures++
     })
     const failures = `Test Failures: ${testFailures}`;
