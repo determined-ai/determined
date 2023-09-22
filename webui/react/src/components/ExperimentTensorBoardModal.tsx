@@ -6,22 +6,19 @@ import handleError from 'utils/error';
 import { openCommandResponse } from 'utils/wait';
 
 interface Props {
-  selectedExperiments: { id: number; unmanaged: boolean | undefined }[];
+  selectedExperimentIds: number[];
   filters?: V1BulkExperimentFilters;
   workspaceId?: number;
 }
 
 const ExperimentTensorBoardModal = ({
   workspaceId,
-  selectedExperiments,
+  selectedExperimentIds,
   filters,
 }: Props): JSX.Element => {
   const handleSubmit = async () => {
-    const managedExperimentIds = selectedExperiments
-      .filter((exp) => !exp.unmanaged)
-      .map((exp) => exp.id);
     openCommandResponse(
-      await openOrCreateTensorBoard({ experimentIds: managedExperimentIds, filters, workspaceId }),
+      await openOrCreateTensorBoard({ experimentIds: selectedExperimentIds, filters, workspaceId }),
     );
   };
 
