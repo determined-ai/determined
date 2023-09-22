@@ -8,17 +8,14 @@ const (
 	SingularityEntrypointWrapperScript = "singularity-entrypoint-wrapper.sh"
 	singularityEntrypointWrapperMode   = 0o744
 
-	taskLoggingSetupScript = "task-logging-setup.sh"
-	taskLoggingSetupMode   = 0o744
+	taskSetupScript = "task-setup.sh"
+	taskSetupMode   = 0o744
 
-	taskLoggingTeardownScript = "task-logging-teardown.sh"
-	taskLoggingTeardownMode   = 0o744
+	taskShipLogsShell     = "ship-logs.sh"
+	taskShipLogsShellMode = 0o755
 
-	taskSignalHandlingScript = "task-signal-handling.sh"
-	taskSignalHandlingMode   = 0o744
-
-	taskEnrichLogsScript     = "enrich_task_logs.py"
-	taskEnrichLogsScriptMode = 0o744
+	taskShipLogsPython     = "ship_logs.py"
+	taskShipLogsPythonMode = 0o755
 
 	// Put as many ssh-related files in /run/determined as possible. In particular, it is very
 	// important that we don't overwrite the user's host $HOME/.ssh/id_rsa, if the user happens to

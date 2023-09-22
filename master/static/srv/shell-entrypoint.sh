@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-source /run/determined/task-signal-handling.sh
-source /run/determined/task-logging-setup.sh
+source /run/determined/task-setup.sh
 
 set -e
 
@@ -93,7 +92,5 @@ chmod 600 "$modified"
 
 READINESS_REGEX="Server listening on"
 
-trap_and_forward_signals
 /usr/sbin/sshd "$@" \
-    2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX") >&2) &
-wait_and_handle_signals $!
+    2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX") >&2)

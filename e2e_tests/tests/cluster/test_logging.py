@@ -1,8 +1,8 @@
 import functools
 import re
+import socket
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
-import _socket
 import pytest
 
 from determined.cli import command
@@ -78,13 +78,6 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
     rps = bindings.get_GetResourcePools(session)
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 
-    if (
-        rps.resourcePools[0].type == bindings.v1ResourcePoolType.K8S
-        and task_type == command.TaskTypeCommand
-    ):
-        # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
-        pytest.skip("DET-6712: Investigate intermittent slowness with K8s command logs")
-
     if task_type == command.TaskTypeTensorBoard:
         exp_id = exp.run_basic_test(
             conf.fixtures_path("no_op/single.yaml"),
@@ -117,7 +110,7 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
             functools.partial(api.task_logs, session, task_id),
             functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
         )
-    except _socket.timeout:
+    except socket.timeout:
         raise TimeoutError(f"timed out waiting for {task_type} with id {task_id}")
 
     finally:

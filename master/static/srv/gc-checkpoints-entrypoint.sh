@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-source /run/determined/task-signal-handling.sh
-source /run/determined/task-logging-setup.sh
+source /run/determined/task-setup.sh
 
 set -e
 
@@ -12,6 +11,4 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container
 
-trap_and_forward_signals
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.gc_checkpoints "$@" &
-wait_and_handle_signals $!
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.gc_checkpoints "$@"
