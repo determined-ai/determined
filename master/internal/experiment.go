@@ -804,7 +804,7 @@ func (e *experiment) processOperations(
 				t.id = *e.continueFromTrialID
 				t.idSet = true
 
-				count, err := getNumTaskIDsForTrial(t.id)
+				trialIDTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), t.id)
 				if err != nil {
 					e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 					e.updateState(model.StateWithReason{
@@ -816,7 +816,7 @@ func (e *experiment) processOperations(
 					return
 				}
 
-				t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, count))
+				t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, len(trialIDTaskIDs)))
 				t.continued = true
 			}
 
@@ -904,18 +904,6 @@ func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	}
 
 	return experimentID, nil
-}
-
-func getNumTaskIDsForTrial(trialID int) (int, error) {
-	count, err := db.Bun().NewSelect().
-		Table("trial_id_task_id").
-		Where("trial_id = ?", trialID).
-		Count(context.TODO())
-	if err != nil {
-		return 0, fmt.Errorf("counting number of task IDs for trial %d: %w", trialID, err)
-	}
-
-	return count, nil
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {

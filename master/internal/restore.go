@@ -177,6 +177,21 @@ func (e *experiment) restoreTrial(
 		}
 	}
 
+	taskID := trialTaskID(e.ID, searcher.Create.RequestID)
+	if !terminal && trialID != nil {
+		trialTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), *trialID)
+		switch {
+		case err != nil:
+			l.WithError(err).Error("failed to retrieve trial's tasks, stopping restore")
+			terminal = true
+		case len(trialTaskIDs) == 0:
+			l.Errorf("trial %d in restoring has no task IDs, stopping restore", *trialID)
+			terminal = true
+		default:
+			taskID = trialTaskIDs[len(trialTaskIDs)-1].TaskID
+		}
+	}
+
 	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
 	if terminal {
 		if !e.searcher.TrialIsClosed(searcher.Create.RequestID) {
@@ -192,7 +207,7 @@ func (e *experiment) restoreTrial(
 
 	config := schemas.Copy(e.activeConfig)
 	t, err := newTrial(
-		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
+		e.logCtx, taskID, e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
 		e.system, e.self, e.TrialClosed,
 	)

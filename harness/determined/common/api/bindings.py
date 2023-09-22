@@ -10369,19 +10369,15 @@ class v1ProxyPortConfig(Printable):
 
 class v1PutExperimentResponse(Printable):
     """Response to PutExperimentRequest."""
-    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
-        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.config = config
         self.experiment = experiment
-        if not isinstance(warnings, Unset):
-            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PutExperimentResponse":
@@ -10389,8 +10385,6 @@ class v1PutExperimentResponse(Printable):
             "config": obj["config"],
             "experiment": v1Experiment.from_json(obj["experiment"]),
         }
-        if "warnings" in obj:
-            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10398,8 +10392,6 @@ class v1PutExperimentResponse(Printable):
             "config": self.config,
             "experiment": self.experiment.to_json(omit_unset),
         }
-        if not omit_unset or "warnings" in vars(self):
-            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
 class v1PutProjectNotesRequest(Printable):

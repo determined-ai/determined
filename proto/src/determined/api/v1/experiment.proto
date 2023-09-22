@@ -548,7 +548,6 @@ message PutExperimentResponse {
   // The created experiment config.
   google.protobuf.Struct config = 2;
   // Note: no LaunchWarnings.
-  repeated LaunchWarning warnings = 3;
 }
 
 // Request to continue an experiment.

@@ -7539,12 +7539,6 @@ export interface V1PutExperimentResponse {
      * @memberof V1PutExperimentResponse
      */
     config: any;
-    /**
-     * Note: no LaunchWarnings.
-     * @type {Array<V1LaunchWarning>}
-     * @memberof V1PutExperimentResponse
-     */
-    warnings?: Array<V1LaunchWarning>;
 }
 /**
  * Request for setting project notes.

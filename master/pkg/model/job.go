@@ -84,7 +84,7 @@ type Job struct {
 	bun.BaseModel `bun:"table:jobs"`
 
 	JobID   JobID           `db:"job_id" bun:"job_id,pk"`
-	JobType JobType         `db:"job_type"`
-	OwnerID *UserID         `db:"owner_id"`
+	JobType JobType         `db:"job_type" bun:"job_type"`
+	OwnerID *UserID         `db:"owner_id" bun:"owner_id"`
 	QPos    decimal.Decimal `db:"q_position" bun:"q_position"`
 }

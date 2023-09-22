@@ -1448,7 +1448,6 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 		return nil, status.Errorf(codes.InvalidArgument, "'workspace' in override config "+
 			"cannot be specified, use `det experiment move` first if you want to change the workspace")
 	}
-	// TODO deny list more stuff.
 
 	activeConfig, err := a.m.db.ActiveExperimentConfig(expID)
 	if err != nil {
@@ -1617,14 +1616,14 @@ func (a *apiServer) ContinueExperiment(
 		if _, err := tx.NewUpdate().Model(&model.Experiment{}).
 			Set("state = ?", model.PausedState). // Throw it in paused.
 			Set("progress = ?", 0.0).            // Reset progress.
+			Set("end_time = null").
 			Where("id = ?", req.Id).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("updating experiments config: %w", err)
 		}
 
 		if _, err := db.Bun().NewUpdate().Model(&model.Job{}).
-			Set("owner_id = ?", user.ID).
-			Set("q_position = ?", 0).
+			Set("q_position = DEFAULT").
 			Where("job_id = ?", dbExp.JobID).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("updating experiment's job: %w", err)
@@ -1646,8 +1645,12 @@ func (a *apiServer) ContinueExperiment(
 
 		// Zero out trial restarts. We do somewhat lose information about how many times
 		// the previous failed but likely people care only about current run.
+		// TODO consider moving this to trial_id_task_id or some other level to preserve
+		// the history of what happened during the trial. We should also do this
+		// with submitted config yamls likely and display these in the webui.
 		if _, err := tx.NewUpdate().Model(&model.Trial{}).
 			Set("restarts = 0").
+			Set("end_time = null").
 			Where("id = ?", trialsResp.Trials[0].Id).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("zeroing out trial restarts: %w", err)

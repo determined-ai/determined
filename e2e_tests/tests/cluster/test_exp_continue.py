@@ -169,13 +169,13 @@ def test_continue_trial_time() -> None:
     # Task times are updated.
     experiment_trials = exp.experiment_trials(exp_id)
     assert len(experiment_trials) == 1
-    taskIds = experiment_trials[0].trial.taskIds
-    assert taskIds is not None
-    assert len(taskIds) == 2
+    task_ids = experiment_trials[0].trial.taskIds
+    assert task_ids is not None
+    assert len(task_ids) == 2
 
-    assert taskIds[1] == taskIds[0] + "-1"  # Task IDs are formatted prevTaskID-N
+    assert task_ids[1] == task_ids[0] + "-1"  # Task IDs are formatted prevTaskID-N
 
-    task = bindings.get_GetTask(sess, taskId=taskIds[1]).task
+    task = bindings.get_GetTask(sess, taskId=task_ids[1]).task
     assert task.startTime > exp_orig_end
     assert task.endTime is not None
     assert task.endTime > task.startTime
