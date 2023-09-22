@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -32,6 +33,10 @@ const (
 type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
+
+	closedChan           chan struct{}
+	permissionChangeChan chan struct{}
+	permissionLock       sync.Mutex
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -66,13 +71,6 @@ type CollectSubscriptionModMsgsFunc[S any] func(ctx context.Context, addSpec S) 
 	[]*websocket.PreparedMessage, error,
 )
 
-// Restart restarts underlying publishers and closes all active websocket connections.
-func (ps *PublisherSet) Restart() (errs []error) {
-	ps.Trials.CloseAllStreamers()
-	// ps.Experiments.CloseAllStreamers()
-	return errs
-}
-
 func newDBListener(channel string) (*pq.Listener, error) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
@@ -98,6 +96,9 @@ func NewPublisherSet() PublisherSet {
 	return PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
+
+		closedChan:           make(chan struct{}),
+		permissionChangeChan: make(chan struct{}),
 	}
 }
 
@@ -177,7 +178,11 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	}()
 
 	ctx := c.Request().Context()
+	ps.permissionLock.Lock()
+	permissionChangeChan := ps.permissionChangeChan
+	ps.permissionLock.Unlock()
 	streamer := stream.NewStreamer()
+
 	user := c.(*detContext.DetContext).MustGetUser()
 
 	ss, err := NewSubscriptionSet(ctx, streamer, ps, user)
@@ -222,8 +227,14 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 
 	// detect context cancelation, and bring it into the websocket thread
 	go func() {
-		<-ctx.Done()
-		streamer.Close()
+		select {
+		case <-ctx.Done():
+			streamer.Close()
+		case <-permissionChangeChan:
+			streamer.Close()
+		case <-ps.closedChan:
+			streamer.Close()
+		}
 	}()
 
 	// reads is where we collect SubscriptionModMsg messages we read from the websocket until
@@ -269,7 +280,6 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 
 	for {
 		mods, msgs, closed := waitForSomething()
-
 		// were we closed?
 		if closed {
 			return nil
@@ -298,12 +308,14 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 
 func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
 	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
-	switch {
-	case err != nil:
-		log.Errorf("error occurred while getting permission change listener: %s", err)
-		fallthrough
-	case permListener == nil:
-		// no need to loop or cleanup if there's no listener
+	if err != nil {
+		log.Errorf("unable to get permission change listener: %s", err)
+		// XXX: investigate better recovery mechanism
+		close(ps.closedChan)
+		return
+	}
+	if permListener == nil {
+		// no listener means we don't have permissions configured at all
 		return
 	}
 	defer func() {
@@ -317,12 +329,11 @@ func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
 		select {
 		// did permissions change?
 		case <-permListener.Notify:
-			log.Debugf("permission change detected, restarting publisher set")
-			for _, err := range ps.Restart() {
-				if err != nil {
-					log.Debugf("error restarting publisher set: %v", err)
-				}
-			}
+			log.Debugf("permission change detected")
+			ps.permissionLock.Lock()
+			close(ps.permissionChangeChan)
+			ps.permissionChangeChan = make(chan struct{})
+			ps.permissionLock.Unlock()
 		// is the listener still alive?
 		case <-time.After(30 * time.Second):
 			pingErrChan := make(chan error)
@@ -331,10 +342,14 @@ func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
 				pingErrChan <- errors.Wrap(err, "no active connection")
 			}()
 			if err := <-pingErrChan; err != nil {
-				log.Errorf("permission listener failed: %s", err)
+				log.Errorf("permission listener failed %s", err)
+				close(ps.closedChan)
 			}
 		// are we canceled?
 		case <-ctx.Done():
+			return
+		// is the PublisherSet closed?
+		case <-ps.closedChan:
 			return
 		}
 	}
@@ -367,6 +382,7 @@ func doPublishLoop[T stream.Msg](
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
+	// clean up listener
 	defer func() {
 		err := listener.Close()
 		if err != nil {
@@ -381,7 +397,6 @@ func doPublishLoop[T stream.Msg](
 		case <-ctx.Done():
 			// fmt.Printf("publishTrials canceled\n")
 			return nil
-
 		// The pq listener example includes a timeout case, so we do too.
 		// (https://pkg.go.dev/github.com/lib/pq/example/listen)
 		case <-time.After(30 * time.Second):
@@ -425,6 +440,17 @@ func doPublishLoop[T stream.Msg](
 	}
 }
 
+func newPermFilter[T stream.Msg](
+	ctx context.Context,
+	user model.User,
+	permFilterFn func(context.Context, model.User) (func(T) bool, error),
+	err *error,
+) func(T) bool {
+	out, tempErr := permFilterFn(ctx, user)
+	*err = tempErr
+	return out
+}
+
 // NewSubscriptionSet constructor for SubscriptionSet.
 func NewSubscriptionSet(
 	ctx context.Context,
@@ -432,22 +458,19 @@ func NewSubscriptionSet(
 	ps *PublisherSet,
 	user model.User,
 ) (SubscriptionSet, error) {
-	trialPermissionFilter, err := TrialMakePermissionFilter(ctx, user)
-	if err != nil {
-		return SubscriptionSet{}, err
-	}
+	var err error
 	return SubscriptionSet{
 		Trials: &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
 			stream.NewSubscription(
 				streamer,
 				ps.Trials,
-				trialPermissionFilter,
+				newPermFilter(ctx, user, TrialMakePermissionFilter, &err),
 			),
 			NewTrialFilterMaker(),
 			TrialCollectStartupMsgs,
 			TrialCollectSubscriptionModMsgs,
 		},
-	}, nil
+	}, err
 }
 
 func startup[T stream.Msg, S any](

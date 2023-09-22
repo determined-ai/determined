@@ -120,8 +120,12 @@ func NewPublisher[T Msg]() *Publisher[T] {
 func (p *Publisher[T]) CloseAllStreamers() {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
+	seenStreamersSet := make(map[*Streamer]struct{})
 	for _, sub := range p.Subscriptions {
-		sub.Streamer.Close()
+		if _, ok := seenStreamersSet[sub.Streamer]; !ok {
+			sub.Streamer.Close()
+			seenStreamersSet[sub.Streamer] = struct{}{}
+		}
 	}
 	p.Subscriptions = nil
 }
