@@ -78,7 +78,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   yLabel,
   yTickValues,
 }: LineChartProps) => {
-  const series = Loadable.isLoadable(propSeries) ? Loadable.getOrElse([], propSeries) : propSeries;
+  const series = Loadable.ensureLoadable(propSeries).getOrElse([]);
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
   const hasPopulatedSeries: boolean = useMemo(
@@ -318,28 +318,24 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     const height = size.height ?? 0;
     const width = size.width ?? 0;
     const columnCount = Math.max(1, Math.floor(width / 540));
-    const chartsProps = (
-      Loadable.isLoadable(propChartsProps)
-        ? Loadable.getOrElse([], propChartsProps)
-        : propChartsProps
-    ).filter(
-      (c) =>
-        // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
-        !Loadable.isLoadable(c.series) ||
-        !Loadable.isLoaded(c.series) ||
-        Loadable.getOrElse([], c.series).find((serie) =>
-          Object.entries(serie.data).find(([, points]) => points.length > 0),
-        ),
-    );
+    const chartsProps = Loadable.ensureLoadable(propChartsProps)
+      .getOrElse([])
+      .filter(
+        (c) =>
+          // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
+          !Loadable.isLoadable(c.series) ||
+          !Loadable.isLoaded(c.series) ||
+          Loadable.getOrElse([], c.series).find((serie) =>
+            Object.entries(serie.data).find(([, points]) => points.length > 0),
+          ),
+      );
     const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isNotLoaded(propChartsProps);
-    // X-Axis control
 
+    // X-Axis control
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
-        const series = Loadable.isLoadable(chart.series)
-          ? Loadable.getOrElse([], chart.series)
-          : chart.series;
+        const series = Loadable.ensureLoadable(chart.series).getOrElse([]);
         series.forEach((serie) => {
           Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
             if (dataPoints.length > 0) {

@@ -160,8 +160,8 @@ class Loadable_<T> {
   }
 
   /**
-   * Filters an array of Loadables to remove NotLoaded values. Can also optionally
-   * accept a conditional function
+   * Filters an array of Loadables to remove NotLoaded values and returns array of data.
+   * Can also optionally accept a conditional function.
    */
   static filterNotLoaded<T>(
     a: Array<Loadable<T>>,
@@ -210,6 +210,11 @@ class Loadable_<T> {
   /** Returns true if the passed object is a Loadable */
   static isLoadable<T, Z>(l: Loadable<T> | Z): l is Loadable<T> {
     return ['Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
+  }
+
+  /** If passed a Loadable, returns unchanged. Otherwise, wraps argument in Loaded */
+  static ensureLoadable<T>(l: Loadable<T> | T): Loadable<T> {
+    return this.isLoadable(l) ? l : Loaded(l);
   }
 }
 
