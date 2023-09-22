@@ -146,6 +146,18 @@ fi
 if [ "$DET_CONTAINER_LOCAL_TMP" == "1" ]; then
     # Create a per-container tmp
     mkdir -p $PROCDIR/tmp
+    # Our ROCm images generate temporary files in /tmp during the entrypoint
+    # setup before this script is invoked. If the filesystem type is private
+    # to the container ('overlayfs' with Singularity/Podman, or 'tmpfs' with enroot)
+    # so we know we are not going to touch user files, then move the files to
+    # the per-process local storage tmp we create, and the rm /tmp  below will
+    # succeed so we can replace /tmp with a soft-link.
+    tmp_fstype=$(stat -f -L -c %T /tmp)
+    if [[ -n "$(ls /tmp)" && ($tmp_fstype == "overlayfs" || $tmp_fstype == "tmpfs") ]]; then
+        log "INFO: Moving content of /tmp to $PROCDIR/tmp/"
+        mv /tmp/* $PROCDIR/tmp/
+    fi
+
     # Replace /tmp with a link to our private
     if rmdir /tmp; then
         ln -fs $PROCDIR/tmp /
