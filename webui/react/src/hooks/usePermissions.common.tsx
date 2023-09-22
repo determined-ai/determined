@@ -20,7 +20,7 @@ vi.mock('services/api', () => ({
 }));
 
 vi.mock('stores/users', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
+  const loadable = await import('components/kit/utils/loadable');
   const observable = await import('utils/observable');
   const store = {
     currentUser: observable.observable(

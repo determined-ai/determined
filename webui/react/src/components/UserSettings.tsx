@@ -10,6 +10,7 @@ import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import useUI, { Mode } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -35,7 +36,6 @@ import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import Accordion from './kit/Accordion';

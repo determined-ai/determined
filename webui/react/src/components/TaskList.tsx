@@ -15,6 +15,7 @@ import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import { ShirtSize } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
@@ -57,7 +58,6 @@ import {
   Workspace,
 } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'utils/sort';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';

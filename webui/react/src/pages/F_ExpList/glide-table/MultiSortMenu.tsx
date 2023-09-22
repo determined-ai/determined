@@ -4,9 +4,9 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Select from 'components/kit/Select';
+import { Loadable } from 'components/kit/utils/loadable';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
-import { Loadable } from 'utils/loadable';
 
 import css from './MultiSortMenu.module.scss';
 

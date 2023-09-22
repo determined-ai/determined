@@ -12,8 +12,8 @@ import {
   FormKind,
   Operator,
 } from 'components/FilterForm/components/type';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 export const ITEM_LIMIT = 50;
 

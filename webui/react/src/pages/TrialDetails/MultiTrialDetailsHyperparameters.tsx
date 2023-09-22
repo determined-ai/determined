@@ -1,6 +1,7 @@
 import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Loadable } from 'components/kit/utils/loadable';
 import useMetricNames from 'hooks/useMetricNames';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
@@ -19,7 +20,6 @@ import {
   TrialDetails,
 } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import {

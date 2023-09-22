@@ -14,7 +14,7 @@ import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/inter
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 

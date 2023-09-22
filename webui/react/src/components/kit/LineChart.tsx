@@ -19,7 +19,7 @@ import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltip
 import useResize from 'components/kit/internal/useResize';
 import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'utils/loadable';
+import { Loadable } from 'components/kit/utils/loadable';
 
 import css from './LineChart.module.scss';
 

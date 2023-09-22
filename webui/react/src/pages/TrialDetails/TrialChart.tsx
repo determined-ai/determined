@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';
@@ -14,7 +15,6 @@ import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, Scale } from 'types';
 import { glasbeyColor } from 'utils/color';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToStr } from 'utils/metric';
 
 interface Props {

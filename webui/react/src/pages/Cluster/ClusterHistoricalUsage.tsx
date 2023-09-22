@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
@@ -10,7 +11,6 @@ import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './ClusterHistoricalUsage.module.scss';

@@ -12,6 +12,7 @@ import Spinner from 'components/kit/Spinner';
 import useUI, { UIProvider } from 'components/kit/Theme';
 import { notification } from 'components/kit/Toast';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
@@ -37,7 +38,6 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
-import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
 

@@ -2,9 +2,9 @@ import { map } from 'fp-ts/lib/Record';
 import { boolean, null as ioNull, partial, TypeOf, union } from 'io-ts';
 import { useObservable } from 'micro-observables';
 
+import { Loadable } from 'components/kit/utils/loadable';
 import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 import userSettings from 'stores/userSettings';
-import { Loadable } from 'utils/loadable';
 
 // add new feature switches here
 export type ValidFeature = 'explist_v2' | 'rp_binding';

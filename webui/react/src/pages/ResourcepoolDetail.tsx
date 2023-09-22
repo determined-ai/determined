@@ -7,6 +7,7 @@ import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { ShirtSize } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -26,7 +27,6 @@ import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';
 

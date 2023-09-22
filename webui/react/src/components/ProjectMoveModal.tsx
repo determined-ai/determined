@@ -5,6 +5,7 @@ import React, { useCallback, useState } from 'react';
 import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -12,7 +13,6 @@ import { moveProject } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './ProjectMoveModal.module.scss';

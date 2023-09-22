@@ -2,10 +2,10 @@ import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { Loadable, NotLoaded } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 /*

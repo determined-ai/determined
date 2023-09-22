@@ -2,7 +2,7 @@ import { Spin } from 'antd';
 import React from 'react';
 
 import Icon, { IconSize } from 'components/kit/Icon';
-import { Loadable } from 'utils/loadable';
+import { Loadable } from 'components/kit/utils/loadable';
 
 import css from './Spinner.module.scss';
 

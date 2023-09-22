@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
+import { Loadable } from 'components/kit/utils/loadable';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
@@ -11,7 +12,6 @@ import { ClusterOverallBar } from 'pages/Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from 'pages/Cluster/ClusterOverallStats';
 import clusterStore from 'stores/cluster';
 import { ResourcePool } from 'types';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const ClusterOverview: React.FC = () => {

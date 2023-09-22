@@ -8,6 +8,7 @@ import Input from 'components/kit/Input';
 import Notes from 'components/kit/Notes';
 import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
@@ -37,7 +38,6 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelItem, ModelVersion, Note } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound, validateDetApiEnum } from 'utils/service';
 

@@ -8,6 +8,7 @@ import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
@@ -16,7 +17,6 @@ import { postModel } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
 import handleError, { DetError, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 import css from './ModelCreateModal.module.scss';
 

@@ -13,6 +13,7 @@ import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import { makeToast } from 'components/kit/Toast';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -40,7 +41,6 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 

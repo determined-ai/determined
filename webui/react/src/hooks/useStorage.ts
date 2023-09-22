@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
+import { Loadable } from 'components/kit/utils/loadable';
 import { resetUserSetting } from 'services/api';
 import userStore from 'stores/users';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { StorageManager } from 'utils/storage';
 

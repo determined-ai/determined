@@ -44,6 +44,7 @@ import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
 import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
 import { useTags } from 'components/kit/useTags';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -68,7 +69,6 @@ import {
   Surface,
 } from 'utils/colors';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
 

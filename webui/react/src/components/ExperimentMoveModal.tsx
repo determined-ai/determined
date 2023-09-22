@@ -8,6 +8,7 @@ import { Modal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -17,7 +18,6 @@ import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
 
 const FORM_ID = 'move-experiment-form';

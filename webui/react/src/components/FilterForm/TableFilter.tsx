@@ -7,8 +7,8 @@ import { FormKind } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import { Loadable } from 'components/kit/utils/loadable';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
-import { Loadable } from 'utils/loadable';
 
 interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;

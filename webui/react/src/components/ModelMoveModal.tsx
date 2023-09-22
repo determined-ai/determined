@@ -5,6 +5,7 @@ import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -13,7 +14,6 @@ import { moveModel } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 const FORM_ID = 'move-model-form';
 

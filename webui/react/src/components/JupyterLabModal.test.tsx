@@ -29,7 +29,7 @@ vi.mock('services/api', () => ({
 }));
 
 vi.mock('stores/cluster', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
+  const loadable = await import('components/kit/utils/loadable');
   const observable = await import('utils/observable');
 
   const store = { resourcePools: observable.observable(loadable.Loaded([])) };

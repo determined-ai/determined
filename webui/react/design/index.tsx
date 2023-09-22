@@ -8,9 +8,9 @@ import 'uplot/dist/uPlot.min.css';
 import css from 'App.module.scss';
 import { UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
+import { Loaded } from 'components/kit/utils/loadable';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
 import DesignKit from 'pages/DesignKit';
-import { Loaded } from 'utils/loadable';
 
 import 'antd/dist/reset.css';
 

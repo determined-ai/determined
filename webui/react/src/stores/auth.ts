@@ -1,9 +1,9 @@
 import { observable, WritableObservable } from 'micro-observables';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { globalStorage } from 'globalStorage';
 import { Auth } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 export const AUTH_COOKIE_KEY = 'auth';
 
