@@ -4,10 +4,11 @@
 *
 
 # team-specific repo segments
-/.github  @determined-ai/infrastructure
-/master   @determined-ai/backend
-/agent    @determined-ai/backend
-/proto    @determined-ai/backend
+/.github        @determined-ai/infrastructure
+/master         @determined-ai/backend
+/agent          @determined-ai/backend
+/proto          @determined-ai/backend
+/performance    @determined-ai/web
 
 # anyone can approve docs, except for specific files
 /docs
