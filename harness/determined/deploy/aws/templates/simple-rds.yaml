@@ -104,9 +104,9 @@ Parameters:
     Type: Number
     Description: Initial storage size for database in GB
   
-  DBClass:
+  DBInstanceClass:
     Type: String
-    Description: Class instance for database (eg. "db.m7g.large")
+    Description: Instance class for database (eg. "db.m7g.large")
 
   MaxAuxContainersPerAgent:
     Type: Number
@@ -461,7 +461,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
-      DBInstanceClass: !Ref DBClass
+      DBInstanceClass: !Ref DBInstanceClass
       Engine: postgres
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
