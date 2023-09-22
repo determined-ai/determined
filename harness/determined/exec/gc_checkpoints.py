@@ -44,6 +44,7 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
                 ),
             )
         )
+
     bindings.patch_PatchCheckpoints(
         sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
     )
