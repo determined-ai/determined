@@ -199,6 +199,13 @@ func isNonRetryableError(err error) bool {
 	return false
 }
 
+func (t *trial) exit(reason *model.ExitedReason) {
+	if err := t.close(); err != nil {
+		t.syslog.WithError(err).Error("error closing trial")
+	}
+	go t.exitCallback(t.searcher.Create.RequestID, reason)
+}
+
 func (t *trial) close() error {
 	t.wg.Close()
 	if !t.idSet {
@@ -649,12 +656,11 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			// TODO?
-			// t.exit(ptrs.Ptr(model.Errored))
+			t.exit(ptrs.Ptr(model.Errored))
 		case model.CanceledState:
-			// t.exit(ptrs.Ptr(model.UserCanceled))
+			t.exit(ptrs.Ptr(model.UserCanceled))
 		default:
-			// t.exit(nil)
+			t.exit(nil)
 		}
 	default:
 		panic(fmt.Errorf("unmatched state in transition %s", t.state))

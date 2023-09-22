@@ -10,7 +10,7 @@ from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
-from .test_groups import det_cmd, det_cmd_expect_error
+from .test_groups import det_cmd
 
 
 @pytest.mark.e2e_cpu
@@ -182,30 +182,6 @@ def test_continue_trial_time() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_continue_completed_single_step() -> None:
-    exp_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        [],
-    )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
-
-    det_cmd(
-        [
-            "e",
-            "continue",
-            str(exp_id),
-            "--config",
-            "searcher.max_length.batches=505",
-            "--config",
-            "searcher.name=single",
-        ],
-        check=True,
-    )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
-
-
-@pytest.mark.e2e_cpu
 def test_continue_batches() -> None:
     # Experiment fails before first checkpoint.
     exp_id = exp.create_experiment(
@@ -292,8 +268,33 @@ def test_continue_batches() -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.parametrize("continue_max_length", [405, 500])
+def test_continue_workloads_searcher(continue_max_length: int) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        [],
+    )
+    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+
+    det_cmd(
+        [
+            "e",
+            "continue",
+            str(exp_id),
+            "--config",
+            "searcher.max_length.batches={continue_max_length}",
+            "--config",
+            "searcher.name=single",
+        ],
+        check=True,
+    )
+    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+
+
+@pytest.mark.e2e_cpu
 @pytest.mark.parametrize("continue_max_length", [2, 3])
-def test_continue_completed_searcher(continue_max_length: int) -> None:
+def test_continue_pytorch_completed_searcher(continue_max_length: int) -> None:
     exp_id = exp.create_experiment(
         conf.fixtures_path("mnist_pytorch/failable.yaml"),
         conf.fixtures_path("mnist_pytorch"),
@@ -301,8 +302,8 @@ def test_continue_completed_searcher(continue_max_length: int) -> None:
     )
     exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
 
-    # Train for less time runs into error.
-    det_cmd_expect_error(
+    # Train for less or the same time has no error.
+    det_cmd(
         [
             "e",
             "continue",
@@ -312,5 +313,6 @@ def test_continue_completed_searcher(continue_max_length: int) -> None:
             "--config",
             "searcher.name=single",
         ],
-        "would like the trial to train longer",
+        check=True,
     )
+    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)

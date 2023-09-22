@@ -1591,8 +1591,6 @@ func (a *apiServer) ContinueExperiment(
 	e.continueFromTrialID = ptrs.Ptr(trialID)
 	_, created := a.m.system.ActorOf(exputil.ExperimentsAddr.Child(e.ID), e)
 	if !created {
-		// Is it even possible to fail here? I don't think so from continuing experiment alone.
-		// If we fail here we just messed with the experiment database representation.
 		return nil, status.Errorf(codes.FailedPrecondition, "experiment actor still running")
 	}
 

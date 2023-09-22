@@ -813,7 +813,7 @@ func (e *experiment) processOperations(
 							"can not get number of times trial was continued %v", err),
 					})
 					e.syslog.Error(err)
-					return
+					continue
 				}
 
 				t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, len(trialIDTaskIDs)))
@@ -821,7 +821,6 @@ func (e *experiment) processOperations(
 			}
 
 			e.trialCreated(t)
-
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Op = op
