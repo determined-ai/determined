@@ -275,7 +275,7 @@ def test_remote_search_runner() -> None:
 
 
 HUGGINGFACE_CONTEXT_ERR_MSG = """
-HF_READ_ONLY_TOKEN environment variable is missing!
+A HF_READ_ONLY_TOKEN environment variable is missing!
 
 If this error was raised in CircleCI, verify that the test was run using the
 `hugging-face` context. This context should be injecting the expected
