@@ -68,6 +68,7 @@ def delete_checkpoints(
                 logging.warn(e)
         else:
             logging.info(f"Dry run: deleting checkpoint {storage_id}")
+            
     return storage_id_to_resources
 
 
@@ -158,7 +159,7 @@ def main(argv: List[str]) -> None:
         storage_ids_to_resources = delete_checkpoints(
             manager, storage_ids, globs, dry_run=args.dry_run
         )
-        patch_checkpoints(storage_ids_to_resources)
+        #patch_checkpoints(storage_ids_to_resources)
 
     if args.delete_tensorboards:
         tb_manager = tensorboard.build(
