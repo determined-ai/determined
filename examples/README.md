@@ -10,7 +10,6 @@
 
 | Example                                                                      | Dataset                      | Framework                                |
 |:----------------------------------------------------------------------------:|:----------------------------:|:----------------------------------------:|
-| [cifar10\_pytorch\_inference](computer_vision/cifar10_pytorch_inference)     | CIFAR-10                     | PyTorch                                  |
 | [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
 
 ## Diffusion

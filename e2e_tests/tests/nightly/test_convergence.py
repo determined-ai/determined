@@ -42,7 +42,7 @@ def test_cifar10_tf_keras_accuracy(client: _client.Determined) -> None:
 
     target_accuracy = 0.73
     assert max(validation_accuracies) > target_accuracy, (
-        "cifar10_pytorch did not reach minimum target accuracy {}."
+        "cifar10_tf_keras did not reach minimum target accuracy {}."
         " full validation accuracy history: {}".format(target_accuracy, validation_accuracies)
     )
 
