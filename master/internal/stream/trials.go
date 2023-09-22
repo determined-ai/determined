@@ -82,14 +82,14 @@ type TrialSubscriptionSpec struct {
 }
 
 // TODO: refactor pls
-func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx context.Context) (
 	[]interface{}, error,
 ) {
 	var out []interface{}
 
 	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
-		out = append(out, newDeletedInterface(TrialsDeleteKey, known, deleteFunc))
+		out = append(out, stream.NewDeleteMsg(TrialsDeleteKey, known))
 		return out, nil
 	}
 
@@ -130,15 +130,15 @@ func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx conte
 	}
 
 	// step 4: emit deletions and updates to the client
-	out = append(out, newDeletedInterface(TrialsDeleteKey, missing, deleteFunc))
+	out = append(out, stream.NewDeleteMsg(TrialsDeleteKey, missing))
 	for _, msg := range trialMsgs {
-		out = append(out, msg.UpsertMsg(upsertFunc))
+		out = append(out, stream.NewUpsertMsg(msg, "trial"))
 	}
 	return out, nil
 }
 
 // When a user submits a new TrialSubscriptionSpec, we scrape the database for initial matches.
-func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.Context) (
 	[]interface{}, error,
 ) {
 	if len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {

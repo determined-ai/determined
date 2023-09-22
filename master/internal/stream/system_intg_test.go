@@ -107,7 +107,7 @@ func TestStartup(t *testing.T) {
 		startupMessage: &startupMessage,
 	}
 	publisherSet := NewPublisherSet()
-	err := publisherSet.entrypoint(ctx, &tester, simpleUpsert, recordDeletion)
+	err := publisherSet.entrypoint(ctx, &tester, simpleUpsert)
 	require.NoError(t, err)
 
 	deletions, trialMsgs, err := splitDeletionsAndTrials(tester.data)
@@ -130,7 +130,7 @@ func TestStartup(t *testing.T) {
 	}
 	tester.startupMessage = &startupMessage
 	publisherSet = NewPublisherSet()
-	err = publisherSet.entrypoint(ctx, &tester, simpleUpsert, recordDeletion)
+	err = publisherSet.entrypoint(ctx, &tester, simpleUpsert) // XXX: fix prepare func
 	require.NoError(t, err)
 	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.data)
 	require.NoError(t, err)
@@ -236,9 +236,14 @@ func splitDeletionsAndTrials(messages []interface{}) ([]string, []*TrialMsg, err
 	var deletions []string
 	var trialMsgs []*TrialMsg
 	for _, msg := range messages {
-		if deletion, ok := msg.(string); ok {
-			deletions = append(deletions, deletion)
-		} else if trialMsg, ok := msg.(*TrialMsg); ok {
+		if deletion, ok := msg.(stream.DeleteMsg); ok {
+			deletions = append(deletions, deletion.Deleted)
+		} else if upsert, ok := msg.(stream.UpsertMsg); ok {
+			trialMsg, ok := upsert.Msg.(*TrialMsg)
+			if !ok {
+				return nil, nil, fmt.Errorf("expected a trial message, but received %t",
+					reflect.TypeOf(upsert.Msg))
+			}
 			trialMsgs = append(trialMsgs, trialMsg)
 		} else {
 			return nil, nil, fmt.Errorf("expected a string or *TrialMsg, but received %t",
@@ -250,9 +255,9 @@ func splitDeletionsAndTrials(messages []interface{}) ([]string, []*TrialMsg, err
 
 func testSubscriptionSetStartup(t *testing.T, startupMessage StartupMsg) []interface{} {
 	ctx := context.TODO()
-	streamer := stream.NewStreamer()
+	streamer := stream.NewStreamer(simpleUpsert) // XXX: fix prepare func
 	publisherSet := NewPublisherSet()
-	subSet := NewSubscriptionSet(streamer, publisherSet, simpleUpsert, recordDeletion)
+	subSet := NewSubscriptionSet(streamer, publisherSet)
 	messages, err := subSet.Startup(startupMessage, ctx)
 	require.NoError(t, err, "error running startup")
 

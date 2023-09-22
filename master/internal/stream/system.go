@@ -45,11 +45,11 @@ type subscriptionState[T stream.Msg, S any] struct {
 	CollectSubscriptionModMsgs CollectSubscriptionModMsgsFunc[S]
 }
 
-type CollectStartupMsgsFunc[S any] func(known string, spec S, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+type CollectStartupMsgsFunc[S any] func(known string, spec S, ctx context.Context) (
 	[]interface{}, error,
 )
 
-type CollectSubscriptionModMsgsFunc[S any] func(addSpec S, ctx context.Context, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) (
+type CollectSubscriptionModMsgsFunc[S any] func(addSpec S, ctx context.Context) (
 	[]interface{}, error,
 )
 
@@ -121,9 +121,9 @@ func writeAll(socketLike api.ReadWriter, msgs []interface{}) error {
 }
 
 // XXX: entrypoint should be renamed
-func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) error {
-	streamer := stream.NewStreamer()
-	ss := NewSubscriptionSet(streamer, ps, upsertFunc, deleteFunc)
+func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, prepareFunc func(interface{}) interface{}) error {
+	streamer := stream.NewStreamer(prepareFunc)
+	ss := NewSubscriptionSet(streamer, ps)
 
 	defer ss.UnsubscribeAll()
 	// First read the startup message.
@@ -239,7 +239,7 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, up
 // Websocket is an Echo websocket endpoint.
 func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	ctx := c.Request().Context()
-	return ps.entrypoint(ctx, &api.WrappedWebsocket{Conn: socket}, nil, nil)
+	return ps.entrypoint(ctx, &api.WrappedWebsocket{Conn: socket}, prepareWebsocket)
 }
 
 func publishLoop[T stream.Msg](
@@ -334,10 +334,10 @@ func doPublishLoop[T stream.Msg](
 	return nil
 }
 
-func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet, upsertFunc stream.UpsertFunc, deleteFunc stream.DeleteFunc) SubscriptionSet {
+func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet) SubscriptionSet {
 	return SubscriptionSet{
 		Trials: &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
-			stream.NewSubscription(streamer, ps.Trials, upsertFunc, deleteFunc),
+			stream.NewSubscription(streamer, ps.Trials),
 			NewTrialFilterMaker(),
 			TrialCollectStartupMsgs,
 			TrialCollectSubscriptionModMsgs,
@@ -371,7 +371,7 @@ func startup[T stream.Msg, S any](
 
 	// Scan for historical msgs matching newly-added subscriptions.
 	var newmsgs []interface{}
-	newmsgs, err = state.CollectStartupMsgs(known, *spec, ctx, state.Subscription.UpsertFunc, state.Subscription.DeleteFunc)
+	newmsgs, err = state.CollectStartupMsgs(known, *spec, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +425,7 @@ func subMod[T stream.Msg, S any](
 	if addSpec != nil {
 		// Scan for historical msgs matching newly-added subscriptions.
 		var newmsgs []interface{}
-		newmsgs, err = state.CollectSubscriptionModMsgs(*addSpec, ctx, state.Subscription.UpsertFunc, state.Subscription.DeleteFunc)
+		newmsgs, err = state.CollectSubscriptionModMsgs(*addSpec, ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -469,6 +469,15 @@ func prepareMessageWithCache(
 		return nil
 	}
 	return *cache
+}
+
+func prepareWebsocket(msg interface{}) interface{} {
+	if _, ok := msg.(stream.UpsertMsg); ok {
+		return prepareMessageWithCache(msg, nil)
+	} else if deleted, ok := msg.(stream.DeleteMsg); ok {
+		return newDeletedMsg(deleted.Key, deleted.Deleted)
+	}
+	return nil
 }
 
 func newDeletedInterface(key, deleted string, deleteFunc stream.DeleteFunc) interface{} {
