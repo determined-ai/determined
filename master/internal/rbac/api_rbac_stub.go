@@ -74,8 +74,8 @@ func (s *rbacAPIServerStub) RemoveAssignments(ctx context.Context,
 	return nil, UnimplementedError
 }
 
-func (s *rbacAPIServerStub) PatchUsersAssignments(ctx context.Context, req *apiv1.PatchUsersAssignmentsRequest) (
-	*apiv1.PatchUsersAssignmentsResponse, error,
+func (s *rbacAPIServerStub) AssignMultipleGroups(ctx context.Context, req *apiv1.AssignMultipleGroupsRequest) (
+	*apiv1.AssignMultipleGroupsResponse, error,
 ) {
 	return nil, UnimplementedError
 }

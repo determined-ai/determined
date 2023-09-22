@@ -76,11 +76,11 @@ func (s *RBACAPIServerWrapper) RemoveAssignments(ctx context.Context,
 	return rbacAPIServer.RemoveAssignments(ctx, req)
 }
 
-// PatchUsersAssignments is a wrapper the same function the RBACAPIServer interface.
-func (s *RBACAPIServerWrapper) PatchUsersAssignments(ctx context.Context, req *apiv1.PatchUsersAssignmentsRequest) (
-	*apiv1.PatchUsersAssignmentsResponse, error,
+// AssignMultipleGroups is a wrapper to the same function in the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) AssignMultipleGroups(ctx context.Context, req *apiv1.AssignMultipleGroupsRequest) (
+	*apiv1.AssignMultipleGroupsResponse, error,
 ) {
-	return rbacAPIServer.PatchUsersAssignments(ctx, req)
+	return rbacAPIServer.AssignMultipleGroups(ctx, req)
 }
 
 // AssignWorkspaceAdminToUserTx is a wrapper the same function the RBACAPIServer interface.

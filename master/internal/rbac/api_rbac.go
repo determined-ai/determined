@@ -32,8 +32,8 @@ type RBACAPIServer interface {
 		*apiv1.AssignRolesResponse, error)
 	RemoveAssignments(context.Context, *apiv1.RemoveAssignmentsRequest) (
 		*apiv1.RemoveAssignmentsResponse, error)
-	PatchUsersAssignments(context.Context, *apiv1.PatchUsersAssignmentsRequest) (
-		*apiv1.PatchUsersAssignmentsResponse, error)
+	AssignMultipleGroups(context.Context, *apiv1.AssignMultipleGroupsRequest) (
+		*apiv1.AssignMultipleGroupsResponse, error)
 	AssignWorkspaceAdminToUserTx(
 		ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
 	) error
