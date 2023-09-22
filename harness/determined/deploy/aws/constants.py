@@ -16,7 +16,7 @@ class defaults:
     STACK_TAG_KEY = "managed-by"
     STACK_TAG_VALUE = "determined"
     DB_SIZE = 20
-    DB_INSTANCE_CLASS = "db.m7g.large"
+    DB_INSTANCE_TYPE = "db.m7g.large"
 
 
 class cloudformation:
@@ -38,7 +38,7 @@ class cloudformation:
     MASTER_SCHEME = "MasterScheme"
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
-    DB_INSTANCE_CLASS = "DBInstanceClass"
+    DB_INSTANCE_TYPE = "DBInstanceType"
     DB_SIZE = "DBSize"
     ENABLE_CORS = "EnableCORS"
     MASTER_TLS_CERT = "MasterTLSCert"

@@ -22,7 +22,7 @@ COMMON_TEMPLATE_PARAMETER_KEYS = [
     constants.cloudformation.INBOUND_CIDR,
     constants.cloudformation.VERSION,
     constants.cloudformation.DB_PASSWORD,
-    constants.cloudformation.DB_INSTANCE_CLASS,
+    constants.cloudformation.DB_INSTANCE_TYPE,
     constants.cloudformation.DB_SIZE,
     constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
     constants.cloudformation.MAX_AGENT_STARTING_PERIOD,
