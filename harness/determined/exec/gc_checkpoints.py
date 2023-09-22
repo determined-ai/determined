@@ -65,7 +65,8 @@ def delete_checkpoints(
             if "**/*" in globs and len(to_delete) > 0:
                 logging.info("Deleting ALL checkpoints in directory.")
                 try:
-                    return manager.delete(to_delete[0], globs)
+                    manager.delete(to_delete[0], globs)
+                    return {}
                 except errors.CheckpointNotFound as e:
                     logging.warn(e)
 
