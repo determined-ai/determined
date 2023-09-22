@@ -1529,7 +1529,8 @@ const AvatarSection: React.FC = () => {
     <ComponentSection id="Avatar" title="Avatar">
       <AntDCard>
         <p>
-          An avatar is a compact information display. The information is abbreviated with an option to hover for an unabbreviated view.
+          An avatar is a compact information display. The information is abbreviated with an option
+          to hover for an unabbreviated view.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
@@ -2592,11 +2593,7 @@ const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal
-      cancel
-      footerLink={{ text: value, url: '/' }}
-      headerLink={{ text: value, url: '/' }}
-      title={value}>
+    <Modal cancel footerLink={<a>Footer Link</a>} headerLink={<a>Header Link</a>} title={value}>
       <div>{value}</div>
     </Modal>
   );
