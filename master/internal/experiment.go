@@ -789,7 +789,6 @@ func (e *experiment) processOperations(
 			if e.self == nil {
 				panic("experiment actor not started")
 			}
-
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
@@ -800,7 +799,6 @@ func (e *experiment) processOperations(
 				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 				continue
 			}
-
 			e.trialCreated(t)
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
