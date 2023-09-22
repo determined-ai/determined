@@ -68,7 +68,7 @@ def delete_checkpoints(
                 logging.warn(e)
         else:
             logging.info(f"Dry run: deleting checkpoint {storage_id}")
-            
+
     return storage_id_to_resources
 
 
@@ -159,9 +159,9 @@ def main(argv: List[str]) -> None:
         storage_ids_to_resources = delete_checkpoints(
             manager, storage_ids, globs, dry_run=args.dry_run
         )
-        #patch_checkpoints(storage_ids_to_resources)
 
     if args.delete_tensorboards:
+        logging.info("Deleting checkpoints via deleted experiment, will not patch checkpoints.")
         tb_manager = tensorboard.build(
             os.environ["DET_CLUSTER_ID"],
             args.experiment_id,
@@ -171,6 +171,9 @@ def main(argv: List[str]) -> None:
             async_upload=False,
         )
         delete_tensorboards(tb_manager, dry_run=args.dry_run)
+    else:
+        logging.info("Patching checkpoints.")
+        patch_checkpoints(storage_ids_to_resources)
 
 
 if __name__ == "__main__":
