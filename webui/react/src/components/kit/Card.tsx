@@ -57,25 +57,22 @@ const Card: Card = ({
       style={sizeStyle}
       tabIndex={onClick ? 0 : -1}
       onClick={onClick}>
-      {children}
-      <>
-        {children && <section className={css.content}>{children}</section>}
-        {actionsAvailable && (
-          <div className={css.action} onClick={stopPropagation}>
-            <Dropdown
-              disabled={disabled}
-              menu={actionMenu}
-              placement="bottomRight"
-              onClick={onDropdown}>
-              <Button
-                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
-                type="text"
-                onClick={stopPropagation}
-              />
-            </Dropdown>
-          </div>
-        )}
-      </>
+      {children && <section className={css.content}>{children}</section>}
+      {actionsAvailable && (
+        <div className={css.action} onClick={stopPropagation}>
+          <Dropdown
+            disabled={disabled}
+            menu={actionMenu}
+            placement="bottomRight"
+            onClick={onDropdown}>
+            <Button
+              icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+              type="text"
+              onClick={stopPropagation}
+            />
+          </Dropdown>
+        </div>
+      )}
     </div>
   );
 };
