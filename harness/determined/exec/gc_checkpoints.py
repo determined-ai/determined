@@ -23,7 +23,6 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
         info._to_file()
 
     cert = certs.default_load(info.master_url)
-
     sess = api.Session(
         info.master_url,
         util.get_det_username_from_env(),
@@ -46,9 +45,9 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
             )
         )
     # TODO/Need 2nd opinions: Testing deleting this bc it says file not found.
-    # bindings.patch_PatchCheckpoints(
+    #bindings.patch_PatchCheckpoints(
     #    sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
-    # )
+    #)
 
 def delete_checkpoints(
     manager: storage.StorageManager, to_delete: List[str], globs: List[str], dry_run: bool
@@ -59,7 +58,7 @@ def delete_checkpoints(
     logging.info(f"Deleting {len(to_delete)} checkpoints")
 
     if "**/*" in globs and len(to_delete) > 0:
-        logging.info(f"Deleting ALL checkpoints in directory.")
+        logging.info("Deleting ALL checkpoints in directory.")
         try:
             return manager.delete(to_delete[0], globs)
         except errors.CheckpointNotFound as e:
@@ -86,6 +85,7 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
     if dry_run:
         logging.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
         return
+    
     try:
         manager.delete()
     except errors.CheckpointNotFound as e:
@@ -160,6 +160,7 @@ def main(argv: List[str]) -> None:
     globs = [s.strip() for s in args.globs]
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
+
     if len(storage_ids) > 0:
         storage_ids_to_resources = delete_checkpoints(
             manager, storage_ids, globs, dry_run=args.dry_run
