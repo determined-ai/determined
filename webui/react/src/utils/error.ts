@@ -133,7 +133,7 @@ const errorLevelMap = {
   [ErrorLevel.Warn]: 'warn',
 };
 
-const toastSeverityMap = {
+const toastSeverityMap: Record<ErrorLevel, Severity> = {
   [ErrorLevel.Error]: 'Error',
   [ErrorLevel.Fatal]: 'Error',
   [ErrorLevel.Warn]: 'Warning',
@@ -142,7 +142,7 @@ const toastSeverityMap = {
 const openNotification = (e: DetError) => {
   makeToast({
     description: e.publicMessage || '',
-    severity: toastSeverityMap[e.level] as Severity,
+    severity: toastSeverityMap[e.level],
     title: e.publicSubject || listToStr([e.type, e.level]),
   });
 };
