@@ -2,7 +2,7 @@
 
 **New Features**
 
--  Experiments: Add new CLI command ``det e continue <experiment-id>`` to resume or recover training
-   for an experiment. This can be used on experiments that have completed successfully or failed.
-   This is limited to single-searcher experiments. If the continue feature is used, it might not be
-   possible to replicate results of the continued experiment.
+-  Experiments: Add an experiment continue feature via a CLI command ``det e continue
+   <experiment-id>``. This allows users to resume or recover training for an experiment whether it
+   previously succeeded or failed. This is limited to single-searcher experiments and using it may
+   prevent the user from replicating the continued experiment's results.

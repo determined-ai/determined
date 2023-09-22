@@ -66,7 +66,6 @@ type trial struct {
 	experimentID      int
 	restored          bool
 	continued         bool
-	trialCreationSent bool
 
 	// System dependencies.
 	db     db.DB
@@ -165,7 +164,7 @@ func newTrial(
 	}
 
 	if t.continued {
-		// TODO these should be in a transaction eventually.
+		// TODO(DET-9857) these should be in a transaction eventually.
 		err := t.addTask()
 		if err != nil {
 			return nil, err
@@ -650,7 +649,6 @@ func (t *trial) transition(s model.StateWithReason) error {
 	case model.TerminalStates[t.state]:
 		switch t.state {
 		case model.ErrorState:
-			fmt.Println(ptrs.Ptr(model.Errored))
 			// TODO?
 			// t.exit(ptrs.Ptr(model.Errored))
 		case model.CanceledState:
