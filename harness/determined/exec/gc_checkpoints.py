@@ -58,25 +58,25 @@ def delete_checkpoints(
     """
     logging.info(f"Deleting {len(to_delete)} checkpoints")
 
-    if "**/*" in globs and len(to_delete) > 0:
-        logging.info("Deleting ALL checkpoints in directory.")
-        try:
-            return manager.delete(to_delete[0], globs)
-        except errors.CheckpointNotFound as e:
-            logging.warn(e)
-            return {}
-    else:
-        storage_id_to_resources: Dict[str, Dict[str, int]] = {}
-        for storage_id in to_delete:
-            if not dry_run:
-                logging.info(f"Deleting checkpoint {storage_id}")
+    storage_id_to_resources: Dict[str, Dict[str, int]] = {}
+
+    for storage_id in to_delete:
+        if not dry_run:
+            if "**/*" in globs and len(to_delete) > 0:
+                logging.info("Deleting ALL checkpoints in directory.")
                 try:
-                    storage_id_to_resources[storage_id] = manager.delete(storage_id, globs)
+                    return manager.delete(to_delete[0], globs)
                 except errors.CheckpointNotFound as e:
                     logging.warn(e)
-            else:
-                logging.info(f"Dry run: deleting checkpoint {storage_id}")
-        return storage_id_to_resources
+
+            logging.info(f"Deleting checkpoint {storage_id}")
+            try:
+                storage_id_to_resources[storage_id] = manager.delete(storage_id, globs)
+            except errors.CheckpointNotFound as e:
+                logging.warn(e)
+        else:
+            logging.info(f"Dry run: deleting checkpoint {storage_id}")
+    return storage_id_to_resources
 
 
 def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool = False) -> None:
@@ -86,6 +86,7 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
     if dry_run:
         logging.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
         return
+
     try:
         manager.delete()
     except errors.CheckpointNotFound as e:
