@@ -573,6 +573,10 @@ func TestTrialAuthZ(t *testing.T) {
 	authZNSC := setupNSCAuthZ()
 	trial, _ := createTestTrial(t, api, curUser)
 
+	mockUserArg := mock.MatchedBy(func(u model.User) bool {
+		return u.ID == curUser.ID
+	})
+
 	cases := []struct {
 		DenyFuncName   string
 		IDToReqCall    func(id int) error
@@ -689,7 +693,7 @@ func TestTrialAuthZ(t *testing.T) {
 			return err
 		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			authZNSC.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+			authZNSC.On("CanGetTensorboard", mock.Anything, mockUserArg, mock.Anything, mock.Anything,
 				mock.Anything).Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				TrialIds: []int32{int32(id)},
@@ -710,22 +714,22 @@ func TestTrialAuthZ(t *testing.T) {
 	for _, curCase := range cases {
 		require.ErrorIs(t, curCase.IDToReqCall(-999), apiPkg.NotFoundErrs("trial", "-999", true))
 		// Can't view trials experiment gives same error.
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID),
 			apiPkg.NotFoundErrs("trial", fmt.Sprint(trial.ID), true))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 
 		// Action func error returns error in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(nil).Once()
-		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
+		authZExp.On(curCase.DenyFuncName, mock.Anything, mockUserArg, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 	}
@@ -1151,6 +1155,10 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial.ID))
 	createTestTrialInferenceMetrics(ctx, t, api, int32(infTrial2.ID))
 
+	mockUserArg := mock.MatchedBy(func(u model.User) bool {
+		return u.ID == curUser.ID
+	})
+
 	// Create a checkpoint to index with
 	checkpointUUID := createVersionTwoCheckpoint(ctx, t, api, curUser, map[string]int64{"a": 1})
 
@@ -1177,9 +1185,9 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	require.Equal(t, resp.TrialId, int32(infTrial2.ID))
 	require.Equal(t, resp.CheckpointUuid, checkpointUUID)
 
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+	authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 		Return(nil).Times(3)
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, mockUserArg, mock.Anything).
 		Return(nil).Times(3)
 
 	// If there are no restrictions, we should see all the trials
@@ -1198,16 +1206,16 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	require.NoError(t, err)
 
 	// All experiments can be seen
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+	authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 		Return(nil).Times(3)
 	// We can see the experiment that generated the checkpoint
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, mockUserArg, mock.Anything).
 		Return(nil).Once()
 	// We can't see the experiment for infTrial
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrialExp).
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, mockUserArg, infTrialExp).
 		Return(authz2.PermissionDeniedError{}).Once()
 	// We can see the experiment for infTrial2
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, infTrial2Exp).
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, mockUserArg, infTrial2Exp).
 		Return(nil).Once()
 	getCkptResp, getErr = api.GetTrialMetricsByCheckpoint(
 		ctx, &apiv1.GetTrialMetricsByCheckpointRequest{
