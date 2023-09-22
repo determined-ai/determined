@@ -44,7 +44,6 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
                 ),
             )
         )
-    # TODO/Need 2nd opinions: Testing deleting this bc it says file not found.
     bindings.patch_PatchCheckpoints(
         sess, body=bindings.v1PatchCheckpointsRequest(checkpoints=checkpoints)
     )
