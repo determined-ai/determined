@@ -491,7 +491,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 					err := runCheckpointGCTask(
 						a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
 						taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-						true, agentUserGroup, userModel, nil,
+						true, false, agentUserGroup, userModel, nil,
 					)
 					if err != nil {
 						log.WithError(err).Errorf("failed to gc checkpoints for experiment")
@@ -1302,7 +1302,7 @@ func (a *apiServer) PatchExperiment(
 				err = runCheckpointGCTask(
 					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
 					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, false,
-					agentUserGroup, user, nil,
+					false, agentUserGroup, user, nil,
 				)
 				if err != nil {
 					log.WithError(err).Error("failed to GC checkpoints in patch experiment")

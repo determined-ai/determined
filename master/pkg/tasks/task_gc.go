@@ -26,8 +26,9 @@ type GCCkptSpec struct {
 	ToDelete     string
 	// If len(CheckpointGlobs) == 0 then we won't delete any checkpoint files
 	// and just refresh the state of the checkpoint.
-	CheckpointGlobs   []string
-	DeletedExperiment bool
+	CheckpointGlobs    []string
+	DeleteTensorboards bool
+	PatchCheckpoints   bool
 }
 
 // ToTaskSpec generates a TaskSpec.
@@ -109,8 +110,11 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		"--delete", fmt.Sprintf("/run/determined/%s", checkpointsToDeletePath),
 		"--globs", fmt.Sprintf("/run/determined/%s", checkpointsGlobsPath),
 	}
-	if g.DeletedExperiment {
-		res.Entrypoint = append(res.Entrypoint, "--deleted-experiment")
+	if g.DeleteTensorboards {
+		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
+	}
+	if g.PatchCheckpoints {
+		res.Entrypoint = append(res.Entrypoint, "--patch-checkpoints")
 	}
 
 	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts, res.WorkDir)

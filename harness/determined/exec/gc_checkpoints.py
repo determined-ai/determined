@@ -126,10 +126,16 @@ def main(argv: List[str]) -> None:
         help="Glob list to match against checkpoint list (JSON-formatted file)",
     )
     parser.add_argument(
-        "--deleted-experiment",
+        "--delete-tensorboards",
         action="store_true",
-        default=os.getenv("DET_DELETED_EXPERIMENT", False),
-        help="Delete checkpoints via experiment deletion, also deletes Tensorboards from storage.",
+        default=os.getenv("DET_DELETE_TENSORBOARDS", False),
+        help="Delete Tensorboards from storage",
+    )
+    parser.add_argument(
+        "--patch-checkpoints",
+        action="store_true",
+        default=os.getenv("DET_PATCH_CHECKPOINTS", False),
+        help="When an experiment is deleted, do not patch checkpoints.",
     )
     parser.add_argument(
         "--dry-run",
@@ -159,9 +165,10 @@ def main(argv: List[str]) -> None:
         storage_ids_to_resources = delete_checkpoints(
             manager, storage_ids, globs, dry_run=args.dry_run
         )
+        if args.patch_checkpoints:
+            patch_checkpoints(storage_ids_to_resources)
 
-    if args.deleted_experiment:
-        logging.info("Deleting checkpoints via deleted experiment, will not patch checkpoints.")
+    if args.delete_tensorboards:
         tb_manager = tensorboard.build(
             os.environ["DET_CLUSTER_ID"],
             args.experiment_id,
@@ -171,9 +178,6 @@ def main(argv: List[str]) -> None:
             async_upload=False,
         )
         delete_tensorboards(tb_manager, dry_run=args.dry_run)
-    else:
-        logging.info("Patching checkpoints.")
-        patch_checkpoints(storage_ids_to_resources)
 
 
 if __name__ == "__main__":
