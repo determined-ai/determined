@@ -4406,6 +4406,20 @@ export interface V1GetUserResponse {
     user: V1User;
 }
 /**
+ * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ACTIVE: Returns users sorted by if they are admin.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+ * @export
+ * @enum {string}
+ */
+export const V1GetUsersEERequestSortBy = {
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    DISPLAYNAME: 'SORT_BY_DISPLAY_NAME',
+    USERNAME: 'SORT_BY_USER_NAME',
+    ACTIVE: 'SORT_BY_ACTIVE',
+    MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME',
+    NAME: 'SORT_BY_NAME',
+} as const
+export type V1GetUsersEERequestSortBy = ValueOf<typeof V1GetUsersEERequestSortBy>
+/**
  * Response to GetUserSettingRequest.
  * @export
  * @interface V1GetUserSettingResponse
@@ -25437,6 +25451,71 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @summary Get a list of users for ee.
+         * @param {V1GetUsersEERequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ACTIVE: Returns users sorted by if they are admin.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [active] Filter by status.
+         * @param {Array<number>} [roleIds] Filter by roles.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users/ee`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name
+            }
+            
+            if (active !== undefined) {
+                localVarQueryParameter['active'] = active
+            }
+            
+            if (roleIds) {
+                localVarQueryParameter['roleIds'] = roleIds
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary ListRoles returns roles and groups/users granted that role.
          * @param {V1ListRolesRequest} body
          * @param {*} [options] Override http request option.
@@ -25674,6 +25753,31 @@ export const RBACApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of users for ee.
+         * @param {V1GetUsersEERequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ACTIVE: Returns users sorted by if they are admin.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [active] Filter by status.
+         * @param {Array<number>} [roleIds] Filter by roles.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIds, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary ListRoles returns roles and groups/users granted that role.
          * @param {V1ListRolesRequest} body
          * @param {*} [options] Override http request option.
@@ -25800,6 +25904,22 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
         },
         /**
          * 
+         * @summary Get a list of users for ee.
+         * @param {V1GetUsersEERequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ACTIVE: Returns users sorted by if they are admin.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [active] Filter by status.
+         * @param {Array<number>} [roleIds] Filter by roles.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options?: any) {
+            return RBACApiFp(configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary ListRoles returns roles and groups/users granted that role.
          * @param {V1ListRolesRequest} body
          * @param {*} [options] Override http request option.
@@ -25908,6 +26028,24 @@ export class RBACApi extends BaseAPI {
      */
     public getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
         return RBACApiFp(this.configuration).getRolesByID(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of users for ee.
+     * @param {V1GetUsersEERequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ACTIVE: Returns users sorted by if they are admin.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+     * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+     * @param {string} [name] Filter by username or display name.
+     * @param {boolean} [active] Filter by status.
+     * @param {Array<number>} [roleIds] Filter by roles.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options?: any) {
+        return RBACApiFp(this.configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIds, options)(this.fetch, this.basePath)
     }
     
     /**

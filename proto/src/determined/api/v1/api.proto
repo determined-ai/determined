@@ -116,6 +116,15 @@ service Determined {
       tags: "Users"
     };
   }
+  // Get a list of users for ee.
+  rpc GetUsersEE(GetUsersEERequest) returns (GetUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/ee"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
   // Get a user's settings for website
   rpc GetUserSetting(GetUserSettingRequest) returns (GetUserSettingResponse) {
     option (google.api.http) = {

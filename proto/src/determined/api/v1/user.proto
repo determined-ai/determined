@@ -7,6 +7,42 @@ import "determined/user/v1/user.proto";
 import "determined/api/v1/pagination.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Get a list of users for ee.
+message GetUsersEERequest {
+  // Sort users by the given field.
+  enum SortBy {
+    // Returns users in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns users sorted by display name.
+    SORT_BY_DISPLAY_NAME = 1;
+    // Returns users sorted by user name.
+    SORT_BY_USER_NAME = 2;
+    // Returns users sorted by if they are admin.
+    SORT_BY_ACTIVE = 4;
+    // Returns users sorted by modified time.
+    SORT_BY_MODIFIED_TIME = 5;
+    // Returns users sorted by username unless display name exist.
+    SORT_BY_NAME = 6;
+  }
+  // Sort users by the given field.
+  SortBy sort_by = 1;
+  // Order users in either ascending or descending order.
+  OrderBy order_by = 2;
+
+  // Skip the number of projects before returning results. Negative values
+  // denote number of projects to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of projects. A value of 0 denotes no limit.
+  int32 limit = 4;
+
+  // Filter by username or display name.
+  string name = 5;
+  // Filter by status.
+  optional bool active = 6;
+  // Filter by roles.
+  repeated int32 role_ids = 7;
+}
+
 // Get a list of users.
 message GetUsersRequest {
   // Sort users by the given field.

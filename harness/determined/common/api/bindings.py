@@ -5981,6 +5981,22 @@ class v1GetUserSettingResponse(Printable):
         }
         return out
 
+class v1GetUsersEERequestSortBy(DetEnum):
+    """Sort users by the given field.
+    - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
+    - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.
+    - SORT_BY_USER_NAME: Returns users sorted by user name.
+    - SORT_BY_ACTIVE: Returns users sorted by if they are admin.
+    - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
+    - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
+    USER_NAME = "SORT_BY_USER_NAME"
+    ACTIVE = "SORT_BY_ACTIVE"
+    MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
+    NAME = "SORT_BY_NAME"
+
 class v1GetUsersRequestSortBy(DetEnum):
     """Sort users by the given field.
     - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
@@ -18115,6 +18131,62 @@ denote number of projects to skip from the end before returning results.
     if _resp.status_code == 200:
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
+
+def get_GetUsersEE(
+    session: "api.Session",
+    *,
+    active: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    roleIds: "typing.Optional[typing.Sequence[int]]" = None,
+    sortBy: "typing.Optional[v1GetUsersEERequestSortBy]" = None,
+) -> "v1GetUsersResponse":
+    """Get a list of users for ee.
+
+    - active: Filter by status.
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - name: Filter by username or display name.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order users in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - roleIds: Filter by roles.
+    - sortBy: Sort users by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
+ - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.
+ - SORT_BY_USER_NAME: Returns users sorted by user name.
+ - SORT_BY_ACTIVE: Returns users sorted by if they are admin.
+ - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
+ - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+    """
+    _params = {
+        "active": str(active).lower() if active is not None else None,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "roleIds": roleIds,
+        "sortBy": sortBy.value if sortBy is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users/ee",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUsersResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUsersEE", _resp)
 
 def get_GetValidationMetrics(
     session: "api.Session",
