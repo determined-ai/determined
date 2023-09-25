@@ -33,8 +33,6 @@ const (
 type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
-
-	closedChan           chan struct{}
 	permissionChangeChan chan struct{}
 	permissionLock       sync.Mutex
 }
@@ -96,8 +94,6 @@ func NewPublisherSet() PublisherSet {
 	return PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
-
-		closedChan:           make(chan struct{}),
 		permissionChangeChan: make(chan struct{}),
 	}
 }
@@ -150,9 +146,6 @@ type FilterMaker[T stream.Msg, S any] interface {
 
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) {
-	// start listening for permission changes
-	go ps.permissionChangeLoop(ctx)
-
 	// start each publisher
 	go publishLoop(ctx, "stream_trial_chan", ps.Trials)
 	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
@@ -232,8 +225,6 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 			streamer.Close()
 		case <-permissionChangeChan:
 			streamer.Close()
-		case <-ps.closedChan:
-			streamer.Close()
 		}
 	}()
 
@@ -306,17 +297,18 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	}
 }
 
-func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
+// MonitorPermissionChanges listens for permission changes, updates the PublisherSet
+// to signal to boot streamers, returns an error in the event of a failure to listen.
+func MonitorPermissionChanges(ctx context.Context, ps *PublisherSet) error {
 	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
 	if err != nil {
 		log.Errorf("unable to get permission change listener: %s", err)
 		// XXX: investigate better recovery mechanism
-		close(ps.closedChan)
-		return
+		return err
 	}
 	if permListener == nil {
 		// no listener means we don't have permissions configured at all
-		return
+		return nil
 	}
 	defer func() {
 		err := permListener.Close()
@@ -343,14 +335,11 @@ func (ps *PublisherSet) permissionChangeLoop(ctx context.Context) {
 			}()
 			if err := <-pingErrChan; err != nil {
 				log.Errorf("permission listener failed %s", err)
-				close(ps.closedChan)
+				return err
 			}
 		// are we canceled?
 		case <-ctx.Done():
-			return
-		// is the PublisherSet closed?
-		case <-ps.closedChan:
-			return
+			return nil
 		}
 	}
 }

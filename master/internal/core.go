@@ -1219,8 +1219,16 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
+	streamContext, streamCancel := context.WithCancel(context.Background())
 	ps := stream.NewPublisherSet()
-	ps.Start(context.Background())
+	ps.Start(streamContext)
+	go func() {
+		err := stream.MonitorPermissionChanges(streamContext, &ps)
+		if err != nil {
+			log.Errorf("error occurred while monitoring permission changes: %s", err)
+			streamCancel()
+		}
+	}()
 	m.echo.GET("/stream", api.WebSocketRoute(ps.Websocket))
 
 	return m.startServers(ctx, cert)
