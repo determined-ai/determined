@@ -150,9 +150,23 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
                 f"deployment-type={args.deployment_type}."
             )
-    if args.deployment_type == constants.deployment_types.SIMPLE_RDS:
-        if args.db_size is not None and args.db_size < 20:
-            raise ValueError("The db-size must be greater than or equal to 20 GB")
+
+    if (
+        args.db_instance_type is not None
+        and args.deployment_type != constants.deployment_types.SIMPLE_RDS
+    ):
+        raise ValueError(
+            f"--db-instance-type cannot be specified for deployment types other than "
+            f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+        )
+
+    if args.db_size is not None and args.deployment_type != constants.deployment_types.SIMPLE_RDS:
+        raise ValueError(
+            f"--db-size cannot be specified for deployment types other than "
+            f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+        )
+    if args.db_size is not None and args.db_size < 20:
+        raise ValueError("--db-size must be greater than or equal to 20 GB")
 
     if args.deployment_type == constants.deployment_types.GOVCLOUD:
         if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
@@ -445,14 +459,14 @@ args_description = Cmd(
                 Arg(
                     "--db-instance-type",
                     type=str,
-                    default=constants.defaults.DB_INSTANCE_TYPE,
-                    help="instance type for master database",
+                    default=None,
+                    help="instance type for master database (only for simple-rds)",
                 ),
                 Arg(
                     "--db-size",
                     type=int,
-                    default=constants.defaults.DB_SIZE,
-                    help="storage size in GB for master database",
+                    default=None,
+                    help="storage size in GB for master database (only for simple-rds)",
                 ),
                 Arg(
                     "--max-idle-agent-period",

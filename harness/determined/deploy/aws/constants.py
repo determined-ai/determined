@@ -15,8 +15,6 @@ class defaults:
     REGION = "us-west-2"
     STACK_TAG_KEY = "managed-by"
     STACK_TAG_VALUE = "determined"
-    DB_SIZE = 20
-    DB_INSTANCE_TYPE = "db.m7g.large"
 
 
 class cloudformation:
