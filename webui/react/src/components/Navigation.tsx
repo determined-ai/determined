@@ -2,13 +2,13 @@ import React, { useEffect } from 'react';
 
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import { useInitApi } from 'components/kit/Toast';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
-import { useInitApi } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 

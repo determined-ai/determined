@@ -11,6 +11,7 @@ import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
@@ -30,7 +31,6 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -77,7 +77,10 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const onToggleActive = useCallback(async () => {
     try {
       await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
-      message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
+      makeToast({
+        severity: 'Confirm',
+        title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
+      });
       fetchUsers();
     } catch (e) {
       handleError(e, {

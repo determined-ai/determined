@@ -10,6 +10,7 @@ import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
 import useUI, { UIProvider } from 'components/kit/Theme';
+import { notification } from 'components/kit/Toast';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
@@ -36,7 +37,6 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
-import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';

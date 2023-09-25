@@ -9,6 +9,7 @@ import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import useUI, { Mode } from 'components/kit/Theme';
+import { makeToast } from 'components/kit/Toast';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -33,7 +34,6 @@ import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMe
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -81,7 +81,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         await userStore.patchUser(currentUser?.id || 0, {
           displayName: newValue as string,
         });
-        message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
+        makeToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
       } catch (e) {
         handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
@@ -96,9 +96,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         await userStore.patchUser(currentUser?.id || 0, {
           username: newValue as string,
         });
-        message.success(API_USERNAME_SUCCESS_MESSAGE);
+        makeToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
       } catch (e) {
-        message.error(API_USERNAME_ERROR_MESSAGE);
+        makeToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
         handleError(e, { silent: true, type: ErrorType.Input });
         return e as Error;
       }
