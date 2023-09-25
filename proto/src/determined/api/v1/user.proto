@@ -42,6 +42,13 @@ message GetUsersEERequest {
   // Filter by roles.
   repeated int32 role_ids = 7;
 }
+// Response to GetUsersEERequest.
+message GetUsersEEResponse {
+  // The list of requested users.
+  repeated determined.user.v1.User users = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
 
 // Get a list of users.
 message GetUsersRequest {

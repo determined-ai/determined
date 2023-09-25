@@ -117,7 +117,7 @@ service Determined {
     };
   }
   // Get a list of users for ee.
-  rpc GetUsersEE(GetUsersEERequest) returns (GetUsersResponse) {
+  rpc GetUsersEE(GetUsersEERequest) returns (GetUsersEEResponse) {
     option (google.api.http) = {
       get: "/api/v1/users/ee"
     };

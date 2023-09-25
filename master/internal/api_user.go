@@ -125,7 +125,7 @@ func getUser(
 
 func (a *apiServer) GetUsersEE(
 	ctx context.Context, req *apiv1.GetUsersEERequest,
-) (*apiv1.GetUsersResponse, error) {
+) (*apiv1.GetUsersEEResponse, error) {
 	return nil, grpcutil.UnimplementedError
 }
 
