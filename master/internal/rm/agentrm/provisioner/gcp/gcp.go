@@ -171,7 +171,7 @@ func (c *gcpCluster) generateInstanceNamePattern() string {
 	suffix := "-#####"
 	// We make sure that the generated name is less than the max length
 	if len(genName) > maxInstanceNameLength-len(suffix) {
-		c.syslog.Warnf("Generated name for instance was truncated")
+		c.syslog.WithField("genName", genName).Warnf("Generated name for instance was truncated")
 		genName = genName[:maxInstanceNameLength-len(suffix)]
 	}
 	return genName + suffix
