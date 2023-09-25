@@ -6,7 +6,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"slices"
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
@@ -181,19 +180,19 @@ func TestFilterUser(t *testing.T) {
 
 	userIds := fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{})
 	for _, u := range []model.UserID{userID1, userID2, userID3, userID4} {
-		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
 	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Admin: ptrs.Ptr(true)})
 	for _, u := range []model.UserID{userID3, userID4} {
-		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
 	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true)})
 	for _, u := range []model.UserID{userID2, userID3} {
-		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
 	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true), Admin: ptrs.Ptr(true)})
 	for _, u := range []model.UserID{userID3} {
-		require.True(t, slices.Contains(userIds, u), fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
 }
 
