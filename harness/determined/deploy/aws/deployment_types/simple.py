@@ -36,3 +36,8 @@ class Simple(base.DeterminedDeployment):
 class SimpleRDS(Simple):
     template = "simple-rds.yaml"
     deployment_type = constants.deployment_types.SIMPLE_RDS
+
+    template_parameter_keys = base.COMMON_TEMPLATE_PARAMETER_KEYS + [
+        constants.cloudformation.DB_INSTANCE_TYPE,
+        constants.cloudformation.DB_SIZE,
+    ]
