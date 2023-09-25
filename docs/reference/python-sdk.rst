@@ -59,7 +59,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 ==========
 
 .. automodule:: determined.experimental.client
-   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, stream_trials_training_metrics, stream_trials_validation_metrics
+   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, stream_trials_metrics, stream_trials_training_metrics, stream_trials_validation_metrics
    :member-order: bysource
 
 ``Checkpoint``
@@ -108,6 +108,13 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 ===============
 
 .. autoclass:: determined.experimental.client.ModelSortBy
+   :members:
+   :member-order: bysource
+
+``ModelVersion``
+================
+
+.. autoclass:: determined.experimental.model.ModelVersion
    :members:
    :member-order: bysource
 
