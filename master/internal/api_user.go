@@ -83,6 +83,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
 		ModifiedAt:     timestamppb.New(user.ModifiedAt),
+		LastLogin:      timestamppb.New(user.LastLogin),
 	}
 }
 
@@ -163,6 +164,7 @@ func (a *apiServer) GetUsers(
 		Column("u.active").
 		Column("u.modified_at").
 		Column("u.remote").
+		Column("u.last_login").
 		ColumnExpr("h.uid AS agent_uid").
 		ColumnExpr("h.gid AS agent_gid").
 		ColumnExpr("h.user_ AS agent_user").

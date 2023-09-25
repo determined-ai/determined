@@ -1091,7 +1091,8 @@ main_cmd = Cmd(
                     "--local",
                     action="store_true",
                     help="Create the experiment in local mode instead of submitting it to the "
-                    "cluster. For more information, see documentation on det.experimental.create()",
+                    "cluster. Requires --test. For more information, visit How to Debug Models "
+                    "(https://docs.determined.ai/latest/model-dev-guide/debug-models.html).",
                 ),
                 Arg(
                     "--template",

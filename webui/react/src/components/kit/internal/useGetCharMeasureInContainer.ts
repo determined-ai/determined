@@ -1,15 +1,18 @@
 import { RefObject, useMemo } from 'react';
 
+import { SizeInfo } from 'components/kit/internal/useResize';
+
 export interface CharMeasure {
   height: number;
   width: number;
 }
 
-const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMeasure => {
-  const containerInner = container.current;
-
+const useGetCharMeasureInContainer = (
+  container: RefObject<HTMLElement>,
+  containerSize?: SizeInfo,
+): CharMeasure => {
   return useMemo(() => {
-    if (!containerInner) {
+    if (!container.current) {
       return {
         height: 0,
         width: 0,
@@ -22,18 +25,19 @@ const useGetCharMeasureInContainer = (container: RefObject<HTMLElement>): CharMe
     elem.style.position = 'fixed';
     elem.style.top = '0';
     elem.style.width = 'auto';
+    elem.style.visibility = 'hidden';
     elem.textContent = 'W';
-    containerInner.appendChild(elem);
+    container.current?.appendChild?.(elem);
 
     const charRect = elem.getBoundingClientRect();
-
     elem.remove();
 
     return {
       height: charRect.height,
       width: charRect.width,
     };
-  }, [containerInner]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [container, containerSize]);
 };
 
 export default useGetCharMeasureInContainer;

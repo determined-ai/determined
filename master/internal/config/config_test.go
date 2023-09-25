@@ -11,6 +11,8 @@ import (
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/config"
@@ -246,6 +248,157 @@ checkpoint_storage:
 	assert.DeepEqual(t, unmarshaled, expected)
 }
 
+func TestMaxSlotsPerPodConfig(t *testing.T) {
+	{
+		notK8s := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: agent
+`
+		var unmarshaled Config
+		err := yaml.Unmarshal([]byte(notK8s), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.NoError(t, unmarshaled.Resolve())
+	}
+
+	negativeRM := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: -3
+`
+	negativeTask := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: -3
+`
+	for _, config := range []string{negativeRM, negativeTask} {
+		var unmarshaled Config
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.ErrorContains(t, unmarshaled.Resolve(), ">= 0")
+	}
+
+	noneOf := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+`
+
+	both := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 10
+
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: 11
+`
+	for _, config := range []string{noneOf, both} {
+		var unmarshaled Config
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.ErrorContains(t, unmarshaled.Resolve(), "must provide exactly one")
+	}
+
+	rm := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 17
+`
+	rmZero := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 0
+`
+
+	taskDefaults := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: 17
+`
+	taskDefaultsZero := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: 0
+`
+	for _, c := range []struct {
+		config   string
+		expected int
+	}{
+		{rm, 17},
+		{rmZero, 0},
+		{taskDefaults, 17},
+		{taskDefaultsZero, 0},
+	} {
+		var unmarshaled Config
+		err := yaml.Unmarshal([]byte(c.config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.NoError(t, unmarshaled.Resolve())
+		require.Equal(t, c.expected,
+			*unmarshaled.ResourceConfig.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+		require.Equal(t, c.expected,
+			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
+	}
+}
+
 func TestPrintableConfig(t *testing.T) {
 	s3Key := "my_access_key_secret"
 	//nolint:gosec // These are not potential hardcoded credentials.
@@ -465,6 +618,7 @@ resource_pools:
 			configRaw: `
 resource_manager:
   type: kubernetes
+  max_slots_per_pod: 2
 `,
 			rpName:            "",
 			preemptionEnabled: false,
@@ -475,6 +629,7 @@ resource_manager:
 resource_manager:
   type: kubernetes
   default_scheduler: preemption
+  max_slots_per_pod: 54
 `,
 			rpName:            "default",
 			preemptionEnabled: true,

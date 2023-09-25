@@ -143,6 +143,10 @@ func (i *informer) run(ctx context.Context) {
 				i.syslog.Warnf("%s informer emitted error %+v", i.name, event)
 				continue
 			}
+			if event.Object == nil {
+				i.syslog.Tracef("%s informer emitted nil object %+v", i.name, event)
+				continue
+			}
 			i.cb(event)
 		case <-ctx.Done():
 			i.syslog.Debugf("%s informer stopped unexpectedly: %s", i.name, ctx.Err())
