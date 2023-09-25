@@ -2342,11 +2342,9 @@ class v1ContinueExperimentResponse(Printable):
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
         warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
-        self.config = config
         self.experiment = experiment
         if not isinstance(warnings, Unset):
             self.warnings = warnings
@@ -2354,7 +2352,6 @@ class v1ContinueExperimentResponse(Printable):
     @classmethod
     def from_json(cls, obj: Json) -> "v1ContinueExperimentResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "config": obj["config"],
             "experiment": v1Experiment.from_json(obj["experiment"]),
         }
         if "warnings" in obj:
@@ -2363,7 +2360,6 @@ class v1ContinueExperimentResponse(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "config": self.config,
             "experiment": self.experiment.to_json(omit_unset),
         }
         if not omit_unset or "warnings" in vars(self):

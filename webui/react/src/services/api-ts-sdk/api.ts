@@ -2004,12 +2004,6 @@ export interface V1ContinueExperimentResponse {
      */
     experiment: V1Experiment;
     /**
-     * The created experiment config.
-     * @type {any}
-     * @memberof V1ContinueExperimentResponse
-     */
-    config: any;
-    /**
      * List of any related warnings.
      * @type {Array<V1LaunchWarning>}
      * @memberof V1ContinueExperimentResponse
