@@ -117,6 +117,7 @@ export interface User {
   id: number;
   modifiedAt?: number;
   username: string;
+  lastAuthAt?: number;
 }
 
 export interface DetailedUser extends User {

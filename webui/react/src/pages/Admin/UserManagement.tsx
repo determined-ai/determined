@@ -295,6 +295,23 @@ const UserManagement: React.FC = () => {
         title: 'Modified Time',
       },
       {
+        dataIndex: 'lastAuthAt',
+        defaultSortOrder:
+          defaultSortKey === V1GetUsersRequestSortBy.LASTLOGINTIME ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastAuthAt'],
+        key: V1GetUsersRequestSortBy.LASTLOGINTIME,
+        onCell: onRightClickableCell,
+        render: (value: number | undefined): React.ReactNode => {
+          return value ? (
+            relativeTimeRenderer(new Date(value))
+          ) : (
+            <div className={css.rightAligned}>N/A</div>
+          );
+        },
+        sorter: (a: DetailedUser, b: DetailedUser) => numericSorter(a.lastAuthAt, b.lastAuthAt),
+        title: 'Last Seen',
+      },
+      {
         className: 'fullCell',
         dataIndex: 'action',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
