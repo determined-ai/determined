@@ -69,6 +69,11 @@ class TrainUnit:
         else:
             raise ValueError(f"unrecognized searcher unit {unit}")
 
+    def _to_searcher_unit(self) -> core.Unit:
+        if isinstance(self, Batch):
+            return core.Unit.BATCHES
+        return core.Unit.EPOCHS
+
     @staticmethod
     def _from_values(
         batches: Optional[int] = None,
@@ -218,8 +223,15 @@ class _PyTorchTrialController:
         if local_training:
             self.trial_id = 0
             assert self.max_length, "max_length must be specified for local-training mode."
+            self.searcher_unit = self.max_length._to_searcher_unit()
         else:
             self.trial_id = self.core_context.train._trial_id
+            configured_units = self.core_context.searcher.get_configured_units()
+            if configured_units is None:
+                raise ValueError(
+                    "Searcher units must be configured for training with PyTorchTrial."
+                )
+            self.searcher_unit = configured_units
 
         # Don't initialize the state here because it will be invalid until we load a checkpoint.
         self.state = None  # type: Optional[_TrialState]
@@ -235,7 +247,6 @@ class _PyTorchTrialController:
         self.smaller_is_better = smaller_is_better
         self.global_batch_size = global_batch_size
 
-        self.searcher_unit = self.core_context.searcher.get_configured_units()
         if self.searcher_unit == core.Unit.RECORDS:
             if self.global_batch_size is None:
                 raise ValueError("global_batch_size required for searcher unit RECORDS.")
@@ -760,14 +771,21 @@ class _PyTorchTrialController:
                     batch_metrics=metrics["batch_metrics"],
                 )
 
+            step_reported = False
+
             for train_boundary in train_boundaries:
                 if not train_boundary.limit_reached:
                     continue
 
                 # Train step limits reached, proceed accordingly.
                 if train_boundary.step_type == _TrainBoundaryType.TRAIN:
-                    if not op._completed and self.is_chief:
+                    if not op._completed and self.is_chief and not step_reported:
                         self._report_searcher_progress(op, self.searcher_unit)
+                        step_reported = True
+                elif train_boundary.step_type == _TrainBoundaryType.REPORT:
+                    if not op._completed and self.is_chief and not step_reported:
+                        self._report_searcher_progress(op, self.searcher_unit)
+                        step_reported = True
                 elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
                         self._validate(op)
