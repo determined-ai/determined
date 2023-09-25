@@ -81,19 +81,19 @@ Determined supports configuring the following fields:
 
    For those fields, use ``det user link-with-agent-user`` instead.
 
-Example of configuring a :ref:`pachyderm-integration` notebook plugin to run in ``det notebook``:
+   Example of configuring a :ref:`pachyderm-integration` notebook plugin to run in ``det notebook``:
 
-.. code:: yaml
+   .. code:: yaml
 
-   environment:
-     pod_spec:
-       apiVersion: v1
-       kind: Pod
-       spec:
-         containers:
-           - name: determined-container
-               securityContext:
-                 privileged: true
+      environment:
+        pod_spec:
+          apiVersion: v1
+          kind: Pod
+          spec:
+            containers:
+              - name: determined-container
+                  securityContext:
+                    privileged: true
 
 *******************
  Default Pod Specs
