@@ -10435,7 +10435,7 @@ export interface V1User {
      */
     remote?: boolean;
     /**
-     * when the user last logged in
+     * when the user last authenticated
      * @type {Date}
      * @memberof V1User
      */

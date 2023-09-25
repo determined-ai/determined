@@ -74,6 +74,12 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		}
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
+
+	var lastLogin *timestamppb.Timestamp
+	if user.LastLogin != nil {
+		lastLogin = timestamppb.New(*user.LastLogin)
+	}
+
 	return &userv1.User{
 		Id:             int32(user.ID),
 		Username:       user.Username,
@@ -83,7 +89,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
 		ModifiedAt:     timestamppb.New(user.ModifiedAt),
-		LastLogin:      timestamppb.New(user.LastLogin),
+		LastLogin:      lastLogin,
 	}
 }
 
