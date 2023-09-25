@@ -12,7 +12,7 @@ from determined.pytorch import experimental
 
 # Simple example Inference Processor that demonstrates how to associate
 # generic inference metrics with a model version
-class NineRatioInferenceProcessor(experimental.TorchBatchProcessor):
+class ExampleInferenceProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
         self.context = context
 
@@ -33,7 +33,7 @@ class NineRatioInferenceProcessor(experimental.TorchBatchProcessor):
 
         self.counts = {}
         for rank in range(self.context.get_distributed_size()):
-            self.counts[rank] = {"num_nines": 0, "total": 0}
+            self.counts[rank] = {"total_correct": 0, "total": 0}
 
     def process_batch(self, batch, batch_idx) -> None:
         model_input, labels = batch
