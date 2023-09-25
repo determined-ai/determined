@@ -3,9 +3,10 @@ package gcp
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 )
 
 func TestGCPNodeNameGenGreaterThanMaxLength(t *testing.T) {
