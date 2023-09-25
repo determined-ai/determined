@@ -339,6 +339,10 @@ func (t *trial) continueSetup(continueFromTrialID *int) error {
 	t.id = *continueFromTrialID
 	t.idSet = true
 
+	if err := t.recover(); err != nil {
+		return fmt.Errorf("recovering trial state: %w", err)
+	}
+
 	trialIDTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), t.id)
 	if err != nil {
 		return fmt.Errorf("getting previous task IDs for trial: %w", err)
