@@ -426,7 +426,7 @@ func RecordTaskEndStatsBun(stats *model.TaskStats) error {
 		FROM (
 			SELECT allocation_id, event_type, end_time
 			FROM task_stats
-			Where(allocation_id = ? AND event_type = ? AND end_time IS NULL)
+			Where allocation_id = ? AND event_type = ? AND end_time IS NULL
 			ORDER BY start_time
 			FOR UPDATE
 		) AS t2
