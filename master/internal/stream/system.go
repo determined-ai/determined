@@ -446,8 +446,14 @@ func newPermFilter[T stream.Msg](
 	permFilterFn func(context.Context, model.User) (func(T) bool, error),
 	err *error,
 ) func(T) bool {
+	if *err != nil {
+		return nil
+	}
 	out, tempErr := permFilterFn(ctx, user)
-	*err = tempErr
+	if tempErr != nil {
+		*err = tempErr
+		return nil
+	}
 	return out
 }
 
