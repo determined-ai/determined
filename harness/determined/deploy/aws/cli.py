@@ -151,20 +151,12 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"deployment-type={args.deployment_type}."
             )
 
-    if (
-        args.db_instance_type is not None
-        and args.deployment_type != constants.deployment_types.SIMPLE_RDS
-    ):
-        raise ValueError(
-            f"--db-instance-type cannot be specified for deployment types other than "
-            f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
-        )
-
-    if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
-        raise ValueError(
-            "When deploying to GovCloud, set the region to either us-gov-east-1 "
-            "or us-gov-west-1."
-        )
+    if args.deployment_type == constants.deployment_types.GOVCLOUD:
+        if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
+            raise ValueError(
+                "When deploying to GovCloud, set the region to either us-gov-east-1 "
+                "or us-gov-west-1."
+            )
 
     if args.deploy_type != constants.deployment_types.SIMPLE_RDS:
         if args.db_instance_type != constants.defaults.DB_INSTANCE_TYPE:

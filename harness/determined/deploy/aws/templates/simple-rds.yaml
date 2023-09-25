@@ -99,16 +99,14 @@ Parameters:
     Type: String
     Description: Password for database (eg. "postgres")
     NoEcho: true
-
+  
   DBSize:
     Type: Number
     Description: Initial storage size for database in GB
-    Default: 20
-
+  
   DBInstanceType:
     Type: String
     Description: Instance type for database (eg. "db.m7g.large")
-    Default: db.m7g.large
 
   MaxAuxContainersPerAgent:
     Type: Number
