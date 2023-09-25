@@ -160,20 +160,26 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
         )
 
-    if args.db_size is not None and args.deployment_type != constants.deployment_types.SIMPLE_RDS:
+    if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
         raise ValueError(
-            f"--db-size cannot be specified for deployment types other than "
-            f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+            "When deploying to GovCloud, set the region to either us-gov-east-1 "
+            "or us-gov-west-1."
         )
-    if args.db_size is not None and args.db_size < 20:
-        raise ValueError("--db-size must be greater than or equal to 20 GB")
 
-    if args.deployment_type == constants.deployment_types.GOVCLOUD:
-        if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
+    if args.deploy_type != constants.deployment_types.SIMPLE_RDS:
+        if args.db_instance_type != constants.defaults.DB_INSTANCE_TYPE:
             raise ValueError(
-                "When deploying to GovCloud, set the region to either us-gov-east-1 "
-                "or us-gov-west-1."
+                f"--db-size cannot be specified for deployment types other than "
+                f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
             )
+        if args.db_instance_type != constants.defaults.DB_SIZE:
+            raise ValueError(
+                f"--db-size cannot be specified for deployment types other than "
+                f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+            )
+    else:
+        if args.db_size is not None and args.db_size < 20:
+            raise ValueError("--db-size must be greater than or equal to 20 GB")
 
     if args.deployment_type != constants.deployment_types.EFS:
         if args.efs_id is not None:
@@ -459,13 +465,13 @@ args_description = Cmd(
                 Arg(
                     "--db-instance-type",
                     type=str,
-                    default=None,
+                    default=constants.defaults.DB_INSTANCE_TYPE,
                     help="instance type for master database (only for simple-rds)",
                 ),
                 Arg(
                     "--db-size",
                     type=int,
-                    default=None,
+                    default=constants.defaults.DB_SIZE,
                     help="storage size in GB for master database (only for simple-rds)",
                 ),
                 Arg(
