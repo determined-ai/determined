@@ -132,13 +132,14 @@ func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
 	sortColMap := map[apiv1.GetUsersRequest_SortBy]string{
-		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:   "id",
-		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:  "display_name",
-		apiv1.GetUsersRequest_SORT_BY_USER_NAME:     "username",
-		apiv1.GetUsersRequest_SORT_BY_ADMIN:         "admin",
-		apiv1.GetUsersRequest_SORT_BY_ACTIVE:        "active",
-		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME: "modified_at",
-		apiv1.GetUsersRequest_SORT_BY_NAME:          "name",
+		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:     "id",
+		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:    "display_name",
+		apiv1.GetUsersRequest_SORT_BY_USER_NAME:       "username",
+		apiv1.GetUsersRequest_SORT_BY_ADMIN:           "admin",
+		apiv1.GetUsersRequest_SORT_BY_ACTIVE:          "active",
+		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME:   "modified_at",
+		apiv1.GetUsersRequest_SORT_BY_NAME:            "name",
+		apiv1.GetUsersRequest_SORT_BY_LAST_LOGIN_TIME: "last_login",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
