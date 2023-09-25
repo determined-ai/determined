@@ -6,6 +6,7 @@ import os
 import pathlib
 import sys
 import typing
+import unittest.mock
 from unittest import mock
 
 import numpy as np
@@ -1235,7 +1236,8 @@ class TestPyTorchTrial:
             controller.core_context.train.get_experiment_best_validation.reset_mock()
             controller._checkpoint.reset_mock()
 
-    def test_searcher_progress_reporting(self):
+    @mock.patch.object(det.core.DummySearcherOperation, "report_progress")
+    def test_searcher_progress_reporting(self, mock_report_progress: mock.MagicMock):
         trial, controller = pytorch_utils.create_trial_and_trial_controller(
             trial_class=pytorch_onevar_model.OneVarTrial,
             scheduling_unit=10,
@@ -1243,13 +1245,10 @@ class TestPyTorchTrial:
             trial_seed=self.trial_seed,
             max_batches=100,
         )
-
-        controller._report_searcher_progress = mock.MagicMock()
-
         controller.run()
-
-        # Expect progress reports every scheduling unit step + 1 on training end.
-        assert controller._report_searcher_progress.call_count == (100 / 10) + 1
+        assert mock_report_progress.call_count == 100 // 10
+        for i, step in enumerate(range(10, 110, 10)):
+            assert mock_report_progress.call_args_list[i].args[0] == step
 
     @pytest.mark.parametrize(
         "ckpt",
