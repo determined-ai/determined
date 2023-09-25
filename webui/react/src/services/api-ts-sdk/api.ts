@@ -1973,6 +1973,44 @@ export interface V1Container {
     devices?: Array<V1Device>;
 }
 /**
+ * Request to continue an experiment.
+ * @export
+ * @interface V1ContinueExperimentRequest
+ */
+export interface V1ContinueExperimentRequest {
+    /**
+     * Experiment ID to continue.
+     * @type {number}
+     * @memberof V1ContinueExperimentRequest
+     */
+    id: number;
+    /**
+     * Experiment config (YAML) to merge with the experiment's config.
+     * @type {string}
+     * @memberof V1ContinueExperimentRequest
+     */
+    overrideConfig?: string;
+}
+/**
+ * Request to continue an experiment.
+ * @export
+ * @interface V1ContinueExperimentResponse
+ */
+export interface V1ContinueExperimentResponse {
+    /**
+     * The created experiment.
+     * @type {V1Experiment}
+     * @memberof V1ContinueExperimentResponse
+     */
+    experiment: V1Experiment;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1ContinueExperimentResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+/**
  * Request to create a new experiment.
  * @export
  * @interface V1CreateExperimentRequest
@@ -16849,6 +16887,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling continueExperiment.');
+            }
+            const localVarPath = `/api/v1/experiments/continue`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -19256,6 +19332,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ContinueExperimentResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).continueExperiment(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -20382,6 +20477,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
+            return InternalApiFp(configuration).continueExperiment(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -21073,6 +21178,18 @@ export class InternalApi extends BaseAPI {
      */
     public completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
         return InternalApiFp(this.configuration).completeTrialSearcherValidation(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+     * @param {V1ContinueExperimentRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
+        return InternalApiFp(this.configuration).continueExperiment(body, options)(this.fetch, this.basePath)
     }
     
     /**

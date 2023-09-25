@@ -189,6 +189,65 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	t.Error("expected experiment to delete after 1 minute and it did not")
 }
 
+func TestParseAndMergeContinueConfig(t *testing.T) {
+	// Blank config.
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+
+	_, err := api.parseAndMergeContinueConfig(exp.ID, ``)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+project: test
+`)
+	require.ErrorContains(t, err, "'project' in override config cannot be specified")
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+workspace: test
+`)
+	require.ErrorContains(t, err, "'workspace' in override config cannot be specified")
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+searcher:
+    max_length:
+        batches: 10
+`)
+	require.ErrorContains(t, err, "you might also need to specify searcher.name=single")
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+searcher:
+    max_length:
+        batches: 10
+    name: single
+`)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+searcher:
+  name: random
+  metric: accuracy
+  max_trials: 5
+  max_length:
+    batches: 1000
+`)
+	require.ErrorContains(t, err,
+		"override config must have single searcher type got 'random' instead")
+
+	// Update to non single searcher.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"random"`).
+		Where("id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
+	require.ErrorContains(t, err,
+		"cannot continue a 'random' searcher experiment, must be a single searcher experiment")
+}
+
 // nolint: exhaustivestruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
@@ -1043,6 +1102,12 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	}{
 		{"CanEditExperiment", func(id int) error {
 			_, err := api.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.ContinueExperiment(ctx, &apiv1.ContinueExperimentRequest{
 				Id: int32(id),
 			})
 			return err

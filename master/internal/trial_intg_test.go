@@ -178,7 +178,7 @@ func setup(t *testing.T) (
 		},
 		ssh.PrivateAndPublicKeys{},
 		false,
-		nil, system, expRef, func(ri model.RequestID, reason *model.ExitedReason) {
+		nil, nil, system, expRef, func(ri model.RequestID, reason *model.ExitedReason) {
 			require.Equal(t, rID, ri)
 			done <- true
 			close(done)

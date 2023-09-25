@@ -111,6 +111,7 @@ type (
 		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
+		continueFromTrialID *int
 
 		taskSpec      *tasks.TaskSpec
 		generatedKeys ssh.PrivateAndPublicKeys
@@ -791,7 +792,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, e.system, e.self, e.TrialClosed,
+				nil, e.continueFromTrialID, e.system, e.self, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
