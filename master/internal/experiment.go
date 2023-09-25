@@ -501,7 +501,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				err := runCheckpointGCTask(
 					ctx.Self().System(), e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
 					e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
-					false, false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
+					false, true, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 				)
 				if err != nil {
 					ctx.Log().WithError(err).Error("failed to GC experiment checkpoints")

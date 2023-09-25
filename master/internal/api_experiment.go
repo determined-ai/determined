@@ -1301,7 +1301,7 @@ func (a *apiServer) PatchExperiment(
 			go func() {
 				err = runCheckpointGCTask(
 					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, false,
+					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
 					false, agentUserGroup, user, nil,
 				)
 				if err != nil {
