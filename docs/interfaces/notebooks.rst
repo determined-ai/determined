@@ -217,12 +217,12 @@ or ``det deploy aws --deployment-type fsx`` creates a Network file system that i
 agents and is automatically mounted into Notebook containers at
 ``/run/determined/workdir/shared_fs/``.
 
-To launch a notebook with ``det deploy local cluster-up``, a user can add the ``--auto-bind-mount``
+To launch a notebook with ``det deploy local cluster-up``, a user can add the ``--auto-work-dir``
 flag, which mounts the user's home directory into the task containers by default:
 
 .. code::
 
-   $ det deploy local cluster-up --auto-bind-mount="/shared/home/jimmy"
+   $ det deploy local cluster-up --auto-work-dir="/shared/home/jimmy"
    $ det notebook start
 
 Working on a notebook file within the shared bind mounted directory will ensure that your code and

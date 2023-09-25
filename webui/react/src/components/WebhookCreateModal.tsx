@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -11,6 +11,8 @@ import { RunState } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
+const FORM_ID = 'create-webhook-form';
+
 interface FormInputs {
   triggerEvents: RunState[];
   url: string;
@@ -18,6 +20,7 @@ interface FormInputs {
 }
 
 const WebhookCreateModalComponent: React.FC = () => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
 
@@ -70,12 +73,18 @@ const WebhookCreateModalComponent: React.FC = () => {
       size="small"
       submit={{
         disabled,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Create Webhook',
       }}
       title="New Webhook">
-      <Form autoComplete="off" form={form} layout="vertical" onFieldsChange={onChange}>
+      <Form
+        autoComplete="off"
+        form={form}
+        id={idPrefix + FORM_ID}
+        layout="vertical"
+        onFieldsChange={onChange}>
         <Form.Item
           label="URL"
           name="url"

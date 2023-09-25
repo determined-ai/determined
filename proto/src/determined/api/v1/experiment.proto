@@ -550,6 +550,28 @@ message PutExperimentResponse {
   // Note: no LaunchWarnings.
 }
 
+// Request to continue an experiment.
+message ContinueExperimentRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // Experiment ID to continue.
+  int32 id = 1;
+  // Experiment config (YAML) to merge with the experiment's config.
+  string override_config = 2;
+}
+
+// Request to continue an experiment.
+message ContinueExperimentResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment", "config" ] }
+  };
+  // The created experiment.
+  determined.experiment.v1.Experiment experiment = 1;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 2;
+}
+
 // Request for the set of metrics recorded by multiple experiments.
 message ExpMetricNamesRequest {
   // The ids for the experiments.

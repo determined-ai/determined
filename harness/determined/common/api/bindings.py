@@ -86,16 +86,29 @@ class Printable:
 
 
 class GetMasterResponseProduct(DetEnum):
+    """Different kinds of Determined Cloud offerings
+    - PRODUCT_UNSPECIFIED: Not a Cloud Community offering
+    - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
+    """
     UNSPECIFIED = "PRODUCT_UNSPECIFIED"
     COMMUNITY = "PRODUCT_COMMUNITY"
 
 class GetTrialWorkloadsRequestFilterOption(DetEnum):
+    """Filter workloads with training, validation, and checkpoint information.
+    - FILTER_OPTION_UNSPECIFIED: Any workload.
+    - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.
+    - FILTER_OPTION_VALIDATION: Only validation workloads.
+    - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
+    """
     UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
     CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
     VALIDATION = "FILTER_OPTION_VALIDATION"
     CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
 class PatchCheckpointOptionalResources(Printable):
+    """Gets around not being able to do "Optional map<string, int64>".
+    Not ideal but this API is marked internal for now.
+    """
     resources: "typing.Optional[typing.Dict[str, str]]" = None
 
     def __init__(
@@ -122,6 +135,7 @@ class PatchCheckpointOptionalResources(Printable):
         return out
 
 class PatchExperimentPatchCheckpointStorage(Printable):
+    """Nested object for checkpoint_storage field patch."""
     saveExperimentBest: "typing.Optional[int]" = None
     saveTrialBest: "typing.Optional[int]" = None
     saveTrialLatest: "typing.Optional[int]" = None
@@ -164,6 +178,7 @@ class PatchExperimentPatchCheckpointStorage(Printable):
         return out
 
 class PatchExperimentPatchResources(Printable):
+    """Nested object for resources field patch."""
     maxSlots: "typing.Optional[int]" = None
     priority: "typing.Optional[int]" = None
     weight: "typing.Optional[float]" = None
@@ -206,6 +221,7 @@ class PatchExperimentPatchResources(Printable):
         return out
 
 class ResourcesSummaryDevices(Printable):
+    """A wrapper message of a list of devices."""
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
 
     def __init__(
@@ -232,12 +248,27 @@ class ResourcesSummaryDevices(Printable):
         return out
 
 class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
+    """To distinguish the 2 different categories of metrics.
+    - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+    - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.
+    - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch
+    from the dataloader took.
+    - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
+    """
     UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
     SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
     TIMING = "PROFILER_METRIC_TYPE_TIMING"
     MISC = "PROFILER_METRIC_TYPE_MISC"
 
 class checkpointv1State(DetEnum):
+    """The current state of the checkpoint.
+    - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
+    - STATE_ACTIVE: The checkpoint is in an active state.
+    - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.
+    - STATE_ERROR: The checkpoint errored.
+    - STATE_DELETED: The checkpoint has been deleted.
+    - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
+    """
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     COMPLETED = "STATE_COMPLETED"
@@ -246,6 +277,16 @@ class checkpointv1State(DetEnum):
     PARTIALLY_DELETED = "STATE_PARTIALLY_DELETED"
 
 class containerv1State(DetEnum):
+    """The current state of the container.
+    - STATE_UNSPECIFIED: The container state is unknown.
+    - STATE_ASSIGNED: The container has been assigned to an agent but has not started yet.
+    - STATE_PULLING: The container's base image is being pulled from the Docker registry.
+    - STATE_STARTING: The image has been built and the container is being started, but the
+    service in the container is not ready yet.
+    - STATE_RUNNING: The service in the container is able to accept requests.
+    - STATE_TERMINATED: The container has completely exited or the container has been aborted prior
+    to getting assigned.
+    """
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ASSIGNED = "STATE_ASSIGNED"
     PULLING = "STATE_PULLING"
@@ -254,12 +295,41 @@ class containerv1State(DetEnum):
     TERMINATED = "STATE_TERMINATED"
 
 class devicev1Type(DetEnum):
+    """The type of the Device.
+    - TYPE_UNSPECIFIED: An unspecified device type.
+    - TYPE_CPU: A CPU device.
+    - TYPE_CUDA: CUDA device.
+    - TYPE_ROCM: ROCM.
+    """
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     CPU = "TYPE_CPU"
     CUDA = "TYPE_CUDA"
     ROCM = "TYPE_ROCM"
 
 class experimentv1State(DetEnum):
+    """The current state of the experiment.
+    - STATE_UNSPECIFIED: The state of the experiment is unknown.
+    - STATE_ACTIVE: The experiment is in an active state.
+    - STATE_PAUSED: The experiment is in a paused state
+    - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.
+    - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.
+    - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.
+    - STATE_COMPLETED: The experiment is completed and is shut down.
+    - STATE_CANCELED: The experiment is canceled and is shut down.
+    - STATE_ERROR: The experiment is errored and is shut down.
+    - STATE_DELETED: The experiment has been deleted.
+    - STATE_DELETING: The experiment is deleting.
+    - STATE_DELETE_FAILED: The experiment failed to delete.
+    - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+    - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued).
+    Queued is a substate of the Active state.
+    - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active
+    state.
+    - STATE_STARTING: The experiment is preparing the environment after finishing pulling the
+    image. Starting is a substate of the Active state.
+    - STATE_RUNNING: The experiment has an allocation actively running.
+    Running is a substate of the Active state.
+    """
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     PAUSED = "STATE_PAUSED"
@@ -279,12 +349,28 @@ class experimentv1State(DetEnum):
     RUNNING = "STATE_RUNNING"
 
 class jobv1State(DetEnum):
+    """Job state.
+    - STATE_UNSPECIFIED: Unspecified state.
+    - STATE_QUEUED: Job is queued and waiting to be schedlued.
+    - STATE_SCHEDULED: Job is scheduled.
+    - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+    """
     UNSPECIFIED = "STATE_UNSPECIFIED"
     QUEUED = "STATE_QUEUED"
     SCHEDULED = "STATE_SCHEDULED"
     SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
 
 class jobv1Type(DetEnum):
+    """Job type.
+    - TYPE_UNSPECIFIED: Unspecified state.
+    - TYPE_EXPERIMENT: Experiement Job.
+    - TYPE_NOTEBOOK: Jupyter Notebook Job.
+    - TYPE_TENSORBOARD: TensorBoard Job.
+    - TYPE_SHELL: Shell Job.
+    - TYPE_COMMAND: Command Job.
+    - TYPE_CHECKPOINT_GC: CheckpointGC Job.
+    - TYPE_EXTERNAL: External Job.
+    """
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     EXPERIMENT = "TYPE_EXPERIMENT"
     NOTEBOOK = "TYPE_NOTEBOOK"
@@ -295,6 +381,7 @@ class jobv1Type(DetEnum):
     EXTERNAL = "TYPE_EXTERNAL"
 
 class protobufAny(Printable):
+    """https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"""
     typeUrl: "typing.Optional[str]" = None
     value: "typing.Optional[str]" = None
 
@@ -329,6 +416,7 @@ class protobufAny(Printable):
         return out
 
 class protobufFieldMask(Printable):
+    """https://protobuf.dev/reference/java/api-docs/com/google/protobuf/FieldMask"""
     paths: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
@@ -355,6 +443,11 @@ class protobufFieldMask(Printable):
         return out
 
 class protobufNullValue(DetEnum):
+    """`NullValue` is a singleton enumeration to represent the null value for the
+    `Value` type union.
+    The JSON representation for `NullValue` is JSON `null`.
+    - NULL_VALUE: Null value.
+    """
     NULL_VALUE = "NULL_VALUE"
 
 class runtimeError(Printable):
@@ -466,6 +559,17 @@ class runtimeStreamError(Printable):
         return out
 
 class taskv1State(DetEnum):
+    """The current state of the task.
+    - STATE_UNSPECIFIED: The task state is unknown.
+    - STATE_PULLING: The task's base image is being pulled from the Docker registry.
+    - STATE_STARTING: The image has been pulled and the task is being started, but the task is
+    not ready yet.
+    - STATE_RUNNING: The service in the task is running.
+    - STATE_TERMINATED: The task has exited or has been aborted.
+    - STATE_TERMINATING: The task has begun to exit.
+    - STATE_WAITING: The task is waiting on something to complete.
+    - STATE_QUEUED: Additional state to cover queueing operations.
+    """
     UNSPECIFIED = "STATE_UNSPECIFIED"
     PULLING = "STATE_PULLING"
     STARTING = "STATE_STARTING"
@@ -476,6 +580,26 @@ class taskv1State(DetEnum):
     QUEUED = "STATE_QUEUED"
 
 class trialv1State(DetEnum):
+    """The current state of the trial. see \dT+ trial_state in db
+    - STATE_UNSPECIFIED: The trial is in an unspecified state.
+    - STATE_ACTIVE: The trial is in an active state.
+    - STATE_PAUSED: The trial is in a paused state
+    - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.
+    - STATE_STOPPING_KILLED: The trial is killed and is shutting down.
+    - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.
+    - STATE_STOPPING_ERROR: The trial is errored and is shutting down.
+    - STATE_CANCELED: The trial is canceled and is shut down.
+    - STATE_COMPLETED: The trial is completed and is shut down.
+    - STATE_ERROR: The trial is errored and is shut down.
+    - STATE_QUEUED: The trial is queued (waiting to be run, or job state is still queued).
+    Queued is a substate of the Active state.
+    - STATE_PULLING: The trial is pulling the image. Pulling is a substate of the Active
+    state.
+    - STATE_STARTING: The trial is preparing the environment after finishing pulling the
+    image. Starting is a substate of the Active state.
+    - STATE_RUNNING: The trial's allocation is actively running.
+    Running is a substate of the Active state.
+    """
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
     PAUSED = "STATE_PAUSED"
@@ -492,6 +616,9 @@ class trialv1State(DetEnum):
     RUNNING = "STATE_RUNNING"
 
 class trialv1Trial(Printable):
+    """Trial is a set of workloads and are exploring a determined set of
+    hyperparameters.
+    """
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
     checkpointCount: "typing.Optional[int]" = None
@@ -708,6 +835,7 @@ class v1AcceleratorData(Printable):
         return out
 
 class v1AckAllocationPreemptionSignalRequest(Printable):
+    """Acknowledge the receipt of some stop signal."""
 
     def __init__(
         self,
@@ -730,6 +858,7 @@ class v1AckAllocationPreemptionSignalRequest(Printable):
         return out
 
 class v1ActivateExperimentsRequest(Printable):
+    """Activate multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -760,6 +889,7 @@ class v1ActivateExperimentsRequest(Printable):
         return out
 
 class v1ActivateExperimentsResponse(Printable):
+    """Response to ActivateExperimentsRequest."""
 
     def __init__(
         self,
@@ -782,10 +912,15 @@ class v1ActivateExperimentsResponse(Printable):
         return out
 
 class v1ActivityType(DetEnum):
+    """ActivityType represents a user activity
+    - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.
+    - ACTIVITY_TYPE_GET: Represents a get request.
+    """
     UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
     GET = "ACTIVITY_TYPE_GET"
 
 class v1AddProjectNoteResponse(Printable):
+    """Response to AddProjectNoteRequest."""
 
     def __init__(
         self,
@@ -808,6 +943,7 @@ class v1AddProjectNoteResponse(Printable):
         return out
 
 class v1Address(Printable):
+    """Address represents an exposed port on a container."""
     containerIp: "typing.Optional[str]" = None
     containerPort: "typing.Optional[int]" = None
     hostIp: "typing.Optional[str]" = None
@@ -858,6 +994,7 @@ class v1Address(Printable):
         return out
 
 class v1Agent(Printable):
+    """Agent is a pool of resources where containers are run."""
     addresses: "typing.Optional[typing.Sequence[str]]" = None
     containers: "typing.Optional[typing.Dict[str, v1Container]]" = None
     draining: "typing.Optional[bool]" = None
@@ -952,6 +1089,9 @@ class v1Agent(Printable):
         return out
 
 class v1AgentUserGroup(Printable):
+    """AgentUserGroup represents a username and primary group for a user on an
+    agent host machine.
+    """
     agentGid: "typing.Optional[int]" = None
     agentGroup: "typing.Optional[str]" = None
     agentUid: "typing.Optional[int]" = None
@@ -1002,6 +1142,7 @@ class v1AgentUserGroup(Printable):
         return out
 
 class v1AggregateQueueStats(Printable):
+    """Aggregate statistics for a queue."""
 
     def __init__(
         self,
@@ -1028,6 +1169,7 @@ class v1AggregateQueueStats(Printable):
         return out
 
 class v1Allocation(Printable):
+    """Allocation tracks a specific instance of a Task."""
     endTime: "typing.Optional[str]" = None
     startTime: "typing.Optional[str]" = None
 
@@ -1078,6 +1220,7 @@ class v1Allocation(Printable):
         return out
 
 class v1AllocationAllGatherRequest(Printable):
+    """Arguments to an all gather."""
     numPeers: "typing.Optional[int]" = None
     requestUuid: "typing.Optional[str]" = None
 
@@ -1164,6 +1307,7 @@ class v1AllocationPendingPreemptionSignalRequest(Printable):
         return out
 
 class v1AllocationPreemptionSignalResponse(Printable):
+    """Response to AllocationPreemptionSignalRequest."""
     preempt: "typing.Optional[bool]" = None
 
     def __init__(
@@ -1190,6 +1334,7 @@ class v1AllocationPreemptionSignalResponse(Printable):
         return out
 
 class v1AllocationReadyRequest(Printable):
+    """Mark the given task as ready."""
     allocationId: "typing.Optional[str]" = None
 
     def __init__(
@@ -1238,6 +1383,7 @@ class v1AllocationRendezvousInfoResponse(Printable):
         return out
 
 class v1AllocationSummary(Printable):
+    """AllocationSummary contains information about a task for external display."""
     allocationId: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
@@ -1336,6 +1482,7 @@ class v1AllocationSummary(Printable):
         return out
 
 class v1AllocationWaitingRequest(Printable):
+    """Mark the given task as waiting."""
     allocationId: "typing.Optional[str]" = None
 
     def __init__(
@@ -1362,6 +1509,7 @@ class v1AllocationWaitingRequest(Printable):
         return out
 
 class v1ArchiveExperimentsRequest(Printable):
+    """Archive multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -1392,6 +1540,7 @@ class v1ArchiveExperimentsRequest(Printable):
         return out
 
 class v1ArchiveExperimentsResponse(Printable):
+    """Response to ArchiveExperimentsRequest."""
 
     def __init__(
         self,
@@ -1414,6 +1563,10 @@ class v1ArchiveExperimentsResponse(Printable):
         return out
 
 class v1AssignRolesRequest(Printable):
+    """AssignRolesRequest is the body of the request for the call to
+    grant a user or group a role. It requires group_id, role_id,
+    and either scope_workspace_id or scope_project_id.
+    """
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
     userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None
 
@@ -1512,6 +1665,7 @@ class v1BindRPToWorkspaceRequest(Printable):
         return out
 
 class v1BulkExperimentFilters(Printable):
+    """Filters to apply actions to multiple experiments."""
     archived: "typing.Optional[bool]" = None
     description: "typing.Optional[str]" = None
     excludedExperimentIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -1594,6 +1748,7 @@ class v1BulkExperimentFilters(Printable):
         return out
 
 class v1CancelExperimentsRequest(Printable):
+    """Cancel multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -1624,6 +1779,7 @@ class v1CancelExperimentsRequest(Printable):
         return out
 
 class v1CancelExperimentsResponse(Printable):
+    """Response to CancelExperimentsRequest."""
 
     def __init__(
         self,
@@ -1646,6 +1802,7 @@ class v1CancelExperimentsResponse(Printable):
         return out
 
 class v1Checkpoint(Printable):
+    """Checkpoint a collection of files saved by a task."""
     allocationId: "typing.Optional[str]" = None
     reportTime: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
@@ -1708,6 +1865,7 @@ class v1Checkpoint(Printable):
         return out
 
 class v1CheckpointTrainingMetadata(Printable):
+    """CheckpointTrainingMetadata is specifically metadata about training."""
     experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     experimentId: "typing.Optional[int]" = None
     hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -1782,6 +1940,7 @@ class v1CheckpointTrainingMetadata(Printable):
         return out
 
 class v1CheckpointWorkload(Printable):
+    """CheckpointWorkload is an artifact created by a trial during training."""
     endTime: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     resources: "typing.Optional[typing.Dict[str, str]]" = None
@@ -1840,6 +1999,7 @@ class v1CheckpointWorkload(Printable):
         return out
 
 class v1CheckpointsRemoveFilesRequest(Printable):
+    """Request to delete files matching globs in checkpoints."""
 
     def __init__(
         self,
@@ -1866,6 +2026,7 @@ class v1CheckpointsRemoveFilesRequest(Printable):
         return out
 
 class v1CloseTrialOperation(Printable):
+    """Close a trial with given ID."""
     requestId: "typing.Optional[str]" = None
 
     def __init__(
@@ -1892,12 +2053,19 @@ class v1CloseTrialOperation(Printable):
         return out
 
 class v1ColumnType(DetEnum):
+    """ColumnType indicates the type of data under the column
+    - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed
+    - COLUMN_TYPE_TEXT: data type is textual
+    - COLUMN_TYPE_NUMBER: data type is numeric
+    - COLUMN_TYPE_DATE: data type is a date
+    """
     UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
     TEXT = "COLUMN_TYPE_TEXT"
     NUMBER = "COLUMN_TYPE_NUMBER"
     DATE = "COLUMN_TYPE_DATE"
 
 class v1Command(Printable):
+    """Command is a single container running the configured command."""
     container: "typing.Optional[v1Container]" = None
     displayName: "typing.Optional[str]" = None
     exitStatus: "typing.Optional[str]" = None
@@ -1980,6 +2148,7 @@ class v1Command(Printable):
         return out
 
 class v1ComparableTrial(Printable):
+    """Container for a requested trial and its metrics."""
 
     def __init__(
         self,
@@ -2006,6 +2175,7 @@ class v1ComparableTrial(Printable):
         return out
 
 class v1CompareTrialsResponse(Printable):
+    """Response to CompareTrialsRequest."""
 
     def __init__(
         self,
@@ -2028,6 +2198,7 @@ class v1CompareTrialsResponse(Printable):
         return out
 
 class v1CompleteValidateAfterOperation(Printable):
+    """Used to complete a ValidateAfterOperation."""
     op: "typing.Optional[v1ValidateAfterOperation]" = None
     searcherMetric: "typing.Optional[typing.Any]" = None
 
@@ -2062,6 +2233,7 @@ class v1CompleteValidateAfterOperation(Printable):
         return out
 
 class v1Config(Printable):
+    """The config to be patched into Master Config."""
     log: "typing.Optional[v1LogConfig]" = None
 
     def __init__(
@@ -2088,6 +2260,9 @@ class v1Config(Printable):
         return out
 
 class v1Container(Printable):
+    """Container is a Docker container that is either scheduled to run or is
+    currently running on a set of slots.
+    """
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
     parent: "typing.Optional[str]" = None
 
@@ -2129,7 +2304,70 @@ class v1Container(Printable):
             out["parent"] = self.parent
         return out
 
+class v1ContinueExperimentRequest(Printable):
+    """Request to continue an experiment."""
+    overrideConfig: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        overrideConfig: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.id = id
+        if not isinstance(overrideConfig, Unset):
+            self.overrideConfig = overrideConfig
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ContinueExperimentRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+        }
+        if "overrideConfig" in obj:
+            kwargs["overrideConfig"] = obj["overrideConfig"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+        }
+        if not omit_unset or "overrideConfig" in vars(self):
+            out["overrideConfig"] = self.overrideConfig
+        return out
+
+class v1ContinueExperimentResponse(Printable):
+    """Request to continue an experiment."""
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
+
+    def __init__(
+        self,
+        *,
+        experiment: "v1Experiment",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
+    ):
+        self.experiment = experiment
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ContinueExperimentResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiment": v1Experiment.from_json(obj["experiment"]),
+        }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experiment": self.experiment.to_json(omit_unset),
+        }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
+        return out
+
 class v1CreateExperimentRequest(Printable):
+    """Request to create a new experiment."""
     activate: "typing.Optional[bool]" = None
     config: "typing.Optional[str]" = None
     gitCommit: "typing.Optional[str]" = None
@@ -2244,6 +2482,7 @@ class v1CreateExperimentRequest(Printable):
         return out
 
 class v1CreateExperimentResponse(Printable):
+    """Response to CreateExperimentRequest."""
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
@@ -2278,6 +2517,9 @@ class v1CreateExperimentResponse(Printable):
         return out
 
 class v1CreateGroupRequest(Printable):
+    """CreateGroupRequest is the body of the request for the call
+    to create a group.
+    """
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
@@ -2308,6 +2550,9 @@ class v1CreateGroupRequest(Printable):
         return out
 
 class v1CreateGroupResponse(Printable):
+    """CreateGroupResponse is the body of the response for the call
+    to update a group and its members.
+    """
 
     def __init__(
         self,
@@ -2330,6 +2575,7 @@ class v1CreateGroupResponse(Printable):
         return out
 
 class v1CreateTrialOperation(Printable):
+    """Create a trial with given hyperparameters."""
     hyperparams: "typing.Optional[str]" = None
     requestId: "typing.Optional[str]" = None
 
@@ -2364,6 +2610,7 @@ class v1CreateTrialOperation(Printable):
         return out
 
 class v1CreateTrialRequest(Printable):
+    """Create a trial."""
     experimentId: "typing.Optional[int]" = None
     hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     unmanaged: "typing.Optional[bool]" = None
@@ -2406,6 +2653,7 @@ class v1CreateTrialRequest(Printable):
         return out
 
 class v1CreateTrialResponse(Printable):
+    """Response to CreateTrialRequest."""
 
     def __init__(
         self,
@@ -2428,6 +2676,7 @@ class v1CreateTrialResponse(Printable):
         return out
 
 class v1CurrentUserResponse(Printable):
+    """Response to CurrentUserRequest."""
 
     def __init__(
         self,
@@ -2450,6 +2699,7 @@ class v1CurrentUserResponse(Printable):
         return out
 
 class v1DataPoint(Printable):
+    """One datapoint in a series of metrics from a trial in batch."""
     epoch: "typing.Optional[float]" = None
     values: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
@@ -2514,6 +2764,7 @@ class v1DeleteCheckpointsRequest(Printable):
         return out
 
 class v1DeleteExperimentsRequest(Printable):
+    """Delete multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -2544,6 +2795,7 @@ class v1DeleteExperimentsRequest(Printable):
         return out
 
 class v1DeleteExperimentsResponse(Printable):
+    """Response to DeleteExperimentsRequest."""
 
     def __init__(
         self,
@@ -2566,6 +2818,7 @@ class v1DeleteExperimentsResponse(Printable):
         return out
 
 class v1DeleteProjectResponse(Printable):
+    """Response to DeleteProjectRequest."""
 
     def __init__(
         self,
@@ -2588,6 +2841,7 @@ class v1DeleteProjectResponse(Printable):
         return out
 
 class v1DeleteWorkspaceResponse(Printable):
+    """Response to DeleteWorkspaceRequest."""
 
     def __init__(
         self,
@@ -2610,6 +2864,7 @@ class v1DeleteWorkspaceResponse(Printable):
         return out
 
 class v1Device(Printable):
+    """Device represents a single computational device on an agent."""
     brand: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
     type: "typing.Optional[devicev1Type]" = None
@@ -2660,6 +2915,7 @@ class v1Device(Printable):
         return out
 
 class v1DisableAgentRequest(Printable):
+    """Disable the agent."""
     agentId: "typing.Optional[str]" = None
     drain: "typing.Optional[bool]" = None
 
@@ -2694,6 +2950,7 @@ class v1DisableAgentRequest(Printable):
         return out
 
 class v1DisableAgentResponse(Printable):
+    """Response to DisableAgentRequest."""
     agent: "typing.Optional[v1Agent]" = None
 
     def __init__(
@@ -2720,6 +2977,7 @@ class v1DisableAgentResponse(Printable):
         return out
 
 class v1DisableSlotRequest(Printable):
+    """Disable the slot."""
     agentId: "typing.Optional[str]" = None
     drain: "typing.Optional[bool]" = None
     slotId: "typing.Optional[str]" = None
@@ -2762,6 +3020,7 @@ class v1DisableSlotRequest(Printable):
         return out
 
 class v1DisableSlotResponse(Printable):
+    """Response to DisableSlotRequest."""
     slot: "typing.Optional[v1Slot]" = None
 
     def __init__(
@@ -2788,6 +3047,7 @@ class v1DisableSlotResponse(Printable):
         return out
 
 class v1DoubleFieldFilter(Printable):
+    """Double filters."""
     gt: "typing.Optional[float]" = None
     gte: "typing.Optional[float]" = None
     lt: "typing.Optional[float]" = None
@@ -2838,6 +3098,7 @@ class v1DoubleFieldFilter(Printable):
         return out
 
 class v1DownsampledMetrics(Printable):
+    """DownsampledMetrics captures a metric's name and downsampled data points."""
 
     def __init__(
         self,
@@ -2868,6 +3129,7 @@ class v1DownsampledMetrics(Printable):
         return out
 
 class v1EnableAgentResponse(Printable):
+    """Response to EnableAgentRequest."""
     agent: "typing.Optional[v1Agent]" = None
 
     def __init__(
@@ -2894,6 +3156,7 @@ class v1EnableAgentResponse(Printable):
         return out
 
 class v1EnableSlotResponse(Printable):
+    """Response to EnableSlotRequest."""
     slot: "typing.Optional[v1Slot]" = None
 
     def __init__(
@@ -2920,10 +3183,15 @@ class v1EnableSlotResponse(Printable):
         return out
 
 class v1EntityType(DetEnum):
+    """EntityType represents an entity
+    - ENTITY_TYPE_UNSPECIFIED: Default entity type.
+    - ENTITY_TYPE_PROJECT: Represents a project.
+    """
     UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpMetricNamesResponse(Printable):
+    """Response to ExpMetricNamesRequest."""
     metricNames: "typing.Optional[typing.Sequence[v1MetricIdentifier]]" = None
     searcherMetrics: "typing.Optional[typing.Sequence[str]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -2974,6 +3242,9 @@ class v1ExpMetricNamesResponse(Printable):
         return out
 
 class v1Experiment(Printable):
+    """Experiment is a collection of one or more trials that are exploring a
+    user-defined hyperparameter space.
+    """
     bestTrialId: "typing.Optional[int]" = None
     bestTrialSearcherMetric: "typing.Optional[float]" = None
     checkpointCount: "typing.Optional[int]" = None
@@ -3236,6 +3507,7 @@ class v1Experiment(Printable):
         return out
 
 class v1ExperimentActionResult(Printable):
+    """Message for results of individual experiments in a multi-experiment action."""
 
     def __init__(
         self,
@@ -3262,6 +3534,9 @@ class v1ExperimentActionResult(Printable):
         return out
 
 class v1ExperimentInactive(Printable):
+    """ExperimentInactive is a searcher event triggered when an experiment
+    is no longer active.
+    """
 
     def __init__(
         self,
@@ -3284,6 +3559,9 @@ class v1ExperimentInactive(Printable):
         return out
 
 class v1ExperimentSimulation(Printable):
+    """ExperimentSimulation holds the configuration and results of simulated run of
+    a searcher.
+    """
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     seed: "typing.Optional[int]" = None
     trials: "typing.Optional[typing.Sequence[v1TrialSimulation]]" = None
@@ -3326,6 +3604,22 @@ class v1ExperimentSimulation(Printable):
         return out
 
 class v1FailureType(DetEnum):
+    """The failure type of a resource.
+    - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.
+    - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero
+    exit code.
+    - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.
+    - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked
+    about it.
+    - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.
+    - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.
+    - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.
+    - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.
+    - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master
+    blip.
+    - FAILURE_TYPE_UNKNOWN_ERROR: UnknownError denotes an internal error that did not map to a know failure
+    type.
+    """
     UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
     RESOURCES_FAILED = "FAILURE_TYPE_RESOURCES_FAILED"
     RESOURCES_ABORTED = "FAILURE_TYPE_RESOURCES_ABORTED"
@@ -3338,6 +3632,7 @@ class v1FailureType(DetEnum):
     UNKNOWN_ERROR = "FAILURE_TYPE_UNKNOWN_ERROR"
 
 class v1File(Printable):
+    """File is a Unix file."""
 
     def __init__(
         self,
@@ -3384,6 +3679,7 @@ class v1File(Printable):
         return out
 
 class v1FileNode(Printable):
+    """File node is one node of file in experiment model definition file tree."""
     contentLength: "typing.Optional[int]" = None
     contentType: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1FileNode]]" = None
@@ -3458,6 +3754,18 @@ class v1FileNode(Printable):
         return out
 
 class v1FittingPolicy(DetEnum):
+    """The fitting policy of the scheduler.
+    - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
+    just an artifact of using protobuf.
+    - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number
+    of agents
+    - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the
+    tasks.
+    - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the
+    k8s scheduler so the fitting policy is not relevant.
+    - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.
+    - FITTING_POLICY_PBS: A PBS placeholder. When running on PBS, task placement is delegated.
+    """
     UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
     BEST = "FITTING_POLICY_BEST"
     WORST = "FITTING_POLICY_WORST"
@@ -3466,6 +3774,7 @@ class v1FittingPolicy(DetEnum):
     PBS = "FITTING_POLICY_PBS"
 
 class v1GetActiveTasksCountResponse(Printable):
+    """Response to GetActiveTasksCountRequest."""
 
     def __init__(
         self,
@@ -3500,6 +3809,7 @@ class v1GetActiveTasksCountResponse(Printable):
         return out
 
 class v1GetAgentResponse(Printable):
+    """Response to GetAgentRequest."""
 
     def __init__(
         self,
@@ -3522,11 +3832,17 @@ class v1GetAgentResponse(Printable):
         return out
 
 class v1GetAgentsRequestSortBy(DetEnum):
+    """Sorts agents by the given field.
+    - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.
+    - SORT_BY_ID: Returns agents sorted by id.
+    - SORT_BY_TIME: Returns agents sorted by time.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     TIME = "SORT_BY_TIME"
 
 class v1GetAgentsResponse(Printable):
+    """Response to GetAgentsRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
@@ -3603,6 +3919,7 @@ class v1GetAllocationResponse(Printable):
         return out
 
 class v1GetBestSearcherValidationMetricResponse(Printable):
+    """Response to GetBestSearcherValidationMetricRequest."""
     metric: "typing.Optional[float]" = None
 
     def __init__(
@@ -3629,6 +3946,7 @@ class v1GetBestSearcherValidationMetricResponse(Printable):
         return out
 
 class v1GetCheckpointResponse(Printable):
+    """Response to GetCheckpointRequest."""
 
     def __init__(
         self,
@@ -3651,6 +3969,7 @@ class v1GetCheckpointResponse(Printable):
         return out
 
 class v1GetCommandResponse(Printable):
+    """Response to GetCommandRequest."""
 
     def __init__(
         self,
@@ -3677,6 +3996,13 @@ class v1GetCommandResponse(Printable):
         return out
 
 class v1GetCommandsRequestSortBy(DetEnum):
+    """Sorts commands by the given field.
+    - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.
+    - SORT_BY_ID: Returns commands sorted by id.
+    - SORT_BY_DESCRIPTION: Returns commands sorted by description.
+    - SORT_BY_START_TIME: Return commands sorted by start time.
+    - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -3684,6 +4010,7 @@ class v1GetCommandsRequestSortBy(DetEnum):
     WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetCommandsResponse(Printable):
+    """Response to GetCommandsRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
@@ -3748,6 +4075,16 @@ class v1GetCurrentTrialSearcherOperationResponse(Printable):
         return out
 
 class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
+    """Sorts checkpoints by the given field.
+    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
+    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+    - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
+    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
+    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
+    - SORT_BY_STATE: Returns checkpoints sorted by state.
+    - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
+    configuration setting.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     UUID = "SORT_BY_UUID"
     TRIAL_ID = "SORT_BY_TRIAL_ID"
@@ -3757,6 +4094,7 @@ class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
     SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
 
 class v1GetExperimentCheckpointsResponse(Printable):
+    """Response to GetExperimentCheckpointsRequest."""
 
     def __init__(
         self,
@@ -3783,6 +4121,7 @@ class v1GetExperimentCheckpointsResponse(Printable):
         return out
 
 class v1GetExperimentLabelsResponse(Printable):
+    """Response to GetExperimentsLabelsRequest."""
     labels: "typing.Optional[typing.Sequence[str]]" = None
 
     def __init__(
@@ -3809,6 +4148,7 @@ class v1GetExperimentLabelsResponse(Printable):
         return out
 
 class v1GetExperimentResponse(Printable):
+    """Response to GetExperimentRequest."""
     jobSummary: "typing.Optional[v1JobSummary]" = None
 
     def __init__(
@@ -3839,6 +4179,22 @@ class v1GetExperimentResponse(Printable):
         return out
 
 class v1GetExperimentTrialsRequestSortBy(DetEnum):
+    """Sorts trials by the given field.
+    - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.
+    - SORT_BY_ID: Returns trials sorted by id.
+    - SORT_BY_START_TIME: Return trials sorted by start time.
+    - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are
+    returned after trials that are.
+    - SORT_BY_STATE: Return trials sorted by state.
+    - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is
+    specified by `searcher.metric` in the experiment configuration.
+    - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is
+    specified by `searcher.metric` in the experiment configuration.
+    - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.
+    - SORT_BY_DURATION: Return the trials sorted by the total duration.
+    - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
+    - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     START_TIME = "SORT_BY_START_TIME"
@@ -3852,6 +4208,7 @@ class v1GetExperimentTrialsRequestSortBy(DetEnum):
     CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
 
 class v1GetExperimentTrialsResponse(Printable):
+    """Response to GetExperimentTrialsRequest."""
 
     def __init__(
         self,
@@ -3878,6 +4235,7 @@ class v1GetExperimentTrialsResponse(Printable):
         return out
 
 class v1GetExperimentValidationHistoryResponse(Printable):
+    """Response to GetExperimentValidationHistoryRequest."""
     validationHistory: "typing.Optional[typing.Sequence[v1ValidationHistoryEntry]]" = None
 
     def __init__(
@@ -3904,6 +4262,25 @@ class v1GetExperimentValidationHistoryResponse(Printable):
         return out
 
 class v1GetExperimentsRequestSortBy(DetEnum):
+    """Sorts experiments by the given field.
+    - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
+    - SORT_BY_ID: Returns experiments sorted by id.
+    - SORT_BY_DESCRIPTION: Returns experiments sorted by description.
+    - SORT_BY_START_TIME: Return experiments sorted by start time.
+    - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
+    returned after the ones with end_time.
+    - SORT_BY_STATE: Return experiments sorted by state.
+    - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.
+    - SORT_BY_PROGRESS: Return experiments sorted by progress.
+    - SORT_BY_USER: Return experiments sorted by user.
+    - SORT_BY_NAME: Returns experiments sorted by name.
+    - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
+    - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
+    - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
+    - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
+    - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
+    - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -3922,6 +4299,7 @@ class v1GetExperimentsRequestSortBy(DetEnum):
     SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
 
 class v1GetExperimentsResponse(Printable):
+    """Response to GetExperimentsRequest."""
 
     def __init__(
         self,
@@ -3948,6 +4326,9 @@ class v1GetExperimentsResponse(Printable):
         return out
 
 class v1GetGroupResponse(Printable):
+    """GetGroupResponse is the body of the response for the call
+    to get a group by id.
+    """
 
     def __init__(
         self,
@@ -3970,6 +4351,7 @@ class v1GetGroupResponse(Printable):
         return out
 
 class v1GetGroupsAndUsersAssignedToWorkspaceResponse(Printable):
+    """Response object for GetGroupsAndUsersAssignedToWorkspace."""
 
     def __init__(
         self,
@@ -4000,6 +4382,9 @@ class v1GetGroupsAndUsersAssignedToWorkspaceResponse(Printable):
         return out
 
 class v1GetGroupsRequest(Printable):
+    """GetGroupsRequest is the body of the request for the call
+    to search for groups.
+    """
     name: "typing.Optional[str]" = None
     offset: "typing.Optional[int]" = None
     userId: "typing.Optional[int]" = None
@@ -4046,6 +4431,9 @@ class v1GetGroupsRequest(Printable):
         return out
 
 class v1GetGroupsResponse(Printable):
+    """GetGroupsResponse is the body of the response for the call
+    to search for groups.
+    """
     groups: "typing.Optional[typing.Sequence[v1GroupSearchResult]]" = None
     pagination: "typing.Optional[v1Pagination]" = None
 
@@ -4080,6 +4468,7 @@ class v1GetGroupsResponse(Printable):
         return out
 
 class v1GetJobQueueStatsResponse(Printable):
+    """Response to GetJobQueueStatsRequest."""
 
     def __init__(
         self,
@@ -4102,6 +4491,7 @@ class v1GetJobQueueStatsResponse(Printable):
         return out
 
 class v1GetJobsResponse(Printable):
+    """Response to GetJobsRequest."""
 
     def __init__(
         self,
@@ -4128,6 +4518,7 @@ class v1GetJobsResponse(Printable):
         return out
 
 class v1GetJobsV2Response(Printable):
+    """Response to GetJobsV2Request."""
 
     def __init__(
         self,
@@ -4154,6 +4545,7 @@ class v1GetJobsV2Response(Printable):
         return out
 
 class v1GetMasterConfigResponse(Printable):
+    """Response to GetMasterRequest."""
 
     def __init__(
         self,
@@ -4176,6 +4568,7 @@ class v1GetMasterConfigResponse(Printable):
         return out
 
 class v1GetMasterResponse(Printable):
+    """Response to GetMasterRequest."""
     branding: "typing.Optional[str]" = None
     externalLoginUri: "typing.Optional[str]" = None
     externalLogoutUri: "typing.Optional[str]" = None
@@ -4286,6 +4679,7 @@ class v1GetMasterResponse(Printable):
         return out
 
 class v1GetMeResponse(Printable):
+    """Response to GetMeRequest."""
 
     def __init__(
         self,
@@ -4308,6 +4702,7 @@ class v1GetMeResponse(Printable):
         return out
 
 class v1GetMetricsResponse(Printable):
+    """Response to GetMetricsRequest."""
 
     def __init__(
         self,
@@ -4330,6 +4725,7 @@ class v1GetMetricsResponse(Printable):
         return out
 
 class v1GetModelDefFileRequest(Printable):
+    """Request to get a file of model definition."""
     experimentId: "typing.Optional[int]" = None
     path: "typing.Optional[str]" = None
 
@@ -4364,6 +4760,7 @@ class v1GetModelDefFileRequest(Printable):
         return out
 
 class v1GetModelDefFileResponse(Printable):
+    """Response to GetModelDefFileRequest."""
     file: "typing.Optional[str]" = None
 
     def __init__(
@@ -4390,6 +4787,7 @@ class v1GetModelDefFileResponse(Printable):
         return out
 
 class v1GetModelDefResponse(Printable):
+    """Response to GetModelDefRequest."""
 
     def __init__(
         self,
@@ -4412,6 +4810,7 @@ class v1GetModelDefResponse(Printable):
         return out
 
 class v1GetModelDefTreeResponse(Printable):
+    """Response to GetModelDefTreeRequest."""
     files: "typing.Optional[typing.Sequence[v1FileNode]]" = None
 
     def __init__(
@@ -4438,6 +4837,7 @@ class v1GetModelDefTreeResponse(Printable):
         return out
 
 class v1GetModelLabelsResponse(Printable):
+    """Response to GetModelLabelsRequest."""
 
     def __init__(
         self,
@@ -4460,6 +4860,7 @@ class v1GetModelLabelsResponse(Printable):
         return out
 
 class v1GetModelResponse(Printable):
+    """Response to GetModelRequest."""
 
     def __init__(
         self,
@@ -4482,6 +4883,7 @@ class v1GetModelResponse(Printable):
         return out
 
 class v1GetModelVersionResponse(Printable):
+    """Response for GetModelVersionRequest."""
 
     def __init__(
         self,
@@ -4504,11 +4906,17 @@ class v1GetModelVersionResponse(Printable):
         return out
 
 class v1GetModelVersionsRequestSortBy(DetEnum):
+    """Sort models by the given field.
+    - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.
+    - SORT_BY_VERSION: Returns model versions sorted by version number.
+    - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     VERSION = "SORT_BY_VERSION"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
 
 class v1GetModelVersionsResponse(Printable):
+    """Response for GetModelVersionRequest."""
 
     def __init__(
         self,
@@ -4539,6 +4947,15 @@ class v1GetModelVersionsResponse(Printable):
         return out
 
 class v1GetModelsRequestSortBy(DetEnum):
+    """Sort models by the given field.
+    - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.
+    - SORT_BY_NAME: Returns models sorted by name.
+    - SORT_BY_DESCRIPTION: Returns models sorted by description.
+    - SORT_BY_CREATION_TIME: Returns models sorted by creation time.
+    - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+    - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
+    - SORT_BY_WORKSPACE: Returns models sorted by workspace name.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4548,6 +4965,7 @@ class v1GetModelsRequestSortBy(DetEnum):
     WORKSPACE = "SORT_BY_WORKSPACE"
 
 class v1GetModelsResponse(Printable):
+    """Response to GetModelsRequest."""
 
     def __init__(
         self,
@@ -4574,6 +4992,7 @@ class v1GetModelsResponse(Printable):
         return out
 
 class v1GetNotebookResponse(Printable):
+    """Response to GetNotebookRequest."""
 
     def __init__(
         self,
@@ -4600,6 +5019,13 @@ class v1GetNotebookResponse(Printable):
         return out
 
 class v1GetNotebooksRequestSortBy(DetEnum):
+    """Sorts notebooks by the given field.
+    - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.
+    - SORT_BY_ID: Returns notebooks sorted by id.
+    - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.
+    - SORT_BY_START_TIME: Return notebooks sorted by start time.
+    - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4607,6 +5033,7 @@ class v1GetNotebooksRequestSortBy(DetEnum):
     WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetNotebooksResponse(Printable):
+    """Response to GetNotebooksRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
@@ -4637,6 +5064,7 @@ class v1GetNotebooksResponse(Printable):
         return out
 
 class v1GetPermissionsSummaryResponse(Printable):
+    """Response to GetPermissionsSummaryRequest."""
 
     def __init__(
         self,
@@ -4711,6 +5139,7 @@ class v1GetProjectNumericMetricsRangeResponse(Printable):
         return out
 
 class v1GetProjectResponse(Printable):
+    """Response to GetProjectRequest."""
 
     def __init__(
         self,
@@ -4733,6 +5162,7 @@ class v1GetProjectResponse(Printable):
         return out
 
 class v1GetProjectsByUserActivityResponse(Printable):
+    """Response to GetProjectsByUserActivityRequest."""
     projects: "typing.Optional[typing.Sequence[v1Project]]" = None
 
     def __init__(
@@ -4759,6 +5189,7 @@ class v1GetProjectsByUserActivityResponse(Printable):
         return out
 
 class v1GetResourcePoolsResponse(Printable):
+    """Response to GetResourcePoolsRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
     resourcePools: "typing.Optional[typing.Sequence[v1ResourcePool]]" = None
 
@@ -4893,6 +5324,7 @@ class v1GetRolesByIDResponse(Printable):
         return out
 
 class v1GetSearcherEventsResponse(Printable):
+    """Response to GetSearcherEventsRequest."""
     searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None
 
     def __init__(
@@ -4919,6 +5351,7 @@ class v1GetSearcherEventsResponse(Printable):
         return out
 
 class v1GetShellResponse(Printable):
+    """Response to GetShellRequest."""
 
     def __init__(
         self,
@@ -4945,6 +5378,13 @@ class v1GetShellResponse(Printable):
         return out
 
 class v1GetShellsRequestSortBy(DetEnum):
+    """Sorts shells by the given field.
+    - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.
+    - SORT_BY_ID: Returns shells sorted by id.
+    - SORT_BY_DESCRIPTION: Returns shells sorted by description.
+    - SORT_BY_START_TIME: Return shells sorted by start time.
+    - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -4952,6 +5392,7 @@ class v1GetShellsRequestSortBy(DetEnum):
     WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetShellsResponse(Printable):
+    """Response to GetShellsRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
@@ -4982,6 +5423,7 @@ class v1GetShellsResponse(Printable):
         return out
 
 class v1GetSlotResponse(Printable):
+    """Response to GetSlotRequest."""
     slot: "typing.Optional[v1Slot]" = None
 
     def __init__(
@@ -5008,6 +5450,7 @@ class v1GetSlotResponse(Printable):
         return out
 
 class v1GetSlotsResponse(Printable):
+    """Response to GetSlotsRequest."""
     slots: "typing.Optional[typing.Sequence[v1Slot]]" = None
 
     def __init__(
@@ -5056,6 +5499,7 @@ class v1GetTaskAcceleratorDataResponse(Printable):
         return out
 
 class v1GetTaskResponse(Printable):
+    """Response to GetTaskRequest."""
 
     def __init__(
         self,
@@ -5078,6 +5522,7 @@ class v1GetTaskResponse(Printable):
         return out
 
 class v1GetTasksResponse(Printable):
+    """Response to GetTasksRequest."""
     allocationIdToSummary: "typing.Optional[typing.Dict[str, v1AllocationSummary]]" = None
 
     def __init__(
@@ -5104,6 +5549,7 @@ class v1GetTasksResponse(Printable):
         return out
 
 class v1GetTelemetryResponse(Printable):
+    """Response to GetTelemetryRequest."""
     segmentKey: "typing.Optional[str]" = None
 
     def __init__(
@@ -5134,6 +5580,7 @@ class v1GetTelemetryResponse(Printable):
         return out
 
 class v1GetTemplateResponse(Printable):
+    """Response to GetTemplateRequest."""
 
     def __init__(
         self,
@@ -5156,10 +5603,15 @@ class v1GetTemplateResponse(Printable):
         return out
 
 class v1GetTemplatesRequestSortBy(DetEnum):
+    """Sorts templates by the given field.
+    - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
+    - SORT_BY_NAME: Returns templates sorted by name.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     NAME = "SORT_BY_NAME"
 
 class v1GetTemplatesResponse(Printable):
+    """Response to GetTemplatesRequest."""
 
     def __init__(
         self,
@@ -5186,6 +5638,7 @@ class v1GetTemplatesResponse(Printable):
         return out
 
 class v1GetTensorboardResponse(Printable):
+    """Response to GetTensorboardRequest."""
 
     def __init__(
         self,
@@ -5212,6 +5665,13 @@ class v1GetTensorboardResponse(Printable):
         return out
 
 class v1GetTensorboardsRequestSortBy(DetEnum):
+    """Sorts tensorboards by the given field.
+    - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.
+    - SORT_BY_ID: Returns tensorboards sorted by id.
+    - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.
+    - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+    - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     DESCRIPTION = "SORT_BY_DESCRIPTION"
@@ -5219,6 +5679,7 @@ class v1GetTensorboardsRequestSortBy(DetEnum):
     WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetTensorboardsResponse(Printable):
+    """Response to GetTensorboardsRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
@@ -5249,6 +5710,7 @@ class v1GetTensorboardsResponse(Printable):
         return out
 
 class v1GetTrainingMetricsResponse(Printable):
+    """Response to GetTrainingMetricsRequest."""
 
     def __init__(
         self,
@@ -5271,6 +5733,13 @@ class v1GetTrainingMetricsResponse(Printable):
         return out
 
 class v1GetTrialCheckpointsRequestSortBy(DetEnum):
+    """Sorts checkpoints by the given field.
+    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
+    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
+    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
+    - SORT_BY_STATE: Returns checkpoints sorted by state.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     UUID = "SORT_BY_UUID"
     BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
@@ -5278,6 +5747,7 @@ class v1GetTrialCheckpointsRequestSortBy(DetEnum):
     STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse(Printable):
+    """Response to GetTrialCheckpointsRequest."""
 
     def __init__(
         self,
@@ -5348,6 +5818,7 @@ class v1GetTrialMetricsByModelVersionResponse(Printable):
         return out
 
 class v1GetTrialProfilerAvailableSeriesResponse(Printable):
+    """Response to TrialProfilerAvailableSeriesRequest."""
 
     def __init__(
         self,
@@ -5392,6 +5863,7 @@ class v1GetTrialProfilerMetricsResponse(Printable):
         return out
 
 class v1GetTrialResponse(Printable):
+    """Response to GetTrialRequest."""
 
     def __init__(
         self,
@@ -5414,6 +5886,7 @@ class v1GetTrialResponse(Printable):
         return out
 
 class v1GetTrialWorkloadsResponse(Printable):
+    """Response to GetTrialWorkloadsRequest."""
 
     def __init__(
         self,
@@ -5440,6 +5913,7 @@ class v1GetTrialWorkloadsResponse(Printable):
         return out
 
 class v1GetUserByUsernameResponse(Printable):
+    """Response to GetUserByUsernameRequest."""
 
     def __init__(
         self,
@@ -5462,6 +5936,7 @@ class v1GetUserByUsernameResponse(Printable):
         return out
 
 class v1GetUserResponse(Printable):
+    """Response to GetUserRequest."""
 
     def __init__(
         self,
@@ -5484,6 +5959,7 @@ class v1GetUserResponse(Printable):
         return out
 
 class v1GetUserSettingResponse(Printable):
+    """Response to GetUserSettingRequest."""
 
     def __init__(
         self,
@@ -5506,6 +5982,15 @@ class v1GetUserSettingResponse(Printable):
         return out
 
 class v1GetUsersRequestSortBy(DetEnum):
+    """Sort users by the given field.
+    - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
+    - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.
+    - SORT_BY_USER_NAME: Returns users sorted by user name.
+    - SORT_BY_ADMIN: Returns users sorted by if they are admin.
+    - SORT_BY_ACTIVE: Returns users sorted by if they are active.
+    - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
+    - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
     USER_NAME = "SORT_BY_USER_NAME"
@@ -5515,6 +6000,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     NAME = "SORT_BY_NAME"
 
 class v1GetUsersResponse(Printable):
+    """Response to GetUsersRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
     users: "typing.Optional[typing.Sequence[v1User]]" = None
 
@@ -5549,6 +6035,7 @@ class v1GetUsersResponse(Printable):
         return out
 
 class v1GetValidationMetricsResponse(Printable):
+    """Response to GetTrainingMetricsRequest."""
 
     def __init__(
         self,
@@ -5571,6 +6058,7 @@ class v1GetValidationMetricsResponse(Printable):
         return out
 
 class v1GetWebhooksResponse(Printable):
+    """Response to GetWebhooksRequest."""
 
     def __init__(
         self,
@@ -5593,6 +6081,14 @@ class v1GetWebhooksResponse(Printable):
         return out
 
 class v1GetWorkspaceProjectsRequestSortBy(DetEnum):
+    """Sort associated projects by the given field.
+    - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.
+    - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.
+    - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.
+    - SORT_BY_NAME: Returns projects sorted by name.
+    - SORT_BY_DESCRIPTION: Returns projects sorted by description.
+    - SORT_BY_ID: Returns projects sorted by ID.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
     LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
@@ -5601,6 +6097,7 @@ class v1GetWorkspaceProjectsRequestSortBy(DetEnum):
     ID = "SORT_BY_ID"
 
 class v1GetWorkspaceProjectsResponse(Printable):
+    """Response to GetWorkspaceProjectsRequest."""
 
     def __init__(
         self,
@@ -5627,6 +6124,7 @@ class v1GetWorkspaceProjectsResponse(Printable):
         return out
 
 class v1GetWorkspaceResponse(Printable):
+    """Response to GetWorkspaceRequest."""
 
     def __init__(
         self,
@@ -5649,11 +6147,17 @@ class v1GetWorkspaceResponse(Printable):
         return out
 
 class v1GetWorkspacesRequestSortBy(DetEnum):
+    """Sort workspaces by the given field.
+    - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.
+    - SORT_BY_ID: Returns workspaces sorted by id.
+    - SORT_BY_NAME: Returns workspaces sorted by name.
+    """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
     NAME = "SORT_BY_NAME"
 
 class v1GetWorkspacesResponse(Printable):
+    """Response to GetWorkspacesRequest."""
 
     def __init__(
         self,
@@ -5714,6 +6218,9 @@ class v1Group(Printable):
         return out
 
 class v1GroupDetails(Printable):
+    """GroupDetails contains detailed information about a specific Group
+    including which users belong to the group.
+    """
     groupId: "typing.Optional[int]" = None
     name: "typing.Optional[str]" = None
     users: "typing.Optional[typing.Sequence[v1User]]" = None
@@ -5756,6 +6263,9 @@ class v1GroupDetails(Printable):
         return out
 
 class v1GroupRoleAssignment(Printable):
+    """GroupRoleAssignment contains information about the groups
+    belonging to a role.
+    """
 
     def __init__(
         self,
@@ -5782,6 +6292,9 @@ class v1GroupRoleAssignment(Printable):
         return out
 
 class v1GroupSearchResult(Printable):
+    """GroupSearchResult is the representation of groups as they're returned
+    by the search endpoint.
+    """
 
     def __init__(
         self,
@@ -5808,6 +6321,7 @@ class v1GroupSearchResult(Printable):
         return out
 
 class v1IdleNotebookRequest(Printable):
+    """Kill the requested notebook if idle."""
     idle: "typing.Optional[bool]" = None
     notebookId: "typing.Optional[str]" = None
 
@@ -5842,6 +6356,9 @@ class v1IdleNotebookRequest(Printable):
         return out
 
 class v1InitialOperations(Printable):
+    """InitialOperations is a searcher event signaling the creation of an
+    experiment.
+    """
     placeholder: "typing.Optional[int]" = None
 
     def __init__(
@@ -5868,6 +6385,7 @@ class v1InitialOperations(Printable):
         return out
 
 class v1Int32FieldFilter(Printable):
+    """Int32 filters."""
     gt: "typing.Optional[int]" = None
     gte: "typing.Optional[int]" = None
     incl: "typing.Optional[typing.Sequence[int]]" = None
@@ -5934,6 +6452,9 @@ class v1Int32FieldFilter(Printable):
         return out
 
 class v1Job(Printable):
+    """Job represents a user submitted work that is not in a terminal
+    state.
+    """
     priority: "typing.Optional[int]" = None
     progress: "typing.Optional[float]" = None
     summary: "typing.Optional[v1JobSummary]" = None
@@ -6036,6 +6557,7 @@ class v1Job(Printable):
         return out
 
 class v1JobSummary(Printable):
+    """Job summary."""
 
     def __init__(
         self,
@@ -6096,6 +6618,7 @@ class v1K8PriorityClass(Printable):
         return out
 
 class v1KillCommandResponse(Printable):
+    """Response to KillCommandRequest."""
     command: "typing.Optional[v1Command]" = None
 
     def __init__(
@@ -6122,6 +6645,7 @@ class v1KillCommandResponse(Printable):
         return out
 
 class v1KillExperimentsRequest(Printable):
+    """Kill multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -6152,6 +6676,7 @@ class v1KillExperimentsRequest(Printable):
         return out
 
 class v1KillExperimentsResponse(Printable):
+    """Response to KillExperimentsRequest."""
 
     def __init__(
         self,
@@ -6174,6 +6699,7 @@ class v1KillExperimentsResponse(Printable):
         return out
 
 class v1KillNotebookResponse(Printable):
+    """Response to KillNotebookRequest."""
     notebook: "typing.Optional[v1Notebook]" = None
 
     def __init__(
@@ -6200,6 +6726,7 @@ class v1KillNotebookResponse(Printable):
         return out
 
 class v1KillShellResponse(Printable):
+    """Response to KillShellRequest."""
     shell: "typing.Optional[v1Shell]" = None
 
     def __init__(
@@ -6226,6 +6753,7 @@ class v1KillShellResponse(Printable):
         return out
 
 class v1KillTensorboardResponse(Printable):
+    """Response to KillTensorboardRequest."""
     tensorboard: "typing.Optional[v1Tensorboard]" = None
 
     def __init__(
@@ -6252,6 +6780,7 @@ class v1KillTensorboardResponse(Printable):
         return out
 
 class v1LaunchCommandRequest(Printable):
+    """Request to launch a command."""
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     data: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
@@ -6310,6 +6839,7 @@ class v1LaunchCommandRequest(Printable):
         return out
 
 class v1LaunchCommandResponse(Printable):
+    """Response to LaunchCommandRequest."""
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
@@ -6344,6 +6874,7 @@ class v1LaunchCommandResponse(Printable):
         return out
 
 class v1LaunchNotebookRequest(Printable):
+    """Request to launch a notebook."""
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     preview: "typing.Optional[bool]" = None
@@ -6402,6 +6933,7 @@ class v1LaunchNotebookRequest(Printable):
         return out
 
 class v1LaunchNotebookResponse(Printable):
+    """Response to LaunchNotebookRequest."""
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
@@ -6436,6 +6968,7 @@ class v1LaunchNotebookResponse(Printable):
         return out
 
 class v1LaunchShellRequest(Printable):
+    """Request to launch a shell."""
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     data: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
@@ -6494,6 +7027,7 @@ class v1LaunchShellRequest(Printable):
         return out
 
 class v1LaunchShellResponse(Printable):
+    """Response to LaunchShellRequest."""
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
@@ -6528,6 +7062,7 @@ class v1LaunchShellResponse(Printable):
         return out
 
 class v1LaunchTensorboardRequest(Printable):
+    """Request to launch a tensorboard."""
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     experimentIds: "typing.Optional[typing.Sequence[int]]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
@@ -6602,6 +7137,7 @@ class v1LaunchTensorboardRequest(Printable):
         return out
 
 class v1LaunchTensorboardResponse(Printable):
+    """Response to LaunchTensorboardRequest."""
     warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
@@ -6636,10 +7172,15 @@ class v1LaunchTensorboardResponse(Printable):
         return out
 
 class v1LaunchWarning(DetEnum):
+    """Enum values for warnings when launching commands.
+    - LAUNCH_WARNING_UNSPECIFIED: Default value
+    - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
+    """
     UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
     CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
 class v1LimitedJob(Printable):
+    """LimitedJob is a Job with omitted fields."""
     priority: "typing.Optional[int]" = None
     progress: "typing.Optional[float]" = None
     summary: "typing.Optional[v1JobSummary]" = None
@@ -6718,6 +7259,7 @@ class v1LimitedJob(Printable):
         return out
 
 class v1ListRPsBoundToWorkspaceResponse(Printable):
+    """Response to ListWorkspaceRPsRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -6752,6 +7294,9 @@ class v1ListRPsBoundToWorkspaceResponse(Printable):
         return out
 
 class v1ListRolesRequest(Printable):
+    """ListRolesRequest is the body of the request for the call
+    to search for a role.
+    """
     offset: "typing.Optional[int]" = None
 
     def __init__(
@@ -6782,6 +7327,9 @@ class v1ListRolesRequest(Printable):
         return out
 
 class v1ListRolesResponse(Printable):
+    """ListRolesResponse is the body of the response for the call
+    to search for a role.
+    """
 
     def __init__(
         self,
@@ -6808,6 +7356,7 @@ class v1ListRolesResponse(Printable):
         return out
 
 class v1ListWorkspacesBoundToRPResponse(Printable):
+    """Response to ListWorkspacesBoundToRPRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
 
@@ -6842,6 +7391,14 @@ class v1ListWorkspacesBoundToRPResponse(Printable):
         return out
 
 class v1LocationType(DetEnum):
+    """LocationType indicates where a column comes from
+    - LOCATION_TYPE_UNSPECIFIED: Location unknown
+    - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment
+    - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment
+    - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
+    - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps
+    - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+    """
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
     HYPERPARAMETERS = "LOCATION_TYPE_HYPERPARAMETERS"
@@ -6884,6 +7441,7 @@ class v1LogConfig(Printable):
         return out
 
 class v1LogEntry(Printable):
+    """LogEntry is a log event."""
 
     def __init__(
         self,
@@ -6918,6 +7476,15 @@ class v1LogEntry(Printable):
         return out
 
 class v1LogLevel(DetEnum):
+    """LogLevel specifies the level for a log.
+    - LOG_LEVEL_UNSPECIFIED: Unspecified log level.
+    - LOG_LEVEL_TRACE: A log level of TRACE.
+    - LOG_LEVEL_DEBUG: A log level of DEBUG.
+    - LOG_LEVEL_INFO: A log level of INFO.
+    - LOG_LEVEL_WARNING: A log level of WARNING.
+    - LOG_LEVEL_ERROR: A log level of ERROR.
+    - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
+    """
     UNSPECIFIED = "LOG_LEVEL_UNSPECIFIED"
     TRACE = "LOG_LEVEL_TRACE"
     DEBUG = "LOG_LEVEL_DEBUG"
@@ -6927,6 +7494,7 @@ class v1LogLevel(DetEnum):
     CRITICAL = "LOG_LEVEL_CRITICAL"
 
 class v1LoginRequest(Printable):
+    """Login the user."""
     isHashed: "typing.Optional[bool]" = None
 
     def __init__(
@@ -6961,6 +7529,7 @@ class v1LoginRequest(Printable):
         return out
 
 class v1LoginResponse(Printable):
+    """Response to LoginRequest."""
 
     def __init__(
         self,
@@ -6987,6 +7556,7 @@ class v1LoginResponse(Printable):
         return out
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):
+    """Mark some reservation as a daemon."""
     resourcesId: "typing.Optional[str]" = None
 
     def __init__(
@@ -7017,6 +7587,7 @@ class v1MarkAllocationResourcesDaemonRequest(Printable):
         return out
 
 class v1MasterLogsResponse(Printable):
+    """Response to MasterLogsRequest."""
 
     def __init__(
         self,
@@ -7039,6 +7610,7 @@ class v1MasterLogsResponse(Printable):
         return out
 
 class v1MetricBatchesResponse(Printable):
+    """Response to MetricBatchesRequest."""
     batches: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
@@ -7065,6 +7637,7 @@ class v1MetricBatchesResponse(Printable):
         return out
 
 class v1MetricIdentifier(Printable):
+    """MetricIdentifier packages metric name and group."""
 
     def __init__(
         self,
@@ -7091,6 +7664,11 @@ class v1MetricIdentifier(Printable):
         return out
 
 class v1MetricType(DetEnum):
+    """To distinguish the different categories of metrics.
+    - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+    - METRIC_TYPE_TRAINING: For metrics emitted during training.
+    - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    """
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     TRAINING = "METRIC_TYPE_TRAINING"
     VALIDATION = "METRIC_TYPE_VALIDATION"
@@ -7126,6 +7704,9 @@ class v1Metrics(Printable):
         return out
 
 class v1MetricsRange(Printable):
+    """MetricsRange represents the range of a metrics. Range is a in the format of
+    [min, max].
+    """
 
     def __init__(
         self,
@@ -7156,6 +7737,7 @@ class v1MetricsRange(Printable):
         return out
 
 class v1MetricsReport(Printable):
+    """Metrics report."""
 
     def __init__(
         self,
@@ -7206,6 +7788,7 @@ class v1MetricsReport(Printable):
         return out
 
 class v1MetricsWorkload(Printable):
+    """MetricsWorkload is a workload generating metrics."""
     endTime: "typing.Optional[str]" = None
 
     def __init__(
@@ -7244,6 +7827,7 @@ class v1MetricsWorkload(Printable):
         return out
 
 class v1Model(Printable):
+    """Model is a named collection of model versions."""
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     notes: "typing.Optional[str]" = None
@@ -7326,6 +7910,10 @@ class v1Model(Printable):
         return out
 
 class v1ModelVersion(Printable):
+    """A version of a model containing a checkpoint. Users can label checkpoints as
+    a version of a model and use the model name and version to locate a
+    checkpoint.
+    """
     comment: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -7424,6 +8012,7 @@ class v1ModelVersion(Printable):
         return out
 
 class v1MoveExperimentRequest(Printable):
+    """Request to move an experiment into a project."""
 
     def __init__(
         self,
@@ -7450,6 +8039,7 @@ class v1MoveExperimentRequest(Printable):
         return out
 
 class v1MoveExperimentsRequest(Printable):
+    """Request to move an experiment into a project."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -7484,6 +8074,7 @@ class v1MoveExperimentsRequest(Printable):
         return out
 
 class v1MoveExperimentsResponse(Printable):
+    """Response to MoveExperimentsRequest."""
 
     def __init__(
         self,
@@ -7506,6 +8097,7 @@ class v1MoveExperimentsResponse(Printable):
         return out
 
 class v1MoveModelRequest(Printable):
+    """Request to move a model to a workspace."""
 
     def __init__(
         self,
@@ -7532,6 +8124,7 @@ class v1MoveModelRequest(Printable):
         return out
 
 class v1MoveProjectRequest(Printable):
+    """Request to move a project into a workspace."""
 
     def __init__(
         self,
@@ -7558,6 +8151,7 @@ class v1MoveProjectRequest(Printable):
         return out
 
 class v1Note(Printable):
+    """Note is a user comment connected to a project."""
 
     def __init__(
         self,
@@ -7584,6 +8178,7 @@ class v1Note(Printable):
         return out
 
 class v1Notebook(Printable):
+    """Notebook is a Jupyter notebook in a containerized environment."""
     container: "typing.Optional[v1Container]" = None
     displayName: "typing.Optional[str]" = None
     exitStatus: "typing.Optional[str]" = None
@@ -7674,6 +8269,7 @@ class v1Notebook(Printable):
         return out
 
 class v1NotifyContainerRunningRequest(Printable):
+    """Arguments to a notify container running."""
     nodeName: "typing.Optional[str]" = None
     numPeers: "typing.Optional[int]" = None
     rank: "typing.Optional[int]" = None
@@ -7754,11 +8350,17 @@ class v1NotifyContainerRunningResponse(Printable):
         return out
 
 class v1OrderBy(DetEnum):
+    """Order records in either ascending or descending order.
+    - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+    - ORDER_BY_ASC: Returns records in ascending order.
+    - ORDER_BY_DESC: Returns records in descending order.
+    """
     UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ASC = "ORDER_BY_ASC"
     DESC = "ORDER_BY_DESC"
 
 class v1OverwriteRPWorkspaceBindingsRequest(Printable):
+    """Overwrite and replace the workspaces bound to an RP request."""
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
     workspaceNames: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -7797,6 +8399,9 @@ class v1OverwriteRPWorkspaceBindingsRequest(Printable):
         return out
 
 class v1Pagination(Printable):
+    """Pagination provides information about the offset, limit, and total number of
+    records returned in the results.
+    """
     endIndex: "typing.Optional[int]" = None
     limit: "typing.Optional[int]" = None
     offset: "typing.Optional[int]" = None
@@ -7855,6 +8460,7 @@ class v1Pagination(Printable):
         return out
 
 class v1PatchCheckpoint(Printable):
+    """Request to change checkpoint database information."""
     resources: "typing.Optional[PatchCheckpointOptionalResources]" = None
 
     def __init__(
@@ -7885,6 +8491,7 @@ class v1PatchCheckpoint(Printable):
         return out
 
 class v1PatchCheckpointsRequest(Printable):
+    """Request to patch database info about a checkpoint."""
 
     def __init__(
         self,
@@ -7907,6 +8514,7 @@ class v1PatchCheckpointsRequest(Printable):
         return out
 
 class v1PatchExperiment(Printable):
+    """PatchExperiment is a partial update to an experiment with only id required."""
     checkpointStorage: "typing.Optional[PatchExperimentPatchCheckpointStorage]" = None
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
@@ -7977,6 +8585,7 @@ class v1PatchExperiment(Printable):
         return out
 
 class v1PatchExperimentResponse(Printable):
+    """Response to PatchExperimentRequest."""
     experiment: "typing.Optional[v1Experiment]" = None
 
     def __init__(
@@ -8003,6 +8612,7 @@ class v1PatchExperimentResponse(Printable):
         return out
 
 class v1PatchMasterConfigRequest(Printable):
+    """Patch master config."""
     config: "typing.Optional[v1Config]" = None
     fieldMask: "typing.Optional[protobufFieldMask]" = None
 
@@ -8037,6 +8647,7 @@ class v1PatchMasterConfigRequest(Printable):
         return out
 
 class v1PatchMasterConfigResponse(Printable):
+    """Response to PatchMasterConfigRequest."""
 
     def __init__(
         self,
@@ -8059,6 +8670,7 @@ class v1PatchMasterConfigResponse(Printable):
         return out
 
 class v1PatchModel(Printable):
+    """PatchModel is a partial update to a model with only name required."""
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -8133,6 +8745,7 @@ class v1PatchModel(Printable):
         return out
 
 class v1PatchModelResponse(Printable):
+    """Response to PatchModelRequest."""
 
     def __init__(
         self,
@@ -8221,6 +8834,7 @@ class v1PatchModelVersion(Printable):
         return out
 
 class v1PatchModelVersionResponse(Printable):
+    """Response to PatchModelVersionRequest."""
 
     def __init__(
         self,
@@ -8243,6 +8857,7 @@ class v1PatchModelVersionResponse(Printable):
         return out
 
 class v1PatchProject(Printable):
+    """PatchProject is a partial update to a project with all optional fields."""
     description: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
@@ -8277,6 +8892,7 @@ class v1PatchProject(Printable):
         return out
 
 class v1PatchProjectResponse(Printable):
+    """Response to PatchProjectRequest."""
 
     def __init__(
         self,
@@ -8299,6 +8915,7 @@ class v1PatchProjectResponse(Printable):
         return out
 
 class v1PatchTemplateConfigResponse(Printable):
+    """Response to PatchTemplateConfigRequest."""
 
     def __init__(
         self,
@@ -8321,6 +8938,7 @@ class v1PatchTemplateConfigResponse(Printable):
         return out
 
 class v1PatchTrialRequest(Printable):
+    """Patch a trial."""
     state: "typing.Optional[trialv1State]" = None
 
     def __init__(
@@ -8351,6 +8969,7 @@ class v1PatchTrialRequest(Printable):
         return out
 
 class v1PatchTrialResponse(Printable):
+    """Response to PatchTrialRequest."""
 
     def __init__(
         self,
@@ -8373,6 +8992,7 @@ class v1PatchTrialResponse(Printable):
         return out
 
 class v1PatchUser(Printable):
+    """Request to edit fields for a user."""
     active: "typing.Optional[bool]" = None
     admin: "typing.Optional[bool]" = None
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -8455,6 +9075,7 @@ class v1PatchUser(Printable):
         return out
 
 class v1PatchUserResponse(Printable):
+    """Response to PatchUserRequest."""
 
     def __init__(
         self,
@@ -8477,6 +9098,7 @@ class v1PatchUserResponse(Printable):
         return out
 
 class v1PatchWorkspace(Printable):
+    """PatchWorkspace is a partial update to a workspace with all optional fields."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
@@ -8551,6 +9173,7 @@ class v1PatchWorkspace(Printable):
         return out
 
 class v1PatchWorkspaceResponse(Printable):
+    """Response to PatchWorkspaceRequest."""
 
     def __init__(
         self,
@@ -8573,6 +9196,7 @@ class v1PatchWorkspaceResponse(Printable):
         return out
 
 class v1PauseExperimentsRequest(Printable):
+    """Pause multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -8603,6 +9227,7 @@ class v1PauseExperimentsRequest(Printable):
         return out
 
 class v1PauseExperimentsResponse(Printable):
+    """Response to PauseExperimentsRequest."""
 
     def __init__(
         self,
@@ -8663,6 +9288,62 @@ class v1Permission(Printable):
         return out
 
 class v1PermissionType(DetEnum):
+    """List of permissions types.
+    Value of the enum has 9xxxx for global only permissions.
+    Permissions on the same object share the thousands place
+    value like 2001 and 2002.
+    - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.
+    - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users.
+    Allows updating other users passwords making this
+    permission give all other permissions effectively.
+    - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.
+    - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.
+    - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.
+    - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.
+    - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.
+    - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.
+    - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.
+    - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.
+    - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.
+    - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.
+    - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.
+    - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.
+    - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.
+    - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.
+    - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.
+    - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.
+    - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.
+    - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.
+    - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.
+    - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.
+    - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.
+    - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.
+    - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users.
+    If assigned at a workspace scope, can only assign roles to that workspace
+    scope.
+    - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.
+    - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.
+    - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.
+    - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.
+    - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.
+    - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.
+    - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.
+    - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.
+    - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.
+    - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.
+    - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.
+    - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.
+    - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.
+    - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.
+    - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.
+    - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.
+    - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.
+    - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.
+    - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.
+    - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.
+    - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+    - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.
+    """
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
     ADMINISTRATE_OAUTH = "PERMISSION_TYPE_ADMINISTRATE_OAUTH"
@@ -8762,6 +9443,7 @@ class v1PolymorphicFilter(Printable):
         return out
 
 class v1PostAllocationAcceleratorDataRequest(Printable):
+    """Set the accelerator data for some allocation."""
 
     def __init__(
         self,
@@ -8788,6 +9470,7 @@ class v1PostAllocationAcceleratorDataRequest(Printable):
         return out
 
 class v1PostAllocationProxyAddressRequest(Printable):
+    """Set the proxy address for some allocation."""
     allocationId: "typing.Optional[str]" = None
     proxyAddress: "typing.Optional[str]" = None
 
@@ -8822,6 +9505,7 @@ class v1PostAllocationProxyAddressRequest(Printable):
         return out
 
 class v1PostCheckpointMetadataRequest(Printable):
+    """Request for updating a checkpoints metadata."""
     checkpoint: "typing.Optional[v1Checkpoint]" = None
 
     def __init__(
@@ -8848,6 +9532,7 @@ class v1PostCheckpointMetadataRequest(Printable):
         return out
 
 class v1PostCheckpointMetadataResponse(Printable):
+    """Response to PostCheckpointRequest."""
     checkpoint: "typing.Optional[v1Checkpoint]" = None
 
     def __init__(
@@ -8874,6 +9559,7 @@ class v1PostCheckpointMetadataResponse(Printable):
         return out
 
 class v1PostModelRequest(Printable):
+    """Request for creating a model in the registry."""
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -8944,6 +9630,7 @@ class v1PostModelRequest(Printable):
         return out
 
 class v1PostModelResponse(Printable):
+    """Response to PostModelRequest."""
 
     def __init__(
         self,
@@ -8966,6 +9653,7 @@ class v1PostModelResponse(Printable):
         return out
 
 class v1PostModelVersionRequest(Printable):
+    """Request for creating a model version."""
     comment: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -9032,6 +9720,7 @@ class v1PostModelVersionRequest(Printable):
         return out
 
 class v1PostModelVersionResponse(Printable):
+    """Response for PostModelVersionRequest."""
 
     def __init__(
         self,
@@ -9054,6 +9743,7 @@ class v1PostModelVersionResponse(Printable):
         return out
 
 class v1PostProjectRequest(Printable):
+    """Request for creating a project."""
     description: "typing.Optional[str]" = None
 
     def __init__(
@@ -9088,6 +9778,7 @@ class v1PostProjectRequest(Printable):
         return out
 
 class v1PostProjectResponse(Printable):
+    """Response to PostProjectRequest."""
 
     def __init__(
         self,
@@ -9110,6 +9801,7 @@ class v1PostProjectResponse(Printable):
         return out
 
 class v1PostSearcherOperationsRequest(Printable):
+    """Request for sending operations from a custom search method."""
     experimentId: "typing.Optional[int]" = None
     searcherOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None
     triggeredByEvent: "typing.Optional[v1SearcherEvent]" = None
@@ -9152,6 +9844,7 @@ class v1PostSearcherOperationsRequest(Printable):
         return out
 
 class v1PostTemplateResponse(Printable):
+    """Response to PostTemplateRequest."""
 
     def __init__(
         self,
@@ -9174,6 +9867,7 @@ class v1PostTemplateResponse(Printable):
         return out
 
 class v1PostTrialProfilerMetricsBatchRequest(Printable):
+    """Create a batch of trial profiler metrics."""
     batches: "typing.Optional[typing.Sequence[v1TrialProfilerMetricsBatch]]" = None
 
     def __init__(
@@ -9200,6 +9894,7 @@ class v1PostTrialProfilerMetricsBatchRequest(Printable):
         return out
 
 class v1PostUserActivityRequest(Printable):
+    """Update user activity."""
 
     def __init__(
         self,
@@ -9230,6 +9925,7 @@ class v1PostUserActivityRequest(Printable):
         return out
 
 class v1PostUserRequest(Printable):
+    """Create a new user."""
     isHashed: "typing.Optional[bool]" = None
     password: "typing.Optional[str]" = None
     user: "typing.Optional[v1User]" = None
@@ -9272,6 +9968,7 @@ class v1PostUserRequest(Printable):
         return out
 
 class v1PostUserResponse(Printable):
+    """Response to PostUserRequest."""
     user: "typing.Optional[v1User]" = None
 
     def __init__(
@@ -9298,6 +9995,7 @@ class v1PostUserResponse(Printable):
         return out
 
 class v1PostUserSettingRequest(Printable):
+    """Update user settings."""
 
     def __init__(
         self,
@@ -9320,6 +10018,7 @@ class v1PostUserSettingRequest(Printable):
         return out
 
 class v1PostWebhookResponse(Printable):
+    """Response to PostWebhookRequest."""
 
     def __init__(
         self,
@@ -9342,6 +10041,7 @@ class v1PostWebhookResponse(Printable):
         return out
 
 class v1PostWorkspaceRequest(Printable):
+    """Request for creating a workspace."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
@@ -9396,6 +10096,7 @@ class v1PostWorkspaceRequest(Printable):
         return out
 
 class v1PostWorkspaceResponse(Printable):
+    """Response to PostWorkspaceRequest."""
 
     def __init__(
         self,
@@ -9418,6 +10119,7 @@ class v1PostWorkspaceResponse(Printable):
         return out
 
 class v1PreviewHPSearchRequest(Printable):
+    """Preview hyperparameter search."""
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     seed: "typing.Optional[int]" = None
 
@@ -9452,6 +10154,7 @@ class v1PreviewHPSearchRequest(Printable):
         return out
 
 class v1PreviewHPSearchResponse(Printable):
+    """Response to PreviewSearchRequest."""
     simulation: "typing.Optional[v1ExperimentSimulation]" = None
 
     def __init__(
@@ -9478,6 +10181,7 @@ class v1PreviewHPSearchResponse(Printable):
         return out
 
 class v1Project(Printable):
+    """Project is a named collection of experiments."""
     description: "typing.Optional[str]" = None
     lastExperimentStartedAt: "typing.Optional[str]" = None
     workspaceName: "typing.Optional[str]" = None
@@ -9568,6 +10272,9 @@ class v1Project(Printable):
         return out
 
 class v1ProjectColumn(Printable):
+    """Project Column is a description of a column used on experiments in the
+    project.
+    """
     displayName: "typing.Optional[str]" = None
 
     def __init__(
@@ -9606,6 +10313,7 @@ class v1ProjectColumn(Printable):
         return out
 
 class v1ProxyPortConfig(Printable):
+    """ProxyPortConfig configures a proxy the allocation should start."""
     port: "typing.Optional[int]" = None
     proxyTcp: "typing.Optional[bool]" = None
     serviceId: "typing.Optional[str]" = None
@@ -9656,6 +10364,7 @@ class v1ProxyPortConfig(Printable):
         return out
 
 class v1PutExperimentResponse(Printable):
+    """Response to PutExperimentRequest."""
 
     def __init__(
         self,
@@ -9682,6 +10391,7 @@ class v1PutExperimentResponse(Printable):
         return out
 
 class v1PutProjectNotesRequest(Printable):
+    """Request for setting project notes."""
 
     def __init__(
         self,
@@ -9708,6 +10418,7 @@ class v1PutProjectNotesRequest(Printable):
         return out
 
 class v1PutProjectNotesResponse(Printable):
+    """Response to PutProjectNotesRequest."""
 
     def __init__(
         self,
@@ -9730,6 +10441,7 @@ class v1PutProjectNotesResponse(Printable):
         return out
 
 class v1PutTemplateResponse(Printable):
+    """Response to PutTemplateRequest."""
     template: "typing.Optional[v1Template]" = None
 
     def __init__(
@@ -9756,6 +10468,7 @@ class v1PutTemplateResponse(Printable):
         return out
 
 class v1PutTrialRequest(Printable):
+    """Put a trial."""
     createTrialRequest: "typing.Optional[v1CreateTrialRequest]" = None
     externalTrialId: "typing.Optional[str]" = None
 
@@ -9790,6 +10503,7 @@ class v1PutTrialRequest(Printable):
         return out
 
 class v1PutTrialResponse(Printable):
+    """Response to PutTrialRequest."""
 
     def __init__(
         self,
@@ -9812,6 +10526,7 @@ class v1PutTrialResponse(Printable):
         return out
 
 class v1QueueControl(Printable):
+    """Describes a message to control jobs in a queue."""
     aheadOf: "typing.Optional[str]" = None
     behindOf: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
@@ -9874,6 +10589,7 @@ class v1QueueControl(Printable):
         return out
 
 class v1QueueStats(Printable):
+    """Statistics for a queue."""
 
     def __init__(
         self,
@@ -9900,6 +10616,9 @@ class v1QueueStats(Printable):
         return out
 
 class v1RBACJob(Printable):
+    """RBACJob is a job that can have either a limited or a full
+    representation of a job.
+    """
     full: "typing.Optional[v1Job]" = None
     limited: "typing.Optional[v1LimitedJob]" = None
 
@@ -9934,6 +10653,7 @@ class v1RBACJob(Printable):
         return out
 
 class v1RPQueueStat(Printable):
+    """Job stats for a resource pool."""
     aggregates: "typing.Optional[typing.Sequence[v1AggregateQueueStats]]" = None
 
     def __init__(
@@ -9968,6 +10688,9 @@ class v1RPQueueStat(Printable):
         return out
 
 class v1RemoveAssignmentsRequest(Printable):
+    """RemoveAssignmentsRequest is the body of the request for the call
+    to remove a user or group from a role.
+    """
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
     userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None
 
@@ -10002,6 +10725,7 @@ class v1RemoveAssignmentsRequest(Printable):
         return out
 
 class v1RendezvousInfo(Printable):
+    """The rendezvous info for the trial to rendezvous with sibling containers."""
 
     def __init__(
         self,
@@ -10032,6 +10756,7 @@ class v1RendezvousInfo(Printable):
         return out
 
 class v1ReportTrialMetricsRequest(Printable):
+    """Persist the given metrics for the trial."""
 
     def __init__(
         self,
@@ -10106,6 +10831,9 @@ class v1ReportTrialSourceInfoResponse(Printable):
         return out
 
 class v1ResourceAllocationAggregatedEntry(Printable):
+    """One instance of slots in the cluster being allocated to a task during a
+    period (aggregated).
+    """
 
     def __init__(
         self,
@@ -10152,6 +10880,7 @@ class v1ResourceAllocationAggregatedEntry(Printable):
         return out
 
 class v1ResourceAllocationAggregatedResponse(Printable):
+    """Response to ResourceAllocationAggregatedRequest."""
 
     def __init__(
         self,
@@ -10174,11 +10903,18 @@ class v1ResourceAllocationAggregatedResponse(Printable):
         return out
 
 class v1ResourceAllocationAggregationPeriod(DetEnum):
+    """The period over which to perform aggregation.
+    - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
+    just an artifact of using protobuf.
+    - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.
+    - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+    """
     UNSPECIFIED = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED"
     DAILY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY"
     MONTHLY = "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY"
 
 class v1ResourceAllocationRawEntry(Printable):
+    """One instance of slots in the cluster being allocated to a task."""
     endTime: "typing.Optional[str]" = None
     experimentId: "typing.Optional[int]" = None
     kind: "typing.Optional[str]" = None
@@ -10269,6 +11005,7 @@ class v1ResourceAllocationRawEntry(Printable):
         return out
 
 class v1ResourceAllocationRawResponse(Printable):
+    """Response to ResourceAllocationRawRequest."""
     resourceEntries: "typing.Optional[typing.Sequence[v1ResourceAllocationRawEntry]]" = None
 
     def __init__(
@@ -10295,6 +11032,7 @@ class v1ResourceAllocationRawResponse(Printable):
         return out
 
 class v1ResourcePool(Printable):
+    """A Resource Pool is a pool of resources where containers are run."""
     accelerator: "typing.Optional[str]" = None
     slotsPerAgent: "typing.Optional[int]" = None
     stats: "typing.Optional[v1QueueStats]" = None
@@ -10745,6 +11483,14 @@ class v1ResourcePoolPrioritySchedulerDetail(Printable):
         return out
 
 class v1ResourcePoolType(DetEnum):
+    """The type of the ResourcePool.
+    - RESOURCE_POOL_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
+    just an artifact of using protobuf.
+    - RESOURCE_POOL_TYPE_AWS: An AWS resource pool.
+    - RESOURCE_POOL_TYPE_GCP: A GCP resource pool.
+    - RESOURCE_POOL_TYPE_STATIC: A static resource pool.
+    - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
+    """
     UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
     AWS = "RESOURCE_POOL_TYPE_AWS"
     GCP = "RESOURCE_POOL_TYPE_GCP"
@@ -10752,6 +11498,7 @@ class v1ResourcePoolType(DetEnum):
     K8S = "RESOURCE_POOL_TYPE_K8S"
 
 class v1ResourcesFailure(Printable):
+    """ResourcesFailure contains information about restored resources' failure."""
     errMsg: "typing.Optional[str]" = None
     exitCode: "typing.Optional[int]" = None
     failureType: "typing.Optional[v1FailureType]" = None
@@ -10794,6 +11541,9 @@ class v1ResourcesFailure(Printable):
         return out
 
 class v1ResourcesStarted(Printable):
+    """ResourcesStarted contains the information needed by tasks from container
+    started.
+    """
     addresses: "typing.Optional[typing.Sequence[v1Address]]" = None
     nativeResourcesId: "typing.Optional[str]" = None
 
@@ -10828,6 +11578,9 @@ class v1ResourcesStarted(Printable):
         return out
 
 class v1ResourcesStopped(Printable):
+    """ResourcesStopped contains the information needed by tasks from container
+    stopped.
+    """
     failure: "typing.Optional[v1ResourcesFailure]" = None
 
     def __init__(
@@ -10854,6 +11607,10 @@ class v1ResourcesStopped(Printable):
         return out
 
 class v1ResourcesSummary(Printable):
+    """ResourcesSummary provides a summary of the resources comprising what we know
+    at the time the allocation is granted, but for k8s it is granted before being
+    scheduled so it isn't really much and `agent_devices` are missing for k8s.
+    """
     agentDevices: "typing.Optional[typing.Dict[str, ResourcesSummaryDevices]]" = None
     allocationId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
@@ -10974,6 +11731,9 @@ class v1Role(Printable):
         return out
 
 class v1RoleAssignment(Printable):
+    """RoleAssignment contains information about the scope
+    of the role.
+    """
     scopeCluster: "typing.Optional[bool]" = None
     scopeWorkspaceId: "typing.Optional[int]" = None
 
@@ -11012,6 +11772,7 @@ class v1RoleAssignment(Printable):
         return out
 
 class v1RoleAssignmentSummary(Printable):
+    """RoleAssignmentSummary is used to describe permissions a user has."""
     scopeCluster: "typing.Optional[bool]" = None
     scopeWorkspaceIds: "typing.Optional[typing.Sequence[int]]" = None
 
@@ -11050,6 +11811,9 @@ class v1RoleAssignmentSummary(Printable):
         return out
 
 class v1RoleWithAssignments(Printable):
+    """RoleWithAssignments contains a detailed description of
+    a role and the groups and users belonging to it.
+    """
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
     role: "typing.Optional[v1Role]" = None
     userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None
@@ -11092,6 +11856,9 @@ class v1RoleWithAssignments(Printable):
         return out
 
 class v1RunnableOperation(Printable):
+    """RunnableOperation represents a single runnable operation emitted by a
+    searcher.
+    """
     length: "typing.Optional[str]" = None
     type: "typing.Optional[v1RunnableType]" = None
 
@@ -11126,11 +11893,18 @@ class v1RunnableOperation(Printable):
         return out
 
 class v1RunnableType(DetEnum):
+    """RunnableType defines the type of operation that should be executed by trial
+    runners.
+    - RUNNABLE_TYPE_UNSPECIFIED: Denotes an unknown runnable type.
+    - RUNNABLE_TYPE_TRAIN: Signals to a trial runner that it should run a train.
+    - RUNNABLE_TYPE_VALIDATE: Signals to a trial runner it should compute validation metrics.
+    """
     UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
     TRAIN = "RUNNABLE_TYPE_TRAIN"
     VALIDATE = "RUNNABLE_TYPE_VALIDATE"
 
 class v1SSOProvider(Printable):
+    """Describe one SSO provider."""
 
     def __init__(
         self,
@@ -11157,6 +11931,18 @@ class v1SSOProvider(Printable):
         return out
 
 class v1SchedulerType(DetEnum):
+    """The type of the Scheduler.
+    - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
+    just an artifact of using protobuf.
+    - SCHEDULER_TYPE_PRIORITY: The priority scheduler.
+    - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.
+    - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler
+    - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.
+    - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is
+    delegated.
+    - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is
+    delegated.
+    """
     UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     PRIORITY = "SCHEDULER_TYPE_PRIORITY"
     FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
@@ -11328,6 +12114,9 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
         return out
 
 class v1SearcherEvent(Printable):
+    """SearcherEvent is a message from master to a client-driven custom searcher
+    informing it of relevant changes in the state of an experiment.
+    """
     experimentInactive: "typing.Optional[v1ExperimentInactive]" = None
     initialOperations: "typing.Optional[v1InitialOperations]" = None
     trialClosed: "typing.Optional[v1TrialClosed]" = None
@@ -11406,6 +12195,7 @@ class v1SearcherEvent(Printable):
         return out
 
 class v1SearcherOperation(Printable):
+    """SearcherOperation is an operation issued by the custom searcher."""
     closeTrial: "typing.Optional[v1CloseTrialOperation]" = None
     createTrial: "typing.Optional[v1CreateTrialOperation]" = None
     setSearcherProgress: "typing.Optional[v1SetSearcherProgressOperation]" = None
@@ -11464,6 +12254,7 @@ class v1SearcherOperation(Printable):
         return out
 
 class v1SetCommandPriorityRequest(Printable):
+    """Set the priority of the requested command."""
     commandId: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
 
@@ -11498,6 +12289,7 @@ class v1SetCommandPriorityRequest(Printable):
         return out
 
 class v1SetCommandPriorityResponse(Printable):
+    """Response to SetCommandPriorityRequest."""
     command: "typing.Optional[v1Command]" = None
 
     def __init__(
@@ -11524,6 +12316,7 @@ class v1SetCommandPriorityResponse(Printable):
         return out
 
 class v1SetNotebookPriorityRequest(Printable):
+    """Set the priority of the requested notebook."""
     notebookId: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
 
@@ -11558,6 +12351,7 @@ class v1SetNotebookPriorityRequest(Printable):
         return out
 
 class v1SetNotebookPriorityResponse(Printable):
+    """Response to SetNotebookPriorityRequest."""
     notebook: "typing.Optional[v1Notebook]" = None
 
     def __init__(
@@ -11584,6 +12378,9 @@ class v1SetNotebookPriorityResponse(Printable):
         return out
 
 class v1SetSearcherProgressOperation(Printable):
+    """SetSearcherProgressOperation informs the master of the progress of the custom
+    searcher.
+    """
     progress: "typing.Optional[float]" = None
 
     def __init__(
@@ -11610,6 +12407,7 @@ class v1SetSearcherProgressOperation(Printable):
         return out
 
 class v1SetShellPriorityRequest(Printable):
+    """Set the priority of the requested shell."""
     priority: "typing.Optional[int]" = None
     shellId: "typing.Optional[str]" = None
 
@@ -11644,6 +12442,7 @@ class v1SetShellPriorityRequest(Printable):
         return out
 
 class v1SetShellPriorityResponse(Printable):
+    """Response to SetShellPriorityRequest."""
     shell: "typing.Optional[v1Shell]" = None
 
     def __init__(
@@ -11670,6 +12469,7 @@ class v1SetShellPriorityResponse(Printable):
         return out
 
 class v1SetTensorboardPriorityRequest(Printable):
+    """Set the priority of the requested TensorBoard."""
     priority: "typing.Optional[int]" = None
     tensorboardId: "typing.Optional[str]" = None
 
@@ -11704,6 +12504,7 @@ class v1SetTensorboardPriorityRequest(Printable):
         return out
 
 class v1SetTensorboardPriorityResponse(Printable):
+    """Response to SetTensorboardPriorityRequest."""
     tensorboard: "typing.Optional[v1Tensorboard]" = None
 
     def __init__(
@@ -11730,6 +12531,7 @@ class v1SetTensorboardPriorityResponse(Printable):
         return out
 
 class v1SetUserPasswordResponse(Printable):
+    """Response to SetUserPasswordRequest."""
     user: "typing.Optional[v1User]" = None
 
     def __init__(
@@ -11756,6 +12558,7 @@ class v1SetUserPasswordResponse(Printable):
         return out
 
 class v1Shell(Printable):
+    """Shell is an ssh server in a containerized environment."""
     addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
     agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     container: "typing.Optional[v1Container]" = None
@@ -11870,6 +12673,7 @@ class v1Shell(Printable):
         return out
 
 class v1ShutDownOperation(Printable):
+    """Shut down custom searcher method."""
     cancel: "typing.Optional[bool]" = None
     failure: "typing.Optional[bool]" = None
 
@@ -11904,6 +12708,7 @@ class v1ShutDownOperation(Printable):
         return out
 
 class v1Slot(Printable):
+    """Slot wraps a single device on the agent."""
     container: "typing.Optional[v1Container]" = None
     device: "typing.Optional[v1Device]" = None
     draining: "typing.Optional[bool]" = None
@@ -11962,6 +12767,7 @@ class v1Slot(Printable):
         return out
 
 class v1StartTrialRequest(Printable):
+    """Start a trial."""
     resume: "typing.Optional[bool]" = None
 
     def __init__(
@@ -11992,6 +12798,7 @@ class v1StartTrialRequest(Printable):
         return out
 
 class v1StartTrialResponse(Printable):
+    """Response to StartTrialRequest."""
     latestCheckpoint: "typing.Optional[str]" = None
 
     def __init__(
@@ -12026,6 +12833,7 @@ class v1StartTrialResponse(Printable):
         return out
 
 class v1Task(Printable):
+    """Task is the model for a task in the database."""
     endTime: "typing.Optional[str]" = None
 
     def __init__(
@@ -12068,6 +12876,7 @@ class v1Task(Printable):
         return out
 
 class v1TaskLogsFieldsResponse(Printable):
+    """Response to TaskLogsFieldsRequest."""
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
     allocationIds: "typing.Optional[typing.Sequence[str]]" = None
     containerIds: "typing.Optional[typing.Sequence[str]]" = None
@@ -12134,6 +12943,7 @@ class v1TaskLogsFieldsResponse(Printable):
         return out
 
 class v1TaskLogsResponse(Printable):
+    """Response to TaskLogsRequest."""
     agentId: "typing.Optional[str]" = None
     allocationId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
@@ -12224,6 +13034,15 @@ class v1TaskLogsResponse(Printable):
         return out
 
 class v1TaskType(DetEnum):
+    """Type of the task
+    - TASK_TYPE_UNSPECIFIED: The task type is unknown
+    - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+    """
     UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
     TRIAL = "TASK_TYPE_TRIAL"
     NOTEBOOK = "TASK_TYPE_NOTEBOOK"
@@ -12233,6 +13052,9 @@ class v1TaskType(DetEnum):
     CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
 
 class v1Template(Printable):
+    """Templates move settings that are shared by many experiments into a single
+    YAML file.
+    """
 
     def __init__(
         self,
@@ -12263,6 +13085,7 @@ class v1Template(Printable):
         return out
 
 class v1Tensorboard(Printable):
+    """Tensorboard is a tensorboard instance in a containerized environment."""
     container: "typing.Optional[v1Container]" = None
     displayName: "typing.Optional[str]" = None
     exitStatus: "typing.Optional[str]" = None
@@ -12369,6 +13192,7 @@ class v1Tensorboard(Printable):
         return out
 
 class v1TestWebhookResponse(Printable):
+    """Response to TestWebhookRequest."""
 
     def __init__(
         self,
@@ -12391,6 +13215,7 @@ class v1TestWebhookResponse(Printable):
         return out
 
 class v1TimestampFieldFilter(Printable):
+    """Timestamp filters."""
     gt: "typing.Optional[str]" = None
     gte: "typing.Optional[str]" = None
     lt: "typing.Optional[str]" = None
@@ -12441,6 +13266,9 @@ class v1TimestampFieldFilter(Printable):
         return out
 
 class v1TrialClosed(Printable):
+    """TrialClosed is a searcher event triggered when a trial has successfully
+    finished.
+    """
 
     def __init__(
         self,
@@ -12463,6 +13291,7 @@ class v1TrialClosed(Printable):
         return out
 
 class v1TrialCreated(Printable):
+    """TrialCreated is a searcher event signaling the creation of a trial."""
 
     def __init__(
         self,
@@ -12485,6 +13314,7 @@ class v1TrialCreated(Printable):
         return out
 
 class v1TrialEarlyExit(Printable):
+    """Signals to the experiment the trial early exited."""
 
     def __init__(
         self,
@@ -12507,11 +13337,20 @@ class v1TrialEarlyExit(Printable):
         return out
 
 class v1TrialEarlyExitExitedReason(DetEnum):
+    """The reason for an early exit.
+    - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).
+    - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.
+    - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter
+    in the trial init.
+    """
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
 
 class v1TrialExitedEarly(Printable):
+    """TrialExitedEarly is a searcher event triggered when a trial exited
+    prematurely.
+    """
 
     def __init__(
         self,
@@ -12538,12 +13377,20 @@ class v1TrialExitedEarly(Printable):
         return out
 
 class v1TrialExitedEarlyExitedReason(DetEnum):
+    """The reason for an early exit.
+    - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).
+    - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.
+    - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop, from code.
+    - EXITED_REASON_USER_CANCELED: Indicates the trial exited due to a user requested stop, from the CLI or
+    UI.
+    """
     UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
     USER_CANCELED = "EXITED_REASON_USER_CANCELED"
 
 class v1TrialLogsFieldsResponse(Printable):
+    """Response to TrialLogFieldsRequest."""
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
     containerIds: "typing.Optional[typing.Sequence[str]]" = None
     rankIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -12602,6 +13449,7 @@ class v1TrialLogsFieldsResponse(Printable):
         return out
 
 class v1TrialLogsResponse(Printable):
+    """Response to TrialLogsRequest."""
     agentId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
     log: "typing.Optional[str]" = None
@@ -12688,6 +13536,7 @@ class v1TrialLogsResponse(Printable):
         return out
 
 class v1TrialMetrics(Printable):
+    """Metrics from the trial some duration of training."""
 
     def __init__(
         self,
@@ -12722,6 +13571,7 @@ class v1TrialMetrics(Printable):
         return out
 
 class v1TrialOperation(Printable):
+    """TrialOperation is any operation that a trial can perform while it is active."""
     validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None
 
     def __init__(
@@ -12798,6 +13648,11 @@ class v1TrialProfilerMetricLabels(Printable):
         return out
 
 class v1TrialProfilerMetricsBatch(Printable):
+    """TrialProfilerMetricsBatch is a batch of trial profiler metrics. A batch will
+    contain metrics pertaining to a single series. The fields values, batches and
+    timestamps will be equal length arrays with each index corresponding to a
+    reading.
+    """
 
     def __init__(
         self,
@@ -12832,6 +13687,9 @@ class v1TrialProfilerMetricsBatch(Printable):
         return out
 
 class v1TrialProgress(Printable):
+    """TrialProgress is a searcher event that tells you the number of batches
+    completed in the trial.
+    """
 
     def __init__(
         self,
@@ -12858,6 +13716,7 @@ class v1TrialProgress(Printable):
         return out
 
 class v1TrialRunnerMetadata(Printable):
+    """The metadata pertaining to the current running task for a trial."""
 
     def __init__(
         self,
@@ -12880,6 +13739,9 @@ class v1TrialRunnerMetadata(Printable):
         return out
 
 class v1TrialSimulation(Printable):
+    """TrialSimulation is a specific sequence of workloads that were run before the
+    trial was completed.
+    """
     occurrences: "typing.Optional[int]" = None
     operations: "typing.Optional[typing.Sequence[v1RunnableOperation]]" = None
 
@@ -12960,6 +13822,12 @@ class v1TrialSourceInfo(Printable):
         return out
 
 class v1TrialSourceInfoType(DetEnum):
+    """TrialSourceInfoType is the type of the TrialSourceInfo, which serves as a
+    link between a trial and a checkpoint or model version
+    - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified
+    - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference
+    - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+    """
     UNSPECIFIED = "TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED"
     INFERENCE = "TRIAL_SOURCE_INFO_TYPE_INFERENCE"
     FINE_TUNING = "TRIAL_SOURCE_INFO_TYPE_FINE_TUNING"
@@ -12995,6 +13863,7 @@ class v1TrialsSampleResponse(Printable):
         return out
 
 class v1TrialsSampleResponseTrial(Printable):
+    """Metadata and metrics stream from a trial."""
 
     def __init__(
         self,
@@ -13047,6 +13916,7 @@ class v1TrialsSnapshotResponse(Printable):
         return out
 
 class v1TrialsSnapshotResponseTrial(Printable):
+    """Metric value and metadata for a trial that has progress this far."""
 
     def __init__(
         self,
@@ -13131,11 +14001,17 @@ class v1Trigger(Printable):
         return out
 
 class v1TriggerType(DetEnum):
+    """Enum values for expected trigger types.
+    - TRIGGER_TYPE_UNSPECIFIED: Default value
+    - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state
+    - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+    """
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
 
 class v1UnarchiveExperimentsRequest(Printable):
+    """Unarchive multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
 
     def __init__(
@@ -13166,6 +14042,7 @@ class v1UnarchiveExperimentsRequest(Printable):
         return out
 
 class v1UnarchiveExperimentsResponse(Printable):
+    """Response to UnarchiveExperimentsRequest."""
 
     def __init__(
         self,
@@ -13188,6 +14065,7 @@ class v1UnarchiveExperimentsResponse(Printable):
         return out
 
 class v1UnbindRPFromWorkspaceRequest(Printable):
+    """Unbind a resource pool to workspaces."""
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
     workspaceNames: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -13226,6 +14104,9 @@ class v1UnbindRPFromWorkspaceRequest(Printable):
         return out
 
 class v1UpdateGroupRequest(Printable):
+    """UpdateGroupRequest is the body of the request for the call
+    to update a group and its members.
+    """
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
     name: "typing.Optional[str]" = None
     removeUsers: "typing.Optional[typing.Sequence[int]]" = None
@@ -13272,6 +14153,9 @@ class v1UpdateGroupRequest(Printable):
         return out
 
 class v1UpdateGroupResponse(Printable):
+    """UpdateGroupResponse is the body of the response for the call
+    to update a group and its members.
+    """
 
     def __init__(
         self,
@@ -13294,6 +14178,7 @@ class v1UpdateGroupResponse(Printable):
         return out
 
 class v1UpdateJobQueueRequest(Printable):
+    """Request to update the job queue."""
 
     def __init__(
         self,
@@ -13316,9 +14201,11 @@ class v1UpdateJobQueueRequest(Printable):
         return out
 
 class v1User(Printable):
+    """User is an account in the determined cluster."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     displayName: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
+    lastLogin: "typing.Optional[str]" = None
     modifiedAt: "typing.Optional[str]" = None
     remote: "typing.Optional[bool]" = None
 
@@ -13331,6 +14218,7 @@ class v1User(Printable):
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
+        lastLogin: "typing.Union[str, None, Unset]" = _unset,
         modifiedAt: "typing.Union[str, None, Unset]" = _unset,
         remote: "typing.Union[bool, None, Unset]" = _unset,
     ):
@@ -13343,6 +14231,8 @@ class v1User(Printable):
             self.displayName = displayName
         if not isinstance(id, Unset):
             self.id = id
+        if not isinstance(lastLogin, Unset):
+            self.lastLogin = lastLogin
         if not isinstance(modifiedAt, Unset):
             self.modifiedAt = modifiedAt
         if not isinstance(remote, Unset):
@@ -13361,6 +14251,8 @@ class v1User(Printable):
             kwargs["displayName"] = obj["displayName"]
         if "id" in obj:
             kwargs["id"] = obj["id"]
+        if "lastLogin" in obj:
+            kwargs["lastLogin"] = obj["lastLogin"]
         if "modifiedAt" in obj:
             kwargs["modifiedAt"] = obj["modifiedAt"]
         if "remote" in obj:
@@ -13379,6 +14271,8 @@ class v1User(Printable):
             out["displayName"] = self.displayName
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
+        if not omit_unset or "lastLogin" in vars(self):
+            out["lastLogin"] = self.lastLogin
         if not omit_unset or "modifiedAt" in vars(self):
             out["modifiedAt"] = self.modifiedAt
         if not omit_unset or "remote" in vars(self):
@@ -13386,6 +14280,9 @@ class v1User(Printable):
         return out
 
 class v1UserRoleAssignment(Printable):
+    """UserRoleAssignment contains information about the users
+    belonging to a role.
+    """
 
     def __init__(
         self,
@@ -13412,6 +14309,7 @@ class v1UserRoleAssignment(Printable):
         return out
 
 class v1UserWebSetting(Printable):
+    """UserWebSetting represents user web setting."""
     storagePath: "typing.Optional[str]" = None
     value: "typing.Optional[str]" = None
 
@@ -13450,6 +14348,9 @@ class v1UserWebSetting(Printable):
         return out
 
 class v1ValidateAfterOperation(Printable):
+    """ValidateAfterOperation means the trial should train and validate after
+    training the given length.
+    """
     length: "typing.Optional[str]" = None
     requestId: "typing.Optional[str]" = None
 
@@ -13484,6 +14385,9 @@ class v1ValidateAfterOperation(Printable):
         return out
 
 class v1ValidationCompleted(Printable):
+    """ValidationCompleted is a searcher event triggered when a validation has been
+    completed.
+    """
 
     def __init__(
         self,
@@ -13514,6 +14418,9 @@ class v1ValidationCompleted(Printable):
         return out
 
 class v1ValidationHistoryEntry(Printable):
+    """ValidationHistoryEntry is a single entry for a validation history for an
+    experiment.
+    """
 
     def __init__(
         self,
@@ -13586,11 +14493,19 @@ class v1Webhook(Printable):
         return out
 
 class v1WebhookType(DetEnum):
+    """Enum values for expected webhook types.
+    - WEBHOOK_TYPE_UNSPECIFIED: Default value
+    - WEBHOOK_TYPE_DEFAULT: For a default webhook
+    - WEBHOOK_TYPE_SLACK: For a slack webhook.
+    """
     UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
     DEFAULT = "WEBHOOK_TYPE_DEFAULT"
     SLACK = "WEBHOOK_TYPE_SLACK"
 
 class v1WorkloadContainer(Printable):
+    """WorkloadContainer is a wrapper for Determined workloads to allow repeated
+    oneof types.
+    """
     checkpoint: "typing.Optional[v1CheckpointWorkload]" = None
     training: "typing.Optional[v1MetricsWorkload]" = None
     validation: "typing.Optional[v1MetricsWorkload]" = None
@@ -13633,6 +14548,7 @@ class v1WorkloadContainer(Printable):
         return out
 
 class v1Workspace(Printable):
+    """Workspace is a named collection of projects."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
@@ -13735,6 +14651,12 @@ class v1Workspace(Printable):
         return out
 
 class v1WorkspaceState(DetEnum):
+    """WorkspaceState is used to track progress during a deletion.
+    - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.
+    - WORKSPACE_STATE_DELETING: The object is being deleted.
+    - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.
+    - WORKSPACE_STATE_DELETED: The object finished deleting.
+    """
     UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
     DELETING = "WORKSPACE_STATE_DELETING"
     DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
@@ -13746,6 +14668,13 @@ def post_AckAllocationPreemptionSignal(
     allocationId: str,
     body: "v1AckAllocationPreemptionSignalRequest",
 ) -> None:
+    """Acknowledge the receipt of a signal to stop the given allocation early.
+    This is used indicate and exit 0 isn't final; specifically, it is used
+    for HP search directed early stops and preemption signals (not necessarily
+    just scheduler preemption).
+
+    - allocationId: The allocation that is acknowledging the request.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13766,6 +14695,10 @@ def post_ActivateExperiment(
     *,
     id: int,
 ) -> None:
+    """Activate an experiment.
+
+    - id: The experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13786,6 +14719,7 @@ def post_ActivateExperiments(
     *,
     body: "v1ActivateExperimentsRequest",
 ) -> "v1ActivateExperimentsResponse":
+    """Activate multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13807,6 +14741,11 @@ def post_AddProjectNote(
     body: "v1Note",
     projectId: int,
 ) -> "v1AddProjectNoteResponse":
+    """Add a note to a project.
+
+    - body: The note to add.
+    - projectId: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13828,6 +14767,11 @@ def post_AllocationAllGather(
     allocationId: str,
     body: "v1AllocationAllGatherRequest",
 ) -> "v1AllocationAllGatherResponse":
+    """AllocationAllGather performs an all gather through the master. An
+    allocation can only perform once all gather at a time.
+
+    - allocationId: The ID of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13849,6 +14793,13 @@ def post_AllocationPendingPreemptionSignal(
     allocationId: str,
     body: "v1AllocationPendingPreemptionSignalRequest",
 ) -> None:
+    """Report the receipt of a signal to stop the given allocation early.
+    This is used to communicate back from a SLURM job that it has been
+    notified of a pending preememption. Upon a call to this API
+    the RM should then trigger a checkpoint and immediate exit.
+
+    - allocationId: The id of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13870,6 +14821,14 @@ def get_AllocationPreemptionSignal(
     allocationId: str,
     timeoutSeconds: "typing.Optional[int]" = None,
 ) -> "v1AllocationPreemptionSignalResponse":
+    """Long poll preemption signals for the given allocation. If the allocation
+    has been preempted when called, it will return so immediately. Otherwise,
+    the connection will be kept open until the timeout is reached or
+    the allocation is preempted.
+
+    - allocationId: The id of the allocation.
+    - timeoutSeconds: The timeout in seconds.
+    """
     _params = {
         "timeoutSeconds": timeoutSeconds,
     }
@@ -13893,6 +14852,10 @@ def post_AllocationReady(
     allocationId: str,
     body: "v1AllocationReadyRequest",
 ) -> None:
+    """Set allocation to ready state.
+
+    - allocationId: The id of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13914,6 +14877,13 @@ def get_AllocationRendezvousInfo(
     allocationId: str,
     resourcesId: str,
 ) -> "v1AllocationRendezvousInfoResponse":
+    """Gather an allocation's rendezvous info. Blocks until all trial containers
+    connect to gather their rendezvous information and responds to them all at
+    once.
+
+    - allocationId: The id of the allocation.
+    - resourcesId: The id of the clump of resources.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -13935,6 +14905,10 @@ def post_AllocationWaiting(
     allocationId: str,
     body: "v1AllocationWaitingRequest",
 ) -> None:
+    """Set allocation to waiting state.
+
+    - allocationId: The id of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13955,6 +14929,10 @@ def post_ArchiveExperiment(
     *,
     id: int,
 ) -> None:
+    """Archive an experiment.
+
+    - id: The experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13975,6 +14953,7 @@ def post_ArchiveExperiments(
     *,
     body: "v1ArchiveExperimentsRequest",
 ) -> "v1ArchiveExperimentsResponse":
+    """Archive multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -13995,6 +14974,10 @@ def post_ArchiveModel(
     *,
     modelName: str,
 ) -> None:
+    """Archive a model
+
+    - modelName: The name of the model to archive.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14015,6 +14998,10 @@ def post_ArchiveProject(
     *,
     id: int,
 ) -> None:
+    """Archive a project.
+
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14035,6 +15022,10 @@ def post_ArchiveWorkspace(
     *,
     id: int,
 ) -> None:
+    """Archive a workspace.
+
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14055,6 +15046,7 @@ def post_AssignRoles(
     *,
     body: "v1AssignRolesRequest",
 ) -> None:
+    """AssignRoles adds a set of role assignments to the system."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14076,6 +15068,10 @@ def post_BindRPToWorkspace(
     body: "v1BindRPToWorkspaceRequest",
     resourcePoolName: str,
 ) -> None:
+    """Bind resource pool to workspace
+
+    - resourcePoolName: The resource pool name.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14096,6 +15092,10 @@ def post_CancelExperiment(
     *,
     id: int,
 ) -> None:
+    """Cancel an experiment.
+
+    - id: The experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14116,6 +15116,7 @@ def post_CancelExperiments(
     *,
     body: "v1CancelExperimentsRequest",
 ) -> "v1CancelExperimentsResponse":
+    """Cancel multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14136,6 +15137,7 @@ def post_CheckpointsRemoveFiles(
     *,
     body: "v1CheckpointsRemoveFilesRequest",
 ) -> None:
+    """Remove files from checkpoints."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14178,6 +15180,37 @@ def get_CompareTrials(
     timeSeriesFilter_timeRange_lte: "typing.Optional[str]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1CompareTrialsResponse":
+    """Return a downsampled time series of metrics from multiple trials to compare
+    them side-by-side.
+
+    - endBatches: Sample from metrics before this batch number.
+    - group: Metric group (training, validation, etc).
+    - maxDatapoints: The maximum number of data points to return after downsampling.
+    - metricIds: metric ids for the query. must be in the form group.metric_name.
+    - metricNames: The names of selected metrics.
+    - metricType: Metric group.
+
+ - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+ - METRIC_TYPE_TRAINING: For metrics emitted during training.
+ - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - startBatches: Sample from metrics after this batch number.
+    - timeSeriesFilter_doubleRange_gt: Greater than.
+    - timeSeriesFilter_doubleRange_gte: Greater than or equal.
+    - timeSeriesFilter_doubleRange_lt: Less than.
+    - timeSeriesFilter_doubleRange_lte: Less than or equal.
+    - timeSeriesFilter_integerRange_gt: Greater than.
+    - timeSeriesFilter_integerRange_gte: Greater than or equal.
+    - timeSeriesFilter_integerRange_incl: In a set. `in` is a reserved word in python.
+    - timeSeriesFilter_integerRange_lt: Less than.
+    - timeSeriesFilter_integerRange_lte: Less than or equal.
+    - timeSeriesFilter_integerRange_notIn: Not in a set.
+    - timeSeriesFilter_name: metric or column name for the filter.
+    - timeSeriesFilter_timeRange_gt: Greater than.
+    - timeSeriesFilter_timeRange_gte: Greater than or equal.
+    - timeSeriesFilter_timeRange_lt: Less than.
+    - timeSeriesFilter_timeRange_lte: Less than or equal.
+    - trialIds: The requested trial ids.
+    """
     _params = {
         "endBatches": endBatches,
         "group": group,
@@ -14223,6 +15256,12 @@ def post_CompleteTrialSearcherValidation(
     body: "v1CompleteValidateAfterOperation",
     trialId: int,
 ) -> None:
+    """Reports to the searcher that the trial has completed the given searcher
+    operation.
+
+    - body: The completed operation.
+    - trialId: The id of the trial.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14238,11 +15277,35 @@ def post_CompleteTrialSearcherValidation(
         return
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
 
+def post_ContinueExperiment(
+    session: "api.Session",
+    *,
+    body: "v1ContinueExperimentRequest",
+) -> "v1ContinueExperimentResponse":
+    """Continues an experiment either to make the existing experiment train longer
+    or to retry it.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/continue",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ContinueExperimentResponse.from_json(_resp.json())
+    raise APIHttpError("post_ContinueExperiment", _resp)
+
 def post_CreateExperiment(
     session: "api.Session",
     *,
     body: "v1CreateExperimentRequest",
 ) -> "v1CreateExperimentResponse":
+    """Create an experiment."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14263,6 +15326,7 @@ def post_CreateGroup(
     *,
     body: "v1CreateGroupRequest",
 ) -> "v1CreateGroupResponse":
+    """Create a group with optional members on creation."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14283,6 +15347,7 @@ def post_CreateTrial(
     *,
     body: "v1CreateTrialRequest",
 ) -> "v1CreateTrialResponse":
+    """Create unmanaged trial."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14301,6 +15366,7 @@ def post_CreateTrial(
 def get_CurrentUser(
     session: "api.Session",
 ) -> "v1CurrentUserResponse":
+    """Get the current user."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14321,6 +15387,7 @@ def delete_DeleteCheckpoints(
     *,
     body: "v1DeleteCheckpointsRequest",
 ) -> None:
+    """Delete Checkpoints."""
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14341,6 +15408,10 @@ def delete_DeleteExperiment(
     *,
     experimentId: int,
 ) -> None:
+    """Delete the requested experiment.
+
+    - experimentId: The ID of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14361,6 +15432,7 @@ def delete_DeleteExperiments(
     *,
     body: "v1DeleteExperimentsRequest",
 ) -> "v1DeleteExperimentsResponse":
+    """Delete multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14381,6 +15453,10 @@ def delete_DeleteGroup(
     *,
     groupId: int,
 ) -> None:
+    """Remove a group.
+
+    - groupId: The id of the group that should be deleted.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14401,6 +15477,10 @@ def delete_DeleteModel(
     *,
     modelName: str,
 ) -> None:
+    """Delete a model
+
+    - modelName: The name of the model to delete.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14422,6 +15502,11 @@ def delete_DeleteModelVersion(
     modelName: str,
     modelVersionNum: int,
 ) -> None:
+    """Delete a model version
+
+    - modelName: The name of the model associated with the model version.
+    - modelVersionNum: Sequential model version number.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14442,6 +15527,10 @@ def delete_DeleteProject(
     *,
     id: int,
 ) -> "v1DeleteProjectResponse":
+    """Delete a project.
+
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14462,6 +15551,10 @@ def delete_DeleteTemplate(
     *,
     templateName: str,
 ) -> None:
+    """Delete a template.
+
+    - templateName: The id of the template.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14482,6 +15575,10 @@ def delete_DeleteWebhook(
     *,
     id: int,
 ) -> None:
+    """Delete a webhook.
+
+    - id: The id of the webhook.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14502,6 +15599,10 @@ def delete_DeleteWorkspace(
     *,
     id: int,
 ) -> "v1DeleteWorkspaceResponse":
+    """Delete a workspace.
+
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -14523,6 +15624,10 @@ def post_DisableAgent(
     agentId: str,
     body: "v1DisableAgentRequest",
 ) -> "v1DisableAgentResponse":
+    """Disable the agent.
+
+    - agentId: The id of the agent.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14545,6 +15650,11 @@ def post_DisableSlot(
     body: "v1DisableSlotRequest",
     slotId: str,
 ) -> "v1DisableSlotResponse":
+    """Disable the slot.
+
+    - agentId: The id of the agent.
+    - slotId: The id of the slot.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14565,6 +15675,10 @@ def post_EnableAgent(
     *,
     agentId: str,
 ) -> "v1EnableAgentResponse":
+    """Enable the agent.
+
+    - agentId: The id of the agent.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14586,6 +15700,11 @@ def post_EnableSlot(
     agentId: str,
     slotId: str,
 ) -> "v1EnableSlotResponse":
+    """Enable the slot.
+
+    - agentId: The id of the agent.
+    - slotId: The id of the slot.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -14607,6 +15726,11 @@ def get_ExpMetricNames(
     ids: "typing.Sequence[int]",
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1ExpMetricNamesResponse]":
+    """Get the set of metric names recorded for a list of experiments.
+
+    - ids: The ids for the experiments.
+    - periodSeconds: Seconds to wait when polling for updates.
+    """
     _params = {
         "ids": ids,
         "periodSeconds": periodSeconds,
@@ -14639,6 +15763,7 @@ def get_ExpMetricNames(
 def get_GetActiveTasksCount(
     session: "api.Session",
 ) -> "v1GetActiveTasksCountResponse":
+    """Get a count of active tasks."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14659,6 +15784,10 @@ def get_GetAgent(
     *,
     agentId: str,
 ) -> "v1GetAgentResponse":
+    """Get the requested agent.
+
+    - agentId: The id of the agent.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14683,6 +15812,23 @@ def get_GetAgents(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetAgentsRequestSortBy]" = None,
 ) -> "v1GetAgentsResponse":
+    """Get a set of agents from the cluster.
+
+    - label: This field has been deprecated and will be ignored.
+    - limit: Limit the number of agents. A value of 0 denotes no limit.
+    - offset: Skip the number of agents before returning results. Negative values
+denote number of agents to skip from the end before returning results.
+    - orderBy: Order agents in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort agents by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.
+ - SORT_BY_ID: Returns agents sorted by id.
+ - SORT_BY_TIME: Returns agents sorted by time.
+    """
     _params = {
         "label": label,
         "limit": limit,
@@ -14709,6 +15855,10 @@ def get_GetAllocation(
     *,
     allocationId: str,
 ) -> "v1GetAllocationResponse":
+    """Get details about an Allocation.
+
+    - allocationId: The id of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14729,6 +15879,10 @@ def get_GetBestSearcherValidationMetric(
     *,
     experimentId: int,
 ) -> "v1GetBestSearcherValidationMetricResponse":
+    """Get the best searcher validation for an experiment by the given metric.
+
+    - experimentId: The ID of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14749,6 +15903,10 @@ def get_GetCheckpoint(
     *,
     checkpointUuid: str,
 ) -> "v1GetCheckpointResponse":
+    """Get the requested checkpoint.
+
+    - checkpointUuid: The uuid for the requested checkpoint.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14769,6 +15927,10 @@ def get_GetCommand(
     *,
     commandId: str,
 ) -> "v1GetCommandResponse":
+    """Get the requested command.
+
+    - commandId: The id of the command.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14795,6 +15957,29 @@ def get_GetCommands(
     users: "typing.Optional[typing.Sequence[str]]" = None,
     workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetCommandsResponse":
+    """Get a list of commands.
+
+    - limit: Limit the number of commands. A value of 0 denotes no limit.
+    - offset: Skip the number of commands before returning results. Negative values
+denote number of commands to skip from the end before returning results.
+    - orderBy: Order commands in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort commands by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.
+ - SORT_BY_ID: Returns commands sorted by id.
+ - SORT_BY_DESCRIPTION: Returns commands sorted by description.
+ - SORT_BY_START_TIME: Return commands sorted by start time.
+ - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
+    - userIds: Limit commands to those that are owned by users with the specified userIds.
+    - users: Limit commands to those that are owned by users with the specified
+usernames.
+    - workspaceId: Limit commands to those within a specific workspace, or 0 for all
+accessible workspaces.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -14823,6 +16008,10 @@ def get_GetCurrentTrialSearcherOperation(
     *,
     trialId: int,
 ) -> "v1GetCurrentTrialSearcherOperationResponse":
+    """Get the current searcher operation.
+
+    - trialId: The id of the trial.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14843,6 +16032,10 @@ def get_GetExperiment(
     *,
     experimentId: int,
 ) -> "v1GetExperimentResponse":
+    """Get the requested experiment.
+
+    - experimentId: The id of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14868,6 +16061,36 @@ def get_GetExperimentCheckpoints(
     sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
+    """Get a list of checkpoints for an experiment.
+
+    - id: The experiment id.
+    - limit: Limit the number of checkpoints. A value of 0 denotes no limit.
+    - offset: Skip the number of checkpoints before returning results. Negative values
+denote number of checkpoints to skip from the end before returning results.
+    - orderBy: Order checkpoints in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort checkpoints by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
+ - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+ - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
+ - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
+ - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
+ - SORT_BY_STATE: Returns checkpoints sorted by state.
+ - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
+configuration setting.
+    - states: Limit the checkpoints to those that match the states.
+
+ - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
+ - STATE_ACTIVE: The checkpoint is in an active state.
+ - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.
+ - STATE_ERROR: The checkpoint errored.
+ - STATE_DELETED: The checkpoint has been deleted.
+ - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -14894,6 +16117,10 @@ def get_GetExperimentLabels(
     *,
     projectId: "typing.Optional[int]" = None,
 ) -> "v1GetExperimentLabelsResponse":
+    """Get a list of unique experiment labels (sorted by popularity).
+
+    - projectId: Filter experiments by project.
+    """
     _params = {
         "projectId": projectId,
     }
@@ -14921,6 +16148,57 @@ def get_GetExperimentTrials(
     sortBy: "typing.Optional[v1GetExperimentTrialsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
 ) -> "v1GetExperimentTrialsResponse":
+    """Get the list of trials for an experiment.
+
+    - experimentId: Limit trials to those that are owned by the specified experiments.
+    - limit: Limit the number of trials. A value of 0 denotes no limit.
+    - offset: Skip the number of trials before returning results. Negative values
+denote number of trials to skip from the end before returning results.
+    - orderBy: Order trials in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort trials by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.
+ - SORT_BY_ID: Returns trials sorted by id.
+ - SORT_BY_START_TIME: Return trials sorted by start time.
+ - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are
+returned after trials that are.
+ - SORT_BY_STATE: Return trials sorted by state.
+ - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is
+specified by `searcher.metric` in the experiment configuration.
+ - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is
+specified by `searcher.metric` in the experiment configuration.
+ - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.
+ - SORT_BY_DURATION: Return the trials sorted by the total duration.
+ - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
+ - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+    - states: Limit trials to those that match the provided state.
+
+ - STATE_UNSPECIFIED: The state of the experiment is unknown.
+ - STATE_ACTIVE: The experiment is in an active state.
+ - STATE_PAUSED: The experiment is in a paused state
+ - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.
+ - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.
+ - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.
+ - STATE_COMPLETED: The experiment is completed and is shut down.
+ - STATE_CANCELED: The experiment is canceled and is shut down.
+ - STATE_ERROR: The experiment is errored and is shut down.
+ - STATE_DELETED: The experiment has been deleted.
+ - STATE_DELETING: The experiment is deleting.
+ - STATE_DELETE_FAILED: The experiment failed to delete.
+ - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+ - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued).
+Queued is a substate of the Active state.
+ - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active
+state.
+ - STATE_STARTING: The experiment is preparing the environment after finishing pulling the
+image. Starting is a substate of the Active state.
+ - STATE_RUNNING: The experiment has an allocation actively running.
+Running is a substate of the Active state.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -14947,6 +16225,10 @@ def get_GetExperimentValidationHistory(
     *,
     experimentId: int,
 ) -> "v1GetExperimentValidationHistoryResponse":
+    """Get the validation history for an experiment.
+
+    - experimentId: The id of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -14985,6 +16267,79 @@ def get_GetExperiments(
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
+    """Get a list of experiments.
+
+    - archived: Limit experiments to those that are archived.
+    - description: Limit experiments to those that match the description.
+    - experimentIdFilter_gt: Greater than.
+    - experimentIdFilter_gte: Greater than or equal.
+    - experimentIdFilter_incl: In a set. `in` is a reserved word in python.
+    - experimentIdFilter_lt: Less than.
+    - experimentIdFilter_lte: Less than or equal.
+    - experimentIdFilter_notIn: Not in a set.
+    - labels: Limit experiments to those that match the provided labels.
+    - limit: Limit the number of experiments.
+0 or Unspecified - returns a default of 100.
+-1               - returns everything.
+-2               - returns pagination info but no experiments.
+    - name: Limit experiments to those that match the name.
+    - offset: Skip the number of experiments before returning results. Negative values
+denote number of experiments to skip from the end before returning results.
+    - orderBy: Order experiments in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - projectId: Limit experiments to those within a specified project, or 0 for all
+projects.
+    - showTrialData: whether to surface trial specific data from the best trial.
+    - sortBy: Sort experiments by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
+ - SORT_BY_ID: Returns experiments sorted by id.
+ - SORT_BY_DESCRIPTION: Returns experiments sorted by description.
+ - SORT_BY_START_TIME: Return experiments sorted by start time.
+ - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
+returned after the ones with end_time.
+ - SORT_BY_STATE: Return experiments sorted by state.
+ - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.
+ - SORT_BY_PROGRESS: Return experiments sorted by progress.
+ - SORT_BY_USER: Return experiments sorted by user.
+ - SORT_BY_NAME: Returns experiments sorted by name.
+ - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
+ - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
+ - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
+ - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
+ - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
+ - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+    - states: Limit experiments to those that match the provided state.
+
+ - STATE_UNSPECIFIED: The state of the experiment is unknown.
+ - STATE_ACTIVE: The experiment is in an active state.
+ - STATE_PAUSED: The experiment is in a paused state
+ - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.
+ - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.
+ - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.
+ - STATE_COMPLETED: The experiment is completed and is shut down.
+ - STATE_CANCELED: The experiment is canceled and is shut down.
+ - STATE_ERROR: The experiment is errored and is shut down.
+ - STATE_DELETED: The experiment has been deleted.
+ - STATE_DELETING: The experiment is deleting.
+ - STATE_DELETE_FAILED: The experiment failed to delete.
+ - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+ - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued).
+Queued is a substate of the Active state.
+ - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active
+state.
+ - STATE_STARTING: The experiment is preparing the environment after finishing pulling the
+image. Starting is a substate of the Active state.
+ - STATE_RUNNING: The experiment has an allocation actively running.
+Running is a substate of the Active state.
+    - userIds: Limit experiments to those that are owned by users with the specified
+userIds.
+    - users: Limit experiments to those that are owned by users with the specified
+usernames.
+    """
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "description": description,
@@ -15025,6 +16380,10 @@ def get_GetGroup(
     *,
     groupId: int,
 ) -> "v1GetGroupResponse":
+    """Get a group by id.
+
+    - groupId: The id of the group to return.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15045,6 +16404,7 @@ def post_GetGroups(
     *,
     body: "v1GetGroupsRequest",
 ) -> "v1GetGroupsResponse":
+    """Search for groups with optional filters."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -15066,6 +16426,14 @@ def get_GetGroupsAndUsersAssignedToWorkspace(
     workspaceId: int,
     name: "typing.Optional[str]" = None,
 ) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
+    """Get groups and users assigned to a given workspace with what roles are
+    assigned.
+
+    - workspaceId: ID of workspace getting groups and users.
+    - name: Name of groups and users to search by. Name filters by group name for
+groups. Name filters by display name then username if display name is null
+for users.
+    """
     _params = {
         "name": name,
     }
@@ -15088,6 +16456,10 @@ def get_GetJobQueueStats(
     *,
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetJobQueueStatsResponse":
+    """Get job queue stats for a resource pool.
+
+    - resourcePools: Filter the results based on a set of resource pools.
+    """
     _params = {
         "resourcePools": resourcePools,
     }
@@ -15114,6 +16486,24 @@ def get_GetJobs(
     resourcePool: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[jobv1State]]" = None,
 ) -> "v1GetJobsResponse":
+    """Get a list of jobs in queue.
+
+    - limit: Pagination limit.
+    - offset: Pagination offset.
+    - orderBy: Order results in either ascending or descending order by the number of
+jobs ahead.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - resourcePool: The target resource-pool for agent resource manager.
+    - states: Filter to jobs with states among those given.
+
+ - STATE_UNSPECIFIED: Unspecified state.
+ - STATE_QUEUED: Job is queued and waiting to be schedlued.
+ - STATE_SCHEDULED: Job is scheduled.
+ - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15144,6 +16534,24 @@ def get_GetJobsV2(
     resourcePool: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[jobv1State]]" = None,
 ) -> "v1GetJobsV2Response":
+    """Get a list of jobs in queue.
+
+    - limit: Pagination limit.
+    - offset: Pagination offset.
+    - orderBy: Order results in either ascending or descending order by the number of
+jobs ahead.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - resourcePool: The target resource-pool for agent resource manager.
+    - states: Filter to jobs with states among those given.
+
+ - STATE_UNSPECIFIED: Unspecified state.
+ - STATE_QUEUED: Job is queued and waiting to be schedlued.
+ - STATE_SCHEDULED: Job is scheduled.
+ - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15168,6 +16576,7 @@ def get_GetJobsV2(
 def get_GetMaster(
     session: "api.Session",
 ) -> "v1GetMasterResponse":
+    """Get master information."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15186,6 +16595,7 @@ def get_GetMaster(
 def get_GetMasterConfig(
     session: "api.Session",
 ) -> "v1GetMasterConfigResponse":
+    """Get master config."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15204,6 +16614,7 @@ def get_GetMasterConfig(
 def get_GetMe(
     session: "api.Session",
 ) -> "v1GetMeResponse":
+    """Get the current user."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15225,6 +16636,11 @@ def get_GetMetrics(
     group: str,
     trialIds: "typing.Sequence[int]",
 ) -> "typing.Iterable[v1GetMetricsResponse]":
+    """Stream one or more trial's metrics.
+
+    - group: The group of metrics to get eg 'training', 'validation', etc.
+    - trialIds: Trial IDs to get metrics for.
+    """
     _params = {
         "group": group,
         "trialIds": trialIds,
@@ -15259,6 +16675,10 @@ def get_GetModel(
     *,
     modelName: str,
 ) -> "v1GetModelResponse":
+    """Get the requested model.
+
+    - modelName: The name of the model.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15279,6 +16699,10 @@ def get_GetModelDef(
     *,
     experimentId: int,
 ) -> "v1GetModelDefResponse":
+    """Get the model definition of an experiment.
+
+    - experimentId: The id of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15300,6 +16724,10 @@ def post_GetModelDefFile(
     body: "v1GetModelDefFileRequest",
     experimentId: int,
 ) -> "v1GetModelDefFileResponse":
+    """Get one file content of model definition of an experiment.
+
+    - experimentId: The id of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -15320,6 +16748,10 @@ def get_GetModelDefTree(
     *,
     experimentId: int,
 ) -> "v1GetModelDefTreeResponse":
+    """Get the model definition file tree of an experiment.
+
+    - experimentId: The id of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15340,6 +16772,10 @@ def get_GetModelLabels(
     *,
     workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetModelLabelsResponse":
+    """Get a list of unique model labels (sorted by popularity).
+
+    - workspaceId: Optional workspace ID to limit query for model tags.
+    """
     _params = {
         "workspaceId": workspaceId,
     }
@@ -15363,6 +16799,11 @@ def get_GetModelVersion(
     modelName: str,
     modelVersionNum: int,
 ) -> "v1GetModelVersionResponse":
+    """Get the requested model version.
+
+    - modelName: The name of the model.
+    - modelVersionNum: Sequential model version number.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15387,6 +16828,23 @@ def get_GetModelVersions(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetModelVersionsRequestSortBy]" = None,
 ) -> "v1GetModelVersionsResponse":
+    """Get a list of versions for the requested model.
+
+    - modelName: The name of the model.
+    - limit: Limit the number of model versions. A value of 0 denotes no limit.
+    - offset: Skip the number of model versions before returning results. Negative values
+denote number of models to skip from the end before returning results.
+    - orderBy: Order model versions in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort the model versions by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.
+ - SORT_BY_VERSION: Returns model versions sorted by version number.
+ - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15424,6 +16882,35 @@ def get_GetModels(
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
     workspaceNames: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
+    """Get a list of models.
+
+    - archived: Limit to unarchived models only.
+    - description: Limit the models to those matching or partially-matching the description.
+    - id: Limit the models to this model id.
+    - labels: Limit the models to those with the following labels.
+    - limit: Limit the number of models. A value of 0 denotes no limit.
+    - name: Limit the models to those matching or partially-matching the name.
+    - offset: Skip the number of models before returning results. Negative values
+denote number of models to skip from the end before returning results.
+    - orderBy: Order models in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort the models by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.
+ - SORT_BY_NAME: Returns models sorted by name.
+ - SORT_BY_DESCRIPTION: Returns models sorted by description.
+ - SORT_BY_CREATION_TIME: Returns models sorted by creation time.
+ - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+ - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
+ - SORT_BY_WORKSPACE: Returns models sorted by workspace name.
+    - userIds: Limit the models to those made by the users with the following userIds.
+    - users: Limit the models to those made by the users with the following usernames.
+    - workspaceIds: Limit models to those that belong to the following workspace ids.
+    - workspaceNames: Limit models to those that belong to the following workspace names.
+    """
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "description": description,
@@ -15458,6 +16945,10 @@ def get_GetNotebook(
     *,
     notebookId: str,
 ) -> "v1GetNotebookResponse":
+    """Get the requested notebook.
+
+    - notebookId: The id of the notebook.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15484,6 +16975,30 @@ def get_GetNotebooks(
     users: "typing.Optional[typing.Sequence[str]]" = None,
     workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetNotebooksResponse":
+    """Get a list of notebooks.
+
+    - limit: Limit the number of notebooks. A value of 0 denotes no limit.
+    - offset: Skip the number of notebooks before returning results. Negative values
+denote number of notebooks to skip from the end before returning results.
+    - orderBy: Order notebooks in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort notebooks by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.
+ - SORT_BY_ID: Returns notebooks sorted by id.
+ - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.
+ - SORT_BY_START_TIME: Return notebooks sorted by start time.
+ - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
+    - userIds: Limit notebooks to those that are owned by users with the specified
+userIds.
+    - users: Limit notebooks to those that are owned by users with the specified
+usernames.
+    - workspaceId: Limit to those within a specified workspace, or 0 for all
+accessible workspaces.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15510,6 +17025,7 @@ def get_GetNotebooks(
 def get_GetPermissionsSummary(
     session: "api.Session",
 ) -> "v1GetPermissionsSummaryResponse":
+    """List all permissions for the logged in user in all scopes."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15530,6 +17046,10 @@ def get_GetProject(
     *,
     id: int,
 ) -> "v1GetProjectResponse":
+    """Get the requested project.
+
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15550,6 +17070,10 @@ def get_GetProjectColumns(
     *,
     id: int,
 ) -> "v1GetProjectColumnsResponse":
+    """Get a list of columns for experiment list table.
+
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15570,6 +17094,10 @@ def get_GetProjectNumericMetricsRange(
     *,
     id: int,
 ) -> "v1GetProjectNumericMetricsRangeResponse":
+    """Get metrics range for a project.
+
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15590,6 +17118,10 @@ def get_GetProjectsByUserActivity(
     *,
     limit: "typing.Optional[int]" = None,
 ) -> "v1GetProjectsByUserActivityResponse":
+    """Get projects by user activity
+
+    - limit: Limit number of project entries.
+    """
     _params = {
         "limit": limit,
     }
@@ -15614,6 +17146,14 @@ def get_GetResourcePools(
     offset: "typing.Optional[int]" = None,
     unbound: "typing.Optional[bool]" = None,
 ) -> "v1GetResourcePoolsResponse":
+    """Get a list of all resource pools from the cluster.
+
+    - limit: Limit the number of resource pools. A value of 0 denotes no limit.
+    - offset: Skip the number of resource pools before returning results. Negative values
+denote number of resource pools to skip from the end before returning
+results.
+    - unbound: Indicate whether or not to return unbound pools only.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15638,6 +17178,10 @@ def get_GetRolesAssignedToGroup(
     *,
     groupId: int,
 ) -> "v1GetRolesAssignedToGroupResponse":
+    """Get the roles which are assigned to a group.
+
+    - groupId: The id of the group to search for role assignments for
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15658,6 +17202,10 @@ def get_GetRolesAssignedToUser(
     *,
     userId: int,
 ) -> "v1GetRolesAssignedToUserResponse":
+    """Get the roles which are assigned to a user.
+
+    - userId: The id of the user to search for role assignments for
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15678,6 +17226,7 @@ def post_GetRolesByID(
     *,
     body: "v1GetRolesByIDRequest",
 ) -> "v1GetRolesByIDResponse":
+    """Get a set of roles with the corresponding IDs."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -15698,6 +17247,10 @@ def get_GetSearcherEvents(
     *,
     experimentId: int,
 ) -> "v1GetSearcherEventsResponse":
+    """Get the list of custom searcher events with long polling.
+
+    - experimentId: The ID of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15718,6 +17271,10 @@ def get_GetShell(
     *,
     shellId: str,
 ) -> "v1GetShellResponse":
+    """Get the requested shell.
+
+    - shellId: The id of the shell.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15744,6 +17301,28 @@ def get_GetShells(
     users: "typing.Optional[typing.Sequence[str]]" = None,
     workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetShellsResponse":
+    """Get a list of shells.
+
+    - limit: Limit the number of shells. A value of 0 denotes no limit.
+    - offset: Skip the number of shells before returning results. Negative values
+denote number of shells to skip from the end before returning results.
+    - orderBy: Order shells in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort shells by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.
+ - SORT_BY_ID: Returns shells sorted by id.
+ - SORT_BY_DESCRIPTION: Returns shells sorted by description.
+ - SORT_BY_START_TIME: Return shells sorted by start time.
+ - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
+    - userIds: Limit shells to those that are owned by users with the specified userIds.
+    - users: Limit shells to those that are owned by users with the specified usernames.
+    - workspaceId: Limit to those within a specified workspace, or 0 for all
+accessible workspaces.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15773,6 +17352,11 @@ def get_GetSlot(
     agentId: str,
     slotId: str,
 ) -> "v1GetSlotResponse":
+    """Get the requested slot for an agent.
+
+    - agentId: The id of the agent.
+    - slotId: The id of the slot.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15793,6 +17377,10 @@ def get_GetSlots(
     *,
     agentId: str,
 ) -> "v1GetSlotsResponse":
+    """Get all the slots for an agent.
+
+    - agentId: The id of the agent.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15813,6 +17401,10 @@ def get_GetTask(
     *,
     taskId: str,
 ) -> "v1GetTaskResponse":
+    """Check the status of a requested task.
+
+    - taskId: The requested task id.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15833,6 +17425,11 @@ def get_GetTaskAcceleratorData(
     *,
     taskId: str,
 ) -> "v1GetTaskAcceleratorDataResponse":
+    """GetTaskAcceleratorData gets the accelerator data for each allocation
+    associated with a task.
+
+    - taskId: The id of the task.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15851,6 +17448,7 @@ def get_GetTaskAcceleratorData(
 def get_GetTasks(
     session: "api.Session",
 ) -> "v1GetTasksResponse":
+    """Get all tasks."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15869,6 +17467,7 @@ def get_GetTasks(
 def get_GetTelemetry(
     session: "api.Session",
 ) -> "v1GetTelemetryResponse":
+    """Get telemetry information."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15889,6 +17488,10 @@ def get_GetTemplate(
     *,
     templateName: str,
 ) -> "v1GetTemplateResponse":
+    """Get the requested template.
+
+    - templateName: The id of the template.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15913,6 +17516,22 @@ def get_GetTemplates(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
 ) -> "v1GetTemplatesResponse":
+    """Get a list of templates.
+
+    - limit: Limit the number of templates. A value of 0 denotes no limit.
+    - name: Limit templates to those that match the name.
+    - offset: Skip the number of templates before returning results. Negative values
+denote number of templates to skip from the end before returning results.
+    - orderBy: Order templates in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort templates by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
+ - SORT_BY_NAME: Returns templates sorted by name.
+    """
     _params = {
         "limit": limit,
         "name": name,
@@ -15939,6 +17558,10 @@ def get_GetTensorboard(
     *,
     tensorboardId: str,
 ) -> "v1GetTensorboardResponse":
+    """Get the requested tensorboard.
+
+    - tensorboardId: The id of the tensorboard.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -15965,6 +17588,31 @@ def get_GetTensorboards(
     users: "typing.Optional[typing.Sequence[str]]" = None,
     workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetTensorboardsResponse":
+    """Get a list of tensorboards.
+
+    - limit: Limit the number of tensorboards. A value of 0 denotes no limit.
+    - offset: Skip the number of tensorboards before returning results. Negative values
+denote number of tensorboards to skip from the end before returning
+results.
+    - orderBy: Order tensorboards in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort tensorboards by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.
+ - SORT_BY_ID: Returns tensorboards sorted by id.
+ - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.
+ - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+ - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
+    - userIds: Limit tensorboards to those that are owned by users with the specified
+userIds.
+    - users: Limit tensorboards to those that are owned by users with the specified
+usernames.
+    - workspaceId: Limit tensorboards to those that are in a specific workspace, or 0 for
+all accessible workspaces.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -15993,6 +17641,10 @@ def get_GetTrainingMetrics(
     *,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "typing.Iterable[v1GetTrainingMetricsResponse]":
+    """Stream one or more trial's training metrics.
+
+    - trialIds: Trial IDs to get metrics for.
+    """
     _params = {
         "trialIds": trialIds,
     }
@@ -16026,6 +17678,10 @@ def get_GetTrial(
     *,
     trialId: int,
 ) -> "v1GetTrialResponse":
+    """Get a single trial.
+
+    - trialId: The requested trial's id.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -16051,6 +17707,33 @@ def get_GetTrialCheckpoints(
     sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
+    """Get a list of checkpoints for a trial.
+
+    - id: The trial id.
+    - limit: Limit the number of checkpoints. A value of 0 denotes no limit.
+    - offset: Skip the number of checkpoints before returning results. Negative values
+denote number of checkpoints to skip from the end before returning results.
+    - orderBy: Order checkpoints in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort checkpoints by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
+ - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+ - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
+ - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
+ - SORT_BY_STATE: Returns checkpoints sorted by state.
+    - states: Limit the checkpoints to those that match the states.
+
+ - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
+ - STATE_ACTIVE: The checkpoint is in an active state.
+ - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.
+ - STATE_ERROR: The checkpoint errored.
+ - STATE_DELETED: The checkpoint has been deleted.
+ - STATE_PARTIALLY_DELETED: The checkpoint has been partially deleted.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -16079,6 +17762,17 @@ def get_GetTrialMetricsByCheckpoint(
     metricGroup: "typing.Optional[str]" = None,
     trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
 ) -> "v1GetTrialMetricsByCheckpointResponse":
+    """Gets the metrics for all trials associated with this checkpoint
+
+    - checkpointUuid: UUID of the checkpoint.
+    - metricGroup: Metric Group string ("training", "validation", or anything else) (nil means
+all groups).
+    - trialSourceInfoType: Type of the TrialSourceInfo.
+
+ - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified
+ - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference
+ - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+    """
     _params = {
         "metricGroup": metricGroup,
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
@@ -16105,6 +17799,18 @@ def get_GetTrialMetricsByModelVersion(
     metricGroup: "typing.Optional[str]" = None,
     trialSourceInfoType: "typing.Optional[v1TrialSourceInfoType]" = None,
 ) -> "v1GetTrialMetricsByModelVersionResponse":
+    """Gets the metrics for all trials associated with this model version
+
+    - modelName: The name of the model associated with the model version.
+    - modelVersionNum: Sequential model version number.
+    - metricGroup: Metric Group string ("training", "validation", or anything else) (nil means
+all groups).
+    - trialSourceInfoType: Type of the TrialSourceInfo.
+
+ - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified
+ - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference
+ - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+    """
     _params = {
         "metricGroup": metricGroup,
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
@@ -16129,6 +17835,11 @@ def get_GetTrialProfilerAvailableSeries(
     trialId: int,
     follow: "typing.Optional[bool]" = None,
 ) -> "typing.Iterable[v1GetTrialProfilerAvailableSeriesResponse]":
+    """Stream the available series in a trial's profiler metrics.
+
+    - trialId: The requested trial's id.
+    - follow: Continue streaming labels until the trial stops. Defaults to False.
+    """
     _params = {
         "follow": str(follow).lower() if follow is not None else None,
     }
@@ -16167,6 +17878,21 @@ def get_GetTrialProfilerMetrics(
     labels_metricType: "typing.Optional[TrialProfilerMetricLabelsProfilerMetricType]" = None,
     labels_name: "typing.Optional[str]" = None,
 ) -> "typing.Iterable[v1GetTrialProfilerMetricsResponse]":
+    """Stream trial profiler metrics.
+
+    - labels_trialId: The ID of the trial.
+    - follow: Continue streaming metrics until the trial stops. Defaults to False.
+    - labels_agentId: The agent ID associated with the metric.
+    - labels_gpuUuid: The GPU UUID associated with the metric.
+    - labels_metricType: The type of the metric.
+
+ - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+ - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.
+ - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch
+from the dataloader took.
+ - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
+    - labels_name: The name of the metric.
+    """
     _params = {
         "follow": str(follow).lower() if follow is not None else None,
         "labels.agentId": labels_agentId,
@@ -16213,6 +17939,34 @@ def get_GetTrialWorkloads(
     removeDeletedCheckpoints: "typing.Optional[bool]" = None,
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
+    """Get the list of workloads for a trial.
+
+    - trialId: Limit workloads to those that are owned by the specified trial.
+    - filter: Filter workloads with validation and/or checkpoint information.
+
+ - FILTER_OPTION_UNSPECIFIED: Any workload.
+ - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.
+ - FILTER_OPTION_VALIDATION: Only validation workloads.
+ - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
+    - group: Metric group (training, validation, etc).
+    - includeBatchMetrics: Include per-batch metrics.
+    - limit: Limit the number of workloads. A value of 0 denotes no limit.
+    - metricType: When sorting workloads by sort_key, specify training or validation form of
+a metric.
+
+ - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+ - METRIC_TYPE_TRAINING: For metrics emitted during training.
+ - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - offset: Skip the number of workloads before returning results. Negative values
+denote number of workloads to skip from the end before returning results.
+    - orderBy: Order workloads in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - removeDeletedCheckpoints: Remove deleted checkpoints.
+    - sortKey: Sort workloads by batches, a training metric, or a validation metric.
+    """
     _params = {
         "filter": filter.value if filter is not None else None,
         "group": group,
@@ -16243,6 +17997,10 @@ def get_GetUser(
     *,
     userId: int,
 ) -> "v1GetUserResponse":
+    """Get the requested user.
+
+    - userId: The id of the user.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -16263,6 +18021,10 @@ def get_GetUserByUsername(
     *,
     username: str,
 ) -> "v1GetUserByUsernameResponse":
+    """Get the requested user with username.
+
+    - username: The string of the username.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -16281,6 +18043,7 @@ def get_GetUserByUsername(
 def get_GetUserSetting(
     session: "api.Session",
 ) -> "v1GetUserSettingResponse":
+    """Get a user's settings for website"""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -16305,6 +18068,27 @@ def get_GetUsers(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
+    """Get a list of users.
+
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - name: Filter by username or display name.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order users in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort users by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
+ - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.
+ - SORT_BY_USER_NAME: Returns users sorted by user name.
+ - SORT_BY_ADMIN: Returns users sorted by if they are admin.
+ - SORT_BY_ACTIVE: Returns users sorted by if they are active.
+ - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
+ - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+    """
     _params = {
         "limit": limit,
         "name": name,
@@ -16331,6 +18115,10 @@ def get_GetValidationMetrics(
     *,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "typing.Iterable[v1GetValidationMetricsResponse]":
+    """Stream one or more trial's validation metrics.
+
+    - trialIds: Trial IDs to get metrics for.
+    """
     _params = {
         "trialIds": trialIds,
     }
@@ -16362,6 +18150,7 @@ def get_GetValidationMetrics(
 def get_GetWebhooks(
     session: "api.Session",
 ) -> "v1GetWebhooksResponse":
+    """Get a list of webhooks."""
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -16382,6 +18171,10 @@ def get_GetWorkspace(
     *,
     id: int,
 ) -> "v1GetWorkspaceResponse":
+    """Get the requested workspace.
+
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="GET",
@@ -16410,6 +18203,31 @@ def get_GetWorkspaceProjects(
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspaceProjectsResponse":
+    """Get projects associated with a workspace.
+
+    - id: The id of the workspace.
+When id is set to 0, return all projects across the all workspaces.
+    - archived: Limit the projects to those with an archived status.
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - name: Limit the projects to those matching the name.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order projects in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort the projects by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.
+ - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.
+ - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.
+ - SORT_BY_NAME: Returns projects sorted by name.
+ - SORT_BY_DESCRIPTION: Returns projects sorted by description.
+ - SORT_BY_ID: Returns projects sorted by ID.
+    - userIds: Limit the projects to those from particular users, by userIds.
+    - users: Limit the projects to those from particular users, by usernames.
+    """
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "limit": limit,
@@ -16448,6 +18266,28 @@ def get_GetWorkspaces(
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspacesResponse":
+    """Get a list of workspaces.
+
+    - archived: Limit the workspaces to those with an archived status.
+    - limit: Limit the number of workspaces. A value of 0 denotes no limit.
+    - name: Limit the workspaces to those matching the name (case insensitive).
+    - nameCaseSensitive: Limit the workspaces to those matching the name (case sensitive).
+    - offset: Skip the number of workspaces before returning results. Negative values
+denote number of workspaces to skip from the end before returning results.
+    - orderBy: Order workspaces in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - pinned: Limit the workspaces to those with pinned status by the current user.
+    - sortBy: Sort the workspaces by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.
+ - SORT_BY_ID: Returns workspaces sorted by id.
+ - SORT_BY_NAME: Returns workspaces sorted by name.
+    - userIds: Limit the workspaces to those from particular users, by userIds.
+    - users: Limit the workspaces to those from particular users, by usernames.
+    """
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "limit": limit,
@@ -16480,6 +18320,10 @@ def put_IdleNotebook(
     body: "v1IdleNotebookRequest",
     notebookId: str,
 ) -> None:
+    """Send notebook idle data to master
+
+    - notebookId: The id of the notebook.
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -16500,6 +18344,10 @@ def post_KillCommand(
     *,
     commandId: str,
 ) -> "v1KillCommandResponse":
+    """Kill the requested command.
+
+    - commandId: The id of the command.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16520,6 +18368,10 @@ def post_KillExperiment(
     *,
     id: int,
 ) -> None:
+    """Kill an experiment.
+
+    - id: The experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16540,6 +18392,7 @@ def post_KillExperiments(
     *,
     body: "v1KillExperimentsRequest",
 ) -> "v1KillExperimentsResponse":
+    """Kill multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16560,6 +18413,10 @@ def post_KillNotebook(
     *,
     notebookId: str,
 ) -> "v1KillNotebookResponse":
+    """Kill the requested notebook.
+
+    - notebookId: The id of the notebook.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16580,6 +18437,10 @@ def post_KillShell(
     *,
     shellId: str,
 ) -> "v1KillShellResponse":
+    """Kill the requested shell.
+
+    - shellId: The id of the shell.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16600,6 +18461,10 @@ def post_KillTensorboard(
     *,
     tensorboardId: str,
 ) -> "v1KillTensorboardResponse":
+    """Kill the requested tensorboard.
+
+    - tensorboardId: The id of the tensorboard.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16620,6 +18485,10 @@ def post_KillTrial(
     *,
     id: int,
 ) -> None:
+    """Kill a trial.
+
+    - id: The trial id
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16640,6 +18509,7 @@ def post_LaunchCommand(
     *,
     body: "v1LaunchCommandRequest",
 ) -> "v1LaunchCommandResponse":
+    """Launch a command."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16660,6 +18530,7 @@ def post_LaunchNotebook(
     *,
     body: "v1LaunchNotebookRequest",
 ) -> "v1LaunchNotebookResponse":
+    """Launch a notebook."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16680,6 +18551,7 @@ def post_LaunchShell(
     *,
     body: "v1LaunchShellRequest",
 ) -> "v1LaunchShellResponse":
+    """Launch a shell."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16700,6 +18572,7 @@ def post_LaunchTensorboard(
     *,
     body: "v1LaunchTensorboardRequest",
 ) -> "v1LaunchTensorboardResponse":
+    """Launch a tensorboard."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16722,6 +18595,13 @@ def get_ListRPsBoundToWorkspace(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
 ) -> "v1ListRPsBoundToWorkspaceResponse":
+    """List all resource pools, bound and unbound, available to a specific
+    workspace
+
+    - workspaceId: Workspace ID.
+    - limit: The maximum number of results to return.
+    - offset: The offset to use with pagination.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -16745,6 +18625,7 @@ def post_ListRoles(
     *,
     body: "v1ListRolesRequest",
 ) -> "v1ListRolesResponse":
+    """ListRoles returns roles and groups/users granted that role."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16767,6 +18648,12 @@ def get_ListWorkspacesBoundToRP(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
 ) -> "v1ListWorkspacesBoundToRPResponse":
+    """List all workspaces bound to a specific resource pool
+
+    - resourcePoolName: Resource pool name.
+    - limit: The maximum number of results to return.
+    - offset: The offset to use with pagination.
+    """
     _params = {
         "limit": limit,
         "offset": offset,
@@ -16790,6 +18677,7 @@ def post_Login(
     *,
     body: "v1LoginRequest",
 ) -> "v1LoginResponse":
+    """Login the user."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16808,6 +18696,7 @@ def post_Login(
 def post_Logout(
     session: "api.Session",
 ) -> None:
+    """Logout the user."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16830,6 +18719,15 @@ def post_MarkAllocationResourcesDaemon(
     body: "v1MarkAllocationResourcesDaemonRequest",
     resourcesId: str,
 ) -> None:
+    """Mark the given reservation (container, pod, etc) within an allocation as
+    a daemon reservation. In the exit of a successful exit, Determined will
+    wait for all resources to exit - unless they are marked as daemon
+    resources, in which case Determined will clean them up regardless of
+    exit status after all non-daemon resources have exited.
+
+    - allocationId: The id of the allocation.
+    - resourcesId: The id of the clump of resources to mark as daemon.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16852,6 +18750,13 @@ def get_MasterLogs(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MasterLogsResponse]":
+    """Stream master logs.
+
+    - follow: Continue following logs until the master stops or the limit is reached.
+    - limit: Limit the number of master logs. A value of 0 denotes no limit.
+    - offset: Skip the number of master logs before returning results. Negative values
+denote number of master logs to skip from the end before returning results.
+    """
     _params = {
         "follow": str(follow).lower() if follow is not None else None,
         "limit": limit,
@@ -16891,6 +18796,19 @@ def get_MetricBatches(
     metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1MetricBatchesResponse]":
+    """Get the milestones (in batches processed) at which a metric is recorded by
+    an experiment.
+
+    - experimentId: The id of the experiment.
+    - metricName: A metric name.
+    - group: Metric group (training, validation, etc).
+    - metricType: The type of metric.
+
+ - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+ - METRIC_TYPE_TRAINING: For metrics emitted during training.
+ - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - periodSeconds: Seconds to wait when polling for updates.
+    """
     _params = {
         "group": group,
         "metricName": metricName,
@@ -16928,6 +18846,10 @@ def post_MoveExperiment(
     body: "v1MoveExperimentRequest",
     experimentId: int,
 ) -> None:
+    """Move an experiment into a project.
+
+    - experimentId: The id of the experiment being moved.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16948,6 +18870,7 @@ def post_MoveExperiments(
     *,
     body: "v1MoveExperimentsRequest",
 ) -> "v1MoveExperimentsResponse":
+    """Move multiple experiments into a project."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16969,6 +18892,10 @@ def post_MoveModel(
     body: "v1MoveModelRequest",
     modelName: str,
 ) -> None:
+    """Move a model into a workspace
+
+    - modelName: The target model name.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -16990,6 +18917,10 @@ def post_MoveProject(
     body: "v1MoveProjectRequest",
     projectId: int,
 ) -> None:
+    """Move a project into a workspace.
+
+    - projectId: The id of the project being moved.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17011,6 +18942,15 @@ def post_NotifyContainerRunning(
     allocationId: str,
     body: "v1NotifyContainerRunningRequest",
 ) -> "v1NotifyContainerRunningResponse":
+    """NotifyContainterRunning is used to notify the master that the container
+    is running.  On HPC, the launcher will report a state of "Running" as
+    soon as Slurm starts the job, but the container may be in the process
+    of getting pulled down from the Internet, so the experiment is not
+    really considered to be in a "Running" state until all the containers
+    that are part of the experiment are running and not being pulled.
+
+    - allocationId: The ID of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17032,6 +18972,10 @@ def put_OverwriteRPWorkspaceBindings(
     body: "v1OverwriteRPWorkspaceBindingsRequest",
     resourcePoolName: str,
 ) -> None:
+    """Overwrite resource pool - workspace bindings
+
+    - resourcePoolName: The resource pool name.
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -17052,6 +18996,7 @@ def patch_PatchCheckpoints(
     *,
     body: "v1PatchCheckpointsRequest",
 ) -> None:
+    """Update checkpoints. Won't modify checkpoint files."""
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17073,6 +19018,11 @@ def patch_PatchExperiment(
     body: "v1PatchExperiment",
     experiment_id: int,
 ) -> "v1PatchExperimentResponse":
+    """Patch an experiment's fields.
+
+    - body: Patched experiment attributes.
+    - experiment_id: The id of the experiment.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17093,6 +19043,7 @@ def patch_PatchMasterConfig(
     *,
     body: "v1PatchMasterConfigRequest",
 ) -> "v1PatchMasterConfigResponse":
+    """Patch master config."""
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17114,6 +19065,11 @@ def patch_PatchModel(
     body: "v1PatchModel",
     modelName: str,
 ) -> "v1PatchModelResponse":
+    """Patch a model's fields.
+
+    - body: The model desired model fields and values.
+    - modelName: The name of the model being updated.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17136,6 +19092,12 @@ def patch_PatchModelVersion(
     modelName: str,
     modelVersionNum: int,
 ) -> "v1PatchModelVersionResponse":
+    """Patch a model version's fields.
+
+    - body: Patch payload.
+    - modelName: The name of the model being updated.
+    - modelVersionNum: The model version number being updated.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17157,6 +19119,11 @@ def patch_PatchProject(
     body: "v1PatchProject",
     id: int,
 ) -> "v1PatchProjectResponse":
+    """Update a project.
+
+    - body: The desired project fields and values to update.
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17178,6 +19145,11 @@ def patch_PatchTemplateConfig(
     body: "typing.Dict[str, typing.Any]",
     templateName: str,
 ) -> "v1PatchTemplateConfigResponse":
+    """Patch template config.
+
+    - body: The template value.
+    - templateName: The name of the template.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17199,6 +19171,10 @@ def patch_PatchTrial(
     body: "v1PatchTrialRequest",
     trialId: int,
 ) -> "v1PatchTrialResponse":
+    """Patch (an unmanaged) trial.
+
+    - trialId: Trial id.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17220,6 +19196,11 @@ def patch_PatchUser(
     body: "v1PatchUser",
     userId: int,
 ) -> "v1PatchUserResponse":
+    """Patch a user's fields.
+
+    - body: The updated user.
+    - userId: The id of the user.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17241,6 +19222,11 @@ def patch_PatchWorkspace(
     body: "v1PatchWorkspace",
     id: int,
 ) -> "v1PatchWorkspaceResponse":
+    """Update a workspace.
+
+    - body: The desired workspace fields and values to update.
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",
@@ -17261,6 +19247,10 @@ def post_PauseExperiment(
     *,
     id: int,
 ) -> None:
+    """Pause an experiment.
+
+    - id: The experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17281,6 +19271,7 @@ def post_PauseExperiments(
     *,
     body: "v1PauseExperimentsRequest",
 ) -> "v1PauseExperimentsResponse":
+    """Pause multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17301,6 +19292,10 @@ def post_PinWorkspace(
     *,
     id: int,
 ) -> None:
+    """Pin a workspace.
+
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17322,6 +19317,10 @@ def post_PostAllocationAcceleratorData(
     allocationId: str,
     body: "v1PostAllocationAcceleratorDataRequest",
 ) -> None:
+    """PostAllocationAcceleratorData sets the accelerator for a given allocation.
+
+    - allocationId: The id of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17343,6 +19342,12 @@ def post_PostAllocationProxyAddress(
     allocationId: str,
     body: "v1PostAllocationProxyAddressRequest",
 ) -> None:
+    """PostAllocationProxyAddress sets the proxy address to use when proxying to
+    services provided by an allocation. Upon receipt, the master will also
+    register any proxies specified by the task.
+
+    - allocationId: The id of the allocation.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17364,6 +19369,10 @@ def post_PostCheckpointMetadata(
     body: "v1PostCheckpointMetadataRequest",
     checkpoint_uuid: str,
 ) -> "v1PostCheckpointMetadataResponse":
+    """Update checkpoint metadata.
+
+    - checkpoint_uuid: UUID of the checkpoint.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17384,6 +19393,7 @@ def post_PostModel(
     *,
     body: "v1PostModelRequest",
 ) -> "v1PostModelResponse":
+    """Create a model in the registry."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17405,6 +19415,10 @@ def post_PostModelVersion(
     body: "v1PostModelVersionRequest",
     modelName: str,
 ) -> "v1PostModelVersionResponse":
+    """Create a model version.
+
+    - modelName: The name of the model to add this version to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17426,6 +19440,10 @@ def post_PostProject(
     body: "v1PostProjectRequest",
     workspaceId: int,
 ) -> "v1PostProjectResponse":
+    """Create a project.
+
+    - workspaceId: Id of the associated workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17447,6 +19465,10 @@ def post_PostSearcherOperations(
     body: "v1PostSearcherOperationsRequest",
     experimentId: int,
 ) -> None:
+    """Submit operations to a custom searcher.
+
+    - experimentId: The experiment ID.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17468,6 +19490,11 @@ def post_PostTemplate(
     body: "v1Template",
     template_name: str,
 ) -> "v1PostTemplateResponse":
+    """Post a new template.
+
+    - body: The template to put.
+    - template_name: The name of the template.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17488,6 +19515,7 @@ def post_PostTrialProfilerMetricsBatch(
     *,
     body: "v1PostTrialProfilerMetricsBatchRequest",
 ) -> None:
+    """Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17509,6 +19537,11 @@ def post_PostTrialRunnerMetadata(
     body: "v1TrialRunnerMetadata",
     trialId: int,
 ) -> None:
+    """For bookkeeping, update trial runner metadata (currently just state).
+
+    - body: The state for the trial runner.
+    - trialId: The id of the trial.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17529,6 +19562,7 @@ def post_PostUser(
     *,
     body: "v1PostUserRequest",
 ) -> "v1PostUserResponse":
+    """Create a new user."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17549,6 +19583,7 @@ def post_PostUserActivity(
     *,
     body: "v1PostUserActivityRequest",
 ) -> None:
+    """Patch a user's activity"""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17569,6 +19604,7 @@ def post_PostUserSetting(
     *,
     body: "v1PostUserSettingRequest",
 ) -> None:
+    """Post a user's settings for website"""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17589,6 +19625,11 @@ def post_PostWebhook(
     *,
     body: "v1Webhook",
 ) -> "v1PostWebhookResponse":
+    """Create a webhook.
+    TODO(???): Simplify req/response structs?
+
+    - body: The webhook to store.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17609,6 +19650,7 @@ def post_PostWorkspace(
     *,
     body: "v1PostWorkspaceRequest",
 ) -> "v1PostWorkspaceResponse":
+    """Create a workspace."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17629,6 +19671,7 @@ def post_PreviewHPSearch(
     *,
     body: "v1PreviewHPSearchRequest",
 ) -> "v1PreviewHPSearchResponse":
+    """Preview hyperparameter search."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17650,6 +19693,11 @@ def put_PutExperiment(
     body: "v1CreateExperimentRequest",
     externalExperimentId: str,
 ) -> "v1PutExperimentResponse":
+    """Put an experiment by external id.
+
+    - body: CreateExperimentRequest payload.
+    - externalExperimentId: External experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -17671,6 +19719,10 @@ def put_PutProjectNotes(
     body: "v1PutProjectNotesRequest",
     projectId: int,
 ) -> "v1PutProjectNotesResponse":
+    """Set project notes.
+
+    - projectId: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -17692,6 +19744,11 @@ def put_PutTemplate(
     body: "v1Template",
     template_name: str,
 ) -> "v1PutTemplateResponse":
+    """DEPRECATED: Update or create (upsert) the requested template.
+
+    - body: The template to put.
+    - template_name: The name of the template.
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -17712,6 +19769,7 @@ def put_PutTrial(
     *,
     body: "v1PutTrialRequest",
 ) -> "v1PutTrialResponse":
+    """Put a trial."""
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -17732,6 +19790,7 @@ def post_RemoveAssignments(
     *,
     body: "v1RemoveAssignmentsRequest",
 ) -> None:
+    """RemoveAssignments removes a set of role assignments from the system."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17752,6 +19811,10 @@ def post_ReportCheckpoint(
     *,
     body: "v1Checkpoint",
 ) -> None:
+    """Record a checkpoint.
+
+    - body: The training metrics to persist.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17773,6 +19836,10 @@ def post_ReportTrialMetrics(
     body: "v1ReportTrialMetricsRequest",
     metrics_trialId: int,
 ) -> None:
+    """Record metrics for specified trial.
+
+    - metrics_trialId: The trial associated with these metrics.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17794,6 +19861,13 @@ def post_ReportTrialProgress(
     body: float,
     trialId: int,
 ) -> None:
+    """For bookkeeping, updates the progress towards to current requested searcher
+    training length.
+
+    - body: Total units completed by the trial, in terms of the unit used to configure
+the searcher.
+    - trialId: The id of the trial.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17815,6 +19889,13 @@ def post_ReportTrialSearcherEarlyExit(
     body: "v1TrialEarlyExit",
     trialId: int,
 ) -> None:
+    """Reports to the searcher that the trial has completed the current
+    requested amount of training with the given searcher validation
+    metric.
+
+    - body: The exit reason.
+    - trialId: The id of the trial.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17835,6 +19916,7 @@ def post_ReportTrialSourceInfo(
     *,
     body: "v1ReportTrialSourceInfoRequest",
 ) -> "v1ReportTrialSourceInfoResponse":
+    """Reports a TrialSourceInfo entry for tracking inference or fine-tuning runs"""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17856,6 +19938,11 @@ def post_ReportTrialTrainingMetrics(
     body: "v1TrialMetrics",
     trainingMetrics_trialId: int,
 ) -> None:
+    """Record training metrics for specified training.
+
+    - body: The training metrics to persist.
+    - trainingMetrics_trialId: The trial associated with these metrics.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17877,6 +19964,11 @@ def post_ReportTrialValidationMetrics(
     body: "v1TrialMetrics",
     validationMetrics_trialId: int,
 ) -> None:
+    """Record validation metrics.
+
+    - body: The training metrics to persist.
+    - validationMetrics_trialId: The trial associated with these metrics.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17895,6 +19987,7 @@ def post_ReportTrialValidationMetrics(
 def post_ResetUserSetting(
     session: "api.Session",
 ) -> None:
+    """Reset a user's settings for website"""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -17917,6 +20010,19 @@ def get_ResourceAllocationAggregated(
     period: "v1ResourceAllocationAggregationPeriod",
     startDate: str,
 ) -> "v1ResourceAllocationAggregatedResponse":
+    """Get an aggregated view of resource allocation during the given time period.
+
+    - endDate: The last day to consider (the exact time is midnight UTC at the end of the
+day).
+    - period: The period over which to perform aggregation.
+
+ - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
+just an artifact of using protobuf.
+ - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.
+ - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+    - startDate: The first day to consider (the exact time is midnight UTC at the beginning
+of the day).
+    """
     _params = {
         "endDate": endDate,
         "period": period.value,
@@ -17942,6 +20048,11 @@ def get_ResourceAllocationRaw(
     timestampAfter: str,
     timestampBefore: str,
 ) -> "v1ResourceAllocationRawResponse":
+    """Get a detailed view of resource allocation during the given time period.
+
+    - timestampAfter: The start of the period to consider.
+    - timestampBefore: The end of the period to consider.
+    """
     _params = {
         "timestampAfter": timestampAfter,
         "timestampBefore": timestampBefore,
@@ -17969,6 +20080,14 @@ def get_SearchExperiments(
     projectId: "typing.Optional[int]" = None,
     sort: "typing.Optional[str]" = None,
 ) -> "v1SearchExperimentsResponse":
+    """Get experiments with grouping and search syntax
+
+    - filter: Filter expression.
+    - limit: How many results to show.
+    - offset: How many experiments to skip before including in the results.
+    - projectId: ID of the project to look at.
+    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+    """
     _params = {
         "filter": filter,
         "limit": limit,
@@ -17995,6 +20114,7 @@ def post_SearchRolesAssignableToScope(
     *,
     body: "v1SearchRolesAssignableToScopeRequest",
 ) -> "v1SearchRolesAssignableToScopeResponse":
+    """Search for roles assignable to a given scope."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18016,6 +20136,10 @@ def post_SetCommandPriority(
     body: "v1SetCommandPriorityRequest",
     commandId: str,
 ) -> "v1SetCommandPriorityResponse":
+    """Set the priority of the requested command.
+
+    - commandId: The id of the command.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18037,6 +20161,10 @@ def post_SetNotebookPriority(
     body: "v1SetNotebookPriorityRequest",
     notebookId: str,
 ) -> "v1SetNotebookPriorityResponse":
+    """Set the priority of the requested notebook.
+
+    - notebookId: The id of the notebook.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18058,6 +20186,10 @@ def post_SetShellPriority(
     body: "v1SetShellPriorityRequest",
     shellId: str,
 ) -> "v1SetShellPriorityResponse":
+    """Set the priority of the requested shell.
+
+    - shellId: The id of the shell.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18079,6 +20211,10 @@ def post_SetTensorboardPriority(
     body: "v1SetTensorboardPriorityRequest",
     tensorboardId: str,
 ) -> "v1SetTensorboardPriorityResponse":
+    """Set the priority of the requested TensorBoard.
+
+    - tensorboardId: The id of the TensorBoard.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18100,6 +20236,11 @@ def post_SetUserPassword(
     body: str,
     userId: int,
 ) -> "v1SetUserPasswordResponse":
+    """Set the requested user's password.
+
+    - body: The password of the user.
+    - userId: The id of the user.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18121,6 +20262,10 @@ def post_StartTrial(
     body: "v1StartTrialRequest",
     trialId: int,
 ) -> "v1StartTrialResponse":
+    """Start (an unmanaged) trial.
+
+    - trialId: Trial id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18154,6 +20299,35 @@ def get_TaskLogs(
     timestampAfter: "typing.Optional[str]" = None,
     timestampBefore: "typing.Optional[str]" = None,
 ) -> "typing.Iterable[v1TaskLogsResponse]":
+    """Stream task logs.
+
+    - taskId: The id of the task.
+    - agentIds: Limit the trial logs to a subset of agents.
+    - allocationIds: Limit the task logs to particular allocations.
+    - containerIds: Limit the trial logs to a subset of containers.
+    - follow: Continue following logs until the trial stops.
+    - levels: Limit the trial logs to a subset of agents.
+
+ - LOG_LEVEL_UNSPECIFIED: Unspecified log level.
+ - LOG_LEVEL_TRACE: A log level of TRACE.
+ - LOG_LEVEL_DEBUG: A log level of DEBUG.
+ - LOG_LEVEL_INFO: A log level of INFO.
+ - LOG_LEVEL_WARNING: A log level of WARNING.
+ - LOG_LEVEL_ERROR: A log level of ERROR.
+ - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
+    - limit: Limit the number of trial logs. A value of 0 denotes no limit.
+    - orderBy: Order logs in either ascending or descending order by timestamp.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - rankIds: Limit the trial logs to a subset of ranks.
+    - searchText: Search the logs by whether the text contains a substring.
+    - sources: Limit the trial logs to a subset of sources.
+    - stdtypes: Limit the trial logs to a subset of output streams.
+    - timestampAfter: Limit the trial logs to ones with a timestamp after a given time.
+    - timestampBefore: Limit the trial logs to ones with a timestamp before a given time.
+    """
     _params = {
         "agentIds": agentIds,
         "allocationIds": allocationIds,
@@ -18200,6 +20374,11 @@ def get_TaskLogsFields(
     taskId: str,
     follow: "typing.Optional[bool]" = None,
 ) -> "typing.Iterable[v1TaskLogsFieldsResponse]":
+    """Stream task log fields.
+
+    - taskId: The ID of the task.
+    - follow: Continue following fields until the task stops.
+    """
     _params = {
         "follow": str(follow).lower() if follow is not None else None,
     }
@@ -18233,6 +20412,10 @@ def post_TestWebhook(
     *,
     id: int,
 ) -> "v1TestWebhookResponse":
+    """Test a webhook.
+
+    - id: The id of the webhook.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18265,6 +20448,34 @@ def get_TrialLogs(
     timestampAfter: "typing.Optional[str]" = None,
     timestampBefore: "typing.Optional[str]" = None,
 ) -> "typing.Iterable[v1TrialLogsResponse]":
+    """Stream trial logs.
+
+    - trialId: The id of the trial.
+    - agentIds: Limit the trial logs to a subset of agents.
+    - containerIds: Limit the trial logs to a subset of containers.
+    - follow: Continue following logs until the trial stops.
+    - levels: Limit the trial logs to a subset of agents.
+
+ - LOG_LEVEL_UNSPECIFIED: Unspecified log level.
+ - LOG_LEVEL_TRACE: A log level of TRACE.
+ - LOG_LEVEL_DEBUG: A log level of DEBUG.
+ - LOG_LEVEL_INFO: A log level of INFO.
+ - LOG_LEVEL_WARNING: A log level of WARNING.
+ - LOG_LEVEL_ERROR: A log level of ERROR.
+ - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
+    - limit: Limit the number of trial logs. A value of 0 denotes no limit.
+    - orderBy: Order logs in either ascending or descending order by timestamp.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - rankIds: Limit the trial logs to a subset of ranks.
+    - searchText: Search the logs by whether the text contains a substring.
+    - sources: Limit the trial logs to a subset of sources.
+    - stdtypes: Limit the trial logs to a subset of output streams.
+    - timestampAfter: Limit the trial logs to ones with a timestamp after a given time.
+    - timestampBefore: Limit the trial logs to ones with a timestamp before a given time.
+    """
     _params = {
         "agentIds": agentIds,
         "containerIds": containerIds,
@@ -18310,6 +20521,11 @@ def get_TrialLogsFields(
     trialId: int,
     follow: "typing.Optional[bool]" = None,
 ) -> "typing.Iterable[v1TrialLogsFieldsResponse]":
+    """Stream trial log fields.
+
+    - trialId: The ID of the trial.
+    - follow: Continue following fields until the trial stops.
+    """
     _params = {
         "follow": str(follow).lower() if follow is not None else None,
     }
@@ -18351,6 +20567,22 @@ def get_TrialsSample(
     periodSeconds: "typing.Optional[int]" = None,
     startBatches: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSampleResponse]":
+    """Get a sample of the metrics over time for a sample of the trials.
+
+    - experimentId: The id of the experiment.
+    - metricName: A metric name.
+    - endBatches: Ending of window (inclusive) to fetch data for.
+    - group: Metric group (training, validation, etc).
+    - maxDatapoints: Maximum number of initial / historical data points.
+    - maxTrials: Maximum number of trials to fetch data for.
+    - metricType: The type of metric.
+
+ - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+ - METRIC_TYPE_TRAINING: For metrics emitted during training.
+ - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - periodSeconds: Seconds to wait when polling for updates.
+    - startBatches: Beginning of window (inclusive) to fetch data for.
+    """
     _params = {
         "endBatches": endBatches,
         "group": group,
@@ -18397,6 +20629,21 @@ def get_TrialsSnapshot(
     metricType: "typing.Optional[v1MetricType]" = None,
     periodSeconds: "typing.Optional[int]" = None,
 ) -> "typing.Iterable[v1TrialsSnapshotResponse]":
+    """Get a snapshot of a metric across all trials at a certain point of
+    progress.
+
+    - batchesProcessed: The point of progress at which to query metrics.
+    - experimentId: The id of the experiment.
+    - metricName: A metric name.
+    - batchesMargin: A range either side of batches_processed to include near-misses.
+    - group: Metric group (training, validation, etc).
+    - metricType: The type of metric.
+
+ - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
+ - METRIC_TYPE_TRAINING: For metrics emitted during training.
+ - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - periodSeconds: Seconds to wait when polling for updates.
+    """
     _params = {
         "batchesMargin": batchesMargin,
         "batchesProcessed": batchesProcessed,
@@ -18435,6 +20682,10 @@ def post_UnarchiveExperiment(
     *,
     id: int,
 ) -> None:
+    """Unarchive an experiment.
+
+    - id: The experiment id.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18455,6 +20706,7 @@ def post_UnarchiveExperiments(
     *,
     body: "v1UnarchiveExperimentsRequest",
 ) -> "v1UnarchiveExperimentsResponse":
+    """Unarchive multiple experiments."""
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18475,6 +20727,10 @@ def post_UnarchiveModel(
     *,
     modelName: str,
 ) -> None:
+    """Unarchive a model
+
+    - modelName: The name of the model to un-archive.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18495,6 +20751,10 @@ def post_UnarchiveProject(
     *,
     id: int,
 ) -> None:
+    """Unarchive a project.
+
+    - id: The id of the project.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18515,6 +20775,10 @@ def post_UnarchiveWorkspace(
     *,
     id: int,
 ) -> None:
+    """Unarchive a workspace.
+
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18536,6 +20800,10 @@ def delete_UnbindRPFromWorkspace(
     body: "v1UnbindRPFromWorkspaceRequest",
     resourcePoolName: str,
 ) -> None:
+    """Unbind resource pool to workspace
+
+    - resourcePoolName: The resource pool name.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -18556,6 +20824,10 @@ def post_UnpinWorkspace(
     *,
     id: int,
 ) -> None:
+    """Unpin a workspace.
+
+    - id: The id of the workspace.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -18577,6 +20849,10 @@ def put_UpdateGroup(
     body: "v1UpdateGroupRequest",
     groupId: int,
 ) -> "v1UpdateGroupResponse":
+    """Update group info.
+
+    - groupId: The id of the group
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -18597,6 +20873,7 @@ def post_UpdateJobQueue(
     *,
     body: "v1UpdateJobQueueRequest",
 ) -> None:
+    """Control the job queues."""
     _params = None
     _resp = session._do_request(
         method="POST",

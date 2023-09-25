@@ -1,8 +1,8 @@
 import { Map } from 'immutable';
 import _ from 'lodash';
 
-import { getCurrentUser, getUsers } from 'services/api';
-import type { GetUsersParams } from 'services/types';
+import { getCurrentUser, getUsers, patchUser } from 'services/api';
+import type { GetUsersParams, PatchUserParams } from 'services/types';
 import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -46,20 +46,14 @@ class UserStore extends PollingStore {
     this.#currentUser.set(Loaded(currentUser));
   }
 
-  public updateUsers = (users: DetailedUser | DetailedUser[]) => {
-    this.#usersById.update((prev) =>
-      prev.withMutations((map) => {
-        const iterUsers = Array.isArray(users) ? users : [users];
-        iterUsers.forEach((user) => {
-          map.set(user.id, user);
-
-          // Update current user if applicable.
-          const currentUser = Loadable.getOrElse(undefined, this.#currentUser.get());
-          if (currentUser?.id === user.id) this.#currentUser.set(Loaded(user));
-        });
-      }),
-    );
-  };
+  public async patchUser(userId: number, userParams: PatchUserParams['userParams']) {
+    const user = await patchUser({ userId, userParams });
+    this.#usersById.update((prev) => {
+      return prev.set(user.id, user);
+    });
+    const currentUser = Loadable.getOrElse(undefined, this.#currentUser.get());
+    if (currentUser?.id === user.id) this.#currentUser.set(Loaded(user));
+  }
 
   public fetchCurrentUser(signal?: AbortSignal): () => void {
     const canceler = new AbortController();

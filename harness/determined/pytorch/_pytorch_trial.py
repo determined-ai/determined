@@ -739,9 +739,15 @@ class _PyTorchTrialController:
     def _train_for_op(
         self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
     ) -> None:
-        searcher_complete = op._completed
+        if self.local_training:
+            searcher_length = self.max_length
+        else:
+            searcher_length = TrainUnit._from_searcher_unit(
+                op.length, self.searcher_unit, self.global_batch_size
+            )
+        assert searcher_length
 
-        while not searcher_complete:
+        while self._steps_until_complete(searcher_length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
             )
@@ -762,7 +768,6 @@ class _PyTorchTrialController:
                 if train_boundary.step_type == _TrainBoundaryType.TRAIN:
                     if not op._completed and self.is_chief:
                         self._report_searcher_progress(op, self.searcher_unit)
-                    searcher_complete = train_boundary.limit_reached
                 elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
                         self._validate(op)
@@ -786,7 +791,11 @@ class _PyTorchTrialController:
 
         # Test mode will break after one batch despite not completing op.
         if self.is_chief and not self.test_mode:
-            assert op._completed, "logic error; op was never completed."
+            # The only case where op isn't reported as completed is if we restarted but
+            # op.length was already trained for and validated on; in that case just raise
+            # ShouldExit; we have nothing to do.
+            if not op._completed:
+                raise ShouldExit(skip_exit_checkpoint=True)
 
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
         if self.searcher_metric_name not in val_metrics:

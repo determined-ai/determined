@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
@@ -18,6 +20,7 @@ interface Props {
 const FORM_ID = 'edit-model-form';
 
 const ModelEditModal = ({ model, fetchModel }: Props): JSX.Element => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
 
   const handleOk = async () => {
@@ -43,10 +46,10 @@ const ModelEditModal = ({ model, fetchModel }: Props): JSX.Element => {
   return (
     <Modal
       size="small"
-      submit={{ form: FORM_ID, handleError, handler: handleOk, text: 'Save' }}
+      submit={{ form: idPrefix + FORM_ID, handleError, handler: handleOk, text: 'Save' }}
       title="Edit Model"
       onClose={handleClose}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           initialValue={model.name}
           label="Name"

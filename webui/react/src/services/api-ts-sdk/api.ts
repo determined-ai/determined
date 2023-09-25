@@ -172,7 +172,7 @@ export const Experimentv1State = {
 } as const
 export type Experimentv1State = ValueOf<typeof Experimentv1State>
 /**
- * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
+ * Different kinds of Determined Cloud offerings - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
  * @export
  * @enum {string}
  */
@@ -304,7 +304,7 @@ export interface ProtobufAny {
     value?: string;
 }
 /**
- * paths: "f.a"     paths: "f.b.d"  Here `f` represents a field in some root message, `a` and `b` fields in the message found in `f`, and `d` a field found in the message in `f.b`.  Field masks are used to specify a subset of fields that should be returned by a get operation or modified by an update operation. Field masks also have a custom JSON encoding (see below).  # Field Masks in Projections  When used in the context of a projection, a response message or sub-message is filtered by the API to only contain those fields as specified in the mask. For example, if the mask in the previous example is applied to a response message as follows:      f {       a : 22       b {         d : 1         x : 2       }       y : 13     }     z: 8  The result will not contain specific values for fields x,y and z (their value will be set to the default, and omitted in proto text output):       f {       a : 22       b {         d : 1       }     }  A repeated field is not allowed except at the last position of a paths string.  If a FieldMask object is not present in a get operation, the operation applies to all fields (as if a FieldMask of all fields had been specified).  Note that a field mask does not necessarily apply to the top-level response message. In case of a REST get operation, the field mask applies directly to the response, but in case of a REST list operation, the mask instead applies to each individual message in the returned resource list. In case of a REST custom method, other definitions may be used. Where the mask applies will be clearly documented together with its declaration in the API.  In any case, the effect on the returned resource/resources is required behavior for APIs.  # Field Masks in Update Operations  A field mask in update operations specifies which fields of the targeted resource are going to be updated. The API is required to only change the values of the fields as specified in the mask and leave the others untouched. If a resource is passed in to describe the updated values, the API ignores the values of all fields not covered by the mask.  If a repeated field is specified for an update operation, new values will be appended to the existing repeated field in the target resource. Note that a repeated field is only allowed in the last position of a `paths` string.  If a sub-message is specified in the last position of the field mask for an update operation, then new value will be merged into the existing sub-message in the target resource.  For example, given the target message:      f {       b {         d: 1         x: 2       }       c: [1]     }  And an update message:      f {       b {         d: 10       }       c: [2]     }  then if the field mask is:   paths: ["f.b", "f.c"]  then the result will be:      f {       b {         d: 10         x: 2       }       c: [1, 2]     }  An implementation may provide options to override this default behavior for repeated and message fields.  In order to reset a field's value to the default, the field must be in the mask and set to the default value in the provided resource. Hence, in order to reset all fields of a resource, provide a default instance of the resource and set all fields in the mask, or do not provide a mask as described below.  If a field mask is not present on update, the operation applies to all fields (as if a field mask of all fields has been specified). Note that in the presence of schema evolution, this may mean that fields the client does not know and has therefore not filled into the request will be reset to their default. If this is unwanted behavior, a specific service may require a client to always specify a field mask, producing an error if not.  As with get operations, the location of the resource which describes the updated values in the request message depends on the operation kind. In any case, the effect of the field mask is required to be honored by the API.  ## Considerations for HTTP REST  The HTTP kind of an update operation which uses a field mask must be set to PATCH instead of PUT in order to satisfy HTTP semantics (PUT must only be used for full updates).  # JSON Encoding of Field Masks  In JSON, a field mask is encoded as a single string where paths are separated by a comma. Fields name in each path are converted to/from lower-camel naming conventions.  As an example, consider the following message declarations:      message Profile {       User user = 1;       Photo photo = 2;     }     message User {       string display_name = 1;       string address = 2;     }  In proto a field mask for `Profile` may look as such:      mask {       paths: "user.display_name"       paths: "photo"     }  In JSON, the same mask is represented as below:      {       mask: "user.displayName,photo"     }  # Field Masks and Oneof Fields  Field masks treat fields in oneofs just as regular fields. Consider the following message:      message SampleMessage {       oneof test_oneof {         string name = 4;         SubMessage sub_message = 9;       }     }  The field mask can be:      mask {       paths: "name"     }  Or:      mask {       paths: "sub_message"     }  Note that oneof type names ("test_oneof" in this case) cannot be used in paths.  ## Field Mask Verification  The implementation of any API method which has a FieldMask type field in the request should verify the included field paths, and return an `INVALID_ARGUMENT` error if any path is unmappable.
+ * https://protobuf.dev/reference/java/api-docs/com/google/protobuf/FieldMask
  * @export
  * @interface ProtobufFieldMask
  */
@@ -701,7 +701,7 @@ export const TrialProfilerMetricLabelsProfilerMetricType = {
 } as const
 export type TrialProfilerMetricLabelsProfilerMetricType = ValueOf<typeof TrialProfilerMetricLabelsProfilerMetricType>
 /**
- * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.  - STATE_QUEUED: The trial is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The trial is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The trial is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The trial's allocation is actively running. Running is a substate of the Active state.
+ * The current state of the trial. see \dT+ trial_state in db - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.  - STATE_QUEUED: The trial is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The trial is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The trial is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The trial's allocation is actively running. Running is a substate of the Active state.
  * @export
  * @enum {string}
  */
@@ -952,7 +952,7 @@ export interface V1ActivateExperimentsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
- * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
+ * ActivityType represents a user activity - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
  * @export
  * @enum {string}
  */
@@ -1780,7 +1780,7 @@ export interface V1CloseTrialOperation {
     requestId?: string;
 }
 /**
- * - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
+ * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
  * @export
  * @enum {string}
  */
@@ -1971,6 +1971,44 @@ export interface V1Container {
      * @memberof V1Container
      */
     devices?: Array<V1Device>;
+}
+/**
+ * Request to continue an experiment.
+ * @export
+ * @interface V1ContinueExperimentRequest
+ */
+export interface V1ContinueExperimentRequest {
+    /**
+     * Experiment ID to continue.
+     * @type {number}
+     * @memberof V1ContinueExperimentRequest
+     */
+    id: number;
+    /**
+     * Experiment config (YAML) to merge with the experiment's config.
+     * @type {string}
+     * @memberof V1ContinueExperimentRequest
+     */
+    overrideConfig?: string;
+}
+/**
+ * Request to continue an experiment.
+ * @export
+ * @interface V1ContinueExperimentResponse
+ */
+export interface V1ContinueExperimentResponse {
+    /**
+     * The created experiment.
+     * @type {V1Experiment}
+     * @memberof V1ContinueExperimentResponse
+     */
+    experiment: V1Experiment;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1ContinueExperimentResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 /**
  * Request to create a new experiment.
@@ -2513,7 +2551,7 @@ export interface V1EnableSlotResponse {
     slot?: V1Slot;
 }
 /**
- * - ENTITY_TYPE_UNSPECIFIED: Default entity type.  - ENTITY_TYPE_PROJECT: Represents a project.
+ * EntityType represents an entity - ENTITY_TYPE_UNSPECIFIED: Default entity type.  - ENTITY_TYPE_PROJECT: Represents a project.
  * @export
  * @enum {string}
  */
@@ -5339,7 +5377,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+ * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
  * @export
  * @enum {string}
  */
@@ -9461,7 +9499,7 @@ export interface V1TaskLogsResponse {
     stdtype?: string;
 }
 /**
- * - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+ * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
  * @export
  * @enum {string}
  */
@@ -10033,7 +10071,7 @@ export interface V1TrialSourceInfo {
     trialSourceInfoType: V1TrialSourceInfoType;
 }
 /**
- * - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+ * TrialSourceInfoType is the type of the TrialSourceInfo, which serves as a link between a trial and a checkpoint or model version - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
  * @export
  * @enum {string}
  */
@@ -10396,6 +10434,12 @@ export interface V1User {
      * @memberof V1User
      */
     remote?: boolean;
+    /**
+     * when the user last logged in
+     * @type {Date}
+     * @memberof V1User
+     */
+    lastLogin?: Date;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
@@ -16843,6 +16887,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling continueExperiment.');
+            }
+            const localVarPath = `/api/v1/experiments/continue`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -19250,6 +19332,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ContinueExperimentResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).continueExperiment(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -20376,6 +20477,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
+            return InternalApiFp(configuration).continueExperiment(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -21067,6 +21178,18 @@ export class InternalApi extends BaseAPI {
      */
     public completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
         return InternalApiFp(this.configuration).completeTrialSearcherValidation(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+     * @param {V1ContinueExperimentRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
+        return InternalApiFp(this.configuration).continueExperiment(body, options)(this.fetch, this.basePath)
     }
     
     /**

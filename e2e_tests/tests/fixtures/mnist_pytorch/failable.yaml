@@ -1,0 +1,28 @@
+name: failable
+data:
+  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+hyperparameters:
+  learning_rate: 1.0
+  global_batch_size: 64
+  n_filters1: 32
+  n_filters2: 64
+  dropout1: 0.25
+  dropout2: 0.5
+resources:
+  slots_per_trial: 1
+
+min_checkpoint_period:
+  batches: 3
+
+checkpoint_policy: none
+min_validation_period:
+  batches: 1
+
+max_restarts: 0
+searcher:
+  name: single
+  metric: validation_loss
+  max_length:
+      batches: 8
+  smaller_is_better: true
+entrypoint: failable_model_def:MNistFailable

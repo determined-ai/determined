@@ -347,8 +347,9 @@ func (rp *resourcePool) resourcesReleased(
 	case allocated == nil:
 		ctx.Log().Infof("released before allocated for %s", msg.AllocationID)
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
+		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 	case msg.ResourcesID != nil:
-		ctx.Log().Infof("resources %v are released for %s", *msg.ResourcesID, msg.AllocationID)
+		ctx.Log().Infof("incrementally released resources %v for %s", *msg.ResourcesID, msg.AllocationID)
 		for rID, r := range allocated.Resources {
 			if r.Summary().ResourcesID != *msg.ResourcesID {
 				continue
@@ -366,6 +367,7 @@ func (rp *resourcePool) resourcesReleased(
 			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
 		}
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
+		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 	}
 }
 

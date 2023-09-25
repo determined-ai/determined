@@ -55,20 +55,20 @@ build/schema_gen.stamp: $(GENERATION_INPUTS)
 	touch $@
 
 build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
-	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
-	mockery --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
-	mockery --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
-	mockery --name=WorkspaceAuthZ --dir=internal/workspace --output internal/mocks --filename workspace_authz_iface.go
-	mockery --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
-	mockery --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
-	mockery --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
-	mockery --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
-	mockery --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go     
-	mockery --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
-	mockery --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
-	mockery --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
-	mockery --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
-	mockery --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
+	mockery --quiet --name=DB --dir=internal/db --output internal/mocks --filename db.go
+	mockery --quiet --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
+	mockery --quiet --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
+	mockery --quiet --name=WorkspaceAuthZ --dir=internal/workspace --output internal/mocks --filename workspace_authz_iface.go
+	mockery --quiet --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
+	mockery --quiet --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
+	mockery --quiet --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
+	mockery --quiet --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
+	mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go     
+	mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
+	mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
+	mockery --quiet --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
+	mockery --quiet --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
+	mockery --quiet --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
 
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks

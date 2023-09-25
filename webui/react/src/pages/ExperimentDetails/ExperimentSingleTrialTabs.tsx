@@ -29,6 +29,7 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 import ExperimentCodeViewer from './ExperimentCodeViewer';
+import css from './ExperimentSingleTrialTabs.module.scss';
 
 const TabType = {
   Checkpoints: 'checkpoints',
@@ -348,18 +349,20 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <Pivot
-        activeKey={tabKey}
-        items={tabItems}
-        tabBarExtraContent={
-          tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (
-            <div style={{ padding: 4 }}>
-              <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
-            </div>
-          ) : undefined
-        }
-        onChange={handleTabChange}
-      />
+      <div className={css.pivoter}>
+        <Pivot
+          activeKey={tabKey}
+          items={tabItems}
+          tabBarExtraContent={
+            tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (
+              <div style={{ padding: 4 }}>
+                <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
+              </div>
+            ) : undefined
+          }
+          onChange={handleTabChange}
+        />
+      </div>
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
   );

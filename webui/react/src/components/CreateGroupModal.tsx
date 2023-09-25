@@ -2,7 +2,7 @@ import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -40,6 +40,7 @@ const ADD_USERS = 'addUsers';
 const REMOVE_USERS = 'removeUsers';
 export const API_SUCCESS_MESSAGE_CREATE = 'New group has been created.';
 const API_SUCCESS_MESSAGE_EDIT = 'Group has been updated.';
+const FORM_ID = 'create-group-form';
 
 interface Props {
   group?: V1GroupSearchResult;
@@ -48,6 +49,7 @@ interface Props {
 }
 
 const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm();
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
@@ -176,6 +178,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
@@ -183,7 +186,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}
       onClose={form.resetFields}>
       <Spinner spinning={isLoading}>
-        <Form form={form}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             label={GROUP_NAME_LABEL}
             name={GROUP_NAME_NAME}

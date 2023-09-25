@@ -111,6 +111,7 @@ type (
 		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
+		continueFromTrialID *int
 
 		taskSpec      *tasks.TaskSpec
 		generatedKeys ssh.PrivateAndPublicKeys
@@ -194,7 +195,7 @@ func newExperiment(
 		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 	}
 
-	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, workspaceID)
+	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *expModel.OwnerID, workspaceID)
 	if err != nil {
 		return nil, launchWarnings, err
 	}
@@ -462,6 +463,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		jobservice.Default.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
+		if state == "" {
+			state = model.ErrorState
+		}
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
 		} else if !wasPatched {
@@ -788,7 +792,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, e.system, e.self, e.TrialClosed,
+				nil, e.continueFromTrialID, e.system, e.self, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
