@@ -2,6 +2,5 @@
 
 **Improvements**
 
--  Kubernetes: Notebooks, Commands, Tensorboards, and Shells in Kubernetes no longer has a file
-   context limit of around 1MB. The file context limit is now the same limit as the agent resource
-   manager of around 95MB.
+-  Kubernetes: Increased the file context limit for Notebooks, Commands, Tensorboards, and Shells in
+   Kubernetes from approximately 1MB to roughly 95MB, the same limit as the agent resource manager.
