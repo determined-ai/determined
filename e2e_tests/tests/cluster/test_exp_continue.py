@@ -1,5 +1,6 @@
+import subprocess
 import tempfile
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import pytest
 
@@ -9,7 +10,15 @@ from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
-from . import test_groups
+
+# TODO move this to a package helper.
+def det_cmd(cmd: List[str], **kwargs: Any) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["det", "-m", conf.make_master_url()] + cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        **kwargs,
+    )
 
 
 @pytest.mark.e2e_cpu
@@ -24,7 +33,7 @@ def test_continue_config_file_cli() -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump({"hyperparameters": {"metrics_sigma": 1.0}}, f)
-        test_groups.det_cmd(["e", "continue", str(exp_id), "--config-file", tf.name], check=True)
+        det_cmd(["e", "continue", str(exp_id), "--config-file", tf.name], check=True)
 
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
@@ -43,7 +52,7 @@ def test_continue_config_file_and_args_cli() -> None:
         with open(tf.name, "w") as f:
             yaml.dump({"name": expected_name, "hyperparameters": {"metrics_sigma": -1.0}}, f)
 
-        stdout = test_groups.det_cmd(
+        stdout = det_cmd(
             [
                 "e",
                 "continue",
@@ -82,7 +91,7 @@ def test_continue_fixing_broken_config() -> None:
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
-    test_groups.det_cmd(
+    det_cmd(
         ["e", "continue", str(exp_id), "--config", "hyperparameters.metrics_sigma=1.0"], check=True
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
@@ -119,12 +128,12 @@ def test_continue_max_restart() -> None:
     assert count_times_ran() == 3
     assert get_trial_restarts() == 2
 
-    test_groups.det_cmd(["e", "continue", str(exp_id)], check=True)
+    det_cmd(["e", "continue", str(exp_id)], check=True)
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
     assert count_times_ran() == 6
     assert get_trial_restarts() == 2
 
-    test_groups.det_cmd(["e", "continue", str(exp_id), "--config", "max_restarts=1"], check=True)
+    det_cmd(["e", "continue", str(exp_id), "--config", "max_restarts=1"], check=True)
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
     assert count_times_ran() == 8
     assert get_trial_restarts() == 1
@@ -155,7 +164,7 @@ def test_continue_trial_time() -> None:
     exp_orig_start, exp_orig_end = exp_start_end_time()
     trial_orig_start, trial_orig_end = trial_start_end_time()
 
-    test_groups.det_cmd(["e", "continue", str(exp_id)], check=True)
+    det_cmd(["e", "continue", str(exp_id)], check=True)
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     exp_new_start, exp_new_end = exp_start_end_time()
@@ -219,7 +228,7 @@ def test_continue_batches() -> None:
     # Experiment has to start over since we didn't checkpoint.
     # We must invalidate all previous reported metrics.
     # This time experiment makes it a validation after the first checkpoint.
-    test_groups.det_cmd(
+    det_cmd(
         [
             "e",
             "continue",
@@ -244,7 +253,7 @@ def test_continue_batches() -> None:
 
     # We lose one metric since we are continuing from first checkpoint.
     # We correctly stop at total_batches.
-    test_groups.det_cmd(
+    det_cmd(
         [
             "e",
             "continue",
@@ -278,7 +287,7 @@ def test_continue_workloads_searcher(continue_max_length: int) -> None:
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
-    test_groups.det_cmd(
+    det_cmd(
         [
             "e",
             "continue",
@@ -304,7 +313,7 @@ def test_continue_pytorch_completed_searcher(continue_max_length: int) -> None:
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
     # Train for less or the same time has no error.
-    test_groups.det_cmd(
+    det_cmd(
         [
             "e",
             "continue",
