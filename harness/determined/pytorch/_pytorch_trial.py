@@ -765,7 +765,10 @@ class _PyTorchTrialController:
                     continue
 
                 # Train step limits reached, proceed accordingly.
-                if train_boundary.step_type == _TrainBoundaryType.TRAIN:
+                if train_boundary.step_type in (
+                    _TrainBoundaryType.TRAIN,
+                    _TrainBoundaryType.REPORT,
+                ):
                     if not op._completed and self.is_chief:
                         self._report_searcher_progress(op, self.searcher_unit)
                 elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
