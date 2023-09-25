@@ -4420,6 +4420,25 @@ export const V1GetUsersEERequestSortBy = {
 } as const
 export type V1GetUsersEERequestSortBy = ValueOf<typeof V1GetUsersEERequestSortBy>
 /**
+ * Response to GetUsersEERequest.
+ * @export
+ * @interface V1GetUsersEEResponse
+ */
+export interface V1GetUsersEEResponse {
+    /**
+     * The list of requested users.
+     * @type {Array<V1User>}
+     * @memberof V1GetUsersEEResponse
+     */
+    users?: Array<V1User>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetUsersEEResponse
+     */
+    pagination?: V1Pagination;
+}
+/**
  * Response to GetUserSettingRequest.
  * @export
  * @interface V1GetUserSettingResponse
@@ -25458,11 +25477,11 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
-         * @param {Array<number>} [roleIds] Filter by roles.
+         * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options: any = {}): FetchArgs {
+        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/ee`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -25501,8 +25520,8 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['active'] = active
             }
             
-            if (roleIds) {
-                localVarQueryParameter['roleIds'] = roleIds
+            if (roleIdAssignedDirectlyToUser) {
+                localVarQueryParameter['roleIdAssignedDirectlyToUser'] = roleIdAssignedDirectlyToUser
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -25760,12 +25779,12 @@ export const RBACApiFp = function (configuration?: Configuration) {
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
-         * @param {Array<number>} [roleIds] Filter by roles.
+         * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIds, options);
+        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersEEResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIdAssignedDirectlyToUser, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25911,12 +25930,12 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
-         * @param {Array<number>} [roleIds] Filter by roles.
+         * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options?: any) {
-            return RBACApiFp(configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIds, options)(fetch, basePath);
+        getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options?: any) {
+            return RBACApiFp(configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIdAssignedDirectlyToUser, options)(fetch, basePath);
         },
         /**
          * 
@@ -26039,13 +26058,13 @@ export class RBACApi extends BaseAPI {
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Filter by username or display name.
      * @param {boolean} [active] Filter by status.
-     * @param {Array<number>} [roleIds] Filter by roles.
+     * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIds?: Array<number>, options?: any) {
-        return RBACApiFp(this.configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIds, options)(this.fetch, this.basePath)
+    public getUsersEE(sortBy?: V1GetUsersEERequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options?: any) {
+        return RBACApiFp(this.configuration).getUsersEE(sortBy, orderBy, offset, limit, name, active, roleIdAssignedDirectlyToUser, options)(this.fetch, this.basePath)
     }
     
     /**

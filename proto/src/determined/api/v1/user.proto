@@ -40,7 +40,7 @@ message GetUsersEERequest {
   // Filter by status.
   optional bool active = 6;
   // Filter by roles.
-  repeated int32 role_ids = 7;
+  repeated int32 role_id_assigned_directly_to_user = 7;
 }
 // Response to GetUsersEERequest.
 message GetUsersEEResponse {
