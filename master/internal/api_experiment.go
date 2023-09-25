@@ -486,19 +486,17 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return
 			}
 
-			if len(checkpoints) > 0 {
-				go func() {
-					err := runCheckpointGCTask(
-						a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-						taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-						true, false, agentUserGroup, userModel, nil,
-					)
-					if err != nil {
-						log.WithError(err).Errorf("failed to gc checkpoints for experiment")
-						return
-					}
-				}()
-			}
+			go func() {
+				err := runCheckpointGCTask(
+					a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+					true, false, agentUserGroup, userModel, nil,
+				)
+				if err != nil {
+					log.WithError(err).Errorf("failed to gc checkpoints for experiment")
+					return
+				}
+			}()
 
 			// delete jobs per experiment
 			resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
