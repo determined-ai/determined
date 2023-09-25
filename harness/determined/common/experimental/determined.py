@@ -358,9 +358,10 @@ class Determined:
                 workspaceIds=workspace_ids,
             )
 
-        resps = api.read_paginated(get_with_offset)
-
-        return [model.Model._from_bindings(m, self._session) for r in resps for m in r.models]
+        return [
+            model.Model._from_bindings(m, self._session)
+            for m in api.read_paginated(get_with_offset, smart_flatten=True)
+        ]
 
     def get_model_labels(self) -> List[str]:
         """

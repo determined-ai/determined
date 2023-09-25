@@ -105,9 +105,10 @@ class ExperimentReference:
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy(sort_by.value),
             )
 
-        resps = api.read_paginated(get_with_offset)
-
-        return [trial.TrialReference(t.id, self._session) for r in resps for t in r.trials]
+        return [
+            trial.TrialReference(t.id, self._session)
+            for t in api.read_paginated(get_with_offset, smart_flatten=True)
+        ]
 
     def await_first_trial(self, interval: float = 0.1) -> trial.TrialReference:
         """
@@ -231,12 +232,9 @@ class ExperimentReference:
                 states=[bindings.checkpointv1State.COMPLETED],
             )
 
-        resps = api.read_paginated(get_with_offset)
-
         checkpoints = [
             checkpoint.Checkpoint._from_bindings(c, self._session)
-            for r in resps
-            for c in r.checkpoints
+            for c in api.read_paginated(get_with_offset, smart_flatten=True)
         ]
 
         if not checkpoints:

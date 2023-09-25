@@ -5,7 +5,7 @@ import tarfile
 import tempfile
 from argparse import Namespace
 from datetime import datetime
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 from termcolor import colored
 
@@ -55,7 +55,7 @@ def _format_checkpoint(checkpoint: Optional[bindings.v1CheckpointWorkload]) -> L
 
 
 def _workloads_tabulate(
-    workloads: Sequence[bindings.v1WorkloadContainer], metrics: bool
+    workloads: Iterable[bindings.v1WorkloadContainer], metrics: bool
 ) -> Tuple[List[str], List[List[Any]]]:
     # Print information about individual steps.
     headers = [
@@ -107,8 +107,9 @@ def describe_trial(args: Namespace) -> None:
             includeBatchMetrics=args.metrics,
         )
 
-    resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
-    workloads = [w for r in resps for w in r.workloads]
+    workloads = api.read_paginated(
+        get_with_offset, offset=args.offset, pages=args.pages, smart_flatten=True
+    )
 
     if args.json:
         data = trial_response.to_json()

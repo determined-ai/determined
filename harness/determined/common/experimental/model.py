@@ -248,10 +248,9 @@ class Model:
                 orderBy=order_by._to_bindings(),
             )
 
-        resps = api.read_paginated(get_with_offset)
-
         return [
-            ModelVersion._from_bindings(m, self._session) for r in resps for m in r.modelVersions
+            ModelVersion._from_bindings(m, self._session)
+            for m in api.read_paginated(get_with_offset, smart_flatten=True)
         ]
 
     def register_version(self, checkpoint_uuid: str) -> ModelVersion:
