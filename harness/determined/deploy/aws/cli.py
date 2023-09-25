@@ -158,13 +158,13 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 "or us-gov-west-1."
             )
 
-    if args.deploy_type != constants.deployment_types.SIMPLE_RDS:
+    if args.deployment_type != constants.deployment_types.SIMPLE_RDS:
         if args.db_instance_type != constants.defaults.DB_INSTANCE_TYPE:
             raise ValueError(
                 f"--db-instance-size cannot be specified for deployment types other than "
                 f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
             )
-        if args.db_instance_type != constants.defaults.DB_SIZE:
+        if args.db_size != constants.defaults.DB_SIZE:
             raise ValueError(
                 f"--db-size cannot be specified for deployment types other than "
                 f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
