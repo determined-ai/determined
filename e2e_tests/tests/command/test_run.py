@@ -203,6 +203,7 @@ def test_large_uploads(tmp_path: Path) -> None:
 
 
 # TODO we could move this test to nightly or even per release to save CI cost.
+# It takes around 15 seconds.
 @pytest.mark.e2e_k8s
 def test_context_directory_larger_than_config_map_k8s(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:

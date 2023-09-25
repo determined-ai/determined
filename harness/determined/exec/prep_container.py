@@ -335,7 +335,6 @@ if __name__ == "__main__":
             "in a future version.\n"
             "Please use --download_context_directory instead.",
             FutureWarning,
-            stacklevel=2,
         )
 
     cert = certs.default_load(info.master_url)
