@@ -500,11 +500,11 @@ account each experiment's request. More specifically, slots are divided among th
 according to the demand of each experiment, where *demand* is the number of desired concurrent
 slots.
 
-For example, in an eight-GPU cluster running two experiments with demands of 10 and 30 respectively,
-the fair-share scheduler allocates one slot to the first experiment while the second experiment
-receives the remaining seven slots. As new experiments become active or the resource demand of an
-active experiment changes, the scheduler appropriately adjusts how slots are allocated to
-experiments.
+For example, in an eight-GPU cluster running two experiments with demands of 10 and 30 single-slot
+trials respectively, the fair-share scheduler allocates two slots to the first experiment while the
+second experiment receives the remaining six slots. As new experiments become active or the resource
+demand of an active experiment changes, the scheduler appropriately adjusts how slots are allocated
+to experiments.
 
 You can modify the behavior of the fair-share scheduler by changing the *weight* of a workload. A
 workload demand for slots is multiplied by the workload weight for scheduling purposes. A workload
