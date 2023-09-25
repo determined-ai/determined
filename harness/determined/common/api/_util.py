@@ -1,5 +1,5 @@
 import enum
-from typing import Callable, Iterator, Optional, Set, Tuple, TypeVar, Union
+from typing import Any, Callable, Iterator, Optional, Set, Tuple, TypeVar, Union
 
 import urllib3
 
@@ -39,9 +39,31 @@ def read_paginated(
     offset: int = 0,
     pages: PageOpts = PageOpts.all,
     smart_flatten: bool = False,
-) -> Iterator[T]:
+) -> Iterator[Any]:
+    """Read paginated responses from the Determined REST API.
+
+    Args:
+        get_with_offset: A function that takes an offset and returns a bindings.Paginated response.
+        offset: The very first index to start reading from.
+        pages: The number of pages to read. If set to PageOpts.single, only the first page will be
+            read. If set to PageOpts.all, all pages will be read.
+        smart_flatten: An option to yield individual items (instead of pages) from the pages of
+            responses.
+
+    Yields:
+        If smart_flatten is True:
+            individual items from a paginated response
+        If smart_flatten is False:
+            entire response objects (which consiste of a list of individual items and a
+            bindings.v1Pagination for the entire response)
+    """
     while True:
         resp = get_with_offset(offset)
+        # TODO: when on Python 3.8 can use typing.get_args instead of __args__
+        # TODO: when on Python 3.10 isinstance can take a Union type without need of args
+        assert isinstance(
+            resp, bindings.Paginated.__args__  # type: ignore
+        ), "Passed 'get_with_offset' must return a bindings.Paginated type"
         pagination = resp.pagination
         assert pagination is not None
         assert pagination.endIndex is not None
@@ -49,7 +71,9 @@ def read_paginated(
         if smart_flatten:
             resp_attrs = set(resp.__dict__.keys())
             resp_attrs.remove("pagination")
-            assert len(resp_attrs) == 1, "Responses contain only one attribute besides pagination"
+            assert (
+                len(resp_attrs) == 1
+            ), "bindings.Paginated responses contain only one attribute besides pagination"
             paged_attr = getattr(resp, resp_attrs.pop())
             for item in paged_attr:
                 yield item
