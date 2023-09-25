@@ -16,7 +16,6 @@ per-file-ignores =
   tests/cluster/test_agent_restart.py:I2041
   tests/cluster/test_agent_user_group.py:I2041
   tests/cluster/test_checkpoints.py:I2041
-  tests/cluster/test_exp_continue.py:I2041
   tests/cluster/test_groups.py:I2041
   tests/cluster/test_job_queue.py:I2041
   tests/cluster/test_master_restart.py:I2041

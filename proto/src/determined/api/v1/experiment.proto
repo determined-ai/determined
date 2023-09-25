@@ -568,10 +568,8 @@ message ContinueExperimentResponse {
   };
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
-  // The created experiment config.
-  google.protobuf.Struct config = 2;
   // List of any related warnings.
-  repeated LaunchWarning warnings = 3;
+  repeated LaunchWarning warnings = 2;
 }
 
 // Request for the set of metrics recorded by multiple experiments.

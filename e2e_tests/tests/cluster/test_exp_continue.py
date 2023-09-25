@@ -5,12 +5,11 @@ import pytest
 
 from determined.common import yaml
 from determined.common.api import bindings
-from determined.common.api.bindings import experimentv1State
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
-from .test_groups import det_cmd
+from . import test_groups
 
 
 @pytest.mark.e2e_cpu
@@ -20,14 +19,14 @@ def test_continue_config_file_cli() -> None:
         conf.fixtures_path("no_op"),
         ["--config", "hyperparameters.metrics_sigma=-1.0"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump({"hyperparameters": {"metrics_sigma": 1.0}}, f)
-        det_cmd(["e", "continue", str(exp_id), "--config-file", tf.name], check=True)
+        test_groups.det_cmd(["e", "continue", str(exp_id), "--config-file", tf.name], check=True)
 
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -37,14 +36,14 @@ def test_continue_config_file_and_args_cli() -> None:
         conf.fixtures_path("no_op"),
         ["--config", "hyperparameters.metrics_sigma=-1.0"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     expected_name = "checkThis"
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump({"name": expected_name, "hyperparameters": {"metrics_sigma": -1.0}}, f)
 
-        stdout = det_cmd(
+        stdout = test_groups.det_cmd(
             [
                 "e",
                 "continue",
@@ -64,7 +63,9 @@ def test_continue_config_file_and_args_cli() -> None:
     sess = api_utils.determined_test_session()
     resp = bindings.get_GetExperiment(sess, experimentId=exp_id)
     assert resp.experiment.config["name"] == expected_name
-    assert resp.experiment.state == experimentv1State.COMPLETED  # Follow goes till completion.
+    assert (
+        resp.experiment.state == bindings.experimentv1State.COMPLETED
+    )  # Follow goes till completion.
 
     # Experiment original config is not updated. This might be a slight abuse of the webui's
     # meaning original config as "pre merged". I imagine most user's continues won't change config
@@ -79,12 +80,12 @@ def test_continue_fixing_broken_config() -> None:
         conf.fixtures_path("no_op"),
         ["--config", "hyperparameters.metrics_sigma=-1.0"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
-    det_cmd(
+    test_groups.det_cmd(
         ["e", "continue", str(exp_id), "--config", "hyperparameters.metrics_sigma=1.0"], check=True
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
@@ -102,7 +103,7 @@ def test_continue_max_restart() -> None:
         conf.fixtures_path("no_op"),
         ["--config", "hyperparameters.metrics_sigma=-1.0", "--config", "max_restarts=2"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
@@ -118,13 +119,13 @@ def test_continue_max_restart() -> None:
     assert count_times_ran() == 3
     assert get_trial_restarts() == 2
 
-    det_cmd(["e", "continue", str(exp_id)], check=True)
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    test_groups.det_cmd(["e", "continue", str(exp_id)], check=True)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
     assert count_times_ran() == 6
     assert get_trial_restarts() == 2
 
-    det_cmd(["e", "continue", str(exp_id), "--config", "max_restarts=1"], check=True)
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    test_groups.det_cmd(["e", "continue", str(exp_id), "--config", "max_restarts=1"], check=True)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
     assert count_times_ran() == 8
     assert get_trial_restarts() == 1
 
@@ -136,7 +137,7 @@ def test_continue_trial_time() -> None:
         conf.fixtures_path("no_op"),
         ["--config", "hyperparameters.metrics_sigma=-1.0"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     sess = api_utils.determined_test_session()
 
@@ -154,8 +155,8 @@ def test_continue_trial_time() -> None:
     exp_orig_start, exp_orig_end = exp_start_end_time()
     trial_orig_start, trial_orig_end = trial_start_end_time()
 
-    det_cmd(["e", "continue", str(exp_id)], check=True)
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    test_groups.det_cmd(["e", "continue", str(exp_id)], check=True)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     exp_new_start, exp_new_end = exp_start_end_time()
     trial_new_start, trial_new_end = trial_start_end_time()
@@ -189,7 +190,7 @@ def test_continue_batches() -> None:
         conf.fixtures_path("mnist_pytorch"),
         ["--config", "environment.environment_variables=['FAIL_AT_BATCH=2']"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     sess = api_utils.determined_test_session()
     trials = exp.experiment_trials(exp_id)
@@ -218,7 +219,7 @@ def test_continue_batches() -> None:
     # Experiment has to start over since we didn't checkpoint.
     # We must invalidate all previous reported metrics.
     # This time experiment makes it a validation after the first checkpoint.
-    det_cmd(
+    test_groups.det_cmd(
         [
             "e",
             "continue",
@@ -228,7 +229,7 @@ def test_continue_batches() -> None:
         ],
         check=True,
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.ERROR)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
     assert_exited_at(5)
 
     second_metric_ids = []
@@ -243,7 +244,7 @@ def test_continue_batches() -> None:
 
     # We lose one metric since we are continuing from first checkpoint.
     # We correctly stop at total_batches.
-    det_cmd(
+    test_groups.det_cmd(
         [
             "e",
             "continue",
@@ -253,7 +254,7 @@ def test_continue_batches() -> None:
         ],
         check=True,
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
     metrics = get_metric_list()
     assert len(metrics) == 8
@@ -275,9 +276,9 @@ def test_continue_workloads_searcher(continue_max_length: int) -> None:
         conf.fixtures_path("no_op"),
         [],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
-    det_cmd(
+    test_groups.det_cmd(
         [
             "e",
             "continue",
@@ -289,7 +290,7 @@ def test_continue_workloads_searcher(continue_max_length: int) -> None:
         ],
         check=True,
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -300,10 +301,10 @@ def test_continue_pytorch_completed_searcher(continue_max_length: int) -> None:
         conf.fixtures_path("mnist_pytorch"),
         ["--config", "searcher.max_length.batches=3"],
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
 
     # Train for less or the same time has no error.
-    det_cmd(
+    test_groups.det_cmd(
         [
             "e",
             "continue",
@@ -315,4 +316,4 @@ def test_continue_pytorch_completed_searcher(continue_max_length: int) -> None:
         ],
         check=True,
     )
-    exp.wait_for_experiment_state(exp_id, experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)

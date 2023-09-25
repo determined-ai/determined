@@ -1605,7 +1605,6 @@ func (a *apiServer) ContinueExperiment(
 	}
 	return &apiv1.ContinueExperimentResponse{
 		Experiment: protoExp,
-		Config:     protoutils.ToStruct(activeConfig),
 		Warnings:   command.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

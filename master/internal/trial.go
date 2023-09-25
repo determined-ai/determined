@@ -344,8 +344,7 @@ func (t *trial) continueSetup(continueFromTrialID *int) error {
 		return fmt.Errorf("getting previous task IDs for trial: %w", err)
 	}
 
-	cutTaskID, _, _ := strings.Cut(string(t.taskID), "-")
-	t.taskID = model.TaskID(fmt.Sprintf("%s-%d", cutTaskID, len(trialIDTaskIDs)))
+	t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, len(trialIDTaskIDs)))
 
 	err = t.addTask()
 	if err != nil {
