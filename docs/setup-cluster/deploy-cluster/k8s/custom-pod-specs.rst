@@ -16,8 +16,8 @@ In this topic guide, we will cover:
 #. How Determined uses pod specs.
 #. The different ways to configure custom pod specs.
 #. Supported pod spec fields.
-#. How to configuring default pod specs.
-#. How to configuring per-task pods specs.
+#. How to configure default pod specs.
+#. How to configure per-task pods specs.
 
 *******************************
  How Determined Uses Pod Specs
@@ -25,9 +25,9 @@ In this topic guide, we will cover:
 
 All Determined tasks are launched as pods. Determined pods consists of an initContainer named
 ``determined-init-container`` and a container named ``determined-container`` which executes the
-workload. When users provide a pod spec, Determined inserts the ``determined-init-container`` and
-``determined-container`` into the provided pod spec. As described below, users may also configure
-some of the fields for the ``determined-container``.
+workload. When you provide a pod spec, Determined inserts the ``determined-init-container`` and
+``determined-container`` into the provided pod spec. You may also configure some of the fields for
+the ``determined-container``, as described below.
 
 *****************************
  Ways to Configure Pod Specs
@@ -44,10 +44,13 @@ default pod spec (if any).
  Supported Pod Spec Fields
 ***************************
 
-This section describes which fields users can and cannot configure when specifying custom `pod specs
+This section describes which fields can and cannot be configured when specifying custom `pod specs
 <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#pod-v1-core>`__.
 
-Determined does not currently support configuring:
+Not Supported
+=============
+
+Determined does not support configuring the following fields:
 
 -  Pod Name - Determined automatically assigns a name for every pod that is created.
 
@@ -60,13 +63,37 @@ Determined does not currently support configuring:
 
 -  Restart Policy - This is always set to ``Never``.
 
-As part of their pod spec, users can specify ``initContainers`` and ``containers``. Additionally
-users can configure the ``determined-container`` that executes the task (e.g., training), by setting
-the container name in the pod spec to ``determined-container``. For the ``determined-container``,
-Determined currently supports configuring:
+Supported
+=========
+
+As part of your pod spec, you can specify ``initContainers`` and ``containers``. Additionally you
+can configure the ``determined-container`` that executes the task (e.g., training), by setting the
+container name in the pod spec to ``determined-container``. For the ``determined-container``,
+
+Determined supports configuring the following fields:
 
 -  Resource requests and limits (except GPU resources).
+
 -  Volume mounts and volumes.
+
+-  All ``securityContext`` fields within the pod spec of the ``determined-container`` container
+   except for ``RunAsUser`` and ``RunAsGroup``.
+
+   For those fields, use ``det user link-with-agent-user`` instead.
+
+   Example of configuring a :ref:`pachyderm-integration` notebook plugin to run in ``det notebook``:
+
+   .. code:: yaml
+
+      environment:
+        pod_spec:
+          apiVersion: v1
+          kind: Pod
+          spec:
+            containers:
+              - name: determined-container
+                  securityContext:
+                    privileged: true
 
 *******************
  Default Pod Specs
