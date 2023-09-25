@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
+from determined.common.experimental import resource_pool
 
 
 class Workspace:
@@ -57,7 +58,7 @@ class Workspace:
 
         self._hydrate(workspace_bindings)
 
-    def list_pools(self) -> List[str]:
+    def list_pools(self) -> List[resource_pool.ResourcePool]:
         """
         Lists the resources pools that the workspace has access to. Tasks submitted to this
         workspace can only use the resource pools listed here.
@@ -71,11 +72,11 @@ class Workspace:
             )
 
         resps = api.read_paginated(get_with_offset)
-        resource_pools = [
+        resource_pool_names = [
             rp for r in resps if r.resourcePools is not None for rp in r.resourcePools
         ]
 
-        return resource_pools
+        return [resource_pool.ResourcePool(self._session, name=rp) for rp in resource_pool_names]
 
 
 def _get_workspace_id_from_name(session: api.Session, name: str) -> int:
