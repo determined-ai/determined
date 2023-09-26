@@ -61,7 +61,7 @@ func AddGroupWithMembers(ctx context.Context, group model.Group, uids ...model.U
 		idsToAdd = append(idsToAdd, group.OwnerID)
 	}
 	if len(idsToAdd) > 0 {
-		err = AddUsersToGroupTx(ctx, tx, group.ID, idsToAdd...)
+		err = AddUsersToGroupsTx(ctx, tx, []int{group.ID}, false, idsToAdd...)
 		if err != nil {
 			return model.Group{}, nil, err
 		}
@@ -95,6 +95,27 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (model.Group, error)
 	}
 
 	return g, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d", gid)
+}
+
+// ModifiableGroupsTx verifies that groups are in the DB and non-personal. Returns error if any group isn't found.
+func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) (model.Group, error) {
+	if len(groups) == 0 {
+		return nil
+	}
+	if idb == nil {
+		idb = db.Bun()
+	}
+	var count int
+	err := idb.NewSelect().Model(&count).
+		ColumnExpr("COUNT(*)").
+		Where("owner_id != 0").
+		Where("id IN (?)", bun.In(groups)).
+		Scan(ctx)
+	if len(groups) != count {
+		return errors.Wrap(db.ErrNotFound, "group does not exist or is a personal group")
+	}
+
+	return errors.Wrapf(db.MatchSentinelError(err), "Error getting non-personal groups")
 }
 
 // SearchGroups searches the database for groups. userBelongsTo is "optional"
@@ -217,15 +238,18 @@ func UpdateGroupTx(ctx context.Context, idb bun.IDB, group model.Group) error {
 		group.ID)
 }
 
-// AddUsersToGroupTx adds users to a group by creating GroupMembership rows.
+// AddUsersToGroupsTx adds users to groups by creating GroupMembership rows.
 // Returns ErrNotFound if the group isn't found or ErrDuplicateRow if one
-// of the users is already in the group. Will use db.Bun() if passed nil
-// for idb.
-func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
+// of the users is already in the group (unless ignoreDuplicates).
+// Will use db.Bun() if passed nil for idb.
+func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDuplicates bool,
+	uids ...model.UserID,
+) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
-	if _, err := GroupByIDTx(ctx, idb, gid); err != nil {
+
+	if _, err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
 		return err
 	}
 
@@ -233,16 +257,22 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 		return nil
 	}
 
-	groupMem := make([]model.GroupMembership, 0, len(uids))
+	groupMem := make([]model.GroupMembership, 0, len(uids) * len(groups))
 	for _, uid := range uids {
-		groupMem = append(groupMem, model.GroupMembership{
-			UserID:  uid,
-			GroupID: gid,
-		})
+		for _, gid := range groups {
+			groupMem = append(groupMem, model.GroupMembership{
+				UserID:  uid,
+				GroupID: gid,
+			})
+		}
 	}
 
 	res, err := idb.NewInsert().Model(&groupMem).Exec(ctx)
-	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+	if ignoreDuplicates {
+		if err != nil {
+			return err
+		}
+	} else if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
@@ -261,11 +291,13 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 	return nil
 }
 
-// RemoveUsersFromGroupTx removes users from a group. Removes nothing and
+// RemoveUsersFromGroupsTx removes users from a group. Removes nothing and
 // returns ErrNotFound if the group or one of the users' membership rows
-// aren't found.
-func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
-	if _, err := GroupByIDTx(ctx, idb, gid); err != nil {
+// aren't found; unless ignoreNotFound flag is enabled.
+func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreNotFound bool,
+	uids ...model.UserID,
+) error {
+	if _, err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
 		return err
 	}
 
@@ -278,10 +310,15 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 	}
 
 	res, err := idb.NewDelete().Table("user_group_membership").
-		Where("group_id = ?", gid).
+		Where("group_id IN (?)", bun.In(groups)).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
-	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+
+	if ignoreNotFound {
+		if err != nil {
+			return err
+		}
+	} else if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
@@ -340,14 +377,14 @@ func UpdateGroupAndMembers(
 	}
 
 	if len(addUsers) > 0 {
-		err = AddUsersToGroupTx(ctx, tx, gid, addUsers...)
+		err = AddUsersToGroupsTx(ctx, tx, []int{gid}, false, addUsers...)
 		if err != nil {
 			return nil, "", err
 		}
 	}
 
 	if len(removeUsers) > 0 {
-		err = RemoveUsersFromGroupTx(ctx, tx, gid, removeUsers...)
+		err = RemoveUsersFromGroupsTx(ctx, tx, []int{gid}, false, removeUsers...)
 		if err != nil {
 			return nil, "", err
 		}
@@ -365,6 +402,43 @@ func UpdateGroupAndMembers(
 	}
 
 	return users, newName, nil
+}
+
+// UpdateGroupsForMultipleUsers adds and removes group associations for multiple members.
+func UpdateGroupsForMultipleUsers(
+	ctx context.Context,
+	modUsers []model.UserID,
+	addGroups []int32,
+	removeGroups []int32,
+) error {
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrapf(
+			db.MatchSentinelError(err),
+			"Error starting transaction for multi-group update")
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			logrus.WithError(txErr).Error("error rolling back transaction in UpdateGroupsForMultipleUsers")
+		}
+	}()
+
+	if len(addGroups) > 0 {
+		err = AddUsersToGroupsTx(ctx, tx, addGroups, true, addUsers...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(removeGroups) > 0 {
+		err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, true, removeUsers...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // UpdateUsersTimestampTx updates the user modified_at field to the present time.

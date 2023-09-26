@@ -224,6 +224,36 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 	return &apiv1.DeleteGroupResponse{}, nil
 }
 
+// AssignMultipleGroups will assign or un-assign groups from any included users.
+func (a *UserGroupAPIServer) AssignMultipleGroups(ctx context.Context, req *apiv1.AssignMultipleGroupsRequest,
+) (resp *apiv1.AssignMultipleGroupsResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
+
+	modUserIds := intsToUserIDs()
+
+	// this will include tests for non-personal groups
+	users, err := UpdateGroupsForMultipleUsers(ctx,
+		modUserIds, req.AddGroups, req.RemoveGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.AssignMultipleGroupsResponse{}, nil
+}
+
 func intsToUserIDs(ints []int32) []model.UserID {
 	ids := make([]model.UserID, len(ints))
 
