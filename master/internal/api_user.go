@@ -20,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
@@ -51,15 +50,6 @@ func clearUsername(targetUser model.User, name string, minLength int) (*string, 
 		return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 	}
 	return &clearName, nil
-}
-
-// TODO(ilia): We need null.Int32.
-func i64Ptr2i32(v *int64) *int32 {
-	if v == nil {
-		return nil
-	}
-
-	return ptrs.Ptr(int32(*v))
 }
 
 func toProtoUserFromFullUser(u model.FullUser) *userv1.User {

@@ -17,6 +17,7 @@ func i64Ptr2i32(v *int64) *int32 {
 	return ptrs.Ptr(int32(*v))
 }
 
+// ToProtoUserFromFullUser formats full user.
 func ToProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	var agentUserGroup *userv1.AgentUserGroup
 	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
