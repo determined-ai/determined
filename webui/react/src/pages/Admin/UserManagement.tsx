@@ -1,13 +1,14 @@
-import { Space } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
-import { FilterDropdownProps } from 'antd/lib/table/interface';
 import Button from 'determined-ui/Button';
+import { Column, Columns } from 'determined-ui/Columns';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
 import { useModal } from 'determined-ui/Modal';
+import Select, { SelectValue } from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
-import { Loadable } from 'determined-ui/utils/loadable';
-import _ from 'lodash';
+import { Loadable, NotLoaded } from 'determined-ui/utils/loadable';
+import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
@@ -23,17 +24,17 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
+  getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
-import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
+import { useLoadable } from 'hooks/useLoadable';
 import usePermissions from 'hooks/usePermissions';
-import { useSettings } from 'hooks/useSettings';
-import { getGroups, patchUsers } from 'services/api';
-import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
+import { getGroups, getUsers, patchUsers } from 'services/api';
+import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
-import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -41,11 +42,12 @@ import { validateDetApiEnum } from 'utils/service';
 import { alphaNumericSorter, booleanSorter, numericSorter } from 'utils/sort';
 
 import css from './UserManagement.module.scss';
-import settingsConfig, {
+import {
   DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-  UserColumnName,
+  DEFAULT_SETTINGS,
   UserManagementSettings,
+  UserRole,
+  UserStatus,
 } from './UserManagement.settings';
 
 export const USER_TITLE = 'Users';
@@ -160,22 +162,59 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   );
 };
 
+const roleOptions = [
+  { label: 'Admin', value: UserRole.ADMIN },
+  { label: 'Member', value: UserRole.MEMBER },
+];
+
+const statusOptions = [
+  { label: 'Active', value: UserStatus.ACTIVE },
+  { label: 'Inactive', value: UserStatus.INACTIVE },
+];
+
+const userManagementSettings = userSettings.get(UserManagementSettings, 'user-management');
 const UserManagement: React.FC = () => {
-  const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
+  const [refresh, setRefresh] = useState({});
   const pageRef = useRef<HTMLElement>(null);
-  const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
+  const loadableSettings = useObservable(userManagementSettings);
+  const settings = useMemo(() => {
+    return Loadable.match(loadableSettings, {
+      _: () => DEFAULT_SETTINGS,
+      Loaded: (s) => ({ ...DEFAULT_SETTINGS, ...s }),
+    });
+  }, [loadableSettings]);
+  const updateSettings = useCallback(
+    (p: Partial<UserManagementSettings>) =>
+      userSettings.setPartial(UserManagementSettings, 'user-management', p),
+    [],
+  );
 
-  const loadableUsers = useObservable(userStore.getUsers());
-  const users = Loadable.getOrElse([], loadableUsers);
-  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const userResponse = useLoadable(async () => {
+    try {
+      return await getUsers({
+        active: settings.statusFilter && settings.statusFilter === UserStatus.ACTIVE,
+        admin: settings.roleFilter && settings.roleFilter === UserRole.ADMIN,
+        limit: settings.tableLimit,
+        name: settings.name,
+        offset: settings.tableOffset,
+        orderBy: settings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC,
+        sortBy: settings.sortKey || V1GetUsersRequestSortBy.UNSPECIFIED,
+      });
+    } catch (e) {
+      handleError(e, { publicSubject: 'Could not fetch user search results' });
+      return NotLoaded;
+    }
+  }, [settings, refresh]);
 
-  const nameRegex = useMemo(() => {
-    if (settings.name === undefined) return new RegExp('.*');
-    const escapedName = settings.name?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(escapedName, 'i');
-  }, [settings.name]);
-  const filteredUsers = users.filter((user) => nameRegex.test(user.displayName || user.username));
+  const users = useMemo(
+    () =>
+      Loadable.match(userResponse, {
+        Loaded: (r) => r.users,
+        _: () => [],
+      }),
+    [userResponse],
+  );
 
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers, canModifyPermissions } = usePermissions();
@@ -184,60 +223,60 @@ const UserManagement: React.FC = () => {
   const SetUserRolesModal = useModal(SetUserRolesModalComponent);
   const AddUsersToGroupsModal = useModal(AddUsersToGroupsModalComponent);
 
-  const canceler = useRef(new AbortController());
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    userStore.fetchUsers(canceler.current.signal);
-  }, [settings]);
+    setRefresh({});
+  }, [settings, setRefresh]);
 
-  const fetchGroups = useCallback(async (): Promise<void> => {
+  const groupsResponse = useLoadable(async (canceler) => {
     try {
-      const response = await getGroups({ limit: 500 }, { signal: canceler.current.signal });
-
-      setGroups((prev) => {
-        if (_.isEqual(prev, response.groups)) return prev;
-        return response.groups || [];
-      });
+      return await getGroups({ limit: 500 }, { signal: canceler.signal });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch groups.' });
+      return NotLoaded;
     }
   }, []);
-
-  useEffect(() => {
-    const currentCanceler = canceler.current;
-    return () => currentCanceler.abort();
-  }, []);
-
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+  const groups = useMemo(
+    () =>
+      Loadable.match(groupsResponse, {
+        Loaded: (g) => g.groups || [],
+        _: () => [],
+      }),
+    [groupsResponse],
+  );
 
   useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
+  useEffect(() => {
+    // reset invalid settings
+    if (Loadable.isLoaded(loadableSettings) && !Loadable.getOrElse(null, loadableSettings)) {
+      updateSettings(DEFAULT_SETTINGS);
+    }
+  }, [loadableSettings, updateSettings]);
+
   const CreateUserModal = useModal(CreateUserModalComponent);
 
-  const handleNameSearchApply = useCallback(
-    (name: string) => {
-      updateSettings({ name: name || undefined, row: undefined, tableOffset: 0 });
-    },
+  const handleNameSearchApply = useMemo(
+    () =>
+      debounce(
+        (e: React.ChangeEvent<HTMLInputElement>) =>
+          updateSettings({ name: e.target.value || undefined, row: undefined, tableOffset: 0 }),
+        500,
+      ),
     [updateSettings],
   );
 
-  const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined, row: undefined, tableOffset: 0 });
-  }, [updateSettings]);
+  const handleStatusFilterApply = useCallback(
+    (statusFilter?: SelectValue) =>
+      updateSettings({ row: undefined, statusFilter: statusFilter as UserStatus, tableOffset: 0 }),
+    [updateSettings],
+  );
 
-  const nameFilterSearch = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterSearch
-        {...filterProps}
-        value={settings.name || ''}
-        onReset={handleNameSearchReset}
-        onSearch={handleNameSearchApply}
-      />
-    ),
-    [handleNameSearchApply, handleNameSearchReset, settings.name],
+  const handleRoleFilterApply = useCallback(
+    (roleFilter?: SelectValue) =>
+      updateSettings({ roleFilter: roleFilter as UserRole, row: undefined, tableOffset: 0 }),
+    [updateSettings],
   );
 
   const handleTableRowSelect = useCallback((rowKeys: React.Key[]) => {
@@ -304,9 +343,6 @@ const UserManagement: React.FC = () => {
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.NAME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
-        filterDropdown: nameFilterSearch,
-        filterIcon: filterIcon,
-        isFiltered: (settings: unknown) => !!(settings as UserManagementSettings)?.name,
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
@@ -382,60 +418,41 @@ const UserManagement: React.FC = () => {
     filterIcon,
     groups,
     info.userManagementEnabled,
-    nameFilterSearch,
     rbacEnabled,
     settings,
   ]);
 
-  const table = useMemo(() => {
-    return settings ? (
-      <InteractiveTable<DetailedUser, UserManagementSettings>
-        columns={columns}
-        containerRef={pageRef}
-        dataSource={filteredUsers}
-        interactiveColumns={false}
-        loading={Loadable.isNotLoaded(loadableUsers)}
-        rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey="id"
-        rowSelection={{
-          columnWidth: '20px',
-          fixed: true,
-          getCheckboxProps: (record) => ({
-            disabled: record.id === currentUser?.id, // disable the current user not to select onself
-          }),
-          onChange: handleTableRowSelect,
-          preserveSelectedRowKeys: false,
-          selectedRowKeys: selectedUserIds,
-        }}
-        settings={{
-          ...settings,
-          columns: DEFAULT_COLUMNS,
-          columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-        }}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings}
-      />
-    ) : (
-      <SkeletonTable columns={columns.length} />
-    );
-  }, [
-    settings,
-    columns,
-    filteredUsers,
-    loadableUsers,
-    handleTableRowSelect,
-    selectedUserIds,
-    updateSettings,
-    currentUser?.id,
-  ]);
-
   return (
     <>
-      <Section
-        className={css.usersTable}
-        options={
-          <Space>
+      <Section className={css.usersTable}>
+        <Columns>
+          <Column>
+            <Columns>
+              {/* input is uncontrolled to prevent settings overwriting during composition */}
+              <Input
+                defaultValue={settings.name}
+                prefix={<Icon color="cancel" decorative name="search" />}
+                onChange={handleNameSearchApply}
+              />
+              <Select
+                allowClear
+                options={roleOptions}
+                placeholder="All roles"
+                searchable={false}
+                value={settings.roleFilter}
+                onChange={handleRoleFilterApply}
+              />
+              <Select
+                allowClear
+                options={statusOptions}
+                placeholder="All statuses"
+                searchable={false}
+                value={settings.statusFilter}
+                onChange={handleStatusFilterApply}
+              />
+            </Columns>
+          </Column>
+          <Column align="right">
             {selectedUserIds.length > 0 && (
               <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
                 <Button>Actions</Button>
@@ -447,11 +464,36 @@ const UserManagement: React.FC = () => {
               onClick={CreateUserModal.open}>
               {CREATE_USER}
             </Button>
-            {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
-          </Space>
-        }
-        title={USER_TITLE}>
-        {table}
+          </Column>
+        </Columns>
+        {settings ? (
+          <InteractiveTable<DetailedUser, UserManagementSettings>
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={users}
+            interactiveColumns={false}
+            loading={Loadable.isNotLoaded(userResponse)}
+            pagination={Loadable.match(userResponse, {
+              _: () => undefined,
+              Loaded: (r) =>
+                getFullPaginationConfig(
+                  {
+                    limit: settings.tableLimit,
+                    offset: settings.tableOffset,
+                  },
+                  r.pagination.total || 0,
+                ),
+            })}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="id"
+            settings={settings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings}
+          />
+        ) : (
+          <SkeletonTable columns={columns.length} />
+        )}
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />
       <ChangeUserStatusModal.Component

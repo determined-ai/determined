@@ -333,14 +333,11 @@ export interface GetJobQStatsParams extends FetchOptions {
 }
 
 export interface GetUsersParams extends PaginationParams {
+  active?: boolean;
+  admin?: boolean;
   name?: string;
-  sortBy?:
-    | 'SORT_BY_UNSPECIFIED'
-    | 'SORT_BY_USER_NAME'
-    | 'SORT_BY_DISPLAY_NAME'
-    | 'SORT_BY_ADMIN'
-    | 'SORT_BY_ACTIVE'
-    | 'SORT_BY_MODIFIED_TIME';
+  roleIdAssignedDirectlyToUser?: Array<number>;
+  sortBy?: Api.V1GetUsersRequestSortBy;
 }
 export interface GetUserParams {
   userId: number;
