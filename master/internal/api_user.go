@@ -178,9 +178,9 @@ func (a *apiServer) GetUsers(
 	if !ok {
 		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
 	}
-	query = query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
+	query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
 	if sortColumn != "id" {
-		query = query.OrderExpr("id asc")
+		query.OrderExpr("id asc")
 	}
 
 	err := query.Scan(ctx)
