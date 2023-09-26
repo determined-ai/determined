@@ -3520,7 +3520,7 @@ workflows:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
               always-run: [true]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go
 
@@ -3535,7 +3535,7 @@ workflows:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
               container-run-type: ["podman"]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go
 
@@ -3550,7 +3550,7 @@ workflows:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
               container-run-type: ["enroot"]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go
 
@@ -3566,7 +3566,7 @@ workflows:
               name: [test-e2e-pbs-singularity-gcp]
               workload-manager: ["pbs"]
               always-run: [true]
-              mark: ["e2e_pbs and not parallel"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
             - build-go
 
@@ -3582,7 +3582,7 @@ workflows:
               name: [test-e2e-pbs-podman-gcp]
               container-run-type: ["podman"]
               workload-manager: ["pbs"]
-              mark: ["e2e_pbs and not parallel"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go
@@ -3599,7 +3599,7 @@ workflows:
               name: [test-e2e-pbs-enroot-gcp]
               container-run-type: ["enroot"]
               workload-manager: ["pbs"]
-              mark: ["e2e_pbs and not parallel"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
             - build-go
 
@@ -3615,7 +3615,7 @@ workflows:
               name: [test-e2e-slurm-agent-podman-gcp]
               agent-use: ["-A"]
               container-run-type: ["podman"]
-              mark: ["e2e_slurm and not parallel"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go
@@ -4380,6 +4380,9 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
+          matrix:
+            parameters:
+              mark: ["e2e_slurm and not deepspeed"]
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - check-if-nightly-tests-should-run
