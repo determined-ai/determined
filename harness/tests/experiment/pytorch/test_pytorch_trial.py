@@ -1247,8 +1247,9 @@ class TestPyTorchTrial:
         )
         controller.run()
         assert mock_report_progress.call_count == 100 // 10
-        for i, step in enumerate(range(10, 110, 10)):
-            assert mock_report_progress.call_args_list[i].args[0] == step
+        exp_prog = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+        got_prog = [x.args[0] for x in mock_report_progress.call_args_list]
+        assert exp_prog == got_prog
 
     @pytest.mark.parametrize(
         "ckpt",
