@@ -362,23 +362,24 @@ func (a *apiServer) LaunchCommand(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
-	spec := launchReq.Spec
 
-	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
+	if err = a.isNTSCPermittedToLaunch(ctx, launchReq.Spec, user); err != nil {
 		return nil, err
 	}
 
-	// Postprocess the spec.
-	if spec.Config.Description == "" {
-		spec.Config.Description = fmt.Sprintf(
+	// Postprocess the launchReq.Spec.
+	if launchReq.Spec.Config.Description == "" {
+		launchReq.Spec.Config.Description = fmt.Sprintf(
 			"Command (%s)",
 			petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 		)
 	}
 
-	spec.Config.Entrypoint = append([]string{commandEntrypoint}, spec.Config.Entrypoint...)
-	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+	launchReq.Spec.Config.Entrypoint = append(
+		[]string{commandEntrypoint}, launchReq.Spec.Config.Entrypoint...,
+	)
+	launchReq.Spec.AdditionalFiles = archive.Archive{
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			commandEntrypoint,
 			etc.MustStaticFile(etc.CommandEntrypointResource),
 			0o700,
@@ -386,14 +387,16 @@ func (a *apiServer) LaunchCommand(
 		),
 	}
 
-	if err = check.Validate(spec.Config); err != nil {
+	if err = check.Validate(launchReq.Spec.Config); err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"invalid command config: %s",
 			err.Error(),
 		)
 	}
-	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCommand)}
+	launchReq.Spec.Base.ExtraEnvVars = map[string]string{
+		"DET_TASK_TYPE": string(model.TaskTypeCommand),
+	}
 
 	// Launch a command actor.
 	var cmdID model.TaskID
@@ -408,7 +411,7 @@ func (a *apiServer) LaunchCommand(
 
 	return &apiv1.LaunchCommandResponse{
 		Command:  cmd,
-		Config:   protoutils.ToStruct(spec.Config),
+		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

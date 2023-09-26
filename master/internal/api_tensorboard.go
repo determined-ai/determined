@@ -220,12 +220,11 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
-	spec := launchReq.Spec
-	spec.TaskType = model.TaskTypeTensorboard
-	spec.Metadata.ExperimentIDs = req.ExperimentIds
-	spec.Metadata.TrialIDs = req.TrialIds
+	launchReq.Spec.TaskType = model.TaskTypeTensorboard
+	launchReq.Spec.Metadata.ExperimentIDs = req.ExperimentIds
+	launchReq.Spec.Metadata.TrialIDs = req.TrialIds
 
-	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
+	if err = a.isNTSCPermittedToLaunch(ctx, launchReq.Spec, user); err != nil {
 		return nil, err
 	}
 
@@ -237,16 +236,16 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Error(codes.InvalidArgument, "no experiments found")
 	}
 
-	spec.WatchProxyIdleTimeout = true
+	launchReq.Spec.WatchProxyIdleTimeout = true
 
-	// Postprocess the spec.
-	if spec.Config.IdleTimeout == nil {
+	// Postprocess the launchReq.Spec.
+	if launchReq.Spec.Config.IdleTimeout == nil {
 		masterTensorBoardIdleTimeout := model.Duration(
 			time.Duration(a.m.config.TensorBoardTimeout) * time.Second)
-		spec.Config.IdleTimeout = &masterTensorBoardIdleTimeout
+		launchReq.Spec.Config.IdleTimeout = &masterTensorBoardIdleTimeout
 	}
 
-	spec.Config.Description = fmt.Sprintf(
+	launchReq.Spec.Config.Description = fmt.Sprintf(
 		"TensorBoard (%s)",
 		petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 	)
@@ -254,7 +253,7 @@ func (a *apiServer) LaunchTensorboard(
 	// Selecting a random port mitigates the risk of multiple processes binding
 	// the same port on an agent in host mode.
 	port := getRandomPort(minTensorBoardPort, maxTensorBoardPort)
-	spec.Base.ExtraProxyPorts = append(spec.Base.ExtraProxyPorts, expconf.ProxyPort{
+	launchReq.Spec.Base.ExtraProxyPorts = append(launchReq.Spec.Base.ExtraProxyPorts, expconf.ProxyPort{
 		RawProxyPort:        port,
 		RawDefaultServiceID: ptrs.Ptr(true),
 	})
@@ -272,7 +271,7 @@ func (a *apiServer) LaunchTensorboard(
 		"DET_TASK_TYPE":        string(model.TaskTypeTensorboard),
 	}
 
-	if spec.Config.Debug {
+	if launchReq.Spec.Config.Debug {
 		uniqEnvVars["DET_DEBUG"] = "true"
 	}
 
@@ -344,14 +343,14 @@ func (a *apiServer) LaunchTensorboard(
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, spec.Base.ClusterID, exp.ExperimentID)
+				logBasePath, launchReq.Spec.Base.ClusterID, exp.ExperimentID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/trial/%d/",
-				logBasePath, spec.Base.ClusterID, exp.ExperimentID, id)
+				logBasePath, launchReq.Spec.Base.ClusterID, exp.ExperimentID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -365,21 +364,21 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, errors.Wrapf(err, "error loading experiment: %d", mostRecentExpID)
 	}
 
-	spec.Config.Entrypoint = append(
+	launchReq.Spec.Config.Entrypoint = append(
 		[]string{tensorboardEntrypointFile, storageConfPath, strings.Join(logDirs, ",")},
-		spec.Config.TensorBoardArgs...)
+		launchReq.Spec.Config.TensorBoardArgs...)
 
-	spec.Base.ExtraEnvVars = uniqEnvVars
+	launchReq.Spec.Base.ExtraEnvVars = uniqEnvVars
 
 	if !model.UsingCustomImage(req) {
-		spec.Config.Environment.Image = model.RuntimeItem{
+		launchReq.Spec.Config.Environment.Image = model.RuntimeItem{
 			CPU:  exp.Config.Environment.Image().CPU(),
 			CUDA: exp.Config.Environment.Image().CUDA(),
 			ROCM: exp.Config.Environment.Image().ROCM(),
 		}
 
 		// Inherit ImagePullSecrets too, if we inherit the image.
-		presentPod := spec.Config.Environment.PodSpec
+		presentPod := launchReq.Spec.Config.Environment.PodSpec
 		experimentPod := exp.Config.Environment.PodSpec()
 		if experimentPod != nil && len(experimentPod.Spec.ImagePullSecrets) > 0 {
 			if presentPod != nil {
@@ -389,7 +388,7 @@ func (a *apiServer) LaunchTensorboard(
 				)
 			} else {
 				// Construct a new k8sV1.Pod with just ImagePullSecrets set.
-				spec.Config.Environment.PodSpec = &k8sV1.Pod{
+				launchReq.Spec.Config.Environment.PodSpec = &k8sV1.Pod{
 					Spec: k8sV1.PodSpec{
 						ImagePullSecrets: experimentPod.Spec.ImagePullSecrets,
 					},
@@ -398,29 +397,29 @@ func (a *apiServer) LaunchTensorboard(
 		}
 	}
 	// Prefer RegistryAuth already present over the one from inferred from the experiment.
-	if spec.Config.Environment.RegistryAuth == nil {
-		spec.Config.Environment.RegistryAuth = exp.Config.Environment.RegistryAuth()
+	if launchReq.Spec.Config.Environment.RegistryAuth == nil {
+		launchReq.Spec.Config.Environment.RegistryAuth = exp.Config.Environment.RegistryAuth()
 	}
 
 	var bindMounts []model.BindMount
 	for _, uniqMount := range uniqMounts {
 		bindMounts = append(bindMounts, uniqMount)
 	}
-	spec.Config.BindMounts = append(spec.Config.BindMounts, bindMounts...)
+	launchReq.Spec.Config.BindMounts = append(launchReq.Spec.Config.BindMounts, bindMounts...)
 
 	confBytes, err := json.Marshal(exp.Config.CheckpointStorage)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error marshaling checkpoint_storage")
 	}
 
-	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+	launchReq.Spec.AdditionalFiles = archive.Archive{
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(storageConfPath, confBytes, 0o700, tar.TypeReg),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(storageConfPath, confBytes, 0o700, tar.TypeReg),
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
 			0o700,
@@ -445,7 +444,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	return &apiv1.LaunchTensorboardResponse{
 		Tensorboard: tb,
-		Config:      protoutils.ToStruct(spec.Config),
+		Config:      protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings:    pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, err
 }

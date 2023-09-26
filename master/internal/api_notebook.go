@@ -233,9 +233,8 @@ func (a *apiServer) LaunchNotebook(
 		return nil, api.WrapWithFallbackCode(err, codes.InvalidArgument,
 			"failed to prepare launch params")
 	}
-	spec := launchReq.Spec
 
-	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
+	if err = a.isNTSCPermittedToLaunch(ctx, launchReq.Spec, user); err != nil {
 		return nil, err
 	}
 
@@ -244,86 +243,87 @@ func (a *apiServer) LaunchNotebook(
 		return nil, err
 	}
 
-	spec.WatchProxyIdleTimeout = true
-	spec.WatchRunnerIdleTimeout = true
+	launchReq.Spec.WatchProxyIdleTimeout = true
+	launchReq.Spec.WatchRunnerIdleTimeout = true
 
-	// Postprocess the spec.
-	if spec.Config.IdleTimeout == nil && a.m.config.NotebookTimeout != nil {
-		spec.Config.IdleTimeout = ptrs.Ptr(model.Duration(
+	// Postprocess the launchReq.Spec.
+	if launchReq.Spec.Config.IdleTimeout == nil && a.m.config.NotebookTimeout != nil {
+		launchReq.Spec.Config.IdleTimeout = ptrs.Ptr(model.Duration(
 			time.Second * time.Duration(*a.m.config.NotebookTimeout)))
 	}
-	if spec.Config.Description == "" {
+	if launchReq.Spec.Config.Description == "" {
 		petName := petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep)
-		spec.Config.Description = fmt.Sprintf("JupyterLab (%s)", petName)
+		launchReq.Spec.Config.Description = fmt.Sprintf("JupyterLab (%s)", petName)
 	}
 
 	if req.Preview {
 		return &apiv1.LaunchNotebookResponse{
 			Notebook: &notebookv1.Notebook{},
-			Config:   protoutils.ToStruct(spec.Config),
+			Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		}, nil
 	}
 
 	// Selecting a random port mitigates the risk of multiple processes binding
 	// the same port on an agent in host mode.
 	port := getRandomPort(minNotebookPort, maxNotebookPort)
-	configBytes, err := json.Marshal(spec.Config)
+	configBytes, err := json.Marshal(launchReq.Spec.Config)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot marshal notebook config: %s", err.Error())
 	}
-	spec.Base.ExtraEnvVars = map[string]string{
+	launchReq.Spec.Base.ExtraEnvVars = map[string]string{
 		"NOTEBOOK_PORT":      strconv.Itoa(port),
 		"NOTEBOOK_CONFIG":    string(configBytes),
-		"NOTEBOOK_IDLE_TYPE": spec.Config.NotebookIdleType,
+		"NOTEBOOK_IDLE_TYPE": launchReq.Spec.Config.NotebookIdleType,
 		"DET_TASK_TYPE":      string(model.TaskTypeNotebook),
 	}
-	spec.Base.ExtraProxyPorts = append(spec.Base.ExtraProxyPorts, expconf.ProxyPort{
-		RawProxyPort:        port,
-		RawDefaultServiceID: ptrs.Ptr(true),
-	})
+	launchReq.Spec.Base.ExtraProxyPorts = append(launchReq.Spec.Base.ExtraProxyPorts,
+		expconf.ProxyPort{
+			RawProxyPort:        port,
+			RawDefaultServiceID: ptrs.Ptr(true),
+		})
 
-	spec.Config.Entrypoint = []string{jupyterEntrypoint}
+	launchReq.Spec.Config.Entrypoint = []string{jupyterEntrypoint}
 
-	if err = check.Validate(spec.Config); err != nil {
+	if err = check.Validate(launchReq.Spec.Config); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid notebook config: %s", err.Error())
 	}
 
-	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0o700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0o700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0o700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0o700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+	launchReq.Spec.AdditionalFiles = archive.Archive{
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0o700, tar.TypeDir),
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0o700, tar.TypeDir),
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0o700, tar.TypeDir),
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0o700, tar.TypeDir),
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterEntrypoint,
 			etc.MustStaticFile(etc.NotebookEntrypointResource),
 			0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterIdleCheck,
 			etc.MustStaticFile(etc.NotebookIdleCheckResource),
 			0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
 			0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			notebookDefaultPage,
 			etc.MustStaticFile(etc.NotebookTemplateResource),
 			0o644,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterKeyPath,
 			notebookKey,
 			0o600,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterCertPath,
 			notebookCert,
 			0o600,
@@ -344,7 +344,7 @@ func (a *apiServer) LaunchNotebook(
 
 	return &apiv1.LaunchNotebookResponse{
 		Notebook: notebook,
-		Config:   protoutils.ToStruct(spec.Config),
+		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
