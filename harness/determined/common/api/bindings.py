@@ -14439,15 +14439,19 @@ class v1UserRoleAssignment(Printable):
     """UserRoleAssignment contains information about the users
     belonging to a role.
     """
+    userIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
         roleAssignment: "v1RoleAssignment",
         userId: int,
+        userIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
         self.roleAssignment = roleAssignment
         self.userId = userId
+        if not isinstance(userIds, Unset):
+            self.userIds = userIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UserRoleAssignment":
@@ -14455,6 +14459,8 @@ class v1UserRoleAssignment(Printable):
             "roleAssignment": v1RoleAssignment.from_json(obj["roleAssignment"]),
             "userId": obj["userId"],
         }
+        if "userIds" in obj:
+            kwargs["userIds"] = obj["userIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -14462,6 +14468,8 @@ class v1UserRoleAssignment(Printable):
             "roleAssignment": self.roleAssignment.to_json(omit_unset),
             "userId": self.userId,
         }
+        if not omit_unset or "userIds" in vars(self):
+            out["userIds"] = self.userIds
         return out
 
 class v1UserWebSetting(Printable):

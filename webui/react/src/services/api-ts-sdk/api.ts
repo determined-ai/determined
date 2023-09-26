@@ -10562,6 +10562,12 @@ export interface V1UserRoleAssignment {
      * @memberof V1UserRoleAssignment
      */
     roleAssignment: V1RoleAssignment;
+    /**
+     * optional list of users to apply the role.
+     * @type {Array<number>}
+     * @memberof V1UserRoleAssignment
+     */
+    userIds?: Array<number>;
 }
 /**
  * UserWebSetting represents user web setting.
