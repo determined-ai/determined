@@ -123,18 +123,15 @@ func SetActive(
 	updateIDs []model.UserID,
 	activate bool,
 ) error {
-	return db.Bun().RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if len(updateIDs) > 0 {
-			if _, err := tx.NewUpdate().
-				Table("users").
-				Set("active = ?", activate).
-				Where("id IN (?)", bun.In(updateIDs)).Exec(ctx); err != nil {
-				return fmt.Errorf("error updating %q: %s", updateIDs, err)
-			}
+	if len(updateIDs) > 0 {
+		if _, err := db.Bun().NewUpdate().
+			Table("users").
+			Set("active = ?", activate).
+			Where("id IN (?)", bun.In(updateIDs)).Exec(ctx); err != nil {
+			return fmt.Errorf("error updating %q: %s", updateIDs, err)
 		}
-
-		return nil
-	})
+	}
+	return nil
 }
 
 // DeleteSessionByToken deletes user session if found
