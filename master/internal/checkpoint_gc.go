@@ -80,7 +80,11 @@ func runCheckpointGCTask(
 		ToDelete:           deleteCheckpointsStr,
 		CheckpointGlobs:    checkpointGlobs,
 		DeleteTensorboards: deleteTensorboards,
-		PatchCheckpoints:   patchCheckpoints,
+
+		// PatchCheckpoints is a flag to sync checkpoint resources (patch them)
+		// ONLY after a partial delete. In the case of a full delete, the resources
+		// are already removed, so do not attempt to patch them.
+		PatchCheckpoints: patchCheckpoints,
 	}
 
 	logCtx = logger.MergeContexts(logCtx, logger.Context{
