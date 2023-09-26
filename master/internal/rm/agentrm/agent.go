@@ -134,36 +134,42 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		ctx.Respond(a.summarize(ctx))
 	case actorapi.WebSocketRequest:
 		if a.socket != nil {
-			panic("websocket already connected")
+			err := errors.New("websocket already connected")
+			ctx.Log().WithError(err).Error("socket not nil when WebSocketRequest received")
+			return err
 		}
 
 		conn, err := ws.UpgradeEchoConnection(msg.Ctx)
 		if err != nil {
-			ctx.Log().WithError(err).Panic("Error upgrading connection to WebSocket")
+			msg := "error upgrading connection to WebSocket"
+			ctx.Log().WithError(err).Error(msg)
+			return errors.Wrap(err, msg)
 		}
 
 		wsName := "master-agent-ws-" + ctx.Self().Address().String()
 		socket, err := ws.Wrap[*aproto.MasterMessage, aproto.AgentMessage](wsName, conn)
 		if err != nil {
-			ctx.Log().WithError(err).Panic("failed to accept websocket connection")
+			msg := "failed to accept websocket connection"
+			ctx.Log().WithError(err).Error(msg)
+			return errors.Wrap(err, msg)
 		}
 
 		// spin up goroutine that sends messages to self
 		go func() {
-		InboxLoop:
+			defer ctx.Tell(ctx.Self(), socketDisconnect{})
+
 			for {
 				select {
 				case msg := <-socket.Inbox:
 					// If the Inbox has closed, we get a zero value
 					if msg == nil {
-						break InboxLoop
+						return
 					}
 					ctx.Tell(ctx.Self(), *msg)
 				case <-socket.Done:
-					break InboxLoop
+					return
 				}
 			}
-			ctx.Tell(ctx.Self(), socketDisconnect{})
 		}()
 
 		a.socket = socket
@@ -246,7 +252,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			ctx.Log().
 				WithError(err).
 				Errorf("WebSocket failed, awaiting reconnect: %s", a.socket.Name())
-			break
+			return nil
 		}
 
 		// If the socket has closed gracefully, there are really two cases:
@@ -295,7 +301,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			WithField("slots", len(msg.StartContainer.Container.Devices))
 		log.Infof("starting container")
 
-		// TODO(DET-5862): After push arch, return and handle errors when starting allocations.
 		a.socket.Outbox <- aproto.AgentMessage{StartContainer: &msg.StartContainer}
 
 		if err := a.agentState.startContainer(ctx, msg); err != nil {
