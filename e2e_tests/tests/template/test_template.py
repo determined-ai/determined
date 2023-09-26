@@ -269,7 +269,7 @@ def test_rbac_template_ntsc_create(kind: NTSC_Kind) -> None:
                 api_utils.launch_ntsc(
                     usession, workspaces[0].id, kind, exp_id=experiment_id, template=tpl1.name
                 )
-            assert e.value.status_code == 400, e.value.message
+            assert e.value.status_code == 404, e.value.message
 
 
 @pytest.mark.e2e_cpu_rbac
