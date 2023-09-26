@@ -256,7 +256,8 @@ def test_master_restart_cmd(
 
 @pytest.mark.e2e_k8s
 @pytest.mark.parametrize("slots", [0, 1])
-@pytest.mark.parametrize("downtime", [0, 20, 60])
+# Needs to be less than 64 seconds plus some so our tasks don't fail retrying model download.
+@pytest.mark.parametrize("downtime", [0, 20, 50])
 def test_master_restart_cmd_k8s(
     k8s_managed_cluster: ManagedK8sCluster, slots: int, downtime: int
 ) -> None:
@@ -272,7 +273,7 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
         time.sleep(downtime)
         managed_cluster.restart_master()
 
-    wait_for_command_state(command_id, "TERMINATED", 30)
+    wait_for_command_state(command_id, "TERMINATED", 60)  # Exponential retry can delay sleep start.
     assert_command_succeeded(command_id)
 
 
