@@ -122,7 +122,6 @@ func getUser(
 	return toProtoUserFromFullUser(*user), nil
 }
 
-
 func (a *apiServer) GetUsersEE(
 	ctx context.Context, req *apiv1.GetUsersEERequest,
 ) (*apiv1.GetUsersEEResponse, error) {
