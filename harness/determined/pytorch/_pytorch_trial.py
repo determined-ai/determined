@@ -223,8 +223,15 @@ class _PyTorchTrialController:
         if local_training:
             self.trial_id = 0
             assert self.max_length, "max_length must be specified for local-training mode."
+            self.searcher_unit = self.max_length._to_searcher_unit()
         else:
             self.trial_id = self.core_context.train._trial_id
+            configured_units = self.core_context.searcher.get_configured_units()
+            if configured_units is None:
+                raise ValueError(
+                    "Searcher units must be configured for training with PyTorchTrial."
+                )
+            self.searcher_unit = configured_units
 
         # Don't initialize the state here because it will be invalid until we load a checkpoint.
         self.state = None  # type: Optional[_TrialState]
@@ -240,10 +247,6 @@ class _PyTorchTrialController:
         self.smaller_is_better = smaller_is_better
         self.global_batch_size = global_batch_size
 
-        if local_training:
-            self.searcher_unit = self.max_length._to_searcher_unit()
-        else:
-            self.searcher_unit = self.core_context.searcher.get_configured_units()
         if self.searcher_unit == core.Unit.RECORDS:
             if self.global_batch_size is None:
                 raise ValueError("global_batch_size required for searcher unit RECORDS.")
