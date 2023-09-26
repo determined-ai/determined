@@ -257,7 +257,16 @@ func (a *TemplateAPIServer) DeleteTemplate(
 	if err != nil {
 		return nil, err
 	}
-	permErr, err := AuthZProvider.Get().CanDeleteTemplate(
+
+	permErr, err := AuthZProvider.Get().CanViewTemplate(ctx, user, model.AccessScopeID(tpl.WorkspaceID))
+	switch {
+	case err != nil:
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
+	case permErr != nil:
+		return nil, authz.SubIfUnauthorized(permErr, api.NotFoundErrs("template", req.TemplateName, true))
+	}
+
+	permErr, err = AuthZProvider.Get().CanDeleteTemplate(
 		ctx, user, model.AccessScopeID(tpl.WorkspaceID),
 	)
 	switch {
