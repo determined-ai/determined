@@ -242,11 +242,18 @@ func (a *UserGroupAPIServer) AssignMultipleGroups(ctx context.Context, req *apiv
 		return nil, err
 	}
 
-	modUserIds := intsToUserIDs()
+	modUserIds := intsToUserIDs(req.UserIds)
+	addGroups := make([]int, len(req.AddGroups))
+	for i, ag := range req.AddGroups {
+		addGroups[i] = int(ag)
+	}
+	removeGroups := make([]int, len(req.RemoveGroups))
+	for i, rg := range req.RemoveGroups {
+		removeGroups[i] = int(rg)
+	}
 
-	// this will include tests for non-personal groups
-	users, err := UpdateGroupsForMultipleUsers(ctx,
-		modUserIds, req.AddGroups, req.RemoveGroups)
+	// UpdateGroupsForMultipleUsers internals throws errors for personal groups
+	err = UpdateGroupsForMultipleUsers(ctx, modUserIds, addGroups, removeGroups)
 	if err != nil {
 		return nil, err
 	}

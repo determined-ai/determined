@@ -98,7 +98,7 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (model.Group, error)
 }
 
 // ModifiableGroupsTx verifies that groups are in the DB and non-personal. Returns error if any group isn't found.
-func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) (model.Group, error) {
+func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) error {
 	if len(groups) == 0 {
 		return nil
 	}
@@ -249,7 +249,7 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 		idb = db.Bun()
 	}
 
-	if _, err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
+	if err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
 		return err
 	}
 
@@ -257,7 +257,7 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 		return nil
 	}
 
-	groupMem := make([]model.GroupMembership, 0, len(uids) * len(groups))
+	groupMem := make([]model.GroupMembership, 0, len(uids)*len(groups))
 	for _, uid := range uids {
 		for _, gid := range groups {
 			groupMem = append(groupMem, model.GroupMembership{
@@ -276,11 +276,11 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
-				"Error adding %d user(s) to group %d because"+
-					" one or more of them were not found", len(uids), gid)
+				"Error adding %d user(s) to %d group(s) because"+
+					" one or more of them were not found", len(uids), len(groups))
 		}
-		return errors.Wrapf(sError, "Error when adding %d user(s) to group %d",
-			len(uids), gid)
+		return errors.Wrapf(sError, "Error when adding %d user(s) to %d group(s)",
+			len(uids), len(groups))
 	}
 
 	err = UpdateUsersTimestampTx(ctx, idb, uids)
@@ -297,7 +297,7 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreNotFound bool,
 	uids ...model.UserID,
 ) error {
-	if _, err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
+	if err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
 		return err
 	}
 
@@ -322,11 +322,11 @@ func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ign
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
-				"Error removing %d user(s) from group %d because"+
-					" one or more of them were not found", len(uids), gid)
+				"Error removing %d user(s) from %d group(s) because"+
+					" one or more of them were not found", len(uids), len(groups))
 		}
-		return errors.Wrapf(sError, "Error when removing %d user(s) from group %d",
-			len(uids), gid)
+		return errors.Wrapf(sError, "Error when removing %d user(s) from %d group(s)",
+			len(uids), len(groups))
 	}
 
 	err = UpdateUsersTimestampTx(ctx, idb, uids)
@@ -408,8 +408,8 @@ func UpdateGroupAndMembers(
 func UpdateGroupsForMultipleUsers(
 	ctx context.Context,
 	modUsers []model.UserID,
-	addGroups []int32,
-	removeGroups []int32,
+	addGroups []int,
+	removeGroups []int,
 ) error {
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
@@ -425,14 +425,14 @@ func UpdateGroupsForMultipleUsers(
 	}()
 
 	if len(addGroups) > 0 {
-		err = AddUsersToGroupsTx(ctx, tx, addGroups, true, addUsers...)
+		err = AddUsersToGroupsTx(ctx, tx, addGroups, true, modUsers...)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(removeGroups) > 0 {
-		err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, true, removeUsers...)
+		err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, true, modUsers...)
 		if err != nil {
 			return err
 		}
