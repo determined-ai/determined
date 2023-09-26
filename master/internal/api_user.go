@@ -140,18 +140,6 @@ func (a *apiServer) GetUsers(
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
 	}
 
-	orderExpr := ""
-	switch _, ok := sortColMap[req.SortBy]; {
-	case !ok:
-		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case sortColMap[req.SortBy] != "id":
-		orderExpr = fmt.Sprintf(
-			"%s %s, id %s",
-			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],
-		)
-	default:
-		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
-	}
 	users := []model.FullUser{}
 
 	query := db.Bun().NewSelect().Model(&users).
@@ -182,7 +170,20 @@ func (a *apiServer) GetUsers(
 		query.Where("u.active = ?", *req.Active)
 	}
 
-	err := query.Order(orderExpr).Scan(ctx)
+	orderBy, ok := orderByMap[req.OrderBy]
+	if !ok {
+		return nil, fmt.Errorf("unsupported order by %s", req.OrderBy)
+	}
+	sortColumn, ok := sortColMap[req.SortBy]
+	if !ok {
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	}
+	query = query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
+	if sortColumn != "id" {
+		query = query.OrderExpr("id asc")
+	}
+
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
