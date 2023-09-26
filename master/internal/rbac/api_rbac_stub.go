@@ -74,12 +74,6 @@ func (s *rbacAPIServerStub) RemoveAssignments(ctx context.Context,
 	return nil, UnimplementedError
 }
 
-func (s *rbacAPIServerStub) AssignMultipleGroups(ctx context.Context, req *apiv1.AssignMultipleGroupsRequest) (
-	*apiv1.AssignMultipleGroupsResponse, error,
-) {
-	return nil, UnimplementedError
-}
-
 func (s *rbacAPIServerStub) AssignWorkspaceAdminToUserTx(
 	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
 ) error {
