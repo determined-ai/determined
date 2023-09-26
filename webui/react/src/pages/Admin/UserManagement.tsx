@@ -199,7 +199,7 @@ const UserManagement: React.FC = () => {
         name: settings.name,
         offset: settings.tableOffset,
         orderBy: settings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC,
-        sortBy: settings.sortKey || V1GetUsersRequestSortBy.UNSPECIFIED,
+        sortBy: settings.sortKey,
       });
     } catch (e) {
       handleError(e, { publicSubject: 'Could not fetch user search results' });
@@ -425,47 +425,49 @@ const UserManagement: React.FC = () => {
   return (
     <>
       <Section className={css.usersTable}>
-        <Columns>
-          <Column>
-            <Columns>
-              {/* input is uncontrolled to prevent settings overwriting during composition */}
-              <Input
-                defaultValue={settings.name}
-                prefix={<Icon color="cancel" decorative name="search" />}
-                onChange={handleNameSearchApply}
-              />
-              <Select
-                allowClear
-                options={roleOptions}
-                placeholder="All roles"
-                searchable={false}
-                value={settings.roleFilter}
-                onChange={handleRoleFilterApply}
-              />
-              <Select
-                allowClear
-                options={statusOptions}
-                placeholder="All statuses"
-                searchable={false}
-                value={settings.statusFilter}
-                onChange={handleStatusFilterApply}
-              />
-            </Columns>
-          </Column>
-          <Column align="right">
-            {selectedUserIds.length > 0 && (
-              <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                <Button>Actions</Button>
-              </Dropdown>
-            )}
-            <Button
-              aria-label={CREATE_USER_LABEL}
-              disabled={!info.userManagementEnabled || !canModifyUsers}
-              onClick={CreateUserModal.open}>
-              {CREATE_USER}
-            </Button>
-          </Column>
-        </Columns>
+        <div className={css.actionBar}>
+          <Columns>
+            <Column>
+              <Columns>
+                {/* input is uncontrolled to prevent settings overwriting during composition */}
+                <Input
+                  defaultValue={settings.name}
+                  prefix={<Icon color="cancel" decorative name="search" />}
+                  onChange={handleNameSearchApply}
+                />
+                <Select
+                  allowClear
+                  options={roleOptions}
+                  placeholder="All roles"
+                  searchable={false}
+                  value={settings.roleFilter}
+                  onChange={handleRoleFilterApply}
+                />
+                <Select
+                  allowClear
+                  options={statusOptions}
+                  placeholder="All statuses"
+                  searchable={false}
+                  value={settings.statusFilter}
+                  onChange={handleStatusFilterApply}
+                />
+              </Columns>
+            </Column>
+            <Column align="right">
+              {selectedUserIds.length > 0 && (
+                <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
+                  <Button>Actions</Button>
+                </Dropdown>
+              )}
+              <Button
+                aria-label={CREATE_USER_LABEL}
+                disabled={!info.userManagementEnabled || !canModifyUsers}
+                onClick={CreateUserModal.open}>
+                {CREATE_USER}
+              </Button>
+            </Column>
+          </Columns>
+        </div>
         {settings ? (
           <InteractiveTable<DetailedUser, UserManagementSettings>
             columns={columns}
