@@ -211,13 +211,14 @@ func TestUpdateUsername(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	initialValues, err := List(context.TODO())
+	ctx := context.TODO()
+	initialValues, err := List(ctx)
 	require.NoError(t, err)
 
 	_, err = addTestUser(nil)
 	require.NoError(t, err)
 
-	newValues, err := List(context.TODO())
+	newValues, err := List(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(newValues)-len(initialValues))
 }
