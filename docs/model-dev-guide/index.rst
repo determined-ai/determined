@@ -30,7 +30,7 @@
          <div class="tile-container">
              <a class="tile" href="../model-dev-guide/apis-howto/overview.html">
                  <h2 class="tile-title">Using a Training API</h2>
-                 <p class="tile-description">Learn how to work with Training APIs and configure your distributed model-dev-guide experiments.</p>
+                 <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
              </a>
          </div>
          <div class="tile-container">
