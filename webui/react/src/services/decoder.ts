@@ -284,7 +284,7 @@ export const mapV1ModelVersion = (modelVersion: Sdk.V1ModelVersion): types.Model
 
 export const mapV1ModelDetails = (
   modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
-): types.ModelVersions | undefined => {
+): types.ModelWithVersions | undefined => {
   if (
     !modelDetailsResponse.model ||
     !modelDetailsResponse.modelVersions ||
