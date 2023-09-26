@@ -13,7 +13,6 @@ import (
 	bun "github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -63,28 +62,8 @@ func i64Ptr2i32(v *int64) *int32 {
 	return ptrs.Ptr(int32(*v))
 }
 
-func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
-	var agentUserGroup *userv1.AgentUserGroup
-	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
-		agentUserGroup = &userv1.AgentUserGroup{
-			AgentUid:   i64Ptr2i32(user.AgentUID.Ptr()),
-			AgentGid:   i64Ptr2i32(user.AgentGID.Ptr()),
-			AgentUser:  user.AgentUser.Ptr(),
-			AgentGroup: user.AgentGroup.Ptr(),
-		}
-	}
-	displayNameString := user.DisplayName.ValueOrZero()
-	return &userv1.User{
-		Id:             int32(user.ID),
-		Username:       user.Username,
-		Admin:          user.Admin,
-		Active:         user.Active,
-		Remote:         user.Remote,
-		AgentUserGroup: agentUserGroup,
-		DisplayName:    displayNameString,
-		ModifiedAt:     timestamppb.New(user.ModifiedAt),
-		LastLogin:      timestamppb.New(user.LastLogin),
-	}
+func toProtoUserFromFullUser(u model.FullUser) *userv1.User {
+	return user.ToProtoUserFromFullUser(u)
 }
 
 func getFullModelUserByUsername(
