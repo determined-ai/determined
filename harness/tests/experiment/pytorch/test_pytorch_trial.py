@@ -6,7 +6,6 @@ import os
 import pathlib
 import sys
 import typing
-import unittest.mock
 from unittest import mock
 
 import numpy as np
