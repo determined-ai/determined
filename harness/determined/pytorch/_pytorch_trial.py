@@ -122,6 +122,7 @@ class Epoch(TrainUnit):
     """
     Epoch step type (e.g. Epoch(1) defines 1 epoch)
     """
+
     pass
 
 
