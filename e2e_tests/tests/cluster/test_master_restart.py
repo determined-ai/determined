@@ -247,7 +247,8 @@ def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("slots", [0, 1])
-@pytest.mark.parametrize("downtime", [0, 20, 60])
+# Needs to be less than 64 seconds plus some so our tasks don't fail retrying model download.
+@pytest.mark.parametrize("downtime", [0, 20, 50])
 def test_master_restart_cmd(
     restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
 ) -> None:
@@ -267,6 +268,8 @@ def test_master_restart_cmd_k8s(
 def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
     command_id = run_command(30, slots=slots)
     wait_for_command_state(command_id, "RUNNING", 30)
+
+    # ALTERNTIVE IS TO WAIT FOR SOME OUTPUT
 
     if downtime >= 0:
         managed_cluster.kill_master()
