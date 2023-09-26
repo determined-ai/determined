@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { ValueOf } from 'types';
@@ -63,6 +63,25 @@ const TimeAgo: React.FC<Props> = ({
     }
     return undefined;
   }, [datetime]);
+  const tooltip: ReactNode = useMemo(() => {
+    let base = dayjs(milliseconds).format(tooltipFormat);
+    const check = 'Last experiment started';
+
+    if (base.includes(check)) {
+      base = base.slice(check.length);
+
+      // Tried to just add a line break \n to the string, but, it doesn't work...
+      return (
+        <>
+          <span>{check}:</span>
+          <br />
+          <span>{base}</span>
+        </>
+      );
+    }
+
+    return base;
+  }, [tooltipFormat, milliseconds]);
 
   const delta = useMemo(() => {
     return milliseconds === undefined ? 0 : now - milliseconds;
@@ -116,7 +135,7 @@ const TimeAgo: React.FC<Props> = ({
   }, [updateInterval]);
 
   return (
-    <Tooltip content={dayjs(milliseconds).format(tooltipFormat)}>
+    <Tooltip content={tooltip}>
       <div className={classes.join(' ')}>{durationString}</div>
     </Tooltip>
   );
