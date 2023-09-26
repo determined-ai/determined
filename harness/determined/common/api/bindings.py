@@ -1593,29 +1593,6 @@ class v1AssignMultipleGroupsRequest(Printable):
         }
         return out
 
-class v1AssignMultipleGroupsResponse(Printable):
-    """Response to AssignMultipleGroupsRequest."""
-
-    def __init__(
-        self,
-        *,
-        results: "typing.Sequence[v1UserActionResult]",
-    ):
-        self.results = results
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1AssignMultipleGroupsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1UserActionResult.from_json(x) for x in obj["results"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "results": [x.to_json(omit_unset) for x in self.results],
-        }
-        return out
-
 class v1AssignRolesRequest(Printable):
     """AssignRolesRequest is the body of the request for the call to
     grant a user or group a role. It requires group_id, role_id,
@@ -14439,19 +14416,15 @@ class v1UserRoleAssignment(Printable):
     """UserRoleAssignment contains information about the users
     belonging to a role.
     """
-    userIds: "typing.Optional[typing.Sequence[int]]" = None
 
     def __init__(
         self,
         *,
         roleAssignment: "v1RoleAssignment",
         userId: int,
-        userIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
     ):
         self.roleAssignment = roleAssignment
         self.userId = userId
-        if not isinstance(userIds, Unset):
-            self.userIds = userIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UserRoleAssignment":
@@ -14459,8 +14432,6 @@ class v1UserRoleAssignment(Printable):
             "roleAssignment": v1RoleAssignment.from_json(obj["roleAssignment"]),
             "userId": obj["userId"],
         }
-        if "userIds" in obj:
-            kwargs["userIds"] = obj["userIds"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -14468,8 +14439,6 @@ class v1UserRoleAssignment(Printable):
             "roleAssignment": self.roleAssignment.to_json(omit_unset),
             "userId": self.userId,
         }
-        if not omit_unset or "userIds" in vars(self):
-            out["userIds"] = self.userIds
         return out
 
 class v1UserWebSetting(Printable):
@@ -15209,7 +15178,7 @@ def patch_AssignMultipleGroups(
     session: "api.Session",
     *,
     body: "v1AssignMultipleGroupsRequest",
-) -> "v1AssignMultipleGroupsResponse":
+) -> None:
     """Assign multiple users to multiple groups."""
     _params = None
     _resp = session._do_request(
@@ -15223,7 +15192,7 @@ def patch_AssignMultipleGroups(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1AssignMultipleGroupsResponse.from_json(_resp.json())
+        return
     raise APIHttpError("patch_AssignMultipleGroups", _resp)
 
 def post_AssignRoles(

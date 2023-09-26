@@ -1453,12 +1453,6 @@ export interface V1AssignMultipleGroupsRequest {
  * @interface V1AssignMultipleGroupsResponse
  */
 export interface V1AssignMultipleGroupsResponse {
-    /**
-     * Details on success or error for each user.
-     * @type {Array<V1UserActionResult>}
-     * @memberof V1AssignMultipleGroupsResponse
-     */
-    results: Array<V1UserActionResult>;
 }
 /**
  * AssignRolesRequest is the body of the request for the call to grant a user or group a role. It requires group_id, role_id, and either scope_workspace_id or scope_project_id.
@@ -10562,12 +10556,6 @@ export interface V1UserRoleAssignment {
      * @memberof V1UserRoleAssignment
      */
     roleAssignment: V1RoleAssignment;
-    /**
-     * optional list of users to apply the role.
-     * @type {Array<number>}
-     * @memberof V1UserRoleAssignment
-     */
-    userIds?: Array<number>;
 }
 /**
  * UserWebSetting represents user web setting.

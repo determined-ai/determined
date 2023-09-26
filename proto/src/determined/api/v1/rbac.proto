@@ -188,11 +188,4 @@ message AssignMultipleGroupsRequest {
   repeated int32 remove_groups = 3;
 }
 // Response to AssignMultipleGroupsRequest.
-message AssignMultipleGroupsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
-  };
-
-  // Details on success or error for each user.
-  repeated UserActionResult results = 1;
-}
+message AssignMultipleGroupsResponse {}

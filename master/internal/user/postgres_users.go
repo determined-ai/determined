@@ -293,7 +293,7 @@ func ResetUserSetting(ctx context.Context, userID model.UserID) error {
 func List(ctx context.Context) (values []model.FullUser, err error) {
 	err = db.Bun().NewSelect().TableExpr("users AS u").
 		Column("u.id", "u.display_name", "u.username", "u.admin", "u.active", "u.modified_at", "u.last_login").
-		ColumnExpr(`h.uid AS agent_uid, h.gid AS agent_gid, 
+		ColumnExpr(`h.uid AS agent_uid, h.gid AS agent_gid,
 		h.user_ AS agent_user, h.group_ AS agent_group`).
 		Join("LEFT OUTER JOIN agent_user_groups h ON u.id = h.user_id").
 		Scan(ctx, &values)
@@ -308,7 +308,7 @@ func ByID(ctx context.Context, userID model.UserID) (*model.FullUser, error) {
 			"u.display_name", "u.admin",
 			"u.active", "u.remote",
 			"u.modified_at", "u.last_login").
-		ColumnExpr(`h.uid AS agent_uid, h.gid AS agent_gid, 
+		ColumnExpr(`h.uid AS agent_uid, h.gid AS agent_gid,
 		h.user_ AS agent_user, h.group_ AS agent_group`).
 		Join("LEFT OUTER JOIN agent_user_groups h ON u.id = h.user_id").
 		Where("u.id = ?", userID).Scan(ctx, &fu)
