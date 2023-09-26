@@ -1246,7 +1246,7 @@ class TestPyTorchTrial:
             max_batches=100,
         )
         controller.run()
-        assert mock_report_progress.call_count == 100 // 10
+        
         exp_prog = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
         got_prog = [x.args[0] for x in mock_report_progress.call_args_list]
         assert exp_prog == got_prog
