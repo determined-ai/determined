@@ -31,7 +31,7 @@
 /e2e_tests/tests/template @determined-ai/backend
 
 # Owned by @determined-ai/web except for generated files
-/webui    @determined-ai/web
+/webui
 /webui/react/src/services/api-ts-sdk/
 
 # EE only files in their own section to ease rebases
