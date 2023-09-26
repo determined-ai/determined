@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -140,7 +141,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if req.TemplateName != "" {
-		err := a.m.unmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config, false)
+		err := templates.UnmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config, false)
 		if err != nil {
 			return nil, launchWarnings, err
 		}
@@ -250,12 +251,12 @@ func (a *apiServer) GetCommands(
 		return nil, workspaceNotFoundErr
 	}
 
-	a.filter(&resp.Commands, func(i int) bool {
+	api.Where(&resp.Commands, func(i int) bool {
 		return limitedScopes[model.AccessScopeID(resp.Commands[i].WorkspaceId)]
 	})
 
-	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
+	api.Sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
+	return resp, api.Paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetCommand(

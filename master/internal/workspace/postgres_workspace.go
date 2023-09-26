@@ -22,6 +22,15 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 	return &w, nil
 }
 
+// Exists returns if the workspace exists and is not archived.
+func Exists(ctx context.Context, id int) (bool, error) {
+	return db.Bun().NewSelect().Table("workspaces").
+		Where("id = ?", id).
+		Where("archived = false").
+		Limit(1).
+		Exists(ctx)
+}
+
 // WorkspaceIDsFromNames returns an unordered slice of workspaceIDs that correlate with the given
 // workspace names.
 func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (

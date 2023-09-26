@@ -200,7 +200,7 @@ func (a *apiServer) GetUsers(
 		resp.Users = append(resp.Users, toProtoUserFromFullUser(user))
 	}
 
-	return resp, a.paginate(&resp.Pagination, &resp.Users, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Users, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetUser(

@@ -81,12 +81,12 @@ func (a *apiServer) GetNotebooks(
 	if err != nil {
 		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
-	a.filter(&resp.Notebooks, func(i int) bool {
+	api.Where(&resp.Notebooks, func(i int) bool {
 		return limitedScopes[model.AccessScopeID(resp.Notebooks[i].WorkspaceId)]
 	})
 
-	a.sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Notebooks, req.Offset, req.Limit)
+	api.Sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
+	return resp, api.Paginate(&resp.Pagination, &resp.Notebooks, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetNotebook(

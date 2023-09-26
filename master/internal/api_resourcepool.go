@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -81,7 +82,7 @@ func (a *apiServer) GetResourcePools(
 		resp.ResourcePools = unboundPools
 	}
 
-	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
 func (a *apiServer) BindRPToWorkspace(

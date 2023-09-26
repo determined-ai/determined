@@ -144,13 +144,24 @@ func MustResolveNewPostgresDatabase(t *testing.T) (*PgDB, func()) {
 
 // MustMigrateTestPostgres ensures the integrations DB has migrations applied.
 func MustMigrateTestPostgres(t *testing.T, db *PgDB, migrationsPath string, actions ...string) {
+	require.NoError(t, MigrateTestPostgres(db, migrationsPath, actions...))
+}
+
+// MigrateTestPostgres ensures the integrations DB has migrations applied.
+func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) error {
 	if len(actions) == 0 {
 		actions = []string{"up"}
 	}
 	err := db.Migrate(migrationsPath, actions)
-	require.NoError(t, err, "failed to migrate postgres")
+	if err != nil {
+		return fmt.Errorf("failed to migrate postgres: %w", err)
+	}
+
 	err = InitAuthKeys()
-	require.NoError(t, err, "failed to initAuthKeys")
+	if err != nil {
+		return fmt.Errorf("failed to initAuthKeys: %w", err)
+	}
+	return nil
 }
 
 // MustSetupTestPostgres returns a ready to use test postgres connection.

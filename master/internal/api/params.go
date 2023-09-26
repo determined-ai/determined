@@ -12,10 +12,10 @@ type Pagination struct {
 	EndIndex   int // Exclusive
 }
 
-// Paginate calculates pagination values. Negative offsets denotes that offsets should be
+// CalculatePagination calculates pagination values. Negative offsets denotes that offsets should be
 // calculated from the end.
 // Input offset: the number of entries you wish to skip.
-func Paginate(total, offset, limit int) (*Pagination, error) {
+func CalculatePagination(total, offset, limit int) (*Pagination, error) {
 	startIndex := offset
 	if offset < 0 {
 		startIndex = total + offset
