@@ -35,4 +35,5 @@ type RBACAPIServer interface {
 	AssignWorkspaceAdminToUserTx(
 		ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
 	) error
+	GetUsersEE(ctx context.Context, req *apiv1.GetUsersEERequest) (*apiv1.GetUsersEEResponse, error)
 }

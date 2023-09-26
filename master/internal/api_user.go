@@ -122,12 +122,6 @@ func getUser(
 	return toProtoUserFromFullUser(*user), nil
 }
 
-func (a *apiServer) GetUsersEE(
-	ctx context.Context, req *apiv1.GetUsersEERequest,
-) (*apiv1.GetUsersEEResponse, error) {
-	return nil, grpcutil.UnimplementedError
-}
-
 func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
