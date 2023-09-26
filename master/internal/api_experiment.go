@@ -11,10 +11,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
@@ -448,7 +448,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 	taskSpec := *a.m.taskSpec
 
 	sema := make(chan struct{}, maxConcurrentDeletes)
-	wg := sync.WaitGroup{}
+	g, ctx := errgroup.WithContext(context.Background())
 	successfulExpIDs := make(chan int, len(exps))
 
 	var expIDs []int
@@ -462,28 +462,21 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 
 	for i, e := range exps {
 		i := i
-
-		wg.Add(1)
-		go func(exp *model.Experiment) {
+		exp := e
+		g.Go(func() error {
 			sema <- struct{}{}
 			defer func() { <-sema }()
-			defer wg.Done()
 
 			agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceIDs[i])
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
-				return
+				return err
 			}
 
-			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
-				exp.ID,
-				0,
-				0,
-				0,
-			)
+			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(exp.ID, 0, 0, 0)
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
-				return
+				return err
 			}
 
 			err = runCheckpointGCTask(
@@ -493,7 +486,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			)
 			if err != nil {
 				log.WithError(err).Errorf("failed to gc checkpoints for experiment")
-				return
+				return err
 			}
 
 			// delete jobs per experiment
@@ -502,24 +495,28 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			})
 			if err != nil {
 				log.WithError(err).Errorf("requesting cleanup of resource mananger resources")
-				return
+				return err
 			}
 			if err = <-resp.Err; err != nil {
 				log.WithError(err).Errorf("cleaning up resource mananger resources")
-				return
+				return err
 			}
 			successfulExpIDs <- exp.ID
-		}(e)
+			return nil
+		})
 	}
-	wg.Wait()
+
+	err = g.Wait()
 	close(successfulExpIDs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to checkpoint gc")
+	}
 
 	var processExpIDs []int
 	for expID := range successfulExpIDs {
 		processExpIDs = append(processExpIDs, expID)
 	}
 
-	ctx := context.Background()
 	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
