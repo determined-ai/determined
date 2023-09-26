@@ -26,11 +26,7 @@ func TestMain(m *testing.M) {
 		log.Panicln(err)
 	}
 
-	err = pgDB.Migrate("file://../../static/migrations", []string{"up"})
-	if err != nil {
-		log.Panicln(err)
-	}
-	err = db.InitAuthKeys()
+	err = db.MigrateTestPostgres(pgDB, "file://../../static/migrations", "up")
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -74,6 +70,7 @@ func TestUserAdd(t *testing.T) {
 			require.NoError(t, err)
 			// Reset the modified at variable, just for testing purposes.
 			resUser.ModifiedAt = tt.user.ModifiedAt
+			resUser.LastLogin = tt.user.LastLogin
 			require.Equal(t, tt.user, resUser)
 
 			// require entry in the group table (addUser).
@@ -288,7 +285,7 @@ func TestGetAgentUserGroup(t *testing.T) {
 			workspaceID, err := addTestWorkspace(user.ID, tt.workspaceAug)
 			require.NoError(t, err)
 
-			aug, err := GetAgentUserGroup(user.ID, workspaceID)
+			aug, err := GetAgentUserGroup(context.TODO(), user.ID, workspaceID)
 			require.NoError(t, err)
 			if tt.workspaceAug == nil {
 				nilAug := model.AgentUserGroup{
@@ -296,7 +293,6 @@ func TestGetAgentUserGroup(t *testing.T) {
 					ID:        0, UserID: 0,
 					User: "root", UID: 0,
 					Group: "root", GID: 0,
-					RelatedUser: (*model.User)(nil),
 				}
 				require.Equal(t, &nilAug, aug)
 			}
