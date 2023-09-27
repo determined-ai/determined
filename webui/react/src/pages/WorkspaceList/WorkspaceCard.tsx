@@ -6,12 +6,13 @@ import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Spinner from 'components/kit/Spinner';
-import Avatar from 'components/kit/UserAvatar';
-import { paths } from 'routes/utils';
+import Avatar from 'components/UserAvatar';
+import { handlePath, paths } from 'routes/utils';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
@@ -34,8 +35,10 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     <>
       <Card
         actionMenu={!workspace.immutable ? menu : undefined}
-        href={paths.workspaceDetails(workspace.id)}
         size="medium"
+        onClick={(e: AnyMouseEvent) =>
+          handlePath(e, { path: paths.workspaceDetails(workspace.id) })
+        }
         onDropdown={onClick}>
         <div className={workspace.archived ? css.archived : ''}>
           <Columns gap={8}>

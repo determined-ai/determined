@@ -20,7 +20,6 @@ import {
   formatDatetime,
   numericSorter,
 } from 'components/kit/internal/functions';
-import Link from 'components/kit/internal/Link';
 import Section from 'components/kit/internal/Section';
 import { readLogStream } from 'components/kit/internal/services';
 import {
@@ -531,9 +530,9 @@ const LogViewer: React.FC<Props> = ({
           onClick={handleFullScreen}
         />
         {handleCloseLogs && (
-          <Link onClick={handleCloseLogs}>
+          <a onClick={handleCloseLogs}>
             <Icon name="close" title="Close Logs" />
-          </Link>
+          </a>
         )}
         {onDownload && (
           <Button

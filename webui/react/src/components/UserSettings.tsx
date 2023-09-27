@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
-import InputShortcut from 'components/kit/InputShortcut';
+import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
@@ -37,7 +37,6 @@ import userSettings from 'stores/userSettings';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';

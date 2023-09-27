@@ -4,10 +4,15 @@ import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } f
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import { DarkLight, ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
+import {
+  DarkLight,
+  ErrorHandler,
+  ErrorLevel,
+  ErrorType,
+  XAxisDomain,
+} from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import useResize from 'components/kit/internal/useResize';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 

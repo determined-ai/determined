@@ -5,9 +5,10 @@ import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
+import { AnyMouseEvent } from 'utils/routes';
 
 import DynamicIcon from './DynamicIcon';
 import { useProjectActionMenu } from './ProjectActionDropdown';
@@ -45,7 +46,7 @@ const ProjectCard: React.FC<Props> = ({
     <>
       <Card
         actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
-        href={paths.projectDetails(project.id)}
+        onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
         onDropdown={onClick}>
         <div className={classnames.join(' ')}>
           <div className={css.headerContainer}>

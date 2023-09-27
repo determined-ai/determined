@@ -9,6 +9,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -183,13 +184,14 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     <Modal
       cancel
       footerLink={
-        showFullConfig
-          ? {
-              external: true,
-              text: 'Read about JupyterLab settings',
-              url: paths.docs('/architecture/introduction.html#interactive-job-configuration'),
-            }
-          : undefined
+        showFullConfig ? (
+          <Link
+            external
+            path={paths.docs('/architecture/introduction.html#interactive-job-configuration')}
+            popout>
+            Read about JupyterLab settings
+          </Link>
+        ) : undefined
       }
       size={showFullConfig ? 'large' : 'small'}
       submit={{

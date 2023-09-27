@@ -1,6 +1,7 @@
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { matchesShortcut } from 'components/kit/InputShortcut';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
@@ -11,7 +12,6 @@ import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
 import handleError from 'utils/error';
-import { matchesShortcut } from 'utils/shortcut';
 
 import css from './Omnibar.module.scss';
 

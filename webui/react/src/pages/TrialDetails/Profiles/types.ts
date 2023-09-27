@@ -1,9 +1,8 @@
-import { Serie } from 'components/kit/LineChart';
 import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
 } from 'services/api-ts-sdk';
-import { TrialDetails, ValueOf } from 'types';
+import { Serie, TrialDetails, ValueOf } from 'types';
 
 export const MetricType = {
   System: 'PROFILER_METRIC_TYPE_SYSTEM',

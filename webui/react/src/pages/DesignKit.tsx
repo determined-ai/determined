@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
+import Avatar from 'components/kit/Avatar';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -16,18 +17,17 @@ import { Column, Columns } from 'components/kit/Columns';
 import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
-import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
-import InputShortcut from 'components/kit/InputShortcut';
+import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
-import { LineChart, Serie } from 'components/kit/LineChart';
+import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
+import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
@@ -43,7 +43,6 @@ import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
 import Paragraph from 'components/kit/Typography/Paragraph';
 import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
-import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
@@ -58,7 +57,6 @@ import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { BrandingType } from 'stores/determinedInfo';
-import { MetricType, Note, User, ValueOf } from 'types';
 import {
   Background,
   Brand,
@@ -73,12 +71,12 @@ import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import loremIpsum, { loremIpsumSentence } from 'utils/loremIpsum';
 import { noOp } from 'utils/service';
-import { KeyboardShortcut } from 'utils/shortcut';
 
 import css from './DesignKit.module.scss';
 
 const ComponentTitles = {
   Accordion: 'Accordion',
+  Avatar: 'Avatar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Cards: 'Cards',
@@ -91,7 +89,6 @@ const ComponentTitles = {
   Drawer: 'Drawer',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
-  Facepile: 'Facepile',
   Form: 'Form',
   Icons: 'Icons',
   InlineForm: 'InlineForm',
@@ -114,7 +111,6 @@ const ComponentTitles = {
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
-  UserAvatar: 'UserAvatar',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -1484,115 +1480,6 @@ const BreadcrumbsSection: React.FC = () => {
   );
 };
 
-const FacepileSection: React.FC = () => {
-  const users = [
-    {
-      id: 123,
-      isActive: true,
-      isAdmin: true,
-      username: 'Fake Admin',
-    },
-    {
-      id: 3,
-      isActive: true,
-      isAdmin: true,
-      username: 'Admin',
-    },
-    {
-      id: 13,
-      isActive: true,
-      isAdmin: true,
-      username: 'Fake',
-    },
-    {
-      id: 23,
-      isActive: true,
-      isAdmin: true,
-      username: 'User',
-    },
-    {
-      id: 12,
-      isActive: true,
-      isAdmin: true,
-      username: 'Foo',
-    },
-    {
-      id: 2,
-      isActive: true,
-      isAdmin: true,
-      username: 'Baar',
-    },
-    {
-      id: 12,
-      isActive: true,
-      isAdmin: true,
-      username: 'Gandalf',
-    },
-    {
-      id: 1,
-      isActive: true,
-      isAdmin: true,
-      username: 'Leroy Jenkins',
-    },
-  ];
-  return (
-    <ComponentSection id="Facepile" title="Facepile">
-      <AntDCard>
-        <p>
-          A face pile (<code>{'<Facepile>'}</code>) displays a list of personas. Each circle
-          represents a person and contains their image or initials. Often this control is used when
-          sharing who has access to a specific view or file, or when assigning someone a task within
-          a workflow.
-        </p>
-      </AntDCard>
-      <AntDCard title="Best practices">
-        <strong>Content considerations</strong>
-        <ul>
-          <li>
-            The face pile empty state should only include an &quot;Add&quot; button. Another variant
-            is to use an input field with placeholder text instructing people to add a person. See
-            the people picker component for the menu used to add people to the face pile list.
-          </li>
-          <li>
-            When there is only one person in the face pile, consider using their name next to the
-            face or initials.
-          </li>
-          <li>
-            When there is a need to show the face pile expanded into a vertical list, include a
-            downward chevron button. Selecting the chevron opens a standard list view of people.
-          </li>
-          <li>
-            When the face pile exceeds a max number of 5 people, show a button at the end of the
-            list indicating how many are not being shown. Clicking or tapping on the overflow would
-            open a standard list view of people.
-          </li>
-          <li>
-            The component can include an &quot;Add&quot; button which can be used for quickly adding
-            a person to the list.
-          </li>
-          <li>
-            When hovering over a person in the face pile, include a tooltip or people card that
-            offers more information about that person.
-          </li>
-        </ul>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <strong>Facepile with initial state</strong>
-        <Facepile editable selectableUsers={users} />
-        <strong>Variations</strong>
-        <ul>
-          <li>
-            Facepile with 8 people
-            <Facepile users={users.slice(0, 8)} />
-          </li>
-          <li>Facepile with both name initials</li>
-          <p>Check the Facepile above and select a user that would fit that case</p>
-        </ul>
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
 const useNoteDemo = (): ((props?: Omit<NotesProps, 'multiple'>) => JSX.Element) => {
   const [note, setNote] = useState<Note>({ contents: '', name: 'Untitled' });
   const onSave = async (n: Note) => await setNote(n);
@@ -1637,25 +1524,24 @@ const NotesSection: React.FC = () => {
   );
 };
 
-const UserAvatarSection: React.FC = () => {
+const AvatarSection: React.FC = () => {
   return (
-    <ComponentSection id="UserAvatar" title="UserAvatar">
+    <ComponentSection id="Avatar" title="Avatar">
       <AntDCard>
         <p>
-          A (<code>{'<UserAvatar>'}</code>) represents a user. It consists of a circle containing
-          the first letter of the user&apos;s display name or username. On hover, it displays a
-          tooltip with the full display name or username.
+          An avatar (<code>{'<Avatar>'}</code>) is a compact information display. The information is
+          abbreviated with an option to hover for an unabbreviated view.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <UserAvatar />
+        <Avatar displayName="Test User" />
       </AntDCard>
     </ComponentSection>
   );
 };
 
 const NameplateSection: React.FC = () => {
-  const testUser: User = { displayName: 'Test User', id: 1, username: 'testUser123' };
+  const testUser = { displayName: 'Test User', id: 1, username: 'testUser123' } as const;
 
   return (
     <ComponentSection id="Nameplate" title="Nameplate">
@@ -1671,14 +1557,14 @@ const NameplateSection: React.FC = () => {
         <li>With name and alias</li>
         <Nameplate
           alias={testUser.displayName}
-          icon={<UserAvatar user={testUser} />}
+          icon={<Avatar displayName={testUser.displayName} />}
           name={testUser.username}
         />
         <li>Compact format</li>
         <Nameplate
           alias={testUser.displayName}
           compact
-          icon={<UserAvatar user={testUser} />}
+          icon={<Avatar displayName={testUser.displayName} />}
           name={testUser.username}
         />
         <li>No alias</li>
@@ -2707,11 +2593,7 @@ const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal
-      cancel
-      footerLink={{ text: value, url: '/' }}
-      headerLink={{ text: value, url: '/' }}
-      title={value}>
+    <Modal cancel footerLink={<a>Footer Link</a>} headerLink={<a>Header Link</a>} title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -3149,6 +3031,7 @@ const SpinnerSection = () => {
 
 const Components = {
   Accordion: <AccordionSection />,
+  Avatar: <AvatarSection />,
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
   Cards: <CardsSection />,
@@ -3161,7 +3044,6 @@ const Components = {
   Drawer: <DrawerSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
-  Facepile: <FacepileSection />,
   Form: <FormSection />,
   Icons: <IconsSection />,
   InlineForm: <InlineFormSection />,
@@ -3184,7 +3066,6 @@ const Components = {
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   Typography: <TypographySection />,
-  UserAvatar: <UserAvatarSection />,
 };
 
 const DesignKit: React.FC = () => {

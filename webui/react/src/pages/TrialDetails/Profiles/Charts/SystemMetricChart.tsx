@@ -2,7 +2,6 @@ import { string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect, useMemo } from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
@@ -12,6 +11,7 @@ import {
   getScientificNotationTickValues,
   getUnitForMetricName,
 } from 'pages/TrialDetails/Profiles/utils';
+import { XAxisDomain } from 'types';
 import handleError from 'utils/error';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
