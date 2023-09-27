@@ -6,6 +6,7 @@ on:  # yamllint disable-line rule:truthy
       types:
         - opened
         - reopened
+        - synchronize
       paths:
         - 'docs/**'
 
@@ -16,9 +17,8 @@ permissions:
 jobs:
   docpr:
     runs-on: ubuntu-latest
-    if: github.actor == 'tara-det-ai'
     steps:
       - uses: dannysauer/actions-assigner@v2
         with:
           token: ${{ secrets.DETERMINED_TOKEN }}
-          team-reviewers: ml-group
+          team-reviewers: docs
