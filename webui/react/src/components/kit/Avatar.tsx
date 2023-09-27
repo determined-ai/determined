@@ -2,7 +2,7 @@ import React from 'react';
 
 import { hex2hsl, hsl2str } from 'components/kit/internal/functions';
 import md5 from 'components/kit/internal/md5';
-import { ClassNameProp, DarkLight, ValueOf } from 'components/kit/internal/types';
+import { DarkLight, ValueOf } from 'components/kit/internal/types';
 import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 
@@ -16,8 +16,8 @@ export const Size = {
 
 export type Size = ValueOf<typeof Size>;
 
-export interface Props extends ClassNameProp {
-  displayName?: string;
+export interface Props {
+  displayName: string;
   hideTooltip?: boolean;
   /** do not color the bg based on displayName */
   noColor?: boolean;
@@ -47,7 +47,6 @@ export const getColor = (name = '', darkLight: DarkLight): string => {
 };
 
 const Avatar: React.FC<Props> = ({
-  className,
   displayName,
   hideTooltip,
   noColor,
@@ -62,8 +61,6 @@ const Avatar: React.FC<Props> = ({
     color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
   };
   const classes = [css.base, css[size]];
-
-  if (className) classes.push(className);
 
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>

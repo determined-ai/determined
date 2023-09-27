@@ -25,7 +25,7 @@ import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
-import { MetricType, Note, Serie, User, ValueOf, XAxisDomain } from 'components/kit/internal/types';
+import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
@@ -1529,8 +1529,8 @@ const AvatarSection: React.FC = () => {
     <ComponentSection id="Avatar" title="Avatar">
       <AntDCard>
         <p>
-          An avatar is a compact information display. The information is abbreviated with an option
-          to hover for an unabbreviated view.
+          An avatar (<code>{'<Avatar>'}</code>) is a compact information display. The information is
+          abbreviated with an option to hover for an unabbreviated view.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
@@ -1541,7 +1541,7 @@ const AvatarSection: React.FC = () => {
 };
 
 const NameplateSection: React.FC = () => {
-  const testUser: User = { displayName: 'Test User', id: 1, username: 'testUser123' };
+  const testUser = { displayName: 'Test User', id: 1, username: 'testUser123' } as const;
 
   return (
     <ComponentSection id="Nameplate" title="Nameplate">
