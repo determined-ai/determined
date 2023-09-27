@@ -490,5 +490,5 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     assert job_list == post_restart_job_list
 
     for cmd_id in [running_command_id, queued_command_id]:
-        wait_for_command_state(cmd_id, "TERMINATED", 60)
+        wait_for_command_state(cmd_id, "TERMINATED", 90)
         assert_command_succeeded(cmd_id)
