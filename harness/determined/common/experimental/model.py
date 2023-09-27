@@ -178,16 +178,11 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-
     Class representing a model in the model registry.
 
     A Model object is usually obtained from ``determined.experimental.client.create_model()``
     or ``determined.experimental.client.get_model()``. It contains methods for model
     versions and metadata.
-
-    Attributes:
-        model_id (int): The unique id of this model.
-        name (string): The name of the model.
     """
 
     def __init__(
@@ -195,6 +190,12 @@ class Model:
         session: api.Session,
         name: str,
     ):
+        """Construct a new Model object.
+
+        Args:
+            session (api.Session): The session to use for API calls.
+            name (string): The name of the model.
+        """
         self._session = session
         self.name = name
 
