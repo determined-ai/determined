@@ -106,7 +106,13 @@ const TrialChart: React.FC<Props> = ({
   const chartOptions: Options = useMemo(() => {
     return {
       axes: [
-        { label: 'Batches' },
+        {
+          incrs: [
+            1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000, 10_000, 20_000,
+            30_000, 50_000, 100_000, 200_000, 300_000, 500_000, 1_000_000,
+          ],
+          label: 'Batches',
+        },
         { label: metrics.length === 1 ? metricToStr(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
