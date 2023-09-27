@@ -294,7 +294,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			// Group:             ctx.Self().Address().String(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
 			ResourcePool: c.Config.Resources.ResourcePool,
@@ -322,6 +321,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
+			ctx.Log().WithError(err).Error("deleting command from GroupPriorityChangeRegistry")
+		}
 		if c.exitStatus == nil {
 			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
@@ -347,10 +349,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete user session for task: %v", c.taskID)
 		}
-		if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
-			ctx.Log().WithError(err).Error("deleting command from GroupPriorityChangeRegistry")
-		}
-		// TODO: discuss GC & termination
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 	case getSummary:
 		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {

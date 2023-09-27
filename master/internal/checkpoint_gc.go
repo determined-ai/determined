@@ -43,8 +43,6 @@ func runCheckpointGCTask(
 	owner *model.User,
 	logCtx logger.Context,
 ) error {
-	// TODO: discuss
-	// jobID += "-gc"
 	conv := &protoconverter.ProtoConverter{}
 	checkpointStrIDs := conv.ToStringList(toDeleteCheckpoints)
 	deleteCheckpointsStr := strings.Join(checkpointStrIDs, ",")
@@ -88,10 +86,6 @@ func runCheckpointGCTask(
 	})
 	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
 
-	// if err := tasklist.GroupPriorityChangeRegistry.Add(jobID, nil); err != nil {
-	// 	return err
-	// }
-
 	if err := db.AddTask(&model.Task{
 		TaskID:     taskID,
 		TaskType:   model.TaskTypeCheckpointGC,
@@ -109,9 +103,6 @@ func runCheckpointGCTask(
 		if err := db.CompleteTask(taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking GC task complete")
 		}
-		// if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
-		// 	syslog.WithError(err).Error("removing GC task from group manager registry")
-		// }
 		resultChan <- ae.Err
 	}
 
@@ -124,7 +115,6 @@ func runCheckpointGCTask(
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: true,
 		},
-		// Group:        group.Address().String(),
 		ResourcePool: rp,
 	}, db, rm, gcSpec, system, onExit)
 	if err != nil {

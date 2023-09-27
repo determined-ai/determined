@@ -51,8 +51,8 @@ func roundRobinSchedule(
 		state, ok := groupMapping[group]
 		if !ok {
 			state = &groupState{
-				Group:      group,
-				createTime: req.JobSubmissionTime,
+				Group:          group,
+				registeredTime: req.JobSubmissionTime,
 			}
 			states = append(states, state)
 			groupMapping[group] = state
@@ -70,7 +70,7 @@ func roundRobinSchedule(
 		if first.activeSlots != second.activeSlots {
 			return first.activeSlots < second.activeSlots
 		}
-		return first.RegisteredTime().Before(second.RegisteredTime())
+		return first.registeredTime.Before(second.registeredTime)
 	})
 
 	toAllocate := make([]*sproto.AllocateRequest, 0)

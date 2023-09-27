@@ -43,10 +43,8 @@ type kubernetesResourcePool struct {
 	allocationIDToContainerID map[model.AllocationID]cproto.ID
 	containerIDtoAllocationID map[string]model.AllocationID
 	// TODO(DET-9613): Jobs have many allocs.
-	jobIDToAllocationID map[model.JobID]model.AllocationID
-	allocationIDToJobID map[model.AllocationID]model.JobID
-	// groupActorToID            map[*actor.Ref]model.JobID
-	// IDToGroupActor            map[model.JobID]*actor.Ref
+	jobIDToAllocationID       map[model.JobID]model.AllocationID
+	allocationIDToJobID       map[model.AllocationID]model.JobID
 	slotsUsedPerGroup         map[*tasklist.Group]int
 	allocationIDToRunningPods map[model.AllocationID]int
 
@@ -73,8 +71,6 @@ func newResourcePool(
 		containerIDtoAllocationID: map[string]model.AllocationID{},
 		jobIDToAllocationID:       map[model.JobID]model.AllocationID{},
 		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
-		// groupActorToID:            map[*actor.Ref]model.JobID{},
-		// IDToGroupActor:            map[model.JobID]*actor.Ref{},
 		slotsUsedPerGroup:         map[*tasklist.Group]int{},
 		allocationIDToRunningPods: map[model.AllocationID]int{},
 		podsActor:                 podsActor,
@@ -238,7 +234,6 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-
 	k.getOrCreateGroup(ctx, msg.JobID)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed-k8-Task"
@@ -363,17 +358,10 @@ func (k *kubernetesResourcePool) moveJob(
 		return nil
 	}
 
-	// groupAddr, ok := k.IDToGroupActor[jobID]
-	// if !ok {
-	// 	return sproto.ErrJobNotFound(jobID)
-	// }
-
 	if _, ok := k.queuePositions[anchorID]; !ok {
 		return sproto.ErrJobNotFound(anchorID)
 	}
 
-	// nolint:dupword
-	// /*
 	prioChange, secondAnchor, anchorPriority := tasklist.FindAnchor(
 		jobID,
 		anchorID,

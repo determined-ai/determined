@@ -457,6 +457,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(e.JobID); err != nil {
+			e.syslog.WithError(err).Error("failed to remove priority change registry")
+		}
 		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
 			if err := e.db.SaveExperimentProgress(e.ID, ptrs.Ptr(1.0)); err != nil {
 				e.syslog.Error(err)
@@ -522,10 +525,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		); err != nil {
 			e.syslog.WithError(err).Errorf(
 				"failure to delete user session for experiment: %d", e.Experiment.ID)
-		}
-
-		if err := tasklist.GroupPriorityChangeRegistry.Delete(e.JobID); err != nil {
-			e.syslog.WithError(err).Error("failed to remove priority change registry")
 		}
 
 		e.syslog.Info("experiment shut down successfully")

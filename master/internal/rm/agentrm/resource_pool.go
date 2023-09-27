@@ -47,9 +47,7 @@ type resourcePool struct {
 	taskList         *tasklist.TaskList
 	groups           map[model.JobID]*tasklist.Group
 	queuePositions   tasklist.JobSortState // secondary sort key based on job submission time
-	// groupActorToID   map[*actor.Ref]model.JobID
-	// IDToGroupActor   map[model.JobID]*actor.Ref
-	scalingInfo *sproto.ScalingInfo
+	scalingInfo      *sproto.ScalingInfo
 
 	reschedule bool
 
@@ -89,9 +87,7 @@ func newResourcePool(
 		taskList:       tasklist.New(),
 		groups:         make(map[model.JobID]*tasklist.Group),
 		queuePositions: tasklist.InitializeJobSortState(false),
-		// groupActorToID: make(map[*actor.Ref]model.JobID),
-		// IDToGroupActor: make(map[model.JobID]*actor.Ref),
-		scalingInfo: &sproto.ScalingInfo{},
+		scalingInfo:    &sproto.ScalingInfo{},
 
 		reschedule: false,
 		db:         db,
@@ -137,8 +133,6 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 				false,
 			)
 		}
-		// rp.groupActorToID[handler] = msg.JobID
-		// rp.IDToGroupActor[msg.JobID] = handler
 	}
 
 	if msg.Restore {
@@ -635,14 +629,6 @@ func (rp *resourcePool) moveJob(
 			rp.config.Scheduler.GetType())
 	}
 
-	// groupAddr, ok := rp.IDToGroupActor[jobID]
-	// if !ok {
-	// 	return sproto.ErrJobNotFound(jobID)
-	// }
-	// if _, ok := rp.queuePositions[anchorID]; !ok {
-	// 	return sproto.ErrJobNotFound(anchorID)
-	// }
-
 	prioChange, secondAnchor, anchorPriority := tasklist.FindAnchor(
 		jobID,
 		anchorID,
@@ -704,8 +690,6 @@ func (rp *resourcePool) moveJob(
 	if err := rp.db.UpdateJobPosition(msg.JobID, msg.JobPosition); err != nil {
 		return err
 	}
-
-	// ctx.Tell(groupAddr, msg)
 
 	return nil
 }

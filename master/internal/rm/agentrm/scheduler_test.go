@@ -512,7 +512,6 @@ func setupSchedulerStates(
 	for _, mockTask := range mockTasks {
 		ref, _ := system.ActorOf(actor.Addr(mockTask.ID), mockTask)
 		system.Ask(ref, actor.Ping{})
-		// assert.Assert(t, created)
 		jobID := model.JobID(mockTask.JobID)
 		if jobID == "" {
 			if mockTask.Group != nil {

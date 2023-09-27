@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -434,9 +433,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case taskContainerDefaults:
 		ctx.Respond(k.getTaskContainerDefaults(msg))
-
-	case tasklist.GroupActorStopped:
-		k.forwardToAllPools(ctx, msg)
 
 	case sproto.UpdatePodStatus:
 		k.forwardToAllPools(ctx, msg)

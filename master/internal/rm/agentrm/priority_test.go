@@ -801,8 +801,6 @@ func AddUnallocatedTasks(
 		assert.Assert(t, created)
 		req := MockTaskToAllocateRequest(mockTask, ref)
 		if mockTask.Group != nil {
-			// groupRef, _ := system.ActorOf(actor.Addr(mockTask.Group.ID), mockTask.Group)
-			// req.Group = groupRef.Address().String()
 			req.JobID = model.JobID(mockTask.Group.ID)
 		}
 
