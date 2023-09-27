@@ -36,8 +36,8 @@ class AuthStore {
   public readonly isChecked = this.#state.select((state) => state.isChecked);
   public readonly isAuthenticated = this.auth.select((loadableAuth) => {
     return Loadable.match(loadableAuth, {
+      _: () => false,
       Loaded: (a) => a.isAuthenticated,
-      NotLoaded: () => false,
     });
   });
 

@@ -28,19 +28,19 @@ class WorkspaceStore extends PollingStore {
   public readonly workspaces = this.#loadableWorkspaces.readOnly();
 
   public readonly unarchived = this.#loadableWorkspaces.select((loadable) => {
-    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+    return Loadable.flatMap(loadable, (workspaces) => {
       return Loaded(workspaces.filter((workspace) => !workspace.archived));
     });
   });
 
   public readonly pinned = this.#loadableWorkspaces.select((loadable) => {
-    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+    return Loadable.flatMap(loadable, (workspaces) => {
       return Loaded(workspaces.filter((workspace) => workspace.pinned));
     });
   });
 
   public readonly mutables = this.#loadableWorkspaces.select((loadable) => {
-    return Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+    return Loadable.flatMap(loadable, (workspaces) => {
       return Loaded(workspaces.filter((workspace) => !workspace.immutable));
     });
   });
@@ -48,8 +48,8 @@ class WorkspaceStore extends PollingStore {
   public getWorkspace(id: number | Loadable<number>): Observable<Loadable<Workspace | null>> {
     return this.workspaces.select((loadable) => {
       const loadableID = Loadable.isLoadable(id) ? id : Loaded(id);
-      return Loadable.quickMatch(loadableID, NotLoaded, (wid) =>
-        Loadable.quickMatch(loadable, NotLoaded, (workspaces) => {
+      return Loadable.flatMap(loadableID, (wid) =>
+        Loadable.flatMap(loadable, (workspaces) => {
           const workspace = workspaces.find((workspace) => workspace.id === wid);
           return workspace ? Loaded(workspace) : Loaded(null);
         }),

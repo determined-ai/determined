@@ -33,14 +33,14 @@ const TableFilter = ({
     (newOpen: boolean) => {
       if (newOpen) {
         Loadable.match(formset, {
+          _: () => {
+            return;
+          },
           Loaded: (data) => {
             // if there's no conditions, add default condition
             if (data.filterGroup.children.length === 0) {
               formStore.addChild(data.filterGroup.id, FormKind.Field);
             }
-          },
-          NotLoaded: () => {
-            return;
           },
         });
       }

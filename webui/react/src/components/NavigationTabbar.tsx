@@ -95,6 +95,7 @@ const NavigationTabbar: React.FC = () => {
   const workspaceActions = Loadable.quickMatch(
     loadablePinnedWorkspaces,
     [{ icon: <Spinner spinning />, label: 'Loading...' }],
+    [{ icon: <Spinner spinning />, label: 'Could not load workspaces' }],
     (workspaces) =>
       workspaces.map(
         (workspace) =>

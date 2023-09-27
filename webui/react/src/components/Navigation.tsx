@@ -29,7 +29,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   useEffect(() => {
     updateFaviconType(
-      Loadable.quickMatch(clusterOverview, false, (o) => o[ResourceType.ALL].allocation !== 0),
+      Loadable.quickMatch(
+        clusterOverview,
+        false,
+        false,
+        (o) => o[ResourceType.ALL].allocation !== 0,
+      ),
       info.branding || BrandingType.Determined,
     );
   }, [clusterOverview, info]);

@@ -22,8 +22,8 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const loadableData = useObservable(formStore.formset);
   const isButtonDisabled = Loadable.match(loadableData, {
+    _: () => true,
     Loaded: (data) => data.filterGroup.children.length > ITEM_LIMIT,
-    NotLoaded: () => true,
   });
 
   const onAddItem = (formKind: FormKind) => {
@@ -38,6 +38,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
   return (
     <div className={css.base}>
       {Loadable.match(loadableData, {
+        Failed: () => null,
         Loaded: (data) => (
           <>
             <div className={css.header}>
@@ -86,7 +87,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
             </div>
           </>
         ),
-        NotLoaded: () => <Spinner spinning />,
+        NotLoaded: () => <Spinner spinning />, // TODO correctly handle error state
       })}
     </div>
   );

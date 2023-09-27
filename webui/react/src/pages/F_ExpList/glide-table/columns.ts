@@ -404,8 +404,8 @@ export const getColumnDefs = ({
     id: 'user',
     renderer: (record: ExperimentWithTrial) => {
       const displayName = Loadable.match(users, {
+        _: () => undefined,
         Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.experiment.userId)),
-        NotLoaded: () => undefined,
       });
       return {
         allowOverlay: true,
@@ -422,8 +422,8 @@ export const getColumnDefs = ({
     title: 'User',
     tooltip: (record: ExperimentWithTrial) => {
       return Loadable.match(users, {
+        _: () => undefined,
         Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.experiment.userId)),
-        NotLoaded: () => undefined,
       });
     },
     width: columnWidths.user,

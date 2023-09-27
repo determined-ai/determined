@@ -146,8 +146,8 @@ class ClusterStore extends PollingStore {
     [this.clusterOverview, this.#resourcePools, this.#agents],
     (overview, pools, agents) => {
       return Loadable.match(Loadable.all([overview, pools, agents]), {
+        _: () => undefined,
         Loaded: ([overview, pools, agents]) => clusterStatusText(overview, pools, agents) ?? '',
-        NotLoaded: () => undefined,
       });
     },
   );

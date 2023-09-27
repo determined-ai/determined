@@ -60,11 +60,13 @@ export const ClusterOverallStats: React.FC = () => {
       <Card.Group size="small">
         <OverviewStats title="Connected Agents">
           {Loadable.match(agents, {
+            Failed: () => null,
             Loaded: (agents) => (agents ? agents.length : '?'),
-            NotLoaded: (): ReactNode => <Spinner spinning />,
+            NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
           })}
         </OverviewStats>
         {Loadable.match(Loadable.all([maxTotalSlots, clusterOverview]), {
+          _: () => null,
           Loaded: ([maxTotalSlots, clusterOverview]) =>
             [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
               maxTotalSlots[resType] > 0 ? (
@@ -74,7 +76,6 @@ export const ClusterOverallStats: React.FC = () => {
                 </OverviewStats>
               ) : null,
             ),
-          NotLoaded: () => null,
         })}
         {auxContainers.total > 0 && (
           <OverviewStats title="Aux Containers Running">
@@ -85,32 +86,37 @@ export const ClusterOverallStats: React.FC = () => {
           <>
             <OverviewStats title="Active Experiments">
               {Loadable.match(activeExperiments, {
+                Failed: () => null,
                 Loaded: (activeExperiments) => activeExperiments.pagination?.total ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />,
+                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
               })}
             </OverviewStats>
             <OverviewStats title="Active JupyterLabs">
               {Loadable.match(activeTasks, {
+                Failed: () => null,
                 Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />,
+                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
               })}
             </OverviewStats>
             <OverviewStats title="Active TensorBoards">
               {Loadable.match(activeTasks, {
+                Failed: () => null,
                 Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />,
+                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
               })}
             </OverviewStats>
             <OverviewStats title="Active Shells">
               {Loadable.match(activeTasks, {
+                Failed: () => null,
                 Loaded: (activeTasks) => activeTasks.shells ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />,
+                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
               })}
             </OverviewStats>
             <OverviewStats title="Active Commands">
               {Loadable.match(activeTasks, {
+                Failed: () => null,
                 Loaded: (activeTasks) => activeTasks.commands ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />,
+                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
               })}
             </OverviewStats>
           </>

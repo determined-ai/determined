@@ -59,8 +59,9 @@ function Spinner<T>({
     return spinner;
   } else {
     return Loadable.match(data, {
+      Failed: () => <></>,
       Loaded: children,
-      NotLoaded: () => spinner,
+      NotLoaded: () => spinner, // TODO display an error state.
     });
   }
 }

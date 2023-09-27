@@ -132,6 +132,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
       useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
+      Failed: () => null,
       Loaded: ([
         savedExperimentListGlobalSettings,
         savedShortcutSettings,
@@ -370,7 +371,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
           </Drawer>
         );
       },
-      NotLoaded: () => <Spinner spinning />,
+      NotLoaded: () => <Spinner spinning />, // TDOD correctly handle error state
     },
   );
 };

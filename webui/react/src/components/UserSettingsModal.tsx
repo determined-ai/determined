@@ -35,6 +35,7 @@ const UserSettingsModalComponent: React.FC<Props> = ({ onSave }: Props) => {
   const editedSettings: Map<string, Json> | undefined = useMemo(
     () =>
       Loadable.match(editedSettingsString, {
+        _: () => undefined,
         Loaded: (settingsString) => {
           try {
             const obj = JSON.parse(settingsString);
@@ -45,7 +46,6 @@ const UserSettingsModalComponent: React.FC<Props> = ({ onSave }: Props) => {
             return;
           }
         },
-        NotLoaded: () => undefined,
       }),
     [editedSettingsString],
   );

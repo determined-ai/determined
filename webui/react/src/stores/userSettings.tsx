@@ -249,9 +249,10 @@ export class UserSettingsStore extends PollingStore {
     } finally {
       this.#settings.update((settings) =>
         Loadable.match(settings, {
-          Loaded: (settings) => Loaded(settings),
           // If we are unable to load settings just notify the user and unblock them.
-          NotLoaded: () => Loaded(Map()),
+          _: () => Loaded(Map()),
+
+          Loaded: (settings) => Loaded(settings),
         }),
       );
     }
