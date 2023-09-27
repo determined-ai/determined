@@ -19,7 +19,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.check import check_eq, check_true
+from determined.common.check import check_gt, check_true
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
