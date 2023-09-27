@@ -155,7 +155,7 @@ def main(argv: List[str]) -> None:
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
-    if len(storage_ids) > 0 and storage_ids != [""]:
+    if len(storage_ids) > 0:
         storage_ids_to_resources = delete_checkpoints(
             manager, storage_ids, globs, dry_run=args.dry_run
         )
