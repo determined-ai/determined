@@ -90,8 +90,8 @@ func newDBListener(channel string) (*pq.Listener, error) {
 }
 
 // NewPublisherSet constructor for PublisherSet.
-func NewPublisherSet() PublisherSet {
-	return PublisherSet{
+func NewPublisherSet() *PublisherSet {
+	return &PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		permissionChangeChan: make(chan struct{}),
@@ -144,11 +144,24 @@ type FilterMaker[T stream.Msg, S any] interface {
 	MakeFilter() func(T) bool
 }
 
+func start[T stream.Msg](
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	channel string,
+	publisher *stream.Publisher[T],
+) {
+	publishLoop(ctx, channel, publisher)
+	wg.Done()
+}
+
 // Start starts each Publisher in the PublisherSet.
-func (ps *PublisherSet) Start(ctx context.Context) {
-	// start each publisher
-	go publishLoop(ctx, "stream_trial_chan", ps.Trials)
-	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
+func (ps *PublisherSet) Start(ctx context.Context) error {
+	var wg sync.WaitGroup
+	wg.Add(1) // XXX: hard-coding this will cause issues if not updated correctly
+	go start(ctx, &wg, "stream_trial_chan", ps.Trials)
+	// go start(ctx, &wg, "stream_experiment_chan", ps.Experiments)
+	wg.Wait()
+	return nil
 }
 
 func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
@@ -162,22 +175,29 @@ func writeAll(socket *websocket.Conn, msgs []*websocket.PreparedMessage) error {
 }
 
 // Websocket is an Echo websocket endpoint.
-func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
+func (ps *PublisherSet) Websocket(
+	ssupCtx context.Context,
+	socket *websocket.Conn,
+	c echo.Context,
+) error {
 	// clean up socket
 	defer func() {
 		if err := socket.Close(); err != nil {
 			log.Debugf("error while cleaning up socket: %s", err)
 		}
 	}()
-
 	ctx := c.Request().Context()
-	ps.permissionLock.Lock()
-	permissionChangeChan := ps.permissionChangeChan
-	ps.permissionLock.Unlock()
+
+	// get permission change channel
+	var permissionChangeChan chan struct{}
+	func() {
+		ps.permissionLock.Lock()
+		defer ps.permissionLock.Unlock()
+		permissionChangeChan = ps.permissionChangeChan
+	}()
+
 	streamer := stream.NewStreamer()
-
 	user := c.(*detContext.DetContext).MustGetUser()
-
 	ss, err := NewSubscriptionSet(ctx, streamer, ps, user)
 	if err != nil {
 		return errors.Wrap(err, "creating subscription set")
@@ -188,6 +208,7 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	var startupMsg StartupMsg
 	err = socket.ReadJSON(&startupMsg)
 	// XXX: errors here don't seem to appear on the websocket side...?
+	// XXX: create a ticket for communicating errors back to streaming clients
 	if err != nil {
 		return errors.Wrap(err, "reading startup message")
 	}
@@ -222,6 +243,10 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	go func() {
 		select {
 		case <-ctx.Done():
+			streamer.Close()
+		// XXX: is this redundant?
+		case <-ssupCtx.Done():
+			// XXX: if this isn't redundant, is this the correct response?
 			streamer.Close()
 		case <-permissionChangeChan:
 			streamer.Close()
@@ -297,53 +322,7 @@ func (ps *PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error 
 	}
 }
 
-// MonitorPermissionChanges listens for permission changes, updates the PublisherSet
-// to signal to boot streamers, returns an error in the event of a failure to listen.
-func MonitorPermissionChanges(ctx context.Context, ps *PublisherSet) error {
-	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
-	if err != nil {
-		log.Errorf("unable to get permission change listener: %s", err)
-		// XXX: investigate better recovery mechanism
-		return err
-	}
-	if permListener == nil {
-		// no listener means we don't have permissions configured at all
-		return nil
-	}
-	defer func() {
-		err := permListener.Close()
-		if err != nil {
-			log.Debugf("error occurred while closing permission listener: %s", err)
-		}
-	}()
-
-	for {
-		select {
-		// did permissions change?
-		case <-permListener.Notify:
-			log.Debugf("permission change detected")
-			ps.permissionLock.Lock()
-			close(ps.permissionChangeChan)
-			ps.permissionChangeChan = make(chan struct{})
-			ps.permissionLock.Unlock()
-		// is the listener still alive?
-		case <-time.After(30 * time.Second):
-			pingErrChan := make(chan error)
-			go func() {
-				err = permListener.Ping()
-				pingErrChan <- errors.Wrap(err, "no active connection")
-			}()
-			if err := <-pingErrChan; err != nil {
-				log.Errorf("permission listener failed %s", err)
-				return err
-			}
-		// are we canceled?
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
+// publishLoop monitors for new events and broadcasts them to Publishers.
 func publishLoop[T stream.Msg](
 	ctx context.Context,
 	channelName string,
@@ -355,6 +334,8 @@ func publishLoop[T stream.Msg](
 		if err != nil {
 			log.Errorf("publishLoop failed (will restart): %v", err.Error())
 			publisher.CloseAllStreamers()
+			// backoff some amount
+			time.Sleep(time.Second)
 			continue
 		}
 		// exited without error

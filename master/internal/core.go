@@ -1219,17 +1219,11 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	streamContext, streamCancel := context.WithCancel(context.Background())
-	ps := stream.NewPublisherSet()
-	ps.Start(streamContext)
+	ssup := stream.NewSupervisor()
 	go func() {
-		err := stream.MonitorPermissionChanges(streamContext, &ps)
-		if err != nil {
-			log.Errorf("error occurred while monitoring permission changes: %s", err)
-			streamCancel()
-		}
+		_ = ssup.Run(context.Background())
 	}()
-	m.echo.GET("/stream", api.WebSocketRoute(ps.Websocket))
+	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket))
 
 	return m.startServers(ctx, cert)
 }

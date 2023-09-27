@@ -1,5 +1,3 @@
-import subprocess
-
 import lomond
 from lomond import events
 
