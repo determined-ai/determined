@@ -44,6 +44,7 @@ import { alphaNumericSorter, booleanSorter, numericSorter } from 'utils/sort';
 import css from './UserManagement.module.scss';
 import {
   DEFAULT_COLUMN_WIDTHS,
+  DEFAULT_COLUMNS,
   DEFAULT_SETTINGS,
   UserManagementSettings,
   UserRole,
@@ -171,6 +172,15 @@ const statusOptions = [
   { label: 'Active', value: UserStatus.ACTIVE },
   { label: 'Inactive', value: UserStatus.INACTIVE },
 ];
+type UserManagementSettingsWithColumns = UserManagementSettings & {
+  columns: string[];
+  columnWidths: number[];
+};
+
+const columnSettings = {
+  columns: DEFAULT_COLUMNS,
+  columnWidths: DEFAULT_COLUMNS.map((c) => DEFAULT_COLUMN_WIDTHS[c]),
+};
 
 const userManagementSettings = userSettings.get(UserManagementSettings, 'user-management');
 const UserManagement: React.FC = () => {
@@ -180,8 +190,8 @@ const UserManagement: React.FC = () => {
   const loadableSettings = useObservable(userManagementSettings);
   const settings = useMemo(() => {
     return Loadable.match(loadableSettings, {
-      _: () => DEFAULT_SETTINGS,
-      Loaded: (s) => ({ ...DEFAULT_SETTINGS, ...s }),
+      _: () => ({ ...DEFAULT_SETTINGS, ...columnSettings }),
+      Loaded: (s) => ({ ...DEFAULT_SETTINGS, ...s, ...columnSettings }),
     });
   }, [loadableSettings]);
   const updateSettings = useCallback(
@@ -260,9 +270,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     // reset invalid settings
-    if (Loadable.isLoaded(loadableSettings) && !Loadable.getOrElse(null, loadableSettings)) {
-      updateSettings(DEFAULT_SETTINGS);
-    }
+    Loadable.forEach(loadableSettings, (s) => s || updateSettings(DEFAULT_SETTINGS));
   }, [loadableSettings, updateSettings]);
 
   const CreateUserModal = useModal(CreateUserModalComponent);
@@ -479,7 +487,7 @@ const UserManagement: React.FC = () => {
           </Columns>
         </div>
         {settings ? (
-          <InteractiveTable<DetailedUser, UserManagementSettings>
+          <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns>
             columns={columns}
             containerRef={pageRef}
             dataSource={users}

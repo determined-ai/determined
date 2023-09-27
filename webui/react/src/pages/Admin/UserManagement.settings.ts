@@ -43,8 +43,6 @@ export type UserRole = ValueOf<typeof UserRole>;
 
 export const UserManagementSettings = t.intersection([
   t.type({
-    columns: t.array(t.string),
-    columnWidths: t.array(t.number),
     sortDesc: t.boolean,
     tableLimit: t.number,
     tableOffset: t.number,
@@ -74,8 +72,6 @@ export const UserManagementSettings = t.intersection([
 ]);
 export type UserManagementSettings = t.TypeOf<typeof UserManagementSettings>;
 export const DEFAULT_SETTINGS: UserManagementSettings = {
-  columns: DEFAULT_COLUMNS,
-  columnWidths: DEFAULT_COLUMNS.map((col) => DEFAULT_COLUMN_WIDTHS[col]),
   sortDesc: true,
   sortKey: V1GetUsersRequestSortBy.MODIFIEDTIME,
   tableLimit: MINIMUM_PAGE_SIZE,
