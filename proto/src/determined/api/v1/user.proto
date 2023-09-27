@@ -39,6 +39,10 @@ message GetUsersRequest {
 
   // Filter by username or display name.
   string name = 5;
+  // Filter by status.
+  optional bool active = 6;
+  // Filter by roles.
+  optional bool admin = 7;
 }
 // Response to GetUsersRequest.
 message GetUsersResponse {

@@ -3,8 +3,8 @@ import { Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
-import { notification } from 'utils/dialogApi';
 import { copyToClipboard } from 'utils/dom';
 
 import css from './AuthToken.module.scss';
@@ -15,14 +15,15 @@ const AuthToken: React.FC = () => {
   const handleCopyToClipboard = useCallback(async () => {
     try {
       await copyToClipboard(token);
-      notification.open({
+      makeToast({
         description: 'Auth token copied to the clipboard.',
-        message: 'Auth Token Copied',
+        title: 'Auth Token Copied',
       });
     } catch (e) {
-      notification.warning({
+      makeToast({
         description: (e as Error)?.message,
-        message: 'Unable to Copy to Clipboard',
+        severity: 'Warning',
+        title: 'Unable to Copy to Clipboard',
       });
     }
   }, [token]);

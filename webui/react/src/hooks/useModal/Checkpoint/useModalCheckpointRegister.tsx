@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import { makeToast } from 'components/kit/Toast';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
@@ -13,7 +14,6 @@ import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { Metadata, ModelItem } from 'types';
-import { notification } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 import { pluralizer } from 'utils/string';
@@ -107,18 +107,14 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           if (!response) return;
 
           modalClose(ModalCloseReason.Ok);
-
-          notification.open({
-            btn: null,
-            description: (
-              <div className={css.toast}>
-                <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-                <Link path={paths.modelVersionDetails(selectedModelName, response.version)}>
-                  View Model Version
-                </Link>
-              </div>
+          makeToast({
+            description: `"${versionName || `Version ${selectedModelNumVersions + 1}`} registered"`,
+            link: (
+              <Link path={paths.modelVersionDetails(selectedModelName, response.version)}>
+                View Model Version
+              </Link>
             ),
-            message: '',
+            title: 'Version Registered',
           });
         } else {
           for (const checkpointUuid of checkpoints) {
@@ -134,16 +130,10 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
             });
           }
           modalClose(ModalCloseReason.Ok);
-
-          notification.open({
-            btn: null,
-            description: (
-              <div className={css.toast}>
-                <p>{checkpoints.length} versions registered</p>
-                <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>
-              </div>
-            ),
-            message: '',
+          makeToast({
+            description: `${checkpoints.length} versions registered`,
+            link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
+            title: 'Versions Registered',
           });
         }
       } catch (e) {

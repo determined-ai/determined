@@ -5,10 +5,10 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import { makeToast } from 'components/kit/Toast';
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import { DetailedUser } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 
 const FORM_ID = 'configure-agent-form';
@@ -41,7 +41,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       await patchUser({ userId: user.id, userParams: formData });
       onClose?.();
     } catch (e) {
-      message.error('Error configuring agent');
+      makeToast({ severity: 'Error', title: 'Error configuring agent' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

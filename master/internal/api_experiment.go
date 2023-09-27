@@ -1350,7 +1350,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
 	}
 
-	a.filter(&resp.Checkpoints, func(i int) bool {
+	api.Where(&resp.Checkpoints, func(i int) bool {
 		v := resp.Checkpoints[i]
 
 		found := false
@@ -1399,7 +1399,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
-	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
 func (a *apiServer) createUnmanagedExperimentTx(
@@ -2266,6 +2266,40 @@ func (a *apiServer) GetModelDef(
 	b64Tgz := base64.StdEncoding.EncodeToString(tgz)
 
 	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
+}
+
+func (a *apiServer) GetTaskContextDirectory(
+	ctx context.Context, req *apiv1.GetTaskContextDirectoryRequest,
+) (*apiv1.GetTaskContextDirectoryResponse, error) {
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
+	isExp, exp, err := expFromTaskID(ctx, model.TaskID(req.TaskId))
+	if err != nil {
+		return nil, err
+	}
+
+	var tgz []byte
+	if isExp {
+		tgz, err = a.m.db.ExperimentModelDefinitionRaw(exp.ID)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"fetching experiment's taskID %s model definition from database: %w",
+				req.TaskId, err)
+		}
+	} else {
+		tgz, err = db.NonExperimentTasksContextDirectory(ctx, model.TaskID(req.TaskId))
+		if err != nil {
+			return nil, fmt.Errorf(
+				"fetching taskID %s context directory from database: %s", req.TaskId, err)
+		}
+	}
+
+	return &apiv1.GetTaskContextDirectoryResponse{
+		B64Tgz: base64.StdEncoding.EncodeToString(tgz),
+	}, nil
 }
 
 func (a *apiServer) MoveExperiment(

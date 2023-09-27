@@ -108,6 +108,16 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	return api, *userModel, ctx
 }
 
+func fetchUserIds(ctx context.Context, t *testing.T, api *apiServer, req *apiv1.GetUsersRequest) []model.UserID {
+	resp, err := api.GetUsers(ctx, req)
+	require.NoError(t, err)
+	var ids []model.UserID
+	for _, u := range resp.Users {
+		ids = append(ids, model.UserID(u.Id))
+	}
+	return ids
+}
+
 func TestGetUsersRemote(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
@@ -139,6 +149,59 @@ func TestGetUsersRemote(t *testing.T) {
 		} else if model.UserID(u.Id) == nonRemoteUser {
 			require.False(t, u.Remote)
 		}
+	}
+}
+
+func TestFilterUser(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	userID1, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+			Admin:    false,
+		},
+		nil,
+	)
+	userID2, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   true,
+			Admin:    false,
+		},
+		nil,
+	)
+	userID3, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   true,
+			Admin:    true,
+		},
+		nil,
+	)
+	userID4, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+			Admin:    true,
+		},
+		nil,
+	)
+
+	userIds := fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{})
+	for _, u := range []model.UserID{userID1, userID2, userID3, userID4} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Admin: ptrs.Ptr(true)})
+	for _, u := range []model.UserID{userID3, userID4} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true)})
+	for _, u := range []model.UserID{userID2, userID3} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true), Admin: ptrs.Ptr(true)})
+	for _, u := range []model.UserID{userID3} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
 	}
 }
 

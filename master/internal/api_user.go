@@ -153,19 +153,36 @@ func (a *apiServer) GetUsers(
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
 	users := []model.FullUser{}
-	nameFilterExpr := "%" + req.Name + "%"
-	selectExpr := `
-		SELECT
-			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at, u.remote, u.last_login,
-			h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group, 
-			COALESCE(u.display_name, u.username) AS name
-		FROM users u
-			LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
-		WHERE ((? = '') OR u.display_name ILIKE ? OR u.username ILIKE ?)
-	`
-	query := selectExpr + fmt.Sprintf(" ORDER BY %s", orderExpr)
-	err := db.Bun().NewRaw(query,
-		req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
+
+	query := db.Bun().NewSelect().Model(&users).
+		ModelTableExpr("users as u").
+		Join("LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)").
+		Column("u.id").
+		Column("u.display_name").
+		Column("u.username").
+		Column("u.admin").
+		Column("u.active").
+		Column("u.modified_at").
+		Column("u.remote").
+		Column("u.last_login").
+		ColumnExpr("h.uid AS agent_uid").
+		ColumnExpr("h.gid AS agent_gid").
+		ColumnExpr("h.user_ AS agent_user").
+		ColumnExpr("h.group_ AS agent_group").
+		ColumnExpr("COALESCE(u.display_name, u.username) AS name")
+
+	if req.Name != "" {
+		nameFilterExpr := "%" + req.Name + "%"
+		query.Where("u.display_name ILIKE ? OR u.username ILIKE ?", nameFilterExpr, nameFilterExpr)
+	}
+	if req.Admin != nil {
+		query.Where("u.admin = ?", *req.Admin)
+	}
+	if req.Active != nil {
+		query.Where("u.active = ?", *req.Active)
+	}
+
+	err := query.Order(orderExpr).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +200,7 @@ func (a *apiServer) GetUsers(
 		resp.Users = append(resp.Users, toProtoUserFromFullUser(user))
 	}
 
-	return resp, a.paginate(&resp.Pagination, &resp.Users, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Users, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetUser(

@@ -132,6 +132,12 @@ html {
     border: solid var(--theme-stroke-width) var(--theme-float-border);
     border-radius: var(--theme-border-radius);
     box-shadow: var(--theme-elevation-strong);
+    color: var(--theme-float-on);
+
+    .ant-notification-notice-message {
+      color: var(--theme-float-on);
+      margin-bottom: 0;
+    }
   }
 
   /* Picker */

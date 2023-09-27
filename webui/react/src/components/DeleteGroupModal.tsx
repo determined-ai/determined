@@ -1,9 +1,9 @@
 import React from 'react';
 
 import { Modal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 
 export const API_SUCCESS_MESSAGE = 'Group deleted.';
@@ -19,10 +19,10 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
-      message.success(API_SUCCESS_MESSAGE);
+      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       onClose?.();
     } catch (e) {
-      message.error('error deleting group');
+      makeToast({ severity: 'Error', title: 'error deleting group' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

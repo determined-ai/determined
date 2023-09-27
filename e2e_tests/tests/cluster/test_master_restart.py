@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from determined.common import constants
-from determined.common.api import authentication, task_logs
+from determined.common.api import authentication, task_is_ready, task_logs
 from determined.common.api.bindings import experimentv1State as EXP_STATE
 from tests import api_utils
 from tests import command as cmd
@@ -264,8 +264,27 @@ def test_master_restart_cmd_k8s(
 
 
 def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
-    command_id = run_command(30, slots=slots)
-    wait_for_command_state(command_id, "RUNNING", 30)
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "command",
+        "run",
+        "-d",
+        "--config",
+        f"resources.slots={slots}",
+        "echo weareready && sleep 30",
+    ]
+    command_id = subprocess.check_output(command).decode().strip()
+
+    # Don't just check ready. We want to make sure the command's sleep has started.
+    logs = ""
+    for log in task_logs(api_utils.determined_test_session(), command_id, follow=True):
+        if "weareready" in log.log:
+            break
+        logs += log.log
+    else:
+        pytest.fail(f"did not get weareready in task logs, logs {logs}")
 
     if downtime >= 0:
         managed_cluster.kill_master()
@@ -293,7 +312,8 @@ def _test_master_restart_shell(managed_cluster: Cluster, downtime: int) -> None:
         task_id = shell.task_id
 
         assert task_id is not None
-        wait_for_task_state("shell", task_id, "RUNNING")
+        # Checking running is not correct here, running != ready for shells.
+        task_is_ready(api_utils.determined_test_session(), task_id)
         pre_restart_queue = det_cmd_json(["job", "list", "--json"])
 
         if downtime >= 0:
@@ -469,5 +489,5 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     assert job_list == post_restart_job_list
 
     for cmd_id in [running_command_id, queued_command_id]:
-        wait_for_command_state(cmd_id, "TERMINATED", 60)
+        wait_for_command_state(cmd_id, "TERMINATED", 90)
         assert_command_succeeded(cmd_id)

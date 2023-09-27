@@ -1130,7 +1130,7 @@ export const getModel: DetApi<
 export const getModelDetails: DetApi<
   Service.GetModelDetailsParams,
   Api.V1GetModelVersionsResponse,
-  Type.ModelVersions | undefined
+  Type.ModelWithVersions | undefined
 > = {
   name: 'getModelDetails',
   postProcess: (response) => {

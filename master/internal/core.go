@@ -666,7 +666,9 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	// gRPC server (logger initialization, maybe more). Found by --race.
 	gRPCServer := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
 		m.config.Observability.EnablePrometheus,
-		&m.config.InternalConfig.ExternalSessions)
+		&m.config.InternalConfig.ExternalSessions,
+		m.logs,
+	)
 
 	err = grpcutil.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
 	if err != nil {

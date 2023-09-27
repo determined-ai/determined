@@ -46,7 +46,9 @@ type GenericCommandSpec struct {
 
 	CommandID string
 
-	Config          model.CommandConfig
+	Config model.CommandConfig
+	// Deprecated: kept so we can still marshal to this.
+	// Please use command.CreateGeneric.modelDef instead.
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
 	Metadata        genericCommandSpecMetadata
@@ -100,7 +102,6 @@ func (s GenericCommandSpec) ToTaskSpec() TaskSpec {
 	}
 
 	res.ExtraArchives = []cproto.RunArchive{
-		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), res.WorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
 	}
 
@@ -118,8 +119,6 @@ func (s GenericCommandSpec) ToTaskSpec() TaskSpec {
 
 	// Evict the context from memory after starting the command as it is no longer needed. We
 	// evict as soon as possible to prevent the master from hitting an OOM.
-	// TODO: Consider not storing the userFiles in memory at all.
-	s.UserFiles = nil
 	s.AdditionalFiles = nil
 
 	return res

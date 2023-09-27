@@ -1,9 +1,7 @@
-import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface';
-
+import { makeToast, Severity } from 'components/kit/Toast';
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'types';
-import { notification as antdNotification } from 'utils/dialogApi';
 import rootLogger, { LoggerInterface } from 'utils/Logger';
 import { routeToReactUrl } from 'utils/routes';
 import { isAborted, isAuthFailure } from 'utils/service';
@@ -135,14 +133,17 @@ const errorLevelMap = {
   [ErrorLevel.Warn]: 'warn',
 };
 
-const openNotification = (e: DetError) => {
-  const key = errorLevelMap[e.level] as keyof NotificationInstance;
-  const notification = antdNotification[key] as (args: ArgsProps) => void;
+const toastSeverityMap: Record<ErrorLevel, Severity> = {
+  [ErrorLevel.Error]: 'Error',
+  [ErrorLevel.Fatal]: 'Error',
+  [ErrorLevel.Warn]: 'Warning',
+};
 
-  notification?.({
+const openNotification = (e: DetError) => {
+  makeToast({
     description: e.publicMessage || '',
-    key: e.name,
-    message: e.publicSubject || listToStr([e.type, e.level]),
+    severity: toastSeverityMap[e.level],
+    title: e.publicSubject || listToStr([e.type, e.level]),
   });
 };
 

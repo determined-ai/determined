@@ -8,6 +8,7 @@ import socket
 import sys
 import tarfile
 import uuid
+import warnings
 from typing import List, Optional
 
 import psutil
@@ -20,13 +21,14 @@ from determined.common import api, util
 from determined.common.api import bindings, certs
 
 
-def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
-    trial_info = det.TrialInfo._from_env()
-    trial_info._to_file()
+def is_trial(info: det.ClusterInfo) -> bool:
+    return info.task_type == "TRIAL"
 
-    model_def_resp = None
+
+def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None:
+    context_directory_resp = None
     try:
-        model_def_resp = bindings.get_GetModelDef(sess, experimentId=trial_info.experiment_id)
+        context_directory_resp = bindings.get_GetTaskContextDirectory(sess, taskId=info.task_id)
     except Exception as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
@@ -43,7 +45,7 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
             "networking error.\n"
             "Debug information:\n"
             f"    master_url: {info.master_url}\n"
-            f"    endpoint: api/v1/experiments/{trial_info.experiment_id}/model_def\n"
+            f"    endpoint: api/v1/tasks/{info.task_id}/context_directory\n"
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
@@ -52,18 +54,25 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
         )
         raise
 
-    tgz = base64.b64decode(model_def_resp.to_json()["b64Tgz"])
+    b64_tgz = context_directory_resp.b64Tgz
+    if not is_trial(info) and len(b64_tgz) == 0:
+        return  # Non trials can have empty model defs.
+    assert len(b64_tgz) > 0
 
-    with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as model_def:
+    tgz = base64.b64decode(b64_tgz)
+    with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as context_directory:
         # Ensure all members of the tarball resolve to subdirectories.
-        for path in model_def.getnames():
+        for path in context_directory.getnames():
             if os.path.relpath(path).startswith("../"):
                 raise ValueError(f"'{path}' in tarball would expand to a parent directory")
-        model_def.extractall(path=constants.MANAGED_TRAINING_MODEL_COPY)
-        model_def.extractall(path=".")
+        context_directory.extractall(path=constants.MANAGED_TRAINING_MODEL_COPY)
+        context_directory.extractall(path=".")
 
     # pre-0.18.3 code wrote tensorboard stuff under /tmp/tensorboard
-    det.util.force_create_symlink(f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard")
+    if is_trial(info):
+        det.util.force_create_symlink(
+            f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard"
+        )
 
 
 def do_rendezvous_rm_provided(
@@ -290,6 +299,11 @@ if __name__ == "__main__":
     parser.add_argument("--rendezvous", action="store_true")
     parser.add_argument("--proxy", action="store_true")
     parser.add_argument("--notify_container_running", action="store_true")
+    parser.add_argument(
+        "--download_context_directory",
+        action="store_true",
+        help="download the task's user files from master",
+    )
     args = parser.parse_args()
 
     # Avoid reading det.get_cluster_info(), which might (wrongly) set a singleton to None.
@@ -297,6 +311,11 @@ if __name__ == "__main__":
     if info is None:
         info = det.ClusterInfo._from_env()
         info._to_file()
+    if is_trial(info):
+        trial_info = det.TrialInfo._from_file()
+        if trial_info is None:
+            trial_info = det.TrialInfo._from_env()
+            trial_info._to_file()
 
     try:
         # See the ClusterInfo.trial property for explanation
@@ -309,6 +328,15 @@ if __name__ == "__main__":
         format=det.LOG_FORMAT,
     )
     logging.debug("running prep_container")
+
+    if args.trial:
+        warnings.warn(
+            "--trial has been deprecated and will be removed "
+            "in a future version.\n"
+            "Please use --download_context_directory instead.",
+            FutureWarning,
+            stacklevel=1,
+        )
 
     cert = certs.default_load(info.master_url)
     sess = api.Session(
@@ -327,8 +355,8 @@ if __name__ == "__main__":
     if args.notify_container_running:
         send_container_running_notification(sess, info.allocation_id)
 
-    if args.trial:
-        trial_prep(sess, info)
+    if args.download_context_directory or args.trial:
+        download_context_directory(sess, info)
 
     if args.resources:
         resources = det.ResourcesInfo._by_inspection()

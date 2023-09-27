@@ -187,7 +187,7 @@ func (a *apiServer) GetModels(
 	if err != nil {
 		return nil, err
 	}
-	return resp, a.paginate(&resp.Pagination, &resp.Models, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Models, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetModelLabels(
@@ -602,8 +602,10 @@ func (a *apiServer) GetModelVersions(
 		return nil, err
 	}
 
-	a.sort(resp.ModelVersions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION)
-	return resp, a.paginate(&resp.Pagination, &resp.ModelVersions, req.Offset, req.Limit)
+	api.Sort(
+		resp.ModelVersions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION,
+	)
+	return resp, api.Paginate(&resp.Pagination, &resp.ModelVersions, req.Offset, req.Limit)
 }
 
 func (a *apiServer) PostModelVersion(

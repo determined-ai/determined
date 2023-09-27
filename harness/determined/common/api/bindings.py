@@ -5498,6 +5498,29 @@ class v1GetTaskAcceleratorDataResponse(Printable):
         }
         return out
 
+class v1GetTaskContextDirectoryResponse(Printable):
+    """Response to GetTaskContextDirectoryRequest."""
+
+    def __init__(
+        self,
+        *,
+        b64Tgz: str,
+    ):
+        self.b64Tgz = b64Tgz
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskContextDirectoryResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "b64Tgz": obj["b64Tgz"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "b64Tgz": self.b64Tgz,
+        }
+        return out
+
 class v1GetTaskResponse(Printable):
     """Response to GetTaskRequest."""
 
@@ -17445,6 +17468,30 @@ def get_GetTaskAcceleratorData(
         return v1GetTaskAcceleratorDataResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTaskAcceleratorData", _resp)
 
+def get_GetTaskContextDirectory(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskContextDirectoryResponse":
+    """Get the model definition of a task.
+
+    - taskId: The id of the experiment.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/context_directory",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskContextDirectoryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTaskContextDirectory", _resp)
+
 def get_GetTasks(
     session: "api.Session",
 ) -> "v1GetTasksResponse":
@@ -18062,6 +18109,8 @@ def get_GetUserSetting(
 def get_GetUsers(
     session: "api.Session",
     *,
+    active: "typing.Optional[bool]" = None,
+    admin: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
@@ -18070,6 +18119,8 @@ def get_GetUsers(
 ) -> "v1GetUsersResponse":
     """Get a list of users.
 
+    - active: Filter by status.
+    - admin: Filter by roles.
     - limit: Limit the number of projects. A value of 0 denotes no limit.
     - name: Filter by username or display name.
     - offset: Skip the number of projects before returning results. Negative values
@@ -18090,6 +18141,8 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
     """
     _params = {
+        "active": str(active).lower() if active is not None else None,
+        "admin": str(admin).lower() if admin is not None else None,
         "limit": limit,
         "name": name,
         "offset": offset,

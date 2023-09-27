@@ -1,15 +1,15 @@
 import { Modal as AntdModal } from 'antd';
 
+import { makeToast } from 'components/kit/Toast';
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
-import { message } from 'utils/dialogApi';
 import { routeToReactUrl } from 'utils/routes';
 /** generates a handler that alerts when called */
 export const alertAction =
   (msg: string): FinalAction =>
   () => {
-    message.info(msg);
+    makeToast({ title: msg });
   };
 export const visitAction = (url: string) => (): void => routeToReactUrl(url);
 export const noOp = (): void => undefined;

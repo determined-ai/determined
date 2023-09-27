@@ -37,6 +37,7 @@ import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import { makeToast } from 'components/kit/Toast';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Header from 'components/kit/Typography/Header';
@@ -45,6 +46,7 @@ import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
+import KitLink from 'components/Link';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
@@ -108,6 +110,7 @@ const ComponentTitles = {
   Spinner: 'Spinner',
   Tags: 'Tags',
   Theme: 'Theme',
+  Toast: 'Toast',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   Typography: 'Typography',
@@ -2553,6 +2556,95 @@ const IconsSection: React.FC = () => {
   );
 };
 
+const ToastSection: React.FC = () => {
+  return (
+    <ComponentSection id="Toast" title="Toast">
+      <AntDCard>
+        <p>
+          A <code>{'<Toast>'}</code> component is used to display a notification message at the
+          viewport. Typically it&apos;s a notification providing a feedback based on the user
+          interaction.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Default toast</strong>
+        <Space>
+          <Button
+            onClick={() =>
+              makeToast({
+                description: 'Some informative content.',
+                severity: 'Info',
+                title: 'Default notification',
+              })
+            }>
+            Open a default toast
+          </Button>
+        </Space>
+        <strong>Variations</strong>
+        <Space>
+          <Button
+            onClick={() =>
+              makeToast({
+                description: "You've triggered an error.",
+                severity: 'Error',
+                title: 'Error notification',
+              })
+            }>
+            Open an error toast
+          </Button>
+          <Button
+            onClick={() =>
+              makeToast({
+                description: "You've triggered an warning.",
+                severity: 'Warning',
+                title: 'Warning notification',
+              })
+            }>
+            Open an warning toast
+          </Button>
+          <Button
+            onClick={() =>
+              makeToast({
+                description: 'Action succed.',
+                severity: 'Confirm',
+                title: 'Success notification',
+              })
+            }>
+            Open an success toast
+          </Button>
+        </Space>
+        <Space>
+          <Button
+            onClick={() =>
+              makeToast({
+                closeable: false,
+                description: "You've triggered an error.",
+                severity: 'Error',
+                title: 'Error notification',
+              })
+            }>
+            Open a non-closable toast
+          </Button>
+          <Button
+            onClick={() =>
+              makeToast({
+                description: 'Click below to design kit page.',
+                link: <KitLink>View Design Kit</KitLink>,
+                severity: 'Info',
+                title: 'Welcome to design kit',
+              })
+            }>
+            Open a toast with link
+          </Button>
+          <Button onClick={() => makeToast({ severity: 'Info', title: 'Compact notification' })}>
+            Open a toast without description
+          </Button>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const ToggleSection: React.FC = () => {
   return (
     <ComponentSection id="Toggle" title="Toggle">
@@ -3088,6 +3180,7 @@ const Components = {
   Spinner: <SpinnerSection />,
   Tags: <TagsSection />,
   Theme: <ThemeSection />,
+  Toast: <ToastSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   Typography: <TypographySection />,

@@ -5,14 +5,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
-import { useModal } from 'components/kit/Modal';
 import Notes from 'components/kit/Notes';
 import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
-import ModelDownloadModal from 'components/ModelDownloadModal';
-import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
@@ -38,7 +35,7 @@ import {
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { Metadata, ModelVersion, ModelVersions, Note } from 'types';
+import { Metadata, ModelItem, ModelVersion, Note } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -59,8 +56,8 @@ type Params = {
 };
 
 const ModelDetails: React.FC = () => {
-  const [model, setModel] = useState<ModelVersions>();
-  const [modelVersion, setModelVersion] = useState<ModelVersion | undefined>(undefined);
+  const [model, setModel] = useState<ModelItem>();
+  const [modelVersions, setModelVersions] = useState<ModelVersion[]>();
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
@@ -70,10 +67,23 @@ const ModelDetails: React.FC = () => {
   const workspaces = useObservable(workspaceStore.workspaces);
   const workspace = Loadable.getOrElse(
     undefined,
-    useObservable(workspaceStore.getWorkspace(model ? Loaded(model.model.workspaceId) : NotLoaded)),
+    useObservable(workspaceStore.getWorkspace(model ? Loaded(model.workspaceId) : NotLoaded)),
   );
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
+  const [permissionsByModelVersion, setPermissionsByModelVersion] = useState<
+    Record<number, { canModify: boolean }>
+  >({});
+
+  useEffect(() => {
+    const allPerm: Record<number, { canModify: boolean }> = {};
+    modelVersions?.forEach((modelVersion) => {
+      allPerm[modelVersion.id] = {
+        canModify: canModifyModelVersion({ modelVersion }),
+      };
+    });
+    setPermissionsByModelVersion((prev) => (_.isEqual(prev, allPerm) ? prev : allPerm));
+  }, [canModifyModelVersion, modelVersions]);
 
   const config = useMemo(() => {
     return settingsConfig(modelId);
@@ -93,16 +103,16 @@ const ModelDetails: React.FC = () => {
         sortBy: validateDetApiEnum(V1GetModelVersionsRequestSortBy, settings.sortKey),
       });
       setTotal(modelData?.pagination.total || 0);
-      setModel((prev) => (!_.isEqual(modelData, prev) ? modelData : prev));
+      setModel((prev) => (!_.isEqual(modelData?.model, prev) ? modelData?.model : prev));
+      setModelVersions((prev) =>
+        !_.isEqual(modelData?.modelVersions, prev) ? modelData?.modelVersions : prev,
+      );
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     } finally {
       setIsLoading(false);
     }
   }, [modelId, pageError, settings]);
-
-  const modelDownloadModal = useModal(ModelDownloadModal);
-  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
 
   usePolling(fetchModel, { rerunOnNewFn: true });
 
@@ -136,7 +146,7 @@ const ModelDetails: React.FC = () => {
   const saveVersionDescription = useCallback(
     async (editedDescription: string, versionNum: number) => {
       try {
-        const modelName = model?.model.name;
+        const modelName = model?.name;
         if (modelName) {
           await patchModelVersion({
             body: { comment: editedDescription, modelName },
@@ -152,7 +162,7 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [model?.model.name],
+    [model?.name],
   );
 
   const columns = useMemo(() => {
@@ -165,7 +175,7 @@ const ModelDetails: React.FC = () => {
           <div>
             <Tags
               compact
-              disabled={record.model.archived}
+              disabled={record.model.archived || !permissionsByModelVersion[record.id]?.canModify}
               tags={record.labels ?? []}
               onAction={tagsActionHelper(record.labels ?? [], (tags) =>
                 saveModelVersionTags(record.model.name, record.version, tags),
@@ -177,24 +187,14 @@ const ModelDetails: React.FC = () => {
     );
 
     const actionRenderer = (_: string, record: ModelVersion) => (
-      <ModelVersionActionDropdown
-        version={record}
-        onDelete={() => {
-          setModelVersion(record);
-          modelVersionDeleteModal.open();
-        }}
-        onDownload={() => {
-          setModelVersion(record);
-          modelDownloadModal.open();
-        }}
-      />
+      <ModelVersionActionDropdown version={record} />
     );
 
     const descriptionRenderer = (value: string, record: ModelVersion) => (
       <Input
         className={css.descriptionRenderer}
         defaultValue={record.comment ?? ''}
-        disabled={record.model.archived || !canModifyModelVersion({ modelVersion: record })}
+        disabled={record.model.archived || !permissionsByModelVersion[record.id]?.canModify}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         title={record.model.archived ? 'Archived description' : 'Edit description'}
         onBlur={(e) => {
@@ -257,14 +257,7 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [
-    users,
-    saveModelVersionTags,
-    modelVersionDeleteModal,
-    modelDownloadModal,
-    canModifyModelVersion,
-    saveVersionDescription,
-  ]);
+  }, [permissionsByModelVersion, saveModelVersionTags, saveVersionDescription, users]);
 
   const tableIsLoading = useMemo(
     () => isLoading || isLoadingSettings,
@@ -296,7 +289,7 @@ const ModelDetails: React.FC = () => {
   const saveMetadata = useCallback(
     async (editedMetadata: Metadata) => {
       try {
-        const modelName = model?.model.name;
+        const modelName = model?.name;
         if (modelName) {
           await patchModel({
             body: { metadata: editedMetadata, name: modelName },
@@ -312,14 +305,14 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [fetchModel, model?.model.name],
+    [fetchModel, model?.name],
   );
 
   const saveNotes = useCallback(
     async (notes: Note) => {
       const editedNotes = notes.contents;
       try {
-        const modelName = model?.model.name;
+        const modelName = model?.name;
         if (modelName) {
           await patchModel({
             body: { name: modelName, notes: editedNotes },
@@ -335,13 +328,13 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [model?.model.name, fetchModel],
+    [model?.name, fetchModel],
   );
 
   const saveModelTags = useCallback(
     async (editedTags: string[]) => {
       try {
-        const modelName = model?.model.name;
+        const modelName = model?.name;
         if (modelName) {
           await patchModel({
             body: { labels: editedTags, name: modelName },
@@ -357,37 +350,27 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [fetchModel, model?.model.name],
+    [fetchModel, model?.name],
   );
 
   const switchArchive = useCallback(() => {
-    const modelName = model?.model.name;
+    const modelName = model?.name;
     if (modelName) {
-      if (model?.model.archived) {
+      if (model?.archived) {
         unarchiveModel({ modelName });
       } else {
         archiveModel({ modelName });
       }
     }
-  }, [model?.model.archived, model?.model.name]);
+  }, [model?.archived, model?.name]);
 
   const actionDropdown = useCallback(
     ({ record, children }: { children: React.ReactNode; record: ModelVersion }) => (
-      <ModelVersionActionDropdown
-        isContextMenu
-        version={record}
-        onDelete={() => {
-          setModelVersion(record);
-          modelVersionDeleteModal.open();
-        }}
-        onDownload={() => {
-          setModelVersion(record);
-          modelDownloadModal.open();
-        }}>
+      <ModelVersionActionDropdown isContextMenu version={record}>
         {children}
       </ModelVersionActionDropdown>
     ),
-    [modelDownloadModal, modelVersionDeleteModal],
+    [],
   );
 
   if (!modelId) {
@@ -423,8 +406,8 @@ const ModelDetails: React.FC = () => {
     );
   }
   pageBreadcrumb.push({
-    breadcrumbName: `${model.model.name} (${model.model.id})`,
-    path: paths.modelDetails(model.model.id.toString()),
+    breadcrumbName: `${model.name} (${model.id})`,
+    path: paths.modelDetails(model.id.toString()),
   });
 
   return (
@@ -435,7 +418,7 @@ const ModelDetails: React.FC = () => {
       headerComponent={
         <ModelHeader
           fetchModel={fetchModel}
-          model={model.model}
+          model={model}
           workspace={workspace || undefined}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
@@ -444,7 +427,7 @@ const ModelDetails: React.FC = () => {
       id="modelDetails"
       notFound={pageError && isNotFound(pageError)}>
       <div className={css.base}>
-        {model.modelVersions.length === 0 ? (
+        {modelVersions?.length === 0 ? (
           <div className={css.noVersions}>
             <p className={css.header}>No Model Versions</p>
             <p className={css.subtext}>
@@ -456,7 +439,7 @@ const ModelDetails: React.FC = () => {
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
-            dataSource={model.modelVersions}
+            dataSource={modelVersions}
             loading={tableIsLoading}
             pagination={getFullPaginationConfig(
               {
@@ -475,20 +458,18 @@ const ModelDetails: React.FC = () => {
           />
         )}
         <Notes
-          disabled={model.model.archived || !canModifyModel({ model: model.model })}
+          disabled={model.archived || !canModifyModel({ model: model })}
           disableTitle
-          notes={{ contents: model.model.notes ?? '', name: 'Notes' }}
+          notes={{ contents: model.notes ?? '', name: 'Notes' }}
           onError={handleError}
           onSave={saveNotes}
         />
         <MetadataCard
-          disabled={model.model.archived || !canModifyModel({ model: model.model })}
-          metadata={model.model.metadata}
+          disabled={model.archived || !canModifyModel({ model: model })}
+          metadata={model.metadata}
           onSave={saveMetadata}
         />
       </div>
-      {modelVersion && <modelDownloadModal.Component modelVersion={modelVersion} />}
-      {modelVersion && <modelVersionDeleteModal.Component modelVersion={modelVersion} />}
     </Page>
   );
 };

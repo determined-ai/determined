@@ -4,6 +4,7 @@ import { useId } from 'react';
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
+import { makeToast } from 'components/kit/Toast';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -11,7 +12,6 @@ import { paths } from 'routes/utils';
 import { moveModel } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ModelItem } from 'types';
-import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -40,17 +40,11 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
         values.workspaceId === 1
           ? paths.modelList()
           : paths.workspaceDetails(values.workspaceId, WorkspaceDetailsTab.ModelRegistry);
-      notification.success({
-        description: (
-          <div>
-            <p>
-              {model.name} moved to workspace {workspaceName}
-            </p>
-            <Link path={path}>View Workspace</Link>
-          </div>
-        ),
-        key: 'move-model-notification',
-        message: 'Successfully Moved',
+      makeToast({
+        description: `${model.name} moved to workspace ${workspaceName}`,
+        link: <Link path={path}>View Workspace</Link>,
+        severity: 'Confirm',
+        title: 'Successfully Moved',
       });
     } catch (e) {
       handleError(e, { publicSubject: `Unable to move model ${model.id}.`, silent: false });

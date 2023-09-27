@@ -5,11 +5,11 @@ import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
+import { makeToast } from 'components/kit/Toast';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
 import { User, UserOrGroup } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -90,7 +90,10 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         form.resetFields();
         setSelectedOption(undefined);
         onClose?.();
-        message.success(`${getName(selectedOption)} added to workspace.`);
+        makeToast({
+          severity: 'Confirm',
+          title: `${getName(selectedOption)} added to workspace.`,
+        });
       }
     } catch (e) {
       if (e instanceof DetError) {
