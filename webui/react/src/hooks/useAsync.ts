@@ -3,7 +3,21 @@ import { useCallback, useEffect, useInsertionEffect, useRef, useState } from 're
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 
 type LoadablePromiser<T> = (canceler: AbortController) => Promise<T | Loadable<T>>;
-export const useLoadable = <T>(
+
+/**
+ * A hook that manages the result of an async function. The async function is
+ * called as a render effect with an AbortController which is aborted on
+ * unmount.  While pending, the hook returns `NotLoaded`, and on complete, the
+ * hook returns the return value wrapped in `Loaded`. If the function returns a
+ * `Loadable`, the value isn't wrapped. When any value in the deps array
+ * changes, the function is run again as a render effect. If the deps array
+ * changes before the async function returns, the older call will not trigger an
+ * update on return.
+ * @param loadableFunc (canceler: AbortController) => Promise<T | Loadable<T>>
+ * @param deps readonly unknown[]
+ * @returns Loadable<T>
+ */
+export const useAsync = <T>(
   loadableFunc: LoadablePromiser<T>,
   deps: readonly unknown[],
 ): Loadable<T> => {
@@ -25,6 +39,7 @@ export const useLoadable = <T>(
   useEffect(() => {
     const internalCanceler = new AbortController();
     (async () => {
+      setState(NotLoaded);
       const retVal = await callFunc(internalCanceler);
       if (!internalCanceler.signal.aborted) {
         setState(Loadable.isLoadable(retVal) ? retVal : Loaded(retVal));

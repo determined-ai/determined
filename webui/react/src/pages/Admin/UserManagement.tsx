@@ -28,7 +28,7 @@ import {
   relativeTimeRenderer,
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
-import { useLoadable } from 'hooks/useLoadable';
+import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { getGroups, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
@@ -190,7 +190,7 @@ const UserManagement: React.FC = () => {
     [],
   );
 
-  const userResponse = useLoadable(async () => {
+  const userResponse = useAsync(async () => {
     try {
       return await getUsers({
         active: settings.statusFilter && settings.statusFilter === UserStatus.ACTIVE,
@@ -205,7 +205,17 @@ const UserManagement: React.FC = () => {
       handleError(e, { publicSubject: 'Could not fetch user search results' });
       return NotLoaded;
     }
-  }, [settings, refresh]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    settings.name,
+    settings.roleFilter,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.statusFilter,
+    settings.tableLimit,
+    settings.tableOffset,
+    refresh,
+  ]);
 
   const users = useMemo(
     () =>
@@ -229,7 +239,7 @@ const UserManagement: React.FC = () => {
     setRefresh({});
   }, [settings, setRefresh]);
 
-  const groupsResponse = useLoadable(async (canceler) => {
+  const groupsResponse = useAsync(async (canceler) => {
     try {
       return await getGroups({ limit: 500 }, { signal: canceler.signal });
     } catch (e) {
