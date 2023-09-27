@@ -6013,6 +6013,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     - SORT_BY_ACTIVE: Returns users sorted by if they are active.
     - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
     - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+    - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
@@ -6021,6 +6022,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     ACTIVE = "SORT_BY_ACTIVE"
     MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
     NAME = "SORT_BY_NAME"
+    LAST_LOGIN_TIME = "SORT_BY_LAST_LOGIN_TIME"
 
 class v1GetUsersResponse(Printable):
     """Response to GetUsersRequest."""
@@ -18139,6 +18141,7 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_ACTIVE: Returns users sorted by if they are active.
  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+ - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
     """
     _params = {
         "active": str(active).lower() if active is not None else None,
