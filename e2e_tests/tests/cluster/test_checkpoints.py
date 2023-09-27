@@ -375,18 +375,20 @@ def test_delete_experiment_with_no_checkpoints() -> None:
         None,
     )
 
-    # Not able to delete because the checkpoint gc task will attempt to run.
+    # Still able to delete this since it will have no checkpoints meaning no checkpoint gc task.
     test_session = api_utils.determined_test_session()
     bindings.delete_DeleteExperiment(session=test_session, experimentId=exp_id)
     ticks = 60
     for i in range(ticks):
-        state = exp.experiment_state(exp_id)
-        if i % 5 == 0:
-            print(f"experiment in state {state} waiting to be delete_failed")
-        time.sleep(1)
-        if state == bindings.experimentv1State.DELETE_FAILED:
+        try:
+            state = exp.experiment_state(exp_id)
+            if i % 5 == 0:
+                print(f"experiment in state {state} waiting to be deleted")
+            time.sleep(1)
+        except api.errors.NotFoundException:
             return
-    pytest.fail(f"experiment failed to reach delete_failed after {ticks} seconds")
+
+    pytest.fail(f"experiment failed to be deleted after {ticks} seconds")
 
 
 @pytest.mark.e2e_cpu

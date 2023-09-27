@@ -472,12 +472,13 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return err
 			}
-
-			err = runCheckpointGCTask(
-				a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-				taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-				true, agentUserGroup, userModel, nil,
-			)
+			if len(checkpoints) > 0 {
+				err = runCheckpointGCTask(
+					a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+					true, agentUserGroup, userModel, nil,
+				)
+			}
 			if err != nil {
 				log.WithError(err).Errorf("failed to gc checkpoints for experiment")
 				return err
