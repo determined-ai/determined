@@ -64,23 +64,23 @@ const TimeAgo: React.FC<Props> = ({
     return undefined;
   }, [datetime]);
   const tooltip: ReactNode = useMemo(() => {
+    if (tooltipFormat === DEFAULT_TOOLTIP_FORMAT) return tooltipFormat;
+
     let base = dayjs(milliseconds).format(tooltipFormat);
-    const check = 'Last experiment started';
+    // Removes a few possible formats of dates from the end of the string to be added after a line break.
+    const check = base
+      .split(/\w{3,} \d{1,2}, \d{2,4}( - \d{1,2}:\d{1,2}( \w{2}|\s)|\s)$/)[0]
+      .trim();
 
-    if (base.includes(check)) {
-      base = base.slice(check.length);
+    base = base.slice(check.length);
 
-      // Tried to just add a line break \n to the string, but, it doesn't work...
-      return (
-        <>
-          <span>{check}:</span>
-          <br />
-          <span>{base}</span>
-        </>
-      );
-    }
-
-    return base;
+    return (
+      <>
+        <span>{check}:</span>
+        <br />
+        <span>{base}</span>
+      </>
+    );
   }, [tooltipFormat, milliseconds]);
 
   const delta = useMemo(() => {
