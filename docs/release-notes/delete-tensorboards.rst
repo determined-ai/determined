@@ -2,5 +2,5 @@
 
 **Bug Fixes**
 
--  Tensorboards: Fix an issue where tensorboard files were not deleted, even though their respective
-   experiments were via `det e delete <exp-id>`.
+-  TensorBoard: Fix an issue where TensorBoard files were not getting deleted even though the user
+   deleted the experiment by using det e delete <exp-id>.
