@@ -183,7 +183,7 @@ func (a *apiServer) LaunchShell(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	launchReq, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		WorkspaceID:  req.WorkspaceId,
 		Config:       req.Config,
@@ -194,13 +194,13 @@ func (a *apiServer) LaunchShell(
 			"failed to prepare launch params")
 	}
 
-	if err = a.isNTSCPermittedToLaunch(ctx, spec, user); err != nil {
+	if err = a.isNTSCPermittedToLaunch(ctx, launchReq.Spec, user); err != nil {
 		return nil, err
 	}
 
-	// Postprocess the spec.
-	if spec.Config.Description == "" {
-		spec.Config.Description = fmt.Sprintf(
+	// Postprocess the launchReq.Spec.
+	if launchReq.Spec.Config.Description == "" {
+		launchReq.Spec.Config.Description = fmt.Sprintf(
 			"Shell (%s)",
 			petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 		)
@@ -210,29 +210,29 @@ func (a *apiServer) LaunchShell(
 	// the same port on an agent in host mode.
 	port := getRandomPort(minSshdPort, maxSshdPort)
 	// Shell authentication happens through SSH keys, instead.
-	spec.Base.ExtraProxyPorts = append(spec.Base.ExtraProxyPorts, expconf.ProxyPort{
+	launchReq.Spec.Base.ExtraProxyPorts = append(launchReq.Spec.Base.ExtraProxyPorts, expconf.ProxyPort{
 		RawProxyPort:        port,
 		RawProxyTCP:         ptrs.Ptr(true),
 		RawUnauthenticated:  ptrs.Ptr(true),
 		RawDefaultServiceID: ptrs.Ptr(true),
 	})
 
-	spec.Config.Entrypoint = []string{
+	launchReq.Spec.Config.Entrypoint = []string{
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
-	if err = check.Validate(spec.Config); err != nil {
+	if err = check.Validate(launchReq.Spec.Config); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+	launchReq.Spec.AdditionalFiles = archive.Archive{
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			shellEntrypointScript,
 			etc.MustStaticFile(etc.ShellEntrypointResource),
 			0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
+		launchReq.Spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
 			0o700,
@@ -240,7 +240,7 @@ func (a *apiServer) LaunchShell(
 		),
 	}
 
-	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeShell)}
+	launchReq.Spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeShell)}
 
 	var passphrase *string
 	if len(req.Data) > 0 {
@@ -255,17 +255,17 @@ func (a *apiServer) LaunchShell(
 		}
 	}
 
-	keys, err := ssh.GenerateKey(spec.Base.SSHRsaSize, passphrase)
+	keys, err := ssh.GenerateKey(launchReq.Spec.Base.SSHRsaSize, passphrase)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	spec.Metadata.PrivateKey = ptrs.Ptr(string(keys.PrivateKey))
-	spec.Metadata.PublicKey = ptrs.Ptr(string(keys.PublicKey))
-	spec.Keys = &keys
+	launchReq.Spec.Metadata.PrivateKey = ptrs.Ptr(string(keys.PrivateKey))
+	launchReq.Spec.Metadata.PublicKey = ptrs.Ptr(string(keys.PublicKey))
+	launchReq.Spec.Keys = &keys
 
 	// Launch a Shell actor.
 	var shellID model.TaskID
-	if err := a.ask(shellsAddr, *spec, &shellID); err != nil {
+	if err := a.ask(shellsAddr, launchReq, &shellID); err != nil {
 		return nil, err
 	}
 
@@ -276,7 +276,7 @@ func (a *apiServer) LaunchShell(
 
 	return &apiv1.LaunchShellResponse{
 		Shell:    shell,
-		Config:   protoutils.ToStruct(spec.Config),
+		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
