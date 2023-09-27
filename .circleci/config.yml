@@ -541,19 +541,27 @@ commands:
           name: Split tests
           working_directory: ~/project/e2e_tests
           command: |
-            # If a test mark is specified, preselect only files that contain tests with that mark to
-            # minimize how wrong CircleCI's splitting can get things.
-            if [ -n "<<parameters.mark>>" ]; then
-              mark="<<parameters.mark>>"
-              # Extract the first mark for complex conditions such as 'mark1 and not mark2'.
-              mark_prefix=${mark%% and*}
-              find tests -name 'test*.py' -print0 | xargs -0 grep -rl "pytest\.mark\.$mark_prefix"
-            else
-              circleci tests glob 'tests/**/test*.py'
-            fi | circleci tests split --split-by=timings > /tmp/tests-to-run
+            # Preselect the files that contain any matching tests to minimize how wrong CircleCI's
+            # splitting can get things. (The presence of files with no tests can cause the files
+            # with tests to be bunched up incorrectly, making the split suboptimal.)
+
+            # `--setup-plan` tells pytest to not run any tests but instead print out a description
+            # of the tests that would be run, along with some other stuff. Each file containing
+            # any selected tests is printed on a line by itself, except for (for some reason) a
+            # single trailing space.
+            pytest --setup-plan -m '<<parameters.mark>>' | grep '\.py $' | sed 's/ $//' > /tmp/all-relevant-files
+
+            echo 'All files with tests matching mark "<<parameters.mark>>":'
+            sed 's/^/- /' </tmp/all-relevant-files
+
+            circleci tests split --split-by=timings < /tmp/all-relevant-files > /tmp/tests-to-run
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
+            if [ ! -s /tmp/tests-to-run ]; then
+              echo 'No test files found!'
+              exit 1
+            fi
       - when:
           condition:
             and:
