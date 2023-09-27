@@ -511,7 +511,6 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 		processExpIDs = append(processExpIDs, expID)
 	}
 
-	// TODO CAROLINA
 	ctx := context.Background()
 	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
 	if err != nil {
