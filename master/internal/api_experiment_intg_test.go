@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"sync"
 	"testing"
 	"time"
 	"unsafe"
@@ -214,21 +213,20 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 		Where("id = ?", exp.ID).Exec(ctx)
 	require.NoError(t, err)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		_, err = api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{ExperimentId: int32(exp.ID)})
-		require.NoError(t, err)
-	}()
-	wg.Wait()
+	_, err = api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{ExperimentId: int32(exp.ID)})
+	require.NoError(t, err)
 
-	e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
-	if err != nil {
-		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true), err)
-		return
+	// Delete is async so we need to retry until it completes.
+	for i := 0; i < 60; i++ {
+		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
+		if err != nil {
+			require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true), err)
+			return
+		}
+		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+		time.Sleep(1 * time.Second)
 	}
-	require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+	t.Error("expected experiment to delete after 1 minute and it did not")
 }
 
 func TestParseAndMergeContinueConfig(t *testing.T) {
