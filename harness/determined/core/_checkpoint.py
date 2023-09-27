@@ -355,7 +355,8 @@ class CheckpointContext:
     ) -> Dict[str, int]:
         all_conflicts = conflicts.copy()
 
-        for fname in conflicts:
+        # Make sure each rank processes files in the same order.
+        for fname in sorted(conflicts):
             ranks = conflicts[fname]
             if self._dist.rank in ranks:
                 assert ckpt_dir
