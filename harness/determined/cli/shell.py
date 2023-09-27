@@ -147,7 +147,7 @@ def _open_shell(
     print_only: bool,
 ) -> None:
     task = bindings.get_GetTask(sess, taskId=shell["id"]).task
-    check_eq(len(task.allocations), 1, "Shell must have only one allocation")
+    check_gt(len(task.allocations), 0, "Shell must have at least one allocation")
     check_true(task.allocations[0].isReady, "Shell must be ready")
 
     cache_dir = None
