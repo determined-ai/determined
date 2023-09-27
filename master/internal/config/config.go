@@ -51,6 +51,8 @@ func DefaultDBConfig() *DBConfig {
 	return &DBConfig{
 		Migrations: "file://static/migrations",
 		SSLMode:    sslModeDisable,
+		User:       "admin",
+		Password:   "determined",
 	}
 }
 
