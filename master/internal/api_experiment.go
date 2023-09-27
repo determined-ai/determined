@@ -480,7 +480,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				)
 			}
 			if err != nil {
-				log.WithError(err).Errorf("failed to gc checkpoints for experiment")
+				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
 				return err
 			}
 
