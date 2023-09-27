@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from determined.common import constants
-from determined.common.api import authentication, task_logs
+from determined.common.api import authentication, task_is_ready, task_logs
 from determined.common.api.bindings import experimentv1State as EXP_STATE
 from tests import api_utils
 from tests import command as cmd
@@ -247,8 +247,7 @@ def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("slots", [0, 1])
-# Needs to be less than 64 seconds plus some so our tasks don't fail retrying model download.
-@pytest.mark.parametrize("downtime", [0, 20, 50])
+@pytest.mark.parametrize("downtime", [0, 20, 60])
 def test_master_restart_cmd(
     restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
 ) -> None:
@@ -257,8 +256,7 @@ def test_master_restart_cmd(
 
 @pytest.mark.e2e_k8s
 @pytest.mark.parametrize("slots", [0, 1])
-# Needs to be less than 64 seconds plus some so our tasks don't fail retrying model download.
-@pytest.mark.parametrize("downtime", [0, 20, 50])
+@pytest.mark.parametrize("downtime", [0, 20, 60])
 def test_master_restart_cmd_k8s(
     k8s_managed_cluster: ManagedK8sCluster, slots: int, downtime: int
 ) -> None:
@@ -266,17 +264,35 @@ def test_master_restart_cmd_k8s(
 
 
 def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
-    command_id = run_command(30, slots=slots)
-    wait_for_command_state(command_id, "RUNNING", 30)
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "command",
+        "run",
+        "-d",
+        "--config",
+        f"resources.slots={slots}",
+        "echo weareready && sleep 30",
+    ]
+    command_id = subprocess.check_output(command).decode().strip()
 
-    # ALTERNTIVE IS TO WAIT FOR SOME OUTPUT
+    # Don't just check ready. We want to make sure the command's sleep has started.
+    logs = ""
+    for log in task_logs(api_utils.determined_test_session(), command_id, follow=True):
+        print(log.log)
+        if "weareready" in log.log:
+            break
+        logs += log.log
+    else:
+        pytest.fail(f"did not get weareready in task logs, logs {logs}")
 
     if downtime >= 0:
         managed_cluster.kill_master()
         time.sleep(downtime)
         managed_cluster.restart_master()
 
-    wait_for_command_state(command_id, "TERMINATED", 60)  # Exponential retry can delay sleep start.
+    wait_for_command_state(command_id, "TERMINATED", 30)
     assert_command_succeeded(command_id)
 
 
@@ -297,7 +313,8 @@ def _test_master_restart_shell(managed_cluster: Cluster, downtime: int) -> None:
         task_id = shell.task_id
 
         assert task_id is not None
-        wait_for_task_state("shell", task_id, "RUNNING")
+        # Checking running is not correct here, running != ready for shells.
+        task_is_ready(api_utils.determined_test_session(), task_id)
         pre_restart_queue = det_cmd_json(["job", "list", "--json"])
 
         if downtime >= 0:
