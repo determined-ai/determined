@@ -67,6 +67,9 @@ build/%.tgz: */%/ build/newest build/manifest
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
 fmt:
-	make -C tests fmt
 	black .
 	isort .
+
+check:
+	black . --check
+	isort . --check
