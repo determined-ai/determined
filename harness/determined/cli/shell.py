@@ -10,7 +10,7 @@ import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union
+from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union, cast
 
 import appdirs
 from termcolor import colored
@@ -19,7 +19,6 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.check import check_gt, check_true
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -51,11 +50,10 @@ def start_shell(args: Namespace) -> None:
     render.report_job_launched("shell", sid)
 
     session = cli.setup_session(args)
-    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.shell, sid)
 
     shell = bindings.get_GetShell(session, shellId=sid).shell
     _open_shell(
-        cli.setup_session(args),
+        session,
         args.master,
         shell.to_json(),
         args.ssh_opts,
@@ -66,7 +64,8 @@ def start_shell(args: Namespace) -> None:
 
 @authentication.required
 def open_shell(args: Namespace) -> None:
-    shell_id = command.expand_uuid_prefixes(args)
+    shell_id = cast(str, command.expand_uuid_prefixes(args))
+
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
         cli.setup_session(args),
@@ -146,9 +145,7 @@ def _open_shell(
     retain_keys_and_print: bool,
     print_only: bool,
 ) -> None:
-    task = bindings.get_GetTask(sess, taskId=shell["id"]).task
-    check_gt(len(task.allocations), 0, "Shell must have at least one allocation")
-    check_true(task.allocations[0].isReady, "Shell must be ready")
+    cli.wait_ntsc_ready(sess, api.NTSC_Kind.shell, shell["id"])
 
     cache_dir = None
     if retain_keys_and_print:

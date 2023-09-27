@@ -73,7 +73,6 @@ type ResourceManager interface {
 
 	// Job queue
 	GetJobQ(actor.Messenger, sproto.GetJobQ) (map[model.JobID]*sproto.RMJobInfo, error)
-	GetJobQStats(actor.Messenger, sproto.GetJobQStats) (*jobv1.QueueStats, error)
 	GetJobQueueStatsRequest(
 		actor.Messenger,
 		*apiv1.GetJobQueueStatsRequest,

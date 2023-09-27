@@ -1,6 +1,5 @@
 :orphan:
 
-**Bug Fixes**
+**Improvements**
 
--  Shells: Fix an issue where running ``det shell start --detach`` then running ``det shell open
-   <shell-id>`` could cause the CLI to hang.
+-  CLI: ``det notebook|shell|tensorboard open <id>`` will now wait for the item to be ready instead of giving an error if it was not ready.
