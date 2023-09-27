@@ -15,11 +15,11 @@ trials = input("Submit array of trial_id values to subscribe to (default: [1]): 
 if trials == "":
     trials = "[1]"
 
-max_retries = 5
-num_retries = 0
-
 
 def stream_loop():
+    max_retries = 5
+    num_retries = 0
+
     ws = lomond.WebSocket(f"http://{url}/stream")
     ws.add_header(b"Authorization", f"Bearer {token}".encode("utf8"))
     try:
