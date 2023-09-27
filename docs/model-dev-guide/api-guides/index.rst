@@ -16,5 +16,5 @@
    :caption: API Guides
    :hidden:
 
-   apis-howto/overview
+   apis-howto/index
    batch-processing/batch-process-api-ug
