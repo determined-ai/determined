@@ -24,6 +24,7 @@ type JSONB interface{}
 const (
 	minReconn = 1 * time.Second
 	maxReconn = 10 * time.Second
+	trialChan = "stream_trial_chan"
 )
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
@@ -158,7 +159,7 @@ func start[T stream.Msg](
 func (ps *PublisherSet) Start(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(1) // XXX: hard-coding this will cause issues if not updated correctly
-	go start(ctx, &wg, "stream_trial_chan", ps.Trials)
+	go start(ctx, &wg, trialChan, ps.Trials)
 	// go start(ctx, &wg, "stream_experiment_chan", ps.Experiments)
 	wg.Wait()
 	return nil
