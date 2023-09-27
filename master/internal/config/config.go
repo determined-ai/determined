@@ -51,8 +51,6 @@ func DefaultDBConfig() *DBConfig {
 	return &DBConfig{
 		Migrations: "file://static/migrations",
 		SSLMode:    sslModeDisable,
-		User:       "admin",
-		Password:   "determined",
 	}
 }
 
@@ -83,6 +81,7 @@ type WebhooksConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		ConfigFile:            "",
+		DefaultPassword:       "determined",
 		Log:                   *logger.DefaultConfig(),
 		DB:                    *DefaultDBConfig(),
 		TaskContainerDefaults: *model.DefaultTaskContainerDefaults(),
@@ -130,6 +129,7 @@ func DefaultConfig() *Config {
 // environment variables and command line arguments.
 type Config struct {
 	ConfigFile            string                            `json:"config_file"`
+	DefaultPassword       string                            `json:"default_password"`
 	Log                   logger.Config                     `json:"log"`
 	DB                    DBConfig                          `json:"db"`
 	TensorBoardTimeout    int                               `json:"tensorboard_timeout"`

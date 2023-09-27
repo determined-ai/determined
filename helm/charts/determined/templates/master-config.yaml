@@ -229,6 +229,10 @@ data:
       {{- end }}
       {{- end }}
     {{- end}}
+    {- if .Values.defaultPassword }}
+      default_password: {{ .Values.defaultPassword | quote }}
+    {{- end }}
+
   {{- if .Values.logging }}
   {{- if .Values.logging.security }}
   {{- if .Values.logging.security.tls }}
