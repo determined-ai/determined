@@ -280,7 +280,6 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
     # Don't just check ready. We want to make sure the command's sleep has started.
     logs = ""
     for log in task_logs(api_utils.determined_test_session(), command_id, follow=True):
-        print(log.log)
         if "weareready" in log.log:
             break
         logs += log.log
