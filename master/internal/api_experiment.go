@@ -13,31 +13,28 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
-	"golang.org/x/sync/errgroup"
-
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	structpbmap "google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
-
-	log "github.com/sirupsen/logrus"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	exputil "github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
@@ -56,9 +53,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	structpb "github.com/golang/protobuf/ptypes/struct"
-	structpbmap "google.golang.org/protobuf/types/known/structpb"
 )
 
 // Catches information on active running experiments.
@@ -448,7 +442,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 	taskSpec := *a.m.taskSpec
 
 	sema := make(chan struct{}, maxConcurrentDeletes)
-	g, ctx := errgroup.WithContext(context.Background())
+	g, _ := errgroup.WithContext(context.Background())
 	successfulExpIDs := make(chan int, len(exps))
 
 	var expIDs []int
@@ -517,6 +511,8 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 		processExpIDs = append(processExpIDs, expID)
 	}
 
+	// TODO CAROLINA
+	ctx := context.Background()
 	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
