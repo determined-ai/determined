@@ -5,12 +5,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
+)
+
+const (
+	minInterval = time.Second
+	maxInterval = time.Minute
+	maxRetries  = 5
 )
 
 // Supervisor manages the context for underlying PublisherSet.
@@ -94,6 +101,7 @@ func (ssup *Supervisor) runOne(ctx context.Context) error {
 			},
 		)
 		// start up all publishers
+		// XXX: should these be passing errors backup?
 		group.Go(ssup.ps.Start)
 		// group.Go(PublishLoop(ctx, "experiment_trial_chan", ps.Experiments))
 	}()
@@ -102,19 +110,24 @@ func (ssup *Supervisor) runOne(ctx context.Context) error {
 
 // Run attempts to start up the publisher system and recovers in the event of a failure.
 func (ssup *Supervisor) Run(ctx context.Context) error {
-	for {
+	backoffSettings := backoff.NewExponentialBackOff()
+	backoffSettings.InitialInterval = minInterval
+	backoffSettings.MaxInterval = maxInterval
+
+	run := func() error {
 		err := ssup.runOne(ctx)
-		// did we get canceled?
-		select {
-		case <-ctx.Done():
-			return err
-		default:
+		if err != nil {
 			log.Errorf("restarting publisher system after failure: %s", err)
-			// backoff some amount
-			// XXX: make this less naive
-			time.Sleep(time.Second)
 		}
+		return err
 	}
+
+	err := backoff.Retry(run, backoff.WithContext(backoffSettings, ctx))
+
+	if err != nil && err != backoff.Permanent(err) {
+		return errors.Wrap(err, "maximum number of retries reached")
+	}
+	return err
 }
 
 // Websocket is the method that we pass to the Echo server, because rb doesn't know how to update
