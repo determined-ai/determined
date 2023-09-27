@@ -11,8 +11,8 @@ type LoadablePromiser<T> = (canceler: AbortController) => Promise<T | Loadable<T
  * hook returns the return value wrapped in `Loaded`. If the function returns a
  * `Loadable`, the value isn't wrapped. When any value in the deps array
  * changes, the function is run again as a render effect. If the deps array
- * changes before the async function returns, the older call will not trigger an
- * update on return.
+ * changes before the async function returns, useAsync will discard the results
+ * of the older call.
  * @param loadableFunc (canceler: AbortController) => Promise<T | Loadable<T>>
  * @param deps readonly unknown[]
  * @returns Loadable<T>
