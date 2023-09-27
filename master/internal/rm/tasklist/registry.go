@@ -3,11 +3,9 @@ package tasklist
 import (
 	"fmt"
 	"sync"
-	"time"
 )
 
-// Registry is a thread-safe map of key value pairs that supports callbacks on delete and stores
-// the time of registration.
+// Registry is a thread-safe map of key value pairs that supports callbacks on delete.
 type Registry[K comparable, V any] struct {
 	mu   sync.Mutex
 	data map[K]entry[V]
@@ -16,7 +14,6 @@ type Registry[K comparable, V any] struct {
 type entry[V any] struct {
 	value V
 	done  chan bool
-	time  time.Time
 }
 
 // NewRegistry creates a new Registry.
@@ -47,7 +44,6 @@ func (r *Registry[K, V]) Add(key K, value V) error {
 	r.data[key] = entry[V]{
 		value: value,
 		done:  make(chan bool),
-		time:  time.Now(),
 	}
 	return nil
 }
@@ -79,13 +75,4 @@ func (r *Registry[K, V]) OnDelete(key K, callback func()) {
 		}
 		callback()
 	}()
-}
-
-// RegisteredTime returns the time a key was registered (or default) and if the entry exists.
-func (r *Registry[K, V]) RegisteredTime(key K) (time.Time, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	e, ok := r.data[key]
-	return e.time, ok
 }

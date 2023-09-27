@@ -2,7 +2,6 @@ package agentrm
 
 import (
 	"sort"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
@@ -51,13 +50,9 @@ func roundRobinSchedule(
 		group := groups[req.JobID]
 		state, ok := groupMapping[group]
 		if !ok {
-			createTime, ok := tasklist.GroupPriorityChangeRegistry.RegisteredTime(req.JobID)
-			if !ok {
-				createTime = time.Now()
-			}
 			state = &groupState{
 				Group:      group,
-				createTime: createTime,
+				createTime: req.JobSubmissionTime,
 			}
 			states = append(states, state)
 			groupMapping[group] = state
