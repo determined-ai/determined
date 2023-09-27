@@ -19,7 +19,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.check import check_eq
+from determined.common.check import check_eq, check_true
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -55,6 +55,7 @@ def start_shell(args: Namespace) -> None:
 
     shell = bindings.get_GetShell(session, shellId=sid).shell
     _open_shell(
+        cli.setup_session(args),
         args.master,
         shell.to_json(),
         args.ssh_opts,
@@ -68,6 +69,7 @@ def open_shell(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
+        cli.setup_session(args),
         args.master,
         shell,
         args.ssh_opts,
@@ -80,7 +82,14 @@ def open_shell(args: Namespace) -> None:
 def show_ssh_command(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
-    _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
+    _open_shell(
+        cli.setup_session(args),
+        args.master,
+        shell,
+        args.ssh_opts,
+        retain_keys_and_print=True,
+        print_only=True,
+    )
 
 
 def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], str]:
@@ -130,14 +139,18 @@ def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, N
 
 
 def _open_shell(
+    sess: api.Session,
     master: str,
     shell: Dict[str, Any],
     additional_opts: List[str],
     retain_keys_and_print: bool,
     print_only: bool,
 ) -> None:
+    task = bindings.get_GetTask(sess, taskId=shell["id"]).task
+    check_eq(len(task.allocations), 1, "Shell must have only one allocation")
+    check_true(task.allocations[0].isReady, "Shell must be ready")
+
     cache_dir = None
-    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     if retain_keys_and_print:
         cache_dir = Path(appdirs.user_cache_dir("determined")) / "shell" / shell["id"]
         if not cache_dir.exists():
