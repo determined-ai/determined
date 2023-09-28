@@ -98,7 +98,7 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (model.Group, error)
 }
 
 // ModifiableGroupsTx verifies that groups are in the DB and non-personal. Returns error if any group isn't found.
-// based on singular GroupByIDTx
+// Based on singular GroupByIDTx.
 func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) error {
 	if len(groups) == 0 {
 		return nil
@@ -321,15 +321,12 @@ func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ign
 		return nil
 	}
 
-	var changeRecords []struct {
-		GroupID int
-		UserID  int
-	}
+	var changeRecords []int32
 	_, err = tx.NewDelete().Model(&changeRecords).
-		TableExpr("user_group_membership").
+		Table("user_group_membership").
 		Where("group_id IN (?)", bun.In(groups)).
 		Where("user_id IN (?)", bun.In(uids)).
-		Returning("group_id, user_id").
+		Returning("user_id").
 		Exec(ctx)
 
 	if err != nil {
