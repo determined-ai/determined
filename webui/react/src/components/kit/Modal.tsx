@@ -136,7 +136,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
       }
       key={key}
-      maskClosable={true}
+      maskClosable={false}
       open={isOpen}
       title={
         <div className={css.header}>

@@ -615,7 +615,7 @@ const useModalHyperparameterSearch = ({
         </Form>
       ),
       icon: null,
-      maskClosable: true,
+      maskClosable: false,
       title: 'Hyperparameter Search',
       width: 700,
     };

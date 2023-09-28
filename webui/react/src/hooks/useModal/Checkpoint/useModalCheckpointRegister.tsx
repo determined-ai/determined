@@ -334,7 +334,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         closable: true,
         content: getModalContent(state),
         icon: null,
-        maskClosable: true,
+        maskClosable: false,
         okButtonProps: { disabled: selectedModelName == null },
         okText: 'Register Checkpoint',
         onCancel: handleCancel,

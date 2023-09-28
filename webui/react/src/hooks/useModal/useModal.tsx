@@ -129,7 +129,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     if (!modalProps || modalProps === prevModalProps) return;
 
     const completeModalProps: ModalFuncProps = {
-      maskClosable: true,
+      maskClosable: false,
       open: true,
       style: { minWidth: 280 },
       ...modalProps,
