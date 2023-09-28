@@ -1740,7 +1740,14 @@ func (m *DispatcherResourceManager) terminateDispatcherJob(
 		return false
 	}
 
-	_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := m.syslog.WithField("caller", "terminateDispatcherJob")
+
+	_, _, err := m.apiClient.terminateDispatch( //nolint:bodyclose
+		owner,
+		dispatchID,
+		launcherAPILogger)
 	if err != nil {
 		m.syslog.WithField("dispatch-id", dispatchID).
 			WithError(err).Errorf("failed to terminate dispatch job")
@@ -1776,7 +1783,11 @@ func (m *DispatcherResourceManager) removeDispatchEnvironment(
 ) {
 	log := m.syslog.WithField("dispatch-id", dispatchID).WithField("owner", owner)
 
-	_, err := m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := m.syslog.WithField("caller", "removeDispatchEnvironment")
+
+	_, err := m.apiClient.deleteDispatch(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		log.WithError(err).Error("failed to delete dispatch")
 		return
@@ -1797,29 +1808,17 @@ func (m *DispatcherResourceManager) sendManifestToDispatcher(
 	impersonatedUser string,
 	allocationID string,
 ) (string, error) {
-	/*
-	 * "LaunchAsync()" does not wait for the "launcher" to move the job to the "RUNNING"
-	 * state and returns right away while the job is still in the "PENDING" state. If it
-	 * becomes necessary to wait for the job to be in the "RUNNING" state, we can switch
-	 * to using "Launch()".
-	 *
-	 * The "manifest" describes the job to be launched and includes any environment
-	 * variables, mount points, etc., that are needed by the job.
-	 *
-	 * The "impersonatedUser" is the user that we want to run the job as on the cluster.
-	 * Of course, that user must be known to the cluster as either a local Linux user
-	 * (e.g. "/etc/passwd"), LDAP, or some other authentication mechanism.
-	 */
-	start := time.Now()
-	dispatchInfo, response, err := m.apiClient.LaunchApi.
-		Launch(m.apiClient.withAuth(context.TODO())).
-		Manifest(*manifest).
-		Impersonate(impersonatedUser).
-		DispatchId(allocationID).
-		Execute() //nolint:bodyclose
-	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := m.syslog.WithField("caller", "sendManifestToDispatcher")
+
+	//nolint:bodyclose
+	dispatchInfo, response, err := m.apiClient.launchDispatcherJob(
+		manifest,
+		impersonatedUser,
+		allocationID,
+		launcherAPILogger)
 	if err != nil {
-		dispatcherErrors.WithLabelValues("launch").Inc()
 		if response != nil {
 			// If we have a real error body, return the details message
 			if details := extractDetailsFromResponse(response, err); len(details) > 0 {

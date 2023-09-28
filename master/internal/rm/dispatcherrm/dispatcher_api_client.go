@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	semver "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
@@ -105,7 +106,13 @@ func (c *launcherAPIClient) reloadAuthToken() {
 	}
 }
 
-func (c *launcherAPIClient) getVersion(ctx context.Context) (v *semver.Version, err error) {
+func (c *launcherAPIClient) getVersion(
+	ctx context.Context,
+	launcherAPILogger *logrus.Entry,
+) (v *semver.Version, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("api-name", "getVersion")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
 	defer recordAPITiming("get_version")()
 	defer recordAPIErr("get_version")(err)
 
@@ -123,11 +130,83 @@ func (c *launcherAPIClient) getVersion(ctx context.Context) (v *semver.Version, 
 	return version, nil
 }
 
-func (c *launcherAPIClient) launchHPCResourcesJob() (
+func (c *launcherAPIClient) launchDispatcherJob(
+	manifest *launcher.Manifest,
+	impersonatedUser string,
+	allocationID string,
+	launcherAPILogger *logrus.Entry,
+) (dispatchInfo launcher.DispatchInfo, response *http.Response, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", allocationID).
+		WithField("api-name", "launchDispatcherJob")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("launch_dispatcher_job")()
+	defer recordAPIErr("launch_dispatcher_job")(err)
+
+	/*
+	 * "Launch()" waits until the job has been submitted to the Workload manager
+	 * (i.e., "Slurm" or "PBS) before returning, thereby guaranteeing that the
+	 * launcher has created the environment files/directories and that we have
+	 * the HPC job ID.
+	 *
+	 * The "manifest" describes the job to be launched and includes any environment
+	 * variables, mount points, etc., that are needed by the job.
+	 *
+	 * The "impersonatedUser" is the user that we want to run the job as on the cluster.
+	 * Of course, that user must be known to the cluster as either a local Linux user
+	 * (e.g. "/etc/passwd"), LDAP, or some other authentication mechanism.
+	 */
+	return c.LaunchApi.
+		Launch(c.withAuth(context.TODO())).
+		Manifest(*manifest).
+		Impersonate(impersonatedUser).
+		DispatchId(allocationID).
+		Execute() //nolint:bodyclose
+}
+
+func (c *launcherAPIClient) getEnvironmentStatus(
+	owner string,
+	dispatchID string,
+	launcherAPILogger *logrus.Entry,
+) (dispatchInfo launcher.DispatchInfo, response *http.Response, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", dispatchID).
+		WithField("api-name", "getEnvironmentStatus")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("get_environment_status")()
+	defer recordAPIErr("get_environment_status")(err)
+
+	return c.MonitoringApi.
+		GetEnvironmentStatus(c.withAuth(context.TODO()), owner, dispatchID).
+		Refresh(true).
+		Execute() //nolint:bodyclose
+}
+
+func (c *launcherAPIClient) getEnvironmentDetails(
+	owner string,
+	dispatchID string,
+	launcherAPILogger *logrus.Entry,
+) (manifest launcher.Manifest, response *http.Response, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", dispatchID).
+		WithField("api-name", "getEnvironmentDetails")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("get_environment_details")()
+	defer recordAPIErr("get_environment_details")(err)
+
+	return c.MonitoringApi.
+		GetEnvironmentDetails(c.withAuth(context.TODO()), owner, dispatchID).
+		Execute() //nolint:bodyclose
+}
+
+func (c *launcherAPIClient) launchHPCResourcesJob(launcherAPILogger *logrus.Entry) (
 	info launcher.DispatchInfo,
 	resp *http.Response,
 	err error,
 ) {
+	launcherAPILogger = launcherAPILogger.WithField("api-name", "launchHPCResourcesJob")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
 	defer recordAPITiming("launch_hpc_resources_job")()
 	defer recordAPIErr("launch_hpc_resources_job")(err)
 
@@ -140,11 +219,14 @@ func (c *launcherAPIClient) launchHPCResourcesJob() (
 		Execute() //nolint:bodyclose
 }
 
-func (c *launcherAPIClient) launchHPCQueueJob() (
+func (c *launcherAPIClient) launchHPCQueueJob(launcherAPILogger *logrus.Entry) (
 	info launcher.DispatchInfo,
 	resp *http.Response,
 	err error,
 ) {
+	launcherAPILogger = launcherAPILogger.WithField("api-name", "launchHPCQueueJob")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
 	defer recordAPITiming("launch_hpc_queue_job")()
 	defer recordAPIErr("launch_hpc_queue_job")(err)
 
@@ -157,69 +239,136 @@ func (c *launcherAPIClient) launchHPCQueueJob() (
 		Execute() //nolint:bodyclose
 }
 
+func (c *launcherAPIClient) listAllTerminated(
+	launcherAPILogger *logrus.Entry,
+) (dispatchInfo map[string][]launcher.DispatchInfo, response *http.Response, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("api-name", "listAllTerminated")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("list_all_terminated")()
+	defer recordAPIErr("list_all_terminated")(err)
+
+	return c.TerminatedApi.
+		ListAllTerminated(c.withAuth(context.TODO())).
+		EventLimit(0).
+		Execute() //nolint:bodyclose
+}
+
+func (c *launcherAPIClient) listAllRunning(
+	launcherAPILogger *logrus.Entry,
+) (dispatchInfo map[string][]launcher.DispatchInfo, response *http.Response, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("api-name", "listAllRunning")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("list_all_running")()
+	defer recordAPIErr("list_all_running")(err)
+
+	return c.RunningApi.
+		ListAllRunning(c.withAuth(context.TODO())).
+		EventLimit(0).
+		Execute() //nolint:bodyclose
+}
+
 func (c *launcherAPIClient) terminateDispatch(
 	owner string,
-	id string,
+	dispatchID string,
+	launcherAPILogger *logrus.Entry,
 ) (
 	info launcher.DispatchInfo,
 	resp *http.Response,
 	err error,
 ) {
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", dispatchID).
+		WithField("api-name", "terminateDispatch")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
 	defer recordAPITiming("terminate")()
 	defer recordAPIErr("terminate")(err)
 
-	log := c.log.WithField("dispatch-id", id)
 	info, resp, err = c.RunningApi.
-		TerminateRunning(c.withAuth(context.TODO()), owner, id).
+		TerminateRunning(c.withAuth(context.TODO()), owner, dispatchID).
 		Force(true).Execute() //nolint:bodyclose
 	switch {
 	case err != nil && resp != nil && resp.StatusCode == 404:
-		log.WithError(err).Debug("attempt to terminate dispatch but it is gone")
+		launcherAPILogger.WithError(err).Debug("attempt to terminate dispatch but it is gone")
 	case err != nil:
-		return launcher.DispatchInfo{}, nil, fmt.Errorf("terminating dispatch %s: %w", id, err)
+		return launcher.DispatchInfo{}, nil, fmt.Errorf("terminating dispatch %s: %w", dispatchID, err)
 	default:
-		log.Debug("terminated dispatch")
+		launcherAPILogger.Debug("terminated dispatch")
 	}
 	return info, resp, nil
 }
 
-func (c *launcherAPIClient) deleteDispatch(owner, id string) (resp *http.Response, err error) {
+func (c *launcherAPIClient) deleteDispatch(
+	owner,
+	dispatchID string,
+	launcherAPILogger *logrus.Entry,
+) (resp *http.Response, err error) {
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", dispatchID).
+		WithField("api-name", "deleteDispatch")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
 	defer recordAPITiming("delete_env")()
 	defer recordAPIErr("delete_env")(err)
 
-	log := c.log.WithField("dispatch-id", id)
-	log.Debug("deleting environment")
+	launcherAPILogger.Debug("deleting environment")
 
 	resp, err = c.MonitoringApi.
-		DeleteEnvironment(c.withAuth(context.TODO()), owner, id).
+		DeleteEnvironment(c.withAuth(context.TODO()), owner, dispatchID).
 		Execute() //nolint:bodyclose
 	switch {
 	case err != nil && resp != nil && resp.StatusCode == 404:
-		log.Debug("try to delete environment but it is gone")
+		launcherAPILogger.Debug("try to delete environment but it is gone")
 	case err != nil:
-		return nil, fmt.Errorf("removing environment for Dispatch ID %s: %w", id, err)
+		return nil, fmt.Errorf("removing environment for Dispatch ID %s: %w", dispatchID, err)
 	default:
-		log.Debug("deleted environment")
+		launcherAPILogger.Debug("deleted environment")
 	}
 	return resp, nil
 }
 
-func (c *launcherAPIClient) loadEnvironmentLog(owner, id, logFileName string) (
-	log string,
-	resp *http.Response,
-	err error,
+func (c *launcherAPIClient) loadEnvironmentLog(
+	owner string,
+	dispatchID string,
+	logFileName string,
+	launcherAPILogger *logrus.Entry,
+) (data string, resp *http.Response, err error,
 ) {
-	defer recordAPITiming("load_log")()
-	defer recordAPIErr("load_log")(err)
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", dispatchID).WithField("api-name", "loadEnvironmentLog")
 
-	log, resp, err = c.MonitoringApi.
-		LoadEnvironmentLog(c.withAuth(context.TODO()), owner, id, logFileName).
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("load_environment_log")()
+	defer recordAPIErr("load_environment_log")(err)
+
+	data, resp, err = c.MonitoringApi.
+		LoadEnvironmentLog(c.withAuth(context.TODO()), owner, dispatchID, logFileName).
 		Execute() //nolint:bodyclose
 	if err != nil {
-		return log, nil, fmt.Errorf(c.handleLauncherError(
+		return data, nil, fmt.Errorf(c.handleLauncherError(
 			resp, "Failed to retrieve HPC Resource details", err))
 	}
-	return log, resp, nil
+	return data, resp, nil
+}
+
+func (c *launcherAPIClient) loadEnvironmentLogWithRange(
+	owner string,
+	dispatchID string,
+	logFileName string,
+	logRange string,
+	launcherAPILogger *logrus.Entry) (
+	data string, httpResponse *http.Response, err error,
+) {
+	launcherAPILogger = launcherAPILogger.WithField("dispatch-id", dispatchID).
+		WithField("api-name", "loadEnvironmentLogWithRange")
+
+	defer c.logExcessiveAPIResponseTimes(launcherAPILogger)()
+	defer recordAPITiming("launch_environment_log_with_range")()
+	defer recordAPIErr("launch_environment_log_with_range")(err)
+
+	return c.MonitoringApi.
+		LoadEnvironmentLog(c.withAuth(context.TODO()), owner, dispatchID, logFileName).
+		Range_(logRange).
+		Execute() //nolint:bodyclose
 }
 
 // handleLauncherError provides common error handling for REST API calls
@@ -323,4 +472,45 @@ func extractDetailsFromResponse(resp *http.Response, err error) string {
 		return errorBody.Detail
 	}
 	return err.Error()
+}
+
+func (c *launcherAPIClient) logExcessiveAPIResponseTimes(launcherAPILogger *logrus.Entry) func() {
+	// The time that the launcher API call was made, so we can track how long
+	// the API call is taking to return.
+	startTime := time.Now()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-time.After(10 * time.Second):
+				launcherAPILogger.Warnf("after %.2fs, API call has still not completed",
+					time.Since(startTime).Seconds())
+			case <-ctx.Done():
+				elapsed := time.Since(startTime)
+
+				// Only log a message if it took longer than 10 seconds for the API
+				// call to complete to avoid filling up the logs.
+				if elapsed.Seconds() >= 10 {
+					launcherAPILogger.Infof("after %.2fs, API call has completed",
+						elapsed.Seconds())
+				}
+
+				return
+			}
+		}
+	}()
+
+	// When "logExcessiveAPIResponseTimes()" is called from a "defer", this is
+	// the real function that gets deferred until the calling function returns.
+	// The "cancel()" will cause the "ctx->Done()" in the goroutine above to
+	// return a value, which will result in the goroutine terminating.
+	return func() {
+		cancel()
+		wg.Wait()
+	}
 }
