@@ -139,7 +139,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Delete]: (experiment) => deletableRunStates.has(experiment.state),
 
-  [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
+  [ExperimentAction.DownloadCode]: (experiment) => experiment.modelDefinitionSize !== 0,
 
   [ExperimentAction.Edit]: (experiment) => !experiment?.parentArchived && !experiment?.archived,
 
@@ -187,15 +187,18 @@ export const getActionsForExperiment = (
         case ExperimentAction.HyperparameterSearch:
           return (
             permissions.canViewExperimentArtifacts({ workspace }) &&
-            permissions.canCreateExperiment({ workspace })
+            permissions.canCreateExperiment({ workspace }) &&
+            !experiment.unmanaged
           );
 
         case ExperimentAction.Delete:
           return permissions.canDeleteExperiment({ experiment });
 
         case ExperimentAction.DownloadCode:
-        case ExperimentAction.OpenTensorBoard:
           return permissions.canViewExperimentArtifacts({ workspace });
+
+        case ExperimentAction.OpenTensorBoard:
+          return permissions.canViewExperimentArtifacts({ workspace }) && !experiment.unmanaged;
 
         case ExperimentAction.Move:
           return permissions.canMoveExperiment({ experiment });
@@ -205,13 +208,15 @@ export const getActionsForExperiment = (
             workspace: { id: experiment?.workspaceId },
           });
 
-        case ExperimentAction.Activate:
         case ExperimentAction.Archive:
+        case ExperimentAction.Unarchive:
+          return permissions.canModifyExperiment({ workspace });
+
+        case ExperimentAction.Activate:
         case ExperimentAction.Cancel:
         case ExperimentAction.Kill:
         case ExperimentAction.Pause:
-        case ExperimentAction.Unarchive:
-          return permissions.canModifyExperiment({ workspace });
+          return permissions.canModifyExperiment({ workspace }) && !experiment.unmanaged;
 
         default:
           return true;

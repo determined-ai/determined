@@ -110,7 +110,7 @@ test:
 
 .PHONY: test-ci
 test-ci:
-	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
+	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=junit.xml
 
 # INCLUDE_FLAKY runs all tests even if they use flakyIt.
 # By default this would run ALL tests.

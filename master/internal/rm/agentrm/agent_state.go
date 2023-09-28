@@ -669,7 +669,8 @@ func clearAgentStates(agentIds []agentID) error {
 
 func updateContainerState(c *cproto.Container) error {
 	snapshot := newContainerSnapshot(c)
-	_, err := db.Bun().NewUpdate().Model(&snapshot).
+	_, err := db.Bun().NewUpdate().
+		Model(&snapshot).
 		Where("container_id = ?", snapshot.ID).
 		Column("state", "devices").
 		Exec(context.TODO())

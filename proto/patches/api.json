@@ -57,6 +57,9 @@
         }
       }
     },
+    "protobufFieldMask": {
+      "description": "https://protobuf.dev/reference/java/api-docs/com/google/protobuf/FieldMask"
+    },
     "protobufAny": {
       "properties": {
         "typeUrl": {

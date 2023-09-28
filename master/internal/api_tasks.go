@@ -215,6 +215,13 @@ func (a *apiServer) AllocationAllGather(
 	return &apiv1.AllocationAllGatherResponse{Data: out}, nil
 }
 
+func (a *apiServer) GetAllocation(
+	ctx context.Context,
+	req *apiv1.GetAllocationRequest,
+) (*apiv1.GetAllocationResponse, error) {
+	return nil, grpcutil.UnimplementedError
+}
+
 func (a *apiServer) PostAllocationProxyAddress(
 	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
@@ -234,6 +241,20 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, err
 	}
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
+}
+
+func (a *apiServer) GetTaskAcceleratorData(
+	ctx context.Context,
+	req *apiv1.GetTaskAcceleratorDataRequest,
+) (*apiv1.GetTaskAcceleratorDataResponse, error) {
+	return nil, grpcutil.UnimplementedError
+}
+
+func (a *apiServer) PostAllocationAcceleratorData(
+	ctx context.Context,
+	req *apiv1.PostAllocationAcceleratorDataRequest,
+) (*apiv1.PostAllocationAcceleratorDataResponse, error) {
+	return nil, grpcutil.UnimplementedError
 }
 
 // TaskLogBackend is an interface task log backends, such as elastic or postgres,

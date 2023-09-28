@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 
+import { UIProvider } from 'components/kit/Theme';
 import {
   getExperimentDetails,
   getExpTrials,
@@ -9,7 +10,6 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import {} from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';

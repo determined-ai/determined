@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';
@@ -14,7 +15,6 @@ import { timeSeries } from 'services/api';
 import { Metric, MetricContainer, Scale } from 'types';
 import { glasbeyColor } from 'utils/color';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToStr } from 'utils/metric';
 
 interface Props {
@@ -106,7 +106,15 @@ const TrialChart: React.FC<Props> = ({
   const chartOptions: Options = useMemo(() => {
     return {
       axes: [
-        { label: 'Batches' },
+        {
+          incrs: [
+            /* eslint-disable array-element-newline */
+            1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000,
+            100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000,
+            /* eslint-enable array-element-newline */
+          ],
+          label: 'Batches',
+        },
         { label: metrics.length === 1 ? metricToStr(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
@@ -147,7 +155,7 @@ const TrialChart: React.FC<Props> = ({
       <div className={css.base}>
         <UPlotChart
           data={chartData}
-          isLoading={!trialId || Loadable.isLoading(trialSummary)}
+          isLoading={!trialId || Loadable.isNotLoaded(trialSummary)}
           options={chartOptions}
         />
       </div>

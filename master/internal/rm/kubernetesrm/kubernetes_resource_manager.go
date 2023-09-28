@@ -55,6 +55,14 @@ func New(
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
+
+	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
+	clusterID, err := db.GetOrCreateClusterID()
+	if err != nil {
+		panic(fmt.Errorf("getting clusterID: %w", err))
+	}
+	setClusterID(clusterID)
+
 	ref, _ := system.ActorOf(
 		sproto.K8sRMAddr,
 		newKubernetesResourceManager(
@@ -264,9 +272,19 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		)
 
 		for _, poolConfig := range k.poolsConfig {
+			maxSlotsPerPod := 0
+			if k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
+				maxSlotsPerPod = *k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+			}
+			if poolConfig.TaskContainerDefaults != nil &&
+				poolConfig.TaskContainerDefaults.Kubernetes != nil &&
+				poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
+				maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+			}
+
 			poolConfig := poolConfig
 			k.pools[poolConfig.PoolName] = ctx.MustActorOf(
-				poolConfig.PoolName, newResourcePool(k.config, &poolConfig, k.podsActor),
+				poolConfig.PoolName, newResourcePool(maxSlotsPerPod, &poolConfig, k.podsActor),
 			)
 		}
 
@@ -316,12 +334,20 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-			PoolName: k.config.DefaultComputeResourcePool,
-		})
+		if k.config.DefaultComputeResourcePool == "" {
+			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
+		} else {
+			ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
+				PoolName: k.config.DefaultComputeResourcePool,
+			})
+		}
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: k.config.DefaultAuxResourcePool})
+		if k.config.DefaultComputeResourcePool == "" {
+			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
+		} else {
+			ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: k.config.DefaultAuxResourcePool})
+		}
 
 	case sproto.ValidateCommandResourcesRequest:
 		k.forwardToPool(ctx, msg.ResourcePool, msg)
@@ -417,6 +443,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 
+	case *apiv1.EnableAgentRequest:
+		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+
+	case *apiv1.DisableAgentRequest:
+		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+
 	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)
 
@@ -502,6 +534,17 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 		return &resourcepoolv1.ResourcePool{}, err
 	}
 
+	// TODO actor refactor, this is just getting resourcePool[poolName].maxSlotsPerPod
+	slotsPerAgent := 0
+	if k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
+		slotsPerAgent = *k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+	}
+	if pool.TaskContainerDefaults != nil &&
+		pool.TaskContainerDefaults.Kubernetes != nil &&
+		pool.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
+		slotsPerAgent = *pool.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+	}
+
 	const na = "n/a"
 
 	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S
@@ -509,7 +552,6 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 	location := na
 	imageID := ""
 	instanceType := na
-	slotsPerAgent := k.config.MaxSlotsPerPod
 
 	accelerator := ""
 	schedulerType := resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES
@@ -636,6 +678,22 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 		}
 	}
 	return result
+}
+
+// EnableAgent allows scheduling on a node that has been disabled.
+func (k ResourceManager) EnableAgent(
+	ctx actor.Messenger,
+	req *apiv1.EnableAgentRequest,
+) (resp *apiv1.EnableAgentResponse, err error) {
+	return resp, k.Ask(ctx, req, &resp)
+}
+
+// DisableAgent prevents scheduling on a node and has the option to kill running jobs.
+func (k ResourceManager) DisableAgent(
+	ctx actor.Messenger,
+	req *apiv1.DisableAgentRequest,
+) (resp *apiv1.DisableAgentResponse, err error) {
+	return resp, k.Ask(ctx, req, &resp)
 }
 
 // EnableSlot implements 'det slot enable...' functionality.

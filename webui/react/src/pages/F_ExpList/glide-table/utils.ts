@@ -1,6 +1,7 @@
 import { DataEditorProps } from '@hpe.com/glide-data-grid';
 import dayjs from 'dayjs';
 
+import { Theme } from 'components/kit/Theme';
 import { ExperimentItem } from 'types';
 import {
   DURATION_MINUTE,
@@ -9,7 +10,6 @@ import {
   durationInEnglish,
   getDuration,
 } from 'utils/datetime';
-import { Theme } from 'utils/themes';
 
 export const getDurationInEnglish = (record: ExperimentItem): string => {
   const duration = getDuration(record);

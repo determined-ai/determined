@@ -6,7 +6,7 @@ import os
 import pathlib
 import uuid
 import warnings
-from typing import Any, ContextManager, Dict, Optional, Set, Sized, Type
+from typing import TYPE_CHECKING, Any, ContextManager, Dict, Optional, Set, Sized, Type
 
 import torch
 import torch.distributed as dist
@@ -15,6 +15,11 @@ from torch.utils import data
 
 import determined as det
 from determined import common, core, pytorch
+
+if TYPE_CHECKING:
+    # These modules are only needed for type checking and
+    # cause a circular dependency issue. This bypasses it.
+    from determined.experimental import checkpoint, model
 
 common.set_logger(False)
 
@@ -25,11 +30,21 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
     def __init__(self, core_context: core.Context, storage_path: str) -> None:
         super().__init__()
         self._core_context = core_context
-        self.distributed = self._core_context.distributed
+        self._distributed = core_context.distributed
         self.device = get_default_device(core_context)
         self._tensorboard_path = core_context.train.get_tensorboard_path()
         self._storage_path = storage_path
         self._use_default_storage = False
+        self._hparams = None  # type: Optional[Dict[str, Any]]
+
+    def get_hparams(self) -> Dict[str, Any]:
+        if self._hparams is None:
+            info = det.get_cluster_info()
+            assert info, "Must run TorchBatchProcessor in a cluster to run get_hparams()"
+            assert info.task_type == "TRIAL", "TorchBatchProcessor must be run inside of a Trial"
+            self._hparams = info.trial.hparams
+        assert self._hparams is not None
+        return self._hparams
 
     def to_device(
         self, data: pytorch._Data, warned_types: Optional[Set[Type]] = None
@@ -77,6 +92,60 @@ class TorchBatchProcessorContext(pytorch._PyTorchReducerContext):
         """
         self._use_default_storage = True
         return self._core_context.checkpoint._storage_manager.store_path(self._storage_path)
+
+    def report_metrics(self, group: str, steps_completed: int, metrics: Dict[str, Any]) -> None:
+        """
+        Report metrics data to the master.
+
+        Arguments:
+            group (string): metrics group name. Can be used to partition metrics
+                into different logical groups or time series.
+                "training" and "validation" group names map to built-in training
+                and validation time series. Note: Group cannot contain ``.`` character.
+            steps_completed (int): global step number, e.g. the number of batches processed.
+            metrics (Dict[str, Any]): metrics data dictionary. Must be JSON-serializable.
+                When reporting metrics with the same ``group`` and ``steps_completed`` values,
+                the dictionary keys must not overlap.
+        """
+        self._core_context.train.report_metrics(
+            group=group,
+            steps_completed=steps_completed,
+            metrics=metrics,
+        )
+
+    def report_task_using_model_version(self, model_version: "model.ModelVersion") -> None:
+        """
+        Associate ``model_version`` with the current task. This links together the metrics
+        reporting so that any metrics which are reported to the current task will be
+        visible when querying for metrics associated with this model version
+
+        Args:
+            model_Version (model.ModelVersion): The model version to associate with this task
+        """
+        self._core_context.experimental.report_task_using_model_version(model_version)
+
+    def report_task_using_checkpoint(self, checkpoint: "checkpoint.Checkpoint") -> None:
+        """
+        Associate ``checkpoint`` with the current task. This links together the metrics
+        reporting so that any metrics which are reported to the current task will be
+        visible when querying for metrics associated with this checkpoint
+
+        Args:
+            checkpoint (checkpoint.Checkpoint): The checkpoint to associate with this task
+        """
+        self._core_context.experimental.report_task_using_checkpoint(checkpoint)
+
+    def get_distributed_rank(self) -> int:
+        """
+        The rank of this current process in a trial
+        """
+        return self._core_context.distributed.get_rank()
+
+    def get_distributed_size(self) -> int:
+        """
+        The number of slots this trial is running on
+        """
+        return self._core_context.distributed.get_size()
 
 
 def get_default_device(core_context: core.Context) -> torch.device:
@@ -348,7 +417,9 @@ def torch_batch_process(
         slots_per_node = len(info.slot_ids)
 
         num_nodes = len(info.container_addrs)
-        total_worker = num_nodes * slots_per_node
+        total_worker = num_nodes
+        if slots_per_node > 0:
+            total_worker *= slots_per_node
         # Get global rank
         rank = core_context.distributed.get_rank()
         latest_checkpoint = info.latest_checkpoint

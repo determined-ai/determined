@@ -11,6 +11,8 @@ import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
@@ -30,9 +32,7 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
 import { alphaNumericSorter, booleanSorter, numericSorter } from 'utils/sort';
@@ -77,7 +77,10 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const onToggleActive = useCallback(async () => {
     try {
       await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
-      message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
+      makeToast({
+        severity: 'Confirm',
+        title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
+      });
       fetchUsers();
     } catch (e) {
       handleError(e, {
@@ -292,6 +295,23 @@ const UserManagement: React.FC = () => {
         title: 'Modified Time',
       },
       {
+        dataIndex: 'lastAuthAt',
+        defaultSortOrder:
+          defaultSortKey === V1GetUsersRequestSortBy.LASTLOGINTIME ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastAuthAt'],
+        key: V1GetUsersRequestSortBy.LASTLOGINTIME,
+        onCell: onRightClickableCell,
+        render: (value: number | undefined): React.ReactNode => {
+          return value ? (
+            relativeTimeRenderer(new Date(value))
+          ) : (
+            <div className={css.rightAligned}>N/A</div>
+          );
+        },
+        sorter: (a: DetailedUser, b: DetailedUser) => numericSorter(a.lastAuthAt, b.lastAuthAt),
+        title: 'Last Seen',
+      },
+      {
         className: 'fullCell',
         dataIndex: 'action',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
@@ -320,7 +340,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={filteredUsers}
         interactiveColumns={false}
-        loading={Loadable.isLoading(loadableUsers)}
+        loading={Loadable.isNotLoaded(loadableUsers)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         settings={{

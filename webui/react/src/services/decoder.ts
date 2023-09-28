@@ -16,6 +16,7 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
     id: data.id || 0,
     isActive: data.active,
     isAdmin: data.admin,
+    lastAuthAt: data.lastLogin ? new Date(data.lastLogin).getTime() : undefined,
     modifiedAt: new Date(data.modifiedAt || 1).getTime(),
     username: data.username,
   };
@@ -284,7 +285,7 @@ export const mapV1ModelVersion = (modelVersion: Sdk.V1ModelVersion): types.Model
 
 export const mapV1ModelDetails = (
   modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
-): types.ModelVersions | undefined => {
+): types.ModelWithVersions | undefined => {
   if (
     !modelDetailsResponse.model ||
     !modelDetailsResponse.modelVersions ||
@@ -481,12 +482,15 @@ export const mapV1Experiment = (
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
+    externalExperimentId: data.externalExperimentId,
+    externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
     hyperparameters,
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,
     labels: data.labels || [],
+    modelDefinitionSize: data.modelDefinitionSize,
     name: data.name,
     notes: data.notes,
     numTrials: data.numTrials || 0,
@@ -499,6 +503,7 @@ export const mapV1Experiment = (
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
+    unmanaged: data.unmanaged,
     userId: data.userId ?? 0,
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName,

@@ -1803,7 +1803,7 @@ func (*DeleteModelVersionResponse) Descriptor() ([]byte, []int) {
 }
 
 // Request for all metrics related to a given model version
-type GetTrialSourceInfoMetricsByModelVersionRequest struct {
+type GetTrialMetricsByModelVersionRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -1814,10 +1814,13 @@ type GetTrialSourceInfoMetricsByModelVersionRequest struct {
 	ModelVersionNum int32 `protobuf:"varint,2,opt,name=model_version_num,json=modelVersionNum,proto3" json:"model_version_num,omitempty"`
 	// Type of the TrialSourceInfo
 	TrialSourceInfoType *trialv1.TrialSourceInfoType `protobuf:"varint,3,opt,name=trial_source_info_type,json=trialSourceInfoType,proto3,enum=determined.trial.v1.TrialSourceInfoType,oneof" json:"trial_source_info_type,omitempty"`
+	// Metric Group string ("training", "validation", or anything else) (nil means
+	// all groups)
+	MetricGroup *string `protobuf:"bytes,4,opt,name=metric_group,json=metricGroup,proto3,oneof" json:"metric_group,omitempty"`
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionRequest) Reset() {
-	*x = GetTrialSourceInfoMetricsByModelVersionRequest{}
+func (x *GetTrialMetricsByModelVersionRequest) Reset() {
+	*x = GetTrialMetricsByModelVersionRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_model_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1825,13 +1828,13 @@ func (x *GetTrialSourceInfoMetricsByModelVersionRequest) Reset() {
 	}
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionRequest) String() string {
+func (x *GetTrialMetricsByModelVersionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetTrialSourceInfoMetricsByModelVersionRequest) ProtoMessage() {}
+func (*GetTrialMetricsByModelVersionRequest) ProtoMessage() {}
 
-func (x *GetTrialSourceInfoMetricsByModelVersionRequest) ProtoReflect() protoreflect.Message {
+func (x *GetTrialMetricsByModelVersionRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_model_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1843,44 +1846,51 @@ func (x *GetTrialSourceInfoMetricsByModelVersionRequest) ProtoReflect() protoref
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetTrialSourceInfoMetricsByModelVersionRequest.ProtoReflect.Descriptor instead.
-func (*GetTrialSourceInfoMetricsByModelVersionRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetTrialMetricsByModelVersionRequest.ProtoReflect.Descriptor instead.
+func (*GetTrialMetricsByModelVersionRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_model_proto_rawDescGZIP(), []int{28}
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionRequest) GetModelName() string {
+func (x *GetTrialMetricsByModelVersionRequest) GetModelName() string {
 	if x != nil {
 		return x.ModelName
 	}
 	return ""
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionRequest) GetModelVersionNum() int32 {
+func (x *GetTrialMetricsByModelVersionRequest) GetModelVersionNum() int32 {
 	if x != nil {
 		return x.ModelVersionNum
 	}
 	return 0
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionRequest) GetTrialSourceInfoType() trialv1.TrialSourceInfoType {
+func (x *GetTrialMetricsByModelVersionRequest) GetTrialSourceInfoType() trialv1.TrialSourceInfoType {
 	if x != nil && x.TrialSourceInfoType != nil {
 		return *x.TrialSourceInfoType
 	}
 	return trialv1.TrialSourceInfoType_TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED
 }
 
+func (x *GetTrialMetricsByModelVersionRequest) GetMetricGroup() string {
+	if x != nil && x.MetricGroup != nil {
+		return *x.MetricGroup
+	}
+	return ""
+}
+
 // Response for all metrics related to a given checkpoint
-type GetTrialSourceInfoMetricsByModelVersionResponse struct {
+type GetTrialMetricsByModelVersionResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// All the related trials and their metrics
-	Data []*trialv1.TrialSourceInfoMetric `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	Metrics []*trialv1.MetricsReport `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics,omitempty"`
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionResponse) Reset() {
-	*x = GetTrialSourceInfoMetricsByModelVersionResponse{}
+func (x *GetTrialMetricsByModelVersionResponse) Reset() {
+	*x = GetTrialMetricsByModelVersionResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_model_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1888,13 +1898,13 @@ func (x *GetTrialSourceInfoMetricsByModelVersionResponse) Reset() {
 	}
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionResponse) String() string {
+func (x *GetTrialMetricsByModelVersionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetTrialSourceInfoMetricsByModelVersionResponse) ProtoMessage() {}
+func (*GetTrialMetricsByModelVersionResponse) ProtoMessage() {}
 
-func (x *GetTrialSourceInfoMetricsByModelVersionResponse) ProtoReflect() protoreflect.Message {
+func (x *GetTrialMetricsByModelVersionResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_model_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1906,14 +1916,14 @@ func (x *GetTrialSourceInfoMetricsByModelVersionResponse) ProtoReflect() protore
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetTrialSourceInfoMetricsByModelVersionResponse.ProtoReflect.Descriptor instead.
-func (*GetTrialSourceInfoMetricsByModelVersionResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetTrialMetricsByModelVersionResponse.ProtoReflect.Descriptor instead.
+func (*GetTrialMetricsByModelVersionResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_model_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *GetTrialSourceInfoMetricsByModelVersionResponse) GetData() []*trialv1.TrialSourceInfoMetric {
+func (x *GetTrialMetricsByModelVersionResponse) GetMetrics() []*trialv1.MetricsReport {
 	if x != nil {
-		return x.Data
+		return x.Metrics
 	}
 	return nil
 }
@@ -2188,37 +2198,40 @@ var file_determined_api_v1_model_proto_rawDesc = []byte{
 	0x5f, 0x6e, 0x61, 0x6d, 0x65, 0xd2, 0x01, 0x11, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x76, 0x65,
 	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x6e, 0x75, 0x6d, 0x22, 0x1c, 0x0a, 0x1a, 0x44, 0x65, 0x6c,
 	0x65, 0x74, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa2, 0x02, 0x0a, 0x2e, 0x47, 0x65, 0x74, 0x54,
-	0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x4d, 0x65,
-	0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x56, 0x65, 0x72, 0x73,
-	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x6d, 0x6f,
-	0x64, 0x65, 0x6c, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09,
-	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x2a, 0x0a, 0x11, 0x6d, 0x6f, 0x64,
-	0x65, 0x6c, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x6e, 0x75, 0x6d, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x0f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x56, 0x65, 0x72, 0x73, 0x69,
-	0x6f, 0x6e, 0x4e, 0x75, 0x6d, 0x12, 0x62, 0x0a, 0x16, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x28, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x72, 0x69, 0x61,
-	0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x54, 0x79, 0x70, 0x65, 0x48,
-	0x00, 0x52, 0x13, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e,
-	0x66, 0x6f, 0x54, 0x79, 0x70, 0x65, 0x88, 0x01, 0x01, 0x3a, 0x26, 0x92, 0x41, 0x23, 0x0a, 0x21,
-	0xd2, 0x01, 0x0a, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0xd2, 0x01, 0x11,
-	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x6e, 0x75,
-	0x6d, 0x42, 0x19, 0x0a, 0x17, 0x5f, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x22, 0x7f, 0x0a, 0x2f,
-	0x47, 0x65, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e,
-	0x66, 0x6f, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x4d, 0x6f, 0x64, 0x65, 0x6c,
-	0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x3e, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2a, 0x2e,
-	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c,
-	0x2e, 0x76, 0x31, 0x2e, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49,
-	0x6e, 0x66, 0x6f, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x3a,
-	0x0c, 0x92, 0x41, 0x09, 0x0a, 0x07, 0xd2, 0x01, 0x04, 0x64, 0x61, 0x74, 0x61, 0x42, 0x35, 0x5a,
-	0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65,
-	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
-	0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61,
-	0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd1, 0x02, 0x0a, 0x24, 0x47, 0x65, 0x74, 0x54,
+	0x72, 0x69, 0x61, 0x6c, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79, 0x4d, 0x6f, 0x64,
+	0x65, 0x6c, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x1d, 0x0a, 0x0a, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x12,
+	0x2a, 0x0a, 0x11, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,
+	0x5f, 0x6e, 0x75, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0f, 0x6d, 0x6f, 0x64, 0x65,
+	0x6c, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x4e, 0x75, 0x6d, 0x12, 0x62, 0x0a, 0x16, 0x74,
+	0x72, 0x69, 0x61, 0x6c, 0x5f, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x69, 0x6e, 0x66, 0x6f,
+	0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x28, 0x2e, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x2e, 0x76,
+	0x31, 0x2e, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66,
+	0x6f, 0x54, 0x79, 0x70, 0x65, 0x48, 0x00, 0x52, 0x13, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x53, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x54, 0x79, 0x70, 0x65, 0x88, 0x01, 0x01, 0x12,
+	0x26, 0x0a, 0x0c, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x48, 0x01, 0x52, 0x0b, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x47,
+	0x72, 0x6f, 0x75, 0x70, 0x88, 0x01, 0x01, 0x3a, 0x26, 0x92, 0x41, 0x23, 0x0a, 0x21, 0xd2, 0x01,
+	0x0a, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0xd2, 0x01, 0x11, 0x6d, 0x6f,
+	0x64, 0x65, 0x6c, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x6e, 0x75, 0x6d, 0x42,
+	0x19, 0x0a, 0x17, 0x5f, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x42, 0x0f, 0x0a, 0x0d, 0x5f, 0x6d,
+	0x65, 0x74, 0x72, 0x69, 0x63, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x22, 0x76, 0x0a, 0x25, 0x47,
+	0x65, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x42, 0x79,
+	0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a, 0x07, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x65, 0x74, 0x72,
+	0x69, 0x63, 0x73, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x52, 0x07, 0x6d, 0x65, 0x74, 0x72, 0x69,
+	0x63, 0x73, 0x3a, 0x0f, 0x92, 0x41, 0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x6d, 0x65, 0x74, 0x72,
+	0x69, 0x63, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f,
+	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -2236,48 +2249,48 @@ func file_determined_api_v1_model_proto_rawDescGZIP() []byte {
 var file_determined_api_v1_model_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_determined_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_determined_api_v1_model_proto_goTypes = []interface{}{
-	(GetModelsRequest_SortBy)(0),                            // 0: determined.api.v1.GetModelsRequest.SortBy
-	(GetModelVersionsRequest_SortBy)(0),                     // 1: determined.api.v1.GetModelVersionsRequest.SortBy
-	(*GetModelRequest)(nil),                                 // 2: determined.api.v1.GetModelRequest
-	(*GetModelResponse)(nil),                                // 3: determined.api.v1.GetModelResponse
-	(*GetModelsRequest)(nil),                                // 4: determined.api.v1.GetModelsRequest
-	(*GetModelsResponse)(nil),                               // 5: determined.api.v1.GetModelsResponse
-	(*GetModelLabelsRequest)(nil),                           // 6: determined.api.v1.GetModelLabelsRequest
-	(*GetModelLabelsResponse)(nil),                          // 7: determined.api.v1.GetModelLabelsResponse
-	(*PostModelRequest)(nil),                                // 8: determined.api.v1.PostModelRequest
-	(*PostModelResponse)(nil),                               // 9: determined.api.v1.PostModelResponse
-	(*PatchModelRequest)(nil),                               // 10: determined.api.v1.PatchModelRequest
-	(*PatchModelResponse)(nil),                              // 11: determined.api.v1.PatchModelResponse
-	(*ArchiveModelRequest)(nil),                             // 12: determined.api.v1.ArchiveModelRequest
-	(*ArchiveModelResponse)(nil),                            // 13: determined.api.v1.ArchiveModelResponse
-	(*UnarchiveModelRequest)(nil),                           // 14: determined.api.v1.UnarchiveModelRequest
-	(*UnarchiveModelResponse)(nil),                          // 15: determined.api.v1.UnarchiveModelResponse
-	(*MoveModelRequest)(nil),                                // 16: determined.api.v1.MoveModelRequest
-	(*MoveModelResponse)(nil),                               // 17: determined.api.v1.MoveModelResponse
-	(*DeleteModelRequest)(nil),                              // 18: determined.api.v1.DeleteModelRequest
-	(*DeleteModelResponse)(nil),                             // 19: determined.api.v1.DeleteModelResponse
-	(*GetModelVersionRequest)(nil),                          // 20: determined.api.v1.GetModelVersionRequest
-	(*GetModelVersionResponse)(nil),                         // 21: determined.api.v1.GetModelVersionResponse
-	(*GetModelVersionsRequest)(nil),                         // 22: determined.api.v1.GetModelVersionsRequest
-	(*GetModelVersionsResponse)(nil),                        // 23: determined.api.v1.GetModelVersionsResponse
-	(*PostModelVersionRequest)(nil),                         // 24: determined.api.v1.PostModelVersionRequest
-	(*PostModelVersionResponse)(nil),                        // 25: determined.api.v1.PostModelVersionResponse
-	(*PatchModelVersionRequest)(nil),                        // 26: determined.api.v1.PatchModelVersionRequest
-	(*PatchModelVersionResponse)(nil),                       // 27: determined.api.v1.PatchModelVersionResponse
-	(*DeleteModelVersionRequest)(nil),                       // 28: determined.api.v1.DeleteModelVersionRequest
-	(*DeleteModelVersionResponse)(nil),                      // 29: determined.api.v1.DeleteModelVersionResponse
-	(*GetTrialSourceInfoMetricsByModelVersionRequest)(nil),  // 30: determined.api.v1.GetTrialSourceInfoMetricsByModelVersionRequest
-	(*GetTrialSourceInfoMetricsByModelVersionResponse)(nil), // 31: determined.api.v1.GetTrialSourceInfoMetricsByModelVersionResponse
-	(*modelv1.Model)(nil),                                   // 32: determined.model.v1.Model
-	(OrderBy)(0),                                            // 33: determined.api.v1.OrderBy
-	(*wrappers.BoolValue)(nil),                              // 34: google.protobuf.BoolValue
-	(*Pagination)(nil),                                      // 35: determined.api.v1.Pagination
-	(*_struct.Struct)(nil),                                  // 36: google.protobuf.Struct
-	(*modelv1.PatchModel)(nil),                              // 37: determined.model.v1.PatchModel
-	(*modelv1.ModelVersion)(nil),                            // 38: determined.model.v1.ModelVersion
-	(*modelv1.PatchModelVersion)(nil),                       // 39: determined.model.v1.PatchModelVersion
-	(trialv1.TrialSourceInfoType)(0),                        // 40: determined.trial.v1.TrialSourceInfoType
-	(*trialv1.TrialSourceInfoMetric)(nil),                   // 41: determined.trial.v1.TrialSourceInfoMetric
+	(GetModelsRequest_SortBy)(0),                  // 0: determined.api.v1.GetModelsRequest.SortBy
+	(GetModelVersionsRequest_SortBy)(0),           // 1: determined.api.v1.GetModelVersionsRequest.SortBy
+	(*GetModelRequest)(nil),                       // 2: determined.api.v1.GetModelRequest
+	(*GetModelResponse)(nil),                      // 3: determined.api.v1.GetModelResponse
+	(*GetModelsRequest)(nil),                      // 4: determined.api.v1.GetModelsRequest
+	(*GetModelsResponse)(nil),                     // 5: determined.api.v1.GetModelsResponse
+	(*GetModelLabelsRequest)(nil),                 // 6: determined.api.v1.GetModelLabelsRequest
+	(*GetModelLabelsResponse)(nil),                // 7: determined.api.v1.GetModelLabelsResponse
+	(*PostModelRequest)(nil),                      // 8: determined.api.v1.PostModelRequest
+	(*PostModelResponse)(nil),                     // 9: determined.api.v1.PostModelResponse
+	(*PatchModelRequest)(nil),                     // 10: determined.api.v1.PatchModelRequest
+	(*PatchModelResponse)(nil),                    // 11: determined.api.v1.PatchModelResponse
+	(*ArchiveModelRequest)(nil),                   // 12: determined.api.v1.ArchiveModelRequest
+	(*ArchiveModelResponse)(nil),                  // 13: determined.api.v1.ArchiveModelResponse
+	(*UnarchiveModelRequest)(nil),                 // 14: determined.api.v1.UnarchiveModelRequest
+	(*UnarchiveModelResponse)(nil),                // 15: determined.api.v1.UnarchiveModelResponse
+	(*MoveModelRequest)(nil),                      // 16: determined.api.v1.MoveModelRequest
+	(*MoveModelResponse)(nil),                     // 17: determined.api.v1.MoveModelResponse
+	(*DeleteModelRequest)(nil),                    // 18: determined.api.v1.DeleteModelRequest
+	(*DeleteModelResponse)(nil),                   // 19: determined.api.v1.DeleteModelResponse
+	(*GetModelVersionRequest)(nil),                // 20: determined.api.v1.GetModelVersionRequest
+	(*GetModelVersionResponse)(nil),               // 21: determined.api.v1.GetModelVersionResponse
+	(*GetModelVersionsRequest)(nil),               // 22: determined.api.v1.GetModelVersionsRequest
+	(*GetModelVersionsResponse)(nil),              // 23: determined.api.v1.GetModelVersionsResponse
+	(*PostModelVersionRequest)(nil),               // 24: determined.api.v1.PostModelVersionRequest
+	(*PostModelVersionResponse)(nil),              // 25: determined.api.v1.PostModelVersionResponse
+	(*PatchModelVersionRequest)(nil),              // 26: determined.api.v1.PatchModelVersionRequest
+	(*PatchModelVersionResponse)(nil),             // 27: determined.api.v1.PatchModelVersionResponse
+	(*DeleteModelVersionRequest)(nil),             // 28: determined.api.v1.DeleteModelVersionRequest
+	(*DeleteModelVersionResponse)(nil),            // 29: determined.api.v1.DeleteModelVersionResponse
+	(*GetTrialMetricsByModelVersionRequest)(nil),  // 30: determined.api.v1.GetTrialMetricsByModelVersionRequest
+	(*GetTrialMetricsByModelVersionResponse)(nil), // 31: determined.api.v1.GetTrialMetricsByModelVersionResponse
+	(*modelv1.Model)(nil),                         // 32: determined.model.v1.Model
+	(OrderBy)(0),                                  // 33: determined.api.v1.OrderBy
+	(*wrappers.BoolValue)(nil),                    // 34: google.protobuf.BoolValue
+	(*Pagination)(nil),                            // 35: determined.api.v1.Pagination
+	(*_struct.Struct)(nil),                        // 36: google.protobuf.Struct
+	(*modelv1.PatchModel)(nil),                    // 37: determined.model.v1.PatchModel
+	(*modelv1.ModelVersion)(nil),                  // 38: determined.model.v1.ModelVersion
+	(*modelv1.PatchModelVersion)(nil),             // 39: determined.model.v1.PatchModelVersion
+	(trialv1.TrialSourceInfoType)(0),              // 40: determined.trial.v1.TrialSourceInfoType
+	(*trialv1.MetricsReport)(nil),                 // 41: determined.trial.v1.MetricsReport
 }
 var file_determined_api_v1_model_proto_depIdxs = []int32{
 	32, // 0: determined.api.v1.GetModelResponse.model:type_name -> determined.model.v1.Model
@@ -2300,8 +2313,8 @@ var file_determined_api_v1_model_proto_depIdxs = []int32{
 	38, // 17: determined.api.v1.PostModelVersionResponse.model_version:type_name -> determined.model.v1.ModelVersion
 	39, // 18: determined.api.v1.PatchModelVersionRequest.model_version:type_name -> determined.model.v1.PatchModelVersion
 	38, // 19: determined.api.v1.PatchModelVersionResponse.model_version:type_name -> determined.model.v1.ModelVersion
-	40, // 20: determined.api.v1.GetTrialSourceInfoMetricsByModelVersionRequest.trial_source_info_type:type_name -> determined.trial.v1.TrialSourceInfoType
-	41, // 21: determined.api.v1.GetTrialSourceInfoMetricsByModelVersionResponse.data:type_name -> determined.trial.v1.TrialSourceInfoMetric
+	40, // 20: determined.api.v1.GetTrialMetricsByModelVersionRequest.trial_source_info_type:type_name -> determined.trial.v1.TrialSourceInfoType
+	41, // 21: determined.api.v1.GetTrialMetricsByModelVersionResponse.metrics:type_name -> determined.trial.v1.MetricsReport
 	22, // [22:22] is the sub-list for method output_type
 	22, // [22:22] is the sub-list for method input_type
 	22, // [22:22] is the sub-list for extension type_name
@@ -2653,7 +2666,7 @@ func file_determined_api_v1_model_proto_init() {
 			}
 		}
 		file_determined_api_v1_model_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetTrialSourceInfoMetricsByModelVersionRequest); i {
+			switch v := v.(*GetTrialMetricsByModelVersionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2665,7 +2678,7 @@ func file_determined_api_v1_model_proto_init() {
 			}
 		}
 		file_determined_api_v1_model_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetTrialSourceInfoMetricsByModelVersionResponse); i {
+			switch v := v.(*GetTrialMetricsByModelVersionResponse); i {
 			case 0:
 				return &v.state
 			case 1:

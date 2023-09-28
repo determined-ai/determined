@@ -6,6 +6,8 @@ import Json from 'components/Json';
 import Empty from 'components/kit/Empty';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import { ShirtSize } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -22,11 +24,9 @@ import {
   V1SchedulerType,
 } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
-import { ShirtSize } from 'themes';
 import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';
 
@@ -59,7 +59,7 @@ const ResourcepoolDetailInner: React.FC = () => {
   const resourcePools = useObservable(clusterStore.resourcePools);
 
   const pool = useMemo(() => {
-    if (Loadable.isLoading(resourcePools)) return;
+    if (Loadable.isNotLoaded(resourcePools)) return;
 
     return resourcePools.data.find((pool) => pool.name === poolname);
   }, [poolname, resourcePools]);
@@ -196,7 +196,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     return tabItems;
   }, [canManageResourcePoolBindings, pool, poolStats, renderPoolConfig, rpBindingFlagOn]);
 
-  if (!pool || Loadable.isLoading(resourcePools)) return <Spinner center spinning />;
+  if (!pool || Loadable.isNotLoaded(resourcePools)) return <Spinner center spinning />;
 
   return (
     <Page

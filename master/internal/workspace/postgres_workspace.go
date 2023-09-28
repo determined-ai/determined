@@ -22,6 +22,15 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 	return &w, nil
 }
 
+// Exists returns if the workspace exists and is not archived.
+func Exists(ctx context.Context, id int) (bool, error) {
+	return db.Bun().NewSelect().Table("workspaces").
+		Where("id = ?", id).
+		Where("archived = false").
+		Limit(1).
+		Exists(ctx)
+}
+
 // WorkspaceIDsFromNames returns an unordered slice of workspaceIDs that correlate with the given
 // workspace names.
 func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (
@@ -82,6 +91,43 @@ func WorkspaceByProjectID(ctx context.Context, projectID int) (*model.Workspace,
 		return nil, err
 	}
 	return &w, nil
+}
+
+// WorkspacesIDsByExperimentIDs gets workspace IDs associated with each experiment.
+func WorkspacesIDsByExperimentIDs(ctx context.Context, expIDs []int) ([]int, error) {
+	if len(expIDs) == 0 {
+		return nil, nil
+	}
+
+	res := []struct {
+		ExperimentID int
+		WorkspaceID  int
+	}{}
+	err := db.Bun().NewRaw(`
+SELECT e.id AS experiment_id, p.workspace_id AS workspace_id
+FROM experiments e
+JOIN projects p ON e.project_id = p.id
+WHERE e.id IN (?)
+`, bun.In(expIDs)).Scan(ctx, &res)
+	if err != nil {
+		return nil, fmt.Errorf("getting experiment's %v workspace IDs: %w", expIDs, err)
+	}
+
+	if len(expIDs) != len(res) {
+		return nil, fmt.Errorf("expected %d results from expIDs %v got %d instead %v",
+			len(expIDs), expIDs, len(res), res)
+	}
+
+	expIDToWorkspace := make(map[int]int)
+	for _, r := range res {
+		expIDToWorkspace[r.ExperimentID] = r.WorkspaceID
+	}
+
+	var output []int
+	for _, expID := range expIDs {
+		output = append(output, expIDToWorkspace[expID])
+	}
+	return output, nil
 }
 
 // AllWorkspaces returns all the workspaces that exist.

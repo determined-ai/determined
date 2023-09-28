@@ -172,7 +172,7 @@ export const Experimentv1State = {
 } as const
 export type Experimentv1State = ValueOf<typeof Experimentv1State>
 /**
- * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
+ * Different kinds of Determined Cloud offerings - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
  * @export
  * @enum {string}
  */
@@ -304,7 +304,7 @@ export interface ProtobufAny {
     value?: string;
 }
 /**
- * paths: "f.a"     paths: "f.b.d"  Here `f` represents a field in some root message, `a` and `b` fields in the message found in `f`, and `d` a field found in the message in `f.b`.  Field masks are used to specify a subset of fields that should be returned by a get operation or modified by an update operation. Field masks also have a custom JSON encoding (see below).  # Field Masks in Projections  When used in the context of a projection, a response message or sub-message is filtered by the API to only contain those fields as specified in the mask. For example, if the mask in the previous example is applied to a response message as follows:      f {       a : 22       b {         d : 1         x : 2       }       y : 13     }     z: 8  The result will not contain specific values for fields x,y and z (their value will be set to the default, and omitted in proto text output):       f {       a : 22       b {         d : 1       }     }  A repeated field is not allowed except at the last position of a paths string.  If a FieldMask object is not present in a get operation, the operation applies to all fields (as if a FieldMask of all fields had been specified).  Note that a field mask does not necessarily apply to the top-level response message. In case of a REST get operation, the field mask applies directly to the response, but in case of a REST list operation, the mask instead applies to each individual message in the returned resource list. In case of a REST custom method, other definitions may be used. Where the mask applies will be clearly documented together with its declaration in the API.  In any case, the effect on the returned resource/resources is required behavior for APIs.  # Field Masks in Update Operations  A field mask in update operations specifies which fields of the targeted resource are going to be updated. The API is required to only change the values of the fields as specified in the mask and leave the others untouched. If a resource is passed in to describe the updated values, the API ignores the values of all fields not covered by the mask.  If a repeated field is specified for an update operation, new values will be appended to the existing repeated field in the target resource. Note that a repeated field is only allowed in the last position of a `paths` string.  If a sub-message is specified in the last position of the field mask for an update operation, then new value will be merged into the existing sub-message in the target resource.  For example, given the target message:      f {       b {         d: 1         x: 2       }       c: [1]     }  And an update message:      f {       b {         d: 10       }       c: [2]     }  then if the field mask is:   paths: ["f.b", "f.c"]  then the result will be:      f {       b {         d: 10         x: 2       }       c: [1, 2]     }  An implementation may provide options to override this default behavior for repeated and message fields.  In order to reset a field's value to the default, the field must be in the mask and set to the default value in the provided resource. Hence, in order to reset all fields of a resource, provide a default instance of the resource and set all fields in the mask, or do not provide a mask as described below.  If a field mask is not present on update, the operation applies to all fields (as if a field mask of all fields has been specified). Note that in the presence of schema evolution, this may mean that fields the client does not know and has therefore not filled into the request will be reset to their default. If this is unwanted behavior, a specific service may require a client to always specify a field mask, producing an error if not.  As with get operations, the location of the resource which describes the updated values in the request message depends on the operation kind. In any case, the effect of the field mask is required to be honored by the API.  ## Considerations for HTTP REST  The HTTP kind of an update operation which uses a field mask must be set to PATCH instead of PUT in order to satisfy HTTP semantics (PUT must only be used for full updates).  # JSON Encoding of Field Masks  In JSON, a field mask is encoded as a single string where paths are separated by a comma. Fields name in each path are converted to/from lower-camel naming conventions.  As an example, consider the following message declarations:      message Profile {       User user = 1;       Photo photo = 2;     }     message User {       string display_name = 1;       string address = 2;     }  In proto a field mask for `Profile` may look as such:      mask {       paths: "user.display_name"       paths: "photo"     }  In JSON, the same mask is represented as below:      {       mask: "user.displayName,photo"     }  # Field Masks and Oneof Fields  Field masks treat fields in oneofs just as regular fields. Consider the following message:      message SampleMessage {       oneof test_oneof {         string name = 4;         SubMessage sub_message = 9;       }     }  The field mask can be:      mask {       paths: "name"     }  Or:      mask {       paths: "sub_message"     }  Note that oneof type names ("test_oneof" in this case) cannot be used in paths.  ## Field Mask Verification  The implementation of any API method which has a FieldMask type field in the request should verify the included field paths, and return an `INVALID_ARGUMENT` error if any path is unmappable.
+ * https://protobuf.dev/reference/java/api-docs/com/google/protobuf/FieldMask
  * @export
  * @interface ProtobufFieldMask
  */
@@ -701,7 +701,7 @@ export const TrialProfilerMetricLabelsProfilerMetricType = {
 } as const
 export type TrialProfilerMetricLabelsProfilerMetricType = ValueOf<typeof TrialProfilerMetricLabelsProfilerMetricType>
 /**
- * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.  - STATE_QUEUED: The trial is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The trial is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The trial is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The trial's allocation is actively running. Running is a substate of the Active state.
+ * The current state of the trial. see \dT+ trial_state in db - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.  - STATE_QUEUED: The trial is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The trial is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The trial is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The trial's allocation is actively running. Running is a substate of the Active state.
  * @export
  * @enum {string}
  */
@@ -850,6 +850,49 @@ export interface Trialv1Trial {
     searcherMetricValue?: number;
 }
 /**
+ * 
+ * @export
+ * @interface V1AcceleratorData
+ */
+export interface V1AcceleratorData {
+    /**
+     * The id of the container.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    containerId?: string;
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    allocationId?: string;
+    /**
+     * The name of the node the allocation is on.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    nodeName?: string;
+    /**
+     * The id of the agent associated with the allocation.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    taskId?: string;
+    /**
+     * The type of accelerator.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    acceleratorType?: string;
+    /**
+     * An array of IDs of the accelerators associated with the allocation.
+     * @type {Array<string>}
+     * @memberof V1AcceleratorData
+     */
+    accelerators?: Array<string>;
+}
+/**
  * Acknowledge the receipt of some stop signal.
  * @export
  * @interface V1AckAllocationPreemptionSignalRequest
@@ -909,7 +952,7 @@ export interface V1ActivateExperimentsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
- * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
+ * ActivityType represents a user activity - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
  * @export
  * @enum {string}
  */
@@ -1737,7 +1780,7 @@ export interface V1CloseTrialOperation {
     requestId?: string;
 }
 /**
- * - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
+ * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
  * @export
  * @enum {string}
  */
@@ -1928,6 +1971,44 @@ export interface V1Container {
      * @memberof V1Container
      */
     devices?: Array<V1Device>;
+}
+/**
+ * Request to continue an experiment.
+ * @export
+ * @interface V1ContinueExperimentRequest
+ */
+export interface V1ContinueExperimentRequest {
+    /**
+     * Experiment ID to continue.
+     * @type {number}
+     * @memberof V1ContinueExperimentRequest
+     */
+    id: number;
+    /**
+     * Experiment config (YAML) to merge with the experiment's config.
+     * @type {string}
+     * @memberof V1ContinueExperimentRequest
+     */
+    overrideConfig?: string;
+}
+/**
+ * Request to continue an experiment.
+ * @export
+ * @interface V1ContinueExperimentResponse
+ */
+export interface V1ContinueExperimentResponse {
+    /**
+     * The created experiment.
+     * @type {V1Experiment}
+     * @memberof V1ContinueExperimentResponse
+     */
+    experiment: V1Experiment;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1ContinueExperimentResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 /**
  * Request to create a new experiment.
@@ -2470,7 +2551,7 @@ export interface V1EnableSlotResponse {
     slot?: V1Slot;
 }
 /**
- * - ENTITY_TYPE_UNSPECIFIED: Default entity type.  - ENTITY_TYPE_PROJECT: Represents a project.
+ * EntityType represents an entity - ENTITY_TYPE_UNSPECIFIED: Default entity type.  - ENTITY_TYPE_PROJECT: Represents a project.
  * @export
  * @enum {string}
  */
@@ -2689,6 +2770,24 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     duration?: number;
+    /**
+     * The id of external experiment
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    externalExperimentId?: string;
+    /**
+     * The id of external trial
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    externalTrialId?: string;
+    /**
+     * Size of model definition file, for unmanaged experiments this should be 0.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    modelDefinitionSize?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -2981,6 +3080,43 @@ export interface V1GetAgentsResponse {
      * @memberof V1GetAgentsResponse
      */
     pagination?: V1Pagination;
+}
+/**
+ * 
+ * @export
+ * @interface V1GetAllocationResponse
+ */
+export interface V1GetAllocationResponse {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1GetAllocationResponse
+     */
+    allocationId: string;
+    /**
+     * The state of the allocation.
+     * @type {Taskv1State}
+     * @memberof V1GetAllocationResponse
+     */
+    state: Taskv1State;
+    /**
+     * The number of slots associated with the allocation.
+     * @type {number}
+     * @memberof V1GetAllocationResponse
+     */
+    slots: number;
+    /**
+     * The exit reason for the allocation.
+     * @type {string}
+     * @memberof V1GetAllocationResponse
+     */
+    exitReason?: string;
+    /**
+     * The status code the allocation exits with.
+     * @type {number}
+     * @memberof V1GetAllocationResponse
+     */
+    statusCode?: number;
 }
 /**
  * Response to GetBestSearcherValidationMetricRequest.
@@ -3964,6 +4100,32 @@ export interface V1GetSlotsResponse {
     slots?: Array<V1Slot>;
 }
 /**
+ * 
+ * @export
+ * @interface V1GetTaskAcceleratorDataResponse
+ */
+export interface V1GetTaskAcceleratorDataResponse {
+    /**
+     * The accelerator data for each allocation associated with the task.
+     * @type {Array<V1AcceleratorData>}
+     * @memberof V1GetTaskAcceleratorDataResponse
+     */
+    acceleratorData: Array<V1AcceleratorData>;
+}
+/**
+ * Response to GetTaskContextDirectoryRequest.
+ * @export
+ * @interface V1GetTaskContextDirectoryResponse
+ */
+export interface V1GetTaskContextDirectoryResponse {
+    /**
+     * The base64-encoded, gzipped, tarball.
+     * @type {string}
+     * @memberof V1GetTaskContextDirectoryResponse
+     */
+    b64Tgz: string;
+}
+/**
  * Response to GetTaskRequest.
  * @export
  * @interface V1GetTaskResponse
@@ -4149,15 +4311,28 @@ export interface V1GetTrialCheckpointsResponse {
 /**
  * 
  * @export
- * @interface V1GetTrialMetricsBySourceInfoCheckpointResponse
+ * @interface V1GetTrialMetricsByCheckpointResponse
  */
-export interface V1GetTrialMetricsBySourceInfoCheckpointResponse {
+export interface V1GetTrialMetricsByCheckpointResponse {
     /**
      * All the related trials and their metrics
-     * @type {Array<V1TrialSourceInfoMetric>}
-     * @memberof V1GetTrialMetricsBySourceInfoCheckpointResponse
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetTrialMetricsByCheckpointResponse
      */
-    data: Array<V1TrialSourceInfoMetric>;
+    metrics: Array<V1MetricsReport>;
+}
+/**
+ * 
+ * @export
+ * @interface V1GetTrialMetricsByModelVersionResponse
+ */
+export interface V1GetTrialMetricsByModelVersionResponse {
+    /**
+     * All the related trials and their metrics
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetTrialMetricsByModelVersionResponse
+     */
+    metrics: Array<V1MetricsReport>;
 }
 /**
  * Response to TrialProfilerAvailableSeriesRequest.
@@ -4197,19 +4372,6 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
-}
-/**
- * 
- * @export
- * @interface V1GetTrialSourceInfoMetricsByModelVersionResponse
- */
-export interface V1GetTrialSourceInfoMetricsByModelVersionResponse {
-    /**
-     * All the related trials and their metrics
-     * @type {Array<V1TrialSourceInfoMetric>}
-     * @memberof V1GetTrialSourceInfoMetricsByModelVersionResponse
-     */
-    data: Array<V1TrialSourceInfoMetric>;
 }
 /**
  * Response to GetTrialWorkloadsRequest.
@@ -4270,7 +4432,7 @@ export interface V1GetUserSettingResponse {
     settings: Array<V1UserWebSetting>;
 }
 /**
- * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+ * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
  * @export
  * @enum {string}
  */
@@ -4282,6 +4444,7 @@ export const V1GetUsersRequestSortBy = {
     ACTIVE: 'SORT_BY_ACTIVE',
     MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME',
     NAME: 'SORT_BY_NAME',
+    LASTLOGINTIME: 'SORT_BY_LAST_LOGIN_TIME',
 } as const
 export type V1GetUsersRequestSortBy = ValueOf<typeof V1GetUsersRequestSortBy>
 /**
@@ -5228,7 +5391,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+ * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
  * @export
  * @enum {string}
  */
@@ -5520,6 +5683,12 @@ export interface V1MetricsReport {
      * @memberof V1MetricsReport
      */
     trialRunId: number;
+    /**
+     * Name of the Metric Group ("training", "validation", anything else)
+     * @type {string}
+     * @memberof V1MetricsReport
+     */
+    group: string;
 }
 /**
  * MetricsWorkload is a workload generating metrics.
@@ -6703,6 +6872,32 @@ export interface V1PolymorphicFilter {
      * @memberof V1PolymorphicFilter
      */
     timeRange?: V1TimestampFieldFilter;
+}
+/**
+ * Set the accelerator data for some allocation.
+ * @export
+ * @interface V1PostAllocationAcceleratorDataRequest
+ */
+export interface V1PostAllocationAcceleratorDataRequest {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1PostAllocationAcceleratorDataRequest
+     */
+    allocationId: string;
+    /**
+     * The accelerator data used by the allocation.
+     * @type {V1AcceleratorData}
+     * @memberof V1PostAllocationAcceleratorDataRequest
+     */
+    acceleratorData: V1AcceleratorData;
+}
+/**
+ * 
+ * @export
+ * @interface V1PostAllocationAcceleratorDataResponse
+ */
+export interface V1PostAllocationAcceleratorDataResponse {
 }
 /**
  * Set the proxy address for some allocation.
@@ -9318,7 +9513,7 @@ export interface V1TaskLogsResponse {
     stdtype?: string;
 }
 /**
- * - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+ * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
  * @export
  * @enum {string}
  */
@@ -9890,32 +10085,7 @@ export interface V1TrialSourceInfo {
     trialSourceInfoType: V1TrialSourceInfoType;
 }
 /**
- * 
- * @export
- * @interface V1TrialSourceInfoMetric
- */
-export interface V1TrialSourceInfoMetric {
-    /**
-     * Trial ID for the inference or fine-tuning run
-     * @type {number}
-     * @memberof V1TrialSourceInfoMetric
-     */
-    trialId: number;
-    /**
-     * Type of the TrialSourceInfo
-     * @type {V1TrialSourceInfoType}
-     * @memberof V1TrialSourceInfoMetric
-     */
-    trialSourceInfoType: V1TrialSourceInfoType;
-    /**
-     * All metrics for the trial
-     * @type {Array<V1MetricsReport>}
-     * @memberof V1TrialSourceInfoMetric
-     */
-    metricReports?: Array<V1MetricsReport>;
-}
-/**
- * - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+ * TrialSourceInfoType is the type of the TrialSourceInfo, which serves as a link between a trial and a checkpoint or model version - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
  * @export
  * @enum {string}
  */
@@ -10278,6 +10448,12 @@ export interface V1User {
      * @memberof V1User
      */
     remote?: boolean;
+    /**
+     * when the user last authenticated
+     * @type {Date}
+     * @memberof V1User
+     */
+    lastLogin?: Date;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
@@ -16725,6 +16901,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling continueExperiment.');
+            }
+            const localVarPath = `/api/v1/experiments/continue`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -16906,6 +17120,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (periodSeconds !== undefined) {
                 localVarQueryParameter['periodSeconds'] = periodSeconds
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get details about an Allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllocation(allocationId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling getAllocation.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -17327,6 +17577,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskAcceleratorData(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTaskAcceleratorData.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/acceleratorData`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17352,15 +17638,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+        getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
-                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialMetricsBySourceInfoCheckpoint.');
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getTrialMetricsByCheckpoint.');
             }
-            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/trial-source-info-metrics`
+            const localVarPath = `/api/v1/checkpoints/{checkpointUuid}/metrics`
                 .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -17379,6 +17666,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['trialSourceInfoType'] = trialSourceInfoType
             }
             
+            if (metricGroup !== undefined) {
+                localVarQueryParameter['metricGroup'] = metricGroup
+            }
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -17394,19 +17685,20 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {string} modelName The name of the model associated with the model version.
          * @param {number} modelVersionNum Sequential model version number.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options: any = {}): FetchArgs {
+        getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getTrialSourceInfoMetricsByModelVersion.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getTrialMetricsByModelVersion.');
             }
             // verify required parameter 'modelVersionNum' is not null or undefined
             if (modelVersionNum === null || modelVersionNum === undefined) {
-                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getTrialSourceInfoMetricsByModelVersion.');
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getTrialMetricsByModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}/trial-source-info-metrics`
+            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}/metrics`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
                 .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
@@ -17424,6 +17716,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (trialSourceInfoType !== undefined) {
                 localVarQueryParameter['trialSourceInfoType'] = trialSourceInfoType
+            }
+            
+            if (metricGroup !== undefined) {
+                localVarQueryParameter['metricGroup'] = metricGroup
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -17909,6 +18205,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationAcceleratorDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling postAllocationAcceleratorData.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAllocationAcceleratorData.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/acceleratorData`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -19006,6 +19346,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ContinueExperimentResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).continueExperiment(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -19090,6 +19449,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpMetricNamesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expMetricNames(ids, periodSeconds, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get details about an Allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllocation(allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllocationResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getAllocation(allocationId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19302,6 +19680,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskAcceleratorData(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskAcceleratorDataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTaskAcceleratorData(taskId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -19323,11 +19720,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsBySourceInfoCheckpointResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options);
+        getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsByCheckpointResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, metricGroup, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19344,11 +19742,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {string} modelName The name of the model associated with the model version.
          * @param {number} modelVersionNum Sequential model version number.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialSourceInfoMetricsByModelVersionResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options);
+        getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsByModelVersionResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19562,6 +19961,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchTrial(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationAcceleratorDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationAcceleratorDataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationAcceleratorData(allocationId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20072,6 +20491,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+         * @param {V1ContinueExperimentRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
+            return InternalApiFp(configuration).continueExperiment(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -20120,6 +20549,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).expMetricNames(ids, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get details about an Allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllocation(allocationId: string, options?: any) {
+            return InternalApiFp(configuration).getAllocation(allocationId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20233,6 +20672,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskAcceleratorData(taskId: string, options?: any) {
+            return InternalApiFp(configuration).getTaskAcceleratorData(taskId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20245,11 +20694,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-            return InternalApiFp(configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options)(fetch, basePath);
+        getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
+            return InternalApiFp(configuration).getTrialMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, metricGroup, options)(fetch, basePath);
         },
         /**
          * 
@@ -20257,11 +20707,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {string} modelName The name of the model associated with the model version.
          * @param {number} modelVersionNum Sequential model version number.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+         * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-            return InternalApiFp(configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(fetch, basePath);
+        getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
+            return InternalApiFp(configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options)(fetch, basePath);
         },
         /**
          * 
@@ -20385,6 +20836,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
             return InternalApiFp(configuration).patchTrial(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationAcceleratorDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any) {
+            return InternalApiFp(configuration).postAllocationAcceleratorData(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20734,6 +21196,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
+     * @param {V1ContinueExperimentRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
+        return InternalApiFp(this.configuration).continueExperiment(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Create an experiment.
      * @param {V1CreateExperimentRequest} body
      * @param {*} [options] Override http request option.
@@ -20791,6 +21265,18 @@ export class InternalApi extends BaseAPI {
      */
     public expMetricNames(ids: Array<number>, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).expMetricNames(ids, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get details about an Allocation.
+     * @param {string} allocationId The id of the allocation.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getAllocation(allocationId: string, options?: any) {
+        return InternalApiFp(this.configuration).getAllocation(allocationId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20925,6 +21411,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary GetTaskAcceleratorData gets the accelerator data for each allocation associated with a task.
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTaskAcceleratorData(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).getTaskAcceleratorData(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get telemetry information.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -20939,12 +21437,13 @@ export class InternalApi extends BaseAPI {
      * @summary Gets the metrics for all trials associated with this checkpoint
      * @param {string} checkpointUuid UUID of the checkpoint.
      * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+     * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialMetricsBySourceInfoCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-        return InternalApiFp(this.configuration).getTrialMetricsBySourceInfoCheckpoint(checkpointUuid, trialSourceInfoType, options)(this.fetch, this.basePath)
+    public getTrialMetricsByCheckpoint(checkpointUuid: string, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
+        return InternalApiFp(this.configuration).getTrialMetricsByCheckpoint(checkpointUuid, trialSourceInfoType, metricGroup, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20953,12 +21452,13 @@ export class InternalApi extends BaseAPI {
      * @param {string} modelName The name of the model associated with the model version.
      * @param {number} modelVersionNum Sequential model version number.
      * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
+     * @param {string} [metricGroup] Metric Group string ("training", "validation", or anything else) (nil means all groups).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialSourceInfoMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, options?: any) {
-        return InternalApiFp(this.configuration).getTrialSourceInfoMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, options)(this.fetch, this.basePath)
+    public getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
+        return InternalApiFp(this.configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -21102,6 +21602,19 @@ export class InternalApi extends BaseAPI {
      */
     public patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).patchTrial(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
+     * @param {string} allocationId The id of the allocation.
+     * @param {V1PostAllocationAcceleratorDataRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public postAllocationAcceleratorData(allocationId: string, body: V1PostAllocationAcceleratorDataRequest, options?: any) {
+        return InternalApiFp(this.configuration).postAllocationAcceleratorData(allocationId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26004,6 +26517,42 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get the model definition of a task.
+         * @param {string} taskId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskContextDirectory(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTaskContextDirectory.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/context_directory`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26222,6 +26771,25 @@ export const TasksApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the model definition of a task.
+         * @param {string} taskId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskContextDirectory(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskContextDirectoryResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTaskContextDirectory(taskId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26320,6 +26888,16 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get the model definition of a task.
+         * @param {string} taskId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskContextDirectory(taskId: string, options?: any) {
+            return TasksApiFp(configuration).getTaskContextDirectory(taskId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26392,6 +26970,18 @@ export class TasksApi extends BaseAPI {
      */
     public getTask(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the model definition of a task.
+     * @param {string} taskId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getTaskContextDirectory(taskId: string, options?: any) {
+        return TasksApiFp(this.configuration).getTaskContextDirectory(taskId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -28557,15 +29147,17 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [active] Filter by status.
+         * @param {boolean} [admin] Filter by roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -28598,6 +29190,14 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             if (name !== undefined) {
                 localVarQueryParameter['name'] = name
+            }
+            
+            if (active !== undefined) {
+                localVarQueryParameter['active'] = active
+            }
+            
+            if (admin !== undefined) {
+                localVarQueryParameter['admin'] = admin
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -28940,16 +29540,18 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [active] Filter by status.
+         * @param {boolean} [admin] Filter by roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, options);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -29134,16 +29736,18 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [active] Filter by status.
+         * @param {boolean} [admin] Filter by roles.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any) {
+            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options)(fetch, basePath);
         },
         /**
          * 
@@ -29263,17 +29867,19 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of users.
-     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
      * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Filter by username or display name.
+     * @param {boolean} [active] Filter by status.
+     * @param {boolean} [admin] Filter by roles.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath)
+    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any) {
+        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options)(this.fetch, this.basePath)
     }
     
     /**

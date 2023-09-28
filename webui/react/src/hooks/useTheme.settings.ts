@@ -1,7 +1,7 @@
 import { literal, union } from 'io-ts';
 
+import { Mode } from 'components/kit/Theme';
 import { SettingsConfig } from 'hooks/useSettings';
-import { Mode } from 'utils/themes';
 
 export interface Settings {
   mode: Mode;

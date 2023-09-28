@@ -52,6 +52,7 @@ type AgentResourceManagerConfig struct {
 	Scheduler                  *SchedulerConfig `json:"scheduler"`
 	DefaultAuxResourcePool     string           `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string           `json:"default_compute_resource_pool"`
+	NoDefaultResourcePools     bool             `json:"no_default_resource_pools"`
 	// Deprecated: use DefaultAuxResourcePool instead.
 	DefaultCPUResourcePool string `json:"default_cpu_resource_pool,omitempty"`
 	// Deprecated: use DefaultComputeResourcePool instead.
@@ -68,19 +69,24 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if a.DefaultAuxResourcePool == "" && a.DefaultCPUResourcePool != "" {
-		a.DefaultAuxResourcePool = a.DefaultCPUResourcePool
-	}
-	if a.DefaultComputeResourcePool == "" && a.DefaultGPUResourcePool != "" {
-		a.DefaultComputeResourcePool = a.DefaultGPUResourcePool
+	if a.NoDefaultResourcePools {
+		a.DefaultComputeResourcePool = ""
+		a.DefaultAuxResourcePool = ""
+	} else {
+		if a.DefaultAuxResourcePool == "" && a.DefaultCPUResourcePool != "" {
+			a.DefaultAuxResourcePool = a.DefaultCPUResourcePool
+		}
+		if a.DefaultComputeResourcePool == "" && a.DefaultGPUResourcePool != "" {
+			a.DefaultComputeResourcePool = a.DefaultGPUResourcePool
+		}
+		if a.DefaultComputeResourcePool == "" {
+			a.DefaultComputeResourcePool = defaultResourcePoolName
+		}
+		if a.DefaultAuxResourcePool == "" {
+			a.DefaultAuxResourcePool = defaultResourcePoolName
+		}
 	}
 
-	if a.DefaultComputeResourcePool == "" {
-		a.DefaultComputeResourcePool = defaultResourcePoolName
-	}
-	if a.DefaultAuxResourcePool == "" {
-		a.DefaultAuxResourcePool = defaultResourcePoolName
-	}
 	a.DefaultCPUResourcePool = ""
 	a.DefaultGPUResourcePool = ""
 
@@ -89,6 +95,15 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // Validate implements the check.Validatable interface.
 func (a AgentResourceManagerConfig) Validate() []error {
+	if a.NoDefaultResourcePools {
+		return []error{
+			check.Equal("", a.DefaultAuxResourcePool,
+				"default_aux_resource_pool should be empty if no_default_resource_pools is set"),
+			check.Equal("", a.DefaultComputeResourcePool,
+				"default_compute_resource_pool should be empty if no_default_resource_pools is "+
+					"set"),
+		}
+	}
 	return []error{
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
 		check.NotEmpty(a.DefaultComputeResourcePool, "default_compute_resource_pool should be non-empty"),
@@ -97,8 +112,13 @@ func (a AgentResourceManagerConfig) Validate() []error {
 
 // KubernetesResourceManagerConfig hosts configuration fields for the kubernetes resource manager.
 type KubernetesResourceManagerConfig struct {
-	Namespace                string                  `json:"namespace"`
-	MaxSlotsPerPod           int                     `json:"max_slots_per_pod"`
+	Namespace string `json:"namespace"`
+
+	// Deprecated: this can be per resource pool now on taskContainerDefaults.
+	// This will always be the same as global
+	// task_container_defaults.kubernetes.max_slots_per_pod so use that.
+	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
+
 	MasterServiceName        string                  `json:"master_service_name"`
 	LeaveKubernetesResources bool                    `json:"leave_kubernetes_resources"`
 	DefaultScheduler         string                  `json:"default_scheduler"`
@@ -112,6 +132,7 @@ type KubernetesResourceManagerConfig struct {
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
+	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -129,11 +150,16 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	type DefaultParser *KubernetesResourceManagerConfig
 	err := json.Unmarshal(data, DefaultParser(k))
 
-	if k.DefaultComputeResourcePool == "" {
-		k.DefaultComputeResourcePool = defaultResourcePoolName
-	}
-	if k.DefaultAuxResourcePool == "" {
-		k.DefaultAuxResourcePool = defaultResourcePoolName
+	if k.NoDefaultResourcePools {
+		k.DefaultComputeResourcePool = ""
+		k.DefaultAuxResourcePool = ""
+	} else {
+		if k.DefaultComputeResourcePool == "" {
+			k.DefaultComputeResourcePool = defaultResourcePoolName
+		}
+		if k.DefaultAuxResourcePool == "" {
+			k.DefaultAuxResourcePool = defaultResourcePoolName
+		}
 	}
 
 	if err == nil && k.SlotType == "gpu" {
@@ -160,7 +186,6 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 	return []error{
-		check.GreaterThanOrEqualTo(k.MaxSlotsPerPod, 0, "max_slots_per_pod must be >= 0"),
 		checkSlotType,
 		checkCPUResource,
 	}

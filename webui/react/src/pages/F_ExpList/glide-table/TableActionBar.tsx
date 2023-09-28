@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import Button from 'components/kit/Button';
@@ -10,7 +11,9 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -31,16 +34,13 @@ import {
   Project,
   ProjectColumn,
   ProjectExperiment,
-  RecordKey,
 } from 'types';
-import { notification } from 'utils/dialogApi';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
@@ -137,6 +137,8 @@ const TableActionBar: React.FC<Props> = ({
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
+    useModal(ExperimentTensorBoardModal);
   const totalExperiments = Loadable.getOrElse(0, total);
   const isMobile = useMobile();
 
@@ -149,8 +151,16 @@ const TableActionBar: React.FC<Props> = ({
         project,
       );
       return acc;
-    }, {} as Record<RecordKey, ProjectExperiment>);
+    }, {} as Record<number, ProjectExperiment>);
   }, [experiments, project]);
+
+  const selectedExperiments = useMemo(
+    () =>
+      Array.from(selectedExperimentIds).flatMap((id) =>
+        id in experimentMap ? [experimentMap[id]] : [],
+      ),
+    [experimentMap, selectedExperimentIds],
+  );
 
   const availableBatchActions = useMemo(() => {
     if (selectAll)
@@ -162,18 +172,28 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      const managedExperimentIds = selectedExperiments
+        .filter((exp) => !exp.unmanaged)
+        .map((exp) => exp.id);
       const params = {
-        experimentIds: Array.from(selectedExperimentIds),
+        experimentIds: managedExperimentIds,
         filters: selectAll ? filters : undefined,
       };
       if (excludedExperimentIds?.size) {
         params.filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
       }
       switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          return openCommandResponse(
-            await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
-          );
+        case ExperimentAction.OpenTensorBoard: {
+          if (managedExperimentIds.length !== selectedExperiments.length) {
+            // if unmanaged experiments are selected, open experimentTensorBoardModal
+            openExperimentTensorBoardModal();
+          } else {
+            openCommandResponse(
+              await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+            );
+          }
+          return;
+        }
         case ExperimentAction.Move:
           return ExperimentMoveModal.open();
         case ExperimentAction.Activate:
@@ -193,12 +213,13 @@ const TableActionBar: React.FC<Props> = ({
       }
     },
     [
+      selectedExperiments,
+      selectAll,
+      filters,
       excludedExperimentIds,
       ExperimentMoveModal,
-      filters,
+      openExperimentTensorBoardModal,
       project?.workspaceId,
-      selectAll,
-      selectedExperimentIds,
     ],
   );
 
@@ -210,8 +231,6 @@ const TableActionBar: React.FC<Props> = ({
     },
     [onActionComplete, onActionSuccess],
   );
-
-  const closeNotification = useCallback(() => notification.destroy(), []);
 
   const submitBatchAction = useCallback(
     async (action: BatchAction) => {
@@ -225,39 +244,31 @@ const TableActionBar: React.FC<Props> = ({
         const numFailures = results.failed.length;
 
         if (numSuccesses === 0 && numFailures === 0) {
-          notification.open({
+          makeToast({
             description: `No selected experiments were eligible for ${action.toLowerCase()}`,
-            message: 'No eligible experiments',
+            title: 'No eligible experiments',
           });
         } else if (numFailures === 0) {
-          notification.open({
-            btn: null,
-            description: (
-              <div onClick={closeNotification}>
-                <p>
-                  {action} succeeded for {results.successful.length} experiments
-                </p>
-              </div>
-            ),
-            message: `${action} Success`,
+          makeToast({
+            closeable: true,
+            description: `${action} succeeded for ${results.successful.length} experiments`,
+            title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
-          notification.warning({
+          makeToast({
             description: `Unable to ${action.toLowerCase()} ${numFailures} experiments`,
-            message: `${action} Failure`,
+            severity: 'Warning',
+            title: `${action} Failure`,
           });
         } else {
-          notification.warning({
-            description: (
-              <div onClick={closeNotification}>
-                <p>
-                  {action} succeeded for {numSuccesses} out of {numFailures + numSuccesses} eligible
-                  experiments
-                </p>
-              </div>
-            ),
-            key: 'move-notification',
-            message: `Partial ${action} Failure`,
+          makeToast({
+            closeable: true,
+            description: `${action} succeeded for ${numSuccesses} out of ${
+              numFailures + numSuccesses
+            } eligible
+            experiments`,
+            severity: 'Warning',
+            title: `Partial ${action} Failure`,
           });
         }
       } catch (e) {
@@ -276,7 +287,7 @@ const TableActionBar: React.FC<Props> = ({
         onActionComplete?.();
       }
     },
-    [sendBatchActions, closeNotification, onActionComplete, onActionSuccess],
+    [sendBatchActions, onActionComplete, onActionSuccess],
   );
 
   const handleBatchAction = useCallback(
@@ -399,6 +410,7 @@ const TableActionBar: React.FC<Props> = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
+          isUnmanagedIncluded={selectedExperiments.some((exp) => exp.unmanaged)}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
@@ -413,6 +425,11 @@ const TableActionBar: React.FC<Props> = ({
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
+      />
+      <ExperimentTensorBoardModalComponent
+        filters={selectAll ? filters : undefined}
+        selectedExperiments={selectedExperiments}
+        workspaceId={project?.workspaceId}
       />
     </Columns>
   );

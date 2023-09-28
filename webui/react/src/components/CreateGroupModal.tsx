@@ -2,12 +2,14 @@ import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -23,9 +25,7 @@ import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 export const MODAL_HEADER_LABEL_CREATE = 'Create Group';
@@ -40,6 +40,7 @@ const ADD_USERS = 'addUsers';
 const REMOVE_USERS = 'removeUsers';
 export const API_SUCCESS_MESSAGE_CREATE = 'New group has been created.';
 const API_SUCCESS_MESSAGE_EDIT = 'Group has been updated.';
+const FORM_ID = 'create-group-form';
 
 interface Props {
   group?: V1GroupSearchResult;
@@ -48,6 +49,7 @@ interface Props {
 }
 
 const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm();
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
@@ -115,7 +117,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           groupRoles.map((r) => r.id),
         );
         if (!nameUpdated && !usersUpdated && !rolesUpdated) {
-          message.info('No changes to save.');
+          makeToast({ title: 'No changes to save.' });
           return;
         }
 
@@ -147,19 +149,19 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
             }));
           await fetchGroupRoles();
         }
-        message.success(API_SUCCESS_MESSAGE_EDIT);
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_EDIT });
       } else {
         if (formData[USERS_NAME]) formData[ADD_USERS] = formData[USERS_NAME];
         await createGroup(formData);
-        message.success(API_SUCCESS_MESSAGE_CREATE);
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
       }
       form.resetFields();
       onClose?.();
     } catch (e) {
       if (group) {
-        message.error('Error editing group.');
+        makeToast({ severity: 'Error', title: 'Error editing group.' });
       } else {
-        message.error('Error creating new group.');
+        makeToast({ severity: 'Error', title: 'Error creating new group.' });
       }
       handleError(e, { silent: true, type: ErrorType.Input });
 
@@ -176,6 +178,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
@@ -183,7 +186,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}
       onClose={form.resetFields}>
       <Spinner spinning={isLoading}>
-        <Form form={form}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             label={GROUP_NAME_LABEL}
             name={GROUP_NAME_NAME}
@@ -206,7 +209,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
             <>
               <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
                 <Select
-                  loading={Loadable.isLoading(roles)}
+                  loading={Loadable.isNotLoaded(roles)}
                   mode="multiple"
                   optionFilterProp="children"
                   placeholder={'Add Roles'}

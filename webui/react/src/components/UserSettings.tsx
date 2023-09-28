@@ -4,10 +4,13 @@ import React, { useCallback, useState } from 'react';
 import Drawer from 'components/kit/Drawer';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
-import InputShortcut from 'components/kit/InputShortcut';
+import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
+import useUI, { Mode } from 'components/kit/Theme';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -29,17 +32,11 @@ import {
 } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
 import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
-import { patchUser } from 'services/api';
-import useUI from 'stores/contexts/UI';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { KeyboardShortcut, shortcutToString } from 'utils/shortcut';
-import { Mode } from 'utils/themes';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
@@ -80,12 +77,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const handleSaveDisplayName = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
-        const user = await patchUser({
-          userId: currentUser?.id || 0,
-          userParams: { displayName: newValue as string },
+        await userStore.patchUser(currentUser?.id || 0, {
+          displayName: newValue as string,
         });
-        userStore.updateUsers(user);
-        message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
+        makeToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
       } catch (e) {
         handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
@@ -97,14 +92,12 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const handleSaveUsername = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
-        const user = await patchUser({
-          userId: currentUser?.id || 0,
-          userParams: { username: newValue as string },
+        await userStore.patchUser(currentUser?.id || 0, {
+          username: newValue as string,
         });
-        userStore.updateUsers(user);
-        message.success(API_USERNAME_SUCCESS_MESSAGE);
+        makeToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
       } catch (e) {
-        message.error(API_USERNAME_ERROR_MESSAGE);
+        makeToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
         handleError(e, { silent: true, type: ErrorType.Input });
         return e as Error;
       }

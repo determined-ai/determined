@@ -12,8 +12,8 @@ import {
   FormKind,
   Operator,
 } from 'components/FilterForm/components/type';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 export const ITEM_LIMIT = 50;
 
@@ -45,7 +45,7 @@ export class FilterFormStore {
   #formset: WritableObservable<Loadable<FilterFormSet>> = observable(NotLoaded);
 
   public init(data?: Readonly<FilterFormSet>): void {
-    this.#formset.update(() => structuredClone(Loaded(data ? data : INIT_FORMSET)));
+    this.#formset.update(() => Loaded(structuredClone(data ? data : INIT_FORMSET)));
   }
 
   public get formset(): Observable<Loadable<FilterFormSet>> {
@@ -163,7 +163,8 @@ export class FilterFormStore {
         ans.columnName = col.column;
         ans.location = col.location;
         ans.type = col.type;
-        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -175,7 +176,8 @@ export class FilterFormStore {
       const ans = this.#getFormById(filterGroup, id);
       if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
         ans.operator = operator;
-        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -187,7 +189,8 @@ export class FilterFormStore {
       const ans = this.#getFormById(filterGroup, id);
       if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
         ans.conjunction = conjunction;
-        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -199,7 +202,8 @@ export class FilterFormStore {
       const ans = this.#getFormById(filterGroup, id);
       if (ans && ans.kind === FormKind.Field) {
         ans.value = value;
-        this.#formset.update((prev) => ({ ...prev, filterGroup }));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -230,7 +234,8 @@ export class FilterFormStore {
       };
 
       traverse(filterGroup);
-      this.#formset.update((prev) => ({ ...prev, filterGroup }));
+      // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+      this.#formset.update((prev) => prev.map((i) => i));
     });
   }
 

@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
-import { notification } from 'components/kit/internal/dialogApi';
 import { copyToClipboard } from 'components/kit/internal/functions';
 
 import Button from './Button';
+import { makeToast } from './Toast';
 import Tooltip, { Placement } from './Tooltip';
 
 type IconName = 'clipboard' | 'checkmark';
@@ -43,9 +43,10 @@ const ClipboardButton: React.FC<Props> = ({
       onCopy?.();
     } catch (e) {
       setTooltipOpen(false);
-      notification.error({
+      makeToast({
         description: (e as Error)?.message,
-        message: 'Unable to Copy to Clipboard',
+        severity: 'Error',
+        title: 'Unable to Copy to Clipboard',
       });
     }
   }, [copiedMessage, getContent, onCopy]);

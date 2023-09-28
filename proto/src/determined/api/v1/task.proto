@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/task/v1/task.proto";
+import "determined/api/v1/trial.proto";
 import "determined/log/v1/log.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -27,6 +28,21 @@ message GetTaskResponse {
 
   // The requested task.
   determined.task.v1.Task task = 1;
+}
+
+// Request for an task's context directory.
+message GetTaskContextDirectoryRequest {
+  // The id of the experiment.
+  string task_id = 1;
+}
+
+// Response to GetTaskContextDirectoryRequest.
+message GetTaskContextDirectoryResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "b64_tgz" ] }
+  };
+  // The base64-encoded, gzipped, tarball.
+  string b64_tgz = 1;
 }
 
 // Request a count of active tasks by type.
@@ -183,4 +199,46 @@ message GetTasksResponse {
   // Information about a task for external display.
   map<string, determined.task.v1.AllocationSummary> allocation_id_to_summary =
       1;
+}
+
+// Get the accelerator data for each allocation associated with a task.
+message GetTaskAcceleratorDataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+// Response to GetTaskAcceleratorDataResponse
+message GetTaskAcceleratorDataResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "accelerator_data" ] }
+  };
+  // The accelerator data for each allocation associated with the task.
+  repeated AcceleratorData accelerator_data = 1;
+}
+
+// Gets some allocation.
+message GetAllocationRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+}
+// Response to GetAllocationRequest
+message GetAllocationResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "state", "slots" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The state of the allocation.
+  determined.task.v1.State state = 2;
+  // The number of slots associated with the allocation.
+  int32 slots = 3;
+  // The exit reason for the allocation.
+  optional string exit_reason = 4;
+  // The status code the allocation exits with.
+  optional int32 status_code = 5;
 }

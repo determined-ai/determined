@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
 from determined.common.api import bindings
-from determined.common.experimental import checkpoint
+from determined.common.experimental import checkpoint, metrics
 
 
 class ModelVersion:
@@ -73,6 +73,27 @@ class ModelVersion:
         bindings.delete_DeleteModelVersion(
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
+
+    def get_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
+        """
+        Gets all metrics for a given metric group associated with this model version.
+        The checkpoint can be originally associated by calling
+        ``core_context.experimental.report_task_using_model_version(<MODEL_VERSION>)``
+        from within a task.
+
+        Arguments:
+            group (str, optional): Group name for the metrics (example: "training", "validation").
+                All metrics will be returned when querying by None.
+        """
+        resp = bindings.get_GetTrialMetricsByModelVersion(
+            session=self._session,
+            modelName=self.model_name,
+            modelVersionNum=self.model_version,
+            trialSourceInfoType=bindings.v1TrialSourceInfoType.INFERENCE,
+            metricGroup=group,
+        )
+        for d in resp.metrics:
+            yield metrics.TrialMetrics._from_bindings(d, group)
 
     @classmethod
     def _from_bindings(cls, m: bindings.v1ModelVersion, session: api.Session) -> "ModelVersion":

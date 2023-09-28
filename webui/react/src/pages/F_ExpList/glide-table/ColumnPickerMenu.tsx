@@ -10,6 +10,7 @@ import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import { useSettings } from 'hooks/useSettings';
 import {
   F_ExperimentListSettings,
@@ -18,7 +19,6 @@ import {
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
-import { Loadable } from 'utils/loadable';
 
 import css from './ColumnPickerMenu.module.scss';
 import { defaultExperimentColumns } from './columns';

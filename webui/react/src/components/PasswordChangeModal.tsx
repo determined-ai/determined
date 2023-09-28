@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import { login, setUserPassword } from 'services/api';
 import userStore from 'stores/users';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const MODAL_HEADER_LABEL = 'Change Password';
@@ -23,6 +23,8 @@ const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
 export const API_SUCCESS_MESSAGE = 'Password updated.';
 const API_ERROR_MESSAGE = 'Could not update password.';
 
+const FORM_ID = 'edit-password-form';
+
 interface FormInputs {
   [OLD_PASSWORD_NAME]: string;
   [NEW_PASSWORD_NAME]: string;
@@ -35,6 +37,7 @@ interface Props {
 }
 
 const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -55,16 +58,16 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
   };
 
   const handleSubmit = async () => {
-    await form.validateFields();
+    form.validateFields();
 
     try {
       const password = newPassword;
       await setUserPassword({ password, userId: currentUser?.id ?? 0 });
-      message.success(API_SUCCESS_MESSAGE);
+      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       form.resetFields();
       onSubmit?.();
     } catch (e) {
-      message.error(API_ERROR_MESSAGE);
+      makeToast({ severity: 'Error', title: API_ERROR_MESSAGE });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
@@ -82,6 +85,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       size="small"
       submit={{
         disabled,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: OK_BUTTON_LABEL,
@@ -89,7 +93,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
       title={MODAL_HEADER_LABEL}
       onClose={handleClose}>
       <p>Please confirm your password change</p>
-      <Form form={form} onFieldsChange={handleFieldsChange}>
+      <Form form={form} id={idPrefix + FORM_ID} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
           name={OLD_PASSWORD_NAME}

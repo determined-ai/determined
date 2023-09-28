@@ -7,15 +7,15 @@ import {
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
 
-import { getColor, getInitials } from 'components/Avatar';
+import { getColor, getInitials } from 'components/kit/Avatar';
+import { DarkLight, Theme } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
-import { Loadable } from 'utils/loadable';
 import { humanReadableNumber } from 'utils/number';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
-import { DarkLight, Theme } from 'utils/themes';
 import { getDisplayName } from 'utils/user';
 
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
@@ -45,6 +45,8 @@ export const experimentColumns = [
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
+  'externalExperimentId',
+  'externalTrialId',
   'archived',
 ] as const;
 
@@ -166,6 +168,30 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.duration,
   },
+  externalExperimentId: {
+    id: 'externalExperimentId',
+    renderer: (record: ExperimentWithTrial) => ({
+      allowOverlay: false,
+      data: record.experiment.externalExperimentId ?? '',
+      displayData: record.experiment.externalExperimentId ?? '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'External Experiment ID',
+    tooltip: () => undefined,
+    width: columnWidths.externalExperimentId,
+  },
+  externalTrialId: {
+    id: 'externalTrialId',
+    renderer: (record: ExperimentWithTrial) => ({
+      allowOverlay: false,
+      data: record.experiment.externalTrialId ?? '',
+      displayData: record.experiment.externalTrialId ?? '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'External Trial ID',
+    tooltip: () => undefined,
+    width: columnWidths.externalTrialId,
+  },
   forkedFrom: {
     id: 'forkedFrom',
     renderer: (record: ExperimentWithTrial) => ({
@@ -227,6 +253,7 @@ export const getColumnDefs = ({
         link: {
           href: paths.experimentDetails(record.experiment.id),
           title: String(record.experiment.name),
+          unmanaged: record.experiment.unmanaged,
         },
         navigateOn: 'click',
         underlineOffset: 6,
@@ -541,6 +568,8 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   checkpointSize: 110,
   description: 148,
   duration: 86,
+  externalExperimentId: 160,
+  externalTrialId: 130,
   forkedFrom: 86,
   id: 50,
   name: 290,

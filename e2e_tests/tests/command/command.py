@@ -87,14 +87,24 @@ def interactive_command(*args: str) -> Iterator[_InteractiveCommandProcess]:
             p.kill()
 
 
-def get_num_running_commands() -> int:
+def get_num_active_commands() -> int:
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     r = api.get(conf.make_master_url(), "api/v1/commands")
     assert r.status_code == requests.codes.ok, r.text
 
-    return len([command for command in r.json()["commands"] if command["state"] == "STATE_RUNNING"])
+    return len(
+        [
+            command
+            for command in r.json()["commands"]
+            if (
+                command["state"] == "STATE_PULLING"
+                or command["state"] == "STATE_STARTING"
+                or command["state"] == "STATE_RUNNING"
+            )
+        ]
+    )
 
 
 def get_command(command_id: str) -> Any:

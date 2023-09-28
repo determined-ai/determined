@@ -1,11 +1,13 @@
 import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
+import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePermissions from 'hooks/usePermissions';
@@ -21,9 +23,7 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const ADMIN_NAME = 'admin';
@@ -41,6 +41,7 @@ const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 const ACTIVE_NAME = 'active';
+const FORM_ID = 'create-user-form';
 
 interface Props {
   user?: DetailedUser;
@@ -57,6 +58,7 @@ interface FormInputs {
 }
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
@@ -65,8 +67,6 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
   const canAssignRolesFlag: boolean = canAssignRoles({});
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const checkAuth = useAuthCheck();
-
-  const username = Form.useWatch(USER_NAME_NAME, form);
 
   const knownRoles = useObservable(roleStore.roles);
   const fetchUserRoles = useCallback(async () => {
@@ -84,14 +84,13 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     fetchUserRoles();
   }, [fetchUserRoles]);
 
-  const handleSubmit = async (viewOnly?: boolean) => {
+  const handleSubmit = async () => {
     if (viewOnly) {
       form.resetFields();
       return;
     }
-    await form.validateFields();
 
-    const formData = form.getFieldsValue();
+    const formData = await form.validateFields();
 
     const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
     const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
@@ -108,8 +107,8 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
             (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
         fetchUserRoles();
-        if (currentUser && currentUser.id === user.id) checkAuth();
-        message.success('User has been updated');
+        if (currentUser?.id === user.id) checkAuth();
+        makeToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {
         formData[ACTIVE_NAME] = true;
         const u = await postUser({ user: formData });
@@ -117,13 +116,15 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
         }
-
-        message.success(API_SUCCESS_MESSAGE_CREATE);
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
         form.resetFields();
       }
       onClose?.();
     } catch (e) {
-      message.error(user ? 'Error updating user' : 'Error creating new user');
+      makeToast({
+        severity: 'Error',
+        title: user ? 'Error updating user' : 'Error creating new user',
+      });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
@@ -144,7 +145,8 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       cancel
       size="small"
       submit={{
-        disabled: !username,
+        disabled: hasErrors(form),
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
@@ -160,7 +162,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       <Spinner
         spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form form={form}>
+        <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}
@@ -182,7 +184,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
               <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
                 <Select
                   disabled={(user !== undefined && userRoles === null) || viewOnly}
-                  loading={Loadable.isLoading(knownRoles)}
+                  loading={Loadable.isNotLoaded(knownRoles)}
                   mode="multiple"
                   optionFilterProp="children"
                   placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}

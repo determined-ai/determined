@@ -10,7 +10,7 @@ import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union
+from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union, cast
 
 import appdirs
 from termcolor import colored
@@ -19,7 +19,6 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -51,10 +50,10 @@ def start_shell(args: Namespace) -> None:
     render.report_job_launched("shell", sid)
 
     session = cli.setup_session(args)
-    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.shell, sid)
 
     shell = bindings.get_GetShell(session, shellId=sid).shell
     _open_shell(
+        session,
         args.master,
         shell.to_json(),
         args.ssh_opts,
@@ -65,9 +64,11 @@ def start_shell(args: Namespace) -> None:
 
 @authentication.required
 def open_shell(args: Namespace) -> None:
-    shell_id = command.expand_uuid_prefixes(args)
+    shell_id = cast(str, command.expand_uuid_prefixes(args))
+
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
+        cli.setup_session(args),
         args.master,
         shell,
         args.ssh_opts,
@@ -80,7 +81,14 @@ def open_shell(args: Namespace) -> None:
 def show_ssh_command(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
-    _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
+    _open_shell(
+        cli.setup_session(args),
+        args.master,
+        shell,
+        args.ssh_opts,
+        retain_keys_and_print=True,
+        print_only=True,
+    )
 
 
 def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], str]:
@@ -130,14 +138,16 @@ def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, N
 
 
 def _open_shell(
+    sess: api.Session,
     master: str,
     shell: Dict[str, Any],
     additional_opts: List[str],
     retain_keys_and_print: bool,
     print_only: bool,
 ) -> None:
+    cli.wait_ntsc_ready(sess, api.NTSC_Kind.shell, shell["id"])
+
     cache_dir = None
-    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     if retain_keys_and_print:
         cache_dir = Path(appdirs.user_cache_dir("determined")) / "shell" / shell["id"]
         if not cache_dir.exists():

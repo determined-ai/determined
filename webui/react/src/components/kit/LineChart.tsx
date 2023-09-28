@@ -1,48 +1,30 @@
-import _ from 'lodash';
 import React, { ReactNode, useMemo } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
-import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
+import {
+  getCssVar,
+  getTimeTickValues,
+  glasbeyColor,
+  metricToStr,
+} from 'components/kit/internal/functions';
+import Message from 'components/kit/internal/Message';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
-import { ErrorHandler, Scale } from 'components/kit/internal/types';
+import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/kit/internal/UPlot/types';
 import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
-import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
+import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
-import Message from 'components/Message';
-import MetricBadgeTag from 'components/MetricBadgeTag';
-import { MapOfIdsToColors } from 'hooks/useGlasbey';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
-import { ExperimentWithTrial, TrialItem } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { metricToKey, metricToStr } from 'utils/metric';
+import { Loadable } from 'components/kit/utils/loadable';
 
 import css from './LineChart.module.scss';
 
 export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';
-
-/**
- * @typedef Serie
- * Represents a single Series to display on the chart.
- * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
- * @param {Partial<Record<XAxisDomain, [x: number, y: number][]>>} data - An array of ordered [x, y] points for each axis.
- * @param {MetricType} [metricType] - Indicator of a Serie representing a Training or Validation metric.
- * @param {string} [name] - Name to display in legend and toolip instead of Series number.
- */
-
-export interface Serie {
-  color?: string;
-  data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
-  key?: number;
-  metricType?: string;
-  name?: string;
-}
 
 /**
  * @typedef ChartProps {object}
@@ -96,8 +78,8 @@ export const LineChart: React.FC<LineChartProps> = ({
   yLabel,
   yTickValues,
 }: LineChartProps) => {
-  const series = Loadable.isLoadable(propSeries) ? Loadable.getOrElse([], propSeries) : propSeries;
-  const isLoading = Loadable.isLoadable(propSeries) && Loadable.isLoading(propSeries);
+  const series = Loadable.ensureLoadable(propSeries).getOrElse([]);
+  const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
   const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis]?.length),
@@ -168,6 +150,15 @@ export const LineChart: React.FC<LineChartProps> = ({
         {
           font: `12px ${getCssVar('--theme-font-family')}`,
           grid: { show: false },
+          incrs:
+            xAxis === XAxisDomain.Time
+              ? undefined
+              : [
+                  /* eslint-disable array-element-newline */
+                  1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000,
+                  50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000,
+                  /* eslint-enable array-element-newline */
+                ],
           label: xLabel,
           scale: 'x',
           side: 2,
@@ -314,71 +305,6 @@ const VirtualChartRenderer: React.FC<
   );
 };
 
-export const calculateChartProps = (
-  metricData: TrialMetricData,
-  experiments: ExperimentWithTrial[],
-  trials: TrialItem[],
-  xAxis: XAxisDomain,
-  colorMap: MapOfIdsToColors,
-): Loadable<ChartsProps> => {
-  const { metricHasData, metrics, data, isLoaded, selectedMetrics } = metricData;
-  const chartedMetrics: Record<string, boolean> = {};
-  const out: ChartsProps = [];
-  const expNameById: Record<number, string> = {};
-  experiments.forEach((e) => {
-    expNameById[e.experiment.id] = e.experiment.name;
-  });
-  metrics.forEach((metric) => {
-    const series: Serie[] = [];
-    const key = metricToKey(metric);
-    trials.forEach((t) => {
-      const m = data[t?.id || 0];
-      m?.[key] &&
-        t &&
-        series.push({
-          ...m[key],
-          color: colorMap[t.experimentId],
-          metricType: undefined,
-          name: expNameById[t.experimentId]
-            ? `${expNameById[t.experimentId]} (${t.experimentId})`
-            : String(t.experimentId),
-        });
-      chartedMetrics[key] ||= series.length > 0;
-    });
-    out.push({
-      series: Loaded(series),
-      title: <MetricBadgeTag metric={metric} />,
-      xAxis,
-      xLabel: String(xAxis),
-    });
-  });
-
-  // In order to show the spinner for each chart in the ChartGrid until
-  // metrics are visible, we must determine whether the metrics have been
-  // loaded and whether the chart props have been updated.
-  // If any metric has data but no chartProps contain data for the metric,
-  // then the charts have not been updated and we need to continue to show the
-  // spinner.
-  const chartDataIsLoaded = metrics.every((metric) => {
-    const metricKey = metricToKey(metric);
-    return metricHasData?.[metricKey] ? !!chartedMetrics?.[metricKey] : true;
-  });
-  if (!isLoaded) {
-    // When trial metrics hasn't loaded metric names or individual trial metrics.
-    return NotLoaded;
-  } else if (!chartDataIsLoaded || !_.isEqual(selectedMetrics, metrics)) {
-    // In some cases the selectedMetrics returned may not be up to date
-    // with the metrics selected by the user. In this case we want to
-    // show a loading state until the metrics match.
-
-    // returns the chartProps with a NotLoaded series which enables
-    // the ChartGrid to show a spinner for the loading charts.
-    return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
-  } else {
-    return Loaded(out);
-  }
-};
-
 export const ChartGrid: React.FC<GroupProps> = React.memo(
   ({
     chartsProps: propChartsProps,
@@ -392,28 +318,24 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     const height = size.height ?? 0;
     const width = size.width ?? 0;
     const columnCount = Math.max(1, Math.floor(width / 540));
-    const chartsProps = (
-      Loadable.isLoadable(propChartsProps)
-        ? Loadable.getOrElse([], propChartsProps)
-        : propChartsProps
-    ).filter(
-      (c) =>
-        // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
-        !Loadable.isLoadable(c.series) ||
-        !Loadable.isLoaded(c.series) ||
-        Loadable.getOrElse([], c.series).find((serie) =>
-          Object.entries(serie.data).find(([, points]) => points.length > 0),
-        ),
-    );
-    const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
-    // X-Axis control
+    const chartsProps = Loadable.ensureLoadable(propChartsProps)
+      .getOrElse([])
+      .filter(
+        (c) =>
+          // filter out Loadable series which are Loaded yet have no serie with more than 0 points.
+          !Loadable.isLoadable(c.series) ||
+          !Loadable.isLoaded(c.series) ||
+          Loadable.getOrElse([], c.series).find((serie) =>
+            Object.entries(serie.data).find(([, points]) => points.length > 0),
+          ),
+      );
+    const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isNotLoaded(propChartsProps);
 
+    // X-Axis control
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
-        const series = Loadable.isLoadable(chart.series)
-          ? Loadable.getOrElse([], chart.series)
-          : chart.series;
+        const series = Loadable.ensureLoadable(chart.series).getOrElse([]);
         series.forEach((serie) => {
           Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
             if (dataPoints.length > 0) {

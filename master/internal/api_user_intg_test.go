@@ -89,29 +89,56 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
-	userModel, err := user.UserByUsername("admin")
-	require.NoError(t, err, "Couldn't get admin user")
-	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
+	username := uuid.New().String()
+	newUserModel := &model.User{
+		Username:     username,
+		PasswordHash: null.NewString("", false),
+		Active:       true,
+		Admin:        true,
+	}
+	_, err := user.Add(context.TODO(), newUserModel, nil)
+	require.NoError(t, err, "Couldn't create admin user")
+	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: username})
 	require.NoError(t, err, "Couldn't login")
+	userModel, err := user.ByUsername(context.TODO(), username)
+	require.NoError(t, err, "Couldn't get admin user")
 	ctx := metadata.NewIncomingContext(context.TODO(),
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
 
 	return api, *userModel, ctx
 }
 
+func fetchUserIds(ctx context.Context, t *testing.T, api *apiServer, req *apiv1.GetUsersRequest) []model.UserID {
+	resp, err := api.GetUsers(ctx, req)
+	require.NoError(t, err)
+	var ids []model.UserID
+	for _, u := range resp.Users {
+		ids = append(ids, model.UserID(u.Id))
+	}
+	return ids
+}
+
 func TestGetUsersRemote(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	remoteUser, err := api.m.db.AddUser(&model.User{
-		Username: uuid.New().String(),
-		Remote:   true,
-	}, nil)
+	remoteUser, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   true,
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
-	nonRemoteUser, err := api.m.db.AddUser(&model.User{
-		Username: uuid.New().String(),
-		Remote:   false,
-	}, nil)
+	nonRemoteUser, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   false,
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
 	resp, err := api.GetUsers(ctx, &apiv1.GetUsersRequest{})
@@ -125,12 +152,68 @@ func TestGetUsersRemote(t *testing.T) {
 	}
 }
 
+func TestFilterUser(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	userID1, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+			Admin:    false,
+		},
+		nil,
+	)
+	userID2, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   true,
+			Admin:    false,
+		},
+		nil,
+	)
+	userID3, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   true,
+			Admin:    true,
+		},
+		nil,
+	)
+	userID4, _ := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+			Admin:    true,
+		},
+		nil,
+	)
+
+	userIds := fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{})
+	for _, u := range []model.UserID{userID1, userID2, userID3, userID4} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Admin: ptrs.Ptr(true)})
+	for _, u := range []model.UserID{userID3, userID4} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true)})
+	for _, u := range []model.UserID{userID2, userID3} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+	userIds = fetchUserIds(ctx, t, api, &apiv1.GetUsersRequest{Active: ptrs.Ptr(true), Admin: ptrs.Ptr(true)})
+	for _, u := range []model.UserID{userID3} {
+		require.Contains(t, userIds, u, fmt.Sprintf("userIds: %v, expected user id: %d", userIds, u))
+	}
+}
+
 func TestPatchUser(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
-	userID, err := api.m.db.AddUser(&model.User{
-		Username: uuid.New().String(),
-		Active:   false,
-	}, nil)
+	userID, err := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
 	username := uuid.New().String()
@@ -195,10 +278,13 @@ func TestPatchUser(t *testing.T) {
 	// Verify we can't set a display name similar to another username or display name.
 	similiarName := uuid.New().String()
 	similiarDisplay := uuid.New().String()
-	_, err = api.m.db.AddUser(&model.User{
-		Username:    similiarName + "uPPER",
-		DisplayName: null.StringFrom(similiarDisplay + "lOwEr"),
-	}, nil)
+	_, err = user.Add(ctx,
+		&model.User{
+			Username:    similiarName + "uPPER",
+			DisplayName: null.StringFrom(similiarDisplay + "lOwEr"),
+		},
+		nil,
+	)
 	require.NoError(t, err)
 
 	_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{

@@ -12,9 +12,9 @@ import Message, { MessageType } from 'components/kit/internal/Message';
 import Section from 'components/kit/internal/Section';
 import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
+import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import useUI from 'stores/contexts/UI';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
@@ -58,7 +58,7 @@ export type MultiFileProps = {
 };
 
 export type Props = (SingleFileProps | MultiFileProps) & {
-  file: LoadableOrError<string>;
+  file: string | LoadableOrError<string>;
   onError: ErrorHandler; // only used to raise ipynb errors
   height?: string; // height of the container.
   onChange?: (fileContent: string) => void; // only use in single-file editing
@@ -142,6 +142,7 @@ const CodeEditor: React.FC<Props> = ({
   readonly,
   selectedFilePath = String(files[0]?.key),
 }) => {
+  const loadableFile = useMemo(() => (typeof file === 'string' ? Loaded(file) : file), [file]);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
   const { ui } = useUI();
 
@@ -158,7 +159,7 @@ const CodeEditor: React.FC<Props> = ({
     let fileDir = files;
     for (let dir = 0; dir < splitFilePath.length; dir++) {
       matchTopFileOrFolder = fileDir.find(
-        (f) => f.key === splitFilePath[dir] || f.key === selectedFilePath,
+        (f) => f.key === splitFilePath.slice(0, dir + 1).join('/') || f.key === selectedFilePath,
       );
       if (matchTopFileOrFolder?.children) {
         fileDir = matchTopFileOrFolder.children;
@@ -206,39 +207,40 @@ const CodeEditor: React.FC<Props> = ({
   );
 
   const handleDownloadClick = useCallback(() => {
-    if (!Loadable.isLoadable(file) || !Loadable.isLoaded(file) || !activeFile) return;
+    if (!Loadable.isLoadable(loadableFile) || !Loadable.isLoaded(loadableFile) || !activeFile)
+      return;
 
     const link = document.createElement('a');
 
     link.download = isConfig(activeFile?.key)
       ? activeFile.download || ''
       : String(activeFile.title);
-    link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', file)]));
+    link.href = URL.createObjectURL(new Blob([Loadable.getOrElse('', loadableFile)]));
     link.dispatchEvent(new MouseEvent('click'));
     setTimeout(() => {
       URL.revokeObjectURL(link.href);
     }, 2000);
-  }, [activeFile, file]);
+  }, [activeFile, loadableFile]);
 
   const classes = [
     css.codeEditorBase,
-    isErrorMessage(file) ? css.noEditor : '',
+    isErrorMessage(loadableFile) ? css.noEditor : '',
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
-  const sectionClasses = [isErrorMessage(file) ? css.pageError : css.editor];
+  const sectionClasses = [isErrorMessage(loadableFile) ? css.pageError : css.editor];
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
-  if (isErrorMessage(file)) {
+  if (isErrorMessage(loadableFile)) {
     fileContent = (
       <Message
         style={{
           justifyContent: 'center',
           padding: '120px',
         }}
-        title={file.message}
+        title={loadableFile.message}
         type={MessageType.Alert}
       />
     );
@@ -252,12 +254,12 @@ const CodeEditor: React.FC<Props> = ({
           readOnly={readonly}
           style={{ height: '100%' }}
           theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
-          value={Loadable.getOrElse('', file)}
+          value={Loadable.getOrElse('', loadableFile)}
           onChange={onChange}
         />
       ) : (
         <Suspense fallback={<Spinner spinning tip="Loading ipynb viewer..." />}>
-          <JupyterRenderer file={Loadable.getOrElse('', file)} onError={onError} />
+          <JupyterRenderer file={Loadable.getOrElse('', loadableFile)} onError={onError} />
         </Suspense>
       );
   }

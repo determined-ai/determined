@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
@@ -21,7 +22,6 @@ import {
   WorkloadGroup,
 } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import {
   extractMetricSortValue,
   extractMetricValue,
@@ -232,7 +232,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       <ResponsiveTable<Step>
         columns={columns}
         dataSource={workloadSteps}
-        loading={Loadable.isLoading(workloads)}
+        loading={Loadable.isNotLoaded(workloads)}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,

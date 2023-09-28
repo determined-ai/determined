@@ -354,6 +354,18 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Continues an experiment either to make the existing experiment train longer
+  // or to retry it.
+  rpc ContinueExperiment(ContinueExperimentRequest)
+      returns (ContinueExperimentResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/continue"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Get the requested experiment.
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
     option (google.api.http) = {
@@ -379,6 +391,17 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
+    };
+    option deprecated = true;  // Use GetTaskModelDef instead.
+  }
+  // Get the model definition of a task.
+  rpc GetTaskContextDirectory(GetTaskContextDirectoryRequest)
+      returns (GetTaskContextDirectoryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/context_directory"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
     };
   }
   // Get the model definition file tree of an experiment.
@@ -743,6 +766,15 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Get details about an Allocation.
+  rpc GetAllocation(GetAllocationRequest) returns (GetAllocationResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/allocations/{allocation_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Set allocation to waiting state.
   rpc AllocationWaiting(AllocationWaitingRequest)
       returns (AllocationWaitingResponse) {
@@ -930,6 +962,30 @@ service Determined {
       returns (PostAllocationProxyAddressResponse) {
     option (google.api.http) = {
       post: "/api/v1/allocations/{allocation_id}/proxy_address"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // GetTaskAcceleratorData gets the accelerator data for each allocation
+  // associated with a task.
+  rpc GetTaskAcceleratorData(GetTaskAcceleratorDataRequest)
+      returns (GetTaskAcceleratorDataResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/acceleratorData"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // PostAllocationAcceleratorData sets the accelerator for a given allocation.
+  rpc PostAllocationAcceleratorData(PostAllocationAcceleratorDataRequest)
+      returns (PostAllocationAcceleratorDataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/acceleratorData"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -1559,11 +1615,10 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this model version
-  rpc GetTrialSourceInfoMetricsByModelVersion(
-      GetTrialSourceInfoMetricsByModelVersionRequest)
-      returns (GetTrialSourceInfoMetricsByModelVersionResponse) {
+  rpc GetTrialMetricsByModelVersion(GetTrialMetricsByModelVersionRequest)
+      returns (GetTrialMetricsByModelVersionResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions/{model_version_num}/trial-source-info-metrics"
+      get: "/api/v1/models/{model_name}/versions/{model_version_num}/metrics"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]
@@ -1629,11 +1684,10 @@ service Determined {
   }
 
   // Gets the metrics for all trials associated with this checkpoint
-  rpc GetTrialMetricsBySourceInfoCheckpoint(
-      GetTrialMetricsBySourceInfoCheckpointRequest)
-      returns (GetTrialMetricsBySourceInfoCheckpointResponse) {
+  rpc GetTrialMetricsByCheckpoint(GetTrialMetricsByCheckpointRequest)
+      returns (GetTrialMetricsByCheckpointResponse) {
     option (google.api.http) = {
-      get: "/api/v1/checkpoints/{checkpoint_uuid}/trial-source-info-metrics"
+      get: "/api/v1/checkpoints/{checkpoint_uuid}/metrics"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Internal" ]

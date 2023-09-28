@@ -6,12 +6,11 @@ import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-li
 import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg?url';
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
+import useUI, { DarkLight } from 'components/kit/Theme';
 import { serverAddress } from 'routes/utils';
-import useUI from 'stores/contexts/UI';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { reactHostAddress } from 'utils/routes';
-import { DarkLight } from 'utils/themes';
 
 import css from './Logo.module.scss';
 

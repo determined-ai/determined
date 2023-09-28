@@ -3,10 +3,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect } from 'react';
 
+import { UIProvider } from 'components/kit/Theme';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
@@ -86,12 +86,11 @@ const setup = () =>
 describe('UserSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.clearAllTimers();
   });
 
   it('should render with correct values', async () => {
     setup();
-    expect(screen.getByText('Username')).toBeInTheDocument();
+    expect(await screen.findByText('Username')).toBeInTheDocument();
     expect(screen.getByText('Display Name')).toBeInTheDocument();
     expect(screen.getByText('Password')).toBeInTheDocument();
     expect(await screen.findByText(USERNAME)).toBeInTheDocument();

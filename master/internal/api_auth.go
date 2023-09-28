@@ -50,7 +50,7 @@ func (a *apiServer) Login(
 		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
 	}
 
-	userModel, err := user.UserByUsername(req.Username)
+	userModel, err := user.ByUsername(ctx, req.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
@@ -73,11 +73,11 @@ func (a *apiServer) Login(
 	if !userModel.Active {
 		return nil, grpcutil.ErrNotActive
 	}
-	token, err := a.m.db.StartUserSession(userModel)
+	token, err := user.StartSession(ctx, userModel)
 	if err != nil {
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, userModel.ID)
+	fullUser, err := getUser(ctx, a.m.db, userModel.ID)
 	return &apiv1.LoginResponse{Token: token, User: fullUser}, err
 }
 
@@ -88,7 +88,7 @@ func (a *apiServer) CurrentUser(
 	if err != nil {
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, user.ID)
+	fullUser, err := getUser(ctx, a.m.db, user.ID)
 	return &apiv1.CurrentUserResponse{User: fullUser}, err
 }
 
@@ -104,7 +104,7 @@ func (a *apiServer) Logout(
 			"cannot manually logout of an allocation session")
 	}
 
-	err = a.m.db.DeleteUserSessionByID(userSession.ID)
+	err = user.DeleteSessionByID(ctx, userSession.ID)
 	return &apiv1.LogoutResponse{}, err
 }
 

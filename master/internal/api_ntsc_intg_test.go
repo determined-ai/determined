@@ -343,8 +343,12 @@ func TestAuthZCanCreateNSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 	var err error
 
+	mockUserArg := mock.MatchedBy(func(u model.User) bool {
+		return u.ID == curUser.ID
+	})
+
 	// check permission errors are returned with permission denied status.
-	authz.On("CanCreateNSC", mock.Anything, curUser, mock.Anything).Return(
+	authz.On("CanCreateNSC", mock.Anything, mockUserArg, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Times(3)
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
@@ -355,7 +359,7 @@ func TestAuthZCanCreateNSC(t *testing.T) {
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned with permission denied status.
-	authz.On("CanCreateNSC", mock.Anything, curUser, mock.Anything).Return(
+	authz.On("CanCreateNSC", mock.Anything, mockUserArg, mock.Anything).Return(
 		errors.New("other error"),
 	).Times(3)
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})

@@ -5,30 +5,36 @@ import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
+import { AnyMouseEvent } from 'utils/routes';
 
 import DynamicIcon from './DynamicIcon';
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
 
 interface Props {
-  fetchProjects?: () => void;
+  hideActionMenu?: boolean;
+  onEdit?: (name: string, archived: boolean) => void;
+  onRemove?: () => void;
   project: Project;
   showWorkspace?: boolean;
   workspaceArchived?: boolean;
 }
 
 const ProjectCard: React.FC<Props> = ({
+  hideActionMenu,
+  onRemove,
+  onEdit,
   project,
-  fetchProjects,
-  workspaceArchived,
   showWorkspace,
+  workspaceArchived,
 }: Props) => {
   const { contextHolders, menu, onClick } = useProjectActionMenu({
-    onComplete: fetchProjects,
-    onDelete: fetchProjects,
+    onDelete: onRemove,
+    onEdit,
+    onMove: onRemove,
     project,
     workspaceArchived,
   });
@@ -39,8 +45,8 @@ const ProjectCard: React.FC<Props> = ({
   return (
     <>
       <Card
-        actionMenu={!project.immutable ? menu : undefined}
-        href={paths.projectDetails(project.id)}
+        actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
+        onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
         onDropdown={onClick}>
         <div className={classnames.join(' ')}>
           <div className={css.headerContainer}>
@@ -75,7 +81,7 @@ const ProjectCard: React.FC<Props> = ({
                 <TimeAgo
                   className={css.lastExperiment}
                   datetime={project.lastExperimentStartedAt}
-                  tooltipFormat="[Last experiment started ]MMM D, YYYY - h:mm a"
+                  tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
                 />
               )
             )}

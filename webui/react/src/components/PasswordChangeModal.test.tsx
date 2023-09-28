@@ -4,10 +4,10 @@ import React, { useCallback, useEffect } from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
+import { UIProvider } from 'components/kit/Theme';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 

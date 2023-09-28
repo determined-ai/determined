@@ -9,16 +9,16 @@ import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
-import Avatar from 'components/kit/UserAvatar';
+import { Loadable } from 'components/kit/utils/loadable';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
+import Avatar from 'components/UserAvatar';
 import usePermissions from 'hooks/usePermissions';
 import userStore from 'stores/users';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/datetime';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
@@ -59,7 +59,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       {
         content: (
           <Space>
-            <Spinner conditionalRender spinning={Loadable.isLoading(loadableUsers)}>
+            <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUsers)}>
               <>
                 <Avatar user={user} />
                 {getDisplayName(user)} on{' '}

@@ -1,12 +1,14 @@
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useObservable } from 'micro-observables';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
@@ -14,9 +16,7 @@ import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
-import { notification } from 'utils/dialogApi';
 import handleError, { DetError, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 import css from './ModelCreateModal.module.scss';
 
@@ -39,6 +39,7 @@ interface Props {
 }
 
 const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
+  const idPrefix = useId();
   const { canCreateModelWorkspace } = usePermissions();
   const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
   const loadableWorkspaces = useObservable(workspaceStore.workspaces);
@@ -71,16 +72,11 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         workspaceId,
       });
       if (!response?.id) return;
-
-      notification.open({
-        btn: null,
-        description: (
-          <div className={css.toast}>
-            <p>{`"${modelName}"`} created</p>
-            <Link path={paths.modelDetails(response.name)}>View Model</Link>
-          </div>
-        ),
-        message: '',
+      makeToast({
+        description: `${modelName} has been created`,
+        link: <Link path={paths.modelDetails(response.name)}>View Model</Link>,
+        severity: 'Info',
+        title: 'Model Created',
       });
     } catch (e) {
       if (e instanceof DetError) {
@@ -116,14 +112,14 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
       size="medium"
       submit={{
         disabled: isWorkspace && disableWorkspaceModelCreation,
-        form: FORM_ID,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: onCreateModel,
         text: 'Create',
       }}
       title="Create a new model"
       onClose={onCloseModal}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <p className={css.directions}>
           Create a registered model to organize important checkpoints.
         </p>

@@ -9,12 +9,16 @@
  Quickstart
 ************
 
-To get started with your first experiment, visit the :ref:`Quickstart for Model Developers
-<qs-mdldev>`.
+If you are new to Determined, visit the :ref:`Quickstart for Model Developers <qs-mdldev>` where
+you'll learn how to perform the following tasks:
 
-******************************
- Get Started with a Trial API
-******************************
+-  Train on a local, single CPU or GPU.
+-  Run a distributed training job on multiple GPUs.
+-  Use hyperparameter tuning.
+
+*******************************************************
+ Get Started with a :ref:`Trial API <high-level-apis>`
+*******************************************************
 
 +---------------------------------+--------------------------------------------------------------+
 | Title                           | Description                                                  |
@@ -23,24 +27,20 @@ To get started with your first experiment, visit the :ref:`Quickstart for Model 
 |                                 | you how to port a simple image classification model for the  |
 |                                 | MNIST dataset.                                               |
 +---------------------------------+--------------------------------------------------------------+
-| :doc:`pytorch-porting-tutorial` | The PyTorch porting tutorial provides helpful hints to       |
-|                                 | successfully integrate PyTorch code with the Determined      |
-|                                 | PyTorchTrial API.                                            |
-+---------------------------------+--------------------------------------------------------------+
 | :doc:`tf-mnist-tutorial`        | The TensorFlow Keras Fashion MNIST tutorial describes how to |
 |                                 | port a ``tf.keras`` model to Determined.                     |
 +---------------------------------+--------------------------------------------------------------+
 
-**********************************************
- Want to Learn About a Specific Training API?
-**********************************************
+********************************
+ Train Your Model in Determined
+********************************
 
-:ref:`Training API Guides <apis-howto-overview>` describe how to take your existing model code and
-train your model in Determined.
+:ref:`Training API Guides <apis-howto-overview>` include the :ref:`api-core-ug` and walk you through
+how to take your existing model code and train your model in Determined.
 
-***********************
- Looking for Examples?
-***********************
+**********
+ Examples
+**********
 
 Examples let you build off of an existing model that already runs on Determined. Visit our
 :ref:`Examples <example-solutions>` to see if the model you'd like to train is already available.
@@ -52,5 +52,4 @@ Examples let you build off of an existing model that already runs on Determined.
 
    Run Your First Experiment <pytorch-mnist-local-qs>
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
-   PyTorch Porting Tutorial <pytorch-porting-tutorial>
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>

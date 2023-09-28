@@ -87,9 +87,9 @@ Determined.
 
 .. _singularity-image-cache:
 
-***********************************************************
- Configuring a Apptainer/Singularity Image Cache Directory
-***********************************************************
+************************************************************
+ Configuring an Apptainer/Singularity Image Cache Directory
+************************************************************
 
 When using Apptainer/Singularity, you may use :ref:`referencing-local-image-paths` as described
 above, or you may instead configure a directory tree of images to be searched. To utilize this
@@ -198,7 +198,7 @@ the following features:
 -  Download the Determined default cuda, cpu, or rocm environment images
 -  Download an arbitrary Docker image reference
 -  Share a directory of re-usable imported .sqsh files
--  Create a per-user container from a shared .sqsh file
+-  Optionally, create a per-user container from a shared .sqsh file
 -  List the currently available images in the shared .sqsh file cache
 
 When using ``manage-enroot-cache`` you must provide a temporary directory via the ``-s`` option
@@ -222,6 +222,23 @@ a container from it for the current user (``enroot create``) use the following c
 .. code:: bash
 
    manage-enroot-cache -s /shared/enroot determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
+
+If you only want the sharable .sqsh file without the overhead of container creation, use the
+``--nocreate`` option:
+
+.. code:: bash
+
+   manage-enroot-cache -s /shared/enroot --nocreate determinedai/environments:cuda-10.2-base-gpu-mpi-0.19.4
+
+To optionally configure credentials for image downloads, follow the `enroot documentation
+<https://github.com/NVIDIA/enroot/blob/master/doc/cmd/import.md>`__. Specify the user name with the
+``--username`` option:
+
+.. code:: bash
+
+   manage-enroot-cache -s /shared/enroot --username <username-here> --cuda --cpu
+
+``--username`` is positional -- if used it should appear before any image reference.
 
 You can view the current set of Docker image names in the cache with the ``-l`` option.
 

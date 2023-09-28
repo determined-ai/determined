@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import { ShirtSize } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import clusterStore from 'stores/cluster';
-import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 export const ClusterOverallBar: React.FC = () => {
@@ -40,7 +40,7 @@ export const ClusterOverallBar: React.FC = () => {
     <Section hideTitle title="Overall Allocation">
       <Spinner
         conditionalRender
-        spinning={Loadable.isLoading(agents) || Loadable.isLoading(overview)}>
+        spinning={Loadable.isNotLoaded(agents) || Loadable.isNotLoaded(overview)}>
         {Loadable.isLoaded(agents) && Loadable.isLoaded(overview) ? ( // This is ok as the Spinner has conditionalRender active
           <>
             {overview.data.CUDA.total + overview.data.ROCM.total + overview.data.CPU.total === 0 ? (

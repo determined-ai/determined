@@ -13,7 +13,7 @@ const MODAL_TITLE = 'Hyperparameter Search';
 vi.mock('stores/cluster', async (importOriginal) => {
   const types = await import('types');
   const sdkTypes = await import('services/api-ts-sdk');
-  const loadable = await import('utils/loadable');
+  const loadable = await import('components/kit/utils/loadable');
   const observable = await import('utils/observable');
 
   const store = {

@@ -14,6 +14,7 @@ FullUser = namedtuple(
     [
         "user_id",
         "username",
+        "display_name",
         "admin",
         "active",
         "remote",
@@ -28,6 +29,7 @@ FullUserNoAdmin = namedtuple(
     [
         "user_id",
         "username",
+        "display_name",
         "active",
         "remote",
         "agent_uid",

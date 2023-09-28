@@ -117,6 +117,7 @@ export interface User {
   id: number;
   modifiedAt?: number;
   username: string;
+  lastAuthAt?: number;
 }
 
 export interface DetailedUser extends User {
@@ -643,6 +644,8 @@ export interface ExperimentItem {
   description?: string;
   duration?: number;
   endTime?: string;
+  externalExperimentId?: string;
+  externalTrialId?: string;
   forkedFrom?: number;
   hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar
   id: number;
@@ -664,6 +667,8 @@ export interface ExperimentItem {
   userId: number;
   workspaceId?: number;
   workspaceName?: string;
+  modelDefinitionSize?: number;
+  unmanaged?: boolean;
 }
 
 export interface ExperimentWithTrial {
@@ -743,7 +748,7 @@ export interface ModelPagination extends WithPagination {
   models: ModelItem[];
 }
 
-export interface ModelVersions extends WithPagination {
+export interface ModelWithVersions extends WithPagination {
   model: ModelItem;
   modelVersions: ModelVersion[];
 }
@@ -1062,3 +1067,28 @@ export interface HpTrialData {
   metricValues: number[];
   trialIds: number[];
 }
+
+/**
+ * @typedef Serie
+ * Represents a single Series to display on the chart.
+ * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
+ * @param {Partial<Record<XAxisDomain, [x: number, y: number][]>>} data - An array of ordered [x, y] points for each axis.
+ * @param {MetricType} [metricType] - Indicator of a Serie representing a Training or Validation metric.
+ * @param {string} [name] - Name to display in legend and toolip instead of Series number.
+ */
+
+export interface Serie {
+  color?: string;
+  data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
+  key?: number;
+  metricType?: string;
+  name?: string;
+}
+
+export const XAxisDomain = {
+  Batches: 'Batches',
+  Epochs: 'Epoch',
+  Time: 'Time',
+} as const;
+
+export type XAxisDomain = ValueOf<typeof XAxisDomain>;

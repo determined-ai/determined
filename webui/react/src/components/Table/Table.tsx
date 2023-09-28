@@ -8,16 +8,16 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
+import { StateOfUnion } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
+import UserAvatar from 'components/UserAvatar';
 import { OMITTED_STR } from 'constants/accessControl';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import { StateOfUnion } from 'themes';
 import {
   CommandTask,
   CommandType,
@@ -210,7 +210,14 @@ export const experimentNameRenderer = (
   record: ExperimentItem,
 ): React.ReactNode => (
   <Typography.Text ellipsis={{ tooltip: true }}>
-    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+    <Link path={paths.experimentDetails(record.id)}>
+      {value === undefined ? '' : value}&nbsp;&nbsp;
+      {record.unmanaged && (
+        <Badge tooltip="Workload not managed by Determined" type="Header">
+          Unmanaged
+        </Badge>
+      )}
+    </Link>
   </Typography.Text>
 );
 

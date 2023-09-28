@@ -4,6 +4,7 @@ import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Label, { LabelTypes } from 'components/kit/internal/Label';
+import { useSelectEscape } from 'components/kit/internal/useInputEscape';
 
 import css from './Select.module.scss';
 
@@ -74,12 +75,16 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     width,
     value,
     children,
+    onDropdownVisibleChange,
     ...passthrough
   }: React.PropsWithChildren<SelectProps>,
   ref?: React.Ref<RefSelectProps>,
 ) {
   const [isOpen, setIsOpen] = useState(false);
   const classes = [css.base];
+
+  const divRef = React.createRef<HTMLDivElement>();
+  const { onBlur, onFocus, inputRef } = useSelectEscape(divRef, isOpen, ref);
 
   if (disableTags) classes.push(css.disableTags);
 
@@ -111,7 +116,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
   }, []);
 
   return (
-    <div className={classes.join(' ')}>
+    <div className={classes.join(' ')} ref={divRef}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <AntdSelect
         disabled={disabled || loading}
@@ -120,12 +125,14 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
         options={options}
-        ref={ref}
+        ref={inputRef}
         showSearch={!!onSearch || !!filterOption || searchable}
         style={{ width }}
         suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" title="Open" /> : undefined}
         value={value}
+        onBlur={onBlur}
         onDropdownVisibleChange={handleDropdownVisibleChange}
+        onFocus={onFocus}
         onSearch={onSearch}
         {...passthrough}>
         {children}

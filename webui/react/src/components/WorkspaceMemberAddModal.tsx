@@ -1,17 +1,19 @@
 import { Select } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useId, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
+import { makeToast } from 'components/kit/Toast';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
 import { User, UserOrGroup } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+
+const FORM_ID = 'add-workspace-member-form';
 
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
@@ -39,6 +41,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   onClose,
   workspaceId,
 }: Props) => {
+  const idPrefix = useId();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
 
@@ -87,7 +90,10 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         form.resetFields();
         setSelectedOption(undefined);
         onClose?.();
-        message.success(`${getName(selectedOption)} added to workspace.`);
+        makeToast({
+          severity: 'Confirm',
+          title: `${getName(selectedOption)} added to workspace.`,
+        });
       }
     } catch (e) {
       if (e instanceof DetError) {
@@ -115,12 +121,13 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Add Member',
       }}
       title="Add Member">
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="User or Group"
           name="userOrGroupId"

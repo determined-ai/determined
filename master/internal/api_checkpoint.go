@@ -24,6 +24,7 @@ import (
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -335,6 +336,15 @@ func (a *apiServer) CheckpointsRemoveFiles(
 
 	taskSpec := *a.m.taskSpec
 
+	var expIDs []int
+	for _, g := range groupCUUIDsByEIDs {
+		expIDs = append(expIDs, g.ExperimentID)
+	}
+	workspaceIDs, err := workspace.WorkspacesIDsByExperimentIDs(ctx, expIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	jobID := model.NewJobID()
 	if err = a.m.db.AddJob(&model.Job{
 		JobID:   jobID,
@@ -347,7 +357,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 	// Submit checkpoint GC tasks for all checkpoints.
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
 		i := i
-		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exps[i])
+		agentUserGroup, err := user.GetAgentUserGroup(ctx, curUser.ID, workspaceIDs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -426,9 +436,9 @@ func (a *apiServer) PostCheckpointMetadata(
 }
 
 // Query for all trials that use a given checkpoint and return their metrics.
-func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
-	ctx context.Context, req *apiv1.GetTrialMetricsBySourceInfoCheckpointRequest,
-) (*apiv1.GetTrialMetricsBySourceInfoCheckpointResponse, error) {
+func (a *apiServer) GetTrialMetricsByCheckpoint(
+	ctx context.Context, req *apiv1.GetTrialMetricsByCheckpointRequest,
+) (*apiv1.GetTrialMetricsByCheckpointResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -439,7 +449,7 @@ func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
 		return nil, err
 	}
 
-	resp := &apiv1.GetTrialMetricsBySourceInfoCheckpointResponse{}
+	resp := &apiv1.GetTrialMetricsByCheckpointResponse{}
 	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
 		Where("checkpoint_uuid = ?", req.CheckpointUuid)
 
@@ -447,11 +457,11 @@ func (a *apiServer) GetTrialMetricsBySourceInfoCheckpoint(
 		trialIDsQuery.Where("trial_source_info_type = ?", req.TrialSourceInfoType.String())
 	}
 
-	trialSourceMetrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery)
+	metrics, err := trials.GetMetricsForTrialSourceInfoQuery(ctx, trialIDsQuery, req.MetricGroup)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
 
-	resp.Data = append(resp.Data, trialSourceMetrics...)
+	resp.Metrics = append(resp.Metrics, metrics...)
 	return resp, nil
 }

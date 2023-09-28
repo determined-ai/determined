@@ -6,9 +6,9 @@ import { BrowserRouter } from 'react-router-dom';
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
+import { UIProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { WorkspaceState } from 'types';
 
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
@@ -29,7 +29,7 @@ vi.mock('services/api', () => ({
 }));
 
 vi.mock('stores/cluster', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
+  const loadable = await import('components/kit/utils/loadable');
   const observable = await import('utils/observable');
 
   const store = { resourcePools: observable.observable(loadable.Loaded([])) };

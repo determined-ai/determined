@@ -150,7 +150,7 @@ func (s *Service) UserAndSessionFromRequest(
 	if err != nil {
 		return nil, nil, err
 	}
-	return UserByToken(token, s.extConfig)
+	return ByToken(context.TODO(), token, s.extConfig)
 }
 
 // getAuthLevel returns what level of authentication a request needs.
@@ -215,7 +215,7 @@ func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 	// Delete the user session information from the database.
 	sess := c.(*detContext.DetContext).MustGetUserSession()
 
-	if err := s.db.DeleteUserSessionByID(sess.ID); err != nil {
+	if err := DeleteSessionByID(context.TODO(), sess.ID); err != nil {
 		return nil, err
 	}
 
@@ -249,7 +249,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	}
 
 	// Get the user from the database.
-	user, err := UserByUsername(params.Username)
+	user, err := ByUsername(context.TODO(), params.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
@@ -268,7 +268,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "invalid credentials")
 	}
 
-	token, err = s.db.StartUserSession(user)
+	token, err = StartSession(context.TODO(), user)
 	if err != nil {
 		return nil, err
 	}
@@ -290,18 +290,18 @@ func NewCookieFromToken(token string) *http.Cookie {
 	cookie.Name = "auth"
 	cookie.Value = token
 	cookie.Path = "/"
-	cookie.Expires = time.Now().Add(db.SessionDuration)
+	cookie.Expires = time.Now().Add(SessionDuration)
 	return cookie
 }
 
 // getMe returns information about the current authenticated user.
 func (s *Service) getMe(c echo.Context) (interface{}, error) {
 	me := c.(*detContext.DetContext).MustGetUser()
-	return UserByID(me.ID)
+	return ByID(context.TODO(), me.ID)
 }
 
 func (s *Service) getUsers(c echo.Context) (interface{}, error) {
-	userList, err := s.db.UserList()
+	userList, err := List(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +370,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	userNotFoundErr := api.NotFoundErrs("user", args.Username, false)
 
 	currUser := c.(*detContext.DetContext).MustGetUser()
-	user, err := UserByUsername(args.Username)
+	user, err := ByUsername(ctx, args.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
@@ -426,7 +426,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		}
 	}
 
-	if err := s.db.UpdateUser(user, toUpdate, ug); err != nil {
+	if err := Update(ctx, user, toUpdate, ug); err != nil {
 		return nil, err
 	}
 
@@ -466,7 +466,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	user, err := UserByUsername(args.Username)
+	user, err := ByUsername(context.TODO(), args.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +491,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	switch u, uErr := UserByUsername(*params.NewUsername); {
+	switch u, uErr := ByUsername(ctx, *params.NewUsername); {
 	case uErr == db.ErrNotFound:
 	case uErr != nil:
 		return nil, uErr
@@ -499,7 +499,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "username is taken")
 	}
 
-	if err = s.db.UpdateUsername(&user.ID, *params.NewUsername); err != nil {
+	if err = UpdateUsername(ctx, &user.ID, *params.NewUsername); err != nil {
 		return nil, err
 	}
 
@@ -564,7 +564,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
 
-	_, err = s.db.AddUser(&userToAdd, ug)
+	_, err = Add(ctx, &userToAdd, ug)
 	switch {
 	case err == db.ErrDuplicateRecord:
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "user already exists")
@@ -587,7 +587,7 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	user, err := UserByUsername(args.Username)
+	user, err := ByUsername(context.TODO(), args.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -608,5 +608,5 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 
 	c.Response().Header().Set("cache-control", "public, max-age=3600")
 
-	return s.db.UserImage(args.Username)
+	return ProfileImage(ctx, args.Username)
 }

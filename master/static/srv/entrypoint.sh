@@ -25,7 +25,7 @@ fi
 if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
     export DET_PYTHON_EXECUTABLE="python3"
 fi
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --trial --resources --proxy
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --download_context_directory --resources --proxy
 
 set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"

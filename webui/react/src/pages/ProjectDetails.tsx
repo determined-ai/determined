@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 
 import DynamicTabs from 'components/DynamicTabs';
 import Spinner from 'components/kit/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Message, { MessageType } from 'components/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -17,7 +18,6 @@ import { getProject, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { isNotFound } from 'utils/service';
@@ -75,8 +75,9 @@ const ProjectDetails: React.FC = () => {
   }, [id]);
 
   const { contextHolders, menu, onClick } = useProjectActionMenu({
-    onComplete: fetchProject,
     onDelete: onProjectDelete,
+    onEdit: fetchProject,
+    onMove: fetchProject,
     project,
     workspaceArchived: workspace?.archived,
   });

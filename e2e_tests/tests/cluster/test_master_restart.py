@@ -7,8 +7,9 @@ import pytest
 import requests
 
 from determined.common import constants
-from determined.common.api import authentication
+from determined.common.api import authentication, task_is_ready, task_logs
 from determined.common.api.bindings import experimentv1State as EXP_STATE
+from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
@@ -17,7 +18,7 @@ from tests.cluster.test_users import det_spawn
 from .abstract_cluster import Cluster
 from .managed_cluster import ManagedCluster, get_agent_data
 from .managed_cluster_k8s import ManagedK8sCluster
-from .test_groups import det_cmd_json
+from .test_groups import det_cmd, det_cmd_json
 from .utils import (
     assert_command_succeeded,
     run_command,
@@ -110,6 +111,44 @@ def _test_master_restart_reattach_recover_experiment(
         restartable_managed_cluster.restart_master()
         restartable_managed_cluster.restart_agent()
         raise
+
+
+@pytest.mark.managed_devcluster
+def test_master_restart_continued_experiment(managed_cluster_restarts: ManagedCluster) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
+    )
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED)
+
+    det_cmd(
+        [
+            "e",
+            "continue",
+            str(exp_id),
+            "--config",
+            "searcher.max_length.batches=505",
+            "--config",
+            "searcher.name=single",
+        ],
+        check=True,
+    )
+
+    managed_cluster_restarts.kill_master()
+    managed_cluster_restarts.restart_master()
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED, max_wait_secs=60)
+
+    # We continued the latest task, not the first one.
+    experiment_trials = exp.experiment_trials(exp_id)
+    assert len(experiment_trials) == 1
+    task_ids = experiment_trials[0].trial.taskIds
+    assert task_ids is not None
+    assert len(task_ids) == 2
+
+    sess = api_utils.determined_test_session()
+    logs = task_logs(sess, task_ids[-1])
+    assert "resources exited successfully with a zero exit code" in "".join(log.log for log in logs)
 
 
 @pytest.mark.managed_devcluster
@@ -225,8 +264,27 @@ def test_master_restart_cmd_k8s(
 
 
 def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
-    command_id = run_command(30, slots=slots)
-    wait_for_command_state(command_id, "RUNNING", 30)
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "command",
+        "run",
+        "-d",
+        "--config",
+        f"resources.slots={slots}",
+        "echo weareready && sleep 30",
+    ]
+    command_id = subprocess.check_output(command).decode().strip()
+
+    # Don't just check ready. We want to make sure the command's sleep has started.
+    logs = ""
+    for log in task_logs(api_utils.determined_test_session(), command_id, follow=True):
+        if "weareready" in log.log:
+            break
+        logs += log.log
+    else:
+        pytest.fail(f"did not get weareready in task logs, logs {logs}")
 
     if downtime >= 0:
         managed_cluster.kill_master()
@@ -254,7 +312,8 @@ def _test_master_restart_shell(managed_cluster: Cluster, downtime: int) -> None:
         task_id = shell.task_id
 
         assert task_id is not None
-        wait_for_task_state("shell", task_id, "RUNNING")
+        # Checking running is not correct here, running != ready for shells.
+        task_is_ready(api_utils.determined_test_session(), task_id)
         pre_restart_queue = det_cmd_json(["job", "list", "--json"])
 
         if downtime >= 0:
@@ -430,5 +489,5 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     assert job_list == post_restart_job_list
 
     for cmd_id in [running_command_id, queued_command_id]:
-        wait_for_command_state(cmd_id, "TERMINATED", 60)
+        wait_for_command_state(cmd_id, "TERMINATED", 90)
         assert_command_succeeded(cmd_id)

@@ -6,7 +6,7 @@ import pytest
 
 from determined.common.api import Session, bindings, errors
 from determined.common.api.bindings import experimentv1State
-from tests import api_utils
+from tests import api_utils, command
 from tests import config as conf
 from tests import experiment as exp
 
@@ -31,6 +31,17 @@ def _delete_workspace_and_check(
                 continue
         except errors.NotFoundException:
             break
+
+
+def _check_test_command(workspace_name: str) -> None:
+    with command.interactive_command(
+        "cmd", "run", "-w", workspace_name, "bash", "-c", "echo $(id -g -n):$(id -g)"
+    ) as cmd:
+        for line in cmd.stdout:
+            if f"{GROUPNAME}:{GID}" in line:
+                break
+        else:
+            raise AssertionError(f"Did not find {GROUPNAME}:{GID} in output")
 
 
 def _check_test_experiment(project_id: int) -> None:
@@ -91,6 +102,7 @@ def test_workspace_post_gid() -> None:
         p = resp_p.project
 
         _check_test_experiment(p.id)
+        _check_test_command(w.name)
     finally:
         _delete_workspace_and_check(sess, w)
 
@@ -129,6 +141,7 @@ def test_workspace_patch_gid() -> None:
         p = resp_p.project
 
         _check_test_experiment(p.id)
+        _check_test_command(w.name)
     finally:
         _delete_workspace_and_check(sess, w)
 

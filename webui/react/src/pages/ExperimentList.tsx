@@ -17,6 +17,7 @@ import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import InteractiveTable, {
   ColumnDef,
@@ -76,7 +77,6 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 import { alphaNumericSorter } from 'utils/sort';

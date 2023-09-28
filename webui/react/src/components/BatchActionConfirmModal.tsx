@@ -1,13 +1,14 @@
 import React from 'react';
 
+import { Modal } from 'components/kit/Modal';
+import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';
 import { ExperimentAction } from 'types';
 import handleError from 'utils/error';
-
-import { Modal } from './kit/Modal';
 
 interface Props {
   batchAction: ExperimentAction;
   itemName?: string;
+  isUnmanagedIncluded?: boolean;
   onConfirm: () => Promise<void>;
   onClose?: () => void;
 }
@@ -23,15 +24,11 @@ const DANGEROUS_BATCH_ACTIONS: ExperimentAction[] = [
 const BatchActionConfirmModalComponent: React.FC<Props> = ({
   batchAction,
   itemName = 'experiment',
+  isUnmanagedIncluded,
   onConfirm,
   onClose,
 }: Props) => {
   const danger = DANGEROUS_BATCH_ACTIONS.includes(batchAction);
-  const submit = {
-    handleError,
-    handler: onConfirm,
-    text: batchAction === ExperimentAction.Cancel ? CONFIRM_BUTTON_LABEL : batchAction,
-  };
 
   return (
     <Modal
@@ -39,12 +36,21 @@ const BatchActionConfirmModalComponent: React.FC<Props> = ({
       danger={danger}
       icon="info"
       size="small"
-      submit={submit}
+      submit={{
+        handleError,
+        handler: onConfirm,
+        text: batchAction === ExperimentAction.Cancel ? CONFIRM_BUTTON_LABEL : batchAction,
+      }}
       title={`Confirm Batch ${batchAction}`}
       onClose={onClose}>
       <div>
         Are you sure you want to <b>{batchAction.toLocaleLowerCase()}</b> all selected {itemName}s?
       </div>
+      {isUnmanagedIncluded && (
+        <div>
+          <small>{UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE}</small>
+        </div>
+      )}
     </Modal>
   );
 };

@@ -9,6 +9,11 @@ It takes care of:
 - Resource management for cutting cloud GPU costs.
 - Experiment tracking for analysis and reproducibility.
 
+<br/>
+
+<p align="center">
+<img alt="Features gif" src="./docs/assets/readme_images/features.gif">
+</p>
 
 # How Determined Works
 

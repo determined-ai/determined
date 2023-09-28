@@ -13,7 +13,7 @@ import (
 type AgentUserGroup struct {
 	bun.BaseModel `bun:"table:agent_user_groups"`
 
-	ID int `db:"id" json:"id"`
+	ID int `db:"id" bun:"id,pk,autoincrement" json:"id"`
 
 	UserID UserID `db:"user_id" json:"user_id"`
 
@@ -25,8 +25,6 @@ type AgentUserGroup struct {
 	// The Group is the primary group of the user.
 	Group string `db:"group_" bun:"group_" json:"group"`
 	GID   int    `db:"gid" json:"gid"`
-
-	RelatedUser *User `bun:"rel:belongs-to,join:user_id=id"`
 }
 
 // Validate validates the fields of the AgentUserGroup.

@@ -11,16 +11,10 @@ import React, {
 
 import Button from 'components/kit/Button';
 import Icon, { IconName } from 'components/kit/Icon';
-import Link from 'components/kit/internal/Link';
 import { ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
 
 import css from './Modal.module.scss';
-
-interface LinkParams {
-  text: string;
-  url: string;
-}
 
 export type ModalSize = 'small' | 'medium' | 'large';
 const modalWidths: { [key in ModalSize]: number } = {
@@ -49,8 +43,8 @@ interface ModalProps {
   cancel?: boolean;
   cancelText?: string;
   danger?: boolean;
-  footerLink?: LinkParams;
-  headerLink?: LinkParams;
+  footerLink?: React.ReactNode;
+  headerLink?: React.ReactNode;
   icon?: IconName;
   key?: string;
   onClose?: () => void;
@@ -95,6 +89,7 @@ export const Modal: React.FC<ModalProps> = ({
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
     try {
+      await new Promise((resolve) => setTimeout(resolve)); // delays form validation until next event cycle to prevent validation conflicts
       await submit?.handler();
       setIsSubmitting(false);
       setIsOpen(false);
@@ -118,13 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
       closeIcon={<Icon name="close" size="small" title="Close modal" />}
       footer={
         <div className={css.footer}>
-          <div className={css.footerLink}>
-            {footerLink && (
-              <Link path={footerLink.url} popout>
-                {footerLink.text}
-              </Link>
-            )}
-          </div>
+          <div className={css.footerLink}>{footerLink}</div>
           <div className={css.buttons}>
             {(cancel || cancelText) && (
               <Button key="back" onClick={close}>
@@ -135,6 +124,7 @@ export const Modal: React.FC<ModalProps> = ({
               danger={danger}
               disabled={!!submit?.disabled}
               form={submit?.form}
+              htmlType={submit?.form ? 'submit' : 'button'}
               key="submit"
               loading={isSubmitting}
               tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}
@@ -158,13 +148,7 @@ export const Modal: React.FC<ModalProps> = ({
             icon && <Icon decorative name={icon} size="large" />
           )}
           <div className={css.headerTitle}>{title}</div>
-          <div className={css.headerLink}>
-            {headerLink && (
-              <Link path={headerLink.url} popout>
-                {headerLink.text}
-              </Link>
-            )}
-          </div>
+          <div className={css.headerLink}>{headerLink}</div>
         </div>
       }
       width={modalWidths[size]}

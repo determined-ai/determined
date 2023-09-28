@@ -279,12 +279,20 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-			PoolName: a.config.DefaultComputeResourcePool,
-		})
+		if a.config.DefaultComputeResourcePool == "" {
+			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
+		} else {
+			ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
+				PoolName: a.config.DefaultComputeResourcePool,
+			})
+		}
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
+		if a.config.DefaultAuxResourcePool == "" {
+			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
+		} else {
+			ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
+		}
 
 	case sproto.ValidateCommandResourcesRequest:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
@@ -298,11 +306,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				// But best to handle it anyway in case the implementation changes in the future.
 				ctx.Log().WithError(err).Error("")
 				ctx.Respond(err)
+				return nil
 			}
 
 			jobStats, err := a.getPoolJobStats(ctx, pool)
 			if err != nil {
 				ctx.Respond(err)
+				return nil
 			}
 
 			summary.Stats = jobStats
@@ -324,8 +334,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
 			return nil
 		}
-		resp := ctx.Ask(rpRef, msg).Get()
-		ctx.Respond(resp)
+		resp := ctx.Ask(rpRef, msg)
+		if resp.Empty() || resp.Get() == nil {
+			ctx.Respond(fmt.Errorf("actor %s did not respond", rpRef.Address()))
+			return nil
+		}
+		ctx.Respond(resp.Get())
 
 	case *apiv1.GetJobQueueStatsRequest:
 		resp := &apiv1.GetJobQueueStatsResponse{
@@ -366,8 +380,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		return nil
 
 	case sproto.GetJobQStats:
-		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
-		ctx.Respond(resp)
+		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg)
+		if resp.Empty() || resp.Get() == nil {
+			ctx.Respond(fmt.Errorf("actor %s did not respond", ctx.Child(msg.ResourcePool).Address()))
+		} else {
+			ctx.Respond(resp.Get())
+		}
 	case taskContainerDefaults:
 		ctx.Respond(a.getTaskContainerDefaults(msg))
 
@@ -466,6 +484,9 @@ func (a *agentResourceManager) getPoolJobStats(
 	jobStatsResp := ctx.Ask(a.pools[pool.PoolName], sproto.GetJobQStats{})
 	if err := jobStatsResp.Error(); err != nil {
 		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
+	}
+	if jobStatsResp.Empty() || jobStatsResp.Get() == nil {
+		return nil, fmt.Errorf("actor %s did not respond", a.pools[pool.PoolName].Address())
 	}
 	jobStats, ok := jobStatsResp.Get().(*jobv1.QueueStats)
 	if !ok {
@@ -685,7 +706,10 @@ func (a *agentResourceManager) createResourcePoolSummary(
 
 	response := ctx.Ask(a.pools[poolName], getResourceSummary{})
 	if response.Error() != nil {
-		return &resourcepoolv1.ResourcePool{}, err
+		return &resourcepoolv1.ResourcePool{}, response.Error()
+	}
+	if response.Empty() || response.Get() == nil {
+		return &resourcepoolv1.ResourcePool{}, fmt.Errorf("actor %s did not respond", a.pools[pool.PoolName].Address())
 	}
 	resourceSummary := response.Get().(resourceSummary)
 	resp.NumAgents = int32(resourceSummary.numAgents)

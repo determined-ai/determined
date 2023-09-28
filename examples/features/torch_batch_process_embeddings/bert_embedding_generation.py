@@ -24,7 +24,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
         self.context = context
         self.last_index = 0
-        self.rank = self.context.distributed.get_rank()
+        self.rank = self.context.get_distributed_rank()
 
         self.output_dir = "/tmp/data/bert_scidocs_embeddings"
         os.makedirs(self.output_dir, exist_ok=True)

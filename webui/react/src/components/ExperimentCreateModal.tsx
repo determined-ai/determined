@@ -1,13 +1,14 @@
 import { Alert } from 'antd';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import Form from 'components/kit/Form';
+import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import { Loaded } from 'components/kit/utils/loadable';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -21,11 +22,11 @@ import handleError, {
   isError,
 } from 'utils/error';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/experiment';
-import { Loaded } from 'utils/loadable';
 import { routeToReactUrl } from 'utils/routes';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
+const FORM_ID = 'create-experiment-form';
 
 export const CreateExperimentType = {
   ContinueTrial: 'Continue Trial',
@@ -111,6 +112,7 @@ const ExperimentCreateModalComponent = ({
   trial,
   type,
 }: Props): JSX.Element => {
+  const idPrefix = useId();
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -145,8 +147,7 @@ const ExperimentCreateModalComponent = ({
       return prev;
     });
 
-    const fields = form.getFieldsError();
-    const hasError = fields.some((f) => f.errors.length);
+    const hasError = hasErrors(form);
     const values = form.getFieldsValue();
     const missingRequiredFields = Object.entries(values).some(([key, value]) => {
       return requiredFields.includes(key) && !value;
@@ -283,7 +284,7 @@ const ExperimentCreateModalComponent = ({
     if (isAdvancedMode) {
       userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     } else {
-      await form?.validateFields();
+      await form.validateFields();
       userConfig = modalState.config;
     }
 
@@ -338,6 +339,7 @@ const ExperimentCreateModalComponent = ({
       const newModalState = {
         ...prev,
         config: publicConfig,
+        configString: prev.configString || yaml.dump(publicConfig),
         experiment,
         open: true,
         trial,
@@ -357,6 +359,7 @@ const ExperimentCreateModalComponent = ({
       size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
       submit={{
         disabled,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: type,
@@ -382,6 +385,7 @@ const ExperimentCreateModalComponent = ({
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}
+          id={idPrefix + FORM_ID}
           labelCol={{ span: 8 }}
           name="basic"
           onFieldsChange={handleFieldsChange}>

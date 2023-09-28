@@ -4,10 +4,10 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
+import { UIProvider } from 'components/kit/Theme';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 import { DetailedUser } from 'types';
 
 import CreateGroupModalComponent, {

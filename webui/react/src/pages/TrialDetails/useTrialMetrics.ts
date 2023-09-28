@@ -1,17 +1,25 @@
 import _ from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
-import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
-import { message } from 'utils/dialogApi';
+import {
+  Metric,
+  MetricContainer,
+  MetricType,
+  RunState,
+  Scale,
+  Serie,
+  TrialDetails,
+  XAxisDomain,
+} from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
 
 type MetricName = string;
@@ -56,7 +64,8 @@ const summarizedMetricToSeries = (
           rawBatchValuesMap[metricKey]?.push([avgMetrics.batches, value]);
           if (avgMetrics.time)
             rawBatchTimesMap[metricKey]?.push([new Date(avgMetrics.time).getTime() / 1000, value]);
-          if (avgMetrics.epoch) rawBatchEpochMap[metricKey]?.push([avgMetrics.epoch, value]);
+          if (!_.isUndefined(avgMetrics.epoch))
+            rawBatchEpochMap[metricKey]?.push([avgMetrics.epoch, value]);
         }
       });
     });
@@ -174,7 +183,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
           setMetricHasData(metricsHaveData);
         }
       } catch (e) {
-        message.error('Error fetching metrics');
+        makeToast({ severity: 'Error', title: 'Error fetching metrics' });
       }
     }
   }, [loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);

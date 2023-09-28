@@ -584,6 +584,20 @@ def run_storage_upload_download_sharded_test(
         pex.distributed.allgather(None)
         checkpoint_context.upload(ckpt_dir, metadata, shard=True)
 
+    # 11. Test uploading directory and file with the same name.
+    with parallel.raises_when(
+        True,
+        RuntimeError,
+        match=r"refusing to upload with files conflicts:.*",
+    ):
+        if pex.distributed.rank == 0:
+            os.makedirs(os.path.join(ckpt_dir, "abc"))
+        elif pex.distributed.rank == 2:
+            with open(os.path.join(ckpt_dir, "abc"), "w") as f:
+                f.write("test")
+        pex.distributed.allgather(None)
+        checkpoint_context.upload(ckpt_dir, metadata, shard=True)
+
 
 def run_storage_store_restore_sharded_test(
     pex: parallel.Execution,
@@ -686,6 +700,19 @@ def run_storage_store_restore_sharded_test(
                 create_checkpoint(path, {"filename": "content 1"})
             else:
                 create_checkpoint(path, {"filename": "content 2"})
+
+    # 6 Test uploading file and directory with the same name.
+    with parallel.raises_when(
+        True,
+        RuntimeError,
+        match=r"refusing to upload with files conflicts:.*",
+    ):
+        with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
+            if pex.distributed.rank in [0, 1]:
+                os.makedirs(os.path.join(path, "abc"))
+            else:
+                with open(os.path.join(path, "abc"), "w") as f:
+                    f.write("test")
 
 
 def create_checkpoint_context(

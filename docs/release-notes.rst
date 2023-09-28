@@ -7,8 +7,77 @@
 ###############
 
 **************
+ Version 0.26
+**************
+
+Version 0.26.0
+==============
+
+**Release Date:** September 25, 2023
+
+**Breaking Changes**
+
+-  Kubernetes: Remove the ``agent_reattach_enabled`` config option. Agent reattach is now always
+   enabled.
+-  Agent: Take the default value for the ``--visible-gpus`` option from the ``CUDA_VISIBLE_DEVICES``
+   or ``ROCR_VISIBLE_DEVICES`` environment variables, if defined.
+
+**New Features**
+
+-  SDK: Add the ability to keep track of what experiments use a particular checkpoint or model
+   version for inference.
+
+-  SDK: Add :meth:`Checkpoint.get_metrics <determined.experimental.client.Checkpoint.get_metrics>`
+   and :meth:`ModelVersion.get_metrics <determined.experimental.model.ModelVersion.get_metrics>`
+   methods.
+
+-  Kubernetes: Support enabling and disabling agents to prevent Determined from scheduling jobs on
+   specific nodes.
+
+   Upgrading from a version before this feature to a version after this feature only on Kubernetes
+   will cause queued allocations to be killed on upgrade. Users can pause queued experiments to
+   avoid this.
+
+**Improvements**
+
+-  Enable reporting and display of metrics with floating-point epoch values.
+
+-  API: Allow the reporting of duplicate metrics across multiple ``report_metrics`` calls with the
+   same ``steps_completed``, provided they have identical values.
+
+-  SDK: :func:`~determined.experimental.client.stream_trials_training_metrics` and
+   :func:`~determined.experimental.client.stream_trials_validation_metrics` are now deprecated.
+   Please use :func:`~determined.experimental.client.stream_trials_metrics` instead. The
+   corresponding methods of :class:`~determined.experimental.client.Determined` and
+   :class:`~determined.experimental.client.TrialReference` have also been updated similarly.
+
+**Bug Fixes**
+
+-  Checkpoints: Fix an issue where in certain situations duplicate checkpoints with the same UUID
+   would be returned by the WebUI and the CLI.
+-  Models: Fix a bug where ``det model describe`` and other methods in the CLI and SDK that act on a
+   single model would error if two models had similar names.
+-  Workspaces: Fix an issue where notebooks, TensorBoards, shells, and commands would not inherit
+   agent user group and agent user information from their workspace.
+
+**************
  Version 0.25
 **************
+
+Version 0.25.1
+==============
+
+**Release Date:** September 11, 2023
+
+**Breaking Changes**
+
+-  Fluent Bit is no longer used for log shipping and configs associated with Fluent Bit are now no
+   longer in use. Fluent Bit has been replaced with an internal log shipper (the same one that is
+   used for Slurm).
+
+**Bug Fixes**
+
+-  Reduce the time before seeing the first metrics of a new experiment.
 
 Version 0.25.0
 ==============

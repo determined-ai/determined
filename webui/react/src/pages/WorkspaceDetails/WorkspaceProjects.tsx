@@ -11,6 +11,7 @@ import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
@@ -37,7 +38,6 @@ import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
 
@@ -139,7 +139,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(loadableUsers))
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isNotLoaded(loadableUsers))
       return;
 
     switch (settings.whose) {
@@ -171,6 +171,20 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     }
   }, []);
 
+  const onProjectRemove = useCallback(
+    (id: number) => {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    },
+    [setProjects],
+  );
+
+  const onProjectEdit = useCallback(
+    (id: number, name: string, archived: boolean) => {
+      setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived, name } : p)));
+    },
+    [setProjects],
+  );
+
   const columns = useMemo(() => {
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
@@ -180,7 +194,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       <ProjectActionDropdown
         project={record}
         workspaceArchived={workspace?.archived}
-        onComplete={fetchProjects}
+        onDelete={() => onProjectRemove(record.id)}
+        onEdit={(name: string, archived: boolean) => onProjectEdit(record.id, name, archived)}
+        onMove={() => onProjectRemove(record.id)}
       />
     );
 
@@ -265,7 +281,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, workspace?.archived, users]);
+  }, [saveProjectDescription, workspace?.archived, users, onProjectEdit, onProjectRemove]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -305,21 +321,14 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   );
 
   const actionDropdown = useCallback(
-    ({
-      record,
-      onVisibleChange,
-      children,
-    }: {
-      children: React.ReactNode;
-      onVisibleChange?: (visible: boolean) => void;
-      record: Project;
-    }) => (
+    ({ record, children }: { children: React.ReactNode; record: Project }) => (
       <ProjectActionDropdown
         isContextMenu
         project={record}
         workspaceArchived={workspace?.archived}
-        onComplete={fetchProjects}
-        onVisibleChange={onVisibleChange}>
+        onDelete={() => onProjectRemove(record.id)}
+        onEdit={(name: string, archived: boolean) => onProjectEdit(record.id, name, archived)}
+        onMove={() => onProjectRemove(record.id)}>
         {children}
       </ProjectActionDropdown>
     ),
@@ -336,10 +345,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <Card.Group size="small">
             {projects.map((project) => (
               <ProjectCard
-                fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}
+                onEdit={(name: string, archived: boolean) =>
+                  onProjectEdit(project.id, name, archived)
+                }
+                onRemove={() => onProjectRemove(project.id)}
               />
             ))}
           </Card.Group>
@@ -351,7 +363,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading || Loadable.isLoading(loadableUsers)}
+            loading={isLoading || Loadable.isNotLoaded(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -369,9 +381,10 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [
     actionDropdown,
     columns,
-    fetchProjects,
     isLoading,
     loadableUsers,
+    onProjectEdit,
+    onProjectRemove,
     pageRef,
     projects,
     settings,

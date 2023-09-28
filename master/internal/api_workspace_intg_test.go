@@ -117,6 +117,30 @@ func TestPostWorkspace(t *testing.T) {
 	require.Equal(t, expected, getWorkResp.Workspace)
 }
 
+// This should eventually be in internal/workspaces.
+func TestWorkspacesIDsByExperimentIDs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	resp, err := workspace.WorkspacesIDsByExperimentIDs(ctx, nil)
+	require.NoError(t, err)
+	require.Len(t, resp, 0)
+
+	w0, p0 := createProjectAndWorkspace(ctx, t, api)
+	w1, p1 := createProjectAndWorkspace(ctx, t, api)
+
+	e0 := createTestExpWithProjectID(t, api, curUser, p0)
+	e1 := createTestExpWithProjectID(t, api, curUser, p1)
+	e2 := createTestExpWithProjectID(t, api, curUser, p0)
+
+	resp, err = workspace.WorkspacesIDsByExperimentIDs(ctx, []int{e0.ID, e1.ID, e2.ID})
+	require.NoError(t, err)
+	require.Equal(t, []int{w0, w1, w0}, resp)
+
+	resp, err = workspace.WorkspacesIDsByExperimentIDs(ctx, []int{e0.ID, e1.ID, -1})
+	require.Error(t, err)
+	require.Len(t, resp, 0)
+}
+
 func TestPatchWorkspace(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})

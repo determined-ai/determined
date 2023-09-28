@@ -15,7 +15,7 @@
 | Apptainer >= 1.0 Singularity >= 3.7 or     |
 | Enroot >= 3.4.0 or Podman >= 3.3.1         |
 +--------------------------------------------+
-| Launcher (``hpe-hpc-launcher``) >= 3.3.7   |
+| Launcher (``hpe-hpc-launcher``) >= 3.3.8   |
 +--------------------------------------------+
 | Java >= 1.8                                |
 +--------------------------------------------+
@@ -58,3 +58,4 @@ To install Determined on the HPC cluster, ensure that the
    upgrade-on-hpc
    singularity
    slurm-known-issues
+   hpc-with-agent

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useId } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -15,11 +15,12 @@ interface FormInputs {
 }
 
 interface Props {
-  onClose?: () => void;
+  onEdit?: (name: string, archived: boolean) => void;
   project: Project;
 }
 
-const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props) => {
+const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) => {
+  const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const projectName = Form.useWatch('projectName', form);
 
@@ -30,6 +31,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
 
     try {
       await patchProject({ description, id: project.id, name });
+      onEdit?.(name, project.archived);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -39,7 +41,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
         type: ErrorType.Server,
       });
     }
-  }, [form, project.id]);
+  }, [onEdit, form, project.id, project.archived]);
 
   return (
     <Modal
@@ -47,6 +49,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
       size="small"
       submit={{
         disabled: !projectName,
+        form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Save Changes',
@@ -54,9 +57,8 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
       title="Edit Project"
       onClose={() => {
         form.resetFields();
-        onClose?.();
       }}>
-      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           initialValue={project.name}
           label="Project Name"

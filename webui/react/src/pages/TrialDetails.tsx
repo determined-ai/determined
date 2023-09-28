@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
@@ -23,7 +24,6 @@ import workspaceStore from 'stores/workspaces';
 import { ApiState, ExperimentBase, TrialDetails, ValueOf, Workspace } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound } from 'utils/service';
 

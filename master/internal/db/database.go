@@ -17,14 +17,6 @@ import (
 
 // DB is an interface for _all_ the functionality packed into the DB.
 type DB interface {
-	StartUserSession(user *model.User) (string, error)
-	DeleteUserSessionByID(sessionID model.SessionID) error
-	DeleteUserSessionByToken(userSessionToken string) error
-	AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error)
-	UpdateUser(updated *model.User, toUpdate []string, ug *model.AgentUserGroup) error
-	UpdateUsername(userID *model.UserID, newUsername string) error
-	UserList() (values []model.FullUser, err error)
-	AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
 	Migrate(migrationURL string, actions []string) error
 	Close() error
 	GetOrCreateClusterID() (string, error)
@@ -70,8 +62,6 @@ type DB interface {
 	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
 	LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
 	PeriodicTelemetryInfo() ([]byte, error)
-	AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error
-	AuthTokenKeypair() (*model.AuthTokenKeypair, error)
 	TrialState(trialID int) (model.State, error)
 	TrialStatus(trialID int) (model.State, *time.Time, error)
 	Query(queryName string, v interface{}, params ...interface{}) error
@@ -79,8 +69,6 @@ type DB interface {
 		queryName string, args []interface{}, v interface{}, params ...interface{}) error
 	RawQuery(queryName string, params ...interface{}) ([]byte, error)
 	UpdateResourceAllocationAggregation() error
-	TemplateByName(name string) (value model.Template, err error)
-	DeleteTemplate(name string) error
 	InsertTrialProfilerMetricsBatch(
 		values []float32, batches []int32, timestamps []time.Time, labels []byte,
 	) error

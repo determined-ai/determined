@@ -3,16 +3,14 @@ import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
 import 'uplot/dist/uPlot.min.css';
-
-import { Loaded } from 'utils/loadable';
-
-import css from '../src/App.module.scss';
-import { ConfirmationProvider } from '../src/components/kit/useConfirm';
-import ThemeProvider from '../src/components/ThemeProvider';
-import { Settings, UserSettings } from '../src/hooks/useSettingsProvider';
-import DesignKit from '../src/pages/DesignKit';
-import { StoreProvider as UIProvider } from '../src/stores/contexts/UI';
+import css from 'App.module.scss';
+import { UIProvider } from 'components/kit/Theme';
+import { ConfirmationProvider } from 'components/kit/useConfirm';
+import { Loaded } from 'components/kit/utils/loadable';
+import { Settings, UserSettings } from 'hooks/useSettingsProvider';
+import DesignKit from 'pages/DesignKit';
 
 import 'antd/dist/reset.css';
 
@@ -29,13 +27,11 @@ const router = createBrowserRouter([
       <HelmetProvider>
         <UIProvider>
           <UserSettings.Provider value={fakeSettingsContext}>
-            <ThemeProvider>
-              <ConfirmationProvider>
-                <div className={css.base}>
-                  <DesignKit />
-                </div>
-              </ConfirmationProvider>
-            </ThemeProvider>
+            <ConfirmationProvider>
+              <div className={css.base}>
+                <DesignKit />
+              </div>
+            </ConfirmationProvider>
           </UserSettings.Provider>
         </UIProvider>
       </HelmetProvider>

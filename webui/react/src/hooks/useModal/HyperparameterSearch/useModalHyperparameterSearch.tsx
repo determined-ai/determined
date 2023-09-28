@@ -2,7 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Alert, Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
@@ -12,6 +12,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
@@ -31,13 +32,14 @@ import {
 } from 'types';
 import { flattenObject, isBoolean, unflattenObject } from 'utils/data';
 import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { validateLength } from 'utils/string';
 
 import css from './useModalHyperparameterSearch.module.scss';
+
+const FORM_ID = 'create-hp-search-form';
 
 interface Props {
   experiment: ExperimentItem;
@@ -93,6 +95,7 @@ const useModalHyperparameterSearch = ({
   onClose,
   trial: trialIn,
 }: Props): ModalHooks => {
+  const idPrefix = useId();
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [trial, setTrial] = useState(trialIn);
   const [modalError, setModalError] = useState<string>();
@@ -606,17 +609,17 @@ const useModalHyperparameterSearch = ({
       className: css.modal,
       closable: true,
       content: (
-        <Form form={form} layout="vertical">
+        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
           {pages[currentPage]}
           {footer}
         </Form>
       ),
       icon: null,
-      maskClosable: false,
+      maskClosable: true,
       title: 'Hyperparameter Search',
       width: 700,
     };
-  }, [form, pages, currentPage, footer]);
+  }, [form, idPrefix, pages, currentPage, footer]);
 
   const modalOpen = useCallback(
     (props?: ShowModalProps) => {

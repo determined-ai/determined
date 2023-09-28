@@ -1,9 +1,9 @@
 import { render, RenderResult } from '@testing-library/react';
 import React from 'react';
 
+import { UIProvider } from 'components/kit/Theme';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
-import { StoreProvider as UIProvider } from 'stores/contexts/UI';
 
 export const workspace = {
   id: 10,
@@ -20,7 +20,7 @@ vi.mock('services/api', () => ({
 }));
 
 vi.mock('stores/users', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
+  const loadable = await import('components/kit/utils/loadable');
   const observable = await import('utils/observable');
   const store = {
     currentUser: observable.observable(

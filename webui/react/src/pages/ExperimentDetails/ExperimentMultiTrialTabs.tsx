@@ -144,7 +144,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       },
     ];
 
-    if (showExperimentArtifacts) {
+    if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0) {
       items.push({
         children: (
           <ExperimentCodeViewer

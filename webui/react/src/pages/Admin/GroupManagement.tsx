@@ -10,6 +10,7 @@ import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
+import { makeToast } from 'components/kit/Toast';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -21,7 +22,6 @@ import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
@@ -180,11 +180,14 @@ const GroupManagement: React.FC = () => {
       if (!groupId || !userId) return;
       try {
         await updateGroup({ groupId, removeUsers: [userId] });
-        message.success('User has been removed from group.');
+        makeToast({
+          severity: 'Confirm',
+          title: 'User has been removed from group.',
+        });
         onExpand(true, record);
         fetchGroups();
       } catch (e) {
-        message.error('Error deleting group.');
+        makeToast({ severity: 'Error', title: 'Error deleting group.' });
         handleError(e, { silent: true, type: ErrorType.Input });
       }
     },

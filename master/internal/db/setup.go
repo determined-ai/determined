@@ -1,12 +1,16 @@
 package db
 
 import (
+	"context"
+	"crypto/ed25519"
+	"database/sql"
 	"fmt"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const maxOpenConns = 48
@@ -16,6 +20,54 @@ const (
 	sslTpl = "&sslmode=%s&sslrootcert=%s"
 )
 
+// authTokenKeypair gets the existing auth token keypair.
+func authTokenKeypair(ctx context.Context) (*model.AuthTokenKeypair, error) {
+	var tokenKeypair model.AuthTokenKeypair
+	switch err := Bun().NewSelect().Table("auth_token_keypair").Scan(ctx, &tokenKeypair); {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, nil
+	case errors.Is(err, ErrNotFound):
+		return nil, nil
+	case err != nil:
+		return nil, err
+	default:
+		return &tokenKeypair, nil
+	}
+}
+
+// addAuthTokenKeypair adds the new auth token keypair.
+func addAuthTokenKeypair(ctx context.Context, tokenKeypair *model.AuthTokenKeypair) error {
+	_, err := Bun().NewInsert().
+		Model(&model.AuthTokenKeypair{
+			PublicKey:  tokenKeypair.PublicKey,
+			PrivateKey: tokenKeypair.PrivateKey,
+		}).
+		Exec(ctx)
+	return err
+}
+
+// InitAuthKeys initializes auth token keypairs.
+func InitAuthKeys() error {
+	switch storedKeys, err := authTokenKeypair(context.TODO()); {
+	case err != nil:
+		return fmt.Errorf("error retrieving auth token keypair: %s", err)
+	case storedKeys == nil:
+		publicKey, privateKey, err := ed25519.GenerateKey(nil)
+		if err != nil {
+			return fmt.Errorf("error creating auth token keypair: %s", err)
+		}
+		tokenKeypair := model.AuthTokenKeypair{PublicKey: publicKey, PrivateKey: privateKey}
+		err = addAuthTokenKeypair(context.TODO(), &tokenKeypair)
+		if err != nil {
+			return fmt.Errorf("error saving auth token keypair: %s", err)
+		}
+		SetTokenKeys(&tokenKeypair)
+	default:
+		SetTokenKeys(storedKeys)
+	}
+	return nil
+}
+
 // Connect connects to the database, but doesn't run migrations & inits.
 func Connect(opts *config.DBConfig) (*PgDB, error) {
 	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
@@ -23,7 +75,7 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 	log.Infof("connecting to database %s:%s", opts.Host, opts.Port)
 	db, err := ConnectPostgres(dbURL)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error connecting to database: %s:%s", opts.Host, opts.Port)
+		return nil, fmt.Errorf("%s: error connecting to database: %s:%s", err, opts.Host, opts.Port)
 	}
 
 	db.sql.SetMaxOpenConns(maxOpenConns)
@@ -39,11 +91,13 @@ func Setup(opts *config.DBConfig) (*PgDB, error) {
 	}
 
 	if err = db.Migrate(opts.Migrations, []string{"up"}); err != nil {
-		return nil, errors.Wrap(err, "running migrations")
+		return nil, fmt.Errorf("error running migrations: %s", err)
 	}
-	if err = db.initAuthKeys(); err != nil {
+
+	if err = InitAuthKeys(); err != nil {
 		return nil, err
 	}
+
 	if err = db.initAllocationSessions(); err != nil {
 		return nil, err
 	}

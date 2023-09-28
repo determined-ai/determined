@@ -19,6 +19,8 @@
 }
 .header {
   background-color: #132231;
+  border: 1px solid var(--theme-surface-border-strong);
+  color: #fff;
 }
 .state {
   text-transform: uppercase;

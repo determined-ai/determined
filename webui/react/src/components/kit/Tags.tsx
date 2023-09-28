@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Input, { InputRef } from 'components/kit/Input';
 import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/internal/functions';
-import Link from 'components/kit/internal/Link';
 import { ValueOf } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
 
@@ -67,25 +66,22 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
 
   const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
-  const handleInputConfirm = useCallback(
-    (
-      e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
-      previousValue?: string,
-      tagID?: number,
-    ) => {
-      const newTag = (e.target as HTMLInputElement).value.trim();
-      const oldTag = previousValue?.trim();
-      if (newTag) {
-        if (oldTag && newTag !== oldTag) {
-          onAction?.(TagAction.Update, newTag, tagID);
-        } else {
-          onAction?.(TagAction.Add, newTag);
-        }
+  const handleInputConfirm = (
+    e: React.FocusEvent | React.KeyboardEvent,
+    previousValue?: string,
+    tagID?: number,
+  ) => {
+    const newTag = (e.target as HTMLInputElement).value.trim();
+    const oldTag = previousValue?.trim();
+    if (newTag) {
+      if (oldTag && newTag !== oldTag) {
+        onAction?.(TagAction.Update, newTag, tagID);
+      } else {
+        onAction?.(TagAction.Add, newTag);
       }
-      setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
-    },
-    [onAction],
-  );
+    }
+    setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
+  };
 
   const { editInputIndex, inputVisible, inputWidth } = state;
 
@@ -121,9 +117,9 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
           if (compact && !showMore && index >= COMPACT_MAX_THRESHOLD) {
             if (index > COMPACT_MAX_THRESHOLD) return null;
             return (
-              <Link className={css.showMore} key="more" onClick={() => setShowMore(true)}>
+              <a className={css.showMore} key="more" onClick={() => setShowMore(true)}>
                 +{tags.length - COMPACT_MAX_THRESHOLD} more
-              </Link>
+              </a>
             );
           }
           if (editInputIndex === index) {

@@ -134,7 +134,7 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 		if err := namedExecOne(tx, fmt.Sprintf(`
 UPDATE trials
 %v
-WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
+WHERE id = :id`, SetClause(toUpdate)), trial); err != nil {
 			return errors.Wrapf(err, "error updating (%v) in trial %v",
 				strings.Join(toUpdate, ", "), id)
 		}
@@ -226,6 +226,21 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 		}
 	}
 
+	for k, v := range updatedSummaryMetrics {
+		switch v := v.(type) {
+		case model.JSONObj, map[string]any:
+		default:
+			log.Errorf("when full compute updating summary metric "+
+				"%+v path %s type %T value %+v is not a map, setting to empty map",
+				updatedSummaryMetrics,
+				k,
+				v,
+				v,
+			)
+			updatedSummaryMetrics[k] = model.JSONObj{}
+		}
+	}
+
 	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
 	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, trialID); err != nil {
 		return fmt.Errorf("rollback updating trial summary metrics: %w", err)
@@ -234,13 +249,14 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 }
 
 func (db *PgDB) calculateFullTrialSummaryMetrics(
-	ctx context.Context, tx *sqlx.Tx, trialID int, metricGroup model.MetricGroup,
+	ctx context.Context, tx *sqlx.Tx, trialID int, mGroup model.MetricGroup,
 ) (model.JSONObj, error) {
-	partition := customMetricGroupToPartitionType(metricGroup)
+	metricGroup := string(mGroup)
+	partition := customMetricGroupToPartitionType(&metricGroup)
 	jsonPath := model.TrialMetricsJSONPath(partition == ValidationMetric)
 	//nolint: execinquery
 	rows, err := tx.QueryContext(ctx, db.queries.GetOrLoad("calculate-full-trial-summary-metrics"),
-		trialID, jsonPath, partition, metricGroup)
+		trialID, jsonPath, partition, mGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getting full compute trial %d summary metrics", trialID)
 	}
@@ -346,8 +362,26 @@ func (db *PgDB) _addTrialMetricsTx(
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}
+
+		var summaryMetricsForGroup map[string]any
+		switch v := summaryMetrics[summaryMetricsJSONPath].(type) {
+		case model.JSONObj:
+			summaryMetricsForGroup = map[string]any(v)
+		case map[string]any:
+			summaryMetricsForGroup = v
+		default:
+			log.Errorf("summary metric "+
+				"%+v path %s type %T value %+v is not a map, setting to empty map",
+				summaryMetrics,
+				summaryMetricsJSONPath,
+				summaryMetrics[summaryMetricsJSONPath],
+				summaryMetrics[summaryMetricsJSONPath],
+			)
+
+			summaryMetricsForGroup = make(map[string]any)
+		}
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
-			summaryMetrics[summaryMetricsJSONPath].(map[string]any),
+			summaryMetricsForGroup,
 			addedMetrics.AvgMetrics,
 		)
 
@@ -364,6 +398,21 @@ func (db *PgDB) _addTrialMetricsTx(
 			if searcherMetric != nil &&
 				m.Metrics.AvgMetrics.Fields[*searcherMetric].AsInterface() != nil {
 				latestValidationID = &metricRowID
+			}
+		}
+
+		for k, v := range summaryMetrics {
+			switch v := v.(type) {
+			case model.JSONObj, map[string]any:
+			default:
+				log.Errorf("when updating summary metric "+
+					"%+v path %s type %T value %+v is not a map, setting to empty map",
+					summaryMetrics,
+					k,
+					v,
+					v,
+				)
+				summaryMetrics[k] = model.JSONObj{}
 			}
 		}
 

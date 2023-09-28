@@ -7,8 +7,8 @@ import {
   FormKind,
   Operator,
 } from 'components/FilterForm/components/type';
+import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
-import { Loadable, NotLoaded } from 'utils/loadable';
 
 // Remove `id` property from object
 const jsonReplacer = (key: string, value: unknown): unknown => {

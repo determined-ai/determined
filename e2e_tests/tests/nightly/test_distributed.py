@@ -43,14 +43,6 @@ def test_fashion_mnist_tf_keras_distributed() -> None:
 
 
 @pytest.mark.distributed
-def test_imagenet_pytorch_distributed() -> None:
-    config = conf.load_config(conf.tutorials_path("imagenet_pytorch/distributed_cifar.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("imagenet_pytorch"), 1)
-
-
-@pytest.mark.distributed
 @pytest.mark.parametrize("image_type", ["PT", "TF2"])
 def test_cifar10_pytorch_distributed(image_type: str) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
@@ -352,7 +344,6 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
     test_dir = "hf_image_classification"
     config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
@@ -370,7 +361,6 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
     test_dir = "hf_language_modeling"
     config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
@@ -388,7 +378,6 @@ def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_torchvision_core_api_deepspeed_autotuning() -> None:
     test_dir = "torchvision/core_api"
     config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
@@ -406,7 +395,6 @@ def test_torchvision_core_api_deepspeed_autotuning() -> None:
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
-@pytest.mark.deepspeed
 def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
     test_dir = "torchvision/deepspeed_trial"
     config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")

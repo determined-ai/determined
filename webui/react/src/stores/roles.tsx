@@ -1,8 +1,8 @@
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { listRoles } from 'services/api';
 import { ListRolesParams } from 'services/types';
 import { UserRole } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
 
 class RoleStore {
