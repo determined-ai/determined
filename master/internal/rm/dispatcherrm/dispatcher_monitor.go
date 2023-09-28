@@ -3,7 +3,6 @@ package dispatcherrm
 // Follow launcher jobs to completion and report status back to Determined.
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -619,13 +618,17 @@ func (m *launcherMonitor) processReasonCodeForRunningJobs(
 
 // queuesFromCluster fetches the latest job queue information from the cluster.
 func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := m.syslog.WithField("caller", "queuesFromCluster")
+
 	result := map[string]map[string]string{}
 	if m.monitoredJobs.Len() == 0 {
 		return result // Nothing to get of interest in this case
 	}
 	m.syslog.Debug("fetching HPC queue state")
 
-	dispatchInfo, r, err := m.apiClient.launchHPCQueueJob() //nolint:bodyclose
+	dispatchInfo, r, err := m.apiClient.launchHPCQueueJob(launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		m.syslog.Error(m.apiClient.handleLauncherError(r,
 			"Failed to retrieve HPC job queue from launcher", err))
@@ -634,14 +637,14 @@ func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
 	dispatchID := dispatchInfo.GetDispatchId()
 	owner := dispatchInfo.GetLaunchingUser()
 	defer func() {
-		_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
+		_, _, err := m.apiClient.terminateDispatch(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 		if err != nil {
 			m.syslog.WithField("dispatch-id", dispatchID).
 				WithError(err).Error("failed to terminate dispatch")
 			return
 		}
 
-		_, err = m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
+		_, err = m.apiClient.deleteDispatch(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 		if err != nil {
 			m.syslog.WithField("dispatch-id", dispatchID).
 				WithError(err).Error("failed to delete dispatch")
@@ -650,7 +653,10 @@ func (m *launcherMonitor) queuesFromCluster() map[string]map[string]string {
 	}()
 
 	resp, _, err := m.apiClient.loadEnvironmentLog( //nolint:bodyclose
-		owner, dispatchID, "slurm-queue-info")
+		owner,
+		dispatchID,
+		"slurm-queue-info",
+		launcherAPILogger)
 	if err != nil {
 		m.syslog.WithField("dispatch-id", dispatchID).
 			WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
@@ -939,10 +945,11 @@ func (m *launcherMonitor) getDispatchStatus(
 	dispatchID string,
 	ignoreNotFound bool,
 ) (dispatchInfo launcher.DispatchInfo, dispatchFound bool) {
-	resp, r, err := m.apiClient.MonitoringApi.
-		GetEnvironmentStatus(m.apiClient.withAuth(context.TODO()), owner, dispatchID).
-		Refresh(true).
-		Execute() //nolint:bodyclose
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := m.syslog.WithField("caller", "getDispatchStatus")
+
+	resp, r, err := m.apiClient.getEnvironmentStatus(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		// This may happen if the job is canceled before the launcher creates
 		// the environment files containing status. Wouldn't expect this to
@@ -1043,6 +1050,10 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	baseLogName string,
 	linesToShow int,
 ) ([]string, error) {
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := m.syslog.WithField("caller", "getTaskLogsFromDispatcher")
+
 	dispatchID := job.dispatcherID
 
 	// The logRange expression can be used to limit the size of the logs returned.
@@ -1053,9 +1064,10 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	// So in the rare case that we fail to start and need to display
 	// the log file content, read the payload name from the launcher.
 	if len(job.payloadName) == 0 {
-		manifest, resp, err := m.apiClient.MonitoringApi.
-			GetEnvironmentDetails(m.apiClient.withAuth(context.TODO()), job.user, dispatchID).
-			Execute() //nolint:bodyclose
+		manifest, resp, err := m.apiClient.getEnvironmentDetails( //nolint:bodyclose
+			job.user,
+			dispatchID,
+			launcherAPILogger)
 		if err != nil {
 			m.syslog.WithField("dispatch-id", dispatchID).
 				WithError(err).Warnf(
@@ -1071,10 +1083,13 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	// Compose the file name
 	logFileName := fmt.Sprintf("%s-%s", job.payloadName, baseLogName)
 
-	logFile, httpResponse, err := m.apiClient.MonitoringApi.
-		LoadEnvironmentLog(m.apiClient.withAuth(context.TODO()), job.user, dispatchID, logFileName).
-		Range_(logRange).
-		Execute() //nolint:bodyclose
+	//nolint:bodyclose
+	logFile, httpResponse, err := m.apiClient.loadEnvironmentLogWithRange(
+		job.user,
+		dispatchID,
+		logFileName,
+		logRange,
+		launcherAPILogger)
 	if err != nil {
 		m.syslog.WithField("dispatch-id", dispatchID).
 			WithField("log-file-name", logFileName).

@@ -17,7 +17,11 @@ func checkVersionNow(ctx context.Context,
 	log *logrus.Entry,
 	cl *launcherAPIClient,
 ) error {
-	v, err := cl.getVersion(ctx)
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := log.WithField("caller", "checkVersionNow")
+
+	v, err := cl.getVersion(ctx, launcherAPILogger)
 	if err != nil {
 		return errors.Wrap(err, "cannot get launcher version")
 	}

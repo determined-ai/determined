@@ -66,10 +66,11 @@ func gcTerminateRunningOrphans(
 	log *logrus.Entry,
 	cl *launcherAPIClient,
 ) {
-	data, _, err := cl.RunningApi.
-		ListAllRunning(cl.withAuth(ctx)).
-		EventLimit(0).
-		Execute() //nolint:bodyclose
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := log.WithField("caller", "gcTerminateRunningOrphans")
+
+	data, _, err := cl.listAllRunning(launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		log.WithError(err).Warn("unable to list running dispatches, skipping status refresh for gc")
 		return
@@ -98,17 +99,17 @@ func gcTerminateRunningOrphans(
 			WithField("owner", owner).
 			WithField("state", v.GetState()).
 			Info("terminate dispatch")
-		_, _, err = cl.terminateDispatch(owner, dispatchID) //nolint:bodyclose
+		_, _, err = cl.terminateDispatch( //nolint:bodyclose
+			owner,
+			dispatchID,
+			launcherAPILogger)
 		if err != nil {
 			log.WithField("dispatch-id", dispatchID).
 				WithError(err).Warn("unable to terminate dispatch")
 			continue
 		}
 
-		dispatch, _, err := cl.MonitoringApi.
-			GetEnvironmentStatus(cl.withAuth(ctx), owner, dispatchID).
-			Refresh(true).
-			Execute() //nolint:bodyclose
+		dispatch, _, err := cl.getEnvironmentStatus(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 		if err != nil {
 			log.WithField("dispatch-id", dispatchID).
 				WithError(err).Warn("unable to refresh dispatch status")
@@ -128,10 +129,11 @@ func gcTerminatedOrphans(
 	log *logrus.Entry,
 	cl *launcherAPIClient,
 ) {
-	data, _, err := cl.TerminatedApi.
-		ListAllTerminated(cl.withAuth(ctx)).
-		EventLimit(0).
-		Execute() //nolint:bodyclose
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := log.WithField("caller", "gcTerminatedOrphans")
+
+	data, _, err := cl.listAllTerminated(launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		log.WithError(err).Warn("unable to list terminated dispatches, skipping dispatch gc")
 		return
@@ -160,7 +162,7 @@ func gcTerminatedOrphans(
 			WithField("owner", owner).
 			WithField("state", v.GetState()).
 			Infof("gc dispatch")
-		_, err = cl.deleteDispatch(owner, dispatchID) //nolint:bodyclose
+		_, err = cl.deleteDispatch(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 		if err != nil {
 			log.WithField("dispatch-id", dispatchID).
 				WithField("owner", owner).

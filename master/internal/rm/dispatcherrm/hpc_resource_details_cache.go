@@ -137,7 +137,11 @@ func (c *hpcResourceDetailsCache) wait() {
 func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 	*hpcResources, bool,
 ) {
-	dispatchInfo, resp, err := c.cl.launchHPCResourcesJob() //nolint:bodyclose
+	// The logger we will pass to the API client, so that when the API client
+	// logs a message, we know who called it.
+	launcherAPILogger := c.log.WithField("caller", "fetchHpcResourceDetails")
+
+	dispatchInfo, resp, err := c.cl.launchHPCResourcesJob(launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		c.log.Errorf(c.cl.handleLauncherError(resp,
 			"Failed to retrieve HPC resources from launcher", err))
@@ -149,13 +153,13 @@ func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 		WithField("owner", owner).
 		Debug("launched manifest")
 	defer func() {
-		_, _, err := c.cl.terminateDispatch(owner, dispatchID) //nolint:bodyclose
+		_, _, err := c.cl.terminateDispatch(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 		if err != nil {
 			c.log.Error(err)
 			return
 		}
 
-		_, err = c.cl.deleteDispatch(owner, dispatchID) //nolint:bodyclose
+		_, err = c.cl.deleteDispatch(owner, dispatchID, launcherAPILogger) //nolint:bodyclose
 		if err != nil {
 			c.log.Error(err)
 			return
@@ -179,7 +183,7 @@ func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 	// to get the partition info and does not create a job, so no job ID is ever
 	// generated.  Eventually it will timeout waiting and return, but that's too
 	// long of a delay for us to deal with.
-	log, _, err := c.cl.loadEnvironmentLog(owner, dispatchID, logFileName) //nolint:bodyclose
+	log, _, err := c.cl.loadEnvironmentLog(owner, dispatchID, logFileName, launcherAPILogger) //nolint:bodyclose
 	if err != nil {
 		c.log.Error(err)
 		return nil, false
