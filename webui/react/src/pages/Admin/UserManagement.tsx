@@ -185,7 +185,7 @@ const columnSettings = {
 const userManagementSettings = userSettings.get(UserManagementSettings, 'user-management');
 const UserManagement: React.FC = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
-  const [refresh, setRefresh] = useState({});
+  const [refresh, setRefresh] = useState<Record<string, never>>({});
   const pageRef = useRef<HTMLElement>(null);
   const loadableSettings = useObservable(userManagementSettings);
   const settings = useMemo(() => {
@@ -230,8 +230,8 @@ const UserManagement: React.FC = () => {
   const users = useMemo(
     () =>
       Loadable.match(userResponse, {
-        Loaded: (r) => r.users,
         _: () => [],
+        Loaded: (r) => r.users,
       }),
     [userResponse],
   );
@@ -260,8 +260,8 @@ const UserManagement: React.FC = () => {
   const groups = useMemo(
     () =>
       Loadable.match(groupsResponse, {
-        Loaded: (g) => g.groups || [],
         _: () => [],
+        Loaded: (g) => g.groups || [],
       }),
     [groupsResponse],
   );
@@ -431,14 +431,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [
-    fetchUsers,
-    filterIcon,
-    groups,
-    info.userManagementEnabled,
-    rbacEnabled,
-    settings,
-  ]);
+  }, [fetchUsers, filterIcon, groups, info.userManagementEnabled, rbacEnabled, settings]);
 
   return (
     <>
