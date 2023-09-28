@@ -78,6 +78,7 @@
     # pre-0.15.6 non-Native-API experiments emitted `internal: null` configs
     internal: null
     labels: []
+    log_pattern_policies: []
     max_restarts: 5
     min_validation_period:
       batches: 0
@@ -179,6 +180,7 @@
       add_capabilities: []
       drop_capabilities: []
     hyperparameters: {}
+    log_pattern_policies: []
     labels: []
     max_restarts: 5
     min_checkpoint_period:
