@@ -20,6 +20,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// GCP has a character length limit of 63.
+const maxInstanceNameLength = 63
+
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
 // 1. A specific key/value pair label.
 // 2. Names of agents that are equal to the instance names.
@@ -164,7 +167,14 @@ func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceSta
 }
 
 func (c *gcpCluster) generateInstanceNamePattern() string {
-	return c.config.NamePrefix + petname.Generate(2, "-") + "-#####"
+	genName := c.config.NamePrefix + petname.Generate(2, "-")
+	suffix := "-#####"
+	// We make sure that the generated name is less than the max length
+	if len(genName) > maxInstanceNameLength-len(suffix) {
+		c.syslog.WithField("genName", genName).Warnf("Generated name for instance was truncated")
+		genName = genName[:maxInstanceNameLength-len(suffix)]
+	}
+	return genName + suffix
 }
 
 func (c *gcpCluster) List() ([]*model.Instance, error) {

@@ -5498,6 +5498,29 @@ class v1GetTaskAcceleratorDataResponse(Printable):
         }
         return out
 
+class v1GetTaskContextDirectoryResponse(Printable):
+    """Response to GetTaskContextDirectoryRequest."""
+
+    def __init__(
+        self,
+        *,
+        b64Tgz: str,
+    ):
+        self.b64Tgz = b64Tgz
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskContextDirectoryResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "b64Tgz": obj["b64Tgz"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "b64Tgz": self.b64Tgz,
+        }
+        return out
+
 class v1GetTaskResponse(Printable):
     """Response to GetTaskRequest."""
 
@@ -5990,6 +6013,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     - SORT_BY_ACTIVE: Returns users sorted by if they are active.
     - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
     - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+    - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
@@ -5998,6 +6022,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     ACTIVE = "SORT_BY_ACTIVE"
     MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
     NAME = "SORT_BY_NAME"
+    LAST_LOGIN_TIME = "SORT_BY_LAST_LOGIN_TIME"
 
 class v1GetUsersResponse(Printable):
     """Response to GetUsersRequest."""
@@ -17445,6 +17470,30 @@ def get_GetTaskAcceleratorData(
         return v1GetTaskAcceleratorDataResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTaskAcceleratorData", _resp)
 
+def get_GetTaskContextDirectory(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskContextDirectoryResponse":
+    """Get the model definition of a task.
+
+    - taskId: The id of the experiment.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/context_directory",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskContextDirectoryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTaskContextDirectory", _resp)
+
 def get_GetTasks(
     session: "api.Session",
 ) -> "v1GetTasksResponse":
@@ -18094,6 +18143,7 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_ACTIVE: Returns users sorted by if they are active.
  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+ - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
     """
     _params = {
         "active": str(active).lower() if active is not None else None,

@@ -1,7 +1,7 @@
 import { type } from 'io-ts';
 
+import { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { SettingsConfig } from 'hooks/useSettings';
-import { KeyboardShortcut } from 'utils/shortcut';
 
 export interface Settings {
   navbarCollapsed: KeyboardShortcut;

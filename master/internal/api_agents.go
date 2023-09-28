@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -40,8 +41,8 @@ func (a *apiServer) GetAgents(
 		}
 	}
 
-	a.sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
+	api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
+	return resp, api.Paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetAgent(

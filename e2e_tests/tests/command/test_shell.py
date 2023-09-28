@@ -4,6 +4,7 @@ import pytest
 
 import determined as det
 from tests import command as cmd
+from tests.cluster.test_users import det_spawn
 
 
 @pytest.mark.slow
@@ -25,3 +26,20 @@ def test_start_and_write_to_shell(tmp_path: Path) -> None:
             pytest.fail(
                 f"Did not find expected input {det.__version__} in shell stdout." + lines + "\n"
             )
+
+
+@pytest.mark.e2e_cpu
+def test_open_shell() -> None:
+    with cmd.interactive_command("shell", "start", "--detach") as shell:
+        task_id = shell.task_id
+        assert task_id is not None
+
+        child = det_spawn(["shell", "open", task_id])
+        child.setecho(True)
+        child.expect(r".*Permanently added.+([0-9a-f-]{36}).+known hosts\.")
+        child.sendline("det user whoami")
+        child.expect("You are logged in as user \\'(.*)\\'", timeout=10)
+        child.sendline("exit")
+        child.read()
+        child.wait()
+        assert child.exitstatus == 0

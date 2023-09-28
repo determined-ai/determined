@@ -317,8 +317,7 @@ To perform a hyperparameter search, we'll update our script to define the hyperp
 settings we want to use for our experiment. More specifically, we'll need to define the following
 settings in our experiment configuration file:
 
--  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :doc:`Search Methods
-   </model-dev-guide/hyperparameter/search-methods/overview>`.
+-  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :ref:`search-methods`.
 
 -  ``metric``: ``test_loss``
 

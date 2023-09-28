@@ -1,11 +1,10 @@
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { Metric } from 'types';
+import { Metric, XAxisDomain } from 'types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 

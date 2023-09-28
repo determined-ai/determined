@@ -406,6 +406,19 @@ func (t TaskLogBatch) ForEach(f func(interface{}) error) error {
 	return nil
 }
 
+// TaskContextDirectory represents a row in database for a tasks context directory.
+// This currently is only for notebooks, trials, tensorboards, and commands now.
+// Trials aren't in it because they are stored on experiments.model_def.
+// In addition trials can have many tasks but currently can only have one model_def.
+// We would end up duplicating a lot of data migrating experiment's model_def over to this
+// table. Also that migration would be pretty painful.
+type TaskContextDirectory struct {
+	bun.BaseModel `bun:"table:task_context_directory"`
+
+	TaskID           TaskID `bun:"task_id"`
+	ContextDirectory []byte `bun:"context_directory"`
+}
+
 // AccessScopeID is an identifier for an access scope.
 type AccessScopeID int
 

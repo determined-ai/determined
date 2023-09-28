@@ -2,7 +2,6 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Spinner from 'components/kit/Spinner';
 import Message from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -23,6 +22,7 @@ import {
   Range,
   Scale,
   TrialItem,
+  XAxisDomain,
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { flattenObject, isPrimitive } from 'utils/data';

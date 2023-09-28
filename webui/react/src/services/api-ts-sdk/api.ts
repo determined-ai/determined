@@ -4113,6 +4113,19 @@ export interface V1GetTaskAcceleratorDataResponse {
     acceleratorData: Array<V1AcceleratorData>;
 }
 /**
+ * Response to GetTaskContextDirectoryRequest.
+ * @export
+ * @interface V1GetTaskContextDirectoryResponse
+ */
+export interface V1GetTaskContextDirectoryResponse {
+    /**
+     * The base64-encoded, gzipped, tarball.
+     * @type {string}
+     * @memberof V1GetTaskContextDirectoryResponse
+     */
+    b64Tgz: string;
+}
+/**
  * Response to GetTaskRequest.
  * @export
  * @interface V1GetTaskResponse
@@ -4419,7 +4432,7 @@ export interface V1GetUserSettingResponse {
     settings: Array<V1UserWebSetting>;
 }
 /**
- * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+ * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
  * @export
  * @enum {string}
  */
@@ -4431,6 +4444,7 @@ export const V1GetUsersRequestSortBy = {
     ACTIVE: 'SORT_BY_ACTIVE',
     MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME',
     NAME: 'SORT_BY_NAME',
+    LASTLOGINTIME: 'SORT_BY_LAST_LOGIN_TIME',
 } as const
 export type V1GetUsersRequestSortBy = ValueOf<typeof V1GetUsersRequestSortBy>
 /**
@@ -10435,7 +10449,7 @@ export interface V1User {
      */
     remote?: boolean;
     /**
-     * when the user last logged in
+     * when the user last authenticated
      * @type {Date}
      * @memberof V1User
      */
@@ -26503,6 +26517,42 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get the model definition of a task.
+         * @param {string} taskId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskContextDirectory(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTaskContextDirectory.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/context_directory`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26721,6 +26771,25 @@ export const TasksApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the model definition of a task.
+         * @param {string} taskId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskContextDirectory(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskContextDirectoryResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTaskContextDirectory(taskId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26819,6 +26888,16 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get the model definition of a task.
+         * @param {string} taskId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskContextDirectory(taskId: string, options?: any) {
+            return TasksApiFp(configuration).getTaskContextDirectory(taskId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -26891,6 +26970,18 @@ export class TasksApi extends BaseAPI {
      */
     public getTask(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the model definition of a task.
+     * @param {string} taskId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getTaskContextDirectory(taskId: string, options?: any) {
+        return TasksApiFp(this.configuration).getTaskContextDirectory(taskId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -29056,7 +29147,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -29454,7 +29545,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -29651,7 +29742,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -29783,7 +29874,7 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of users.
-     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
+     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
      * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.

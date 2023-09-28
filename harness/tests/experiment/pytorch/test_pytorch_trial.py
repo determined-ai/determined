@@ -1235,6 +1235,21 @@ class TestPyTorchTrial:
             controller.core_context.train.get_experiment_best_validation.reset_mock()
             controller._checkpoint.reset_mock()
 
+    @mock.patch.object(det.core.DummySearcherOperation, "report_progress")
+    def test_searcher_progress_reporting(self, mock_report_progress: mock.MagicMock):
+        trial, controller = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            scheduling_unit=10,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            max_batches=100,
+        )
+        controller.run()
+
+        exp_prog = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+        got_prog = [x.args[0] for x in mock_report_progress.call_args_list]
+        assert exp_prog == got_prog
+
     @pytest.mark.parametrize(
         "ckpt",
         [

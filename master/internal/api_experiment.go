@@ -11,33 +11,30 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
-
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	structpbmap "google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
-
-	log "github.com/sirupsen/logrus"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	exputil "github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
@@ -56,9 +53,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	structpb "github.com/golang/protobuf/ptypes/struct"
-	structpbmap "google.golang.org/protobuf/types/known/structpb"
 )
 
 // Catches information on active running experiments.
@@ -448,7 +442,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 	taskSpec := *a.m.taskSpec
 
 	sema := make(chan struct{}, maxConcurrentDeletes)
-	wg := sync.WaitGroup{}
+	g, _ := errgroup.WithContext(context.Background())
 	successfulExpIDs := make(chan int, len(exps))
 
 	var expIDs []int
@@ -462,42 +456,32 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 
 	for i, e := range exps {
 		i := i
-
-		wg.Add(1)
-		go func(exp *model.Experiment) {
+		exp := e
+		g.Go(func() error {
 			sema <- struct{}{}
 			defer func() { <-sema }()
-			defer wg.Done()
 
 			agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceIDs[i])
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
-				return
+				return err
 			}
 
-			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
-				exp.ID,
-				0,
-				0,
-				0,
-			)
+			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(exp.ID, 0, 0, 0)
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
-				return
+				return err
 			}
-
 			if len(checkpoints) > 0 {
-				go func() {
-					err := runCheckpointGCTask(
-						a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-						taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-						true, agentUserGroup, userModel, nil,
-					)
-					if err != nil {
-						log.WithError(err).Errorf("failed to gc checkpoints for experiment")
-						return
-					}
-				}()
+				err = runCheckpointGCTask(
+					a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
+					true, agentUserGroup, userModel, nil,
+				)
+			}
+			if err != nil {
+				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+				return err
 			}
 
 			// delete jobs per experiment
@@ -506,17 +490,22 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			})
 			if err != nil {
 				log.WithError(err).Errorf("requesting cleanup of resource mananger resources")
-				return
+				return err
 			}
 			if err = <-resp.Err; err != nil {
 				log.WithError(err).Errorf("cleaning up resource mananger resources")
-				return
+				return err
 			}
 			successfulExpIDs <- exp.ID
-		}(e)
+			return nil
+		})
 	}
-	wg.Wait()
+
+	err = g.Wait()
 	close(successfulExpIDs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to checkpoint gc")
+	}
 
 	var processExpIDs []int
 	for expID := range successfulExpIDs {
@@ -1350,7 +1339,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
 	}
 
-	a.filter(&resp.Checkpoints, func(i int) bool {
+	api.Where(&resp.Checkpoints, func(i int) bool {
 		v := resp.Checkpoints[i]
 
 		found := false
@@ -1399,7 +1388,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
-	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
 func (a *apiServer) createUnmanagedExperimentTx(
@@ -2266,6 +2255,40 @@ func (a *apiServer) GetModelDef(
 	b64Tgz := base64.StdEncoding.EncodeToString(tgz)
 
 	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
+}
+
+func (a *apiServer) GetTaskContextDirectory(
+	ctx context.Context, req *apiv1.GetTaskContextDirectoryRequest,
+) (*apiv1.GetTaskContextDirectoryResponse, error) {
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
+	isExp, exp, err := expFromTaskID(ctx, model.TaskID(req.TaskId))
+	if err != nil {
+		return nil, err
+	}
+
+	var tgz []byte
+	if isExp {
+		tgz, err = a.m.db.ExperimentModelDefinitionRaw(exp.ID)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"fetching experiment's taskID %s model definition from database: %w",
+				req.TaskId, err)
+		}
+	} else {
+		tgz, err = db.NonExperimentTasksContextDirectory(ctx, model.TaskID(req.TaskId))
+		if err != nil {
+			return nil, fmt.Errorf(
+				"fetching taskID %s context directory from database: %s", req.TaskId, err)
+		}
+	}
+
+	return &apiv1.GetTaskContextDirectoryResponse{
+		B64Tgz: base64.StdEncoding.EncodeToString(tgz),
+	}, nil
 }
 
 func (a *apiServer) MoveExperiment(

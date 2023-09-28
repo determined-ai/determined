@@ -30,6 +30,21 @@ message GetTaskResponse {
   determined.task.v1.Task task = 1;
 }
 
+// Request for an task's context directory.
+message GetTaskContextDirectoryRequest {
+  // The id of the experiment.
+  string task_id = 1;
+}
+
+// Response to GetTaskContextDirectoryRequest.
+message GetTaskContextDirectoryResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "b64_tgz" ] }
+  };
+  // The base64-encoded, gzipped, tarball.
+  string b64_tgz = 1;
+}
+
 // Request a count of active tasks by type.
 message GetActiveTasksCountRequest {}
 

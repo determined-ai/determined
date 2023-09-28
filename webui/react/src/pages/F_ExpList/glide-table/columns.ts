@@ -7,7 +7,7 @@ import {
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
 
-import { getColor, getInitials } from 'components/Avatar';
+import { getColor, getInitials } from 'components/kit/Avatar';
 import { DarkLight, Theme } from 'components/kit/Theme';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';

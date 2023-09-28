@@ -26,7 +26,7 @@ func TestPaginate(t *testing.T) {
 		errReporter := func(msg string) {
 			t.Errorf("Failed case: %v - %s", tb, msg)
 		}
-		p, err := Paginate(tb.Total, tb.Offset, tb.Limit)
+		p, err := CalculatePagination(tb.Total, tb.Offset, tb.Limit)
 		if tb.Err && err == nil || !tb.Err && err != nil {
 			t.Errorf("failed test %v", tb)
 			return

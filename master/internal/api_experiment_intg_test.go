@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -163,6 +164,45 @@ func TestGetExperimentLabels(t *testing.T) {
 	resp, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{})
 	require.NoError(t, err)
 	require.Subset(t, resp.Labels, labels)
+}
+
+func TestGetTaskContextDirectoryExperiment(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	trial, task := createTestTrial(t, api, curUser)
+
+	expected, err := api.GetModelDef(ctx, &apiv1.GetModelDefRequest{
+		ExperimentId: int32(trial.ExperimentID),
+	})
+	require.NoError(t, err)
+
+	actual, err := api.GetTaskContextDirectory(ctx, &apiv1.GetTaskContextDirectoryRequest{
+		TaskId: string(task.TaskID),
+	})
+	require.NoError(t, err)
+	require.Equal(t, expected.B64Tgz, actual.B64Tgz)
+}
+
+func TestGetTaskContextDirectoryTask(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	task := &model.Task{TaskType: model.TaskTypeNotebook, TaskID: model.NewTaskID()}
+	require.NoError(t, api.m.db.AddTask(task))
+
+	expectedContextDirectory := []byte("expectedContextDirectory")
+	_, err := db.Bun().NewInsert().Model(&model.TaskContextDirectory{
+		TaskID:           task.TaskID,
+		ContextDirectory: expectedContextDirectory,
+	}).Exec(context.TODO())
+	require.NoError(t, err)
+
+	actual, err := api.GetTaskContextDirectory(ctx, &apiv1.GetTaskContextDirectoryRequest{
+		TaskId: string(task.TaskID),
+	})
+	require.NoError(t, err)
+
+	actualString, err := base64.StdEncoding.DecodeString(actual.B64Tgz)
+	require.NoError(t, err)
+	require.Equal(t, string(expectedContextDirectory), string(actualString))
 }
 
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {

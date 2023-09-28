@@ -202,6 +202,33 @@ def test_large_uploads(tmp_path: Path) -> None:
         )
 
 
+# TODO(DET-9859) we could move this test to nightly or even per release to save CI cost.
+# It takes around 15 seconds.
+@pytest.mark.e2e_k8s
+def test_context_directory_larger_than_config_map_k8s(tmp_path: Path) -> None:
+    with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
+        large = tree.joinpath("large-file.bin")
+        large.touch()
+        f = large.open(mode="w")
+        f.seek(1024 * 1024 * 10)
+        f.write("\0")
+        f.close()
+
+        _run_and_verify_exit_code_zero(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                "--context",
+                str(tree),
+                "python",
+                "hello.py",
+            ]
+        )
+
+
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
 def test_configs(tmp_path: Path) -> None:

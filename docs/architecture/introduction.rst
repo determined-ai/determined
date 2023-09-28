@@ -4,6 +4,15 @@
 
 .. _features:
 
+Determined is an all-in-one deep learning platform, compatible with PyTorch and TensorFlow.
+
+It takes care of:
+
+-  Distributed training for faster results.
+-  Hyperparameter tuning for obtaining the best models.
+-  Resource management for cutting cloud GPU costs.
+-  Experiment tracking for analysis and reproducibility.
+
 **********
  Features
 **********
@@ -152,6 +161,13 @@ experiment or to compare multiple experiments.
 
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
+
+Workspaces and Projects
+=======================
+
+**Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
+experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
+at :ref:`workspaces`.
 
 .. _benefits:
 
@@ -709,13 +725,6 @@ Trial
 
 A *trial* is a training task with a defined set of hyperparameters. A common degenerate case is an
 experiment with a single trial, which corresponds to training a single deep learning model.
-
-Workspaces and Projects
-=======================
-
-**Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
-experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
-at :ref:`workspaces`.
 
 RBAC and User Groups
 ====================

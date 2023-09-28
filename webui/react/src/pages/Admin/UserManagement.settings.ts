@@ -5,13 +5,20 @@ import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 
-export type UserColumnName = 'action' | 'displayName' | 'isActive' | 'isAdmin' | 'modifiedAt';
+export type UserColumnName =
+  | 'action'
+  | 'displayName'
+  | 'isActive'
+  | 'isAdmin'
+  | 'modifiedAt'
+  | 'lastAuthAt';
 
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
   'isActive',
   'isAdmin',
   'modifiedAt',
+  'lastAuthAt',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
@@ -19,6 +26,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   displayName: 60,
   isActive: 40,
   isAdmin: 40,
+  lastAuthAt: 80,
   modifiedAt: 80,
 };
 
@@ -69,6 +77,7 @@ const config: SettingsConfig<UserManagementSettings> = {
         literal(V1GetUsersRequestSortBy.UNSPECIFIED),
         literal(V1GetUsersRequestSortBy.USERNAME),
         literal(V1GetUsersRequestSortBy.NAME),
+        literal(V1GetUsersRequestSortBy.LASTLOGINTIME),
       ]),
     },
     tableLimit: {
