@@ -3,12 +3,12 @@ import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
 import { Json, JsonObject } from 'types';
 import { isJsonObject, isObject } from 'utils/data';
 import handleError, { DetError, ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, Observable, WritableObservable } from 'utils/observable';
 
 import PollingStore from './polling';

@@ -16,6 +16,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
 import { getCssVar } from 'components/kit/Theme';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -34,7 +35,6 @@ import {
   RunState,
 } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
@@ -290,7 +290,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [isLoadingSettings]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    if (isLoadingSettings || Loadable.isLoading(loadableFormset)) return;
+    if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ActionDropdown, { Triggers } from 'components/ActionDropdown';
 import Icon from 'components/kit/Icon';
 import { DetError } from 'components/kit/internal/types';
+import { Loadable } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -41,7 +42,6 @@ import {
   orderedSchedulers,
   unsupportedQPosSchedulers,
 } from 'utils/job';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { numericSorter } from 'utils/sort';
@@ -61,7 +61,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(() => {
-    if (Loadable.isLoading(resourcePools)) return [];
+    if (Loadable.isNotLoaded(resourcePools)) return [];
 
     return resourcePools.data.map(
       (rp) =>

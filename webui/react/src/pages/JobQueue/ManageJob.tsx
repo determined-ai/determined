@@ -4,6 +4,7 @@ import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { Loadable } from 'components/kit/utils/loadable';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
@@ -11,7 +12,6 @@ import clusterStore from 'stores/cluster';
 import { Job, JobType, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { floatToPercent, truncate } from 'utils/string';
 

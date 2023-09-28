@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
@@ -19,7 +20,6 @@ import {
   XAxisDomain,
 } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
 
 type MetricName = string;

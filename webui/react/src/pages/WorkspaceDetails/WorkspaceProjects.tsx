@@ -11,6 +11,7 @@ import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
@@ -37,7 +38,6 @@ import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
 
@@ -139,7 +139,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(loadableUsers))
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isNotLoaded(loadableUsers))
       return;
 
     switch (settings.whose) {
@@ -363,7 +363,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading || Loadable.isLoading(loadableUsers)}
+            loading={isLoading || Loadable.isNotLoaded(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

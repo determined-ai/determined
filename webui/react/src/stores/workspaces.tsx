@@ -2,6 +2,7 @@ import { Map } from 'immutable';
 import _ from 'lodash';
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import {
   archiveWorkspace,
   createWorkspace,
@@ -16,7 +17,6 @@ import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { workspaceSorter } from 'utils/sort';
 
 import PollingStore from './polling';

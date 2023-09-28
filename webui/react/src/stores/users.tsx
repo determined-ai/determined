@@ -1,11 +1,11 @@
 import { Map } from 'immutable';
 import _ from 'lodash';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getCurrentUser, getUsers, patchUser } from 'services/api';
 import type { GetUsersParams, PatchUserParams } from 'services/types';
 import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
 
 import PollingStore from './polling';

@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { LineChart } from 'components/kit/LineChart';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
@@ -33,7 +34,6 @@ import {
 import { glasbeyColor } from 'utils/color';
 import { flattenObject, isPrimitive } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToStr } from 'utils/metric';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';

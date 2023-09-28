@@ -5,13 +5,13 @@ import { ErrorMessage, LoadableOrError } from 'components/kit/CodeEditor';
 import Icon from 'components/kit/Icon';
 import { TreeNode } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
 import { ExperimentBase, RawJson } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './ExperimentCodeViewer.module.scss';
 

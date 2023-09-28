@@ -2,12 +2,12 @@ import _ from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps } from 'components/kit/LineChart';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors, useGlasbey } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, Serie, TrialItem, XAxisDomain } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { metricToKey } from 'utils/metric';
 
 interface Props {

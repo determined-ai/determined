@@ -4,10 +4,10 @@ import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import { login, setUserPassword } from 'services/api';
 import userStore from 'stores/users';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const MODAL_HEADER_LABEL = 'Change Password';

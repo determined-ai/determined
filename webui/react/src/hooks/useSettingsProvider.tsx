@@ -2,10 +2,10 @@ import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { Loadable, NotLoaded } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 /*
@@ -34,7 +34,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
-  const isLoading = Loadable.isLoading(useObservable(userSettings._forUseSettingsOnly()));
+  const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
 
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);

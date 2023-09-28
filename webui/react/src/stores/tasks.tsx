@@ -1,8 +1,8 @@
 import { observable, WritableObservable } from 'micro-observables';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getActiveTasks } from 'services/api';
 import { TaskCounts } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import PollingStore from './polling';
 

@@ -6,11 +6,11 @@ import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import Avatar from 'components/UserAvatar';
 import { handlePath, paths } from 'routes/utils';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
@@ -60,7 +60,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
               </p>
               <div className={css.avatarRow}>
                 <div className={css.avatar}>
-                  <Spinner conditionalRender spinning={Loadable.isLoading(loadableUser)}>
+                  <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUser)}>
                     {Loadable.isLoaded(loadableUser) && <Avatar user={user} />}
                   </Spinner>
                 </div>
