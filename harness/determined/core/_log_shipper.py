@@ -15,6 +15,10 @@ from determined.common import api
 logger = logging.getLogger("determined.experimental.core_v2")
 
 
+class TaskAlert:
+    pass
+
+
 class _LogShipper:
     def __init__(
         self,
@@ -124,6 +128,14 @@ class _LogSender(threading.Thread):
             except queue.Empty:
                 break
 
+    def _monitor(self, log: str) -> Optional[TaskAlert]:
+        """monitor logs for defined actions
+        - pull in defined patterns and actions at startup for this task
+        - check logs against those
+        - assmble and post alerts
+        """
+        pass
+
     def run(self) -> None:
         while True:
             deadline = time.time() + SHIPPER_FLUSH_INTERVAL
@@ -132,6 +144,7 @@ class _LogSender(threading.Thread):
                     self.ship()
                     return
 
+                self._monitor(m)
                 self._logs.append(m)
                 if len(self._logs) >= LOG_BATCH_MAX_SIZE:
                     self.ship()
