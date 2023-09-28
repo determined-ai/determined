@@ -230,7 +230,7 @@ data:
       {{- end }}
     {{- end}}
     {- if .Values.defaultPassword }}
-      default_password: {{ .Values.defaultPassword | quote }}
+      admin_determined_initial_password: {{ .Values.defaultPassword | quote }}
     {{- end }}
 
   {{- if .Values.logging }}
