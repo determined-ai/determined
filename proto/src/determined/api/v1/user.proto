@@ -43,6 +43,8 @@ message GetUsersRequest {
   optional bool active = 6;
   // Filter by roles.
   optional bool admin = 7;
+  // Filter by roles id assigned directly to user for EE.
+  repeated int32 role_id_assigned_directly_to_user = 8;
 }
 // Response to GetUsersRequest.
 message GetUsersResponse {
