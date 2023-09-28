@@ -1,6 +1,7 @@
 from argparse import ONE_OR_MORE, ArgumentError, FileType, Namespace
 from functools import partial
 from pathlib import Path
+from typing import cast
 
 from termcolor import colored
 
@@ -8,7 +9,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
-from determined.common.check import check_eq
+from determined.common.check import check_none
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
@@ -62,18 +63,22 @@ def start_tensorboard(args: Namespace) -> None:
 
 @authentication.required
 def open_tensorboard(args: Namespace) -> None:
-    tensorboard_id = command.expand_uuid_prefixes(args)
-    resp = api.get(args.master, "api/v1/tensorboards/{}".format(tensorboard_id)).json()[
-        "tensorboard"
-    ]
-    check_eq(resp["state"], "STATE_RUNNING", "TensorBoard must be in a running state")
+    tensorboard_id = cast(str, command.expand_uuid_prefixes(args))
+
+    sess = cli.setup_session(args)
+    task = bindings.get_GetTask(sess, taskId=tensorboard_id).task
+    check_none(task.endTime, "Tensorboard has ended")
+
+    tsb = bindings.get_GetTensorboard(sess, tensorboardId=tensorboard_id).tensorboard
+    assert tsb.serviceAddress is not None, "missing tensorboard serviceAddress"
+
     api.browser_open(
         args.master,
         request.make_interactive_task_url(
-            task_id=resp["id"],
-            service_address=resp["serviceAddress"],
-            resource_pool=resp["resourcePool"],
-            description=resp["description"],
+            task_id=tsb.id,
+            service_address=tsb.serviceAddress,
+            description=tsb.description,
+            resource_pool=tsb.resourcePool,
             task_type="tensorboard",
             currentSlotsExceeded=False,
         ),
