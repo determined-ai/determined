@@ -1,5 +1,5 @@
 import { useObservable } from 'micro-observables';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
@@ -26,6 +26,10 @@ const ResourcePoolBindings = ({ pool }: Props): JSX.Element => {
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
+
+  useEffect(() => {
+    return clusterStore.fetchResourcePoolBindings(pool.name);
+  }, [pool.name]);
 
   const tableColumns: ColumnDef<Workspace>[] = useMemo(() => {
     return [
