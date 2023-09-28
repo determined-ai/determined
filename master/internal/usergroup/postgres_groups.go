@@ -108,7 +108,8 @@ func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) error {
 	var count int
 	err := idb.NewSelect().Model(&count).
 		ColumnExpr("COUNT(*)").
-		Where("owner_id != 0").
+		Where("user_id != 0").
+		Where("user_id IS NOT NULL").
 		Where("id IN (?)", bun.In(groups)).
 		Scan(ctx)
 	if len(groups) != count {

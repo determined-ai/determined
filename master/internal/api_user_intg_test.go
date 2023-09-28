@@ -326,7 +326,7 @@ func TestPatchUsers(t *testing.T) {
 	resp2, err := api.GetUser(ctx, &apiv1.GetUserRequest{
 		UserId: int32(userID),
 	})
-	require.Error(t, err)
+	require.NoError(t, err)
 	require.Equal(t, resp2.User.Active, true)
 }
 
