@@ -86,6 +86,7 @@ func (u FullUser) ToUser() User {
 	}
 }
 
+// SetDefaultPassword initializes default password.
 func (user User) SetDefaultPassword(password string) error {
 	passwordHash, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
@@ -107,12 +108,11 @@ func (user User) ValidatePassword(password string) bool {
 		// supplied password must be empty
 		if !DefaultPassword.Valid {
 			return password == ""
-		} else {
-			err := bcrypt.CompareHashAndPassword(
-				[]byte(DefaultPassword.ValueOrZero()),
-				[]byte(password))
-			return err == nil
 		}
+		err := bcrypt.CompareHashAndPassword(
+			[]byte(DefaultPassword.ValueOrZero()),
+			[]byte(password))
+		return err == nil
 	}
 
 	err := bcrypt.CompareHashAndPassword(
