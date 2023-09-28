@@ -82,10 +82,3 @@ func (s *RBACAPIServerWrapper) AssignWorkspaceAdminToUserTx(
 ) error {
 	return rbacAPIServer.AssignWorkspaceAdminToUserTx(ctx, idb, workspaceID, userID)
 }
-
-// GetUsersEE is a wrapper the same function the RBACAPIServer interface.
-func (s *RBACAPIServerWrapper) GetUsersEE(
-	ctx context.Context, req *apiv1.GetUsersEERequest,
-) (*apiv1.GetUsersEEResponse, error) {
-	return rbacAPIServer.GetUsersEE(ctx, req)
-}

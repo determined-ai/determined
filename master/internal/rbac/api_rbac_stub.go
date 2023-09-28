@@ -79,9 +79,3 @@ func (s *rbacAPIServerStub) AssignWorkspaceAdminToUserTx(
 ) error {
 	return nil
 }
-
-func (s *rbacAPIServerStub) GetUsersEE(
-	ctx context.Context, req *apiv1.GetUsersEERequest,
-) (*apiv1.GetUsersEEResponse, error) {
-	return nil, UnimplementedError
-}

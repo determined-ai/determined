@@ -5981,57 +5981,6 @@ class v1GetUserSettingResponse(Printable):
         }
         return out
 
-class v1GetUsersEERequestSortBy(DetEnum):
-    """Sort users by the given field.
-    - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
-    - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.
-    - SORT_BY_USER_NAME: Returns users sorted by user name.
-    - SORT_BY_ACTIVE: Returns users sorted by if they are admin.
-    - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
-    - SORT_BY_NAME: Returns users sorted by username unless display name exist.
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
-    USER_NAME = "SORT_BY_USER_NAME"
-    ACTIVE = "SORT_BY_ACTIVE"
-    MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
-    NAME = "SORT_BY_NAME"
-
-class v1GetUsersEEResponse(Printable):
-    """Response to GetUsersEERequest."""
-    pagination: "typing.Optional[v1Pagination]" = None
-    users: "typing.Optional[typing.Sequence[v1User]]" = None
-
-    def __init__(
-        self,
-        *,
-        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-        users: "typing.Union[typing.Sequence[v1User], None, Unset]" = _unset,
-    ):
-        if not isinstance(pagination, Unset):
-            self.pagination = pagination
-        if not isinstance(users, Unset):
-            self.users = users
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetUsersEEResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "pagination" in obj:
-            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        if "users" in obj:
-            kwargs["users"] = [v1User.from_json(x) for x in obj["users"]] if obj["users"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "pagination" in vars(self):
-            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        if not omit_unset or "users" in vars(self):
-            out["users"] = None if self.users is None else [x.to_json(omit_unset) for x in self.users]
-        return out
-
 class v1GetUsersRequestSortBy(DetEnum):
     """Sort users by the given field.
     - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
@@ -18167,62 +18116,6 @@ denote number of projects to skip from the end before returning results.
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
 
-def get_GetUsersEE(
-    session: "api.Session",
-    *,
-    active: "typing.Optional[bool]" = None,
-    limit: "typing.Optional[int]" = None,
-    name: "typing.Optional[str]" = None,
-    offset: "typing.Optional[int]" = None,
-    orderBy: "typing.Optional[v1OrderBy]" = None,
-    roleIdAssignedDirectlyToUser: "typing.Optional[typing.Sequence[int]]" = None,
-    sortBy: "typing.Optional[v1GetUsersEERequestSortBy]" = None,
-) -> "v1GetUsersEEResponse":
-    """Get a list of users for ee.
-
-    - active: Filter by status.
-    - limit: Limit the number of projects. A value of 0 denotes no limit.
-    - name: Filter by username or display name.
-    - offset: Skip the number of projects before returning results. Negative values
-denote number of projects to skip from the end before returning results.
-    - orderBy: Order users in either ascending or descending order.
-
- - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
- - ORDER_BY_ASC: Returns records in ascending order.
- - ORDER_BY_DESC: Returns records in descending order.
-    - roleIdAssignedDirectlyToUser: Filter by roles.
-    - sortBy: Sort users by the given field.
-
- - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
- - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.
- - SORT_BY_USER_NAME: Returns users sorted by user name.
- - SORT_BY_ACTIVE: Returns users sorted by if they are admin.
- - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
- - SORT_BY_NAME: Returns users sorted by username unless display name exist.
-    """
-    _params = {
-        "active": str(active).lower() if active is not None else None,
-        "limit": limit,
-        "name": name,
-        "offset": offset,
-        "orderBy": orderBy.value if orderBy is not None else None,
-        "roleIdAssignedDirectlyToUser": roleIdAssignedDirectlyToUser,
-        "sortBy": sortBy.value if sortBy is not None else None,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/users/ee",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetUsersEEResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetUsersEE", _resp)
-
 def get_GetValidationMetrics(
     session: "api.Session",
     *,
@@ -21022,7 +20915,6 @@ Paginated = typing.Union[
     v1GetTensorboardsResponse,
     v1GetTrialCheckpointsResponse,
     v1GetTrialWorkloadsResponse,
-    v1GetUsersEEResponse,
     v1GetUsersResponse,
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
