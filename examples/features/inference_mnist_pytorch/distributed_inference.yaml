@@ -14,7 +14,7 @@ hyperparameters:
   # Change this to your model name.
   model_name: mnist_models
   # Change this to point to each of the model versions you would like to run
-  # inference over.
+  # inference over. If your version is "v1", simply put "1"
   model_version:
     type: categorical
     vals:

@@ -10,8 +10,11 @@ saved ``ModelVersion``.
 ## Prerequisites
 
 You will need to generate a ``Model`` with a set of ``ModelVersion`` for the MNIST dataset ahead of time
-to run this. This can be done by running the example ``determined/examples/tutorials/mnist_pytorch`` and saving
-the ``Checkpoint`` to a ``Model``. 
+to run this. 
+
+1. Create a new ``Model`` through the frontend UI or SDK.
+2. Run the example ``determined/examples/tutorials/mnist_pytorch`` and save the ``Checkpoint`` to the ``Model`` from (1) as a ``ModelVersion``. 
+3. Edit the ``distributed_inference.yaml`` to point to your ``Model`` from (1) and associated ``ModelVersion`` from (2).
 
 More information: [Model Registry Documentation](https://docs.determined.ai/latest/model-dev-guide/model-management/model-registry-org.html)
 
