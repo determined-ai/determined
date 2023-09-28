@@ -17,14 +17,11 @@ type Props<T> = XOR<
   {
     children?: React.ReactNode;
     conditionalRender?: boolean;
-    data?: never;
     spinning?: boolean;
   },
   {
     children: (data: T) => JSX.Element;
-    conditionalRender?: never;
     data: Loadable<T>;
-    spinning?: never;
   }
 > &
   PropsBase;
