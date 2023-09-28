@@ -129,7 +129,7 @@ def list_workspace_projects(args: Namespace) -> None:
     projects = all_projects[offset : offset + limit]
 
     if args.json:
-        determined.cli.render.print_json([p._to_json() for p in projects])
+        determined.cli.render.print_json([render.project_to_json(p) for p in projects])
     else:
         values = [
             [

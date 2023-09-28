@@ -383,17 +383,6 @@ class Model:
         """
         bindings.delete_DeleteModel(self._session, modelName=self.name)
 
-    def to_json(self) -> Dict[str, Any]:
-        return {
-            "name": self.name,
-            "id": self.model_id,
-            "description": self.description,
-            "creation_time": self.creation_time,
-            "last_updated_time": self.last_updated_time,
-            "metadata": self.metadata,
-            "archived": self.archived,
-        }
-
     def __repr__(self) -> str:
         return "Model(id={}, name={}, metadata={})".format(
             self.model_id, self.name, json.dumps(self.metadata)
