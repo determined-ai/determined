@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
@@ -8,7 +9,6 @@ import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
 
 import TrialChart from './TrialChart';

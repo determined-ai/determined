@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 
-import type { Serie } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import useUI from 'components/kit/Theme';
 import { terminalRunStates } from 'constants/states';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { RunState } from 'types';
+import { RunState, Serie, XAxisDomain } from 'types';
 
 import { MetricsAggregateInterface, MetricType, ProfilerMetricsResponse } from './types';
 

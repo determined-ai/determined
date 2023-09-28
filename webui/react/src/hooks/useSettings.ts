@@ -5,11 +5,11 @@ import { useObservable } from 'micro-observables';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { Loadable } from 'components/kit/utils/loadable';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { Primitive } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useValueMemoizedObservable } from 'utils/observable';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
@@ -40,6 +40,17 @@ export type UseSettingsReturn<T> = {
 
 const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   const retVal = new URLSearchParams();
+  const qParams = new URLSearchParams(window.location.search);
+
+  if (qParams.toString().length !== 0) {
+    for (const param of qParams.keys()) {
+      if (settings[param] === undefined) {
+        // passing all non-setting param into the retval
+        retVal.append(param, qParams.get(param) as string);
+      }
+    }
+  }
+
   (Object.values(config.settings) as SettingsConfigProp<T>[]).forEach((setting) => {
     const value = settings[setting.storageKey];
     const isDefault = _.isEqual(setting.defaultValue, value);

@@ -8,6 +8,7 @@ import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import { Loaded } from 'components/kit/utils/loadable';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -21,7 +22,6 @@ import handleError, {
   isError,
 } from 'utils/error';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/experiment';
-import { Loaded } from 'utils/loadable';
 import { routeToReactUrl } from 'utils/routes';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';

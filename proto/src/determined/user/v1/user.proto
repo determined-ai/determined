@@ -28,6 +28,8 @@ message User {
   // Bool denoting whether the user should be able to login with or change a
   // password.
   bool remote = 8;
+  // when the user last authenticated
+  optional google.protobuf.Timestamp last_login = 9;
 }
 
 // Request to edit fields for a user.

@@ -29,11 +29,26 @@ func StartSession(ctx context.Context, user *model.User) (string, error) {
 		Expiry: time.Now().Add(SessionDuration),
 	}
 
-	_, err := db.Bun().NewInsert().
-		Model(userSession).
-		Column("user_id", "expiry").
-		Returning("id").
-		Exec(ctx, &userSession.ID)
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := db.Bun().NewInsert().
+			Model(userSession).
+			Column("user_id", "expiry").
+			Returning("id").
+			Exec(ctx, &userSession.ID)
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Bun().NewUpdate().
+			Table("users").
+			SetColumn("last_login", "NOW()").
+			Where("id = (?)", user.ID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return "", err
 	}
@@ -260,7 +275,7 @@ func ResetUserSetting(ctx context.Context, userID model.UserID) error {
 // List returns all of the users in the database.
 func List(ctx context.Context) (values []model.FullUser, err error) {
 	err = db.Bun().NewSelect().TableExpr("users AS u").
-		Column("u.id", "u.display_name", "u.username", "u.admin", "u.active", "u.modified_at").
+		Column("u.id", "u.display_name", "u.username", "u.admin", "u.active", "u.modified_at", "u.last_login").
 		ColumnExpr(`h.uid AS agent_uid, h.gid AS agent_gid, 
 		h.user_ AS agent_user, h.group_ AS agent_group`).
 		Join("LEFT OUTER JOIN agent_user_groups h ON u.id = h.user_id").
@@ -275,7 +290,7 @@ func ByID(ctx context.Context, userID model.UserID) (*model.FullUser, error) {
 		Column("u.id", "u.username",
 			"u.display_name", "u.admin",
 			"u.active", "u.remote",
-			"u.modified_at").
+			"u.modified_at", "u.last_login").
 		ColumnExpr(`h.uid AS agent_uid, h.gid AS agent_gid, 
 		h.user_ AS agent_user, h.group_ AS agent_group`).
 		Join("LEFT OUTER JOIN agent_user_groups h ON u.id = h.user_id").
@@ -297,7 +312,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 	var session model.UserSession
 
 	if ext.JwtKey != "" {
-		return UserByExternalToken(token, ext)
+		return ByExternalToken(token, ext)
 	}
 
 	v2 := paseto.NewV2()

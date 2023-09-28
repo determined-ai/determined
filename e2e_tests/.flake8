@@ -49,6 +49,7 @@ per-file-ignores =
   tests/filetree.py:I2041
   tests/fixtures/mnist_pytorch/layers.py:I2041
   tests/fixtures/mnist_pytorch/model_def.py:I2041
+  tests/fixtures/mnist_pytorch/failable_model_def.py:I2041
   tests/fixtures/mnist_pytorch/stop_requested_model_def.py:I2041
   tests/fixtures/trial_error/model_def.py:I2041
   tests/nightly/compute_stats.py:I2041

@@ -1,7 +1,7 @@
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, cast
 
 from termcolor import colored
 
@@ -9,7 +9,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
-from determined.common.check import check_eq
+from determined.common.check import check_none
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -67,17 +67,22 @@ def start_notebook(args: Namespace) -> None:
 
 @authentication.required
 def open_notebook(args: Namespace) -> None:
-    notebook_id = command.expand_uuid_prefixes(args)
-    resp = api.get(args.master, "api/v1/notebooks/{}".format(notebook_id)).json()["notebook"]
-    check_eq(resp["state"], "STATE_RUNNING", "Notebook must be in a running state")
+    notebook_id = cast(str, command.expand_uuid_prefixes(args))
+
+    sess = cli.setup_session(args)
+    task = bindings.get_GetTask(sess, taskId=notebook_id).task
+    check_none(task.endTime, "Notebook has ended")
+
+    nb = bindings.get_GetNotebook(sess, notebookId=notebook_id).notebook
+    assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
 
     api.browser_open(
         args.master,
         request.make_interactive_task_url(
-            task_id=resp["id"],
-            service_address=resp["serviceAddress"],
-            description=resp["description"],
-            resource_pool=resp["resourcePool"],
+            task_id=nb.id,
+            service_address=nb.serviceAddress,
+            description=nb.description,
+            resource_pool=nb.resourcePool,
             task_type="jupyter-lab",
             currentSlotsExceeded=False,
         ),

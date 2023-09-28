@@ -8,6 +8,7 @@ import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { copyToClipboard } from 'components/kit/internal/functions';
 import { useModal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
@@ -22,7 +23,6 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -214,7 +214,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           case Action.Copy:
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             await copyToClipboard((cell as any).displayData || cell?.copyData);
-            message.success('Value has been copied to clipboard.');
+            makeToast({
+              severity: 'Confirm',
+              title: 'Value has been copied to clipboard.',
+            });
             break;
         }
       } catch (e) {

@@ -4,9 +4,9 @@ import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Select from 'components/kit/Select';
+import { Loadable } from 'components/kit/utils/loadable';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
-import { Loadable } from 'utils/loadable';
 
 import css from './MultiSortMenu.module.scss';
 
@@ -152,7 +152,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
   <Select
     autoFocus
     dropdownMatchSelectWidth={300}
-    loading={Loadable.isLoading(columns)}
+    loading={Loadable.isNotLoaded(columns)}
     options={Loadable.getOrElse([], columns)
       .filter((c) => !BANNED_SORT_COLUMNS.has(c.column))
       .map((c) => ({

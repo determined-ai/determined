@@ -69,6 +69,11 @@ class TrainUnit:
         else:
             raise ValueError(f"unrecognized searcher unit {unit}")
 
+    def _to_searcher_unit(self) -> core.Unit:
+        if isinstance(self, Batch):
+            return core.Unit.BATCHES
+        return core.Unit.EPOCHS
+
     @staticmethod
     def _from_values(
         batches: Optional[int] = None,
@@ -218,8 +223,15 @@ class _PyTorchTrialController:
         if local_training:
             self.trial_id = 0
             assert self.max_length, "max_length must be specified for local-training mode."
+            self.searcher_unit = self.max_length._to_searcher_unit()
         else:
             self.trial_id = self.core_context.train._trial_id
+            configured_units = self.core_context.searcher.get_configured_units()
+            if configured_units is None:
+                raise ValueError(
+                    "Searcher units must be configured for training with PyTorchTrial."
+                )
+            self.searcher_unit = configured_units
 
         # Don't initialize the state here because it will be invalid until we load a checkpoint.
         self.state = None  # type: Optional[_TrialState]
@@ -235,7 +247,6 @@ class _PyTorchTrialController:
         self.smaller_is_better = smaller_is_better
         self.global_batch_size = global_batch_size
 
-        self.searcher_unit = self.core_context.searcher.get_configured_units()
         if self.searcher_unit == core.Unit.RECORDS:
             if self.global_batch_size is None:
                 raise ValueError("global_batch_size required for searcher unit RECORDS.")
@@ -739,9 +750,15 @@ class _PyTorchTrialController:
     def _train_for_op(
         self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
     ) -> None:
-        searcher_complete = op._completed
+        if self.local_training:
+            searcher_length = self.max_length
+        else:
+            searcher_length = TrainUnit._from_searcher_unit(
+                op.length, self.searcher_unit, self.global_batch_size
+            )
+        assert searcher_length
 
-        while not searcher_complete:
+        while self._steps_until_complete(searcher_length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
             )
@@ -754,15 +771,21 @@ class _PyTorchTrialController:
                     batch_metrics=metrics["batch_metrics"],
                 )
 
+            step_reported = False
+
             for train_boundary in train_boundaries:
                 if not train_boundary.limit_reached:
                     continue
 
                 # Train step limits reached, proceed accordingly.
                 if train_boundary.step_type == _TrainBoundaryType.TRAIN:
-                    if not op._completed and self.is_chief:
+                    if not op._completed and self.is_chief and not step_reported:
                         self._report_searcher_progress(op, self.searcher_unit)
-                    searcher_complete = train_boundary.limit_reached
+                        step_reported = True
+                elif train_boundary.step_type == _TrainBoundaryType.REPORT:
+                    if not op._completed and self.is_chief and not step_reported:
+                        self._report_searcher_progress(op, self.searcher_unit)
+                        step_reported = True
                 elif train_boundary.step_type == _TrainBoundaryType.VALIDATE:
                     if not self._validation_is_current():
                         self._validate(op)
@@ -786,7 +809,11 @@ class _PyTorchTrialController:
 
         # Test mode will break after one batch despite not completing op.
         if self.is_chief and not self.test_mode:
-            assert op._completed, "logic error; op was never completed."
+            # The only case where op isn't reported as completed is if we restarted but
+            # op.length was already trained for and validated on; in that case just raise
+            # ShouldExit; we have nothing to do.
+            if not op._completed:
+                raise ShouldExit(skip_exit_checkpoint=True)
 
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
         if self.searcher_metric_name not in val_metrics:

@@ -1,39 +1,27 @@
 import React, { Children, CSSProperties } from 'react';
 
 import Icon from 'components/kit/Icon';
-import { ConditionalWrapper } from 'components/kit/internal/ConditionalWrapper';
 import { isNumber } from 'components/kit/internal/functions';
 import Grid, { GridMode } from 'components/kit/internal/Grid';
-import Link from 'components/kit/internal/Link';
 
 import Button from './Button';
 import css from './Card.module.scss';
 import Dropdown, { MenuItem } from './Dropdown';
+import { AnyMouseEventHandler } from './internal/types';
 
-type CardPropsBase = {
+type CardProps = {
   actionMenu?: MenuItem[];
   children?: React.ReactNode;
   disabled?: boolean;
   size?: keyof typeof CardSize;
   onDropdown?: (key: string) => void;
+  onClick?: AnyMouseEventHandler;
 };
 
 const CardSize: Record<string, CSSProperties> = {
   medium: { minHeight: '110px', minWidth: '302px' },
   small: { minHeight: '64px', minWidth: '143px' },
 } as const;
-
-type CardProps = (
-  | {
-      href?: string;
-      onClick?: never;
-    }
-  | {
-      href?: never;
-      onClick?: () => void;
-    }
-) &
-  CardPropsBase;
 
 type Card = React.FC<CardProps> & {
   Group: React.FC<CardGroupProps>;
@@ -45,13 +33,12 @@ const Card: Card = ({
   actionMenu,
   children,
   disabled = false,
-  href,
   onClick,
   onDropdown,
   size = 'small',
 }: CardProps) => {
   const classnames = [css.cardBase];
-  if (href || onClick) classnames.push(css.clickable);
+  if (onClick) classnames.push(css.clickable);
   const sizeStyle = CardSize[size];
   switch (size) {
     case 'small':
@@ -65,42 +52,28 @@ const Card: Card = ({
   const actionsAvailable = actionMenu?.length !== undefined && actionMenu.length > 0;
 
   return (
-    <ConditionalWrapper
-      condition={!!href}
-      // This falseWrapper is so styles work consistently whether or not the card has a link.
-      falseWrapper={(children) => (
-        <div
-          className={classnames.join(' ')}
-          style={sizeStyle}
-          tabIndex={onClick ? 0 : -1}
-          onClick={onClick}>
-          {children}
+    <div
+      className={classnames.join(' ')}
+      style={sizeStyle}
+      tabIndex={onClick ? 0 : -1}
+      onClick={onClick}>
+      {children && <section className={css.content}>{children}</section>}
+      {actionsAvailable && (
+        <div className={css.action} onClick={stopPropagation}>
+          <Dropdown
+            disabled={disabled}
+            menu={actionMenu}
+            placement="bottomRight"
+            onClick={onDropdown}>
+            <Button
+              icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
+              type="text"
+              onClick={stopPropagation}
+            />
+          </Dropdown>
         </div>
       )}
-      wrapper={(children) => (
-        <Link className={classnames.join(' ')} path={href} style={sizeStyle}>
-          {children}
-        </Link>
-      )}>
-      <>
-        {children && <section className={css.content}>{children}</section>}
-        {actionsAvailable && (
-          <div className={css.action} onClick={stopPropagation}>
-            <Dropdown
-              disabled={disabled}
-              menu={actionMenu}
-              placement="bottomRight"
-              onClick={onDropdown}>
-              <Button
-                icon={<Icon name="overflow-horizontal" size="tiny" title="Action menu" />}
-                type="text"
-                onClick={stopPropagation}
-              />
-            </Dropdown>
-          </div>
-        )}
-      </>
-    </ConditionalWrapper>
+    </div>
   );
 };
 

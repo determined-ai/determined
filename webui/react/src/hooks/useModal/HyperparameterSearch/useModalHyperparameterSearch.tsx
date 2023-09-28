@@ -12,6 +12,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
@@ -31,7 +32,6 @@ import {
 } from 'types';
 import { flattenObject, isBoolean, unflattenObject } from 'utils/data';
 import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';

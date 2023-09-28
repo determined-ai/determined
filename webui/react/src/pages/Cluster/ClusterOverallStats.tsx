@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useMemo } from 'react';
 
 import Card from 'components/kit/Card';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
@@ -12,7 +13,6 @@ import determinedStore from 'stores/determinedInfo';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
 import { ResourceType } from 'types';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {

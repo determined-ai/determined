@@ -28,9 +28,10 @@ import {
 import { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import useUI, { getCssVar } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
-import { PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
+import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
@@ -43,7 +44,6 @@ import {
 } from 'types';
 import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 
@@ -85,10 +85,7 @@ export interface GlideTableProps {
   onIsOpenFilterChange?: (value: boolean) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
-  onSelectionChange?: (
-    selectionType: 'add' | 'add-all' | 'remove' | 'remove-all' | 'set',
-    range: [number, number],
-  ) => void;
+  onSelectionChange?: HandleSelectionChangeType;
   onSortableColumnChange?: (newColumns: string[]) => void;
   onSortChange?: (sorts: Sort[]) => void;
   page: number;

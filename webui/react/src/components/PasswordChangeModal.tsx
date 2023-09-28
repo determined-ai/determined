@@ -3,11 +3,11 @@ import React, { useId, useState } from 'react';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import { login, setUserPassword } from 'services/api';
 import userStore from 'stores/users';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const MODAL_HEADER_LABEL = 'Change Password';
@@ -63,11 +63,11 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
     try {
       const password = newPassword;
       await setUserPassword({ password, userId: currentUser?.id ?? 0 });
-      message.success(API_SUCCESS_MESSAGE);
+      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       form.resetFields();
       onSubmit?.();
     } catch (e) {
-      message.error(API_ERROR_MESSAGE);
+      makeToast({ severity: 'Error', title: API_ERROR_MESSAGE });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

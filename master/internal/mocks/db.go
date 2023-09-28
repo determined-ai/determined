@@ -348,20 +348,6 @@ func (_m *DB) DeleteSnapshotsForTerminalExperiments() error {
 	return r0
 }
 
-// DeleteTemplate provides a mock function with given fields: name
-func (_m *DB) DeleteTemplate(name string) error {
-	ret := _m.Called(name)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // DeleteTrialLogs provides a mock function with given fields: ids
 func (_m *DB) DeleteTrialLogs(ids []int) error {
 	ret := _m.Called(ids)
@@ -1166,30 +1152,6 @@ func (_m *DB) StartAllocationSession(allocationID model.AllocationID, owner *mod
 
 	if rf, ok := ret.Get(1).(func(model.AllocationID, *model.User) error); ok {
 		r1 = rf(allocationID, owner)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// TemplateByName provides a mock function with given fields: name
-func (_m *DB) TemplateByName(name string) (model.Template, error) {
-	ret := _m.Called(name)
-
-	var r0 model.Template
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (model.Template, error)); ok {
-		return rf(name)
-	}
-	if rf, ok := ret.Get(0).(func(string) model.Template); ok {
-		r0 = rf(name)
-	} else {
-		r0 = ret.Get(0).(model.Template)
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
 	} else {
 		r1 = ret.Error(1)
 	}

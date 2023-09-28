@@ -1,10 +1,10 @@
 import { Map } from 'immutable';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getExperiments } from 'services/api';
 import { V1Pagination } from 'services/api-ts-sdk';
 import { GetExperimentsParams } from 'services/types';
 import { ExperimentItem, ExperimentPagination } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 import { encodeParams } from 'utils/store';
 

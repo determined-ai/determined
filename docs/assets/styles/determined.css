@@ -51,6 +51,11 @@ html[data-theme="dark"] {
   margin-left: 8px;
 }
 
+.version-switcher__menu {
+  max-height: 230px;
+  overflow-y: scroll;
+}
+
 .bd-header-article {
   min-width: 488px;
   z-index: 200; /* sphinx-book-theme default is 1020, lower this enough to stay below algolia modal */
@@ -123,29 +128,14 @@ html[data-theme="dark"] {
   height: 24px;
   width: 24px;
 }
-.tile-container:nth-child(6n - 5) > .tile {
+.tile-container:nth-child(2n - 1) > .tile {
   background-color: #f2f2f3;
 }
 
-.tile-container:nth-child(6n - 4) > .tile {
+.tile-container:nth-child(2n) > .tile {
   background-color: #c8caca;
 }
 
-.tile-container:nth-child(6n - 3) > .tile {
-  background-color: #f2f2f3;
-}
-
-.tile-container:nth-child(6n - 2) > .tile {
-  background-color: #c8caca;
-}
-
-.tile-container:nth-child(6n - 1) > .tile {
-  background-color: #f2f2f3;
-}
-
-.tile-container:nth-child(6n) > .tile {
-  background-color: #c8caca;
-}
 .tile:hover {
   -webkit-transform: translate3d(0, -6px, 0);
   transform: translate3d(0, -6px, 0);

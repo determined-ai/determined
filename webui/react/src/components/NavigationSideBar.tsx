@@ -8,10 +8,12 @@ import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
+import { matchesShortcut, shortcutToString } from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
@@ -28,9 +30,7 @@ import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { matchesShortcut, shortcutToString } from 'utils/shortcut';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';

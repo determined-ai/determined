@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -29,12 +30,13 @@ const jsonPretty = "application/json+pretty"
 
 // NewGRPCServer creates a Determined gRPC service.
 func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus bool,
-	extConfig *model.ExternalSessions,
+	extConfig *model.ExternalSessions, logStore *logger.LogBuffer,
 ) *grpc.Server {
 	// In go-grpc, the INFO log level is used primarily for debugging
 	// purposes, so omit INFO messages from the master log.
 	logger := logrus.New()
 	logger.SetLevel(logrus.WarnLevel)
+	logger.AddHook(logStore)
 
 	logEntry := logrus.NewEntry(logger)
 	grpclogrus.ReplaceGrpcLogger(logEntry)
@@ -53,7 +55,7 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus boo
 		grpclogrus.UnaryServerInterceptor(logEntry, opts...),
 		grpcrecovery.UnaryServerInterceptor(grpcrecovery.WithRecoveryHandler(
 			func(p interface{}) (err error) {
-				logEntry.Error(string(debug.Stack()))
+				logEntry.Errorf(`caught panic in an API request "%s"\n%s`, p, string(debug.Stack()))
 				return status.Errorf(codes.Internal, "%s", p)
 			},
 		)),

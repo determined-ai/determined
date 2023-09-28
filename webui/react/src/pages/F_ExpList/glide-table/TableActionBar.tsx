@@ -11,7 +11,9 @@ import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
+import { makeToast } from 'components/kit/Toast';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -33,14 +35,12 @@ import {
   ProjectColumn,
   ProjectExperiment,
 } from 'types';
-import { notification } from 'utils/dialogApi';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
@@ -155,7 +155,10 @@ const TableActionBar: React.FC<Props> = ({
   }, [experiments, project]);
 
   const selectedExperiments = useMemo(
-    () => Array.from(selectedExperimentIds).map((id) => experimentMap[id]),
+    () =>
+      Array.from(selectedExperimentIds).flatMap((id) =>
+        id in experimentMap ? [experimentMap[id]] : [],
+      ),
     [experimentMap, selectedExperimentIds],
   );
 
@@ -229,8 +232,6 @@ const TableActionBar: React.FC<Props> = ({
     [onActionComplete, onActionSuccess],
   );
 
-  const closeNotification = useCallback(() => notification.destroy(), []);
-
   const submitBatchAction = useCallback(
     async (action: BatchAction) => {
       try {
@@ -243,39 +244,31 @@ const TableActionBar: React.FC<Props> = ({
         const numFailures = results.failed.length;
 
         if (numSuccesses === 0 && numFailures === 0) {
-          notification.open({
+          makeToast({
             description: `No selected experiments were eligible for ${action.toLowerCase()}`,
-            message: 'No eligible experiments',
+            title: 'No eligible experiments',
           });
         } else if (numFailures === 0) {
-          notification.open({
-            btn: null,
-            description: (
-              <div onClick={closeNotification}>
-                <p>
-                  {action} succeeded for {results.successful.length} experiments
-                </p>
-              </div>
-            ),
-            message: `${action} Success`,
+          makeToast({
+            closeable: true,
+            description: `${action} succeeded for ${results.successful.length} experiments`,
+            title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
-          notification.warning({
+          makeToast({
             description: `Unable to ${action.toLowerCase()} ${numFailures} experiments`,
-            message: `${action} Failure`,
+            severity: 'Warning',
+            title: `${action} Failure`,
           });
         } else {
-          notification.warning({
-            description: (
-              <div onClick={closeNotification}>
-                <p>
-                  {action} succeeded for {numSuccesses} out of {numFailures + numSuccesses} eligible
-                  experiments
-                </p>
-              </div>
-            ),
-            key: 'move-notification',
-            message: `Partial ${action} Failure`,
+          makeToast({
+            closeable: true,
+            description: `${action} succeeded for ${numSuccesses} out of ${
+              numFailures + numSuccesses
+            } eligible
+            experiments`,
+            severity: 'Warning',
+            title: `Partial ${action} Failure`,
           });
         }
       } catch (e) {
@@ -294,7 +287,7 @@ const TableActionBar: React.FC<Props> = ({
         onActionComplete?.();
       }
     },
-    [sendBatchActions, closeNotification, onActionComplete, onActionSuccess],
+    [sendBatchActions, onActionComplete, onActionSuccess],
   );
 
   const handleBatchAction = useCallback(

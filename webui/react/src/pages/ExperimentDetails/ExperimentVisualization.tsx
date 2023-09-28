@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import { terminalRunStates } from 'constants/states';
@@ -25,7 +26,6 @@ import {
   Scale,
   ValueOf,
 } from 'types';
-import { Loadable } from 'utils/loadable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import ExperimentVisualizationFilters, {

@@ -74,6 +74,12 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		}
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
+
+	var lastLogin *timestamppb.Timestamp
+	if user.LastLogin != nil {
+		lastLogin = timestamppb.New(*user.LastLogin)
+	}
+
 	return &userv1.User{
 		Id:             int32(user.ID),
 		Username:       user.Username,
@@ -83,6 +89,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
 		ModifiedAt:     timestamppb.New(user.ModifiedAt),
+		LastLogin:      lastLogin,
 	}
 }
 
@@ -125,13 +132,14 @@ func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
 	sortColMap := map[apiv1.GetUsersRequest_SortBy]string{
-		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:   "id",
-		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:  "display_name",
-		apiv1.GetUsersRequest_SORT_BY_USER_NAME:     "username",
-		apiv1.GetUsersRequest_SORT_BY_ADMIN:         "admin",
-		apiv1.GetUsersRequest_SORT_BY_ACTIVE:        "active",
-		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME: "modified_at",
-		apiv1.GetUsersRequest_SORT_BY_NAME:          "name",
+		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:     "id",
+		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:    "display_name",
+		apiv1.GetUsersRequest_SORT_BY_USER_NAME:       "username",
+		apiv1.GetUsersRequest_SORT_BY_ADMIN:           "admin",
+		apiv1.GetUsersRequest_SORT_BY_ACTIVE:          "active",
+		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME:   "modified_at",
+		apiv1.GetUsersRequest_SORT_BY_NAME:            "name",
+		apiv1.GetUsersRequest_SORT_BY_LAST_LOGIN_TIME: "last_login",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -139,32 +147,50 @@ func (a *apiServer) GetUsers(
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
 	}
 
-	orderExpr := ""
-	switch _, ok := sortColMap[req.SortBy]; {
-	case !ok:
-		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case sortColMap[req.SortBy] != "id":
-		orderExpr = fmt.Sprintf(
-			"%s %s, id %s",
-			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],
-		)
-	default:
-		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
-	}
 	users := []model.FullUser{}
-	nameFilterExpr := "%" + req.Name + "%"
-	selectExpr := `
-		SELECT
-			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at, u.remote,
-			h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group, 
-			COALESCE(u.display_name, u.username) AS name
-		FROM users u
-			LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
-		WHERE ((? = '') OR u.display_name ILIKE ? OR u.username ILIKE ?)
-	`
-	query := selectExpr + fmt.Sprintf(" ORDER BY %s", orderExpr)
-	err := db.Bun().NewRaw(query,
-		req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
+
+	query := db.Bun().NewSelect().Model(&users).
+		ModelTableExpr("users as u").
+		Join("LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)").
+		Column("u.id").
+		Column("u.display_name").
+		Column("u.username").
+		Column("u.admin").
+		Column("u.active").
+		Column("u.modified_at").
+		Column("u.remote").
+		Column("u.last_login").
+		ColumnExpr("h.uid AS agent_uid").
+		ColumnExpr("h.gid AS agent_gid").
+		ColumnExpr("h.user_ AS agent_user").
+		ColumnExpr("h.group_ AS agent_group").
+		ColumnExpr("COALESCE(u.display_name, u.username) AS name")
+
+	if req.Name != "" {
+		nameFilterExpr := "%" + req.Name + "%"
+		query.Where("u.display_name ILIKE ? OR u.username ILIKE ?", nameFilterExpr, nameFilterExpr)
+	}
+	if req.Admin != nil {
+		query.Where("u.admin = ?", *req.Admin)
+	}
+	if req.Active != nil {
+		query.Where("u.active = ?", *req.Active)
+	}
+
+	orderBy, ok := orderByMap[req.OrderBy]
+	if !ok {
+		return nil, fmt.Errorf("unsupported order by %s", req.OrderBy)
+	}
+	sortColumn, ok := sortColMap[req.SortBy]
+	if !ok {
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	}
+	query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
+	if sortColumn != "id" {
+		query.OrderExpr("id asc")
+	}
+
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +208,7 @@ func (a *apiServer) GetUsers(
 		resp.Users = append(resp.Users, toProtoUserFromFullUser(user))
 	}
 
-	return resp, a.paginate(&resp.Pagination, &resp.Users, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Users, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetUser(

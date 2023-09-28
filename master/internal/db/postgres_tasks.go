@@ -90,6 +90,16 @@ WHERE task_id = $1
 	return &t, nil
 }
 
+// NonExperimentTasksContextDirectory returns a non experiment's context directory.
+func NonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID) ([]byte, error) {
+	res := &model.TaskContextDirectory{}
+	if err := Bun().NewSelect().Model(res).Where("task_id = ?", tID).Scan(ctx, res); err != nil {
+		return nil, fmt.Errorf("querying task ID %s context directory files: %w", tID, err)
+	}
+
+	return res.ContextDirectory, nil
+}
+
 // CompleteTask persists the completion of a task.
 func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)
@@ -421,9 +431,21 @@ func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
 
 // RecordTaskEndStatsBun record end stats for tasks with bun.
 func RecordTaskEndStatsBun(stats *model.TaskStats) error {
-	_, err := Bun().NewUpdate().Model(stats).Column("end_time").Where(
-		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
-	).Exec(context.TODO())
+	_, err := Bun().NewRaw(`UPDATE task_stats AS t
+		SET end_time = ?
+		FROM (
+			SELECT allocation_id, event_type, end_time
+			FROM task_stats
+			Where allocation_id = ? AND event_type = ? AND end_time IS NULL
+			ORDER BY start_time
+			FOR UPDATE
+		) AS t2
+		WHERE t.allocation_id = t2.allocation_id AND t.event_type = t2.event_type AND t.end_time IS NULL`,
+		stats.EndTime,
+		stats.AllocationID,
+		stats.EventType).
+		Exec(context.TODO())
+
 	return err
 }
 

@@ -236,7 +236,16 @@ def classify_definition(enums: dict, name: str, schema: dict):
     if "enum" in schema:
         if schema["type"] == "string":
             members = schema["enum"]
-            return Enum(name, members, schema["description"])
+            description = schema.get("description", "")
+            title = schema.get("title", "")
+            # title is always set to the enum's name if it's unused thus
+            # for augmenting description we assume it as empty if it's a single word.
+            title = title if " " in title else ""
+            if description and title:
+                description = title + "\n" + description
+            elif title:
+                description = title
+            return Enum(name, members, description or None)
         raise ValueError("unhandled enum type ({schema['type']}): {schema}")
 
     if schema["type"] == "object":

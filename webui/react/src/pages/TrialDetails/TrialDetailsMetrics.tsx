@@ -1,16 +1,22 @@
 import React, { useMemo, useState } from 'react';
 
-import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import { ChartGrid, ChartsProps } from 'components/kit/LineChart';
 import Spinner from 'components/kit/Spinner';
+import { Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
-import { CheckpointWorkloadExtended, ExperimentBase, Metric, TrialDetails } from 'types';
+import {
+  CheckpointWorkloadExtended,
+  ExperimentBase,
+  Metric,
+  Serie,
+  TrialDetails,
+  XAxisDomain,
+} from 'types';
 import handleError from 'utils/error';
-import { Loaded, NotLoaded } from 'utils/loadable';
 import { metricSorter, metricToKey } from 'utils/metric';
 
 import { useTrialMetrics } from './useTrialMetrics';

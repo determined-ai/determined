@@ -158,6 +158,21 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 "or us-gov-west-1."
             )
 
+    if args.deployment_type != constants.deployment_types.SIMPLE_RDS:
+        if args.db_instance_type != constants.defaults.DB_INSTANCE_TYPE:
+            raise ValueError(
+                f"--db-instance-size cannot be specified for deployment types other than "
+                f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+            )
+        if args.db_size != constants.defaults.DB_SIZE:
+            raise ValueError(
+                f"--db-size cannot be specified for deployment types other than "
+                f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+            )
+    else:
+        if args.db_size is not None and args.db_size < 20:
+            raise ValueError("--db-size must be greater than or equal to 20 GB")
+
     if args.deployment_type != constants.deployment_types.EFS:
         if args.efs_id is not None:
             raise ValueError("--efs-id can only be specified for 'efs' deployments")
@@ -198,6 +213,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.VERSION: args.det_version,
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
         constants.cloudformation.DB_PASSWORD: args.db_password,
+        constants.cloudformation.DB_INSTANCE_TYPE: args.db_instance_type,
+        constants.cloudformation.DB_SIZE: args.db_size,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
         constants.cloudformation.MAX_AUX_CONTAINERS_PER_AGENT: args.max_aux_containers_per_agent,
@@ -436,6 +453,18 @@ args_description = Cmd(
                     type=str,
                     default=constants.defaults.DB_PASSWORD,
                     help="password for master database",
+                ),
+                Arg(
+                    "--db-instance-type",
+                    type=str,
+                    default=constants.defaults.DB_INSTANCE_TYPE,
+                    help="instance type for master database (only for simple-rds)",
+                ),
+                Arg(
+                    "--db-size",
+                    type=int,
+                    default=constants.defaults.DB_SIZE,
+                    help="storage size in GB for master database (only for simple-rds)",
                 ),
                 Arg(
                     "--max-idle-agent-period",

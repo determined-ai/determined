@@ -1,6 +1,6 @@
 import { debug } from 'debug';
 
-import { ValueOf } from 'types';
+import { ValueOf } from 'components/kit/internal/types';
 
 const LIB_NAME = 'det';
 export const NAMEPACE_SEPARATOR = '/';

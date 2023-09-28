@@ -1,6 +1,7 @@
 import { Map } from 'immutable';
 import _ from 'lodash';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import {
   addResourcePoolBindings,
   deleteResourcePoolBindings,
@@ -12,7 +13,6 @@ import {
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { percent } from 'utils/number';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 

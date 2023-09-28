@@ -6,6 +6,7 @@ from typing_extensions import assert_never
 
 SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
 SWAGGER = os.path.join(os.path.dirname(__file__), "..", SWAGGER)
+TAB = "    "
 
 Code = str
 SwaggerType = typing.Union[swagger_parser.TypeAnno, swagger_parser.TypeDef]
@@ -150,6 +151,55 @@ def unwrap_streaming_response(anno: swagger_parser.TypeAnno):
     return anno.defn.params["result"].type
 
 
+def breakup_comment(comment: typing.Optional[str]) -> typing.List[str]:
+    if not comment:
+        return []
+    lines = list(filter(lambda x: bool(x), [line.strip() for line in comment.split("\n")]))
+    return lines
+
+
+def gen_function_docstring(func: swagger_parser.Function) -> typing.List[str]:
+    """generate docstring for generated functions with summarized parameter support"""
+    out = []
+    required = sorted((k, v) for k, v in func.params.items() if v.required)
+    optional = sorted((k, v) for k, v in func.params.items() if not v.required)
+    params_in_order = [
+        param for _, param in required + optional if param.title is not None and param.title.strip()
+    ]
+
+    if not params_in_order and not func.summary:
+        return out
+    out += ['"""']
+    summary_lines = breakup_comment(func.summary)
+    if summary_lines:
+        out[-1] += summary_lines[0]
+        out += summary_lines[1:]
+    if params_in_order:
+        out += [""]
+        for param in params_in_order:
+            out += [f"- {param.name}: {param.title}"]
+
+    if len(out) == 1:
+        out[-1] += '"""'
+    else:
+        out += ['"""']
+    return out
+
+
+def description_to_docstring(description: typing.Optional[str]) -> typing.List[str]:
+    out = []
+    lines = breakup_comment(description)
+    if not lines:
+        return []
+    elif len(lines) == 1:
+        out += [f'"""{lines[0]}"""']
+    else:
+        out += ['"""' + lines[0]]
+        out += lines[1:]
+        out += ['"""']
+    return out
+
+
 def gen_function(func: swagger_parser.Function) -> Code:
     # Function name.
     out = [f"def {func.operation_name_sc()}("]
@@ -180,6 +230,7 @@ def gen_function(func: swagger_parser.Function) -> Code:
         returntypestr = f'"{returntypestr}"'
 
     out += [f") -> {returntypestr}:"]
+    out += [TAB + line if line else "" for line in gen_function_docstring(func)]
 
     # Function body.
     has_path_params = any(p for p in func.params.values() if p.where == "path")
@@ -266,6 +317,8 @@ def gen_class(klass: swagger_parser.Class) -> Code:
     optional = sorted((k, v) for k, v in klass.params.items() if not v.required)
 
     out = [f"class {klass.name}(Printable):"]
+    if klass.description:
+        out += [TAB + line if line else "" for line in description_to_docstring(klass.description)]
     for k, v in optional:
         out += [f'    {k}: "typing.Optional[{annotation(v.type, prequoted=True)}]" = None']
     out += [""]
@@ -325,6 +378,8 @@ def gen_class(klass: swagger_parser.Class) -> Code:
 
 def gen_enum(enum: swagger_parser.Enum) -> Code:
     out = [f"class {enum.name}(DetEnum):"]
+    if enum.description:
+        out += [TAB + line if line else "" for line in description_to_docstring(enum.description)]
     prefix = os.path.commonprefix(enum.members)
     skip = len(prefix) if prefix.endswith("_") else 0
     out += [f'    {v[skip:]} = "{v}"' for v in enum.members]
@@ -480,10 +535,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--input", "-i", action="store", default=SWAGGER, help="input swagger file")
     parser.add_argument("--output", "-o", action="store", required=True, help="output file")
     args = parser.parse_args()
 
-    swagger = swagger_parser.parse(SWAGGER)
+    swagger = swagger_parser.parse(args.input)
     bindings = pybindings(swagger)
     with open(args.output, "w") as f:
         print(bindings, file=f)

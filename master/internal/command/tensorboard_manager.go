@@ -12,7 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
@@ -53,13 +52,13 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	case *apiv1.DeleteWorkspaceRequest:
 		ctx.TellAll(msg, ctx.Children()...)
 
-	case tasks.GenericCommandSpec:
+	case *CreateGeneric:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
-		msg.CommandID = string(taskID)
+		msg.Spec.CommandID = string(taskID)
 		if err := createGenericCommandActor(
 			ctx, t.db, t.rm, taskID, model.TaskTypeTensorboard, jobID,
-			model.JobTypeTensorboard, msg,
+			model.JobTypeTensorboard, msg.Spec, msg.ContextDirectory,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch tensorboard")
 			ctx.Respond(err)

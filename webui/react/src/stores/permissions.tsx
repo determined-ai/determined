@@ -1,9 +1,9 @@
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getPermissionsSummary } from 'services/api';
 import { UserAssignment, UserRole } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import PollingStore from './polling';
 

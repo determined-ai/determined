@@ -4,9 +4,9 @@ import React, { useMemo } from 'react';
 
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import { Loaded } from 'components/kit/utils/loadable';
 import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
-import { Loaded } from 'utils/loadable';
 
 import css from './Markdown.module.scss';
 

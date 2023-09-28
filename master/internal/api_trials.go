@@ -468,7 +468,7 @@ func (a *apiServer) GetTrialCheckpoints(
 			errors.Wrapf(err, "error fetching checkpoints for trial %d from database", req.Id)
 	}
 
-	a.filter(&resp.Checkpoints, func(i int) bool {
+	api.Where(&resp.Checkpoints, func(i int) bool {
 		v := resp.Checkpoints[i]
 
 		found := false
@@ -508,7 +508,7 @@ func (a *apiServer) GetTrialCheckpoints(
 		}
 	})
 
-	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+	return resp, api.Paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
 func (a *apiServer) KillTrial(

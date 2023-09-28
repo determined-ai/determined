@@ -297,7 +297,6 @@ additional hyperparameter settings:
        maxval: .8
 
 Hyperparameter searches involve multiple trials or model variations per experiment. The
-configuration settings tell the search algorithm the ranges to explore for each hyperparameter.
 
 The ``adaptive_asha`` search method and maximum number of trials, max_trials` are also specified:
 
@@ -343,14 +342,17 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 For installation guides including how to :ref:`quickly install Determined locally <basic>`, visit
 :ref:`installation-guide`.
 
+The :ref:`api-core-ug` walks you through adapting your existing model code to Determined and uses
+the PyTorch MNIST model.
+
 The :ref:`example-solutions` contain machine learning models that have been converted to the
 Determined APIs. Each example includes a model definition and one or more experiment configuration
 files, and instructions on how to run the example.
 
-To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
-</model-dev-guide/hyperparameter/overview>` section.
+To learn more about the hyperparameter search algorithm, visit :ref:`hyperparameter-tuning`.
 
-For faster, less structured ways to run a Determined cluster without writing a model, see:
+For faster, less structured ways to run a Determined cluster without writing a model, consult the
+following resources:
 
 -  :ref:`commands-and-shells`
 -  :ref:`notebooks`

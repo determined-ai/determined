@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import Message from 'components/Message';
 import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
@@ -21,7 +22,6 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { User, ValueOf } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import ResourcePoolsBound from './WorkspaceDetails/ResourcePoolsBound';
@@ -254,7 +254,7 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  if (Loadable.isLoading(loadableWorkspace) || Loadable.isLoading(loadableUsers)) {
+  if (Loadable.isNotLoaded(loadableWorkspace) || Loadable.isNotLoaded(loadableUsers)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;

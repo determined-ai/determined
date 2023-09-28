@@ -6,6 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import { paths } from 'routes/utils';
@@ -13,7 +14,6 @@ import { getWorkspaceProjects } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 

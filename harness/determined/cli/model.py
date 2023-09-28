@@ -86,12 +86,7 @@ def list_models(args: Namespace) -> None:
 
 
 def model_by_name(args: Namespace) -> Model:
-    models = Determined(args.master, args.user).get_models(name=args.name)
-    if len(models) == 0:
-        raise Exception("No model was found with the given name.")
-    if len(models) > 1:
-        raise Exception("Multiple models were found with the given name.")
-    return models[0]
+    return Determined(args.master, args.user).get_model(identifier=args.name)
 
 
 @authentication.required

@@ -297,6 +297,31 @@ def submit_experiment(args: Namespace) -> None:
                 _follow_experiment_logs(sess, resp.experiment.id)
 
 
+@authentication.required
+def continue_experiment(args: Namespace) -> None:
+    if args.config_file:
+        config_text = args.config_file.read()
+        args.config_file.close()
+        experiment_config = _parse_config_text_or_exit(
+            config_text, args.config_file.name, args.config
+        )
+    else:
+        experiment_config = parse_config_overrides({}, args.config)
+
+    config_text = yaml.dump(experiment_config)
+
+    sess = cli.setup_session(args)
+    req = bindings.v1ContinueExperimentRequest(
+        id=args.experiment_id,
+        overrideConfig=config_text,
+    )
+    bindings.post_ContinueExperiment(sess, body=req)
+    print(f"Continued experiment {args.experiment_id}")
+
+    if args.follow_first_trial:
+        _follow_experiment_logs(sess, args.experiment_id)
+
+
 def local_experiment(args: Namespace) -> None:
     if not args.test_mode:
         raise NotImplementedError(
@@ -1091,7 +1116,8 @@ main_cmd = Cmd(
                     "--local",
                     action="store_true",
                     help="Create the experiment in local mode instead of submitting it to the "
-                    "cluster. For more information, see documentation on det.experimental.create()",
+                    "cluster. Requires --test. For more information, visit How to Debug Models "
+                    "(https://docs.determined.ai/latest/model-dev-guide/debug-models.html).",
                 ),
                 Arg(
                     "--template",
@@ -1127,6 +1153,23 @@ main_cmd = Cmd(
                     default=[],
                     type=str,
                     help="publish task ports to the host",
+                ),
+            ],
+        ),
+        # Continue experiment command.
+        Cmd(
+            "continue",
+            continue_experiment,
+            "resume or recover training for a single-searcher experiment",
+            [
+                experiment_id_arg("experiment ID to continue"),
+                Arg("--config-file", type=FileType("r"), help="experiment config file (.yaml)"),
+                Arg("--config", action="append", default=[], help=CONFIG_DESC),
+                Arg(
+                    "-f",
+                    "--follow-first-trial",
+                    action="store_true",
+                    help="follow logs of the trial that is being continued",
                 ),
             ],
         ),

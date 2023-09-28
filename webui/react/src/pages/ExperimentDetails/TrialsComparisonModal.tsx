@@ -8,6 +8,7 @@ import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Message from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -19,7 +20,6 @@ import { getTrialDetails } from 'services/api';
 import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails } from 'types';
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialsComparisonModal.module.scss';

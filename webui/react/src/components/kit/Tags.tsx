@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Input, { InputRef } from 'components/kit/Input';
 import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/internal/functions';
-import Link from 'components/kit/internal/Link';
 import { ValueOf } from 'components/kit/internal/types';
 import Tooltip from 'components/kit/Tooltip';
 
@@ -118,9 +117,9 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
           if (compact && !showMore && index >= COMPACT_MAX_THRESHOLD) {
             if (index > COMPACT_MAX_THRESHOLD) return null;
             return (
-              <Link className={css.showMore} key="more" onClick={() => setShowMore(true)}>
+              <a className={css.showMore} key="more" onClick={() => setShowMore(true)}>
                 +{tags.length - COMPACT_MAX_THRESHOLD} more
-              </Link>
+              </a>
             );
           }
           if (editInputIndex === index) {

@@ -12,18 +12,19 @@ import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import useUI, { DarkLight, ShirtSize } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
+import { Loadable } from 'components/kit/utils/loadable';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
 import { isDeviceType, JsonObject, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
 
 import { ConditionalWrapper } from './ConditionalWrapper';
@@ -163,8 +164,8 @@ const ResourcePoolCard: React.FC<Props> = ({
     <>
       <Card
         actionMenu={actionMenu}
-        href={paths.resourcePool(pool.name)}
         size="medium"
+        onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(pool.name) })}
         onDropdown={onDropdown}>
         <div className={css.base}>
           <div className={css.header}>

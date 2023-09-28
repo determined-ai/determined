@@ -500,7 +500,7 @@ export const patchModel = generateDetApi<
 export const getModelDetails = generateDetApi<
   Service.GetModelDetailsParams,
   Api.V1GetModelVersionsResponse,
-  Type.ModelVersions | undefined
+  Type.ModelWithVersions | undefined
 >(Config.getModelDetails);
 
 export const getModelVersion = generateDetApi<

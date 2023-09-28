@@ -20,7 +20,6 @@ import {
   formatDatetime,
   numericSorter,
 } from 'components/kit/internal/functions';
-import Link from 'components/kit/internal/Link';
 import Section from 'components/kit/internal/Section';
 import { readLogStream } from 'components/kit/internal/services';
 import {
@@ -144,13 +143,14 @@ const LogViewer: React.FC<Props> = ({
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const { refObject: logsRef, refCallback, size: containerSize } = useResize();
   const { size: pageSize } = useResize();
-  const charMeasures = useGetCharMeasureInContainer(logsRef);
+  const charMeasures = useGetCharMeasureInContainer(logsRef, containerSize);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
-    const maxCharPerLine = Math.floor(
-      (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
-    );
+    const maxCharPerLine =
+      Math.floor(
+        (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
+      ) - 2;
     return { dateTimeWidth, maxCharPerLine };
   }, [charMeasures.width, containerSize.width]);
 
@@ -530,9 +530,9 @@ const LogViewer: React.FC<Props> = ({
           onClick={handleFullScreen}
         />
         {handleCloseLogs && (
-          <Link onClick={handleCloseLogs}>
+          <a onClick={handleCloseLogs}>
             <Icon name="close" title="Close Logs" />
-          </Link>
+          </a>
         )}
         {onDownload && (
           <Button

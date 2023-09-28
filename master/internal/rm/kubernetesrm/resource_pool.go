@@ -31,7 +31,8 @@ const resourcePoolEnvVar = "DET_K8S_RESOURCE_POOL"
 type getResourceSummary struct{}
 
 type kubernetesResourcePool struct {
-	config     *config.KubernetesResourceManagerConfig
+	maxSlotsPerPod int
+
 	poolConfig *config.ResourcePoolConfig
 
 	reqList                   *tasklist.TaskList
@@ -53,12 +54,12 @@ type kubernetesResourcePool struct {
 }
 
 func newResourcePool(
-	rmConfig *config.KubernetesResourceManagerConfig,
+	maxSlotsPerPod int,
 	poolConfig *config.ResourcePoolConfig,
 	podsActor *actor.Ref,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
-		config:                    rmConfig,
+		maxSlotsPerPod:            maxSlotsPerPod,
 		poolConfig:                poolConfig,
 		reqList:                   tasklist.New(),
 		groups:                    map[*actor.Ref]*tasklist.Group{},
@@ -147,7 +148,7 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, ActionCoolDown, SchedulerTick{})
 
 	case sproto.ValidateCommandResourcesRequest:
-		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
+		fulfillable := k.maxSlotsPerPod >= msg.Slots
 		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
 
 	default:
@@ -421,10 +422,10 @@ func (k *kubernetesResourcePool) correctJobQInfo(
 	jobIDToAllocatedSlots := map[model.JobID]int{}
 	for _, req := range reqs {
 		runningPods := k.allocationIDToRunningPods[req.AllocationID]
-		if req.SlotsNeeded <= k.config.MaxSlotsPerPod {
+		if req.SlotsNeeded <= k.maxSlotsPerPod {
 			jobIDToAllocatedSlots[req.JobID] += runningPods * req.SlotsNeeded
 		} else {
-			jobIDToAllocatedSlots[req.JobID] += runningPods * k.config.MaxSlotsPerPod
+			jobIDToAllocatedSlots[req.JobID] += runningPods * k.maxSlotsPerPod
 		}
 	}
 
@@ -457,25 +458,25 @@ func (k *kubernetesResourcePool) assignResources(
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
 	if req.SlotsNeeded > 1 {
-		if k.config.MaxSlotsPerPod == 0 {
+		if k.maxSlotsPerPod == 0 {
 			ctx.Log().WithField("allocation-id", req.AllocationID).Error(
 				"set max_slots_per_pod > 0 to schedule tasks with slots")
 			return
 		}
 
-		if req.SlotsNeeded <= k.config.MaxSlotsPerPod {
+		if req.SlotsNeeded <= k.maxSlotsPerPod {
 			numPods = 1
 			slotsPerPod = req.SlotsNeeded
 		} else {
-			if req.SlotsNeeded%k.config.MaxSlotsPerPod != 0 {
+			if req.SlotsNeeded%k.maxSlotsPerPod != 0 {
 				ctx.Log().WithField("allocation-id", req.AllocationID).Errorf(
 					"task number of slots (%d) is not schedulable on the configured "+
-						"max_slots_per_pod (%d)", req.SlotsNeeded, k.config.MaxSlotsPerPod)
+						"max_slots_per_pod (%d)", req.SlotsNeeded, k.maxSlotsPerPod)
 				return
 			}
 
-			numPods = req.SlotsNeeded / k.config.MaxSlotsPerPod
-			slotsPerPod = k.config.MaxSlotsPerPod
+			numPods = req.SlotsNeeded / k.maxSlotsPerPod
+			slotsPerPod = k.maxSlotsPerPod
 		}
 	}
 
@@ -601,6 +602,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 	}
 
 	ctx.Log().Infof("resources are released for %s", msg.AllocationID)
+
 	group := k.groups[req.Group]
 	if group != nil {
 		k.slotsUsedPerGroup[group] -= req.SlotsNeeded
@@ -616,6 +618,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 			break
 		}
 	}
+	rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 }
 
 func (k *kubernetesResourcePool) getOrCreateGroup(

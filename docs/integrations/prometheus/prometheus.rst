@@ -128,11 +128,16 @@ This example startup script includes the default setup docker commands provided 
    <https://github.com/determined-ai/works-with-determined#observability-tools>`__ configuration
    file.
 
-#. The Prometheus configuration file needs a manual change to replace the placeholder master
-   address.
+#. To replace the placeholder master address, you'll need to edit the Prometheus configuration file.
 
-   The ``metric_relabel_configs`` parameter edits certain label names in jobs for joining in PromQL.
-   - The ``scrape_interval`` parameter values can be modified to optimize for resolution/size/time.
+   -  The ``metric_relabel_configs`` parameter edits certain label names in jobs for joining in
+      PromQL.
+
+   -  The ``scrape_interval`` parameter values can be modified to optimize for resolution/size/time.
+
+   -  The ``$PATH_TO_TOKEN`` specifies a path to an authorization token for the Determined master.
+      This can be kept in a local file by running the ``token-refresh.sh`` script in the same
+      directory with a CRON job (set to run daily).
 
 *******************
  Configure Grafana

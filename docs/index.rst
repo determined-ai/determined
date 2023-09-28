@@ -20,7 +20,7 @@
    :hidden:
 
    Installation Guide <setup-cluster/deploy-cluster/index>
-   Security <setup-cluster/security/overview>
+   Security <setup-cluster/security/index>
    User Accounts <setup-cluster/users>
    Workspaces and Projects <setup-cluster/workspaces>
    Logging and Elasticsearch <setup-cluster/elasticsearch-logging-backend>
@@ -35,20 +35,20 @@
 
    Overview <model-dev-guide/index>
    Distributed Training <model-dev-guide/dtrain/index>
-   Prepare Container Environment <model-dev-guide/prepare-container/overview>
+   Prepare Container Environment <model-dev-guide/prepare-container/index>
    Prepare Data <model-dev-guide/load-model-data>
    API Guides <model-dev-guide/api-guides/index>
-   Hyperparameter Tuning <model-dev-guide/hyperparameter/overview>
+   Hyperparameter Tuning <model-dev-guide/hyperparameter/index>
    Submit Experiment <model-dev-guide/submit-experiment>
    How to Debug Models <model-dev-guide/debug-models>
-   Model Management <model-dev-guide/model-management/overview>
-   Best Practices <model-dev-guide/best-practices/overview>
+   Model Management <model-dev-guide/model-management/index>
+   Best Practices <model-dev-guide/best-practices/index>
 
 .. toctree::
    :caption: Reference
    :hidden:
 
-   Overview <reference/overview>
+   Overview <reference/index>
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
    Training Reference <reference/training/index>
@@ -139,7 +139,7 @@ almost any deep learning model using Determined.
             </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="reference/overview.html">
+            <a class="tile" href="reference/index.html">
                <img class="tile-icon" src="_static/images/reference.png" alt="reference icon">
                <h2 class="tile-title">Reference</h2>
                <p class="tile-description">Explore API libraries and configuration settings.</p>

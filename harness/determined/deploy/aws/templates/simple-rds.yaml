@@ -93,12 +93,20 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.25.2-dev0
+    Default: 0.26.1-dev0
 
   DBPassword:
     Type: String
     Description: Password for database (eg. "postgres")
     NoEcho: true
+  
+  DBSize:
+    Type: Number
+    Description: Initial storage size for database in GB
+  
+  DBInstanceType:
+    Type: String
+    Description: Instance type for database (eg. "db.m7g.large")
 
   MaxAuxContainersPerAgent:
     Type: Number
@@ -453,7 +461,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
     Properties:
-      DBInstanceClass: db.m7g.large
+      DBInstanceClass: !Ref DBInstanceType
       Engine: postgres
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
@@ -462,7 +470,7 @@ Resources:
           Value: !Ref AWS::StackName
       VPCSecurityGroups:
         - !GetAtt DatabaseSecurityGroup.GroupId
-      AllocatedStorage: 20
+      AllocatedStorage: !Ref DBSize
       StorageType: gp2
 
   RetainedLogGroup:

@@ -6,6 +6,8 @@ import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
+import { makeToast } from 'components/kit/Toast';
+import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePermissions from 'hooks/usePermissions';
@@ -21,9 +23,7 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
-import { message } from 'utils/dialogApi';
 import handleError, { ErrorType } from 'utils/error';
-import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 const ADMIN_NAME = 'admin';
@@ -108,7 +108,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         }
         fetchUserRoles();
         if (currentUser?.id === user.id) checkAuth();
-        message.success('User has been updated');
+        makeToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {
         formData[ACTIVE_NAME] = true;
         const u = await postUser({ user: formData });
@@ -116,13 +116,15 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
         }
-
-        message.success(API_SUCCESS_MESSAGE_CREATE);
+        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
         form.resetFields();
       }
       onClose?.();
     } catch (e) {
-      message.error(user ? 'Error updating user' : 'Error creating new user');
+      makeToast({
+        severity: 'Error',
+        title: user ? 'Error updating user' : 'Error creating new user',
+      });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
@@ -182,7 +184,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
               <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
                 <Select
                   disabled={(user !== undefined && userRoles === null) || viewOnly}
-                  loading={Loadable.isLoading(knownRoles)}
+                  loading={Loadable.isNotLoaded(knownRoles)}
                   mode="multiple"
                   optionFilterProp="children"
                   placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}

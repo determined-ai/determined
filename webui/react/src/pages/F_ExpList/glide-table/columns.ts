@@ -7,13 +7,13 @@ import {
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
 
-import { getColor, getInitials } from 'components/Avatar';
+import { getColor, getInitials } from 'components/kit/Avatar';
 import { DarkLight, Theme } from 'components/kit/Theme';
+import { Loadable } from 'components/kit/utils/loadable';
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
-import { Loadable } from 'utils/loadable';
 import { humanReadableNumber } from 'utils/number';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
