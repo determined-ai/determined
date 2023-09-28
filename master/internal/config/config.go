@@ -81,7 +81,7 @@ type WebhooksConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		ConfigFile:            "",
-		DefaultPassword:       "determined",
+		DefaultPassword:       "",
 		Log:                   *logger.DefaultConfig(),
 		DB:                    *DefaultDBConfig(),
 		TaskContainerDefaults: *model.DefaultTaskContainerDefaults(),
