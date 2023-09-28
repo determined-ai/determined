@@ -73,6 +73,10 @@ func findFits(
 	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
 ) []*fittingState {
+	// TODO: or filter agents by blacklist viability here
+	// constraints := []HardConstraint{agentSlotUnusedSatisfied, agentPermittedSatisfied}
+	// if isViable(req, agent, constraints...) {
+
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
 	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
 	//    the current cluster configuration.

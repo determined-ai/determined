@@ -19,6 +19,10 @@ class TaskAlert:
     pass
 
 
+class TaskAlert:
+    pass
+
+
 class _LogShipper:
     def __init__(
         self,
