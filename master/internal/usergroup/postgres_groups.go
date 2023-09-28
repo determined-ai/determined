@@ -98,6 +98,7 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (model.Group, error)
 }
 
 // ModifiableGroupsTx verifies that groups are in the DB and non-personal. Returns error if any group isn't found.
+// based on singular GroupByIDTx
 func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) error {
 	if len(groups) == 0 {
 		return nil
@@ -105,13 +106,11 @@ func ModifiableGroupsTx(ctx context.Context, idb bun.IDB, groups []int) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
-	var count int
-	err := idb.NewSelect().Model(&count).
-		ColumnExpr("COUNT(*)").
-		Where("user_id != 0").
-		Where("user_id IS NOT NULL").
+	count, err := idb.NewSelect().
+		Table("groups").
+		Where("user_id IS NULL").
 		Where("id IN (?)", bun.In(groups)).
-		Scan(ctx)
+		Count(ctx)
 	if len(groups) != count {
 		return errors.Wrap(db.ErrNotFound, "group does not exist or is a personal group")
 	}
@@ -268,12 +267,12 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 		}
 	}
 
-	res, err := idb.NewInsert().Model(&groupMem).Exec(ctx)
+	query := idb.NewInsert().Model(&groupMem)
 	if ignoreDuplicates {
-		if err != nil {
-			return err
-		}
-	} else if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+		query = query.On("CONFLICT(user_id, group_id) DO NOTHING")
+	}
+	res, err := query.Exec(ctx)
+	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
 		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
@@ -298,7 +297,23 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreNotFound bool,
 	uids ...model.UserID,
 ) error {
-	if err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
+	if idb == nil {
+		idb = db.Bun()
+	}
+	tx, err := idb.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrapf(
+			db.MatchSentinelError(err),
+			"Error starting transaction for removing users")
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			logrus.WithError(txErr).Error("error rolling back transaction in RemoveUsersFromGroupsTx")
+		}
+	}()
+
+	if err = ModifiableGroupsTx(ctx, tx, groups); err != nil {
 		return err
 	}
 
@@ -306,31 +321,29 @@ func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ign
 		return nil
 	}
 
-	if idb == nil {
-		idb = db.Bun()
+	var changeRecords []struct {
+		GroupID int
+		UserID  int
 	}
-
-	res, err := idb.NewDelete().Table("user_group_membership").
+	_, err = tx.NewDelete().Model(&changeRecords).
+		TableExpr("user_group_membership").
 		Where("group_id IN (?)", bun.In(groups)).
 		Where("user_id IN (?)", bun.In(uids)).
+		Returning("group_id, user_id").
 		Exec(ctx)
 
-	if ignoreNotFound {
-		if err != nil {
-			return err
-		}
-	} else if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
-		sError := db.MatchSentinelError(foundErr)
-		if errors.Is(sError, db.ErrNotFound) {
-			return errors.Wrapf(sError,
-				"Error removing %d user(s) from %d group(s) because"+
-					" one or more of them were not found", len(uids), len(groups))
-		}
-		return errors.Wrapf(sError, "Error when removing %d user(s) from %d group(s)",
+	if err != nil {
+		return errors.Wrapf(err, "Error when removing %d user(s) from %d group(s)",
 			len(uids), len(groups))
 	}
 
-	err = UpdateUsersTimestampTx(ctx, idb, uids)
+	if !ignoreNotFound && len(changeRecords) < len(groups)*len(uids) {
+		return errors.Wrapf(err,
+			"Error removing %d user(s) from %d group(s) because"+
+				" one or more of them were not found", len(uids), len(groups))
+	}
+
+	err = UpdateUsersTimestampTx(ctx, tx, uids)
 	if err != nil {
 		return fmt.Errorf("error when updating users timestamps: %w", err)
 	}
