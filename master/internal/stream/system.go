@@ -298,10 +298,6 @@ func (ps *PublisherSet) Websocket(
 
 	for {
 		mods, msgs, closed := waitForSomething()
-		// were we closed?
-		if closed {
-			return nil
-		}
 
 		// any modifications to our subscriptions?
 		for _, mod := range mods {
@@ -320,6 +316,11 @@ func (ps *PublisherSet) Websocket(
 			if err != nil {
 				return errors.Wrapf(err, "error writing to socket")
 			}
+		}
+
+		// all messages are flushed, now check if we were closed?
+		if closed {
+			return nil
 		}
 	}
 }
