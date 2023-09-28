@@ -9,7 +9,6 @@ import random
 import re
 import sys
 import time
-import warnings
 from typing import (
     IO,
     Any,
@@ -20,7 +19,6 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    cast,
     no_type_check,
     overload,
 )
@@ -257,23 +255,3 @@ def wait_for(
         done, rv = predicate()
         time.sleep(interval)
     return rv
-
-
-U = TypeVar("U", bound=Callable[..., Any])
-
-
-def deprecated(message: Optional[str] = None) -> Callable[[U], U]:
-    def decorator(func: U) -> U:
-        @functools.wraps(func)
-        def wrapper_deprecated(*args: Any, **kwargs: Any) -> Any:
-            warning_message = (
-                f"{func.__name__} is deprecated and will be removed in a future version."
-            )
-            if message:
-                warning_message += f" {message}."
-            warnings.warn(warning_message, category=DeprecationWarning, stacklevel=2)
-            return func(*args, **kwargs)
-
-        return cast(U, wrapper_deprecated)
-
-    return decorator
