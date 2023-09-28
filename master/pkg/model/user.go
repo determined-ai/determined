@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	// EmptyPassword is the empty password (i.e., the empty string).
-	EmptyPassword = null.NewString("", false)
+	// DefaultPassword is a default password set in master config.
+	DefaultPassword = null.NewString("", false)
 
 	// NoPasswordLogin is a password that prevents the user from logging in
 	// directly. They can still login via external authentication methods like
@@ -84,6 +84,18 @@ func (u FullUser) ToUser() User {
 		Remote:       u.Remote,
 		LastLogin:    u.LastLogin,
 	}
+}
+
+func (user User) SetDefaultPassword(password string) error {
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		BCryptCost,
+	)
+	DefaultPassword = null.StringFrom(string(passwordHash))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // ValidatePassword checks that the supplied password is correct.
