@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import { ValueOf } from 'types';
@@ -63,25 +63,6 @@ const TimeAgo: React.FC<Props> = ({
     }
     return undefined;
   }, [datetime]);
-  const tooltip: ReactNode = useMemo(() => {
-    if (tooltipFormat === DEFAULT_TOOLTIP_FORMAT) return tooltipFormat;
-
-    let base = dayjs(milliseconds).format(tooltipFormat);
-    // Removes a few possible formats of dates from the end of the string to be added after a line break.
-    const check = base
-      .split(/\w{3,} \d{1,2}, \d{2,4}( - \d{1,2}:\d{1,2}( \w{2}|\s)|\s)$/)[0]
-      .trim();
-
-    base = base.slice(check.length);
-
-    return (
-      <>
-        <span>{check}:</span>
-        <br />
-        <span>{base}</span>
-      </>
-    );
-  }, [tooltipFormat, milliseconds]);
 
   const delta = useMemo(() => {
     return milliseconds === undefined ? 0 : now - milliseconds;
@@ -135,7 +116,12 @@ const TimeAgo: React.FC<Props> = ({
   }, [updateInterval]);
 
   return (
-    <Tooltip content={tooltip}>
+    <Tooltip
+      content={
+        <div style={{ whiteSpace: 'pre-wrap' }}>
+          {dayjs(milliseconds).format(tooltipFormat).replace('\\n', '\n')}
+        </div>
+      }>
       <div className={classes.join(' ')}>{durationString}</div>
     </Tooltip>
   );
