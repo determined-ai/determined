@@ -30,21 +30,6 @@ const MARKDOWN_CONFIG = {
   highlightActiveLineGutter: false,
 };
 
-type ErrorMessage = {
-  _tag: 'Error';
-  message: string;
-};
-// TODO: consider lifting this to loadable proper as in WEB-1333
-export type LoadableOrError<T> = Loadable<T> | ErrorMessage;
-
-export const ErrorMessage = (message: string): ErrorMessage => ({
-  _tag: 'Error' as const,
-  message,
-});
-
-const isErrorMessage = (f: unknown): f is ErrorMessage =>
-  !!f && typeof f === 'object' && '_tag' in f && f._tag === 'Error';
-
 export type SingleFileProps = {
   files: [TreeNode];
   onSelectFile?: never;
@@ -58,7 +43,7 @@ export type MultiFileProps = {
 };
 
 export type Props = (SingleFileProps | MultiFileProps) & {
-  file: string | LoadableOrError<string>;
+  file: string | Loadable<string>;
   onError: ErrorHandler; // only used to raise ipynb errors
   height?: string; // height of the container.
   onChange?: (fileContent: string) => void; // only use in single-file editing
@@ -224,23 +209,23 @@ const CodeEditor: React.FC<Props> = ({
 
   const classes = [
     css.codeEditorBase,
-    isErrorMessage(loadableFile) ? css.noEditor : '',
+    loadableFile.isFailed ? css.noEditor : '',
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
-  const sectionClasses = [isErrorMessage(loadableFile) ? css.pageError : css.editor];
+  const sectionClasses = [loadableFile.isFailed ? css.pageError : css.editor];
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
-  if (isErrorMessage(loadableFile)) {
+  if (loadableFile.isFailed) {
     fileContent = (
       <Message
         style={{
           justifyContent: 'center',
           padding: '120px',
         }}
-        title={loadableFile.message}
+        title={loadableFile.error?.message ?? 'Unknown Error'}
         type={MessageType.Alert}
       />
     );
