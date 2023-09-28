@@ -360,14 +360,22 @@ class CheckpointContext:
             ranks = conflicts[fname]
             if self._dist.rank in ranks:
                 assert ckpt_dir
-                md5 = hashlib.md5(open(os.path.join(ckpt_dir, fname), "rb").read()).hexdigest()
+                fpath = os.path.join(ckpt_dir, fname)
+                if os.path.isdir(fpath):
+                    # If rankA uploads a directory and rankB uploads a file with the same name,
+                    # there is an unresolvable conflict. Emit a non-md5sum, non-None object
+                    # to guarantee the fname is kept in the all_conflicts list.
+                    md5 = "this is a directory"
+                else:
+                    with open(fpath, "rb") as f:
+                        md5 = hashlib.md5(f.read()).hexdigest()
                 md5_ranks = self._dist.allgather(md5)
             else:
                 md5_ranks = self._dist.allgather(None)
 
-            md5_ranks = [x for x in md5_ranks if x is not None]
+            md5_ranks_filtered = {x for x in md5_ranks if x is not None}
 
-            if len(set(md5_ranks)) == 1:
+            if len(md5_ranks_filtered) == 1:
                 # All files have the same md5 checksum, which means there is no conflict.
                 all_conflicts.pop(fname)
 
