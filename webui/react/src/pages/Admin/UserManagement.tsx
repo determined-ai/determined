@@ -22,7 +22,6 @@ import SetUserRolesModalComponent from 'components/SetUserRolesModal';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
-  checkmarkRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   relativeTimeRenderer,
@@ -376,7 +375,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['isActive'],
         key: V1GetUsersRequestSortBy.ACTIVE,
         onCell: onRightClickableCell,
-        render: checkmarkRenderer,
+        render: (isActive: boolean) => <>{isActive ? 'Active' : 'Inactive'}</>,
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isActive, b.isActive),
         title: 'Status',
       },
@@ -387,7 +386,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['isAdmin'],
         key: V1GetUsersRequestSortBy.ADMIN,
         onCell: onRightClickableCell,
-        render: checkmarkRenderer,
+        render: (isAdmin: boolean) => <>{isAdmin ? 'Admin' : 'Member'}</>,
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isAdmin, b.isAdmin),
         title: 'Role',
       },
