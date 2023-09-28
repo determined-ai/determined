@@ -136,6 +136,9 @@ func TestUserGroups(t *testing.T) {
 		err = RemoveUsersFromGroupsTx(ctx, nil, []int{testGroup.ID}, false, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrNotFound),
 			"failed to return ErrNotFound when trying to remove users from group they're not in")
+
+		err = RemoveUsersFromGroupsTx(ctx, nil, []int{testGroup.ID}, true, testUser.ID)
+		require.NoError(t, err, "failed to skip ErrNotFound when removing users from group they're not in")
 	})
 
 	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound",
@@ -195,6 +198,12 @@ func TestUserGroups(t *testing.T) {
 		err := AddUsersToGroupsTx(ctx, nil, []int{testGroupStatic.ID}, false, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrDuplicateRecord),
 			"should have returned ErrDuplicateRecord")
+	})
+
+	t.Run("AddUsersToGroup can skip ErrDuplicateRecord when adding users to a "+
+		"group they're already in", func(t *testing.T) {
+		err := AddUsersToGroupsTx(ctx, nil, []int{testGroupStatic.ID}, true, testUser.ID)
+		require.NoError(t, err, "errored when adding user to group they're already in")
 	})
 
 	t.Run("Static test group should exist at the end and test user should be in it",
