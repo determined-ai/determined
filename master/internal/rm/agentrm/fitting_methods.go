@@ -7,6 +7,11 @@ import (
 )
 
 // Hard Constraints
+func agentPermittedSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
+	// TODO get the blacklist for task and check if agent is blacklisted
+	// blacklist, err := ft.NodeBlacklist(req)
+	return true
+}
 
 func slotsSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 	return req.SlotsNeeded <= agent.numEmptySlots()

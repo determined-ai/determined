@@ -455,6 +455,8 @@ func (k *kubernetesResourcePool) receiveSetAllocationName(
 func (k *kubernetesResourcePool) assignResources(
 	ctx *actor.Context, req *sproto.AllocateRequest,
 ) {
+	// per task id access scheduling alerts to know which nodes to skip
+	// and to know which tasks to not schedule.
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
 	if req.SlotsNeeded > 1 {

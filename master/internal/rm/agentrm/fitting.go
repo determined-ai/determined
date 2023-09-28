@@ -73,6 +73,10 @@ func findFits(
 	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
 ) []*fittingState {
+	// TODO: or filter agents by blacklist viability here
+	// constraints := []HardConstraint{agentSlotUnusedSatisfied, agentPermittedSatisfied}
+	// if isViable(req, agent, constraints...) {
+
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
 	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
 	//    the current cluster configuration.
@@ -120,7 +124,7 @@ func findDedicatedAgentFits(
 	// 2) Multi-agent tasks will receive all the slots on every agent they are scheduled on.
 	agentsByNumSlots := make(map[int][]*agentState)
 	for _, agent := range agentStates {
-		constraints := []HardConstraint{agentSlotUnusedSatisfied}
+		constraints := []HardConstraint{agentSlotUnusedSatisfied, agentPermittedSatisfied}
 		if isViable(req, agent, constraints...) {
 			agentsByNumSlots[agent.numEmptySlots()] = append(
 				agentsByNumSlots[agent.numEmptySlots()],
@@ -224,7 +228,7 @@ func findSharedAgentFit(
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
-		if !isViable(req, agent, slotsSatisfied, maxZeroSlotContainersSatisfied) {
+		if !isViable(req, agent, slotsSatisfied, maxZeroSlotContainersSatisfied, agentPermittedSatisfied) {
 			continue
 		}
 
