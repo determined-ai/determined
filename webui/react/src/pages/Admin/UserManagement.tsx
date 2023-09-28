@@ -378,7 +378,7 @@ const UserManagement: React.FC = () => {
         onCell: onRightClickableCell,
         render: checkmarkRenderer,
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isActive, b.isActive),
-        title: 'Active',
+        title: 'Status',
       },
       {
         dataIndex: 'isAdmin',
@@ -389,7 +389,7 @@ const UserManagement: React.FC = () => {
         onCell: onRightClickableCell,
         render: checkmarkRenderer,
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isAdmin, b.isAdmin),
-        title: 'Admin',
+        title: 'Role',
       },
       {
         dataIndex: 'modifiedAt',
@@ -450,6 +450,7 @@ const UserManagement: React.FC = () => {
                 {/* input is uncontrolled to prevent settings overwriting during composition */}
                 <Input
                   defaultValue={settings.name}
+                  placeholder="Display name or user name"
                   prefix={<Icon color="cancel" decorative name="search" />}
                   onChange={handleNameSearchApply}
                 />
@@ -467,6 +468,7 @@ const UserManagement: React.FC = () => {
                   placeholder="All statuses"
                   searchable={false}
                   value={settings.statusFilter}
+                  width={100}
                   onChange={handleStatusFilterApply}
                 />
               </Columns>
