@@ -317,16 +317,6 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 	return nil
 }
 
-// SetAcceleratorData adds the accelerator data of the allocation.
-func (a *allocation) SetAcceleratorData(ctx context.Context, accData model.AcceleratorData,
-) error {
-	if err := db.AddAllocationAcceleratorData(ctx, accData); err != nil {
-		logrus.WithError(err)
-		return err
-	}
-	return nil
-}
-
 // SendContainerLog sends a container log, enriched with metadata from the allocation.
 func (a *allocation) SendContainerLog(log *sproto.ContainerLog) {
 	a.sendTaskLog(log.ToTaskLog())

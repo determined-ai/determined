@@ -200,6 +200,17 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 }
 
 // Proto returns the proto representation of the task state.
+func (a AcceleratorData) Proto() *apiv1.AcceleratorData {
+	return &apiv1.AcceleratorData{
+		ContainerId:      a.ContainerID,
+		AllocationId:     string(a.AllocationID),
+		NodeName:         a.NodeName,
+		AcceleratorType:  a.AcceleratorType,
+		AcceleratorUuids: a.AcceleratorUuids,
+	}
+}
+
+// Proto returns the proto representation of the task state.
 func (s AllocationState) Proto() taskv1.State {
 	switch s {
 	case AllocationStateWaiting:

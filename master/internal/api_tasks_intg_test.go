@@ -17,7 +17,7 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
-	"github.com/determined-ai/determined/master/internal/db"
+	taskPkg "github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -85,7 +85,74 @@ func TestTaskAuthZ(t *testing.T) {
 	}
 }
 
-func TestAllocationAcceleratorData(t *testing.T) {
+// Checks if AddAllocationAcceleratorData and GetAllocationAcceleratorData work.
+func TestAddAllocationAcceleratorData(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	tID := model.NewTaskID()
+	task := &model.Task{
+		TaskID:    tID,
+		TaskType:  model.TaskTypeTrial,
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+	}
+	require.NoError(t, api.m.db.AddTask(task), "failed to add task")
+
+	aID := tID + "-1"
+	a := &model.Allocation{
+		TaskID:       tID,
+		AllocationID: model.AllocationID(aID),
+		Slots:        1,
+		ResourcePool: "default",
+	}
+	require.NoError(t, api.m.db.AddAllocation(a), "failed to add allocation")
+	accData := &model.AcceleratorData{
+		ContainerID:      uuid.NewString(),
+		AllocationID:     model.AllocationID(aID),
+		NodeName:         "NodeName",
+		AcceleratorType:  "cpu-test",
+		AcceleratorUuids: []string{"g", "h", "i"},
+	}
+	require.NoError(t,
+		taskPkg.AddAllocationAcceleratorData(ctx, *accData), "failed to add allocation")
+
+	resp, err := api.GetTaskAcceleratorData(ctx,
+		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
+	require.NoError(t, err, "failed to get task AccelerationData")
+	require.Equal(t, len(resp.AcceleratorData), 1, "incorrect number of allocation accelerator data returned")
+	require.Equal(t, resp.AcceleratorData[0].AllocationId,
+		aID.String(), "failed to get the correct allocation's accelerator data")
+}
+
+// Checks if GetAllocationAcceleratorData works when a task has only one allocation and it does
+// not have accelerator data.
+func TestGetAllocationAcceleratorDataWithNoData(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	tID := model.NewTaskID()
+	task := &model.Task{
+		TaskID:    tID,
+		TaskType:  model.TaskTypeTrial,
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+	}
+	require.NoError(t, api.m.db.AddTask(task), "failed to add task")
+
+	aID := tID + "-1"
+	a := &model.Allocation{
+		TaskID:       tID,
+		AllocationID: model.AllocationID(aID),
+		Slots:        1,
+		ResourcePool: "default",
+	}
+	require.NoError(t, api.m.db.AddAllocation(a), "failed to add allocation")
+
+	resp, err := api.GetTaskAcceleratorData(ctx,
+		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
+	require.NoError(t, err, "failed to get task AccelerationData")
+	require.Equal(t, len(resp.AcceleratorData), 0, "unexpected allocation accelerator data returned")
+}
+
+// Checks if GetAllocationAcceleratorData works when a task has more than one allocation
+// but one without accelerator data.
+func TestGetAllocationAcceleratorData(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	tID := model.NewTaskID()
@@ -109,12 +176,12 @@ func TestAllocationAcceleratorData(t *testing.T) {
 		AllocationID:     model.AllocationID(aID1),
 		NodeName:         "NodeName",
 		AcceleratorType:  "cpu-test",
-		AcceleratorUuids: []string{"g", "h", "i"},
+		AcceleratorUuids: []string{"a", "b", "c"},
 	}
 	require.NoError(t,
-		db.AddAllocationAcceleratorData(ctx, *accData), "failed to add allocation")
+		taskPkg.AddAllocationAcceleratorData(ctx, *accData), "failed to add allocation")
 
-	// Add another allocation that does not have associated acceleration data with it
+	// Add another allocation that does not have associated acceleration data with it.
 	aID2 := tID + "-2"
 	a2 := &model.Allocation{
 		TaskID:       tID,
@@ -127,6 +194,7 @@ func TestAllocationAcceleratorData(t *testing.T) {
 	resp, err := api.GetTaskAcceleratorData(ctx,
 		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
 	require.NoError(t, err, "failed to get task AccelerationData")
-	require.Equal(t, len(resp.AcceleratorData), 1)
-	require.Equal(t, resp.AcceleratorData[0].AllocationId, aID1.String())
+	require.Equal(t, len(resp.AcceleratorData), 1, "incorrect number of allocation accelerator data returned")
+	require.Equal(t, resp.AcceleratorData[0].AllocationId,
+		aID1.String(), "failed to get the correct allocation's accelerator data")
 }

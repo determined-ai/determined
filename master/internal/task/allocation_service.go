@@ -145,11 +145,10 @@ func (as *allocationService) SetAcceleratorData(
 	ctx context.Context,
 	accData model.AcceleratorData,
 ) error {
-	ref, err := as.waitForRestore(ctx, accData.AllocationID)
-	if err != nil {
+	if err := AddAllocationAcceleratorData(ctx, accData); err != nil {
 		return err
 	}
-	return ref.SetAcceleratorData(ctx, accData)
+	return nil
 }
 
 // WatchRendezvous returns a watcher for the caller to wait for rendezvous to complete. When a

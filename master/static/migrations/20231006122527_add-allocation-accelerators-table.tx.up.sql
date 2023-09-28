@@ -5,3 +5,5 @@
     accelerator_type text NOT NULL,
     accelerator_uuids text []
 );
+
+CREATE INDEX ix_allocation_id ON public.allocation_accelerators USING btree (allocation_id);

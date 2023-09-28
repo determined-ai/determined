@@ -118,6 +118,32 @@ func (a *apiServer) canDoActionsOnTask(
 	return nil
 }
 
+func (a *apiServer) canGetTaskAcceleration(ctx context.Context, taskID string) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+	isExp, exp, err := expFromTaskID(ctx, model.TaskID(taskID))
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		var ok bool
+		if ok, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
+			return err
+		} else if !ok {
+			return api.NotFoundErrs("task", taskID, true)
+		}
+		return nil
+	}
+
+	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("task", taskID, true))
+	}
+
+	return nil
+}
+
 func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -250,29 +276,26 @@ func (a *apiServer) GetTaskAcceleratorData(
 	if req.TaskId == "" {
 		return nil, status.Error(codes.InvalidArgument, "task ID missing")
 	}
-	res := []model.AcceleratorData{}
-	var accelerationData []*apiv1.AcceleratorData
+
+	if err := a.canGetTaskAcceleration(ctx, req.TaskId); err != nil {
+		return nil, err
+	}
+
+	var res []model.AcceleratorData
 	err := db.Bun().NewSelect().
-		ColumnExpr("a1.*").
-		TableExpr("allocation_accelerators a1").
-		Join("LEFT JOIN allocations a2 ON a1.allocation_id = a2.allocation_id").
-		Where("a2.task_id = ?", req.TaskId).Scan(ctx, &res)
+		ColumnExpr("alloc_acc.*").
+		TableExpr("allocation_accelerators alloc_acc").
+		Join("LEFT JOIN allocations alloc ON alloc_acc.allocation_id = alloc.allocation_id").
+		Where("alloc.task_id = ?", req.TaskId).Scan(ctx, &res)
 	if err != nil {
 		return nil, fmt.Errorf("querying allocation accelerators: %w", err)
 	}
-	for _, r := range res {
-		row := apiv1.AcceleratorData{
-			ContainerId:      r.ContainerID,
-			AllocationId:     string(r.AllocationID),
-			NodeName:         r.NodeName,
-			AcceleratorType:  r.AcceleratorType,
-			AcceleratorUuids: r.AcceleratorUuids,
-		}
-		accelerationData = append(accelerationData, &row)
-	}
 
-	resp := apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: accelerationData}
-	return &resp, nil
+	var accelerationData []*apiv1.AcceleratorData
+	for _, r := range res {
+		accelerationData = append(accelerationData, r.Proto())
+	}
+	return &apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: accelerationData}, nil
 }
 
 func (a *apiServer) PostAllocationAcceleratorData(
