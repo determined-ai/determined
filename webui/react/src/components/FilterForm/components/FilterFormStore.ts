@@ -45,7 +45,7 @@ export class FilterFormStore {
   #formset: WritableObservable<Loadable<FilterFormSet>> = observable(NotLoaded);
 
   public init(data?: Readonly<FilterFormSet>): void {
-    this.#formset.update(() => structuredClone(Loaded(data ? data : INIT_FORMSET)));
+    this.#formset.update(() => Loaded(structuredClone(data ? data : INIT_FORMSET)));
   }
 
   public get formset(): Observable<Loadable<FilterFormSet>> {
