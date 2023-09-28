@@ -270,20 +270,26 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 	query := idb.NewInsert().Model(&groupMem)
 	if ignoreDuplicates {
 		query = query.On("CONFLICT(user_id, group_id) DO NOTHING")
-	}
-	res, err := query.Exec(ctx)
-	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
-		sError := db.MatchSentinelError(foundErr)
-		if errors.Is(sError, db.ErrNotFound) {
-			return errors.Wrapf(sError,
-				"Error adding %d user(s) to %d group(s) because"+
-					" one or more of them were not found", len(uids), len(groups))
+		_, err := query.Exec(ctx)
+		if err != nil {
+			return errors.Wrapf(err,
+				"Error adding %d user(s) to %d group(s)", len(uids), len(groups))
 		}
-		return errors.Wrapf(sError, "Error when adding %d user(s) to %d group(s)",
-			len(uids), len(groups))
+	} else {
+		res, err := query.Exec(ctx)
+		if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+			sError := db.MatchSentinelError(foundErr)
+			if errors.Is(sError, db.ErrNotFound) {
+				return errors.Wrapf(sError,
+					"Error adding %d user(s) to %d group(s) because"+
+						" one or more of them were not found", len(uids), len(groups))
+			}
+			return errors.Wrapf(sError, "Error when adding %d user(s) to %d group(s)",
+				len(uids), len(groups))
+		}
 	}
 
-	err = UpdateUsersTimestampTx(ctx, idb, uids)
+	err := UpdateUsersTimestampTx(ctx, idb, uids)
 	if err != nil {
 		return fmt.Errorf("error when updating users timestamps: %w", err)
 	}
@@ -292,28 +298,16 @@ func AddUsersToGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreDu
 }
 
 // RemoveUsersFromGroupsTx removes users from a group. Removes nothing and
-// returns ErrNotFound if the group or one of the users' membership rows
-// aren't found; unless ignoreNotFound flag is enabled.
-func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ignoreNotFound bool,
+// returns ErrNotFound if the group or all of the membership rows
+// aren't found.
+func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int,
 	uids ...model.UserID,
 ) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
-	tx, err := idb.BeginTx(ctx, nil)
-	if err != nil {
-		return errors.Wrapf(
-			db.MatchSentinelError(err),
-			"Error starting transaction for removing users")
-	}
-	defer func() {
-		txErr := tx.Rollback()
-		if txErr != nil && txErr != sql.ErrTxDone {
-			logrus.WithError(txErr).Error("error rolling back transaction in RemoveUsersFromGroupsTx")
-		}
-	}()
 
-	if err = ModifiableGroupsTx(ctx, tx, groups); err != nil {
+	if err := ModifiableGroupsTx(ctx, idb, groups); err != nil {
 		return err
 	}
 
@@ -322,25 +316,24 @@ func RemoveUsersFromGroupsTx(ctx context.Context, idb bun.IDB, groups []int, ign
 	}
 
 	var changeRecords []int32
-	_, err = tx.NewDelete().Model(&changeRecords).
+	_, err := idb.NewDelete().Model(&changeRecords).
 		Table("user_group_membership").
 		Where("group_id IN (?)", bun.In(groups)).
 		Where("user_id IN (?)", bun.In(uids)).
 		Returning("user_id").
 		Exec(ctx)
-
 	if err != nil {
 		return errors.Wrapf(err, "Error when removing %d user(s) from %d group(s)",
 			len(uids), len(groups))
 	}
 
-	if !ignoreNotFound && len(changeRecords) < len(groups)*len(uids) {
-		return errors.Wrapf(err,
+	if len(changeRecords) == 0 {
+		return errors.Wrapf(db.ErrNotFound,
 			"Error removing %d user(s) from %d group(s) because"+
-				" one or more of them were not found", len(uids), len(groups))
+				" none were members of these groups", len(uids), len(groups))
 	}
 
-	err = UpdateUsersTimestampTx(ctx, tx, uids)
+	err = UpdateUsersTimestampTx(ctx, idb, uids)
 	if err != nil {
 		return fmt.Errorf("error when updating users timestamps: %w", err)
 	}
@@ -395,7 +388,7 @@ func UpdateGroupAndMembers(
 	}
 
 	if len(removeUsers) > 0 {
-		err = RemoveUsersFromGroupsTx(ctx, tx, []int{gid}, false, removeUsers...)
+		err = RemoveUsersFromGroupsTx(ctx, tx, []int{gid}, removeUsers...)
 		if err != nil {
 			return nil, "", err
 		}
@@ -443,7 +436,7 @@ func UpdateGroupsForMultipleUsers(
 	}
 
 	if len(removeGroups) > 0 {
-		err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, true, modUsers...)
+		err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, modUsers...)
 		if err != nil {
 			return err
 		}
