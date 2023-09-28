@@ -246,3 +246,9 @@ message GetAllocationResponse {
   // The id of the allocation.
   determined.task.v1.Allocation allocation = 1;
 }
+
+/*
+TODO:
+- apis based on master/internal/ft/api_ft.go
+- move messages defined in agent here?
+*/

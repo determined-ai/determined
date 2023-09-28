@@ -23,6 +23,8 @@ enum TriggerType {
   TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = 1;
   // For metrics emitted during training.
   TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = 2;
+  // For detected potential hardware failures.
+  TRIGGER_TYPE_HARDWARE_FAILURE = 3;
 }
 
 // Representation of a Webhook

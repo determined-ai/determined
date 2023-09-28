@@ -154,6 +154,7 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 		return TriggerTypeMetricThresholdExceeded
 	case webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE:
 		return TriggerTypeStateChange
+	// TODO
 	default:
 		// TODO(???): prob don't panic
 		panic(fmt.Errorf("missing mapping for trigger %s to SQL", t))
@@ -179,6 +180,7 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE
 	case TriggerTypeMetricThresholdExceeded:
 		return webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED
+	// TODO
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
 	}

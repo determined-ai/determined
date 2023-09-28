@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/agentv1"
 
 	"github.com/google/uuid"
 )
@@ -73,6 +74,11 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// ReportHWFailure adds webhook event for an alert to the queue.
+func ReportTaskAlert(ctx context.Context, alert agentv1.RunAlert) error {
 	return nil
 }
 
