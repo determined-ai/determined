@@ -78,9 +78,9 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
 
-	var lastLogin *timestamppb.Timestamp
-	if user.LastLogin != nil {
-		lastLogin = timestamppb.New(*user.LastLogin)
+	var lastAuthAt *timestamppb.Timestamp
+	if user.LastAuthAt != nil {
+		lastAuthAt = timestamppb.New(*user.LastAuthAt)
 	}
 
 	return &userv1.User{
@@ -92,7 +92,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
 		ModifiedAt:     timestamppb.New(user.ModifiedAt),
-		LastLogin:      lastLogin,
+		LastAuthAt:     lastAuthAt,
 	}
 }
 
@@ -135,14 +135,14 @@ func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
 	sortColMap := map[apiv1.GetUsersRequest_SortBy]string{
-		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:     "id",
-		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:    "display_name",
-		apiv1.GetUsersRequest_SORT_BY_USER_NAME:       "username",
-		apiv1.GetUsersRequest_SORT_BY_ADMIN:           "admin",
-		apiv1.GetUsersRequest_SORT_BY_ACTIVE:          "active",
-		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME:   "modified_at",
-		apiv1.GetUsersRequest_SORT_BY_NAME:            "name",
-		apiv1.GetUsersRequest_SORT_BY_LAST_LOGIN_TIME: "last_login",
+		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:    "id",
+		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:   "display_name",
+		apiv1.GetUsersRequest_SORT_BY_USER_NAME:      "username",
+		apiv1.GetUsersRequest_SORT_BY_ADMIN:          "admin",
+		apiv1.GetUsersRequest_SORT_BY_ACTIVE:         "active",
+		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME:  "modified_at",
+		apiv1.GetUsersRequest_SORT_BY_NAME:           "name",
+		apiv1.GetUsersRequest_SORT_BY_LAST_AUTH_TIME: "last_auth_at",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -162,7 +162,7 @@ func (a *apiServer) GetUsers(
 		Column("u.active").
 		Column("u.modified_at").
 		Column("u.remote").
-		Column("u.last_login").
+		Column("u.last_auth_at").
 		ColumnExpr("h.uid AS agent_uid").
 		ColumnExpr("h.gid AS agent_gid").
 		ColumnExpr("h.user_ AS agent_user").

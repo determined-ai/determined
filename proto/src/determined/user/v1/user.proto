@@ -29,7 +29,7 @@ message User {
   // password.
   bool remote = 8;
   // when the user last authenticated
-  optional google.protobuf.Timestamp last_login = 9;
+  optional google.protobuf.Timestamp last_auth_at = 9;
 }
 
 // Request to edit fields for a user.

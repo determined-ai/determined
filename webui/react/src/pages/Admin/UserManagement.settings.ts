@@ -77,7 +77,7 @@ const config: SettingsConfig<UserManagementSettings> = {
         literal(V1GetUsersRequestSortBy.UNSPECIFIED),
         literal(V1GetUsersRequestSortBy.USERNAME),
         literal(V1GetUsersRequestSortBy.NAME),
-        literal(V1GetUsersRequestSortBy.LASTLOGINTIME),
+        literal(V1GetUsersRequestSortBy.LASTAUTHTIME),
       ]),
     },
     tableLimit: {

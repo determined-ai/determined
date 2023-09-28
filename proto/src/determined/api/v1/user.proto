@@ -36,8 +36,8 @@ message GetUsersRequest {
     SORT_BY_MODIFIED_TIME = 5;
     // Returns users sorted by username unless display name exist.
     SORT_BY_NAME = 6;
-    // Returns users sorted by last login time.
-    SORT_BY_LAST_LOGIN_TIME = 7;
+    // Returns users sorted by last authenticated time.
+    SORT_BY_LAST_AUTH_TIME = 7;
   }
   // Sort users by the given field.
   SortBy sort_by = 1;

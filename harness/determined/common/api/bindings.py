@@ -6044,7 +6044,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     - SORT_BY_ACTIVE: Returns users sorted by if they are active.
     - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
     - SORT_BY_NAME: Returns users sorted by username unless display name exist.
-    - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+    - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
@@ -6053,7 +6053,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     ACTIVE = "SORT_BY_ACTIVE"
     MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
     NAME = "SORT_BY_NAME"
-    LAST_LOGIN_TIME = "SORT_BY_LAST_LOGIN_TIME"
+    LAST_AUTH_TIME = "SORT_BY_LAST_AUTH_TIME"
 
 class v1GetUsersResponse(Printable):
     """Response to GetUsersRequest."""
@@ -14319,7 +14319,7 @@ class v1User(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     displayName: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
-    lastLogin: "typing.Optional[str]" = None
+    lastAuthAt: "typing.Optional[str]" = None
     modifiedAt: "typing.Optional[str]" = None
     remote: "typing.Optional[bool]" = None
 
@@ -14332,7 +14332,7 @@ class v1User(Printable):
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
-        lastLogin: "typing.Union[str, None, Unset]" = _unset,
+        lastAuthAt: "typing.Union[str, None, Unset]" = _unset,
         modifiedAt: "typing.Union[str, None, Unset]" = _unset,
         remote: "typing.Union[bool, None, Unset]" = _unset,
     ):
@@ -14345,8 +14345,8 @@ class v1User(Printable):
             self.displayName = displayName
         if not isinstance(id, Unset):
             self.id = id
-        if not isinstance(lastLogin, Unset):
-            self.lastLogin = lastLogin
+        if not isinstance(lastAuthAt, Unset):
+            self.lastAuthAt = lastAuthAt
         if not isinstance(modifiedAt, Unset):
             self.modifiedAt = modifiedAt
         if not isinstance(remote, Unset):
@@ -14365,8 +14365,8 @@ class v1User(Printable):
             kwargs["displayName"] = obj["displayName"]
         if "id" in obj:
             kwargs["id"] = obj["id"]
-        if "lastLogin" in obj:
-            kwargs["lastLogin"] = obj["lastLogin"]
+        if "lastAuthAt" in obj:
+            kwargs["lastAuthAt"] = obj["lastAuthAt"]
         if "modifiedAt" in obj:
             kwargs["modifiedAt"] = obj["modifiedAt"]
         if "remote" in obj:
@@ -14385,8 +14385,8 @@ class v1User(Printable):
             out["displayName"] = self.displayName
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
-        if not omit_unset or "lastLogin" in vars(self):
-            out["lastLogin"] = self.lastLogin
+        if not omit_unset or "lastAuthAt" in vars(self):
+            out["lastAuthAt"] = self.lastAuthAt
         if not omit_unset or "modifiedAt" in vars(self):
             out["modifiedAt"] = self.modifiedAt
         if not omit_unset or "remote" in vars(self):
@@ -18315,7 +18315,7 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_ACTIVE: Returns users sorted by if they are active.
  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
- - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+ - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
     """
     _params = {
         "active": str(active).lower() if active is not None else None,

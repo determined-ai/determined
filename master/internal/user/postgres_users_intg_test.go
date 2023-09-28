@@ -70,7 +70,7 @@ func TestUserAdd(t *testing.T) {
 			require.NoError(t, err)
 			// Reset the modified at variable, just for testing purposes.
 			resUser.ModifiedAt = tt.user.ModifiedAt
-			resUser.LastLogin = tt.user.LastLogin
+			resUser.LastAuthAt = tt.user.LastAuthAt
 			require.Equal(t, tt.user, resUser)
 
 			// require entry in the group table (addUser).
