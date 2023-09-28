@@ -211,16 +211,27 @@ func TestUpdateUsername(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	ctx := context.TODO()
-	initialValues, err := List(ctx)
+	ctx := context.Background()
+
+	expectedUser, err := addTestUser(nil)
 	require.NoError(t, err)
 
-	_, err = addTestUser(nil)
+	list, err := List(ctx)
 	require.NoError(t, err)
 
-	newValues, err := List(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(newValues)-len(initialValues))
+	var actualUser model.FullUser
+	for _, u := range list {
+		if u.ID == expectedUser.ID {
+			actualUser = u
+		}
+	}
+	if actualUser.ID == 0 {
+		require.Fail(t, "did not find expected user in list")
+	}
+
+	require.Equal(t, expectedUser.ID, actualUser.ID)
+	require.Equal(t, expectedUser.DisplayName, actualUser.DisplayName)
+	require.Equal(t, expectedUser.Username, actualUser.Username)
 }
 
 func TestByID(t *testing.T) {
