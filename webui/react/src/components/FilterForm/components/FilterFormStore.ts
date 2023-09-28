@@ -163,7 +163,8 @@ export class FilterFormStore {
         ans.columnName = col.column;
         ans.location = col.location;
         ans.type = col.type;
-        this.#formset.update((prev) => prev.map((filters) => ({ ...filters, filterGroup })));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -175,7 +176,8 @@ export class FilterFormStore {
       const ans = this.#getFormById(filterGroup, id);
       if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
         ans.operator = operator;
-        this.#formset.update((prev) => prev.map((filters) => ({ ...filters, filterGroup })));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -187,7 +189,8 @@ export class FilterFormStore {
       const ans = this.#getFormById(filterGroup, id);
       if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
         ans.conjunction = conjunction;
-        this.#formset.update((prev) => prev.map((filters) => ({ ...filters, filterGroup })));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -199,7 +202,8 @@ export class FilterFormStore {
       const ans = this.#getFormById(filterGroup, id);
       if (ans && ans.kind === FormKind.Field) {
         ans.value = value;
-        this.#formset.update((prev) => prev.map((filters) => ({ ...filters, filterGroup })));
+        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+        this.#formset.update((prev) => prev.map((i) => i));
       }
     });
   }
@@ -230,7 +234,8 @@ export class FilterFormStore {
       };
 
       traverse(filterGroup);
-      this.#formset.update((prev) => prev.map((filters) => ({ ...filters, filterGroup })));
+      // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
+      this.#formset.update((prev) => prev.map((i) => i));
     });
   }
 
