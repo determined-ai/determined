@@ -417,14 +417,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.activeConfig.SetResources(resources)
 		msg.JobID = e.JobID
 		e.rm.SetGroupMaxSlots(ctx, msg)
-	case sproto.NotifyRMPriorityChange:
-		err := e.setPriority(ctx, &msg.Priority, false)
-		if err != nil {
-			e.syslog.WithError(err).Info("setting experiment job priority")
-		}
-		if ctx.ExpectingResponse() {
-			ctx.Respond(err)
-		}
 	case sproto.SetGroupWeight:
 		err := e.setWeight(ctx, msg.Weight)
 		if err != nil {

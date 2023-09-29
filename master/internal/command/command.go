@@ -462,9 +462,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-	case sproto.NotifyRMPriorityChange:
-		ctx.Respond(c.setPriority(ctx, msg.Priority, false))
-
 	case sproto.ContainerLog:
 
 	case terminateForGC:

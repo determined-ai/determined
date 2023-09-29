@@ -43,11 +43,6 @@ type (
 		ResourcePool string
 		JobID        model.JobID
 	}
-
-	// NotifyRMPriorityChange notifies the actor of an RM Priority Change.
-	NotifyRMPriorityChange struct {
-		Priority int
-	}
 )
 
 // Message returns the textual content of this log message.
