@@ -173,13 +173,17 @@ func (a *apiServer) GetUsers(
 		nameFilterExpr := "%" + req.Name + "%"
 		query.Where("u.display_name ILIKE ? OR u.username ILIKE ?", nameFilterExpr, nameFilterExpr)
 	}
-	if req.Admin != nil && !config.GetAuthZConfig().IsRBACEnabled() {
+	if req.Admin != nil {
 		query.Where("u.admin = ?", *req.Admin)
 	}
 	if req.Active != nil {
 		query.Where("u.active = ?", *req.Active)
 	}
-	if len(req.RoleIdAssignedDirectlyToUser) != 0 && config.GetAuthZConfig().IsRBACEnabled() {
+	if len(req.RoleIdAssignedDirectlyToUser) != 0 {
+		if !config.GetAuthZConfig().IsRBACEnabled() {
+			return nil, status.Error(codes.InvalidArgument,
+				"cannot filter by role id.")
+		}
 		query.Join("LEFT JOIN groups g ON (u.id = g.user_id)").
 			Join("LEFT JOIN role_assignments a ON (g.id = a.group_id)").
 			Join("LEFT JOIN role_assignment_scopes s ON (s.id = a.scope_id)").
