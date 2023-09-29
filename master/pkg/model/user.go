@@ -103,17 +103,9 @@ func (user User) SetInitialPassword(password string) error {
 // ValidatePassword checks that the supplied password is correct.
 func (user User) ValidatePassword(password string) bool {
 	// If the model's password is empty, then
-	// check for default
+	// supplied password must be empty
 	if !user.PasswordHash.Valid {
-		// If default password is not set, then
-		// supplied password must be empty
-		if !DefaultPassword.Valid {
-			return password == ""
-		}
-		err := bcrypt.CompareHashAndPassword(
-			[]byte(DefaultPassword.ValueOrZero()),
-			[]byte(password))
-		return err == nil
+		return password == ""
 	}
 
 	err := bcrypt.CompareHashAndPassword(

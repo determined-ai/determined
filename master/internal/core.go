@@ -869,6 +869,13 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	defer closeWithErrCheck("db", m.db)
 
+	// Set initial password for 'admin' and 'determined' users
+	err = m.db.SetInitialPassword(replicateClientSideSaltAndHash(m.config.InitialPassword))
+
+	if err != nil {
+		return errors.Wrap(err, "could not set initial password for 'admin' and 'determined'")
+	}
+
 	m.ClusterID, err = m.db.GetOrCreateClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")

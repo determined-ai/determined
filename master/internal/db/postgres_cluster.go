@@ -6,7 +6,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
+
+// BCryptCost is a stopgap until we implement sane master-configuration.
+const BCryptCost = 15
 
 // GetOrCreateClusterID queries the master uuid in the database, adding one if it doesn't exist.
 func (db *PgDB) GetOrCreateClusterID() (string, error) {
@@ -130,4 +134,21 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 		)
 	}
 	return nil
+}
+
+func (db *PgDB) SetInitialPassword(password string) error {
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		BCryptCost,
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.sql.Exec(
+		`UPDATE users SET password_hash = $1
+	 	WHERE username = 'admin' OR username = 'determined';`,
+		passwordHash)
+
+	return errors.Wrapf(err, "error initializing admin and determined passwords in users table")
 }
