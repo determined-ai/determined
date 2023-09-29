@@ -17,7 +17,7 @@ It takes care of:
  Features
 **********
 
-Interactive Job Configuration
+Configurable Interactive Jobs
 =============================
 
 The behavior of interactive jobs, such as :ref:`TensorBoards <tensorboards>`, :ref:`notebooks
@@ -60,12 +60,13 @@ of the tasks you can perform with the Determined CLI:
 Commands and Shells
 ===================
 
-In addition to structured model training workloads, which are handled using :ref:`experiments
-<experiments>`, Determined also supports more free-form tasks using :ref:`commands and shells
-<commands-and-shells>`.
+:ref:`Commands and shells <commands-and-shells>` support free-form tasks.
 
-Commands execute a user-specified program on the cluster. Shells start SSH servers that allow using
-cluster resources interactively.
+In Determined, a developer uses an :ref:`experiment <experiments>`, to run a trial. Outside of
+trials, a developer can use the ``det cmd`` Command (the capitalization indicates it is a specific
+feature of Determined). This Command facilitates the execution of a user-defined program on the
+cluster. On the other hand, shells initiate SSH servers, enabling the interactive use of cluster
+resources.
 
 Commands and shells enable developers to use a Determined cluster and its GPUs without having to
 write code conforming to the trial APIs. Commands are useful for running existing code in a batch
@@ -250,8 +251,8 @@ following benefits:
 Elastic Infrastructure
 ======================
 
-When running in a cloud environment, Determined can automatically provision and terminate GPU
-instances as the set of deep learning workloads on the cluster changes. This capability is called
+When running in an AWS or GCP cloud environment, Determined can automatically provision and
+terminate GPU instances as the set of workloads on the cluster changes. This capability is called
 *elastic infrastructure*. The agents that are provisioned by the system are called *dynamic agents*.
 
 The diagram below outlines the high-level system architecture when using dynamic agents:
@@ -265,8 +266,9 @@ Following the diagram, the execution would be:
    workloads (agents waiting to be scheduled).
 
 #. The master calculates the ideal size of the cluster and decides how many agents to launch and
-   which agents to terminate. The calculation is done based on the configured scaling behavior and
-   the specification of the resource pools.
+   which agents to terminate. The calculation is based on the total resource requests of all jobs
+   submitted to the cluster, configured scaling behavior (minimum and maximum amount of instances
+   the master can spawn), and the specification of the resource pools.
 
    -  An agent that is not running any containers is considered *idle*. By default, idle dynamic
       agents will automatically be terminated after 5 minutes of inactivity. This behavior gives

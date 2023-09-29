@@ -13,10 +13,19 @@
    might change. While we try to preserve backward compatibility whenever possible, you should read
    the :ref:`release-notes` for a description of recent changes before upgrading Determined.
 
-Upgrading an existing Determined installation requires the same steps as installing Determined for
-the first time. Before starting an upgrade, first follow the steps below to safely shut down the
-cluster. Once the upgrade is complete and Determined is restarted, all suspended experiments will be
-resumed automatically.
+To upgrade, follow the same steps as you did during the initial :ref:`installation
+<installation-guide>` of Determined. For example, if you deployed your Determined cluster on Amazon
+Web Services (AWS), you would run ``det deploy aws up --cluster-id CLUSTER_ID --keypair
+KEYPAIR_NAME``.
+
+.. important::
+
+   The specific upgrade commands vary by environment. You'll need to run the same commands
+   (including any flags) that were run when you installed Determined.
+
+Before starting an upgrade, first follow the steps below to safely shut down the cluster. Once the
+upgrade is complete and Determined is restarted, all suspended experiments will be resumed
+automatically.
 
 #. Disable all Determined agents in the cluster:
 

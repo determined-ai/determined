@@ -12,6 +12,8 @@ process for setting up infrastructure with Terraform, you can use our `Terraform
 <https://github.com/determined-ai/determined/tree/master/harness/determined/deploy/gcp/terraform>`__
 rather than ``det deploy``.
 
+.. include:: ../../../_shared/tip-keep-install-instructions.txt
+
 For more information about using Determined on GCP, see the :ref:`topic_guide_gcp` topic guide.
 
 **************

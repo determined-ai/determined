@@ -1,0 +1,4 @@
+.. tip::
+
+   Store your installation commands and flags in a shell script for future use, particularly for
+   :ref:`upgrading <upgrades>`.
