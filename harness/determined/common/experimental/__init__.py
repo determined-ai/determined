@@ -12,7 +12,7 @@ from determined.common.experimental.metrics import (
     TrainingMetrics,
     ValidationMetrics,
 )
-
+from determined.common.experimental.project import Project
 
 warnings.warn(
     "The 'determined.common.experimental' module is deprecated and will be removed "

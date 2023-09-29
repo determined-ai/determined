@@ -1,3 +1,15 @@
+"""Rendering utilities for the CLI.
+
+The to_json functions in this module are used to convert resource objects into dicts that look
+similar to their analagous resources from bindings to_json functions.
+
+This allows the CLI to use the similar code to render resources from both the bindings and the
+experimental API.
+
+For example, the following two lines of pseudocode return similar objects:
+* bindings.v1Model.to_json()
+* _render.model_to_json(model.Model)
+"""
 import base64
 import csv
 import inspect
@@ -14,6 +26,7 @@ import termcolor
 
 from determined import util as det_util
 from determined.common import util, yaml
+from determined.experimental import Model, Project
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
@@ -292,3 +305,31 @@ def print_json(data: Union[str, Any]) -> None:
 def report_job_launched(_type: str, _id: str) -> None:
     msg = f"Launched {_type} (id: {_id})."
     print(termcolor.colored(msg, "green"))
+
+
+def model_to_json(model: Model) -> Dict[str, Any]:
+    """Convert a Model to a bindings-style to_json dict."""
+    return {
+        "name": model.name,
+        "id": model.model_id,
+        "description": model.description,
+        "creation_time": model.creation_time,
+        "last_updated_time": model.last_updated_time,
+        "metadata": model.metadata,
+        "archived": model.archived,
+    }
+
+
+def project_to_json(project: Project) -> Dict[str, Any]:
+    """Convert a Project to a bindings-style to_json dict."""
+    return {
+        "archived": project.archived,
+        "description": project.description,
+        "id": project.id,
+        "name": project.name,
+        "notes": project.notes,
+        "numActiveExperiments": project.n_active_experiments,
+        "numExperiments": project.n_experiments,
+        "workspaceId": project.workspace_id,
+        "username": project.username,
+    }

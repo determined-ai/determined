@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings
@@ -192,24 +192,3 @@ class Project:
         )
 
         self.notes = [note.to_json() for note in resp.notes]
-
-    def _to_json(self) -> Dict[str, Any]:
-        """Return this object as a dict.
-
-        This helps the CLI serialize a Project by providing an interface similar to that in
-        bindings.py.
-
-        #TODO: move this actually into the CLI when controller and view are properly separated
-        in that codebase.
-        """
-        return {
-            "archived": self.archived,
-            "description": self.description,
-            "id": self.id,
-            "name": self.name,
-            "notes": self.notes,
-            "numActiveExperiments": self.n_active_experiments,
-            "numExperiments": self.n_experiments,
-            "workspaceId": self.workspace_id,
-            "username": self.username,
-        }
