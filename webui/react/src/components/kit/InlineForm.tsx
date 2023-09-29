@@ -58,6 +58,7 @@ function InlineForm<T>({
     if (shouldCollapseText) return textValue.slice(0, 50).concat('...');
     return textValue;
   }, [shouldCollapseText, value, initialValue, isPassword, inputCurrentValue, valueFormatter]);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (value !== undefined) {
@@ -98,7 +99,13 @@ function InlineForm<T>({
     }
   }, [form, initialValue, open, onSubmit]);
 
-  const shouldDisableButton = form.getFieldError('input').length !== 0;
+  const errors = form.getFieldError('input');
+
+  useEffect(() => {
+    // for some reason, if I use the for.getFieldError return value it has a delay
+    // which doesn't happen while using state.
+    setHasError(errors.length !== 0);
+  }, [errors]);
 
   return (
     <Form
@@ -129,7 +136,7 @@ function InlineForm<T>({
           <>
             <Button
               data-testid={`submit-${testId}`}
-              disabled={shouldDisableButton}
+              disabled={hasError}
               icon={<Icon name="checkmark" title="confirm" />}
               type="primary"
               onClick={handleConfirm}
