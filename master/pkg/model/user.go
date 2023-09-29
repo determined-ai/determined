@@ -128,7 +128,7 @@ func (user *User) UpdatePasswordHash(password string) error {
 
 // Proto converts a user to its protobuf representation.
 func (user *User) Proto() *userv1.User {
-	return &userv1.User{
+	u := &userv1.User{
 		Id:          int32(user.ID),
 		Username:    user.Username,
 		DisplayName: user.DisplayName.ValueOrZero(),
@@ -136,8 +136,11 @@ func (user *User) Proto() *userv1.User {
 		Active:      user.Active,
 		ModifiedAt:  timestamppb.New(user.ModifiedAt),
 		Remote:      user.Remote,
-		LastLogin:   timestamppb.New(*user.LastLogin),
 	}
+	if user.LastLogin != nil {
+		u.LastLogin = timestamppb.New(*user.LastLogin)
+	}
+	return u
 }
 
 // Users is a slice of User objects—primarily useful for its methods.
