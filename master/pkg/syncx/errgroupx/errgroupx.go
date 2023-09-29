@@ -22,6 +22,11 @@ func WithContext(ctx context.Context) Group {
 	return Group{inner: g, ctx: groupContext, cancel: cancel}
 }
 
+// Context returns the context within this group.
+func (g *Group) Context() context.Context {
+	return g.ctx
+}
+
 // Go launch the given function in a goroutine as a member of the group. If the function returns an
 // error, the Group-scoped context will be canceled.
 func (g *Group) Go(f func(ctx context.Context) error) {

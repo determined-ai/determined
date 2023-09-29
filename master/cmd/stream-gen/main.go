@@ -1,29 +1,29 @@
 package main
 
 import (
-	"io"
-	"fmt"
-	"os"
-	"strings"
-	"strconv"
-	"go/token"
-	"go/parser"
-	"go/ast"
-	"io/fs"
 	"bytes"
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io"
+	"io/fs"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
 type Streamable struct {
-	Name string
+	Name   string
 	Fields []Field
 }
 
 type Field struct {
-	Name string
-	Type string
+	Name    string
+	Type    string
 	JsonTag string
 }
 
@@ -60,8 +60,8 @@ func (x DeclFinder) Visit(node ast.Node) ast.Visitor {
 // StreamableFinder seeks `type Thing struct` definitions with `determined:streamable` comments,
 // builds an associated Streamable object, and adds it to the out slice.
 type StreamableFinder struct {
-	src []byte
-	out *[]Streamable
+	src              []byte
+	out              *[]Streamable
 	expectStreamable bool
 }
 
@@ -134,7 +134,7 @@ func (x *StreamableFinder) Visit(node ast.Node) ast.Visitor {
 			v = strings.SplitN(v, ",", 2)[0]
 			// Get the string representing this type.  We use the string because the ast
 			// representation of the type is a PITA to work with.
-			typestr := string(x.src[field.Type.Pos()-1:field.Type.End()-1])
+			typestr := string(x.src[field.Type.Pos()-1 : field.Type.End()-1])
 			result.Fields = append(result.Fields, Field{field.Names[0].String(), typestr, v})
 		}
 	}
@@ -171,7 +171,7 @@ type Builder struct {
 	builder strings.Builder
 }
 
-func (b *Builder) Writef(fstr string, args... interface{}) {
+func (b *Builder) Writef(fstr string, args ...interface{}) {
 	if len(args) == 0 {
 		_, _ = b.builder.WriteString(fstr)
 		return
@@ -186,18 +186,18 @@ func (b *Builder) String() string {
 func genPython(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) (string, error) {
-		x := map[string]string {
-			"JsonB": "typing.Any",
-			"string": "str",
-			"int": "int",
-			"int64": "int",
-			"[]int": "typing.List[int]",
-			"time.Time": "float",
-			"*time.Time": "typing.Optional[float]",
-			"model.TaskID": "str",
-			"model.RequestID": "int",
+		x := map[string]string{
+			"JSONB":            "typing.Any",
+			"string":           "str",
+			"int":              "int",
+			"int64":            "int",
+			"[]int":            "typing.List[int]",
+			"time.Time":        "float",
+			"*time.Time":       "typing.Optional[float]",
+			"model.TaskID":     "str",
+			"model.RequestID":  "int",
 			"*model.RequestID": "typing.Optional[int]",
-			"model.State": "str",
+			"model.State":      "str",
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -272,7 +272,7 @@ func main() {
 	lang := ""
 	stamp := ""
 	gofiles := []string{}
-	for i := 1 ; i < len(os.Args); i++ {
+	for i := 1; i < len(os.Args); i++ {
 		arg := os.Args[i]
 		if arg == "-h" || arg == "--help" {
 			printHelp(os.Stdout)
@@ -283,7 +283,7 @@ func main() {
 			continue
 		}
 		if arg == "-o" || arg == "--output" {
-			if i + 1 >= len(os.Args) {
+			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "Missing --output parameter.\nTry --help.\n")
 				os.Exit(2)
 			}
@@ -292,7 +292,7 @@ func main() {
 			continue
 		}
 		if arg == "-s" || arg == "--stamp" {
-			if i + 1 >= len(os.Args) {
+			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "Missing --stamp parameter.\nTry --help.\n")
 				os.Exit(2)
 			}
@@ -348,7 +348,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "output is up-to-date\n")
 		} else {
 			// write a new output
-			err := os.WriteFile(output, content, 0666)
+			err := os.WriteFile(output, content, 0o666)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed writing to %v: %v\n", output, err.Error())
 				os.Exit(1)
