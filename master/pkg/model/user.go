@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	// DefaultPassword is a default password set in master config.
-	DefaultPassword = null.NewString("", false)
+	// InitialPassword is a initial password set in master config for
+	// the 'admin' and 'determined' users.
+	InitialPassword = null.NewString("", false)
 
 	// NoPasswordLogin is a password that prevents the user from logging in
 	// directly. They can still login via external authentication methods like
@@ -86,13 +87,13 @@ func (u FullUser) ToUser() User {
 	}
 }
 
-// SetDefaultPassword initializes default password.
-func (user User) SetDefaultPassword(password string) error {
+// SetInitialPassword initializes default password.
+func (user User) SetInitialPassword(password string) error {
 	passwordHash, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
 		BCryptCost,
 	)
-	DefaultPassword = null.StringFrom(string(passwordHash))
+	InitialPassword = null.StringFrom(string(passwordHash))
 	if err != nil {
 		return err
 	}
