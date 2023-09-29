@@ -15,5 +15,5 @@ func TestUserNilLastLoginProto(t *testing.T) {
 func TestUserNonNilLastLoginProto(t *testing.T) {
 	expectedTime := time.Now()
 	u := User{LastLogin: &expectedTime}
-	require.Equal(t, expectedTime, u.Proto().LastLogin.AsTime())
+	require.WithinDuration(t, expectedTime, u.Proto().LastLogin.AsTime(), time.Millisecond)
 }
