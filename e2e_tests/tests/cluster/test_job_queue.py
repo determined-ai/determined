@@ -7,6 +7,7 @@ import pytest
 # from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
+from tests.cluster.utils import run_command
 
 
 @pytest.mark.e2e_cpu
@@ -80,3 +81,23 @@ class JobInfo:
                 continue
             return value_dict["Weight"]
         return ""
+
+
+@pytest.mark.e2e_cpu
+def test_job_queue_is_working_fine() -> None:
+    for slots in [0, 1]:
+        run_command(1, slots)
+
+    exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
+    )
+
+    jobs = JobInfo()
+    ok = jobs.refresh_until_populated()
+    assert ok
+
+    ordered_ids = jobs.get_ids()
+
+    assert len(ordered_ids) == 3
