@@ -35,7 +35,7 @@ type LogPatternPolicyV0 struct {
 	RawPolicy *LogPolicyV0 `json:"policy"`
 }
 
-// LogPatternPoliciesPolicyV0 is a policy to take after matching.
+// LogPolicyV0 is a policy to take after matching.
 //
 //go:generate ../gen.sh
 type LogPolicyV0 struct {
@@ -81,7 +81,7 @@ type OnFailureExcludeNodePolicyV0 struct {
 	RawRestarts *int `json:"restarts"`
 }
 
-// SendWebhookPolicyV0
+// SendWebhookPolicyV0 will send a webhook.
 //
 //go:generate ../gen.sh
 type SendWebhookPolicyV0 struct {
