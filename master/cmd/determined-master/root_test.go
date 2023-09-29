@@ -53,6 +53,8 @@ task_container_defaults:
         - name: determined-container
 webhooks:
     signing_key: testWebhookSigningKey
+
+admin_determined_initial_password: test_default
 `
 
 	expected := config.DefaultConfig()
@@ -104,6 +106,8 @@ webhooks:
 			TaskContainerDefaults:    &expected.TaskContainerDefaults,
 		},
 	}
+
+	expected.InitialPassword = "test_default"
 
 	err := expected.Resolve()
 	assert.NilError(t, err)
