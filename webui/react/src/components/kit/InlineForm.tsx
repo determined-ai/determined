@@ -98,6 +98,8 @@ function InlineForm<T>({
     }
   }, [form, initialValue, open, onSubmit]);
 
+  const shouldDisableButton = form.getFieldError('input').length !== 0;
+
   return (
     <Form
       className={css.formBase}
@@ -127,6 +129,7 @@ function InlineForm<T>({
           <>
             <Button
               data-testid={`submit-${testId}`}
+              disabled={shouldDisableButton}
               icon={<Icon name="checkmark" title="confirm" />}
               type="primary"
               onClick={handleConfirm}

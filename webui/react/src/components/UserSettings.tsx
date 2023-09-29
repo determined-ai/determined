@@ -107,11 +107,11 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
 
   const [newPassword, setNewPassword] = useState<string>('');
 
-  const NEW_PASSWORD_REQUIRED_MESSAGE = 'Password cannot be blank.';
-  const PASSWORD_TOO_SHORT_MESSAGE = "Password isn't long enough.";
-  const PASSWORD_UPPERCASE_MESSAGE = 'Password must include a uppercase letter.';
-  const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter.';
-  const PASSWORD_NUMBER_MESSAGE = 'Password must include a number.';
+  const NEW_PASSWORD_REQUIRED_MESSAGE = "Password can't be blank";
+  const PASSWORD_TOO_SHORT_MESSAGE = 'Password must have at least 8 characters';
+  const PASSWORD_UPPERCASE_MESSAGE = 'Password must include an uppercase letter';
+  const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter';
+  const PASSWORD_NUMBER_MESSAGE = 'Password must include a number';
 
   const handleSavePassword = useCallback(
     (value: string) => {
@@ -155,14 +155,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   rules={[{ message: 'Please input your username', required: true }]}
                   testId="username"
                   onSubmit={handleSaveUsername}>
-                  <Input maxLength={32} placeholder="Add username" />
+                  <Input autoFocus maxLength={32} placeholder="Add username" />
                 </InlineForm>
                 <InlineForm<string>
                   initialValue={currentUser?.displayName ?? ''}
                   label="Display Name"
                   testId="displayname"
                   onSubmit={handleSaveDisplayName}>
-                  <Input maxLength={32} placeholder="Add display name" />
+                  <Input autoFocus maxLength={32} placeholder="Add display name" />
                 </InlineForm>
                 {info.userManagementEnabled && (
                   <>
@@ -194,7 +194,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       onCancel={() => setEditingPassword(false)}
                       onEdit={() => setEditingPassword(true)}
                       onSubmit={handleSavePassword}>
-                      <Input.Password />
+                      <Input.Password autofocus />
                     </InlineForm>
                     <PasswordChangeModal.Component
                       newPassword={newPassword}
