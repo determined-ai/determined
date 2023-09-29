@@ -8,4 +8,7 @@
   .container > [class*='Message_base'] {
     height: 400px;
   }
+  :global(.u-title) {
+    word-break: break-all;
+  }
 }

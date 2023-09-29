@@ -23,4 +23,7 @@
     padding: 12px;
     width: 100%;
   }
+  :global(.u-title) {
+    word-break: break-all;
+  }
 }
