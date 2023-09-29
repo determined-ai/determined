@@ -69,7 +69,7 @@ def list_models(args: Namespace) -> None:
         workspace_names=workspace_names,
     )
     if args.json:
-        determined.cli.render.print_json([m.to_json() for m in models])
+        determined.cli.render.print_json([render.model_to_json(m) for m in models])
     else:
         headers = ["ID", "Name", "Workspace ID", "Creation Time", "Last Updated Time", "Metadata"]
 
@@ -112,7 +112,7 @@ def create(args: Namespace) -> None:
     )
 
     if args.json:
-        determined.cli.render.print_json(model.to_json())
+        determined.cli.render.print_json(render.model_to_json(model))
     else:
         render_model(model)
 
@@ -127,7 +127,7 @@ def describe(args: Namespace) -> None:
     model_version = model.get_version(args.version)
 
     if args.json:
-        determined.cli.render.print_json(model.to_json())
+        determined.cli.render.print_json(render.model_to_json(model))
     else:
         render_model(model)
         if model_version is not None:
