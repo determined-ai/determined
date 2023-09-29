@@ -1464,21 +1464,18 @@ var (
     "additionalProperties": false,
     "type": "object",
     "required": [
-        "type"
-    ],
-    "eventuallyRequired": [
+        "type",
         "webhook_name"
     ],
+    "eventuallyRequired": [],
     "properties": {
         "type": {
             "const": "send_webhook"
         },
         "webhook_name": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         }
     }
 }

@@ -13,6 +13,8 @@ import (
 //go:generate ../gen.sh
 type LogPatternPoliciesConfigV0 []LogPatternPolicyV0
 
+// TODO test merging in task container defaults.
+/*
 // Merge implemenets the mergable interface.
 func (b LogPatternPoliciesConfigV0) Merge(
 	other LogPatternPoliciesConfigV0,
@@ -22,6 +24,7 @@ func (b LogPatternPoliciesConfigV0) Merge(
 	// Yeah like don't define cluster level logs?
 	return append(b, other...)
 }
+*/
 
 // LogPatternPolicyV0 is an action to take if we match against trial logs.
 //
@@ -36,9 +39,9 @@ type LogPatternPolicyV0 struct {
 //
 //go:generate ../gen.sh
 type LogPolicyV0 struct {
-	RawOnFailureDontRetry   *DontRetryPolicyV0            `union:"name,on_failure_dont_retry" json:"-"`
-	RawOnFailureExcludeNode *OnFailureExcludeNodePolicyV0 `union:"name,on_failure_exclude_node" json:"-"`
-	RawSendWebhook          *SendWebhookPolicyV0          `union:"name,send_webhook" json:"-"`
+	RawOnFailureDontRetry   *DontRetryPolicyV0            `union:"type,on_failure_dont_retry" json:"-"`
+	RawOnFailureExcludeNode *OnFailureExcludeNodePolicyV0 `union:"type,on_failure_exclude_node" json:"-"`
+	RawSendWebhook          *SendWebhookPolicyV0          `union:"type,send_webhook" json:"-"`
 }
 
 // Merge implements schemas.Mergeable.
@@ -63,23 +66,24 @@ func (s *LogPolicyV0) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// LogPatternPoliciesPolicyV0 is a policy to take after matching
+// DontRetryPolicyV0 doesn't retry the trial if it fails.
 //
 //go:generate ../gen.sh
 type DontRetryPolicyV0 struct {
-	RawHack string `json:"test"`
+	// This comment is needed to stop ../gen.sh from complaining.
 }
 
-// OnFailurePolicyV0 is a policy to take after matching
+// OnFailureExcludeNodePolicyV0 will exclude the node the log was seen on
+// (only for that trial) and reschedule.
 //
 //go:generate ../gen.sh
 type OnFailureExcludeNodePolicyV0 struct {
-	RawRestarts *int `json:"restarts"` // TODO should these be int or string
+	RawRestarts *int `json:"restarts"`
 }
 
-// SendWebhookPolicyV0 is a policy to take after matching
+// SendWebhookPolicyV0
 //
 //go:generate ../gen.sh
 type SendWebhookPolicyV0 struct {
-	RawWebhookName *string `json:"webhook_name"` // TODO this should be required?
+	RawWebhookName string `json:"webhook_name"`
 }

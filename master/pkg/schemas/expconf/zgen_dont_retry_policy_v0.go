@@ -8,14 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (d DontRetryPolicyV0) Hack() string {
-	return d.RawHack
-}
-
-func (d *DontRetryPolicyV0) SetHack(val string) {
-	d.RawHack = val
-}
-
 func (d DontRetryPolicyV0) ParsedSchema() interface{} {
 	return schemas.ParsedDontRetryPolicyV0()
 }

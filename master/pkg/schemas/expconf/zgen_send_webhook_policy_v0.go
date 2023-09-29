@@ -9,14 +9,11 @@ import (
 )
 
 func (s SendWebhookPolicyV0) WebhookName() string {
-	if s.RawWebhookName == nil {
-		panic("You must call WithDefaults on SendWebhookPolicyV0 before .WebhookName")
-	}
-	return *s.RawWebhookName
+	return s.RawWebhookName
 }
 
 func (s *SendWebhookPolicyV0) SetWebhookName(val string) {
-	s.RawWebhookName = &val
+	s.RawWebhookName = val
 }
 
 func (s SendWebhookPolicyV0) ParsedSchema() interface{} {
