@@ -131,7 +131,7 @@ func RegisterAPIHandlers(config *config.Config, db *db.PgDB, echo *echo.Echo) er
 		log.Info("OIDC is enabled")
 		oidcService, err := oidc.New(db, config.OIDC)
 		if err != nil {
-			return errors.Wrap(err, "error creating SAML service")
+			return errors.Wrap(err, "error creating OIDC service")
 		}
 		oidc.RegisterAPIHandler(echo, oidcService)
 	} else {
