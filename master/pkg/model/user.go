@@ -136,7 +136,6 @@ func (user *User) Proto() *userv1.User {
 		Active:      user.Active,
 		ModifiedAt:  timestamppb.New(user.ModifiedAt),
 		Remote:      user.Remote,
-		LastAuthAt:  timestamppb.New(*user.LastAuthAt),
 	}
 	if user.LastAuthAt != nil {
 		u.LastAuthAt = timestamppb.New(*user.LastAuthAt)
