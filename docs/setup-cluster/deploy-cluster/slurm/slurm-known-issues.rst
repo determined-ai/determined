@@ -382,6 +382,11 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
    reported as completed with no error message reported. Refer to :ref:`PBS Requirements
    <pbs-config-requirements>`.
 
+-  Jobs may fail with exit status 247, for example, ``ERROR: process 6642 exited with status 247.
+   Terminating all tasks.``. This normally indicates the job exceeded its Cgroup memory limit.
+   Reference PBS Administrator's Guide ``Configuring and Using PBS with Cgroups`` and adjust memory
+   subsystem settings accordingly.
+
 ***********************
  AMD/ROCm Known Issues
 ***********************
