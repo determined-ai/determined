@@ -107,7 +107,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
 
   const [newPassword, setNewPassword] = useState<string>('');
 
-  const NEW_PASSWORD_REQUIRED_MESSAGE = 'New password required.';
+  const NEW_PASSWORD_REQUIRED_MESSAGE = 'Password cannot be blank.';
   const PASSWORD_TOO_SHORT_MESSAGE = "Password isn't long enough.";
   const PASSWORD_UPPERCASE_MESSAGE = 'Password must include a uppercase letter.';
   const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter.';
