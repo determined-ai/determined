@@ -171,7 +171,7 @@ export const patchUsers: DetApi<
 > = {
   name: 'patchUsers',
   postProcess: (response) => response,
-  request: (params) => detApi.Users.patchUsers(params),
+  request: (params) => detApi.Internal.patchUsers(params),
 };
 
 export const getUserSetting: DetApi<
