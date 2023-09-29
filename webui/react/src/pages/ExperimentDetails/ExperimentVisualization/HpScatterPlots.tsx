@@ -74,7 +74,7 @@ const ScatterPlots: React.FC<Props> = ({
 
     return selectedHParams.reduce((acc, hParam) => {
       const xLabel = hParam;
-      const yLabel = metricToStr(selectedMetric);
+      const yLabel = metricToStr(selectedMetric, 60);
       const title = `${yLabel} (y) vs ${xLabel} (x)`;
       const hpLabels = chartData?.hpLabels[hParam];
       const isLogarithmic = chartData?.hpLogScales[hParam];
