@@ -16896,6 +16896,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling assignMultipleGroups.');
+            }
+            const localVarPath = `/api/v1/users/assignments`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -18313,6 +18351,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUsers.');
+            }
+            const localVarPath = `/api/v1/users`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -19389,6 +19465,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignMultipleGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).assignMultipleGroups(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -20056,6 +20151,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchUsers(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -20552,6 +20666,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
+            return InternalApiFp(configuration).assignMultipleGroups(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -20922,6 +21046,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options?: any) {
+            return InternalApiFp(configuration).patchUsers(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -21249,6 +21383,18 @@ export class InternalApi extends BaseAPI {
      */
     public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
         return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Assign multiple users to multiple groups.
+     * @param {V1AssignMultipleGroupsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
+        return InternalApiFp(this.configuration).assignMultipleGroups(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -21685,6 +21831,18 @@ export class InternalApi extends BaseAPI {
      */
     public patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).patchTrial(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch multiple users' activation status.
+     * @param {V1PatchUsersRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public patchUsers(body: V1PatchUsersRequest, options?: any) {
+        return InternalApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -25315,44 +25473,6 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
     return {
         /**
          * 
-         * @summary Assign multiple users to multiple groups.
-         * @param {V1AssignMultipleGroupsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling assignMultipleGroups.');
-            }
-            const localVarPath = `/api/v1/users/assignments`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'PATCH', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary AssignRoles adds a set of role assignments to the system.
          * @param {V1AssignRolesRequest} body
          * @param {*} [options] Override http request option.
@@ -25695,25 +25815,6 @@ export const RBACApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Assign multiple users to multiple groups.
-         * @param {V1AssignMultipleGroupsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignMultipleGroupsResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignMultipleGroups(body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary AssignRoles adds a set of role assignments to the system.
          * @param {V1AssignRolesRequest} body
          * @param {*} [options] Override http request option.
@@ -25894,16 +25995,6 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
     return {
         /**
          * 
-         * @summary Assign multiple users to multiple groups.
-         * @param {V1AssignMultipleGroupsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
-            return RBACApiFp(configuration).assignMultipleGroups(body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary AssignRoles adds a set of role assignments to the system.
          * @param {V1AssignRolesRequest} body
          * @param {*} [options] Override http request option.
@@ -26002,18 +26093,6 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
  * @extends {BaseAPI}
  */
 export class RBACApi extends BaseAPI {
-    /**
-     * 
-     * @summary Assign multiple users to multiple groups.
-     * @param {V1AssignMultipleGroupsRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof RBACApi
-     */
-    public assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
-        return RBACApiFp(this.configuration).assignMultipleGroups(body, options)(this.fetch, this.basePath)
-    }
-    
     /**
      * 
      * @summary AssignRoles adds a set of role assignments to the system.
@@ -29452,44 +29531,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Patch multiple users' activation status.
-         * @param {V1PatchUsersRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchUsers(body: V1PatchUsersRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUsers.');
-            }
-            const localVarPath = `/api/v1/users`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'PATCH', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29808,25 +29849,6 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Patch multiple users' activation status.
-         * @param {V1PatchUsersRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUsers(body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -29997,16 +30019,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
-         * @summary Patch multiple users' activation status.
-         * @param {V1PatchUsersRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchUsers(body: V1PatchUsersRequest, options?: any) {
-            return UsersApiFp(configuration).patchUsers(body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body
          * @param {*} [options] Override http request option.
@@ -30141,18 +30153,6 @@ export class UsersApi extends BaseAPI {
      */
     public patchUser(userId: number, body: V1PatchUser, options?: any) {
         return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Patch multiple users' activation status.
-     * @param {V1PatchUsersRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public patchUsers(body: V1PatchUsersRequest, options?: any) {
-        return UsersApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
     }
     
     /**

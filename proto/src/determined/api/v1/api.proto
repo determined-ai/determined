@@ -215,7 +215,7 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
+      tags: "Internal"
     };
   }
   // Assign multiple users to multiple groups.
@@ -226,7 +226,7 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "RBAC"
+      tags: "Internal"
     };
   }
   // Get telemetry information.

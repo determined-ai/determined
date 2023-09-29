@@ -583,6 +583,112 @@ func (*DeleteGroupResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_group_proto_rawDescGZIP(), []int{9}
 }
 
+// Add and remove multiple users from multiple groups.
+type AssignMultipleGroupsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The user ids of users to edit group associations.
+	UserIds []int32 `protobuf:"varint,1,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	// The ids of groups to associate with users.
+	AddGroups []int32 `protobuf:"varint,2,rep,packed,name=add_groups,json=addGroups,proto3" json:"add_groups,omitempty"`
+	// The ids of groups to disassociate from users.
+	RemoveGroups []int32 `protobuf:"varint,3,rep,packed,name=remove_groups,json=removeGroups,proto3" json:"remove_groups,omitempty"`
+}
+
+func (x *AssignMultipleGroupsRequest) Reset() {
+	*x = AssignMultipleGroupsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_group_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AssignMultipleGroupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignMultipleGroupsRequest) ProtoMessage() {}
+
+func (x *AssignMultipleGroupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_group_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignMultipleGroupsRequest.ProtoReflect.Descriptor instead.
+func (*AssignMultipleGroupsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_group_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AssignMultipleGroupsRequest) GetUserIds() []int32 {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+func (x *AssignMultipleGroupsRequest) GetAddGroups() []int32 {
+	if x != nil {
+		return x.AddGroups
+	}
+	return nil
+}
+
+func (x *AssignMultipleGroupsRequest) GetRemoveGroups() []int32 {
+	if x != nil {
+		return x.RemoveGroups
+	}
+	return nil
+}
+
+// Response to AssignMultipleGroupsRequest.
+type AssignMultipleGroupsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *AssignMultipleGroupsResponse) Reset() {
+	*x = AssignMultipleGroupsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_group_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AssignMultipleGroupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignMultipleGroupsResponse) ProtoMessage() {}
+
+func (x *AssignMultipleGroupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_group_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignMultipleGroupsResponse.ProtoReflect.Descriptor instead.
+func (*AssignMultipleGroupsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_group_proto_rawDescGZIP(), []int{11}
+}
+
 var File_determined_api_v1_group_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_group_proto_rawDesc = []byte{
@@ -655,11 +761,24 @@ var file_determined_api_v1_group_proto_rawDesc = []byte{
 	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x64,
 	0x3a, 0x10, 0x92, 0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x5f,
 	0x69, 0x64, 0x22, 0x15, 0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x47, 0x72, 0x6f, 0x75,
-	0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xab, 0x01, 0x0a, 0x1b, 0x41, 0x73,
+	0x73, 0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75,
+	0x70, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x75, 0x73, 0x65,
+	0x72, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x07, 0x75, 0x73, 0x65,
+	0x72, 0x49, 0x64, 0x73, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x64, 0x64, 0x5f, 0x67, 0x72, 0x6f, 0x75,
+	0x70, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x05, 0x52, 0x09, 0x61, 0x64, 0x64, 0x47, 0x72, 0x6f,
+	0x75, 0x70, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x5f, 0x67, 0x72,
+	0x6f, 0x75, 0x70, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0c, 0x72, 0x65, 0x6d, 0x6f,
+	0x76, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x3a, 0x2d, 0x92, 0x41, 0x2a, 0x0a, 0x28, 0xd2,
+	0x01, 0x0a, 0x61, 0x64, 0x64, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0xd2, 0x01, 0x0d, 0x72,
+	0x65, 0x6d, 0x6f, 0x76, 0x65, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0xd2, 0x01, 0x08, 0x75,
+	0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x22, 0x1e, 0x0a, 0x1c, 0x41, 0x73, 0x73, 0x69, 0x67,
+	0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
+	0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -674,28 +793,30 @@ func file_determined_api_v1_group_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_group_proto_rawDescData
 }
 
-var file_determined_api_v1_group_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_determined_api_v1_group_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_determined_api_v1_group_proto_goTypes = []interface{}{
-	(*GetGroupRequest)(nil),           // 0: determined.api.v1.GetGroupRequest
-	(*GetGroupResponse)(nil),          // 1: determined.api.v1.GetGroupResponse
-	(*GetGroupsRequest)(nil),          // 2: determined.api.v1.GetGroupsRequest
-	(*GetGroupsResponse)(nil),         // 3: determined.api.v1.GetGroupsResponse
-	(*UpdateGroupRequest)(nil),        // 4: determined.api.v1.UpdateGroupRequest
-	(*CreateGroupResponse)(nil),       // 5: determined.api.v1.CreateGroupResponse
-	(*UpdateGroupResponse)(nil),       // 6: determined.api.v1.UpdateGroupResponse
-	(*CreateGroupRequest)(nil),        // 7: determined.api.v1.CreateGroupRequest
-	(*DeleteGroupRequest)(nil),        // 8: determined.api.v1.DeleteGroupRequest
-	(*DeleteGroupResponse)(nil),       // 9: determined.api.v1.DeleteGroupResponse
-	(*groupv1.GroupDetails)(nil),      // 10: determined.group.v1.GroupDetails
-	(*groupv1.GroupSearchResult)(nil), // 11: determined.group.v1.GroupSearchResult
-	(*Pagination)(nil),                // 12: determined.api.v1.Pagination
+	(*GetGroupRequest)(nil),              // 0: determined.api.v1.GetGroupRequest
+	(*GetGroupResponse)(nil),             // 1: determined.api.v1.GetGroupResponse
+	(*GetGroupsRequest)(nil),             // 2: determined.api.v1.GetGroupsRequest
+	(*GetGroupsResponse)(nil),            // 3: determined.api.v1.GetGroupsResponse
+	(*UpdateGroupRequest)(nil),           // 4: determined.api.v1.UpdateGroupRequest
+	(*CreateGroupResponse)(nil),          // 5: determined.api.v1.CreateGroupResponse
+	(*UpdateGroupResponse)(nil),          // 6: determined.api.v1.UpdateGroupResponse
+	(*CreateGroupRequest)(nil),           // 7: determined.api.v1.CreateGroupRequest
+	(*DeleteGroupRequest)(nil),           // 8: determined.api.v1.DeleteGroupRequest
+	(*DeleteGroupResponse)(nil),          // 9: determined.api.v1.DeleteGroupResponse
+	(*AssignMultipleGroupsRequest)(nil),  // 10: determined.api.v1.AssignMultipleGroupsRequest
+	(*AssignMultipleGroupsResponse)(nil), // 11: determined.api.v1.AssignMultipleGroupsResponse
+	(*groupv1.GroupDetails)(nil),         // 12: determined.group.v1.GroupDetails
+	(*groupv1.GroupSearchResult)(nil),    // 13: determined.group.v1.GroupSearchResult
+	(*Pagination)(nil),                   // 14: determined.api.v1.Pagination
 }
 var file_determined_api_v1_group_proto_depIdxs = []int32{
-	10, // 0: determined.api.v1.GetGroupResponse.group:type_name -> determined.group.v1.GroupDetails
-	11, // 1: determined.api.v1.GetGroupsResponse.groups:type_name -> determined.group.v1.GroupSearchResult
-	12, // 2: determined.api.v1.GetGroupsResponse.pagination:type_name -> determined.api.v1.Pagination
-	10, // 3: determined.api.v1.CreateGroupResponse.group:type_name -> determined.group.v1.GroupDetails
-	10, // 4: determined.api.v1.UpdateGroupResponse.group:type_name -> determined.group.v1.GroupDetails
+	12, // 0: determined.api.v1.GetGroupResponse.group:type_name -> determined.group.v1.GroupDetails
+	13, // 1: determined.api.v1.GetGroupsResponse.groups:type_name -> determined.group.v1.GroupSearchResult
+	14, // 2: determined.api.v1.GetGroupsResponse.pagination:type_name -> determined.api.v1.Pagination
+	12, // 3: determined.api.v1.CreateGroupResponse.group:type_name -> determined.group.v1.GroupDetails
+	12, // 4: determined.api.v1.UpdateGroupResponse.group:type_name -> determined.group.v1.GroupDetails
 	5,  // [5:5] is the sub-list for method output_type
 	5,  // [5:5] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
@@ -830,6 +951,30 @@ func file_determined_api_v1_group_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_group_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AssignMultipleGroupsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_group_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AssignMultipleGroupsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -837,7 +982,7 @@ func file_determined_api_v1_group_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_group_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
