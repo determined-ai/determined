@@ -14,7 +14,7 @@ import (
 
 // Supervisor manages the context for underlying PublisherSet.
 type Supervisor struct {
-	cond *sync.Cond
+	lock sync.Mutex
 	// these things change each restart of the PublisherSet
 	subctx context.Context
 	ps     *PublisherSet
@@ -22,18 +22,19 @@ type Supervisor struct {
 
 // NewSupervisor creates a new Supervisor.
 func NewSupervisor() *Supervisor {
-	var lock sync.Mutex
-	return &Supervisor{cond: sync.NewCond(&lock)}
+	// initialize with a valid publisher set and canceled supervisor context,
+	// so connections prior to runOne() can at least send startup messages.
+	ctx, cancelFn := context.WithCancel(context.Background())
+	cancelFn()
+	return &Supervisor{ps: NewPublisherSet(), subctx: ctx}
 }
 
 func (ssup *Supervisor) runOne(ctx context.Context) error {
 	group := errgroupx.WithContext(ctx)
 	subctx := group.Context()
 	func() {
-		ssup.cond.L.Lock()
-		defer ssup.cond.L.Unlock()
-		ssup.cond.Broadcast()
-
+		ssup.lock.Lock()
+		defer ssup.lock.Unlock()
 		ssup.subctx = subctx
 		ssup.ps = NewPublisherSet()
 
@@ -73,12 +74,8 @@ func (ssup *Supervisor) Websocket(socket *websocket.Conn, c echo.Context) error 
 	var ssupCtx context.Context
 	var ps *PublisherSet
 	func() {
-		ssup.cond.L.Lock()
-		defer ssup.cond.L.Unlock()
-		for ssup.ps == nil {
-			ssup.cond.Wait()
-			break
-		}
+		ssup.lock.Lock()
+		defer ssup.lock.Unlock()
 		ssupCtx = ssup.subctx
 		ps = ssup.ps
 	}()
