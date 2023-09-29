@@ -397,11 +397,11 @@ func (k *kubernetesResourcePool) moveJob(
 		}
 	}
 
-	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
+	jobPosition, err := k.queuePositions.GetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
 	if err != nil {
 		return err
 	}
-	if err := k.db.UpdateJobPosition(msg.JobID, msg.JobPosition); err != nil {
+	if err := k.db.UpdateJobPosition(jobID, jobPosition); err != nil {
 		return err
 	}
 

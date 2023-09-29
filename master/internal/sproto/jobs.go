@@ -97,13 +97,6 @@ type (
 	}
 )
 
-// RegisterJobPosition gets sent from the resource pool to experiment/command actors.
-// It notifies the task of its new position.
-type RegisterJobPosition struct {
-	JobID       model.JobID
-	JobPosition decimal.Decimal
-}
-
 // RecoverJobPosition gets sent from the experiment or command actor to the resource pool.
 // Notifies the resource pool of the position of the job.
 type RecoverJobPosition struct {

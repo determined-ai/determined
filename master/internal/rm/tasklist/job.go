@@ -93,22 +93,22 @@ func AssignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 // JobSortState models a job queue, and the positions of all jobs within it.
 type JobSortState map[model.JobID]decimal.Decimal
 
-// SetJobPosition sets the job position in the queue, relative to the anchors.
-func (j JobSortState) SetJobPosition(
+// GetJobPosition gets the job position in the queue, relative to the anchors.
+func (j JobSortState) GetJobPosition(
 	jobID model.JobID,
 	anchor1 model.JobID,
 	anchor2 model.JobID,
 	aheadOf bool,
 	isK8s bool,
-) (sproto.RegisterJobPosition, error) {
+) (decimal.Decimal, error) {
 	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, j)
 	if err != nil {
-		return sproto.RegisterJobPosition{}, err
+		return decimal.Decimal{}, err
 	}
-
 	// if the calculated position results in the wrong order
 	// we subtract a minimal decimal amount instead.
 	minDecimal := decimal.New(1, sproto.DecimalExp)
+
 	if isK8s {
 		minDecimal = decimal.New(1, sproto.K8sExp)
 	}
@@ -121,10 +121,7 @@ func (j JobSortState) SetJobPosition(
 	j[sproto.TailAnchor] = InitializeQueuePosition(time.Now(), isK8s)
 	j[jobID] = newPos
 
-	return sproto.RegisterJobPosition{
-		JobID:       jobID,
-		JobPosition: newPos,
-	}, nil
+	return newPos, nil
 }
 
 // RecoverJobPosition explicitly sets the position of a job.

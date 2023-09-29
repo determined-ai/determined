@@ -683,11 +683,11 @@ func (rp *resourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
+	jobPosition, err := rp.queuePositions.GetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
 	if err != nil {
 		return err
 	}
-	if err := rp.db.UpdateJobPosition(msg.JobID, msg.JobPosition); err != nil {
+	if err := rp.db.UpdateJobPosition(jobID, jobPosition); err != nil {
 		return err
 	}
 
