@@ -142,7 +142,7 @@ const NoteCards: React.FC<Props> = ({
         description={
           <>
             <p>No notes for this project</p>
-            <Button onClick={handleNewPage}>+ New Note</Button>
+            {!disabled && <Button onClick={handleNewPage}>+ New Note</Button>}
           </>
         }
         icon="document"
@@ -153,9 +153,11 @@ const NoteCards: React.FC<Props> = ({
   return (
     <>
       <div className={css.tabOptions}>
-        <Button type="text" onClick={onNewPage}>
-          + New Note
-        </Button>
+        {!disabled && (
+          <Button type="text" onClick={onNewPage}>
+            + New Note
+          </Button>
+        )}
       </div>
       <div className={css.base}>
         {notes.length > 0 && (

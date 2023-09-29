@@ -4,6 +4,7 @@ import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import { useModal } from 'components/kit/Modal';
 import Notes from 'components/kit/Notes';
 import ProjectNoteDeleteModalComponent from 'components/ProjectNoteDeleteModal';
+import usePermissions from 'hooks/usePermissions';
 import { addProjectNote, setProjectNotes } from 'services/api';
 import { Note, Project } from 'types';
 import handleError from 'utils/error';
@@ -24,6 +25,9 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
       handleError(e);
     }
   }, [fetchProject, project?.id]);
+
+  const { canCreateExperiment } = usePermissions();
+  const editPermission = canCreateExperiment({ workspace: { id: project.workspaceId } });
 
   const handleSaveNotes = useCallback(
     async (notes: Note[]) => {
@@ -58,7 +62,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
   return (
     <>
       <Notes
-        disabled={project?.archived}
+        disabled={project?.archived || !editPermission}
         multiple
         notes={project?.notes ?? []}
         onDelete={handleDeleteNote}
