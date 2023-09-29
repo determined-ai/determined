@@ -136,6 +136,7 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 	return nil
 }
 
+// SetInitialPassword initializes 'admin' and 'determined' user accounts with given password.
 func (db *PgDB) SetInitialPassword(password string) error {
 	passwordHash, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
