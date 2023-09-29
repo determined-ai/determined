@@ -415,34 +415,24 @@ func UpdateGroupsForMultipleUsers(
 	addGroups []int,
 	removeGroups []int,
 ) error {
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return errors.Wrapf(
-			db.MatchSentinelError(err),
-			"Error starting transaction for multi-group update")
-	}
-	defer func() {
-		txErr := tx.Rollback()
-		if txErr != nil && txErr != sql.ErrTxDone {
-			logrus.WithError(txErr).Error("error rolling back transaction in UpdateGroupsForMultipleUsers")
-		}
-	}()
+	return db.Bun().RunInTx(ctx, &sql.TxOptions{},
+		func(ctx context.Context, tx bun.Tx) error {
+			if len(addGroups) > 0 {
+				err = AddUsersToGroupsTx(ctx, tx, addGroups, true, modUsers...)
+				if err != nil {
+					return err
+				}
+			}
 
-	if len(addGroups) > 0 {
-		err = AddUsersToGroupsTx(ctx, tx, addGroups, true, modUsers...)
-		if err != nil {
-			return err
-		}
-	}
+			if len(removeGroups) > 0 {
+				err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, modUsers...)
+				if err != nil {
+					return err
+				}
+			}
 
-	if len(removeGroups) > 0 {
-		err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, modUsers...)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+			return ni
+		})
 }
 
 // UpdateUsersTimestampTx updates the user modified_at field to the present time.

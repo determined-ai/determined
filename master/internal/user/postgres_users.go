@@ -93,7 +93,7 @@ func Update(
 				Model(updated).
 				Column(toUpdate...).
 				Where("id = ?", updated.ID).Exec(ctx); err != nil {
-				return fmt.Errorf("error updating %q: %s", updated.Username, err)
+				return fmt.Errorf("error setting active status of %q: %s", updated.Username, err)
 			}
 		}
 
