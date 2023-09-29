@@ -52,8 +52,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/stream"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -1219,9 +1219,11 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	ps := stream.NewPublisherSet()
-	ps.Start(context.Background())
-	m.echo.GET("/stream", api.WebSocketRoute(ps.Websocket))
+	ssup := stream.NewSupervisor()
+	go func() {
+		_ = ssup.Run(context.Background())
+	}()
+	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket))
 
 	return m.startServers(ctx, cert)
 }
