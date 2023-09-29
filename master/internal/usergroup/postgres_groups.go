@@ -418,20 +418,20 @@ func UpdateGroupsForMultipleUsers(
 	return db.Bun().RunInTx(ctx, &sql.TxOptions{},
 		func(ctx context.Context, tx bun.Tx) error {
 			if len(addGroups) > 0 {
-				err = AddUsersToGroupsTx(ctx, tx, addGroups, true, modUsers...)
+				err := AddUsersToGroupsTx(ctx, tx, addGroups, true, modUsers...)
 				if err != nil {
 					return err
 				}
 			}
 
 			if len(removeGroups) > 0 {
-				err = RemoveUsersFromGroupsTx(ctx, tx, removeGroups, modUsers...)
+				err := RemoveUsersFromGroupsTx(ctx, tx, removeGroups, modUsers...)
 				if err != nil {
 					return err
 				}
 			}
 
-			return ni
+			return nil
 		})
 }
 
