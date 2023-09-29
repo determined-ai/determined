@@ -364,6 +364,55 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 	}
 }
 
+func TestLogPatternPoliciesMerging(t *testing.T) {
+	defaults := &TaskContainerDefaultsConfig{
+		LogPatternPolicies: expconf.LogPatternPoliciesConfig{
+			expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+			}},
+		},
+	}
+
+	conf := expconf.ExperimentConfig{
+		RawLogPatternPolicies: expconf.LogPatternPoliciesConfig{
+			expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "b", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+				RawSendWebhook: &expconf.SendWebhookPolicy{},
+			}},
+		},
+	}
+
+	defaults.MergeIntoExpConfig(&conf)
+
+	expected := expconf.LogPatternPoliciesConfig{
+		expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "b", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+			RawSendWebhook: &expconf.SendWebhookPolicy{},
+		}},
+	}
+
+	require.Equal(t, expected, conf.RawLogPatternPolicies)
+}
+
 func TestPodSpecsDefaultMerging(t *testing.T) {
 	defaults := &TaskContainerDefaultsConfig{
 		CPUPodSpec: &k8sV1.Pod{

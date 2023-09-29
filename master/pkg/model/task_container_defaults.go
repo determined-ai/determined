@@ -46,6 +46,8 @@ type TaskContainerDefaultsConfig struct {
 	Slurm      expconf.SlurmConfigV0 `json:"slurm"`
 	Pbs        expconf.PbsConfigV0   `json:"pbs"`
 
+	LogPatternPolicies expconf.LogPatternPoliciesConfig
+
 	// TODO(DET-9856) we should probably eventually move this to expconf and allow setting
 	// on a per task level.
 	Kubernetes *KubernetesTaskContainerDefaults `json:"kubernetes"`
@@ -150,6 +152,8 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 		config.RawSlurmConfig.RawSbatchArgs = append(
 			c.Slurm.SbatchArgs(), configRawSlurmConfig.SbatchArgs()...)
 	}
+
+	config.RawLogPatternPolicies = append(c.LogPatternPolicies, config.RawLogPatternPolicies...)
 
 	configRawPbsConfig := config.RawPbsConfig
 	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
