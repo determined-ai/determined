@@ -6693,7 +6693,7 @@ export interface V1PatchUserResponse {
  */
 export interface V1PatchUsersRequest {
     /**
-     * The updated user IDs.
+     * A list of user IDs to update.
      * @type {Array<number>}
      * @memberof V1PatchUsersRequest
      */
@@ -6704,6 +6704,12 @@ export interface V1PatchUsersRequest {
      * @memberof V1PatchUsersRequest
      */
     activate: boolean;
+    /**
+     * Option to filter to users with these properties.
+     * @type {V1UserFilters}
+     * @memberof V1PatchUsersRequest
+     */
+    filters?: V1UserFilters;
 }
 /**
  * Response to PatchUsersRequest.
@@ -10537,6 +10543,25 @@ export interface V1UserActionResult {
      * @memberof V1UserActionResult
      */
     id: number;
+}
+/**
+ * Options to filter a subset of users.
+ * @export
+ * @interface V1UserFilters
+ */
+export interface V1UserFilters {
+    /**
+     * Case-insensitive partial match of string to username or display name.
+     * @type {string}
+     * @memberof V1UserFilters
+     */
+    name?: string;
+    /**
+     * Matches users with or without an admin flag.
+     * @type {boolean}
+     * @memberof V1UserFilters
+     */
+    admin?: boolean;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.

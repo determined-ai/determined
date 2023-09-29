@@ -9155,15 +9155,19 @@ class v1PatchUserResponse(Printable):
 
 class v1PatchUsersRequest(Printable):
     """Update activation status for multiple users."""
+    filters: "typing.Optional[v1UserFilters]" = None
 
     def __init__(
         self,
         *,
         activate: bool,
         userIds: "typing.Sequence[int]",
+        filters: "typing.Union[v1UserFilters, None, Unset]" = _unset,
     ):
         self.activate = activate
         self.userIds = userIds
+        if not isinstance(filters, Unset):
+            self.filters = filters
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchUsersRequest":
@@ -9171,6 +9175,8 @@ class v1PatchUsersRequest(Printable):
             "activate": obj["activate"],
             "userIds": obj["userIds"],
         }
+        if "filters" in obj:
+            kwargs["filters"] = v1UserFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9178,6 +9184,8 @@ class v1PatchUsersRequest(Printable):
             "activate": self.activate,
             "userIds": self.userIds,
         }
+        if not omit_unset or "filters" in vars(self):
+            out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         return out
 
 class v1PatchUsersResponse(Printable):
@@ -14410,6 +14418,41 @@ class v1UserActionResult(Printable):
             "error": self.error,
             "id": self.id,
         }
+        return out
+
+class v1UserFilters(Printable):
+    """Options to filter a subset of users."""
+    admin: "typing.Optional[bool]" = None
+    name: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        admin: "typing.Union[bool, None, Unset]" = _unset,
+        name: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(admin, Unset):
+            self.admin = admin
+        if not isinstance(name, Unset):
+            self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserFilters":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "admin" in obj:
+            kwargs["admin"] = obj["admin"]
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "admin" in vars(self):
+            out["admin"] = self.admin
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
         return out
 
 class v1UserRoleAssignment(Printable):

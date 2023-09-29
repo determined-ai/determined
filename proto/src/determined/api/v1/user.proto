@@ -150,16 +150,26 @@ message PatchUserResponse {
   determined.user.v1.User user = 1;
 }
 
+// Options to filter a subset of users.
+message UserFilters {
+  // Case-insensitive partial match of string to username or display name.
+  string name = 1;
+  // Matches users with or without an admin flag.
+  optional bool admin = 2;
+}
+
 // Update activation status for multiple users.
 message PatchUsersRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "activate", "user_ids" ] }
   };
 
-  // The updated user IDs.
+  // A list of user IDs to update.
   repeated int32 user_ids = 1;
   // Intended status (true to activate, false to deactivate).
   bool activate = 2;
+  // Option to filter to users with these properties.
+  UserFilters filters = 3;
 }
 // Response to PatchUsersRequest.
 message PatchUsersResponse {
