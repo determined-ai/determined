@@ -11,7 +11,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1050,6 +1052,20 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
+
+	if m.config.InternalConfig.LorePath != "" {
+		// loreAddress := "localhost:8000"
+		loreGroup := m.echo.Group("/lore")
+
+		loreTarget, err := url.Parse(m.config.InternalConfig.LorePath)
+		if err != nil {
+			// QUESTION: how do we skip the need to do this with our config package?
+			return errors.Wrap(err, "failed to parse lore path")
+		}
+
+		loreProxy := httputil.NewSingleHostReverseProxy(loreTarget)
+		loreGroup.Any("*", echo.WrapHandler(http.StripPrefix("/lore", loreProxy)))
+	}
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 

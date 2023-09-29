@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"sync"
 
@@ -357,6 +358,28 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 type InternalConfig struct {
 	AuditLoggingEnabled bool                   `json:"audit_logging_enabled"`
 	ExternalSessions    model.ExternalSessions `json:"external_sessions"`
+	// DISCUSS: do we want to use a unix socket? change the impl on master and lore server.
+	LorePath string `json:"lore_path"`
+}
+
+// Validate implements the check.Validatable interface.
+func (i *InternalConfig) Validate() []error {
+	var errs []error
+	if i.LorePath != "" {
+		// TODO: validate either unix socket or valid URL
+		target, err := url.Parse(i.LorePath)
+		if err != nil {
+			errs = append(errs, errors.Wrap(err, "failed to parse lore path"))
+		}
+		// ensure scheme and port is set
+		if target.Scheme == "" {
+			target.Scheme = "http"
+		}
+		if target.Port() == "" {
+			errs = append(errs, errors.New("lore path must include a port"))
+		}
+	}
+	return errs
 }
 
 // ObservabilityConfig is the configuration for observability metrics.
