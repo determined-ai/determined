@@ -436,13 +436,16 @@ def stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[TrialMet
 def stream_trials_training_metrics(trial_ids: List[int]) -> Iterable[TrainingMetrics]:
     """Iterate over training metrics for one or more trials.
 
-    Args:
-        trial_ids: List of trial IDs to get metrics for.
-
     .. warning::
        client.stream_trials_training_metrics() has been deprecated and will be removed
        in a future version.
        Please call client.stream_trials_metrics() with `group` set to "training".
+
+    Args:
+        trial_ids: List of trial IDs to get metrics for.
+
+    Returns:
+        A generator of :class:`~determined.experimental.client.TrialMetrics` objects.
     """
     assert _determined is not None
     return _determined.stream_trials_training_metrics(trial_ids)
@@ -452,13 +455,16 @@ def stream_trials_training_metrics(trial_ids: List[int]) -> Iterable[TrainingMet
 def stream_trials_validation_metrics(trial_ids: List[int]) -> Iterable[ValidationMetrics]:
     """Iterate over validation metrics for one or more trials.
 
-    Args:
-        trial_ids: List of trial IDs to get metrics for.
-
     .. warning::
        client.stream_trials_validation_metrics() has been deprecated and will be removed
        in a future version.
        Please call client.stream_trials_metrics() with `group` set to "validation".
+
+    Args:
+        trial_ids: List of trial IDs to get metrics for.
+
+    Returns:
+        A generator of :class:`~determined.experimental.client.TrialMetrics` objects.
     """
     assert _determined is not None
     return _determined.stream_trials_validation_metrics(trial_ids)
