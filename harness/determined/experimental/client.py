@@ -417,16 +417,16 @@ def remove_oauth_client(client_id: str) -> None:
 def stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[TrialMetrics]:
     """Iterate over the metrics for one or more trials.
 
-    This generator opens up a persistent connection to the Determined master to receive trial
-    metrics. For as long as the connection remains open, it appends TrialMetrics to the end of its
-    iterator.
+    This function opens up a persistent connection to the Determined master to receive trial
+    metrics. For as long as the connection remains open, the generator it returns yields the
+    TrialMetrics it receives.
 
     Args:
         trial_ids: List of trial IDs to get metrics for.
         group: The metrics group to stream. Must be either "training" or "validation".
 
     Returns:
-        An iterable of :class:`~determined.experimental.client.TrialMetrics` objects.
+        A generator of :class:`~determined.experimental.client.TrialMetrics` objects.
     """
     assert _determined is not None
     return _determined.stream_trials_metrics(trial_ids, group=group)
