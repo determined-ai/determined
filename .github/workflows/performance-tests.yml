@@ -85,14 +85,18 @@ jobs:
         if: steps.deploy.outcome == 'success' && steps.tests.outcome == 'success'
         run: make -C performance down
 
-      # TODO(danh): get Slack report generated as part of k6 output
-      # - name: Post run report
-      #   if: always()
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.24.0
-      #   with:
-      #     # goes to #ci-bots
-      #     channel-id: 'C9LFPNA3Y'
-      #     slack-message: NYI
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.PERFORMANCE_SLACK_BOT_TOKEN }}
+      - name: Get Slack report contents
+        id: slack-report
+        run: echo "::set-output name=message::$(cat reports/*.results.txt)"
+
+      - name: Post run report
+        if: always()
+        id: slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          # goes to #ci-bots
+          channel-id: 'C9LFPNA3Y'
+          slack-message: |
+            ${{ steps.slack-report.outputs.message }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.PERFORMANCE_SLACK_BOT_TOKEN }}
