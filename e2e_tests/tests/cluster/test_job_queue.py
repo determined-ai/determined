@@ -35,6 +35,9 @@ def test_job_queue_adjust_weight() -> None:
         new_weight = jobs.get_job_weight(ordered_ids[1])
         assert new_weight == "10"
     finally:
+        # Avoid leaking experiments even if this test fails.
+        # Leaking experiments can block the cluster and other tests from running other tasks
+        # while the experiments finish.
         exp.kill_experiments(exp_ids)
 
 
