@@ -187,6 +187,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
             name="projectId"
             rules={[{ message: 'Project is required', required: true }]}>
             {Loadable.match(loadableProjects, {
+              Failed: () => null, // Inform the user if this fails to load
               Loaded: (loadableProjects) => (
                 <Select
                   filterOption={(input, option) =>

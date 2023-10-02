@@ -90,7 +90,7 @@ const AppView: React.FC = () => {
      * Check to make sure the WebUI version matches the platform version.
      * Skip this check for development version.
      */
-    Loadable.quickMatch(loadableInfo, undefined, (info) => {
+    Loadable.quickMatch(loadableInfo, undefined, undefined, (info) => {
       if (!process.env.IS_DEV && info.version !== process.env.VERSION) {
         const btn = (
           <Button type="primary" onClick={refreshPage}>
@@ -127,6 +127,7 @@ const AppView: React.FC = () => {
     Loadable.quickMatch(
       Loadable.all([loadableAuth, loadableUser, loadableInfo]),
       undefined,
+      undefined,
       ([auth, user, info]) => updateTelemetry(auth, user, info),
     );
   }, [loadableAuth, loadableInfo, loadableUser, updateTelemetry]);
@@ -157,6 +158,7 @@ const AppView: React.FC = () => {
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
   return Loadable.match(loadableInfo, {
+    Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
       <div className={css.base}>
         {isAuthChecked ? (

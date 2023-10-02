@@ -5,6 +5,22 @@ type MatchArgs<T, U> =
   | {
       Loaded: (data: T) => U;
       NotLoaded: () => U;
+      Failed: (e: Error) => U;
+    }
+  | {
+      Loaded: (data: T) => U;
+      NotLoaded: () => U;
+      _: () => U;
+    }
+  | {
+      Loaded: (data: T) => U;
+      Failed: (e: Error) => U;
+      _: () => U;
+    }
+  | {
+      NotLoaded: () => U;
+      Failed: (e: Error) => U;
+      _: () => U;
     }
   | {
       Loaded: (data: T) => U;
@@ -13,15 +29,25 @@ type MatchArgs<T, U> =
   | {
       NotLoaded: () => U;
       _: () => U;
+    }
+  | {
+      Failed: (e: Error) => U;
+      _: () => U;
     };
 
 class Loadable_<T> {
-  _tag: 'Loaded' | 'NotLoaded';
+  _tag: 'Loaded' | 'NotLoaded' | 'Failed';
   data: T | undefined;
+  error: Error | undefined;
 
-  constructor(tag: 'Loaded' | 'NotLoaded', data: T | undefined) {
+  constructor(
+    tag: 'Loaded' | 'NotLoaded' | 'Failed',
+    data: T | undefined,
+    error: Error | undefined = undefined,
+  ) {
     this._tag = tag;
     this.data = data;
+    this.error = error;
   }
 
   /**
@@ -35,7 +61,9 @@ class Loadable_<T> {
       case 'Loaded':
         return new Loadable_('Loaded', fn(this.data!)) as Loadable<U>;
       case 'NotLoaded':
-        return new Loadable_<U>('NotLoaded', undefined) as Loadable<U>;
+        return NotLoaded as Loadable<U>;
+      case 'Failed':
+        return new Loadable_<U>('Failed', undefined, this.error) as Loadable<U>;
       default:
         return exhaustive(this._tag);
     }
@@ -56,7 +84,9 @@ class Loadable_<T> {
       case 'Loaded':
         return fn(this.data!) as Loadable<U>;
       case 'NotLoaded':
-        return new Loadable_<U>('NotLoaded', undefined) as Loadable<U>;
+        return NotLoaded as Loadable<U>;
+      case 'Failed':
+        return new Loadable_<U>('Failed', undefined, this.error) as Loadable<U>;
       default:
         return exhaustive(this._tag);
     }
@@ -76,6 +106,8 @@ class Loadable_<T> {
       }
       case 'NotLoaded':
         return;
+      case 'Failed':
+        return;
       default:
         exhaustive(this._tag);
     }
@@ -93,6 +125,8 @@ class Loadable_<T> {
       case 'Loaded':
         return this.data!;
       case 'NotLoaded':
+        return def;
+      case 'Failed':
         return def;
       default:
         return exhaustive(this._tag);
@@ -112,6 +146,8 @@ class Loadable_<T> {
         return 'Loaded' in cases ? cases.Loaded(this.data!) : cases._();
       case 'NotLoaded':
         return 'NotLoaded' in cases ? cases.NotLoaded() : cases._();
+      case 'Failed':
+        return 'Failed' in cases ? cases.Failed(this.error!) : cases._();
       default:
         return exhaustive(this._tag);
     }
@@ -121,23 +157,25 @@ class Loadable_<T> {
   }
 
   /** Like `match` but without argument names */
-  quickMatch<U>(def: U, f: (data: T) => U): U {
+  quickMatch<U>(nl: U, fd: U, f: (data: T) => U): U {
     switch (this._tag) {
       case 'Loaded':
         return f(this.data!);
       case 'NotLoaded':
-        return def;
+        return nl;
+      case 'Failed':
+        return fd;
       default:
         return exhaustive(this._tag);
     }
   }
-  static quickMatch<T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U {
-    return l.quickMatch(def, f);
+  static quickMatch<T, U>(l: Loadable<T>, nl: U, fd: U, f: (data: T) => U): U {
+    return l.quickMatch(nl, fd, f);
   }
 
   /**
-   * Groups up all passed Loadables. NotFound takes priority over
-   * NotLoaded so all([NotLoaded, NotFound, Loaded(4)]) returns NotFound
+   * Groups up all passed Loadables. Failed takes priority over
+   * NotLoaded so all([NotLoaded, Failed, Loaded(4)]) returns Failed
    */
   static all<A>(ls: [Loadable<A>]): Loadable<[A]>;
   static all<A, B>(ls: [Loadable<A>, Loadable<B>]): Loadable<[A, B]>;
@@ -148,13 +186,21 @@ class Loadable_<T> {
   static all<A, B, C, D, E>(
     ls: [Loadable<A>, Loadable<B>, Loadable<C>, Loadable<D>, Loadable<E>],
   ): Loadable<[A, B, C, D, E]>;
+  static all<T>(ls: Array<Loadable<T>>): Loadable<Array<T>>;
   static all(ls: Array<Loadable<unknown>>): Loadable<Array<unknown>> {
     const res: unknown[] = [];
+    let isLoading = false;
     for (const l of ls) {
       if (l._tag === 'NotLoaded') {
-        return new Loadable_<unknown[]>('NotLoaded', undefined) as Loadable<unknown[]>;
+        isLoading = true;
+      } else if (l._tag === 'Failed') {
+        return new Loadable_<unknown[]>('Failed', undefined, l.error) as Loadable<unknown[]>;
+      } else {
+        res.push(l.data);
       }
-      res.push(l.data);
+    }
+    if (isLoading) {
+      return NotLoaded as Loadable<unknown[]>;
     }
     return new Loadable_('Loaded', res) as Loadable<unknown[]>;
   }
@@ -177,6 +223,8 @@ class Loadable_<T> {
         return this.data!;
       case 'NotLoaded':
         throw Promise.resolve(undefined);
+      case 'Failed':
+        throw this.error;
       default:
         return exhaustive(this._tag);
     }
@@ -189,7 +237,7 @@ class Loadable_<T> {
   }
   static isLoaded<T>(
     l: Loadable<T>,
-  ): l is { _tag: 'Loaded'; data: T; isLoaded: true; isNotLoaded: false } & Omit<
+  ): l is { _tag: 'Loaded'; data: T; isLoaded: true; isNotLoaded: false; isFailed: false } & Omit<
     Loadable_<T>,
     'isLoaded' | 'data'
   > {
@@ -200,16 +248,27 @@ class Loadable_<T> {
   }
   static isNotLoaded<T>(
     l: Loadable<T>,
-  ): l is { _tag: 'NotLoaded'; isLoaded: false; isNotLoaded: true } & Omit<
+  ): l is { _tag: 'NotLoaded'; isLoaded: false; isNotLoaded: true; isFailed: false } & Omit<
     Loadable_<T>,
-    'isLoaded' | 'data'
+    'isNotLoaded' | 'data'
   > {
     return l.isNotLoaded;
+  }
+  get isFailed(): boolean {
+    return this._tag === 'Failed';
+  }
+  static isFailed<T>(
+    l: Loadable<T>,
+  ): l is { _tag: 'Failed'; isLoaded: false; isNotLoaded: false; isFailed: true } & Omit<
+    Loadable_<T>,
+    'isFailed' | 'data'
+  > {
+    return l.isFailed;
   }
 
   /** Returns true if the passed object is a Loadable */
   static isLoadable<T, Z>(l: Loadable<T> | Z): l is Loadable<T> {
-    return ['Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
+    return ['Loaded', 'NotLoaded', 'Failed'].includes((l as Loadable<T>)?._tag);
   }
 
   /** If passed a Loadable, returns unchanged. Otherwise, wraps argument in Loaded */
@@ -224,12 +283,20 @@ export type Loadable<T> =
       data: T;
       isLoaded: true;
       isNotLoaded: false;
-    } & Omit<Loadable_<T>, '_tag' | 'isLoaded' | 'isNotLoaded' | 'data'>)
+      isFailed: false;
+    } & Omit<Loadable_<T>, '_tag' | 'isLoaded' | 'isNotLoaded' | 'isFailed' | 'data'>)
   | ({
       _tag: 'NotLoaded';
       isLoaded: false;
       isNotLoaded: true;
-    } & Omit<Loadable_<T>, '_tag' | 'isLoaded' | 'isNotLoaded' | 'data'>);
+      isFailed: false;
+    } & Omit<Loadable_<T>, '_tag' | 'isLoaded' | 'isNotLoaded' | 'isFailed' | 'data'>)
+  | ({
+      _tag: 'Failed';
+      isLoaded: false;
+      isNotLoaded: false;
+      isFailed: true;
+    } & Omit<Loadable_<T>, '_tag' | 'isLoaded' | 'isNotLoaded' | 'isFailed' | 'data'>);
 
 // There's no real way to add methods to a union type in typescript except for with Proxies
 // but Proxies don't handle generics correctly. We have to "lie" to typescript here to convince
@@ -237,7 +304,9 @@ export type Loadable<T> =
 // as methods on a class so we have to lie to it about the return type of all of our guard methods.
 const Loaded = <T>(data: T): Loadable<T> => new Loadable_('Loaded', data) as Loadable<T>;
 const NotLoaded: Loadable<never> = new Loadable_('NotLoaded', undefined) as Loadable<never>;
+const Failed = <T>(error: Error): Loadable<T> =>
+  new Loadable_<T>('Failed', undefined, error) as Loadable<T>;
 
 export const Loadable = Loadable_;
 
-export { Loaded, NotLoaded };
+export { Loaded, NotLoaded, Failed };

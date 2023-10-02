@@ -306,6 +306,7 @@ const NavigationSideBar: React.FC = () => {
                 tooltip={settings.navbarCollapsed}
               />
               {Loadable.match(pinnedWorkspaces, {
+                Failed: () => null, // TODO inform user if workspaces fail to load
                 Loaded: (workspaces) => (
                   <ul className={css.pinnedWorkspaces} role="list">
                     {workspaces

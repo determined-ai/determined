@@ -125,8 +125,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
   const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
+    _: () => [],
     Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
-    NotLoaded: () => [],
   });
   const isMobile = useMobile();
 
@@ -551,8 +551,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           setExperiments((prev) =>
             prev.filter((expLoadable) =>
               Loadable.match(expLoadable, {
+                _: () => true,
                 Loaded: (experiment) => !idSet.has(experiment.experiment.id),
-                NotLoaded: () => true,
               }),
             ),
           );

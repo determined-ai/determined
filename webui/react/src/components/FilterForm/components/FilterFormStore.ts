@@ -58,6 +58,7 @@ export class FilterFormStore {
     };
     return this.#formset.select((loadableFormset) =>
       Loadable.match(loadableFormset, {
+        _: () => '',
         Loaded: (formset) => {
           const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
           const newFormSet: FilterFormSetWithoutId = JSON.parse(
@@ -65,7 +66,6 @@ export class FilterFormStore {
           );
           return JSON.stringify(newFormSet);
         },
-        NotLoaded: () => '',
       }),
     );
   }
@@ -80,11 +80,11 @@ export class FilterFormStore {
     };
     return this.#formset.select((loadableFormset) =>
       Loadable.match(loadableFormset, {
+        _: () => 0,
         Loaded: (formset) => {
           const validFilterGroup = this.#sweepInvalid(formset.filterGroup);
           return countFields(validFilterGroup);
         },
-        NotLoaded: () => 0,
       }),
     );
   }

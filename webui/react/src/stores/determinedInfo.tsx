@@ -60,8 +60,8 @@ class DeterminedStore extends PollingStore {
 
   public readonly isServerReachable = this.#info.select((info) => {
     return Loadable.match(info, {
+      _: () => false,
       Loaded: (info) => !!info.clusterId,
-      NotLoaded: () => false,
     });
   });
 

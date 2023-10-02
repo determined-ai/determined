@@ -262,9 +262,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       }
 
       const rowColorTheme = Loadable.match(data[row], {
+        _: () => ({}),
         Loaded: (record) =>
           colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
-        NotLoaded: () => ({}),
       });
 
       return { ...rowColorTheme, ...hoverStyle };
@@ -346,8 +346,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         );
         formStore.addChild(ROOT_ID, FormKind.Field, {
           index: Loadable.match(loadableFormset, {
+            _: () => 0,
             Loaded: (formset) => formset.filterGroup.children.length,
-            NotLoaded: () => 0,
           }),
           item: {
             columnName: column.column,
@@ -467,11 +467,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       }
 
       return Loadable.match(data[row], {
+        _: () => loadingCell,
         Loaded: (rowData) => {
           const columnId = columnIds[col];
           return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
-        },
-        NotLoaded: () => loadingCell,
+        }, // TODO correctly handle error state
       });
     },
     [appTheme, data, columnIds, columnDefs],

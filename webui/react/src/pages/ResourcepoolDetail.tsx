@@ -59,7 +59,7 @@ const ResourcepoolDetailInner: React.FC = () => {
   const resourcePools = useObservable(clusterStore.resourcePools);
 
   const pool = useMemo(() => {
-    if (Loadable.isNotLoaded(resourcePools)) return;
+    if (!Loadable.isLoaded(resourcePools)) return;
 
     return resourcePools.data.find((pool) => pool.name === poolname);
   }, [poolname, resourcePools]);
@@ -196,7 +196,11 @@ const ResourcepoolDetailInner: React.FC = () => {
     return tabItems;
   }, [canManageResourcePoolBindings, pool, poolStats, renderPoolConfig, rpBindingFlagOn]);
 
-  if (!pool || Loadable.isNotLoaded(resourcePools)) return <Spinner center spinning />;
+  if (!pool || Loadable.isNotLoaded(resourcePools)) {
+    return <Spinner center spinning />;
+  } else if (Loadable.isFailed(resourcePools)) {
+    return null; // TODO inform user here if resource pools fail to load
+  }
 
   return (
     <Page

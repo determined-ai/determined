@@ -132,6 +132,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           loading={Loadable.isNotLoaded(chartSeries)}
           title="Compute Hours Allocated">
           {Loadable.match(chartSeries, {
+            Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}
@@ -147,6 +148,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           loading={Loadable.isNotLoaded(Loadable.all([loadableUsers, chartSeries]))}
           title="Compute Hours by User">
           {Loadable.match(chartSeries, {
+            Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}
@@ -163,6 +165,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           loading={Loadable.isNotLoaded(chartSeries)}
           title="Compute Hours by Label">
           {Loadable.match(chartSeries, {
+            Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}
@@ -179,6 +182,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           loading={Loadable.isNotLoaded(chartSeries)}
           title="Compute Hours by Resource Pool">
           {Loadable.match(chartSeries, {
+            Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}

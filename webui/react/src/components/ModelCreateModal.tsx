@@ -45,8 +45,8 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
   const loadableWorkspaces = useObservable(workspaceStore.workspaces);
   const isWorkspace = workspaceId !== undefined;
   const workspaces = Loadable.match(loadableWorkspaces, {
+    _: () => [],
     Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace({ workspaceId: id })),
-    NotLoaded: () => [],
   });
   const [form] = Form.useForm<FormInputs>();
   const disableWorkspaceModelCreation = isWorkspace

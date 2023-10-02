@@ -130,6 +130,7 @@
     "eslint-plugin-sort-keys-fix": "^1.1.2",
     "estree-util-to-js": "^2.0.0",
     "express": "^4.18.2",
+    "fast-check": "^3.13.1",
     "hast-util-from-html": "^1.0.2",
     "hast-util-to-estree": "^2.3.3",
     "jsdom": "^16.7.0",

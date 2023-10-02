@@ -8,6 +8,8 @@ import authStore from 'stores/auth';
 import { RouteConfig } from 'types';
 import { filterOutLoginLocation } from 'utils/routes';
 
+import Message from './Message';
+
 interface Props {
   routes: RouteConfig[];
 }
@@ -33,6 +35,7 @@ const Router: React.FC<Props> = (props: Props) => {
             <Route
               {...route}
               element={<Navigate state={filterOutLoginLocation(location)} to={paths.login()} />}
+              ErrorBoundary={ErrorHandler}
               key={route.id}
             />
           );
@@ -43,17 +46,48 @@ const Router: React.FC<Props> = (props: Props) => {
            * redirect will occur when encountered in the `Switch` traversal.
            */
           if (route.path === '*') {
-            return <Route element={<Navigate to={'/'} />} key={route.id} path={route.path} />;
+            return (
+              <Route
+                element={<Navigate to={'/'} />}
+                ErrorBoundary={ErrorHandler}
+                key={route.id}
+                path={route.path}
+              />
+            );
           } else {
             return (
-              <Route element={<Navigate to={route.redirect} />} key={route.id} path={route.path} />
+              <Route
+                element={<Navigate to={route.redirect} />}
+                ErrorBoundary={ErrorHandler}
+                key={route.id}
+                path={route.path}
+              />
             );
           }
         }
 
-        return <Route {...route} element={element} key={route.id} path={route.path} />;
+        return (
+          <Route
+            {...route}
+            element={element}
+            ErrorBoundary={ErrorHandler}
+            key={route.id}
+            path={route.path}
+          />
+        );
       })}
     </Routes>
+  );
+};
+
+const ErrorHandler = () => {
+  // const error = useRouteError();
+  return (
+    <Message
+      message="Encountered an error, please refresh."
+      title="Unexpected Error"
+      type="warning"
+    />
   );
 };
 

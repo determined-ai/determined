@@ -28,9 +28,9 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
   const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
   const { canMoveProjectsTo } = usePermissions();
   const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
+    _: () => [],
     Loaded: (workspaces: Workspace[]) =>
       workspaces.filter((w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } })),
-    NotLoaded: () => [],
   });
 
   const handleSubmit = useCallback(async () => {
