@@ -1054,8 +1054,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	tasksGroup.GET("", api.Route(m.getTasks))
 
 	if m.config.InternalConfig.LorePath != "" {
-		// loreAddress := "localhost:8000"
-		loreGroup := m.echo.Group("/lore")
+		lorePrefix := "/lore"
+		loreGroup := m.echo.Group(lorePrefix)
 
 		loreTarget, err := url.Parse(m.config.InternalConfig.LorePath)
 		if err != nil {
@@ -1063,7 +1063,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		}
 
 		loreProxy := httputil.NewSingleHostReverseProxy(loreTarget)
-		loreGroup.Any("*", echo.WrapHandler(http.StripPrefix("/lore", loreProxy)))
+		loreGroup.Any("*", echo.WrapHandler(http.StripPrefix(lorePrefix, loreProxy)))
 	}
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
