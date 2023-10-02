@@ -24,7 +24,7 @@ if [[ ${WORKLOAD_MANAGER} == pbs ]]; then
     sudo cat /tmp/old_pbs_cgroups.json \
         | jq '. += {"nvidia-smi":"/usr/bin/nvidia-smi"}' \
         | jq '.cgroup.devices += {"enabled":true}' \
-        | jq '.cgroup.memory += {"enabled":false}' \
+        | jq '.cgroup.memory += {"enforce_default":false}' \
         | jq '.cgroup.devices.allow += ["c *:* rwm", ["nvidiactl","rwm","*"]]' \
         | jq '.cgroup.cpuset += {"enabled":true}' >/tmp/pbs_cgroups.json
     sudo /opt/pbs/bin/qmgr -c "import hook pbs_cgroups application/x-config default /tmp/pbs_cgroups.json"
@@ -40,7 +40,7 @@ if [[ ${WORKLOAD_MANAGER} == pbs ]]; then
     STATUS=$?
     GPU_COUNT=$(nvidia-smi --query-gpu=index --format=csv,noheader | wc -l)
     if [[ $${STATUS} == 0 && $${GPU_COUNT} -gt 0 ]]; then
-        sudo /opt/pbs/bin/qmgr -c "create resource accel_type type=string"
+        sudo /opt/pbs/bin/qmgr -c "create resource accel_type type=string_array,flag=h"
         GRES_TYPE=$(nvidia-smi -i 0 --query-gpu=name --format=csv,noheader | cut -f 1 -d ' ' | tr '[:upper:]' '[:lower:]')
         sudo /opt/pbs/bin/qmgr -c "set node $(hostname) resources_available.accel_type=$${GRES_TYPE}"
         echo "Configured accel_type $${GRES_TYPE}"
