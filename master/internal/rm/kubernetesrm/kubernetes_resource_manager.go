@@ -426,10 +426,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 		return nil
 
-	case sproto.GetJobQStats:
-		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
-		ctx.Respond(resp)
-
 	case taskContainerDefaults:
 		ctx.Respond(k.getTaskContainerDefaults(msg))
 

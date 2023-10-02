@@ -379,13 +379,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 		return nil
 
-	case sproto.GetJobQStats:
-		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg)
-		if resp.Empty() || resp.Get() == nil {
-			ctx.Respond(fmt.Errorf("actor %s did not respond", ctx.Child(msg.ResourcePool).Address()))
-		} else {
-			ctx.Respond(resp.Get())
-		}
 	case taskContainerDefaults:
 		ctx.Respond(a.getTaskContainerDefaults(msg))
 

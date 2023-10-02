@@ -159,14 +159,6 @@ func (r *ResourceManager) GetJobQ(
 	return resp, r.Ask(ctx, msg, &resp)
 }
 
-// GetJobQStats requests stats for a job queue.
-func (r *ResourceManager) GetJobQStats(
-	ctx actor.Messenger,
-	msg sproto.GetJobQStats,
-) (resp *jobv1.QueueStats, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
-}
-
 // GetJobQueueStatsRequest requests other stats for a job queue.
 func (r *ResourceManager) GetJobQueueStatsRequest(
 	ctx actor.Messenger,
