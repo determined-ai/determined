@@ -231,8 +231,11 @@ func TestSettingGroupPriority(t *testing.T) {
 	assert.Check(t, rp.groups[jobID].Priority != nil)
 	assert.Equal(t, *rp.groups[jobID].Priority, updatedPriority)
 	assert.Equal(t, tasklist.GroupPriorityChangeRegistry.Delete(jobID), nil)
+
 	time.Sleep(time.Second)
+	rp.mu.Lock()
 	assert.Check(t, rp.groups[jobID] == nil)
+	rp.mu.Unlock()
 }
 
 func TestAddRemoveAgent(t *testing.T) {
