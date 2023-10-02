@@ -1440,14 +1440,14 @@ const DatePickerSection: React.FC = () => {
     <ComponentSection id="DatePicker" title="DatePicker">
       <AntDCard>
         <p>
-          <code>DatePicker</code> is a form element for the user to select a specific date, month,
-          or year from a calendar UI. When using <code>onChange</code>, the returned value is a{' '}
+          <code>DatePicker</code> is a form element for the user to select a specific time, date, or
+          month from a calendar UI. When using <code>onChange</code>, the returned value is a{' '}
           <code>Dayjs</code> object. The component accepts a subset of the props for the{' '}
           <code>Antd.DatePicker</code>, with the <code>style</code> prop replaced by our usage (
           <code>width</code>).
         </p>
         <p>
-          The <code>picker</code> prop can be set to select a year or month. Alternatively the{' '}
+          The <code>picker</code> prop can be set to select a month. Alternatively the{' '}
           <code>showTime</code> prop adds precision to the second.
         </p>
       </AntDCard>
@@ -1457,11 +1457,9 @@ const DatePickerSection: React.FC = () => {
         <DatePicker label="Choose a date and time" showTime onChange={noOp} />
         <strong>Clearable day picker</strong>
         <DatePicker label="Choose a date" onChange={noOp} />
-        <strong>Un-clearable month picker</strong>
-        <DatePicker allowClear={false} label="Choose a date" picker="month" onChange={noOp} />
         <hr />
-        DatePicker set to year, without a label:
-        <DatePicker picker="year" />
+        <strong>Un-clearable month picker, without a label</strong>
+        <DatePicker allowClear={false} picker="month" onChange={noOp} />
       </AntDCard>
     </ComponentSection>
   );
