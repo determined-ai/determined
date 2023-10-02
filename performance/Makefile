@@ -4,7 +4,7 @@ IMAGE_TAG ?= $(USER)
 
 # Perf testing cluster
 CLUSTER_ID ?= $(USER)-perf
-KEYPAIR_ID ?= $(USER)
+KEYPAIR_ID ?= performance-tests
 VERSION ?= $(shell det -v | cut -d' ' -f2)
 
 # Perf test options
@@ -12,22 +12,27 @@ DET_URL ?= $(shell cat .det.url || echo UNSET)
 DET_ADMIN_USERNAME ?= admin
 DET_ADMIN_PASSWORD ?= ""
 
+IMAGE = $(IMAGE_REPO):$(IMAGE_TAG)
 DET_FLAGS = \
 		--cluster-id $(CLUSTER_ID) \
 		--keypair $(KEYPAIR_ID) \
 		--deployment-type simple-rds \
 		--det-version $(VERSION) \
 		--yes
-IMAGE = $(IMAGE_REPO):$(IMAGE_TAG)
+K6_FLAGS = \
+		-e DET_ADMIN_USERNAME=$(DET_ADMIN_USERNAME) \
+		-e DET_ADMIN_PASSWORD=$(DET_ADMIN_PASSWORD)
 PERSIST_CHECK = \
 	PERSIST_VALUE=$$(\
 		aws cloudformation describe-stacks --stack-name $(CLUSTER_ID) | \
 		jq -r '.Stacks[0].Tags[] | select(.Key == "persist").Value' \
 	); \
-	[[ $$PERSIST_VALUE == 'true' ]] && \
-		echo 'Cluster currently persisted' && \
-		exit 1 || \
-		echo 'Cluster not currently persisted'
+	if [ "$$PERSIST_VALUE" = "true" ]; then \
+		echo 'Cluster currently persisted'; \
+		exit 1; \
+	else \
+		echo 'Cluster not currently persisted'; \
+	fi
 
 
 build: Dockerfile src/* package-lock.json package.json tsconfig.json webpack.config.js
@@ -69,26 +74,32 @@ unpersist:
 		--add-tag persist=false
 
 run:
-	touch junit.xml
 	docker run \
-		-v $(PWD)/junit.xml:/app/junit.xml \
+		--name perf-tests \
 		$(IMAGE) run \
 		-e DET_MASTER=$(DET_URL) \
-		-e DET_ADMIN_USERNAME=$(DET_ADMIN_USERNAME) \
-		-e DET_ADMIN_PASSWORD=$(DET_ADMIN_PASSWORD) \
-		/app/api_performance_tests.js
-	mv junit.xml reports/$$(date +%s).junit.xml
+		$(K6_FLAGS) \
+		/test_scripts/api_performance_tests.js; \
+	TEST_STATUS=$$?; \
+	docker cp \
+		perf-tests:/home/k6/junit.xml \
+		reports/$$(date +%s).junit.xml; \
+	docker rm perf-tests; \
+	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
 run-local:
-	touch junit.xml
 	docker run \
-		-v $(PWD)/junit.xml:/app/junit.xml \
+		--name perf-tests \
 		$(IMAGE) run \
 		-e DET_MASTER=http://localhost:8080 \
-		-e DET_ADMIN_USERNAME=$(DET_ADMIN_USERNAME) \
-		-e DET_ADMIN_PASSWORD=$(DET_ADMIN_PASSWORD) \
-		/app/api_performance_tests.js
-	mv junit.xml reports/local-$$(date +%s).junit.xml
+		$(K6_FLAGS) \
+		/test_scripts/api_performance_tests.js; \
+	TEST_STATUS=$$?; \
+	docker cp \
+		perf-tests:/home/k6/junit.xml \
+		reports/local-$$(date +%s).junit.xml; \
+	docker rm perf-tests; \
+	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
 clean:
 	docker image rm $(IMAGE)

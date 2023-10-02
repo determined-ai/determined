@@ -468,12 +468,6 @@ function parseGroupName(groupName) {
 }
 
 function generateProperties(metricName, metric) {
-  if (
-    !metric.type ||
-    !metric.type == "trend" ||
-    !metricName.includes("http_req_duration")
-  )
-    return;
   var properties = [];
   for (var metricValue in metric.values) {
     properties.push(
@@ -482,8 +476,7 @@ function generateProperties(metricName, metric) {
         '" ' +
         'value="' +
         escapeHTML(humanizeDuration(metric.values[metricValue], "ms")) +
-        '" ' +
-        "/>",
+        '"/>',
     );
   }
   return "<properties>" + properties.join("") + "</properties>";
@@ -538,9 +531,9 @@ function generateJUnitXML(data, options) {
     cases.length +
     '" failures="' +
     failures +
-    '">' +
+    '">\n' +
     cases.join("\n") +
-    "\n</testsuite >\n</testsuites >"
+    "\n</testsuite>\n</testsuites>"
   );
 }
 
