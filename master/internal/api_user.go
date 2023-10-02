@@ -182,7 +182,7 @@ func (a *apiServer) GetUsers(
 	if len(req.RoleIdAssignedDirectlyToUser) != 0 {
 		if !config.GetAuthZConfig().IsRBACEnabled() {
 			return nil, status.Error(codes.InvalidArgument,
-				"cannot filter by role id.")
+				"cannot filter by role id. RBAC must be enabled.")
 		}
 		query.Join("LEFT JOIN groups g ON (u.id = g.user_id)").
 			Join("LEFT JOIN role_assignments a ON (g.id = a.group_id)").
