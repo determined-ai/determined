@@ -58,7 +58,8 @@ jobs:
 
       - name: Persist cluster if failure noticed
         if: steps.deploy.outcome == 'success' && steps.tests.outcome != 'success'
-        run: make -C performance persist
+        # run: make -C performance persist
+        run: echo 'skipping'
 
       - name: Unpersist cluster if tests passed
         if: steps.tests.outcome == 'success'
@@ -88,6 +89,8 @@ jobs:
       - name: Get Slack report contents
         id: slack-report
         run: |
+          ls performance/reports
+          cat performance/reports/*.results.txt
           echo 'message<<EOF' >> $GITHUB_OUTPUT
           cat performance/reports/*.results.txt >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
