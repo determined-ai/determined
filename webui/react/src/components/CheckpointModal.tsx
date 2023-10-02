@@ -6,6 +6,7 @@ import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import {
+  CheckpointState,
   CheckpointStorageType,
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
@@ -165,7 +166,7 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
           'Total Size',
           <div className={css.size}>
             <span>{totalSize}</span>
-            {checkpoint.uuid && (
+            {checkpoint.uuid && state !== CheckpointState.Deleted && (
               <Button danger type="text" onClick={onClickDelete}>
                 {'Request Checkpoint Deletion'}
               </Button>
