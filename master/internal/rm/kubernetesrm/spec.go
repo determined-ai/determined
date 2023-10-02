@@ -218,14 +218,10 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 }
 
 func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
-	addTermToRequiredDuringSchedulingIgnoredDuringExecution(pod, k8sV1.NodeSelectorTerm{
-		MatchExpressions: []k8sV1.NodeSelectorRequirement{
-			{
-				Key:      clusterID,
-				Operator: k8sV1.NodeSelectorOpDoesNotExist,
-			},
-		},
-	})
+	addNodeSelectorRequirement(pod, k8sV1.NodeSelectorRequirement{
+		Key:      clusterID,
+		Operator: k8sV1.NodeSelectorOpDoesNotExist,
+	}, addOnLabel)
 
 	// TODO once k8s supports
 	// RequiredDuringSchedulingRequiredDuringExecution
@@ -234,19 +230,25 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 }
 
 func addDisallowedNodesToPodSpec(pod *k8sV1.Pod, taskID model.TaskID) {
-	addTermToRequiredDuringSchedulingIgnoredDuringExecution(pod, k8sV1.NodeSelectorTerm{
-		MatchFields: []k8sV1.NodeSelectorRequirement{
-			{
-				Key:      "metadata.name",
-				Operator: k8sV1.NodeSelectorOpNotIn,
-				Values:   ft.DisallowedNodes(taskID).ToSlice(),
-			},
-		},
-	})
+	// Can't just replace []string{nodeName} with ft.DisallowedNodes(taskID).ToSlice() and not loop
+	// because of the k8s error given "Required value:
+	// must be only one value when `operator` is 'In' or 'NotIn' for node field selector".
+	for _, nodeName := range ft.DisallowedNodes(taskID).ToSlice() {
+		addNodeSelectorRequirement(pod, k8sV1.NodeSelectorRequirement{
+			Key:      "metadata.name",
+			Operator: k8sV1.NodeSelectorOpNotIn,
+			Values:   []string{nodeName},
+		}, addOnField)
+	}
 }
 
-func addTermToRequiredDuringSchedulingIgnoredDuringExecution(
-	pod *k8sV1.Pod, term k8sV1.NodeSelectorTerm,
+const (
+	addOnLabel = true
+	addOnField = false
+)
+
+func addNodeSelectorRequirement(
+	pod *k8sV1.Pod, req k8sV1.NodeSelectorRequirement, onLabel bool,
 ) {
 	if pod.Spec.Affinity == nil {
 		pod.Spec.Affinity = &k8sV1.Affinity{}
@@ -261,14 +263,30 @@ func addTermToRequiredDuringSchedulingIgnoredDuringExecution(
 	}
 	nodeSelector := nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
 
+	if len(nodeSelector.NodeSelectorTerms) == 0 {
+		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms,
+			k8sV1.NodeSelectorTerm{})
+	}
+
+	reqs := nodeSelector.NodeSelectorTerms[0].MatchExpressions
+	if onLabel {
+		reqs = nodeSelector.NodeSelectorTerms[0].MatchFields
+	}
+
 	// Make function idempotent.
-	for _, n := range nodeSelector.NodeSelectorTerms {
-		if reflect.DeepEqual(n, term) {
+	for _, r := range reqs {
+		if reflect.DeepEqual(r, req) {
 			return
 		}
 	}
 
-	nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, term)
+	if onLabel {
+		nodeSelector.NodeSelectorTerms[0].MatchExpressions = append(
+			nodeSelector.NodeSelectorTerms[0].MatchExpressions, req)
+	} else {
+		nodeSelector.NodeSelectorTerms[0].MatchFields = append(
+			nodeSelector.NodeSelectorTerms[0].MatchFields, req)
+	}
 }
 
 func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {

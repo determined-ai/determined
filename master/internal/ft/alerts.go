@@ -17,6 +17,7 @@ func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 
 	s := set.New[string]()
 	s.Insert("agent1")
+	s.Insert("gke-nblaskey-test2-node-pool-name-bae40778-jq79")
 	return &s
 
 	// maybe just taskid is enough. go off of task id and GetAlerts
