@@ -208,6 +208,27 @@ service Determined {
       tags: "Users"
     };
   }
+  // Patch multiple users' activation status.
+  rpc PatchUsers(PatchUsersRequest) returns (PatchUsersResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Assign multiple users to multiple groups.
+  rpc AssignMultipleGroups(AssignMultipleGroupsRequest)
+      returns (AssignMultipleGroupsResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/assignments",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Get telemetry information.
   rpc GetTelemetry(GetTelemetryRequest) returns (GetTelemetryResponse) {
     option (google.api.http) = {

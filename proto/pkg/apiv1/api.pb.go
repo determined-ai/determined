@@ -76,7 +76,7 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x2f, 0x76, 0x31, 0x2f, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x1a, 0x24, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f,
 	0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x70,
-	0x6f, 0x6f, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xf5, 0x95, 0x02, 0x0a, 0x0a, 0x44,
+	0x6f, 0x6f, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xa5, 0x98, 0x02, 0x0a, 0x0a, 0x44,
 	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x12, 0x7e, 0x0a, 0x05, 0x4c, 0x6f, 0x67,
 	0x69, 0x6e, 0x12, 0x1f, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e,
 	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75,
@@ -189,7 +189,26 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2f, 0x82, 0xd3, 0xe4,
 	0x93, 0x02, 0x1f, 0x32, 0x17, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65,
 	0x72, 0x73, 0x2f, 0x7b, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x7d, 0x3a, 0x04, 0x75, 0x73,
-	0x65, 0x72, 0x92, 0x41, 0x07, 0x0a, 0x05, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x90, 0x01, 0x0a,
+	0x65, 0x72, 0x92, 0x41, 0x07, 0x0a, 0x05, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x80, 0x01, 0x0a,
+	0x0a, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x24, 0x2e, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x25, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x25, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x12,
+	0x32, 0x0d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73, 0x3a,
+	0x01, 0x2a, 0x92, 0x41, 0x0a, 0x0a, 0x08, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x12,
+	0xaa, 0x01, 0x0a, 0x14, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70,
+	0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x12, 0x2e, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x73, 0x73,
+	0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2f, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x73, 0x73,
+	0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x1e, 0x32, 0x19, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73,
+	0x2f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x3a, 0x01, 0x2a, 0x92,
+	0x41, 0x0a, 0x0a, 0x08, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x12, 0x90, 0x01, 0x0a,
 	0x0c, 0x47, 0x65, 0x74, 0x54, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x12, 0x26, 0x2e,
 	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
 	0x31, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x52, 0x65,
@@ -2379,415 +2398,419 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*PostUserRequest)(nil),                              // 10: determined.api.v1.PostUserRequest
 	(*SetUserPasswordRequest)(nil),                       // 11: determined.api.v1.SetUserPasswordRequest
 	(*PatchUserRequest)(nil),                             // 12: determined.api.v1.PatchUserRequest
-	(*GetTelemetryRequest)(nil),                          // 13: determined.api.v1.GetTelemetryRequest
-	(*GetMasterRequest)(nil),                             // 14: determined.api.v1.GetMasterRequest
-	(*GetMasterConfigRequest)(nil),                       // 15: determined.api.v1.GetMasterConfigRequest
-	(*PatchMasterConfigRequest)(nil),                     // 16: determined.api.v1.PatchMasterConfigRequest
-	(*MasterLogsRequest)(nil),                            // 17: determined.api.v1.MasterLogsRequest
-	(*GetAgentsRequest)(nil),                             // 18: determined.api.v1.GetAgentsRequest
-	(*GetAgentRequest)(nil),                              // 19: determined.api.v1.GetAgentRequest
-	(*GetSlotsRequest)(nil),                              // 20: determined.api.v1.GetSlotsRequest
-	(*GetSlotRequest)(nil),                               // 21: determined.api.v1.GetSlotRequest
-	(*EnableAgentRequest)(nil),                           // 22: determined.api.v1.EnableAgentRequest
-	(*DisableAgentRequest)(nil),                          // 23: determined.api.v1.DisableAgentRequest
-	(*EnableSlotRequest)(nil),                            // 24: determined.api.v1.EnableSlotRequest
-	(*DisableSlotRequest)(nil),                           // 25: determined.api.v1.DisableSlotRequest
-	(*CreateExperimentRequest)(nil),                      // 26: determined.api.v1.CreateExperimentRequest
-	(*PutExperimentRequest)(nil),                         // 27: determined.api.v1.PutExperimentRequest
-	(*ContinueExperimentRequest)(nil),                    // 28: determined.api.v1.ContinueExperimentRequest
-	(*GetExperimentRequest)(nil),                         // 29: determined.api.v1.GetExperimentRequest
-	(*GetExperimentsRequest)(nil),                        // 30: determined.api.v1.GetExperimentsRequest
-	(*GetModelDefRequest)(nil),                           // 31: determined.api.v1.GetModelDefRequest
-	(*GetTaskContextDirectoryRequest)(nil),               // 32: determined.api.v1.GetTaskContextDirectoryRequest
-	(*GetModelDefTreeRequest)(nil),                       // 33: determined.api.v1.GetModelDefTreeRequest
-	(*GetModelDefFileRequest)(nil),                       // 34: determined.api.v1.GetModelDefFileRequest
-	(*GetExperimentLabelsRequest)(nil),                   // 35: determined.api.v1.GetExperimentLabelsRequest
-	(*GetExperimentValidationHistoryRequest)(nil),        // 36: determined.api.v1.GetExperimentValidationHistoryRequest
-	(*ActivateExperimentRequest)(nil),                    // 37: determined.api.v1.ActivateExperimentRequest
-	(*ActivateExperimentsRequest)(nil),                   // 38: determined.api.v1.ActivateExperimentsRequest
-	(*PauseExperimentRequest)(nil),                       // 39: determined.api.v1.PauseExperimentRequest
-	(*PauseExperimentsRequest)(nil),                      // 40: determined.api.v1.PauseExperimentsRequest
-	(*CancelExperimentRequest)(nil),                      // 41: determined.api.v1.CancelExperimentRequest
-	(*CancelExperimentsRequest)(nil),                     // 42: determined.api.v1.CancelExperimentsRequest
-	(*KillExperimentRequest)(nil),                        // 43: determined.api.v1.KillExperimentRequest
-	(*KillExperimentsRequest)(nil),                       // 44: determined.api.v1.KillExperimentsRequest
-	(*ArchiveExperimentRequest)(nil),                     // 45: determined.api.v1.ArchiveExperimentRequest
-	(*ArchiveExperimentsRequest)(nil),                    // 46: determined.api.v1.ArchiveExperimentsRequest
-	(*UnarchiveExperimentRequest)(nil),                   // 47: determined.api.v1.UnarchiveExperimentRequest
-	(*UnarchiveExperimentsRequest)(nil),                  // 48: determined.api.v1.UnarchiveExperimentsRequest
-	(*PatchExperimentRequest)(nil),                       // 49: determined.api.v1.PatchExperimentRequest
-	(*DeleteExperimentsRequest)(nil),                     // 50: determined.api.v1.DeleteExperimentsRequest
-	(*DeleteExperimentRequest)(nil),                      // 51: determined.api.v1.DeleteExperimentRequest
-	(*GetBestSearcherValidationMetricRequest)(nil),       // 52: determined.api.v1.GetBestSearcherValidationMetricRequest
-	(*GetExperimentCheckpointsRequest)(nil),              // 53: determined.api.v1.GetExperimentCheckpointsRequest
-	(*PreviewHPSearchRequest)(nil),                       // 54: determined.api.v1.PreviewHPSearchRequest
-	(*GetExperimentTrialsRequest)(nil),                   // 55: determined.api.v1.GetExperimentTrialsRequest
-	(*CompareTrialsRequest)(nil),                         // 56: determined.api.v1.CompareTrialsRequest
-	(*ReportTrialSourceInfoRequest)(nil),                 // 57: determined.api.v1.ReportTrialSourceInfoRequest
-	(*CreateTrialRequest)(nil),                           // 58: determined.api.v1.CreateTrialRequest
-	(*PutTrialRequest)(nil),                              // 59: determined.api.v1.PutTrialRequest
-	(*PatchTrialRequest)(nil),                            // 60: determined.api.v1.PatchTrialRequest
-	(*StartTrialRequest)(nil),                            // 61: determined.api.v1.StartTrialRequest
-	(*GetTrialRequest)(nil),                              // 62: determined.api.v1.GetTrialRequest
-	(*GetTrialWorkloadsRequest)(nil),                     // 63: determined.api.v1.GetTrialWorkloadsRequest
-	(*TrialLogsRequest)(nil),                             // 64: determined.api.v1.TrialLogsRequest
-	(*TrialLogsFieldsRequest)(nil),                       // 65: determined.api.v1.TrialLogsFieldsRequest
-	(*AllocationReadyRequest)(nil),                       // 66: determined.api.v1.AllocationReadyRequest
-	(*GetAllocationRequest)(nil),                         // 67: determined.api.v1.GetAllocationRequest
-	(*AllocationWaitingRequest)(nil),                     // 68: determined.api.v1.AllocationWaitingRequest
-	(*TaskLogsRequest)(nil),                              // 69: determined.api.v1.TaskLogsRequest
-	(*TaskLogsFieldsRequest)(nil),                        // 70: determined.api.v1.TaskLogsFieldsRequest
-	(*GetTrialProfilerMetricsRequest)(nil),               // 71: determined.api.v1.GetTrialProfilerMetricsRequest
-	(*GetTrialProfilerAvailableSeriesRequest)(nil),       // 72: determined.api.v1.GetTrialProfilerAvailableSeriesRequest
-	(*PostTrialProfilerMetricsBatchRequest)(nil),         // 73: determined.api.v1.PostTrialProfilerMetricsBatchRequest
-	(*GetMetricsRequest)(nil),                            // 74: determined.api.v1.GetMetricsRequest
-	(*GetTrainingMetricsRequest)(nil),                    // 75: determined.api.v1.GetTrainingMetricsRequest
-	(*GetValidationMetricsRequest)(nil),                  // 76: determined.api.v1.GetValidationMetricsRequest
-	(*KillTrialRequest)(nil),                             // 77: determined.api.v1.KillTrialRequest
-	(*GetTrialCheckpointsRequest)(nil),                   // 78: determined.api.v1.GetTrialCheckpointsRequest
-	(*AllocationPreemptionSignalRequest)(nil),            // 79: determined.api.v1.AllocationPreemptionSignalRequest
-	(*AllocationPendingPreemptionSignalRequest)(nil),     // 80: determined.api.v1.AllocationPendingPreemptionSignalRequest
-	(*AckAllocationPreemptionSignalRequest)(nil),         // 81: determined.api.v1.AckAllocationPreemptionSignalRequest
-	(*MarkAllocationResourcesDaemonRequest)(nil),         // 82: determined.api.v1.MarkAllocationResourcesDaemonRequest
-	(*AllocationRendezvousInfoRequest)(nil),              // 83: determined.api.v1.AllocationRendezvousInfoRequest
-	(*PostAllocationProxyAddressRequest)(nil),            // 84: determined.api.v1.PostAllocationProxyAddressRequest
-	(*GetTaskAcceleratorDataRequest)(nil),                // 85: determined.api.v1.GetTaskAcceleratorDataRequest
-	(*PostAllocationAcceleratorDataRequest)(nil),         // 86: determined.api.v1.PostAllocationAcceleratorDataRequest
-	(*AllocationAllGatherRequest)(nil),                   // 87: determined.api.v1.AllocationAllGatherRequest
-	(*NotifyContainerRunningRequest)(nil),                // 88: determined.api.v1.NotifyContainerRunningRequest
-	(*GetCurrentTrialSearcherOperationRequest)(nil),      // 89: determined.api.v1.GetCurrentTrialSearcherOperationRequest
-	(*CompleteTrialSearcherValidationRequest)(nil),       // 90: determined.api.v1.CompleteTrialSearcherValidationRequest
-	(*ReportTrialSearcherEarlyExitRequest)(nil),          // 91: determined.api.v1.ReportTrialSearcherEarlyExitRequest
-	(*ReportTrialProgressRequest)(nil),                   // 92: determined.api.v1.ReportTrialProgressRequest
-	(*PostTrialRunnerMetadataRequest)(nil),               // 93: determined.api.v1.PostTrialRunnerMetadataRequest
-	(*ReportTrialMetricsRequest)(nil),                    // 94: determined.api.v1.ReportTrialMetricsRequest
-	(*ReportTrialTrainingMetricsRequest)(nil),            // 95: determined.api.v1.ReportTrialTrainingMetricsRequest
-	(*ReportTrialValidationMetricsRequest)(nil),          // 96: determined.api.v1.ReportTrialValidationMetricsRequest
-	(*ReportCheckpointRequest)(nil),                      // 97: determined.api.v1.ReportCheckpointRequest
-	(*GetJobsRequest)(nil),                               // 98: determined.api.v1.GetJobsRequest
-	(*GetJobsV2Request)(nil),                             // 99: determined.api.v1.GetJobsV2Request
-	(*GetJobQueueStatsRequest)(nil),                      // 100: determined.api.v1.GetJobQueueStatsRequest
-	(*UpdateJobQueueRequest)(nil),                        // 101: determined.api.v1.UpdateJobQueueRequest
-	(*GetTemplatesRequest)(nil),                          // 102: determined.api.v1.GetTemplatesRequest
-	(*GetTemplateRequest)(nil),                           // 103: determined.api.v1.GetTemplateRequest
-	(*PutTemplateRequest)(nil),                           // 104: determined.api.v1.PutTemplateRequest
-	(*PostTemplateRequest)(nil),                          // 105: determined.api.v1.PostTemplateRequest
-	(*PatchTemplateConfigRequest)(nil),                   // 106: determined.api.v1.PatchTemplateConfigRequest
-	(*DeleteTemplateRequest)(nil),                        // 107: determined.api.v1.DeleteTemplateRequest
-	(*GetNotebooksRequest)(nil),                          // 108: determined.api.v1.GetNotebooksRequest
-	(*GetNotebookRequest)(nil),                           // 109: determined.api.v1.GetNotebookRequest
-	(*IdleNotebookRequest)(nil),                          // 110: determined.api.v1.IdleNotebookRequest
-	(*KillNotebookRequest)(nil),                          // 111: determined.api.v1.KillNotebookRequest
-	(*SetNotebookPriorityRequest)(nil),                   // 112: determined.api.v1.SetNotebookPriorityRequest
-	(*LaunchNotebookRequest)(nil),                        // 113: determined.api.v1.LaunchNotebookRequest
-	(*GetShellsRequest)(nil),                             // 114: determined.api.v1.GetShellsRequest
-	(*GetShellRequest)(nil),                              // 115: determined.api.v1.GetShellRequest
-	(*KillShellRequest)(nil),                             // 116: determined.api.v1.KillShellRequest
-	(*SetShellPriorityRequest)(nil),                      // 117: determined.api.v1.SetShellPriorityRequest
-	(*LaunchShellRequest)(nil),                           // 118: determined.api.v1.LaunchShellRequest
-	(*GetCommandsRequest)(nil),                           // 119: determined.api.v1.GetCommandsRequest
-	(*GetCommandRequest)(nil),                            // 120: determined.api.v1.GetCommandRequest
-	(*KillCommandRequest)(nil),                           // 121: determined.api.v1.KillCommandRequest
-	(*SetCommandPriorityRequest)(nil),                    // 122: determined.api.v1.SetCommandPriorityRequest
-	(*LaunchCommandRequest)(nil),                         // 123: determined.api.v1.LaunchCommandRequest
-	(*GetTensorboardsRequest)(nil),                       // 124: determined.api.v1.GetTensorboardsRequest
-	(*GetTensorboardRequest)(nil),                        // 125: determined.api.v1.GetTensorboardRequest
-	(*KillTensorboardRequest)(nil),                       // 126: determined.api.v1.KillTensorboardRequest
-	(*SetTensorboardPriorityRequest)(nil),                // 127: determined.api.v1.SetTensorboardPriorityRequest
-	(*LaunchTensorboardRequest)(nil),                     // 128: determined.api.v1.LaunchTensorboardRequest
-	(*GetActiveTasksCountRequest)(nil),                   // 129: determined.api.v1.GetActiveTasksCountRequest
-	(*GetTaskRequest)(nil),                               // 130: determined.api.v1.GetTaskRequest
-	(*GetTasksRequest)(nil),                              // 131: determined.api.v1.GetTasksRequest
-	(*GetModelRequest)(nil),                              // 132: determined.api.v1.GetModelRequest
-	(*PostModelRequest)(nil),                             // 133: determined.api.v1.PostModelRequest
-	(*PatchModelRequest)(nil),                            // 134: determined.api.v1.PatchModelRequest
-	(*ArchiveModelRequest)(nil),                          // 135: determined.api.v1.ArchiveModelRequest
-	(*UnarchiveModelRequest)(nil),                        // 136: determined.api.v1.UnarchiveModelRequest
-	(*MoveModelRequest)(nil),                             // 137: determined.api.v1.MoveModelRequest
-	(*DeleteModelRequest)(nil),                           // 138: determined.api.v1.DeleteModelRequest
-	(*GetModelsRequest)(nil),                             // 139: determined.api.v1.GetModelsRequest
-	(*GetModelLabelsRequest)(nil),                        // 140: determined.api.v1.GetModelLabelsRequest
-	(*GetModelVersionRequest)(nil),                       // 141: determined.api.v1.GetModelVersionRequest
-	(*GetModelVersionsRequest)(nil),                      // 142: determined.api.v1.GetModelVersionsRequest
-	(*PostModelVersionRequest)(nil),                      // 143: determined.api.v1.PostModelVersionRequest
-	(*PatchModelVersionRequest)(nil),                     // 144: determined.api.v1.PatchModelVersionRequest
-	(*DeleteModelVersionRequest)(nil),                    // 145: determined.api.v1.DeleteModelVersionRequest
-	(*GetTrialMetricsByModelVersionRequest)(nil),         // 146: determined.api.v1.GetTrialMetricsByModelVersionRequest
-	(*GetCheckpointRequest)(nil),                         // 147: determined.api.v1.GetCheckpointRequest
-	(*PostCheckpointMetadataRequest)(nil),                // 148: determined.api.v1.PostCheckpointMetadataRequest
-	(*CheckpointsRemoveFilesRequest)(nil),                // 149: determined.api.v1.CheckpointsRemoveFilesRequest
-	(*PatchCheckpointsRequest)(nil),                      // 150: determined.api.v1.PatchCheckpointsRequest
-	(*DeleteCheckpointsRequest)(nil),                     // 151: determined.api.v1.DeleteCheckpointsRequest
-	(*GetTrialMetricsByCheckpointRequest)(nil),           // 152: determined.api.v1.GetTrialMetricsByCheckpointRequest
-	(*GetSearcherEventsRequest)(nil),                     // 153: determined.api.v1.GetSearcherEventsRequest
-	(*PostSearcherOperationsRequest)(nil),                // 154: determined.api.v1.PostSearcherOperationsRequest
-	(*ExpMetricNamesRequest)(nil),                        // 155: determined.api.v1.ExpMetricNamesRequest
-	(*MetricBatchesRequest)(nil),                         // 156: determined.api.v1.MetricBatchesRequest
-	(*TrialsSnapshotRequest)(nil),                        // 157: determined.api.v1.TrialsSnapshotRequest
-	(*TrialsSampleRequest)(nil),                          // 158: determined.api.v1.TrialsSampleRequest
-	(*GetResourcePoolsRequest)(nil),                      // 159: determined.api.v1.GetResourcePoolsRequest
-	(*ResourceAllocationRawRequest)(nil),                 // 160: determined.api.v1.ResourceAllocationRawRequest
-	(*ResourceAllocationAggregatedRequest)(nil),          // 161: determined.api.v1.ResourceAllocationAggregatedRequest
-	(*GetWorkspaceRequest)(nil),                          // 162: determined.api.v1.GetWorkspaceRequest
-	(*GetWorkspaceProjectsRequest)(nil),                  // 163: determined.api.v1.GetWorkspaceProjectsRequest
-	(*GetWorkspacesRequest)(nil),                         // 164: determined.api.v1.GetWorkspacesRequest
-	(*PostWorkspaceRequest)(nil),                         // 165: determined.api.v1.PostWorkspaceRequest
-	(*PatchWorkspaceRequest)(nil),                        // 166: determined.api.v1.PatchWorkspaceRequest
-	(*DeleteWorkspaceRequest)(nil),                       // 167: determined.api.v1.DeleteWorkspaceRequest
-	(*ArchiveWorkspaceRequest)(nil),                      // 168: determined.api.v1.ArchiveWorkspaceRequest
-	(*UnarchiveWorkspaceRequest)(nil),                    // 169: determined.api.v1.UnarchiveWorkspaceRequest
-	(*PinWorkspaceRequest)(nil),                          // 170: determined.api.v1.PinWorkspaceRequest
-	(*UnpinWorkspaceRequest)(nil),                        // 171: determined.api.v1.UnpinWorkspaceRequest
-	(*GetProjectRequest)(nil),                            // 172: determined.api.v1.GetProjectRequest
-	(*GetProjectColumnsRequest)(nil),                     // 173: determined.api.v1.GetProjectColumnsRequest
-	(*GetProjectNumericMetricsRangeRequest)(nil),         // 174: determined.api.v1.GetProjectNumericMetricsRangeRequest
-	(*PostProjectRequest)(nil),                           // 175: determined.api.v1.PostProjectRequest
-	(*AddProjectNoteRequest)(nil),                        // 176: determined.api.v1.AddProjectNoteRequest
-	(*PutProjectNotesRequest)(nil),                       // 177: determined.api.v1.PutProjectNotesRequest
-	(*PatchProjectRequest)(nil),                          // 178: determined.api.v1.PatchProjectRequest
-	(*DeleteProjectRequest)(nil),                         // 179: determined.api.v1.DeleteProjectRequest
-	(*ArchiveProjectRequest)(nil),                        // 180: determined.api.v1.ArchiveProjectRequest
-	(*UnarchiveProjectRequest)(nil),                      // 181: determined.api.v1.UnarchiveProjectRequest
-	(*MoveProjectRequest)(nil),                           // 182: determined.api.v1.MoveProjectRequest
-	(*MoveExperimentRequest)(nil),                        // 183: determined.api.v1.MoveExperimentRequest
-	(*MoveExperimentsRequest)(nil),                       // 184: determined.api.v1.MoveExperimentsRequest
-	(*GetWebhooksRequest)(nil),                           // 185: determined.api.v1.GetWebhooksRequest
-	(*PostWebhookRequest)(nil),                           // 186: determined.api.v1.PostWebhookRequest
-	(*DeleteWebhookRequest)(nil),                         // 187: determined.api.v1.DeleteWebhookRequest
-	(*TestWebhookRequest)(nil),                           // 188: determined.api.v1.TestWebhookRequest
-	(*GetGroupRequest)(nil),                              // 189: determined.api.v1.GetGroupRequest
-	(*GetGroupsRequest)(nil),                             // 190: determined.api.v1.GetGroupsRequest
-	(*CreateGroupRequest)(nil),                           // 191: determined.api.v1.CreateGroupRequest
-	(*UpdateGroupRequest)(nil),                           // 192: determined.api.v1.UpdateGroupRequest
-	(*DeleteGroupRequest)(nil),                           // 193: determined.api.v1.DeleteGroupRequest
-	(*GetPermissionsSummaryRequest)(nil),                 // 194: determined.api.v1.GetPermissionsSummaryRequest
-	(*GetGroupsAndUsersAssignedToWorkspaceRequest)(nil),  // 195: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceRequest
-	(*GetRolesByIDRequest)(nil),                          // 196: determined.api.v1.GetRolesByIDRequest
-	(*GetRolesAssignedToUserRequest)(nil),                // 197: determined.api.v1.GetRolesAssignedToUserRequest
-	(*GetRolesAssignedToGroupRequest)(nil),               // 198: determined.api.v1.GetRolesAssignedToGroupRequest
-	(*SearchRolesAssignableToScopeRequest)(nil),          // 199: determined.api.v1.SearchRolesAssignableToScopeRequest
-	(*ListRolesRequest)(nil),                             // 200: determined.api.v1.ListRolesRequest
-	(*AssignRolesRequest)(nil),                           // 201: determined.api.v1.AssignRolesRequest
-	(*RemoveAssignmentsRequest)(nil),                     // 202: determined.api.v1.RemoveAssignmentsRequest
-	(*PostUserActivityRequest)(nil),                      // 203: determined.api.v1.PostUserActivityRequest
-	(*GetProjectsByUserActivityRequest)(nil),             // 204: determined.api.v1.GetProjectsByUserActivityRequest
-	(*SearchExperimentsRequest)(nil),                     // 205: determined.api.v1.SearchExperimentsRequest
-	(*BindRPToWorkspaceRequest)(nil),                     // 206: determined.api.v1.BindRPToWorkspaceRequest
-	(*UnbindRPFromWorkspaceRequest)(nil),                 // 207: determined.api.v1.UnbindRPFromWorkspaceRequest
-	(*OverwriteRPWorkspaceBindingsRequest)(nil),          // 208: determined.api.v1.OverwriteRPWorkspaceBindingsRequest
-	(*ListRPsBoundToWorkspaceRequest)(nil),               // 209: determined.api.v1.ListRPsBoundToWorkspaceRequest
-	(*ListWorkspacesBoundToRPRequest)(nil),               // 210: determined.api.v1.ListWorkspacesBoundToRPRequest
-	(*LoginResponse)(nil),                                // 211: determined.api.v1.LoginResponse
-	(*CurrentUserResponse)(nil),                          // 212: determined.api.v1.CurrentUserResponse
-	(*LogoutResponse)(nil),                               // 213: determined.api.v1.LogoutResponse
-	(*GetUsersResponse)(nil),                             // 214: determined.api.v1.GetUsersResponse
-	(*GetUserSettingResponse)(nil),                       // 215: determined.api.v1.GetUserSettingResponse
-	(*ResetUserSettingResponse)(nil),                     // 216: determined.api.v1.ResetUserSettingResponse
-	(*PostUserSettingResponse)(nil),                      // 217: determined.api.v1.PostUserSettingResponse
-	(*GetUserResponse)(nil),                              // 218: determined.api.v1.GetUserResponse
-	(*GetUserByUsernameResponse)(nil),                    // 219: determined.api.v1.GetUserByUsernameResponse
-	(*GetMeResponse)(nil),                                // 220: determined.api.v1.GetMeResponse
-	(*PostUserResponse)(nil),                             // 221: determined.api.v1.PostUserResponse
-	(*SetUserPasswordResponse)(nil),                      // 222: determined.api.v1.SetUserPasswordResponse
-	(*PatchUserResponse)(nil),                            // 223: determined.api.v1.PatchUserResponse
-	(*GetTelemetryResponse)(nil),                         // 224: determined.api.v1.GetTelemetryResponse
-	(*GetMasterResponse)(nil),                            // 225: determined.api.v1.GetMasterResponse
-	(*GetMasterConfigResponse)(nil),                      // 226: determined.api.v1.GetMasterConfigResponse
-	(*PatchMasterConfigResponse)(nil),                    // 227: determined.api.v1.PatchMasterConfigResponse
-	(*MasterLogsResponse)(nil),                           // 228: determined.api.v1.MasterLogsResponse
-	(*GetAgentsResponse)(nil),                            // 229: determined.api.v1.GetAgentsResponse
-	(*GetAgentResponse)(nil),                             // 230: determined.api.v1.GetAgentResponse
-	(*GetSlotsResponse)(nil),                             // 231: determined.api.v1.GetSlotsResponse
-	(*GetSlotResponse)(nil),                              // 232: determined.api.v1.GetSlotResponse
-	(*EnableAgentResponse)(nil),                          // 233: determined.api.v1.EnableAgentResponse
-	(*DisableAgentResponse)(nil),                         // 234: determined.api.v1.DisableAgentResponse
-	(*EnableSlotResponse)(nil),                           // 235: determined.api.v1.EnableSlotResponse
-	(*DisableSlotResponse)(nil),                          // 236: determined.api.v1.DisableSlotResponse
-	(*CreateExperimentResponse)(nil),                     // 237: determined.api.v1.CreateExperimentResponse
-	(*PutExperimentResponse)(nil),                        // 238: determined.api.v1.PutExperimentResponse
-	(*ContinueExperimentResponse)(nil),                   // 239: determined.api.v1.ContinueExperimentResponse
-	(*GetExperimentResponse)(nil),                        // 240: determined.api.v1.GetExperimentResponse
-	(*GetExperimentsResponse)(nil),                       // 241: determined.api.v1.GetExperimentsResponse
-	(*GetModelDefResponse)(nil),                          // 242: determined.api.v1.GetModelDefResponse
-	(*GetTaskContextDirectoryResponse)(nil),              // 243: determined.api.v1.GetTaskContextDirectoryResponse
-	(*GetModelDefTreeResponse)(nil),                      // 244: determined.api.v1.GetModelDefTreeResponse
-	(*GetModelDefFileResponse)(nil),                      // 245: determined.api.v1.GetModelDefFileResponse
-	(*GetExperimentLabelsResponse)(nil),                  // 246: determined.api.v1.GetExperimentLabelsResponse
-	(*GetExperimentValidationHistoryResponse)(nil),       // 247: determined.api.v1.GetExperimentValidationHistoryResponse
-	(*ActivateExperimentResponse)(nil),                   // 248: determined.api.v1.ActivateExperimentResponse
-	(*ActivateExperimentsResponse)(nil),                  // 249: determined.api.v1.ActivateExperimentsResponse
-	(*PauseExperimentResponse)(nil),                      // 250: determined.api.v1.PauseExperimentResponse
-	(*PauseExperimentsResponse)(nil),                     // 251: determined.api.v1.PauseExperimentsResponse
-	(*CancelExperimentResponse)(nil),                     // 252: determined.api.v1.CancelExperimentResponse
-	(*CancelExperimentsResponse)(nil),                    // 253: determined.api.v1.CancelExperimentsResponse
-	(*KillExperimentResponse)(nil),                       // 254: determined.api.v1.KillExperimentResponse
-	(*KillExperimentsResponse)(nil),                      // 255: determined.api.v1.KillExperimentsResponse
-	(*ArchiveExperimentResponse)(nil),                    // 256: determined.api.v1.ArchiveExperimentResponse
-	(*ArchiveExperimentsResponse)(nil),                   // 257: determined.api.v1.ArchiveExperimentsResponse
-	(*UnarchiveExperimentResponse)(nil),                  // 258: determined.api.v1.UnarchiveExperimentResponse
-	(*UnarchiveExperimentsResponse)(nil),                 // 259: determined.api.v1.UnarchiveExperimentsResponse
-	(*PatchExperimentResponse)(nil),                      // 260: determined.api.v1.PatchExperimentResponse
-	(*DeleteExperimentsResponse)(nil),                    // 261: determined.api.v1.DeleteExperimentsResponse
-	(*DeleteExperimentResponse)(nil),                     // 262: determined.api.v1.DeleteExperimentResponse
-	(*GetBestSearcherValidationMetricResponse)(nil),      // 263: determined.api.v1.GetBestSearcherValidationMetricResponse
-	(*GetExperimentCheckpointsResponse)(nil),             // 264: determined.api.v1.GetExperimentCheckpointsResponse
-	(*PreviewHPSearchResponse)(nil),                      // 265: determined.api.v1.PreviewHPSearchResponse
-	(*GetExperimentTrialsResponse)(nil),                  // 266: determined.api.v1.GetExperimentTrialsResponse
-	(*CompareTrialsResponse)(nil),                        // 267: determined.api.v1.CompareTrialsResponse
-	(*ReportTrialSourceInfoResponse)(nil),                // 268: determined.api.v1.ReportTrialSourceInfoResponse
-	(*CreateTrialResponse)(nil),                          // 269: determined.api.v1.CreateTrialResponse
-	(*PutTrialResponse)(nil),                             // 270: determined.api.v1.PutTrialResponse
-	(*PatchTrialResponse)(nil),                           // 271: determined.api.v1.PatchTrialResponse
-	(*StartTrialResponse)(nil),                           // 272: determined.api.v1.StartTrialResponse
-	(*GetTrialResponse)(nil),                             // 273: determined.api.v1.GetTrialResponse
-	(*GetTrialWorkloadsResponse)(nil),                    // 274: determined.api.v1.GetTrialWorkloadsResponse
-	(*TrialLogsResponse)(nil),                            // 275: determined.api.v1.TrialLogsResponse
-	(*TrialLogsFieldsResponse)(nil),                      // 276: determined.api.v1.TrialLogsFieldsResponse
-	(*AllocationReadyResponse)(nil),                      // 277: determined.api.v1.AllocationReadyResponse
-	(*GetAllocationResponse)(nil),                        // 278: determined.api.v1.GetAllocationResponse
-	(*AllocationWaitingResponse)(nil),                    // 279: determined.api.v1.AllocationWaitingResponse
-	(*TaskLogsResponse)(nil),                             // 280: determined.api.v1.TaskLogsResponse
-	(*TaskLogsFieldsResponse)(nil),                       // 281: determined.api.v1.TaskLogsFieldsResponse
-	(*GetTrialProfilerMetricsResponse)(nil),              // 282: determined.api.v1.GetTrialProfilerMetricsResponse
-	(*GetTrialProfilerAvailableSeriesResponse)(nil),      // 283: determined.api.v1.GetTrialProfilerAvailableSeriesResponse
-	(*PostTrialProfilerMetricsBatchResponse)(nil),        // 284: determined.api.v1.PostTrialProfilerMetricsBatchResponse
-	(*GetMetricsResponse)(nil),                           // 285: determined.api.v1.GetMetricsResponse
-	(*GetTrainingMetricsResponse)(nil),                   // 286: determined.api.v1.GetTrainingMetricsResponse
-	(*GetValidationMetricsResponse)(nil),                 // 287: determined.api.v1.GetValidationMetricsResponse
-	(*KillTrialResponse)(nil),                            // 288: determined.api.v1.KillTrialResponse
-	(*GetTrialCheckpointsResponse)(nil),                  // 289: determined.api.v1.GetTrialCheckpointsResponse
-	(*AllocationPreemptionSignalResponse)(nil),           // 290: determined.api.v1.AllocationPreemptionSignalResponse
-	(*AllocationPendingPreemptionSignalResponse)(nil),    // 291: determined.api.v1.AllocationPendingPreemptionSignalResponse
-	(*AckAllocationPreemptionSignalResponse)(nil),        // 292: determined.api.v1.AckAllocationPreemptionSignalResponse
-	(*MarkAllocationResourcesDaemonResponse)(nil),        // 293: determined.api.v1.MarkAllocationResourcesDaemonResponse
-	(*AllocationRendezvousInfoResponse)(nil),             // 294: determined.api.v1.AllocationRendezvousInfoResponse
-	(*PostAllocationProxyAddressResponse)(nil),           // 295: determined.api.v1.PostAllocationProxyAddressResponse
-	(*GetTaskAcceleratorDataResponse)(nil),               // 296: determined.api.v1.GetTaskAcceleratorDataResponse
-	(*PostAllocationAcceleratorDataResponse)(nil),        // 297: determined.api.v1.PostAllocationAcceleratorDataResponse
-	(*AllocationAllGatherResponse)(nil),                  // 298: determined.api.v1.AllocationAllGatherResponse
-	(*NotifyContainerRunningResponse)(nil),               // 299: determined.api.v1.NotifyContainerRunningResponse
-	(*GetCurrentTrialSearcherOperationResponse)(nil),     // 300: determined.api.v1.GetCurrentTrialSearcherOperationResponse
-	(*CompleteTrialSearcherValidationResponse)(nil),      // 301: determined.api.v1.CompleteTrialSearcherValidationResponse
-	(*ReportTrialSearcherEarlyExitResponse)(nil),         // 302: determined.api.v1.ReportTrialSearcherEarlyExitResponse
-	(*ReportTrialProgressResponse)(nil),                  // 303: determined.api.v1.ReportTrialProgressResponse
-	(*PostTrialRunnerMetadataResponse)(nil),              // 304: determined.api.v1.PostTrialRunnerMetadataResponse
-	(*ReportTrialMetricsResponse)(nil),                   // 305: determined.api.v1.ReportTrialMetricsResponse
-	(*ReportTrialTrainingMetricsResponse)(nil),           // 306: determined.api.v1.ReportTrialTrainingMetricsResponse
-	(*ReportTrialValidationMetricsResponse)(nil),         // 307: determined.api.v1.ReportTrialValidationMetricsResponse
-	(*ReportCheckpointResponse)(nil),                     // 308: determined.api.v1.ReportCheckpointResponse
-	(*GetJobsResponse)(nil),                              // 309: determined.api.v1.GetJobsResponse
-	(*GetJobsV2Response)(nil),                            // 310: determined.api.v1.GetJobsV2Response
-	(*GetJobQueueStatsResponse)(nil),                     // 311: determined.api.v1.GetJobQueueStatsResponse
-	(*UpdateJobQueueResponse)(nil),                       // 312: determined.api.v1.UpdateJobQueueResponse
-	(*GetTemplatesResponse)(nil),                         // 313: determined.api.v1.GetTemplatesResponse
-	(*GetTemplateResponse)(nil),                          // 314: determined.api.v1.GetTemplateResponse
-	(*PutTemplateResponse)(nil),                          // 315: determined.api.v1.PutTemplateResponse
-	(*PostTemplateResponse)(nil),                         // 316: determined.api.v1.PostTemplateResponse
-	(*PatchTemplateConfigResponse)(nil),                  // 317: determined.api.v1.PatchTemplateConfigResponse
-	(*DeleteTemplateResponse)(nil),                       // 318: determined.api.v1.DeleteTemplateResponse
-	(*GetNotebooksResponse)(nil),                         // 319: determined.api.v1.GetNotebooksResponse
-	(*GetNotebookResponse)(nil),                          // 320: determined.api.v1.GetNotebookResponse
-	(*IdleNotebookResponse)(nil),                         // 321: determined.api.v1.IdleNotebookResponse
-	(*KillNotebookResponse)(nil),                         // 322: determined.api.v1.KillNotebookResponse
-	(*SetNotebookPriorityResponse)(nil),                  // 323: determined.api.v1.SetNotebookPriorityResponse
-	(*LaunchNotebookResponse)(nil),                       // 324: determined.api.v1.LaunchNotebookResponse
-	(*GetShellsResponse)(nil),                            // 325: determined.api.v1.GetShellsResponse
-	(*GetShellResponse)(nil),                             // 326: determined.api.v1.GetShellResponse
-	(*KillShellResponse)(nil),                            // 327: determined.api.v1.KillShellResponse
-	(*SetShellPriorityResponse)(nil),                     // 328: determined.api.v1.SetShellPriorityResponse
-	(*LaunchShellResponse)(nil),                          // 329: determined.api.v1.LaunchShellResponse
-	(*GetCommandsResponse)(nil),                          // 330: determined.api.v1.GetCommandsResponse
-	(*GetCommandResponse)(nil),                           // 331: determined.api.v1.GetCommandResponse
-	(*KillCommandResponse)(nil),                          // 332: determined.api.v1.KillCommandResponse
-	(*SetCommandPriorityResponse)(nil),                   // 333: determined.api.v1.SetCommandPriorityResponse
-	(*LaunchCommandResponse)(nil),                        // 334: determined.api.v1.LaunchCommandResponse
-	(*GetTensorboardsResponse)(nil),                      // 335: determined.api.v1.GetTensorboardsResponse
-	(*GetTensorboardResponse)(nil),                       // 336: determined.api.v1.GetTensorboardResponse
-	(*KillTensorboardResponse)(nil),                      // 337: determined.api.v1.KillTensorboardResponse
-	(*SetTensorboardPriorityResponse)(nil),               // 338: determined.api.v1.SetTensorboardPriorityResponse
-	(*LaunchTensorboardResponse)(nil),                    // 339: determined.api.v1.LaunchTensorboardResponse
-	(*GetActiveTasksCountResponse)(nil),                  // 340: determined.api.v1.GetActiveTasksCountResponse
-	(*GetTaskResponse)(nil),                              // 341: determined.api.v1.GetTaskResponse
-	(*GetTasksResponse)(nil),                             // 342: determined.api.v1.GetTasksResponse
-	(*GetModelResponse)(nil),                             // 343: determined.api.v1.GetModelResponse
-	(*PostModelResponse)(nil),                            // 344: determined.api.v1.PostModelResponse
-	(*PatchModelResponse)(nil),                           // 345: determined.api.v1.PatchModelResponse
-	(*ArchiveModelResponse)(nil),                         // 346: determined.api.v1.ArchiveModelResponse
-	(*UnarchiveModelResponse)(nil),                       // 347: determined.api.v1.UnarchiveModelResponse
-	(*MoveModelResponse)(nil),                            // 348: determined.api.v1.MoveModelResponse
-	(*DeleteModelResponse)(nil),                          // 349: determined.api.v1.DeleteModelResponse
-	(*GetModelsResponse)(nil),                            // 350: determined.api.v1.GetModelsResponse
-	(*GetModelLabelsResponse)(nil),                       // 351: determined.api.v1.GetModelLabelsResponse
-	(*GetModelVersionResponse)(nil),                      // 352: determined.api.v1.GetModelVersionResponse
-	(*GetModelVersionsResponse)(nil),                     // 353: determined.api.v1.GetModelVersionsResponse
-	(*PostModelVersionResponse)(nil),                     // 354: determined.api.v1.PostModelVersionResponse
-	(*PatchModelVersionResponse)(nil),                    // 355: determined.api.v1.PatchModelVersionResponse
-	(*DeleteModelVersionResponse)(nil),                   // 356: determined.api.v1.DeleteModelVersionResponse
-	(*GetTrialMetricsByModelVersionResponse)(nil),        // 357: determined.api.v1.GetTrialMetricsByModelVersionResponse
-	(*GetCheckpointResponse)(nil),                        // 358: determined.api.v1.GetCheckpointResponse
-	(*PostCheckpointMetadataResponse)(nil),               // 359: determined.api.v1.PostCheckpointMetadataResponse
-	(*CheckpointsRemoveFilesResponse)(nil),               // 360: determined.api.v1.CheckpointsRemoveFilesResponse
-	(*PatchCheckpointsResponse)(nil),                     // 361: determined.api.v1.PatchCheckpointsResponse
-	(*DeleteCheckpointsResponse)(nil),                    // 362: determined.api.v1.DeleteCheckpointsResponse
-	(*GetTrialMetricsByCheckpointResponse)(nil),          // 363: determined.api.v1.GetTrialMetricsByCheckpointResponse
-	(*GetSearcherEventsResponse)(nil),                    // 364: determined.api.v1.GetSearcherEventsResponse
-	(*PostSearcherOperationsResponse)(nil),               // 365: determined.api.v1.PostSearcherOperationsResponse
-	(*ExpMetricNamesResponse)(nil),                       // 366: determined.api.v1.ExpMetricNamesResponse
-	(*MetricBatchesResponse)(nil),                        // 367: determined.api.v1.MetricBatchesResponse
-	(*TrialsSnapshotResponse)(nil),                       // 368: determined.api.v1.TrialsSnapshotResponse
-	(*TrialsSampleResponse)(nil),                         // 369: determined.api.v1.TrialsSampleResponse
-	(*GetResourcePoolsResponse)(nil),                     // 370: determined.api.v1.GetResourcePoolsResponse
-	(*ResourceAllocationRawResponse)(nil),                // 371: determined.api.v1.ResourceAllocationRawResponse
-	(*ResourceAllocationAggregatedResponse)(nil),         // 372: determined.api.v1.ResourceAllocationAggregatedResponse
-	(*GetWorkspaceResponse)(nil),                         // 373: determined.api.v1.GetWorkspaceResponse
-	(*GetWorkspaceProjectsResponse)(nil),                 // 374: determined.api.v1.GetWorkspaceProjectsResponse
-	(*GetWorkspacesResponse)(nil),                        // 375: determined.api.v1.GetWorkspacesResponse
-	(*PostWorkspaceResponse)(nil),                        // 376: determined.api.v1.PostWorkspaceResponse
-	(*PatchWorkspaceResponse)(nil),                       // 377: determined.api.v1.PatchWorkspaceResponse
-	(*DeleteWorkspaceResponse)(nil),                      // 378: determined.api.v1.DeleteWorkspaceResponse
-	(*ArchiveWorkspaceResponse)(nil),                     // 379: determined.api.v1.ArchiveWorkspaceResponse
-	(*UnarchiveWorkspaceResponse)(nil),                   // 380: determined.api.v1.UnarchiveWorkspaceResponse
-	(*PinWorkspaceResponse)(nil),                         // 381: determined.api.v1.PinWorkspaceResponse
-	(*UnpinWorkspaceResponse)(nil),                       // 382: determined.api.v1.UnpinWorkspaceResponse
-	(*GetProjectResponse)(nil),                           // 383: determined.api.v1.GetProjectResponse
-	(*GetProjectColumnsResponse)(nil),                    // 384: determined.api.v1.GetProjectColumnsResponse
-	(*GetProjectNumericMetricsRangeResponse)(nil),        // 385: determined.api.v1.GetProjectNumericMetricsRangeResponse
-	(*PostProjectResponse)(nil),                          // 386: determined.api.v1.PostProjectResponse
-	(*AddProjectNoteResponse)(nil),                       // 387: determined.api.v1.AddProjectNoteResponse
-	(*PutProjectNotesResponse)(nil),                      // 388: determined.api.v1.PutProjectNotesResponse
-	(*PatchProjectResponse)(nil),                         // 389: determined.api.v1.PatchProjectResponse
-	(*DeleteProjectResponse)(nil),                        // 390: determined.api.v1.DeleteProjectResponse
-	(*ArchiveProjectResponse)(nil),                       // 391: determined.api.v1.ArchiveProjectResponse
-	(*UnarchiveProjectResponse)(nil),                     // 392: determined.api.v1.UnarchiveProjectResponse
-	(*MoveProjectResponse)(nil),                          // 393: determined.api.v1.MoveProjectResponse
-	(*MoveExperimentResponse)(nil),                       // 394: determined.api.v1.MoveExperimentResponse
-	(*MoveExperimentsResponse)(nil),                      // 395: determined.api.v1.MoveExperimentsResponse
-	(*GetWebhooksResponse)(nil),                          // 396: determined.api.v1.GetWebhooksResponse
-	(*PostWebhookResponse)(nil),                          // 397: determined.api.v1.PostWebhookResponse
-	(*DeleteWebhookResponse)(nil),                        // 398: determined.api.v1.DeleteWebhookResponse
-	(*TestWebhookResponse)(nil),                          // 399: determined.api.v1.TestWebhookResponse
-	(*GetGroupResponse)(nil),                             // 400: determined.api.v1.GetGroupResponse
-	(*GetGroupsResponse)(nil),                            // 401: determined.api.v1.GetGroupsResponse
-	(*CreateGroupResponse)(nil),                          // 402: determined.api.v1.CreateGroupResponse
-	(*UpdateGroupResponse)(nil),                          // 403: determined.api.v1.UpdateGroupResponse
-	(*DeleteGroupResponse)(nil),                          // 404: determined.api.v1.DeleteGroupResponse
-	(*GetPermissionsSummaryResponse)(nil),                // 405: determined.api.v1.GetPermissionsSummaryResponse
-	(*GetGroupsAndUsersAssignedToWorkspaceResponse)(nil), // 406: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse
-	(*GetRolesByIDResponse)(nil),                         // 407: determined.api.v1.GetRolesByIDResponse
-	(*GetRolesAssignedToUserResponse)(nil),               // 408: determined.api.v1.GetRolesAssignedToUserResponse
-	(*GetRolesAssignedToGroupResponse)(nil),              // 409: determined.api.v1.GetRolesAssignedToGroupResponse
-	(*SearchRolesAssignableToScopeResponse)(nil),         // 410: determined.api.v1.SearchRolesAssignableToScopeResponse
-	(*ListRolesResponse)(nil),                            // 411: determined.api.v1.ListRolesResponse
-	(*AssignRolesResponse)(nil),                          // 412: determined.api.v1.AssignRolesResponse
-	(*RemoveAssignmentsResponse)(nil),                    // 413: determined.api.v1.RemoveAssignmentsResponse
-	(*PostUserActivityResponse)(nil),                     // 414: determined.api.v1.PostUserActivityResponse
-	(*GetProjectsByUserActivityResponse)(nil),            // 415: determined.api.v1.GetProjectsByUserActivityResponse
-	(*SearchExperimentsResponse)(nil),                    // 416: determined.api.v1.SearchExperimentsResponse
-	(*BindRPToWorkspaceResponse)(nil),                    // 417: determined.api.v1.BindRPToWorkspaceResponse
-	(*UnbindRPFromWorkspaceResponse)(nil),                // 418: determined.api.v1.UnbindRPFromWorkspaceResponse
-	(*OverwriteRPWorkspaceBindingsResponse)(nil),         // 419: determined.api.v1.OverwriteRPWorkspaceBindingsResponse
-	(*ListRPsBoundToWorkspaceResponse)(nil),              // 420: determined.api.v1.ListRPsBoundToWorkspaceResponse
-	(*ListWorkspacesBoundToRPResponse)(nil),              // 421: determined.api.v1.ListWorkspacesBoundToRPResponse
+	(*PatchUsersRequest)(nil),                            // 13: determined.api.v1.PatchUsersRequest
+	(*AssignMultipleGroupsRequest)(nil),                  // 14: determined.api.v1.AssignMultipleGroupsRequest
+	(*GetTelemetryRequest)(nil),                          // 15: determined.api.v1.GetTelemetryRequest
+	(*GetMasterRequest)(nil),                             // 16: determined.api.v1.GetMasterRequest
+	(*GetMasterConfigRequest)(nil),                       // 17: determined.api.v1.GetMasterConfigRequest
+	(*PatchMasterConfigRequest)(nil),                     // 18: determined.api.v1.PatchMasterConfigRequest
+	(*MasterLogsRequest)(nil),                            // 19: determined.api.v1.MasterLogsRequest
+	(*GetAgentsRequest)(nil),                             // 20: determined.api.v1.GetAgentsRequest
+	(*GetAgentRequest)(nil),                              // 21: determined.api.v1.GetAgentRequest
+	(*GetSlotsRequest)(nil),                              // 22: determined.api.v1.GetSlotsRequest
+	(*GetSlotRequest)(nil),                               // 23: determined.api.v1.GetSlotRequest
+	(*EnableAgentRequest)(nil),                           // 24: determined.api.v1.EnableAgentRequest
+	(*DisableAgentRequest)(nil),                          // 25: determined.api.v1.DisableAgentRequest
+	(*EnableSlotRequest)(nil),                            // 26: determined.api.v1.EnableSlotRequest
+	(*DisableSlotRequest)(nil),                           // 27: determined.api.v1.DisableSlotRequest
+	(*CreateExperimentRequest)(nil),                      // 28: determined.api.v1.CreateExperimentRequest
+	(*PutExperimentRequest)(nil),                         // 29: determined.api.v1.PutExperimentRequest
+	(*ContinueExperimentRequest)(nil),                    // 30: determined.api.v1.ContinueExperimentRequest
+	(*GetExperimentRequest)(nil),                         // 31: determined.api.v1.GetExperimentRequest
+	(*GetExperimentsRequest)(nil),                        // 32: determined.api.v1.GetExperimentsRequest
+	(*GetModelDefRequest)(nil),                           // 33: determined.api.v1.GetModelDefRequest
+	(*GetTaskContextDirectoryRequest)(nil),               // 34: determined.api.v1.GetTaskContextDirectoryRequest
+	(*GetModelDefTreeRequest)(nil),                       // 35: determined.api.v1.GetModelDefTreeRequest
+	(*GetModelDefFileRequest)(nil),                       // 36: determined.api.v1.GetModelDefFileRequest
+	(*GetExperimentLabelsRequest)(nil),                   // 37: determined.api.v1.GetExperimentLabelsRequest
+	(*GetExperimentValidationHistoryRequest)(nil),        // 38: determined.api.v1.GetExperimentValidationHistoryRequest
+	(*ActivateExperimentRequest)(nil),                    // 39: determined.api.v1.ActivateExperimentRequest
+	(*ActivateExperimentsRequest)(nil),                   // 40: determined.api.v1.ActivateExperimentsRequest
+	(*PauseExperimentRequest)(nil),                       // 41: determined.api.v1.PauseExperimentRequest
+	(*PauseExperimentsRequest)(nil),                      // 42: determined.api.v1.PauseExperimentsRequest
+	(*CancelExperimentRequest)(nil),                      // 43: determined.api.v1.CancelExperimentRequest
+	(*CancelExperimentsRequest)(nil),                     // 44: determined.api.v1.CancelExperimentsRequest
+	(*KillExperimentRequest)(nil),                        // 45: determined.api.v1.KillExperimentRequest
+	(*KillExperimentsRequest)(nil),                       // 46: determined.api.v1.KillExperimentsRequest
+	(*ArchiveExperimentRequest)(nil),                     // 47: determined.api.v1.ArchiveExperimentRequest
+	(*ArchiveExperimentsRequest)(nil),                    // 48: determined.api.v1.ArchiveExperimentsRequest
+	(*UnarchiveExperimentRequest)(nil),                   // 49: determined.api.v1.UnarchiveExperimentRequest
+	(*UnarchiveExperimentsRequest)(nil),                  // 50: determined.api.v1.UnarchiveExperimentsRequest
+	(*PatchExperimentRequest)(nil),                       // 51: determined.api.v1.PatchExperimentRequest
+	(*DeleteExperimentsRequest)(nil),                     // 52: determined.api.v1.DeleteExperimentsRequest
+	(*DeleteExperimentRequest)(nil),                      // 53: determined.api.v1.DeleteExperimentRequest
+	(*GetBestSearcherValidationMetricRequest)(nil),       // 54: determined.api.v1.GetBestSearcherValidationMetricRequest
+	(*GetExperimentCheckpointsRequest)(nil),              // 55: determined.api.v1.GetExperimentCheckpointsRequest
+	(*PreviewHPSearchRequest)(nil),                       // 56: determined.api.v1.PreviewHPSearchRequest
+	(*GetExperimentTrialsRequest)(nil),                   // 57: determined.api.v1.GetExperimentTrialsRequest
+	(*CompareTrialsRequest)(nil),                         // 58: determined.api.v1.CompareTrialsRequest
+	(*ReportTrialSourceInfoRequest)(nil),                 // 59: determined.api.v1.ReportTrialSourceInfoRequest
+	(*CreateTrialRequest)(nil),                           // 60: determined.api.v1.CreateTrialRequest
+	(*PutTrialRequest)(nil),                              // 61: determined.api.v1.PutTrialRequest
+	(*PatchTrialRequest)(nil),                            // 62: determined.api.v1.PatchTrialRequest
+	(*StartTrialRequest)(nil),                            // 63: determined.api.v1.StartTrialRequest
+	(*GetTrialRequest)(nil),                              // 64: determined.api.v1.GetTrialRequest
+	(*GetTrialWorkloadsRequest)(nil),                     // 65: determined.api.v1.GetTrialWorkloadsRequest
+	(*TrialLogsRequest)(nil),                             // 66: determined.api.v1.TrialLogsRequest
+	(*TrialLogsFieldsRequest)(nil),                       // 67: determined.api.v1.TrialLogsFieldsRequest
+	(*AllocationReadyRequest)(nil),                       // 68: determined.api.v1.AllocationReadyRequest
+	(*GetAllocationRequest)(nil),                         // 69: determined.api.v1.GetAllocationRequest
+	(*AllocationWaitingRequest)(nil),                     // 70: determined.api.v1.AllocationWaitingRequest
+	(*TaskLogsRequest)(nil),                              // 71: determined.api.v1.TaskLogsRequest
+	(*TaskLogsFieldsRequest)(nil),                        // 72: determined.api.v1.TaskLogsFieldsRequest
+	(*GetTrialProfilerMetricsRequest)(nil),               // 73: determined.api.v1.GetTrialProfilerMetricsRequest
+	(*GetTrialProfilerAvailableSeriesRequest)(nil),       // 74: determined.api.v1.GetTrialProfilerAvailableSeriesRequest
+	(*PostTrialProfilerMetricsBatchRequest)(nil),         // 75: determined.api.v1.PostTrialProfilerMetricsBatchRequest
+	(*GetMetricsRequest)(nil),                            // 76: determined.api.v1.GetMetricsRequest
+	(*GetTrainingMetricsRequest)(nil),                    // 77: determined.api.v1.GetTrainingMetricsRequest
+	(*GetValidationMetricsRequest)(nil),                  // 78: determined.api.v1.GetValidationMetricsRequest
+	(*KillTrialRequest)(nil),                             // 79: determined.api.v1.KillTrialRequest
+	(*GetTrialCheckpointsRequest)(nil),                   // 80: determined.api.v1.GetTrialCheckpointsRequest
+	(*AllocationPreemptionSignalRequest)(nil),            // 81: determined.api.v1.AllocationPreemptionSignalRequest
+	(*AllocationPendingPreemptionSignalRequest)(nil),     // 82: determined.api.v1.AllocationPendingPreemptionSignalRequest
+	(*AckAllocationPreemptionSignalRequest)(nil),         // 83: determined.api.v1.AckAllocationPreemptionSignalRequest
+	(*MarkAllocationResourcesDaemonRequest)(nil),         // 84: determined.api.v1.MarkAllocationResourcesDaemonRequest
+	(*AllocationRendezvousInfoRequest)(nil),              // 85: determined.api.v1.AllocationRendezvousInfoRequest
+	(*PostAllocationProxyAddressRequest)(nil),            // 86: determined.api.v1.PostAllocationProxyAddressRequest
+	(*GetTaskAcceleratorDataRequest)(nil),                // 87: determined.api.v1.GetTaskAcceleratorDataRequest
+	(*PostAllocationAcceleratorDataRequest)(nil),         // 88: determined.api.v1.PostAllocationAcceleratorDataRequest
+	(*AllocationAllGatherRequest)(nil),                   // 89: determined.api.v1.AllocationAllGatherRequest
+	(*NotifyContainerRunningRequest)(nil),                // 90: determined.api.v1.NotifyContainerRunningRequest
+	(*GetCurrentTrialSearcherOperationRequest)(nil),      // 91: determined.api.v1.GetCurrentTrialSearcherOperationRequest
+	(*CompleteTrialSearcherValidationRequest)(nil),       // 92: determined.api.v1.CompleteTrialSearcherValidationRequest
+	(*ReportTrialSearcherEarlyExitRequest)(nil),          // 93: determined.api.v1.ReportTrialSearcherEarlyExitRequest
+	(*ReportTrialProgressRequest)(nil),                   // 94: determined.api.v1.ReportTrialProgressRequest
+	(*PostTrialRunnerMetadataRequest)(nil),               // 95: determined.api.v1.PostTrialRunnerMetadataRequest
+	(*ReportTrialMetricsRequest)(nil),                    // 96: determined.api.v1.ReportTrialMetricsRequest
+	(*ReportTrialTrainingMetricsRequest)(nil),            // 97: determined.api.v1.ReportTrialTrainingMetricsRequest
+	(*ReportTrialValidationMetricsRequest)(nil),          // 98: determined.api.v1.ReportTrialValidationMetricsRequest
+	(*ReportCheckpointRequest)(nil),                      // 99: determined.api.v1.ReportCheckpointRequest
+	(*GetJobsRequest)(nil),                               // 100: determined.api.v1.GetJobsRequest
+	(*GetJobsV2Request)(nil),                             // 101: determined.api.v1.GetJobsV2Request
+	(*GetJobQueueStatsRequest)(nil),                      // 102: determined.api.v1.GetJobQueueStatsRequest
+	(*UpdateJobQueueRequest)(nil),                        // 103: determined.api.v1.UpdateJobQueueRequest
+	(*GetTemplatesRequest)(nil),                          // 104: determined.api.v1.GetTemplatesRequest
+	(*GetTemplateRequest)(nil),                           // 105: determined.api.v1.GetTemplateRequest
+	(*PutTemplateRequest)(nil),                           // 106: determined.api.v1.PutTemplateRequest
+	(*PostTemplateRequest)(nil),                          // 107: determined.api.v1.PostTemplateRequest
+	(*PatchTemplateConfigRequest)(nil),                   // 108: determined.api.v1.PatchTemplateConfigRequest
+	(*DeleteTemplateRequest)(nil),                        // 109: determined.api.v1.DeleteTemplateRequest
+	(*GetNotebooksRequest)(nil),                          // 110: determined.api.v1.GetNotebooksRequest
+	(*GetNotebookRequest)(nil),                           // 111: determined.api.v1.GetNotebookRequest
+	(*IdleNotebookRequest)(nil),                          // 112: determined.api.v1.IdleNotebookRequest
+	(*KillNotebookRequest)(nil),                          // 113: determined.api.v1.KillNotebookRequest
+	(*SetNotebookPriorityRequest)(nil),                   // 114: determined.api.v1.SetNotebookPriorityRequest
+	(*LaunchNotebookRequest)(nil),                        // 115: determined.api.v1.LaunchNotebookRequest
+	(*GetShellsRequest)(nil),                             // 116: determined.api.v1.GetShellsRequest
+	(*GetShellRequest)(nil),                              // 117: determined.api.v1.GetShellRequest
+	(*KillShellRequest)(nil),                             // 118: determined.api.v1.KillShellRequest
+	(*SetShellPriorityRequest)(nil),                      // 119: determined.api.v1.SetShellPriorityRequest
+	(*LaunchShellRequest)(nil),                           // 120: determined.api.v1.LaunchShellRequest
+	(*GetCommandsRequest)(nil),                           // 121: determined.api.v1.GetCommandsRequest
+	(*GetCommandRequest)(nil),                            // 122: determined.api.v1.GetCommandRequest
+	(*KillCommandRequest)(nil),                           // 123: determined.api.v1.KillCommandRequest
+	(*SetCommandPriorityRequest)(nil),                    // 124: determined.api.v1.SetCommandPriorityRequest
+	(*LaunchCommandRequest)(nil),                         // 125: determined.api.v1.LaunchCommandRequest
+	(*GetTensorboardsRequest)(nil),                       // 126: determined.api.v1.GetTensorboardsRequest
+	(*GetTensorboardRequest)(nil),                        // 127: determined.api.v1.GetTensorboardRequest
+	(*KillTensorboardRequest)(nil),                       // 128: determined.api.v1.KillTensorboardRequest
+	(*SetTensorboardPriorityRequest)(nil),                // 129: determined.api.v1.SetTensorboardPriorityRequest
+	(*LaunchTensorboardRequest)(nil),                     // 130: determined.api.v1.LaunchTensorboardRequest
+	(*GetActiveTasksCountRequest)(nil),                   // 131: determined.api.v1.GetActiveTasksCountRequest
+	(*GetTaskRequest)(nil),                               // 132: determined.api.v1.GetTaskRequest
+	(*GetTasksRequest)(nil),                              // 133: determined.api.v1.GetTasksRequest
+	(*GetModelRequest)(nil),                              // 134: determined.api.v1.GetModelRequest
+	(*PostModelRequest)(nil),                             // 135: determined.api.v1.PostModelRequest
+	(*PatchModelRequest)(nil),                            // 136: determined.api.v1.PatchModelRequest
+	(*ArchiveModelRequest)(nil),                          // 137: determined.api.v1.ArchiveModelRequest
+	(*UnarchiveModelRequest)(nil),                        // 138: determined.api.v1.UnarchiveModelRequest
+	(*MoveModelRequest)(nil),                             // 139: determined.api.v1.MoveModelRequest
+	(*DeleteModelRequest)(nil),                           // 140: determined.api.v1.DeleteModelRequest
+	(*GetModelsRequest)(nil),                             // 141: determined.api.v1.GetModelsRequest
+	(*GetModelLabelsRequest)(nil),                        // 142: determined.api.v1.GetModelLabelsRequest
+	(*GetModelVersionRequest)(nil),                       // 143: determined.api.v1.GetModelVersionRequest
+	(*GetModelVersionsRequest)(nil),                      // 144: determined.api.v1.GetModelVersionsRequest
+	(*PostModelVersionRequest)(nil),                      // 145: determined.api.v1.PostModelVersionRequest
+	(*PatchModelVersionRequest)(nil),                     // 146: determined.api.v1.PatchModelVersionRequest
+	(*DeleteModelVersionRequest)(nil),                    // 147: determined.api.v1.DeleteModelVersionRequest
+	(*GetTrialMetricsByModelVersionRequest)(nil),         // 148: determined.api.v1.GetTrialMetricsByModelVersionRequest
+	(*GetCheckpointRequest)(nil),                         // 149: determined.api.v1.GetCheckpointRequest
+	(*PostCheckpointMetadataRequest)(nil),                // 150: determined.api.v1.PostCheckpointMetadataRequest
+	(*CheckpointsRemoveFilesRequest)(nil),                // 151: determined.api.v1.CheckpointsRemoveFilesRequest
+	(*PatchCheckpointsRequest)(nil),                      // 152: determined.api.v1.PatchCheckpointsRequest
+	(*DeleteCheckpointsRequest)(nil),                     // 153: determined.api.v1.DeleteCheckpointsRequest
+	(*GetTrialMetricsByCheckpointRequest)(nil),           // 154: determined.api.v1.GetTrialMetricsByCheckpointRequest
+	(*GetSearcherEventsRequest)(nil),                     // 155: determined.api.v1.GetSearcherEventsRequest
+	(*PostSearcherOperationsRequest)(nil),                // 156: determined.api.v1.PostSearcherOperationsRequest
+	(*ExpMetricNamesRequest)(nil),                        // 157: determined.api.v1.ExpMetricNamesRequest
+	(*MetricBatchesRequest)(nil),                         // 158: determined.api.v1.MetricBatchesRequest
+	(*TrialsSnapshotRequest)(nil),                        // 159: determined.api.v1.TrialsSnapshotRequest
+	(*TrialsSampleRequest)(nil),                          // 160: determined.api.v1.TrialsSampleRequest
+	(*GetResourcePoolsRequest)(nil),                      // 161: determined.api.v1.GetResourcePoolsRequest
+	(*ResourceAllocationRawRequest)(nil),                 // 162: determined.api.v1.ResourceAllocationRawRequest
+	(*ResourceAllocationAggregatedRequest)(nil),          // 163: determined.api.v1.ResourceAllocationAggregatedRequest
+	(*GetWorkspaceRequest)(nil),                          // 164: determined.api.v1.GetWorkspaceRequest
+	(*GetWorkspaceProjectsRequest)(nil),                  // 165: determined.api.v1.GetWorkspaceProjectsRequest
+	(*GetWorkspacesRequest)(nil),                         // 166: determined.api.v1.GetWorkspacesRequest
+	(*PostWorkspaceRequest)(nil),                         // 167: determined.api.v1.PostWorkspaceRequest
+	(*PatchWorkspaceRequest)(nil),                        // 168: determined.api.v1.PatchWorkspaceRequest
+	(*DeleteWorkspaceRequest)(nil),                       // 169: determined.api.v1.DeleteWorkspaceRequest
+	(*ArchiveWorkspaceRequest)(nil),                      // 170: determined.api.v1.ArchiveWorkspaceRequest
+	(*UnarchiveWorkspaceRequest)(nil),                    // 171: determined.api.v1.UnarchiveWorkspaceRequest
+	(*PinWorkspaceRequest)(nil),                          // 172: determined.api.v1.PinWorkspaceRequest
+	(*UnpinWorkspaceRequest)(nil),                        // 173: determined.api.v1.UnpinWorkspaceRequest
+	(*GetProjectRequest)(nil),                            // 174: determined.api.v1.GetProjectRequest
+	(*GetProjectColumnsRequest)(nil),                     // 175: determined.api.v1.GetProjectColumnsRequest
+	(*GetProjectNumericMetricsRangeRequest)(nil),         // 176: determined.api.v1.GetProjectNumericMetricsRangeRequest
+	(*PostProjectRequest)(nil),                           // 177: determined.api.v1.PostProjectRequest
+	(*AddProjectNoteRequest)(nil),                        // 178: determined.api.v1.AddProjectNoteRequest
+	(*PutProjectNotesRequest)(nil),                       // 179: determined.api.v1.PutProjectNotesRequest
+	(*PatchProjectRequest)(nil),                          // 180: determined.api.v1.PatchProjectRequest
+	(*DeleteProjectRequest)(nil),                         // 181: determined.api.v1.DeleteProjectRequest
+	(*ArchiveProjectRequest)(nil),                        // 182: determined.api.v1.ArchiveProjectRequest
+	(*UnarchiveProjectRequest)(nil),                      // 183: determined.api.v1.UnarchiveProjectRequest
+	(*MoveProjectRequest)(nil),                           // 184: determined.api.v1.MoveProjectRequest
+	(*MoveExperimentRequest)(nil),                        // 185: determined.api.v1.MoveExperimentRequest
+	(*MoveExperimentsRequest)(nil),                       // 186: determined.api.v1.MoveExperimentsRequest
+	(*GetWebhooksRequest)(nil),                           // 187: determined.api.v1.GetWebhooksRequest
+	(*PostWebhookRequest)(nil),                           // 188: determined.api.v1.PostWebhookRequest
+	(*DeleteWebhookRequest)(nil),                         // 189: determined.api.v1.DeleteWebhookRequest
+	(*TestWebhookRequest)(nil),                           // 190: determined.api.v1.TestWebhookRequest
+	(*GetGroupRequest)(nil),                              // 191: determined.api.v1.GetGroupRequest
+	(*GetGroupsRequest)(nil),                             // 192: determined.api.v1.GetGroupsRequest
+	(*CreateGroupRequest)(nil),                           // 193: determined.api.v1.CreateGroupRequest
+	(*UpdateGroupRequest)(nil),                           // 194: determined.api.v1.UpdateGroupRequest
+	(*DeleteGroupRequest)(nil),                           // 195: determined.api.v1.DeleteGroupRequest
+	(*GetPermissionsSummaryRequest)(nil),                 // 196: determined.api.v1.GetPermissionsSummaryRequest
+	(*GetGroupsAndUsersAssignedToWorkspaceRequest)(nil),  // 197: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceRequest
+	(*GetRolesByIDRequest)(nil),                          // 198: determined.api.v1.GetRolesByIDRequest
+	(*GetRolesAssignedToUserRequest)(nil),                // 199: determined.api.v1.GetRolesAssignedToUserRequest
+	(*GetRolesAssignedToGroupRequest)(nil),               // 200: determined.api.v1.GetRolesAssignedToGroupRequest
+	(*SearchRolesAssignableToScopeRequest)(nil),          // 201: determined.api.v1.SearchRolesAssignableToScopeRequest
+	(*ListRolesRequest)(nil),                             // 202: determined.api.v1.ListRolesRequest
+	(*AssignRolesRequest)(nil),                           // 203: determined.api.v1.AssignRolesRequest
+	(*RemoveAssignmentsRequest)(nil),                     // 204: determined.api.v1.RemoveAssignmentsRequest
+	(*PostUserActivityRequest)(nil),                      // 205: determined.api.v1.PostUserActivityRequest
+	(*GetProjectsByUserActivityRequest)(nil),             // 206: determined.api.v1.GetProjectsByUserActivityRequest
+	(*SearchExperimentsRequest)(nil),                     // 207: determined.api.v1.SearchExperimentsRequest
+	(*BindRPToWorkspaceRequest)(nil),                     // 208: determined.api.v1.BindRPToWorkspaceRequest
+	(*UnbindRPFromWorkspaceRequest)(nil),                 // 209: determined.api.v1.UnbindRPFromWorkspaceRequest
+	(*OverwriteRPWorkspaceBindingsRequest)(nil),          // 210: determined.api.v1.OverwriteRPWorkspaceBindingsRequest
+	(*ListRPsBoundToWorkspaceRequest)(nil),               // 211: determined.api.v1.ListRPsBoundToWorkspaceRequest
+	(*ListWorkspacesBoundToRPRequest)(nil),               // 212: determined.api.v1.ListWorkspacesBoundToRPRequest
+	(*LoginResponse)(nil),                                // 213: determined.api.v1.LoginResponse
+	(*CurrentUserResponse)(nil),                          // 214: determined.api.v1.CurrentUserResponse
+	(*LogoutResponse)(nil),                               // 215: determined.api.v1.LogoutResponse
+	(*GetUsersResponse)(nil),                             // 216: determined.api.v1.GetUsersResponse
+	(*GetUserSettingResponse)(nil),                       // 217: determined.api.v1.GetUserSettingResponse
+	(*ResetUserSettingResponse)(nil),                     // 218: determined.api.v1.ResetUserSettingResponse
+	(*PostUserSettingResponse)(nil),                      // 219: determined.api.v1.PostUserSettingResponse
+	(*GetUserResponse)(nil),                              // 220: determined.api.v1.GetUserResponse
+	(*GetUserByUsernameResponse)(nil),                    // 221: determined.api.v1.GetUserByUsernameResponse
+	(*GetMeResponse)(nil),                                // 222: determined.api.v1.GetMeResponse
+	(*PostUserResponse)(nil),                             // 223: determined.api.v1.PostUserResponse
+	(*SetUserPasswordResponse)(nil),                      // 224: determined.api.v1.SetUserPasswordResponse
+	(*PatchUserResponse)(nil),                            // 225: determined.api.v1.PatchUserResponse
+	(*PatchUsersResponse)(nil),                           // 226: determined.api.v1.PatchUsersResponse
+	(*AssignMultipleGroupsResponse)(nil),                 // 227: determined.api.v1.AssignMultipleGroupsResponse
+	(*GetTelemetryResponse)(nil),                         // 228: determined.api.v1.GetTelemetryResponse
+	(*GetMasterResponse)(nil),                            // 229: determined.api.v1.GetMasterResponse
+	(*GetMasterConfigResponse)(nil),                      // 230: determined.api.v1.GetMasterConfigResponse
+	(*PatchMasterConfigResponse)(nil),                    // 231: determined.api.v1.PatchMasterConfigResponse
+	(*MasterLogsResponse)(nil),                           // 232: determined.api.v1.MasterLogsResponse
+	(*GetAgentsResponse)(nil),                            // 233: determined.api.v1.GetAgentsResponse
+	(*GetAgentResponse)(nil),                             // 234: determined.api.v1.GetAgentResponse
+	(*GetSlotsResponse)(nil),                             // 235: determined.api.v1.GetSlotsResponse
+	(*GetSlotResponse)(nil),                              // 236: determined.api.v1.GetSlotResponse
+	(*EnableAgentResponse)(nil),                          // 237: determined.api.v1.EnableAgentResponse
+	(*DisableAgentResponse)(nil),                         // 238: determined.api.v1.DisableAgentResponse
+	(*EnableSlotResponse)(nil),                           // 239: determined.api.v1.EnableSlotResponse
+	(*DisableSlotResponse)(nil),                          // 240: determined.api.v1.DisableSlotResponse
+	(*CreateExperimentResponse)(nil),                     // 241: determined.api.v1.CreateExperimentResponse
+	(*PutExperimentResponse)(nil),                        // 242: determined.api.v1.PutExperimentResponse
+	(*ContinueExperimentResponse)(nil),                   // 243: determined.api.v1.ContinueExperimentResponse
+	(*GetExperimentResponse)(nil),                        // 244: determined.api.v1.GetExperimentResponse
+	(*GetExperimentsResponse)(nil),                       // 245: determined.api.v1.GetExperimentsResponse
+	(*GetModelDefResponse)(nil),                          // 246: determined.api.v1.GetModelDefResponse
+	(*GetTaskContextDirectoryResponse)(nil),              // 247: determined.api.v1.GetTaskContextDirectoryResponse
+	(*GetModelDefTreeResponse)(nil),                      // 248: determined.api.v1.GetModelDefTreeResponse
+	(*GetModelDefFileResponse)(nil),                      // 249: determined.api.v1.GetModelDefFileResponse
+	(*GetExperimentLabelsResponse)(nil),                  // 250: determined.api.v1.GetExperimentLabelsResponse
+	(*GetExperimentValidationHistoryResponse)(nil),       // 251: determined.api.v1.GetExperimentValidationHistoryResponse
+	(*ActivateExperimentResponse)(nil),                   // 252: determined.api.v1.ActivateExperimentResponse
+	(*ActivateExperimentsResponse)(nil),                  // 253: determined.api.v1.ActivateExperimentsResponse
+	(*PauseExperimentResponse)(nil),                      // 254: determined.api.v1.PauseExperimentResponse
+	(*PauseExperimentsResponse)(nil),                     // 255: determined.api.v1.PauseExperimentsResponse
+	(*CancelExperimentResponse)(nil),                     // 256: determined.api.v1.CancelExperimentResponse
+	(*CancelExperimentsResponse)(nil),                    // 257: determined.api.v1.CancelExperimentsResponse
+	(*KillExperimentResponse)(nil),                       // 258: determined.api.v1.KillExperimentResponse
+	(*KillExperimentsResponse)(nil),                      // 259: determined.api.v1.KillExperimentsResponse
+	(*ArchiveExperimentResponse)(nil),                    // 260: determined.api.v1.ArchiveExperimentResponse
+	(*ArchiveExperimentsResponse)(nil),                   // 261: determined.api.v1.ArchiveExperimentsResponse
+	(*UnarchiveExperimentResponse)(nil),                  // 262: determined.api.v1.UnarchiveExperimentResponse
+	(*UnarchiveExperimentsResponse)(nil),                 // 263: determined.api.v1.UnarchiveExperimentsResponse
+	(*PatchExperimentResponse)(nil),                      // 264: determined.api.v1.PatchExperimentResponse
+	(*DeleteExperimentsResponse)(nil),                    // 265: determined.api.v1.DeleteExperimentsResponse
+	(*DeleteExperimentResponse)(nil),                     // 266: determined.api.v1.DeleteExperimentResponse
+	(*GetBestSearcherValidationMetricResponse)(nil),      // 267: determined.api.v1.GetBestSearcherValidationMetricResponse
+	(*GetExperimentCheckpointsResponse)(nil),             // 268: determined.api.v1.GetExperimentCheckpointsResponse
+	(*PreviewHPSearchResponse)(nil),                      // 269: determined.api.v1.PreviewHPSearchResponse
+	(*GetExperimentTrialsResponse)(nil),                  // 270: determined.api.v1.GetExperimentTrialsResponse
+	(*CompareTrialsResponse)(nil),                        // 271: determined.api.v1.CompareTrialsResponse
+	(*ReportTrialSourceInfoResponse)(nil),                // 272: determined.api.v1.ReportTrialSourceInfoResponse
+	(*CreateTrialResponse)(nil),                          // 273: determined.api.v1.CreateTrialResponse
+	(*PutTrialResponse)(nil),                             // 274: determined.api.v1.PutTrialResponse
+	(*PatchTrialResponse)(nil),                           // 275: determined.api.v1.PatchTrialResponse
+	(*StartTrialResponse)(nil),                           // 276: determined.api.v1.StartTrialResponse
+	(*GetTrialResponse)(nil),                             // 277: determined.api.v1.GetTrialResponse
+	(*GetTrialWorkloadsResponse)(nil),                    // 278: determined.api.v1.GetTrialWorkloadsResponse
+	(*TrialLogsResponse)(nil),                            // 279: determined.api.v1.TrialLogsResponse
+	(*TrialLogsFieldsResponse)(nil),                      // 280: determined.api.v1.TrialLogsFieldsResponse
+	(*AllocationReadyResponse)(nil),                      // 281: determined.api.v1.AllocationReadyResponse
+	(*GetAllocationResponse)(nil),                        // 282: determined.api.v1.GetAllocationResponse
+	(*AllocationWaitingResponse)(nil),                    // 283: determined.api.v1.AllocationWaitingResponse
+	(*TaskLogsResponse)(nil),                             // 284: determined.api.v1.TaskLogsResponse
+	(*TaskLogsFieldsResponse)(nil),                       // 285: determined.api.v1.TaskLogsFieldsResponse
+	(*GetTrialProfilerMetricsResponse)(nil),              // 286: determined.api.v1.GetTrialProfilerMetricsResponse
+	(*GetTrialProfilerAvailableSeriesResponse)(nil),      // 287: determined.api.v1.GetTrialProfilerAvailableSeriesResponse
+	(*PostTrialProfilerMetricsBatchResponse)(nil),        // 288: determined.api.v1.PostTrialProfilerMetricsBatchResponse
+	(*GetMetricsResponse)(nil),                           // 289: determined.api.v1.GetMetricsResponse
+	(*GetTrainingMetricsResponse)(nil),                   // 290: determined.api.v1.GetTrainingMetricsResponse
+	(*GetValidationMetricsResponse)(nil),                 // 291: determined.api.v1.GetValidationMetricsResponse
+	(*KillTrialResponse)(nil),                            // 292: determined.api.v1.KillTrialResponse
+	(*GetTrialCheckpointsResponse)(nil),                  // 293: determined.api.v1.GetTrialCheckpointsResponse
+	(*AllocationPreemptionSignalResponse)(nil),           // 294: determined.api.v1.AllocationPreemptionSignalResponse
+	(*AllocationPendingPreemptionSignalResponse)(nil),    // 295: determined.api.v1.AllocationPendingPreemptionSignalResponse
+	(*AckAllocationPreemptionSignalResponse)(nil),        // 296: determined.api.v1.AckAllocationPreemptionSignalResponse
+	(*MarkAllocationResourcesDaemonResponse)(nil),        // 297: determined.api.v1.MarkAllocationResourcesDaemonResponse
+	(*AllocationRendezvousInfoResponse)(nil),             // 298: determined.api.v1.AllocationRendezvousInfoResponse
+	(*PostAllocationProxyAddressResponse)(nil),           // 299: determined.api.v1.PostAllocationProxyAddressResponse
+	(*GetTaskAcceleratorDataResponse)(nil),               // 300: determined.api.v1.GetTaskAcceleratorDataResponse
+	(*PostAllocationAcceleratorDataResponse)(nil),        // 301: determined.api.v1.PostAllocationAcceleratorDataResponse
+	(*AllocationAllGatherResponse)(nil),                  // 302: determined.api.v1.AllocationAllGatherResponse
+	(*NotifyContainerRunningResponse)(nil),               // 303: determined.api.v1.NotifyContainerRunningResponse
+	(*GetCurrentTrialSearcherOperationResponse)(nil),     // 304: determined.api.v1.GetCurrentTrialSearcherOperationResponse
+	(*CompleteTrialSearcherValidationResponse)(nil),      // 305: determined.api.v1.CompleteTrialSearcherValidationResponse
+	(*ReportTrialSearcherEarlyExitResponse)(nil),         // 306: determined.api.v1.ReportTrialSearcherEarlyExitResponse
+	(*ReportTrialProgressResponse)(nil),                  // 307: determined.api.v1.ReportTrialProgressResponse
+	(*PostTrialRunnerMetadataResponse)(nil),              // 308: determined.api.v1.PostTrialRunnerMetadataResponse
+	(*ReportTrialMetricsResponse)(nil),                   // 309: determined.api.v1.ReportTrialMetricsResponse
+	(*ReportTrialTrainingMetricsResponse)(nil),           // 310: determined.api.v1.ReportTrialTrainingMetricsResponse
+	(*ReportTrialValidationMetricsResponse)(nil),         // 311: determined.api.v1.ReportTrialValidationMetricsResponse
+	(*ReportCheckpointResponse)(nil),                     // 312: determined.api.v1.ReportCheckpointResponse
+	(*GetJobsResponse)(nil),                              // 313: determined.api.v1.GetJobsResponse
+	(*GetJobsV2Response)(nil),                            // 314: determined.api.v1.GetJobsV2Response
+	(*GetJobQueueStatsResponse)(nil),                     // 315: determined.api.v1.GetJobQueueStatsResponse
+	(*UpdateJobQueueResponse)(nil),                       // 316: determined.api.v1.UpdateJobQueueResponse
+	(*GetTemplatesResponse)(nil),                         // 317: determined.api.v1.GetTemplatesResponse
+	(*GetTemplateResponse)(nil),                          // 318: determined.api.v1.GetTemplateResponse
+	(*PutTemplateResponse)(nil),                          // 319: determined.api.v1.PutTemplateResponse
+	(*PostTemplateResponse)(nil),                         // 320: determined.api.v1.PostTemplateResponse
+	(*PatchTemplateConfigResponse)(nil),                  // 321: determined.api.v1.PatchTemplateConfigResponse
+	(*DeleteTemplateResponse)(nil),                       // 322: determined.api.v1.DeleteTemplateResponse
+	(*GetNotebooksResponse)(nil),                         // 323: determined.api.v1.GetNotebooksResponse
+	(*GetNotebookResponse)(nil),                          // 324: determined.api.v1.GetNotebookResponse
+	(*IdleNotebookResponse)(nil),                         // 325: determined.api.v1.IdleNotebookResponse
+	(*KillNotebookResponse)(nil),                         // 326: determined.api.v1.KillNotebookResponse
+	(*SetNotebookPriorityResponse)(nil),                  // 327: determined.api.v1.SetNotebookPriorityResponse
+	(*LaunchNotebookResponse)(nil),                       // 328: determined.api.v1.LaunchNotebookResponse
+	(*GetShellsResponse)(nil),                            // 329: determined.api.v1.GetShellsResponse
+	(*GetShellResponse)(nil),                             // 330: determined.api.v1.GetShellResponse
+	(*KillShellResponse)(nil),                            // 331: determined.api.v1.KillShellResponse
+	(*SetShellPriorityResponse)(nil),                     // 332: determined.api.v1.SetShellPriorityResponse
+	(*LaunchShellResponse)(nil),                          // 333: determined.api.v1.LaunchShellResponse
+	(*GetCommandsResponse)(nil),                          // 334: determined.api.v1.GetCommandsResponse
+	(*GetCommandResponse)(nil),                           // 335: determined.api.v1.GetCommandResponse
+	(*KillCommandResponse)(nil),                          // 336: determined.api.v1.KillCommandResponse
+	(*SetCommandPriorityResponse)(nil),                   // 337: determined.api.v1.SetCommandPriorityResponse
+	(*LaunchCommandResponse)(nil),                        // 338: determined.api.v1.LaunchCommandResponse
+	(*GetTensorboardsResponse)(nil),                      // 339: determined.api.v1.GetTensorboardsResponse
+	(*GetTensorboardResponse)(nil),                       // 340: determined.api.v1.GetTensorboardResponse
+	(*KillTensorboardResponse)(nil),                      // 341: determined.api.v1.KillTensorboardResponse
+	(*SetTensorboardPriorityResponse)(nil),               // 342: determined.api.v1.SetTensorboardPriorityResponse
+	(*LaunchTensorboardResponse)(nil),                    // 343: determined.api.v1.LaunchTensorboardResponse
+	(*GetActiveTasksCountResponse)(nil),                  // 344: determined.api.v1.GetActiveTasksCountResponse
+	(*GetTaskResponse)(nil),                              // 345: determined.api.v1.GetTaskResponse
+	(*GetTasksResponse)(nil),                             // 346: determined.api.v1.GetTasksResponse
+	(*GetModelResponse)(nil),                             // 347: determined.api.v1.GetModelResponse
+	(*PostModelResponse)(nil),                            // 348: determined.api.v1.PostModelResponse
+	(*PatchModelResponse)(nil),                           // 349: determined.api.v1.PatchModelResponse
+	(*ArchiveModelResponse)(nil),                         // 350: determined.api.v1.ArchiveModelResponse
+	(*UnarchiveModelResponse)(nil),                       // 351: determined.api.v1.UnarchiveModelResponse
+	(*MoveModelResponse)(nil),                            // 352: determined.api.v1.MoveModelResponse
+	(*DeleteModelResponse)(nil),                          // 353: determined.api.v1.DeleteModelResponse
+	(*GetModelsResponse)(nil),                            // 354: determined.api.v1.GetModelsResponse
+	(*GetModelLabelsResponse)(nil),                       // 355: determined.api.v1.GetModelLabelsResponse
+	(*GetModelVersionResponse)(nil),                      // 356: determined.api.v1.GetModelVersionResponse
+	(*GetModelVersionsResponse)(nil),                     // 357: determined.api.v1.GetModelVersionsResponse
+	(*PostModelVersionResponse)(nil),                     // 358: determined.api.v1.PostModelVersionResponse
+	(*PatchModelVersionResponse)(nil),                    // 359: determined.api.v1.PatchModelVersionResponse
+	(*DeleteModelVersionResponse)(nil),                   // 360: determined.api.v1.DeleteModelVersionResponse
+	(*GetTrialMetricsByModelVersionResponse)(nil),        // 361: determined.api.v1.GetTrialMetricsByModelVersionResponse
+	(*GetCheckpointResponse)(nil),                        // 362: determined.api.v1.GetCheckpointResponse
+	(*PostCheckpointMetadataResponse)(nil),               // 363: determined.api.v1.PostCheckpointMetadataResponse
+	(*CheckpointsRemoveFilesResponse)(nil),               // 364: determined.api.v1.CheckpointsRemoveFilesResponse
+	(*PatchCheckpointsResponse)(nil),                     // 365: determined.api.v1.PatchCheckpointsResponse
+	(*DeleteCheckpointsResponse)(nil),                    // 366: determined.api.v1.DeleteCheckpointsResponse
+	(*GetTrialMetricsByCheckpointResponse)(nil),          // 367: determined.api.v1.GetTrialMetricsByCheckpointResponse
+	(*GetSearcherEventsResponse)(nil),                    // 368: determined.api.v1.GetSearcherEventsResponse
+	(*PostSearcherOperationsResponse)(nil),               // 369: determined.api.v1.PostSearcherOperationsResponse
+	(*ExpMetricNamesResponse)(nil),                       // 370: determined.api.v1.ExpMetricNamesResponse
+	(*MetricBatchesResponse)(nil),                        // 371: determined.api.v1.MetricBatchesResponse
+	(*TrialsSnapshotResponse)(nil),                       // 372: determined.api.v1.TrialsSnapshotResponse
+	(*TrialsSampleResponse)(nil),                         // 373: determined.api.v1.TrialsSampleResponse
+	(*GetResourcePoolsResponse)(nil),                     // 374: determined.api.v1.GetResourcePoolsResponse
+	(*ResourceAllocationRawResponse)(nil),                // 375: determined.api.v1.ResourceAllocationRawResponse
+	(*ResourceAllocationAggregatedResponse)(nil),         // 376: determined.api.v1.ResourceAllocationAggregatedResponse
+	(*GetWorkspaceResponse)(nil),                         // 377: determined.api.v1.GetWorkspaceResponse
+	(*GetWorkspaceProjectsResponse)(nil),                 // 378: determined.api.v1.GetWorkspaceProjectsResponse
+	(*GetWorkspacesResponse)(nil),                        // 379: determined.api.v1.GetWorkspacesResponse
+	(*PostWorkspaceResponse)(nil),                        // 380: determined.api.v1.PostWorkspaceResponse
+	(*PatchWorkspaceResponse)(nil),                       // 381: determined.api.v1.PatchWorkspaceResponse
+	(*DeleteWorkspaceResponse)(nil),                      // 382: determined.api.v1.DeleteWorkspaceResponse
+	(*ArchiveWorkspaceResponse)(nil),                     // 383: determined.api.v1.ArchiveWorkspaceResponse
+	(*UnarchiveWorkspaceResponse)(nil),                   // 384: determined.api.v1.UnarchiveWorkspaceResponse
+	(*PinWorkspaceResponse)(nil),                         // 385: determined.api.v1.PinWorkspaceResponse
+	(*UnpinWorkspaceResponse)(nil),                       // 386: determined.api.v1.UnpinWorkspaceResponse
+	(*GetProjectResponse)(nil),                           // 387: determined.api.v1.GetProjectResponse
+	(*GetProjectColumnsResponse)(nil),                    // 388: determined.api.v1.GetProjectColumnsResponse
+	(*GetProjectNumericMetricsRangeResponse)(nil),        // 389: determined.api.v1.GetProjectNumericMetricsRangeResponse
+	(*PostProjectResponse)(nil),                          // 390: determined.api.v1.PostProjectResponse
+	(*AddProjectNoteResponse)(nil),                       // 391: determined.api.v1.AddProjectNoteResponse
+	(*PutProjectNotesResponse)(nil),                      // 392: determined.api.v1.PutProjectNotesResponse
+	(*PatchProjectResponse)(nil),                         // 393: determined.api.v1.PatchProjectResponse
+	(*DeleteProjectResponse)(nil),                        // 394: determined.api.v1.DeleteProjectResponse
+	(*ArchiveProjectResponse)(nil),                       // 395: determined.api.v1.ArchiveProjectResponse
+	(*UnarchiveProjectResponse)(nil),                     // 396: determined.api.v1.UnarchiveProjectResponse
+	(*MoveProjectResponse)(nil),                          // 397: determined.api.v1.MoveProjectResponse
+	(*MoveExperimentResponse)(nil),                       // 398: determined.api.v1.MoveExperimentResponse
+	(*MoveExperimentsResponse)(nil),                      // 399: determined.api.v1.MoveExperimentsResponse
+	(*GetWebhooksResponse)(nil),                          // 400: determined.api.v1.GetWebhooksResponse
+	(*PostWebhookResponse)(nil),                          // 401: determined.api.v1.PostWebhookResponse
+	(*DeleteWebhookResponse)(nil),                        // 402: determined.api.v1.DeleteWebhookResponse
+	(*TestWebhookResponse)(nil),                          // 403: determined.api.v1.TestWebhookResponse
+	(*GetGroupResponse)(nil),                             // 404: determined.api.v1.GetGroupResponse
+	(*GetGroupsResponse)(nil),                            // 405: determined.api.v1.GetGroupsResponse
+	(*CreateGroupResponse)(nil),                          // 406: determined.api.v1.CreateGroupResponse
+	(*UpdateGroupResponse)(nil),                          // 407: determined.api.v1.UpdateGroupResponse
+	(*DeleteGroupResponse)(nil),                          // 408: determined.api.v1.DeleteGroupResponse
+	(*GetPermissionsSummaryResponse)(nil),                // 409: determined.api.v1.GetPermissionsSummaryResponse
+	(*GetGroupsAndUsersAssignedToWorkspaceResponse)(nil), // 410: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse
+	(*GetRolesByIDResponse)(nil),                         // 411: determined.api.v1.GetRolesByIDResponse
+	(*GetRolesAssignedToUserResponse)(nil),               // 412: determined.api.v1.GetRolesAssignedToUserResponse
+	(*GetRolesAssignedToGroupResponse)(nil),              // 413: determined.api.v1.GetRolesAssignedToGroupResponse
+	(*SearchRolesAssignableToScopeResponse)(nil),         // 414: determined.api.v1.SearchRolesAssignableToScopeResponse
+	(*ListRolesResponse)(nil),                            // 415: determined.api.v1.ListRolesResponse
+	(*AssignRolesResponse)(nil),                          // 416: determined.api.v1.AssignRolesResponse
+	(*RemoveAssignmentsResponse)(nil),                    // 417: determined.api.v1.RemoveAssignmentsResponse
+	(*PostUserActivityResponse)(nil),                     // 418: determined.api.v1.PostUserActivityResponse
+	(*GetProjectsByUserActivityResponse)(nil),            // 419: determined.api.v1.GetProjectsByUserActivityResponse
+	(*SearchExperimentsResponse)(nil),                    // 420: determined.api.v1.SearchExperimentsResponse
+	(*BindRPToWorkspaceResponse)(nil),                    // 421: determined.api.v1.BindRPToWorkspaceResponse
+	(*UnbindRPFromWorkspaceResponse)(nil),                // 422: determined.api.v1.UnbindRPFromWorkspaceResponse
+	(*OverwriteRPWorkspaceBindingsResponse)(nil),         // 423: determined.api.v1.OverwriteRPWorkspaceBindingsResponse
+	(*ListRPsBoundToWorkspaceResponse)(nil),              // 424: determined.api.v1.ListRPsBoundToWorkspaceResponse
+	(*ListWorkspacesBoundToRPResponse)(nil),              // 425: determined.api.v1.ListWorkspacesBoundToRPResponse
 }
 var file_determined_api_v1_api_proto_depIdxs = []int32{
 	0,   // 0: determined.api.v1.Determined.Login:input_type -> determined.api.v1.LoginRequest
@@ -2803,417 +2826,421 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	10,  // 10: determined.api.v1.Determined.PostUser:input_type -> determined.api.v1.PostUserRequest
 	11,  // 11: determined.api.v1.Determined.SetUserPassword:input_type -> determined.api.v1.SetUserPasswordRequest
 	12,  // 12: determined.api.v1.Determined.PatchUser:input_type -> determined.api.v1.PatchUserRequest
-	13,  // 13: determined.api.v1.Determined.GetTelemetry:input_type -> determined.api.v1.GetTelemetryRequest
-	14,  // 14: determined.api.v1.Determined.GetMaster:input_type -> determined.api.v1.GetMasterRequest
-	15,  // 15: determined.api.v1.Determined.GetMasterConfig:input_type -> determined.api.v1.GetMasterConfigRequest
-	16,  // 16: determined.api.v1.Determined.PatchMasterConfig:input_type -> determined.api.v1.PatchMasterConfigRequest
-	17,  // 17: determined.api.v1.Determined.MasterLogs:input_type -> determined.api.v1.MasterLogsRequest
-	18,  // 18: determined.api.v1.Determined.GetAgents:input_type -> determined.api.v1.GetAgentsRequest
-	19,  // 19: determined.api.v1.Determined.GetAgent:input_type -> determined.api.v1.GetAgentRequest
-	20,  // 20: determined.api.v1.Determined.GetSlots:input_type -> determined.api.v1.GetSlotsRequest
-	21,  // 21: determined.api.v1.Determined.GetSlot:input_type -> determined.api.v1.GetSlotRequest
-	22,  // 22: determined.api.v1.Determined.EnableAgent:input_type -> determined.api.v1.EnableAgentRequest
-	23,  // 23: determined.api.v1.Determined.DisableAgent:input_type -> determined.api.v1.DisableAgentRequest
-	24,  // 24: determined.api.v1.Determined.EnableSlot:input_type -> determined.api.v1.EnableSlotRequest
-	25,  // 25: determined.api.v1.Determined.DisableSlot:input_type -> determined.api.v1.DisableSlotRequest
-	26,  // 26: determined.api.v1.Determined.CreateExperiment:input_type -> determined.api.v1.CreateExperimentRequest
-	27,  // 27: determined.api.v1.Determined.PutExperiment:input_type -> determined.api.v1.PutExperimentRequest
-	28,  // 28: determined.api.v1.Determined.ContinueExperiment:input_type -> determined.api.v1.ContinueExperimentRequest
-	29,  // 29: determined.api.v1.Determined.GetExperiment:input_type -> determined.api.v1.GetExperimentRequest
-	30,  // 30: determined.api.v1.Determined.GetExperiments:input_type -> determined.api.v1.GetExperimentsRequest
-	31,  // 31: determined.api.v1.Determined.GetModelDef:input_type -> determined.api.v1.GetModelDefRequest
-	32,  // 32: determined.api.v1.Determined.GetTaskContextDirectory:input_type -> determined.api.v1.GetTaskContextDirectoryRequest
-	33,  // 33: determined.api.v1.Determined.GetModelDefTree:input_type -> determined.api.v1.GetModelDefTreeRequest
-	34,  // 34: determined.api.v1.Determined.GetModelDefFile:input_type -> determined.api.v1.GetModelDefFileRequest
-	35,  // 35: determined.api.v1.Determined.GetExperimentLabels:input_type -> determined.api.v1.GetExperimentLabelsRequest
-	36,  // 36: determined.api.v1.Determined.GetExperimentValidationHistory:input_type -> determined.api.v1.GetExperimentValidationHistoryRequest
-	37,  // 37: determined.api.v1.Determined.ActivateExperiment:input_type -> determined.api.v1.ActivateExperimentRequest
-	38,  // 38: determined.api.v1.Determined.ActivateExperiments:input_type -> determined.api.v1.ActivateExperimentsRequest
-	39,  // 39: determined.api.v1.Determined.PauseExperiment:input_type -> determined.api.v1.PauseExperimentRequest
-	40,  // 40: determined.api.v1.Determined.PauseExperiments:input_type -> determined.api.v1.PauseExperimentsRequest
-	41,  // 41: determined.api.v1.Determined.CancelExperiment:input_type -> determined.api.v1.CancelExperimentRequest
-	42,  // 42: determined.api.v1.Determined.CancelExperiments:input_type -> determined.api.v1.CancelExperimentsRequest
-	43,  // 43: determined.api.v1.Determined.KillExperiment:input_type -> determined.api.v1.KillExperimentRequest
-	44,  // 44: determined.api.v1.Determined.KillExperiments:input_type -> determined.api.v1.KillExperimentsRequest
-	45,  // 45: determined.api.v1.Determined.ArchiveExperiment:input_type -> determined.api.v1.ArchiveExperimentRequest
-	46,  // 46: determined.api.v1.Determined.ArchiveExperiments:input_type -> determined.api.v1.ArchiveExperimentsRequest
-	47,  // 47: determined.api.v1.Determined.UnarchiveExperiment:input_type -> determined.api.v1.UnarchiveExperimentRequest
-	48,  // 48: determined.api.v1.Determined.UnarchiveExperiments:input_type -> determined.api.v1.UnarchiveExperimentsRequest
-	49,  // 49: determined.api.v1.Determined.PatchExperiment:input_type -> determined.api.v1.PatchExperimentRequest
-	50,  // 50: determined.api.v1.Determined.DeleteExperiments:input_type -> determined.api.v1.DeleteExperimentsRequest
-	51,  // 51: determined.api.v1.Determined.DeleteExperiment:input_type -> determined.api.v1.DeleteExperimentRequest
-	52,  // 52: determined.api.v1.Determined.GetBestSearcherValidationMetric:input_type -> determined.api.v1.GetBestSearcherValidationMetricRequest
-	53,  // 53: determined.api.v1.Determined.GetExperimentCheckpoints:input_type -> determined.api.v1.GetExperimentCheckpointsRequest
-	54,  // 54: determined.api.v1.Determined.PreviewHPSearch:input_type -> determined.api.v1.PreviewHPSearchRequest
-	55,  // 55: determined.api.v1.Determined.GetExperimentTrials:input_type -> determined.api.v1.GetExperimentTrialsRequest
-	56,  // 56: determined.api.v1.Determined.CompareTrials:input_type -> determined.api.v1.CompareTrialsRequest
-	57,  // 57: determined.api.v1.Determined.ReportTrialSourceInfo:input_type -> determined.api.v1.ReportTrialSourceInfoRequest
-	58,  // 58: determined.api.v1.Determined.CreateTrial:input_type -> determined.api.v1.CreateTrialRequest
-	59,  // 59: determined.api.v1.Determined.PutTrial:input_type -> determined.api.v1.PutTrialRequest
-	60,  // 60: determined.api.v1.Determined.PatchTrial:input_type -> determined.api.v1.PatchTrialRequest
-	61,  // 61: determined.api.v1.Determined.StartTrial:input_type -> determined.api.v1.StartTrialRequest
-	62,  // 62: determined.api.v1.Determined.GetTrial:input_type -> determined.api.v1.GetTrialRequest
-	63,  // 63: determined.api.v1.Determined.GetTrialWorkloads:input_type -> determined.api.v1.GetTrialWorkloadsRequest
-	64,  // 64: determined.api.v1.Determined.TrialLogs:input_type -> determined.api.v1.TrialLogsRequest
-	65,  // 65: determined.api.v1.Determined.TrialLogsFields:input_type -> determined.api.v1.TrialLogsFieldsRequest
-	66,  // 66: determined.api.v1.Determined.AllocationReady:input_type -> determined.api.v1.AllocationReadyRequest
-	67,  // 67: determined.api.v1.Determined.GetAllocation:input_type -> determined.api.v1.GetAllocationRequest
-	68,  // 68: determined.api.v1.Determined.AllocationWaiting:input_type -> determined.api.v1.AllocationWaitingRequest
-	69,  // 69: determined.api.v1.Determined.TaskLogs:input_type -> determined.api.v1.TaskLogsRequest
-	70,  // 70: determined.api.v1.Determined.TaskLogsFields:input_type -> determined.api.v1.TaskLogsFieldsRequest
-	71,  // 71: determined.api.v1.Determined.GetTrialProfilerMetrics:input_type -> determined.api.v1.GetTrialProfilerMetricsRequest
-	72,  // 72: determined.api.v1.Determined.GetTrialProfilerAvailableSeries:input_type -> determined.api.v1.GetTrialProfilerAvailableSeriesRequest
-	73,  // 73: determined.api.v1.Determined.PostTrialProfilerMetricsBatch:input_type -> determined.api.v1.PostTrialProfilerMetricsBatchRequest
-	74,  // 74: determined.api.v1.Determined.GetMetrics:input_type -> determined.api.v1.GetMetricsRequest
-	75,  // 75: determined.api.v1.Determined.GetTrainingMetrics:input_type -> determined.api.v1.GetTrainingMetricsRequest
-	76,  // 76: determined.api.v1.Determined.GetValidationMetrics:input_type -> determined.api.v1.GetValidationMetricsRequest
-	77,  // 77: determined.api.v1.Determined.KillTrial:input_type -> determined.api.v1.KillTrialRequest
-	78,  // 78: determined.api.v1.Determined.GetTrialCheckpoints:input_type -> determined.api.v1.GetTrialCheckpointsRequest
-	79,  // 79: determined.api.v1.Determined.AllocationPreemptionSignal:input_type -> determined.api.v1.AllocationPreemptionSignalRequest
-	80,  // 80: determined.api.v1.Determined.AllocationPendingPreemptionSignal:input_type -> determined.api.v1.AllocationPendingPreemptionSignalRequest
-	81,  // 81: determined.api.v1.Determined.AckAllocationPreemptionSignal:input_type -> determined.api.v1.AckAllocationPreemptionSignalRequest
-	82,  // 82: determined.api.v1.Determined.MarkAllocationResourcesDaemon:input_type -> determined.api.v1.MarkAllocationResourcesDaemonRequest
-	83,  // 83: determined.api.v1.Determined.AllocationRendezvousInfo:input_type -> determined.api.v1.AllocationRendezvousInfoRequest
-	84,  // 84: determined.api.v1.Determined.PostAllocationProxyAddress:input_type -> determined.api.v1.PostAllocationProxyAddressRequest
-	85,  // 85: determined.api.v1.Determined.GetTaskAcceleratorData:input_type -> determined.api.v1.GetTaskAcceleratorDataRequest
-	86,  // 86: determined.api.v1.Determined.PostAllocationAcceleratorData:input_type -> determined.api.v1.PostAllocationAcceleratorDataRequest
-	87,  // 87: determined.api.v1.Determined.AllocationAllGather:input_type -> determined.api.v1.AllocationAllGatherRequest
-	88,  // 88: determined.api.v1.Determined.NotifyContainerRunning:input_type -> determined.api.v1.NotifyContainerRunningRequest
-	89,  // 89: determined.api.v1.Determined.GetCurrentTrialSearcherOperation:input_type -> determined.api.v1.GetCurrentTrialSearcherOperationRequest
-	90,  // 90: determined.api.v1.Determined.CompleteTrialSearcherValidation:input_type -> determined.api.v1.CompleteTrialSearcherValidationRequest
-	91,  // 91: determined.api.v1.Determined.ReportTrialSearcherEarlyExit:input_type -> determined.api.v1.ReportTrialSearcherEarlyExitRequest
-	92,  // 92: determined.api.v1.Determined.ReportTrialProgress:input_type -> determined.api.v1.ReportTrialProgressRequest
-	93,  // 93: determined.api.v1.Determined.PostTrialRunnerMetadata:input_type -> determined.api.v1.PostTrialRunnerMetadataRequest
-	94,  // 94: determined.api.v1.Determined.ReportTrialMetrics:input_type -> determined.api.v1.ReportTrialMetricsRequest
-	95,  // 95: determined.api.v1.Determined.ReportTrialTrainingMetrics:input_type -> determined.api.v1.ReportTrialTrainingMetricsRequest
-	96,  // 96: determined.api.v1.Determined.ReportTrialValidationMetrics:input_type -> determined.api.v1.ReportTrialValidationMetricsRequest
-	97,  // 97: determined.api.v1.Determined.ReportCheckpoint:input_type -> determined.api.v1.ReportCheckpointRequest
-	98,  // 98: determined.api.v1.Determined.GetJobs:input_type -> determined.api.v1.GetJobsRequest
-	99,  // 99: determined.api.v1.Determined.GetJobsV2:input_type -> determined.api.v1.GetJobsV2Request
-	100, // 100: determined.api.v1.Determined.GetJobQueueStats:input_type -> determined.api.v1.GetJobQueueStatsRequest
-	101, // 101: determined.api.v1.Determined.UpdateJobQueue:input_type -> determined.api.v1.UpdateJobQueueRequest
-	102, // 102: determined.api.v1.Determined.GetTemplates:input_type -> determined.api.v1.GetTemplatesRequest
-	103, // 103: determined.api.v1.Determined.GetTemplate:input_type -> determined.api.v1.GetTemplateRequest
-	104, // 104: determined.api.v1.Determined.PutTemplate:input_type -> determined.api.v1.PutTemplateRequest
-	105, // 105: determined.api.v1.Determined.PostTemplate:input_type -> determined.api.v1.PostTemplateRequest
-	106, // 106: determined.api.v1.Determined.PatchTemplateConfig:input_type -> determined.api.v1.PatchTemplateConfigRequest
-	107, // 107: determined.api.v1.Determined.DeleteTemplate:input_type -> determined.api.v1.DeleteTemplateRequest
-	108, // 108: determined.api.v1.Determined.GetNotebooks:input_type -> determined.api.v1.GetNotebooksRequest
-	109, // 109: determined.api.v1.Determined.GetNotebook:input_type -> determined.api.v1.GetNotebookRequest
-	110, // 110: determined.api.v1.Determined.IdleNotebook:input_type -> determined.api.v1.IdleNotebookRequest
-	111, // 111: determined.api.v1.Determined.KillNotebook:input_type -> determined.api.v1.KillNotebookRequest
-	112, // 112: determined.api.v1.Determined.SetNotebookPriority:input_type -> determined.api.v1.SetNotebookPriorityRequest
-	113, // 113: determined.api.v1.Determined.LaunchNotebook:input_type -> determined.api.v1.LaunchNotebookRequest
-	114, // 114: determined.api.v1.Determined.GetShells:input_type -> determined.api.v1.GetShellsRequest
-	115, // 115: determined.api.v1.Determined.GetShell:input_type -> determined.api.v1.GetShellRequest
-	116, // 116: determined.api.v1.Determined.KillShell:input_type -> determined.api.v1.KillShellRequest
-	117, // 117: determined.api.v1.Determined.SetShellPriority:input_type -> determined.api.v1.SetShellPriorityRequest
-	118, // 118: determined.api.v1.Determined.LaunchShell:input_type -> determined.api.v1.LaunchShellRequest
-	119, // 119: determined.api.v1.Determined.GetCommands:input_type -> determined.api.v1.GetCommandsRequest
-	120, // 120: determined.api.v1.Determined.GetCommand:input_type -> determined.api.v1.GetCommandRequest
-	121, // 121: determined.api.v1.Determined.KillCommand:input_type -> determined.api.v1.KillCommandRequest
-	122, // 122: determined.api.v1.Determined.SetCommandPriority:input_type -> determined.api.v1.SetCommandPriorityRequest
-	123, // 123: determined.api.v1.Determined.LaunchCommand:input_type -> determined.api.v1.LaunchCommandRequest
-	124, // 124: determined.api.v1.Determined.GetTensorboards:input_type -> determined.api.v1.GetTensorboardsRequest
-	125, // 125: determined.api.v1.Determined.GetTensorboard:input_type -> determined.api.v1.GetTensorboardRequest
-	126, // 126: determined.api.v1.Determined.KillTensorboard:input_type -> determined.api.v1.KillTensorboardRequest
-	127, // 127: determined.api.v1.Determined.SetTensorboardPriority:input_type -> determined.api.v1.SetTensorboardPriorityRequest
-	128, // 128: determined.api.v1.Determined.LaunchTensorboard:input_type -> determined.api.v1.LaunchTensorboardRequest
-	129, // 129: determined.api.v1.Determined.GetActiveTasksCount:input_type -> determined.api.v1.GetActiveTasksCountRequest
-	130, // 130: determined.api.v1.Determined.GetTask:input_type -> determined.api.v1.GetTaskRequest
-	131, // 131: determined.api.v1.Determined.GetTasks:input_type -> determined.api.v1.GetTasksRequest
-	132, // 132: determined.api.v1.Determined.GetModel:input_type -> determined.api.v1.GetModelRequest
-	133, // 133: determined.api.v1.Determined.PostModel:input_type -> determined.api.v1.PostModelRequest
-	134, // 134: determined.api.v1.Determined.PatchModel:input_type -> determined.api.v1.PatchModelRequest
-	135, // 135: determined.api.v1.Determined.ArchiveModel:input_type -> determined.api.v1.ArchiveModelRequest
-	136, // 136: determined.api.v1.Determined.UnarchiveModel:input_type -> determined.api.v1.UnarchiveModelRequest
-	137, // 137: determined.api.v1.Determined.MoveModel:input_type -> determined.api.v1.MoveModelRequest
-	138, // 138: determined.api.v1.Determined.DeleteModel:input_type -> determined.api.v1.DeleteModelRequest
-	139, // 139: determined.api.v1.Determined.GetModels:input_type -> determined.api.v1.GetModelsRequest
-	140, // 140: determined.api.v1.Determined.GetModelLabels:input_type -> determined.api.v1.GetModelLabelsRequest
-	141, // 141: determined.api.v1.Determined.GetModelVersion:input_type -> determined.api.v1.GetModelVersionRequest
-	142, // 142: determined.api.v1.Determined.GetModelVersions:input_type -> determined.api.v1.GetModelVersionsRequest
-	143, // 143: determined.api.v1.Determined.PostModelVersion:input_type -> determined.api.v1.PostModelVersionRequest
-	144, // 144: determined.api.v1.Determined.PatchModelVersion:input_type -> determined.api.v1.PatchModelVersionRequest
-	145, // 145: determined.api.v1.Determined.DeleteModelVersion:input_type -> determined.api.v1.DeleteModelVersionRequest
-	146, // 146: determined.api.v1.Determined.GetTrialMetricsByModelVersion:input_type -> determined.api.v1.GetTrialMetricsByModelVersionRequest
-	147, // 147: determined.api.v1.Determined.GetCheckpoint:input_type -> determined.api.v1.GetCheckpointRequest
-	148, // 148: determined.api.v1.Determined.PostCheckpointMetadata:input_type -> determined.api.v1.PostCheckpointMetadataRequest
-	149, // 149: determined.api.v1.Determined.CheckpointsRemoveFiles:input_type -> determined.api.v1.CheckpointsRemoveFilesRequest
-	150, // 150: determined.api.v1.Determined.PatchCheckpoints:input_type -> determined.api.v1.PatchCheckpointsRequest
-	151, // 151: determined.api.v1.Determined.DeleteCheckpoints:input_type -> determined.api.v1.DeleteCheckpointsRequest
-	152, // 152: determined.api.v1.Determined.GetTrialMetricsByCheckpoint:input_type -> determined.api.v1.GetTrialMetricsByCheckpointRequest
-	153, // 153: determined.api.v1.Determined.GetSearcherEvents:input_type -> determined.api.v1.GetSearcherEventsRequest
-	154, // 154: determined.api.v1.Determined.PostSearcherOperations:input_type -> determined.api.v1.PostSearcherOperationsRequest
-	155, // 155: determined.api.v1.Determined.ExpMetricNames:input_type -> determined.api.v1.ExpMetricNamesRequest
-	156, // 156: determined.api.v1.Determined.MetricBatches:input_type -> determined.api.v1.MetricBatchesRequest
-	157, // 157: determined.api.v1.Determined.TrialsSnapshot:input_type -> determined.api.v1.TrialsSnapshotRequest
-	158, // 158: determined.api.v1.Determined.TrialsSample:input_type -> determined.api.v1.TrialsSampleRequest
-	159, // 159: determined.api.v1.Determined.GetResourcePools:input_type -> determined.api.v1.GetResourcePoolsRequest
-	160, // 160: determined.api.v1.Determined.ResourceAllocationRaw:input_type -> determined.api.v1.ResourceAllocationRawRequest
-	161, // 161: determined.api.v1.Determined.ResourceAllocationAggregated:input_type -> determined.api.v1.ResourceAllocationAggregatedRequest
-	162, // 162: determined.api.v1.Determined.GetWorkspace:input_type -> determined.api.v1.GetWorkspaceRequest
-	163, // 163: determined.api.v1.Determined.GetWorkspaceProjects:input_type -> determined.api.v1.GetWorkspaceProjectsRequest
-	164, // 164: determined.api.v1.Determined.GetWorkspaces:input_type -> determined.api.v1.GetWorkspacesRequest
-	165, // 165: determined.api.v1.Determined.PostWorkspace:input_type -> determined.api.v1.PostWorkspaceRequest
-	166, // 166: determined.api.v1.Determined.PatchWorkspace:input_type -> determined.api.v1.PatchWorkspaceRequest
-	167, // 167: determined.api.v1.Determined.DeleteWorkspace:input_type -> determined.api.v1.DeleteWorkspaceRequest
-	168, // 168: determined.api.v1.Determined.ArchiveWorkspace:input_type -> determined.api.v1.ArchiveWorkspaceRequest
-	169, // 169: determined.api.v1.Determined.UnarchiveWorkspace:input_type -> determined.api.v1.UnarchiveWorkspaceRequest
-	170, // 170: determined.api.v1.Determined.PinWorkspace:input_type -> determined.api.v1.PinWorkspaceRequest
-	171, // 171: determined.api.v1.Determined.UnpinWorkspace:input_type -> determined.api.v1.UnpinWorkspaceRequest
-	172, // 172: determined.api.v1.Determined.GetProject:input_type -> determined.api.v1.GetProjectRequest
-	173, // 173: determined.api.v1.Determined.GetProjectColumns:input_type -> determined.api.v1.GetProjectColumnsRequest
-	174, // 174: determined.api.v1.Determined.GetProjectNumericMetricsRange:input_type -> determined.api.v1.GetProjectNumericMetricsRangeRequest
-	175, // 175: determined.api.v1.Determined.PostProject:input_type -> determined.api.v1.PostProjectRequest
-	176, // 176: determined.api.v1.Determined.AddProjectNote:input_type -> determined.api.v1.AddProjectNoteRequest
-	177, // 177: determined.api.v1.Determined.PutProjectNotes:input_type -> determined.api.v1.PutProjectNotesRequest
-	178, // 178: determined.api.v1.Determined.PatchProject:input_type -> determined.api.v1.PatchProjectRequest
-	179, // 179: determined.api.v1.Determined.DeleteProject:input_type -> determined.api.v1.DeleteProjectRequest
-	180, // 180: determined.api.v1.Determined.ArchiveProject:input_type -> determined.api.v1.ArchiveProjectRequest
-	181, // 181: determined.api.v1.Determined.UnarchiveProject:input_type -> determined.api.v1.UnarchiveProjectRequest
-	182, // 182: determined.api.v1.Determined.MoveProject:input_type -> determined.api.v1.MoveProjectRequest
-	183, // 183: determined.api.v1.Determined.MoveExperiment:input_type -> determined.api.v1.MoveExperimentRequest
-	184, // 184: determined.api.v1.Determined.MoveExperiments:input_type -> determined.api.v1.MoveExperimentsRequest
-	185, // 185: determined.api.v1.Determined.GetWebhooks:input_type -> determined.api.v1.GetWebhooksRequest
-	186, // 186: determined.api.v1.Determined.PostWebhook:input_type -> determined.api.v1.PostWebhookRequest
-	187, // 187: determined.api.v1.Determined.DeleteWebhook:input_type -> determined.api.v1.DeleteWebhookRequest
-	188, // 188: determined.api.v1.Determined.TestWebhook:input_type -> determined.api.v1.TestWebhookRequest
-	189, // 189: determined.api.v1.Determined.GetGroup:input_type -> determined.api.v1.GetGroupRequest
-	190, // 190: determined.api.v1.Determined.GetGroups:input_type -> determined.api.v1.GetGroupsRequest
-	191, // 191: determined.api.v1.Determined.CreateGroup:input_type -> determined.api.v1.CreateGroupRequest
-	192, // 192: determined.api.v1.Determined.UpdateGroup:input_type -> determined.api.v1.UpdateGroupRequest
-	193, // 193: determined.api.v1.Determined.DeleteGroup:input_type -> determined.api.v1.DeleteGroupRequest
-	194, // 194: determined.api.v1.Determined.GetPermissionsSummary:input_type -> determined.api.v1.GetPermissionsSummaryRequest
-	195, // 195: determined.api.v1.Determined.GetGroupsAndUsersAssignedToWorkspace:input_type -> determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceRequest
-	196, // 196: determined.api.v1.Determined.GetRolesByID:input_type -> determined.api.v1.GetRolesByIDRequest
-	197, // 197: determined.api.v1.Determined.GetRolesAssignedToUser:input_type -> determined.api.v1.GetRolesAssignedToUserRequest
-	198, // 198: determined.api.v1.Determined.GetRolesAssignedToGroup:input_type -> determined.api.v1.GetRolesAssignedToGroupRequest
-	199, // 199: determined.api.v1.Determined.SearchRolesAssignableToScope:input_type -> determined.api.v1.SearchRolesAssignableToScopeRequest
-	200, // 200: determined.api.v1.Determined.ListRoles:input_type -> determined.api.v1.ListRolesRequest
-	201, // 201: determined.api.v1.Determined.AssignRoles:input_type -> determined.api.v1.AssignRolesRequest
-	202, // 202: determined.api.v1.Determined.RemoveAssignments:input_type -> determined.api.v1.RemoveAssignmentsRequest
-	203, // 203: determined.api.v1.Determined.PostUserActivity:input_type -> determined.api.v1.PostUserActivityRequest
-	204, // 204: determined.api.v1.Determined.GetProjectsByUserActivity:input_type -> determined.api.v1.GetProjectsByUserActivityRequest
-	205, // 205: determined.api.v1.Determined.SearchExperiments:input_type -> determined.api.v1.SearchExperimentsRequest
-	206, // 206: determined.api.v1.Determined.BindRPToWorkspace:input_type -> determined.api.v1.BindRPToWorkspaceRequest
-	207, // 207: determined.api.v1.Determined.UnbindRPFromWorkspace:input_type -> determined.api.v1.UnbindRPFromWorkspaceRequest
-	208, // 208: determined.api.v1.Determined.OverwriteRPWorkspaceBindings:input_type -> determined.api.v1.OverwriteRPWorkspaceBindingsRequest
-	209, // 209: determined.api.v1.Determined.ListRPsBoundToWorkspace:input_type -> determined.api.v1.ListRPsBoundToWorkspaceRequest
-	210, // 210: determined.api.v1.Determined.ListWorkspacesBoundToRP:input_type -> determined.api.v1.ListWorkspacesBoundToRPRequest
-	211, // 211: determined.api.v1.Determined.Login:output_type -> determined.api.v1.LoginResponse
-	212, // 212: determined.api.v1.Determined.CurrentUser:output_type -> determined.api.v1.CurrentUserResponse
-	213, // 213: determined.api.v1.Determined.Logout:output_type -> determined.api.v1.LogoutResponse
-	214, // 214: determined.api.v1.Determined.GetUsers:output_type -> determined.api.v1.GetUsersResponse
-	215, // 215: determined.api.v1.Determined.GetUserSetting:output_type -> determined.api.v1.GetUserSettingResponse
-	216, // 216: determined.api.v1.Determined.ResetUserSetting:output_type -> determined.api.v1.ResetUserSettingResponse
-	217, // 217: determined.api.v1.Determined.PostUserSetting:output_type -> determined.api.v1.PostUserSettingResponse
-	218, // 218: determined.api.v1.Determined.GetUser:output_type -> determined.api.v1.GetUserResponse
-	219, // 219: determined.api.v1.Determined.GetUserByUsername:output_type -> determined.api.v1.GetUserByUsernameResponse
-	220, // 220: determined.api.v1.Determined.GetMe:output_type -> determined.api.v1.GetMeResponse
-	221, // 221: determined.api.v1.Determined.PostUser:output_type -> determined.api.v1.PostUserResponse
-	222, // 222: determined.api.v1.Determined.SetUserPassword:output_type -> determined.api.v1.SetUserPasswordResponse
-	223, // 223: determined.api.v1.Determined.PatchUser:output_type -> determined.api.v1.PatchUserResponse
-	224, // 224: determined.api.v1.Determined.GetTelemetry:output_type -> determined.api.v1.GetTelemetryResponse
-	225, // 225: determined.api.v1.Determined.GetMaster:output_type -> determined.api.v1.GetMasterResponse
-	226, // 226: determined.api.v1.Determined.GetMasterConfig:output_type -> determined.api.v1.GetMasterConfigResponse
-	227, // 227: determined.api.v1.Determined.PatchMasterConfig:output_type -> determined.api.v1.PatchMasterConfigResponse
-	228, // 228: determined.api.v1.Determined.MasterLogs:output_type -> determined.api.v1.MasterLogsResponse
-	229, // 229: determined.api.v1.Determined.GetAgents:output_type -> determined.api.v1.GetAgentsResponse
-	230, // 230: determined.api.v1.Determined.GetAgent:output_type -> determined.api.v1.GetAgentResponse
-	231, // 231: determined.api.v1.Determined.GetSlots:output_type -> determined.api.v1.GetSlotsResponse
-	232, // 232: determined.api.v1.Determined.GetSlot:output_type -> determined.api.v1.GetSlotResponse
-	233, // 233: determined.api.v1.Determined.EnableAgent:output_type -> determined.api.v1.EnableAgentResponse
-	234, // 234: determined.api.v1.Determined.DisableAgent:output_type -> determined.api.v1.DisableAgentResponse
-	235, // 235: determined.api.v1.Determined.EnableSlot:output_type -> determined.api.v1.EnableSlotResponse
-	236, // 236: determined.api.v1.Determined.DisableSlot:output_type -> determined.api.v1.DisableSlotResponse
-	237, // 237: determined.api.v1.Determined.CreateExperiment:output_type -> determined.api.v1.CreateExperimentResponse
-	238, // 238: determined.api.v1.Determined.PutExperiment:output_type -> determined.api.v1.PutExperimentResponse
-	239, // 239: determined.api.v1.Determined.ContinueExperiment:output_type -> determined.api.v1.ContinueExperimentResponse
-	240, // 240: determined.api.v1.Determined.GetExperiment:output_type -> determined.api.v1.GetExperimentResponse
-	241, // 241: determined.api.v1.Determined.GetExperiments:output_type -> determined.api.v1.GetExperimentsResponse
-	242, // 242: determined.api.v1.Determined.GetModelDef:output_type -> determined.api.v1.GetModelDefResponse
-	243, // 243: determined.api.v1.Determined.GetTaskContextDirectory:output_type -> determined.api.v1.GetTaskContextDirectoryResponse
-	244, // 244: determined.api.v1.Determined.GetModelDefTree:output_type -> determined.api.v1.GetModelDefTreeResponse
-	245, // 245: determined.api.v1.Determined.GetModelDefFile:output_type -> determined.api.v1.GetModelDefFileResponse
-	246, // 246: determined.api.v1.Determined.GetExperimentLabels:output_type -> determined.api.v1.GetExperimentLabelsResponse
-	247, // 247: determined.api.v1.Determined.GetExperimentValidationHistory:output_type -> determined.api.v1.GetExperimentValidationHistoryResponse
-	248, // 248: determined.api.v1.Determined.ActivateExperiment:output_type -> determined.api.v1.ActivateExperimentResponse
-	249, // 249: determined.api.v1.Determined.ActivateExperiments:output_type -> determined.api.v1.ActivateExperimentsResponse
-	250, // 250: determined.api.v1.Determined.PauseExperiment:output_type -> determined.api.v1.PauseExperimentResponse
-	251, // 251: determined.api.v1.Determined.PauseExperiments:output_type -> determined.api.v1.PauseExperimentsResponse
-	252, // 252: determined.api.v1.Determined.CancelExperiment:output_type -> determined.api.v1.CancelExperimentResponse
-	253, // 253: determined.api.v1.Determined.CancelExperiments:output_type -> determined.api.v1.CancelExperimentsResponse
-	254, // 254: determined.api.v1.Determined.KillExperiment:output_type -> determined.api.v1.KillExperimentResponse
-	255, // 255: determined.api.v1.Determined.KillExperiments:output_type -> determined.api.v1.KillExperimentsResponse
-	256, // 256: determined.api.v1.Determined.ArchiveExperiment:output_type -> determined.api.v1.ArchiveExperimentResponse
-	257, // 257: determined.api.v1.Determined.ArchiveExperiments:output_type -> determined.api.v1.ArchiveExperimentsResponse
-	258, // 258: determined.api.v1.Determined.UnarchiveExperiment:output_type -> determined.api.v1.UnarchiveExperimentResponse
-	259, // 259: determined.api.v1.Determined.UnarchiveExperiments:output_type -> determined.api.v1.UnarchiveExperimentsResponse
-	260, // 260: determined.api.v1.Determined.PatchExperiment:output_type -> determined.api.v1.PatchExperimentResponse
-	261, // 261: determined.api.v1.Determined.DeleteExperiments:output_type -> determined.api.v1.DeleteExperimentsResponse
-	262, // 262: determined.api.v1.Determined.DeleteExperiment:output_type -> determined.api.v1.DeleteExperimentResponse
-	263, // 263: determined.api.v1.Determined.GetBestSearcherValidationMetric:output_type -> determined.api.v1.GetBestSearcherValidationMetricResponse
-	264, // 264: determined.api.v1.Determined.GetExperimentCheckpoints:output_type -> determined.api.v1.GetExperimentCheckpointsResponse
-	265, // 265: determined.api.v1.Determined.PreviewHPSearch:output_type -> determined.api.v1.PreviewHPSearchResponse
-	266, // 266: determined.api.v1.Determined.GetExperimentTrials:output_type -> determined.api.v1.GetExperimentTrialsResponse
-	267, // 267: determined.api.v1.Determined.CompareTrials:output_type -> determined.api.v1.CompareTrialsResponse
-	268, // 268: determined.api.v1.Determined.ReportTrialSourceInfo:output_type -> determined.api.v1.ReportTrialSourceInfoResponse
-	269, // 269: determined.api.v1.Determined.CreateTrial:output_type -> determined.api.v1.CreateTrialResponse
-	270, // 270: determined.api.v1.Determined.PutTrial:output_type -> determined.api.v1.PutTrialResponse
-	271, // 271: determined.api.v1.Determined.PatchTrial:output_type -> determined.api.v1.PatchTrialResponse
-	272, // 272: determined.api.v1.Determined.StartTrial:output_type -> determined.api.v1.StartTrialResponse
-	273, // 273: determined.api.v1.Determined.GetTrial:output_type -> determined.api.v1.GetTrialResponse
-	274, // 274: determined.api.v1.Determined.GetTrialWorkloads:output_type -> determined.api.v1.GetTrialWorkloadsResponse
-	275, // 275: determined.api.v1.Determined.TrialLogs:output_type -> determined.api.v1.TrialLogsResponse
-	276, // 276: determined.api.v1.Determined.TrialLogsFields:output_type -> determined.api.v1.TrialLogsFieldsResponse
-	277, // 277: determined.api.v1.Determined.AllocationReady:output_type -> determined.api.v1.AllocationReadyResponse
-	278, // 278: determined.api.v1.Determined.GetAllocation:output_type -> determined.api.v1.GetAllocationResponse
-	279, // 279: determined.api.v1.Determined.AllocationWaiting:output_type -> determined.api.v1.AllocationWaitingResponse
-	280, // 280: determined.api.v1.Determined.TaskLogs:output_type -> determined.api.v1.TaskLogsResponse
-	281, // 281: determined.api.v1.Determined.TaskLogsFields:output_type -> determined.api.v1.TaskLogsFieldsResponse
-	282, // 282: determined.api.v1.Determined.GetTrialProfilerMetrics:output_type -> determined.api.v1.GetTrialProfilerMetricsResponse
-	283, // 283: determined.api.v1.Determined.GetTrialProfilerAvailableSeries:output_type -> determined.api.v1.GetTrialProfilerAvailableSeriesResponse
-	284, // 284: determined.api.v1.Determined.PostTrialProfilerMetricsBatch:output_type -> determined.api.v1.PostTrialProfilerMetricsBatchResponse
-	285, // 285: determined.api.v1.Determined.GetMetrics:output_type -> determined.api.v1.GetMetricsResponse
-	286, // 286: determined.api.v1.Determined.GetTrainingMetrics:output_type -> determined.api.v1.GetTrainingMetricsResponse
-	287, // 287: determined.api.v1.Determined.GetValidationMetrics:output_type -> determined.api.v1.GetValidationMetricsResponse
-	288, // 288: determined.api.v1.Determined.KillTrial:output_type -> determined.api.v1.KillTrialResponse
-	289, // 289: determined.api.v1.Determined.GetTrialCheckpoints:output_type -> determined.api.v1.GetTrialCheckpointsResponse
-	290, // 290: determined.api.v1.Determined.AllocationPreemptionSignal:output_type -> determined.api.v1.AllocationPreemptionSignalResponse
-	291, // 291: determined.api.v1.Determined.AllocationPendingPreemptionSignal:output_type -> determined.api.v1.AllocationPendingPreemptionSignalResponse
-	292, // 292: determined.api.v1.Determined.AckAllocationPreemptionSignal:output_type -> determined.api.v1.AckAllocationPreemptionSignalResponse
-	293, // 293: determined.api.v1.Determined.MarkAllocationResourcesDaemon:output_type -> determined.api.v1.MarkAllocationResourcesDaemonResponse
-	294, // 294: determined.api.v1.Determined.AllocationRendezvousInfo:output_type -> determined.api.v1.AllocationRendezvousInfoResponse
-	295, // 295: determined.api.v1.Determined.PostAllocationProxyAddress:output_type -> determined.api.v1.PostAllocationProxyAddressResponse
-	296, // 296: determined.api.v1.Determined.GetTaskAcceleratorData:output_type -> determined.api.v1.GetTaskAcceleratorDataResponse
-	297, // 297: determined.api.v1.Determined.PostAllocationAcceleratorData:output_type -> determined.api.v1.PostAllocationAcceleratorDataResponse
-	298, // 298: determined.api.v1.Determined.AllocationAllGather:output_type -> determined.api.v1.AllocationAllGatherResponse
-	299, // 299: determined.api.v1.Determined.NotifyContainerRunning:output_type -> determined.api.v1.NotifyContainerRunningResponse
-	300, // 300: determined.api.v1.Determined.GetCurrentTrialSearcherOperation:output_type -> determined.api.v1.GetCurrentTrialSearcherOperationResponse
-	301, // 301: determined.api.v1.Determined.CompleteTrialSearcherValidation:output_type -> determined.api.v1.CompleteTrialSearcherValidationResponse
-	302, // 302: determined.api.v1.Determined.ReportTrialSearcherEarlyExit:output_type -> determined.api.v1.ReportTrialSearcherEarlyExitResponse
-	303, // 303: determined.api.v1.Determined.ReportTrialProgress:output_type -> determined.api.v1.ReportTrialProgressResponse
-	304, // 304: determined.api.v1.Determined.PostTrialRunnerMetadata:output_type -> determined.api.v1.PostTrialRunnerMetadataResponse
-	305, // 305: determined.api.v1.Determined.ReportTrialMetrics:output_type -> determined.api.v1.ReportTrialMetricsResponse
-	306, // 306: determined.api.v1.Determined.ReportTrialTrainingMetrics:output_type -> determined.api.v1.ReportTrialTrainingMetricsResponse
-	307, // 307: determined.api.v1.Determined.ReportTrialValidationMetrics:output_type -> determined.api.v1.ReportTrialValidationMetricsResponse
-	308, // 308: determined.api.v1.Determined.ReportCheckpoint:output_type -> determined.api.v1.ReportCheckpointResponse
-	309, // 309: determined.api.v1.Determined.GetJobs:output_type -> determined.api.v1.GetJobsResponse
-	310, // 310: determined.api.v1.Determined.GetJobsV2:output_type -> determined.api.v1.GetJobsV2Response
-	311, // 311: determined.api.v1.Determined.GetJobQueueStats:output_type -> determined.api.v1.GetJobQueueStatsResponse
-	312, // 312: determined.api.v1.Determined.UpdateJobQueue:output_type -> determined.api.v1.UpdateJobQueueResponse
-	313, // 313: determined.api.v1.Determined.GetTemplates:output_type -> determined.api.v1.GetTemplatesResponse
-	314, // 314: determined.api.v1.Determined.GetTemplate:output_type -> determined.api.v1.GetTemplateResponse
-	315, // 315: determined.api.v1.Determined.PutTemplate:output_type -> determined.api.v1.PutTemplateResponse
-	316, // 316: determined.api.v1.Determined.PostTemplate:output_type -> determined.api.v1.PostTemplateResponse
-	317, // 317: determined.api.v1.Determined.PatchTemplateConfig:output_type -> determined.api.v1.PatchTemplateConfigResponse
-	318, // 318: determined.api.v1.Determined.DeleteTemplate:output_type -> determined.api.v1.DeleteTemplateResponse
-	319, // 319: determined.api.v1.Determined.GetNotebooks:output_type -> determined.api.v1.GetNotebooksResponse
-	320, // 320: determined.api.v1.Determined.GetNotebook:output_type -> determined.api.v1.GetNotebookResponse
-	321, // 321: determined.api.v1.Determined.IdleNotebook:output_type -> determined.api.v1.IdleNotebookResponse
-	322, // 322: determined.api.v1.Determined.KillNotebook:output_type -> determined.api.v1.KillNotebookResponse
-	323, // 323: determined.api.v1.Determined.SetNotebookPriority:output_type -> determined.api.v1.SetNotebookPriorityResponse
-	324, // 324: determined.api.v1.Determined.LaunchNotebook:output_type -> determined.api.v1.LaunchNotebookResponse
-	325, // 325: determined.api.v1.Determined.GetShells:output_type -> determined.api.v1.GetShellsResponse
-	326, // 326: determined.api.v1.Determined.GetShell:output_type -> determined.api.v1.GetShellResponse
-	327, // 327: determined.api.v1.Determined.KillShell:output_type -> determined.api.v1.KillShellResponse
-	328, // 328: determined.api.v1.Determined.SetShellPriority:output_type -> determined.api.v1.SetShellPriorityResponse
-	329, // 329: determined.api.v1.Determined.LaunchShell:output_type -> determined.api.v1.LaunchShellResponse
-	330, // 330: determined.api.v1.Determined.GetCommands:output_type -> determined.api.v1.GetCommandsResponse
-	331, // 331: determined.api.v1.Determined.GetCommand:output_type -> determined.api.v1.GetCommandResponse
-	332, // 332: determined.api.v1.Determined.KillCommand:output_type -> determined.api.v1.KillCommandResponse
-	333, // 333: determined.api.v1.Determined.SetCommandPriority:output_type -> determined.api.v1.SetCommandPriorityResponse
-	334, // 334: determined.api.v1.Determined.LaunchCommand:output_type -> determined.api.v1.LaunchCommandResponse
-	335, // 335: determined.api.v1.Determined.GetTensorboards:output_type -> determined.api.v1.GetTensorboardsResponse
-	336, // 336: determined.api.v1.Determined.GetTensorboard:output_type -> determined.api.v1.GetTensorboardResponse
-	337, // 337: determined.api.v1.Determined.KillTensorboard:output_type -> determined.api.v1.KillTensorboardResponse
-	338, // 338: determined.api.v1.Determined.SetTensorboardPriority:output_type -> determined.api.v1.SetTensorboardPriorityResponse
-	339, // 339: determined.api.v1.Determined.LaunchTensorboard:output_type -> determined.api.v1.LaunchTensorboardResponse
-	340, // 340: determined.api.v1.Determined.GetActiveTasksCount:output_type -> determined.api.v1.GetActiveTasksCountResponse
-	341, // 341: determined.api.v1.Determined.GetTask:output_type -> determined.api.v1.GetTaskResponse
-	342, // 342: determined.api.v1.Determined.GetTasks:output_type -> determined.api.v1.GetTasksResponse
-	343, // 343: determined.api.v1.Determined.GetModel:output_type -> determined.api.v1.GetModelResponse
-	344, // 344: determined.api.v1.Determined.PostModel:output_type -> determined.api.v1.PostModelResponse
-	345, // 345: determined.api.v1.Determined.PatchModel:output_type -> determined.api.v1.PatchModelResponse
-	346, // 346: determined.api.v1.Determined.ArchiveModel:output_type -> determined.api.v1.ArchiveModelResponse
-	347, // 347: determined.api.v1.Determined.UnarchiveModel:output_type -> determined.api.v1.UnarchiveModelResponse
-	348, // 348: determined.api.v1.Determined.MoveModel:output_type -> determined.api.v1.MoveModelResponse
-	349, // 349: determined.api.v1.Determined.DeleteModel:output_type -> determined.api.v1.DeleteModelResponse
-	350, // 350: determined.api.v1.Determined.GetModels:output_type -> determined.api.v1.GetModelsResponse
-	351, // 351: determined.api.v1.Determined.GetModelLabels:output_type -> determined.api.v1.GetModelLabelsResponse
-	352, // 352: determined.api.v1.Determined.GetModelVersion:output_type -> determined.api.v1.GetModelVersionResponse
-	353, // 353: determined.api.v1.Determined.GetModelVersions:output_type -> determined.api.v1.GetModelVersionsResponse
-	354, // 354: determined.api.v1.Determined.PostModelVersion:output_type -> determined.api.v1.PostModelVersionResponse
-	355, // 355: determined.api.v1.Determined.PatchModelVersion:output_type -> determined.api.v1.PatchModelVersionResponse
-	356, // 356: determined.api.v1.Determined.DeleteModelVersion:output_type -> determined.api.v1.DeleteModelVersionResponse
-	357, // 357: determined.api.v1.Determined.GetTrialMetricsByModelVersion:output_type -> determined.api.v1.GetTrialMetricsByModelVersionResponse
-	358, // 358: determined.api.v1.Determined.GetCheckpoint:output_type -> determined.api.v1.GetCheckpointResponse
-	359, // 359: determined.api.v1.Determined.PostCheckpointMetadata:output_type -> determined.api.v1.PostCheckpointMetadataResponse
-	360, // 360: determined.api.v1.Determined.CheckpointsRemoveFiles:output_type -> determined.api.v1.CheckpointsRemoveFilesResponse
-	361, // 361: determined.api.v1.Determined.PatchCheckpoints:output_type -> determined.api.v1.PatchCheckpointsResponse
-	362, // 362: determined.api.v1.Determined.DeleteCheckpoints:output_type -> determined.api.v1.DeleteCheckpointsResponse
-	363, // 363: determined.api.v1.Determined.GetTrialMetricsByCheckpoint:output_type -> determined.api.v1.GetTrialMetricsByCheckpointResponse
-	364, // 364: determined.api.v1.Determined.GetSearcherEvents:output_type -> determined.api.v1.GetSearcherEventsResponse
-	365, // 365: determined.api.v1.Determined.PostSearcherOperations:output_type -> determined.api.v1.PostSearcherOperationsResponse
-	366, // 366: determined.api.v1.Determined.ExpMetricNames:output_type -> determined.api.v1.ExpMetricNamesResponse
-	367, // 367: determined.api.v1.Determined.MetricBatches:output_type -> determined.api.v1.MetricBatchesResponse
-	368, // 368: determined.api.v1.Determined.TrialsSnapshot:output_type -> determined.api.v1.TrialsSnapshotResponse
-	369, // 369: determined.api.v1.Determined.TrialsSample:output_type -> determined.api.v1.TrialsSampleResponse
-	370, // 370: determined.api.v1.Determined.GetResourcePools:output_type -> determined.api.v1.GetResourcePoolsResponse
-	371, // 371: determined.api.v1.Determined.ResourceAllocationRaw:output_type -> determined.api.v1.ResourceAllocationRawResponse
-	372, // 372: determined.api.v1.Determined.ResourceAllocationAggregated:output_type -> determined.api.v1.ResourceAllocationAggregatedResponse
-	373, // 373: determined.api.v1.Determined.GetWorkspace:output_type -> determined.api.v1.GetWorkspaceResponse
-	374, // 374: determined.api.v1.Determined.GetWorkspaceProjects:output_type -> determined.api.v1.GetWorkspaceProjectsResponse
-	375, // 375: determined.api.v1.Determined.GetWorkspaces:output_type -> determined.api.v1.GetWorkspacesResponse
-	376, // 376: determined.api.v1.Determined.PostWorkspace:output_type -> determined.api.v1.PostWorkspaceResponse
-	377, // 377: determined.api.v1.Determined.PatchWorkspace:output_type -> determined.api.v1.PatchWorkspaceResponse
-	378, // 378: determined.api.v1.Determined.DeleteWorkspace:output_type -> determined.api.v1.DeleteWorkspaceResponse
-	379, // 379: determined.api.v1.Determined.ArchiveWorkspace:output_type -> determined.api.v1.ArchiveWorkspaceResponse
-	380, // 380: determined.api.v1.Determined.UnarchiveWorkspace:output_type -> determined.api.v1.UnarchiveWorkspaceResponse
-	381, // 381: determined.api.v1.Determined.PinWorkspace:output_type -> determined.api.v1.PinWorkspaceResponse
-	382, // 382: determined.api.v1.Determined.UnpinWorkspace:output_type -> determined.api.v1.UnpinWorkspaceResponse
-	383, // 383: determined.api.v1.Determined.GetProject:output_type -> determined.api.v1.GetProjectResponse
-	384, // 384: determined.api.v1.Determined.GetProjectColumns:output_type -> determined.api.v1.GetProjectColumnsResponse
-	385, // 385: determined.api.v1.Determined.GetProjectNumericMetricsRange:output_type -> determined.api.v1.GetProjectNumericMetricsRangeResponse
-	386, // 386: determined.api.v1.Determined.PostProject:output_type -> determined.api.v1.PostProjectResponse
-	387, // 387: determined.api.v1.Determined.AddProjectNote:output_type -> determined.api.v1.AddProjectNoteResponse
-	388, // 388: determined.api.v1.Determined.PutProjectNotes:output_type -> determined.api.v1.PutProjectNotesResponse
-	389, // 389: determined.api.v1.Determined.PatchProject:output_type -> determined.api.v1.PatchProjectResponse
-	390, // 390: determined.api.v1.Determined.DeleteProject:output_type -> determined.api.v1.DeleteProjectResponse
-	391, // 391: determined.api.v1.Determined.ArchiveProject:output_type -> determined.api.v1.ArchiveProjectResponse
-	392, // 392: determined.api.v1.Determined.UnarchiveProject:output_type -> determined.api.v1.UnarchiveProjectResponse
-	393, // 393: determined.api.v1.Determined.MoveProject:output_type -> determined.api.v1.MoveProjectResponse
-	394, // 394: determined.api.v1.Determined.MoveExperiment:output_type -> determined.api.v1.MoveExperimentResponse
-	395, // 395: determined.api.v1.Determined.MoveExperiments:output_type -> determined.api.v1.MoveExperimentsResponse
-	396, // 396: determined.api.v1.Determined.GetWebhooks:output_type -> determined.api.v1.GetWebhooksResponse
-	397, // 397: determined.api.v1.Determined.PostWebhook:output_type -> determined.api.v1.PostWebhookResponse
-	398, // 398: determined.api.v1.Determined.DeleteWebhook:output_type -> determined.api.v1.DeleteWebhookResponse
-	399, // 399: determined.api.v1.Determined.TestWebhook:output_type -> determined.api.v1.TestWebhookResponse
-	400, // 400: determined.api.v1.Determined.GetGroup:output_type -> determined.api.v1.GetGroupResponse
-	401, // 401: determined.api.v1.Determined.GetGroups:output_type -> determined.api.v1.GetGroupsResponse
-	402, // 402: determined.api.v1.Determined.CreateGroup:output_type -> determined.api.v1.CreateGroupResponse
-	403, // 403: determined.api.v1.Determined.UpdateGroup:output_type -> determined.api.v1.UpdateGroupResponse
-	404, // 404: determined.api.v1.Determined.DeleteGroup:output_type -> determined.api.v1.DeleteGroupResponse
-	405, // 405: determined.api.v1.Determined.GetPermissionsSummary:output_type -> determined.api.v1.GetPermissionsSummaryResponse
-	406, // 406: determined.api.v1.Determined.GetGroupsAndUsersAssignedToWorkspace:output_type -> determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse
-	407, // 407: determined.api.v1.Determined.GetRolesByID:output_type -> determined.api.v1.GetRolesByIDResponse
-	408, // 408: determined.api.v1.Determined.GetRolesAssignedToUser:output_type -> determined.api.v1.GetRolesAssignedToUserResponse
-	409, // 409: determined.api.v1.Determined.GetRolesAssignedToGroup:output_type -> determined.api.v1.GetRolesAssignedToGroupResponse
-	410, // 410: determined.api.v1.Determined.SearchRolesAssignableToScope:output_type -> determined.api.v1.SearchRolesAssignableToScopeResponse
-	411, // 411: determined.api.v1.Determined.ListRoles:output_type -> determined.api.v1.ListRolesResponse
-	412, // 412: determined.api.v1.Determined.AssignRoles:output_type -> determined.api.v1.AssignRolesResponse
-	413, // 413: determined.api.v1.Determined.RemoveAssignments:output_type -> determined.api.v1.RemoveAssignmentsResponse
-	414, // 414: determined.api.v1.Determined.PostUserActivity:output_type -> determined.api.v1.PostUserActivityResponse
-	415, // 415: determined.api.v1.Determined.GetProjectsByUserActivity:output_type -> determined.api.v1.GetProjectsByUserActivityResponse
-	416, // 416: determined.api.v1.Determined.SearchExperiments:output_type -> determined.api.v1.SearchExperimentsResponse
-	417, // 417: determined.api.v1.Determined.BindRPToWorkspace:output_type -> determined.api.v1.BindRPToWorkspaceResponse
-	418, // 418: determined.api.v1.Determined.UnbindRPFromWorkspace:output_type -> determined.api.v1.UnbindRPFromWorkspaceResponse
-	419, // 419: determined.api.v1.Determined.OverwriteRPWorkspaceBindings:output_type -> determined.api.v1.OverwriteRPWorkspaceBindingsResponse
-	420, // 420: determined.api.v1.Determined.ListRPsBoundToWorkspace:output_type -> determined.api.v1.ListRPsBoundToWorkspaceResponse
-	421, // 421: determined.api.v1.Determined.ListWorkspacesBoundToRP:output_type -> determined.api.v1.ListWorkspacesBoundToRPResponse
-	211, // [211:422] is the sub-list for method output_type
-	0,   // [0:211] is the sub-list for method input_type
+	13,  // 13: determined.api.v1.Determined.PatchUsers:input_type -> determined.api.v1.PatchUsersRequest
+	14,  // 14: determined.api.v1.Determined.AssignMultipleGroups:input_type -> determined.api.v1.AssignMultipleGroupsRequest
+	15,  // 15: determined.api.v1.Determined.GetTelemetry:input_type -> determined.api.v1.GetTelemetryRequest
+	16,  // 16: determined.api.v1.Determined.GetMaster:input_type -> determined.api.v1.GetMasterRequest
+	17,  // 17: determined.api.v1.Determined.GetMasterConfig:input_type -> determined.api.v1.GetMasterConfigRequest
+	18,  // 18: determined.api.v1.Determined.PatchMasterConfig:input_type -> determined.api.v1.PatchMasterConfigRequest
+	19,  // 19: determined.api.v1.Determined.MasterLogs:input_type -> determined.api.v1.MasterLogsRequest
+	20,  // 20: determined.api.v1.Determined.GetAgents:input_type -> determined.api.v1.GetAgentsRequest
+	21,  // 21: determined.api.v1.Determined.GetAgent:input_type -> determined.api.v1.GetAgentRequest
+	22,  // 22: determined.api.v1.Determined.GetSlots:input_type -> determined.api.v1.GetSlotsRequest
+	23,  // 23: determined.api.v1.Determined.GetSlot:input_type -> determined.api.v1.GetSlotRequest
+	24,  // 24: determined.api.v1.Determined.EnableAgent:input_type -> determined.api.v1.EnableAgentRequest
+	25,  // 25: determined.api.v1.Determined.DisableAgent:input_type -> determined.api.v1.DisableAgentRequest
+	26,  // 26: determined.api.v1.Determined.EnableSlot:input_type -> determined.api.v1.EnableSlotRequest
+	27,  // 27: determined.api.v1.Determined.DisableSlot:input_type -> determined.api.v1.DisableSlotRequest
+	28,  // 28: determined.api.v1.Determined.CreateExperiment:input_type -> determined.api.v1.CreateExperimentRequest
+	29,  // 29: determined.api.v1.Determined.PutExperiment:input_type -> determined.api.v1.PutExperimentRequest
+	30,  // 30: determined.api.v1.Determined.ContinueExperiment:input_type -> determined.api.v1.ContinueExperimentRequest
+	31,  // 31: determined.api.v1.Determined.GetExperiment:input_type -> determined.api.v1.GetExperimentRequest
+	32,  // 32: determined.api.v1.Determined.GetExperiments:input_type -> determined.api.v1.GetExperimentsRequest
+	33,  // 33: determined.api.v1.Determined.GetModelDef:input_type -> determined.api.v1.GetModelDefRequest
+	34,  // 34: determined.api.v1.Determined.GetTaskContextDirectory:input_type -> determined.api.v1.GetTaskContextDirectoryRequest
+	35,  // 35: determined.api.v1.Determined.GetModelDefTree:input_type -> determined.api.v1.GetModelDefTreeRequest
+	36,  // 36: determined.api.v1.Determined.GetModelDefFile:input_type -> determined.api.v1.GetModelDefFileRequest
+	37,  // 37: determined.api.v1.Determined.GetExperimentLabels:input_type -> determined.api.v1.GetExperimentLabelsRequest
+	38,  // 38: determined.api.v1.Determined.GetExperimentValidationHistory:input_type -> determined.api.v1.GetExperimentValidationHistoryRequest
+	39,  // 39: determined.api.v1.Determined.ActivateExperiment:input_type -> determined.api.v1.ActivateExperimentRequest
+	40,  // 40: determined.api.v1.Determined.ActivateExperiments:input_type -> determined.api.v1.ActivateExperimentsRequest
+	41,  // 41: determined.api.v1.Determined.PauseExperiment:input_type -> determined.api.v1.PauseExperimentRequest
+	42,  // 42: determined.api.v1.Determined.PauseExperiments:input_type -> determined.api.v1.PauseExperimentsRequest
+	43,  // 43: determined.api.v1.Determined.CancelExperiment:input_type -> determined.api.v1.CancelExperimentRequest
+	44,  // 44: determined.api.v1.Determined.CancelExperiments:input_type -> determined.api.v1.CancelExperimentsRequest
+	45,  // 45: determined.api.v1.Determined.KillExperiment:input_type -> determined.api.v1.KillExperimentRequest
+	46,  // 46: determined.api.v1.Determined.KillExperiments:input_type -> determined.api.v1.KillExperimentsRequest
+	47,  // 47: determined.api.v1.Determined.ArchiveExperiment:input_type -> determined.api.v1.ArchiveExperimentRequest
+	48,  // 48: determined.api.v1.Determined.ArchiveExperiments:input_type -> determined.api.v1.ArchiveExperimentsRequest
+	49,  // 49: determined.api.v1.Determined.UnarchiveExperiment:input_type -> determined.api.v1.UnarchiveExperimentRequest
+	50,  // 50: determined.api.v1.Determined.UnarchiveExperiments:input_type -> determined.api.v1.UnarchiveExperimentsRequest
+	51,  // 51: determined.api.v1.Determined.PatchExperiment:input_type -> determined.api.v1.PatchExperimentRequest
+	52,  // 52: determined.api.v1.Determined.DeleteExperiments:input_type -> determined.api.v1.DeleteExperimentsRequest
+	53,  // 53: determined.api.v1.Determined.DeleteExperiment:input_type -> determined.api.v1.DeleteExperimentRequest
+	54,  // 54: determined.api.v1.Determined.GetBestSearcherValidationMetric:input_type -> determined.api.v1.GetBestSearcherValidationMetricRequest
+	55,  // 55: determined.api.v1.Determined.GetExperimentCheckpoints:input_type -> determined.api.v1.GetExperimentCheckpointsRequest
+	56,  // 56: determined.api.v1.Determined.PreviewHPSearch:input_type -> determined.api.v1.PreviewHPSearchRequest
+	57,  // 57: determined.api.v1.Determined.GetExperimentTrials:input_type -> determined.api.v1.GetExperimentTrialsRequest
+	58,  // 58: determined.api.v1.Determined.CompareTrials:input_type -> determined.api.v1.CompareTrialsRequest
+	59,  // 59: determined.api.v1.Determined.ReportTrialSourceInfo:input_type -> determined.api.v1.ReportTrialSourceInfoRequest
+	60,  // 60: determined.api.v1.Determined.CreateTrial:input_type -> determined.api.v1.CreateTrialRequest
+	61,  // 61: determined.api.v1.Determined.PutTrial:input_type -> determined.api.v1.PutTrialRequest
+	62,  // 62: determined.api.v1.Determined.PatchTrial:input_type -> determined.api.v1.PatchTrialRequest
+	63,  // 63: determined.api.v1.Determined.StartTrial:input_type -> determined.api.v1.StartTrialRequest
+	64,  // 64: determined.api.v1.Determined.GetTrial:input_type -> determined.api.v1.GetTrialRequest
+	65,  // 65: determined.api.v1.Determined.GetTrialWorkloads:input_type -> determined.api.v1.GetTrialWorkloadsRequest
+	66,  // 66: determined.api.v1.Determined.TrialLogs:input_type -> determined.api.v1.TrialLogsRequest
+	67,  // 67: determined.api.v1.Determined.TrialLogsFields:input_type -> determined.api.v1.TrialLogsFieldsRequest
+	68,  // 68: determined.api.v1.Determined.AllocationReady:input_type -> determined.api.v1.AllocationReadyRequest
+	69,  // 69: determined.api.v1.Determined.GetAllocation:input_type -> determined.api.v1.GetAllocationRequest
+	70,  // 70: determined.api.v1.Determined.AllocationWaiting:input_type -> determined.api.v1.AllocationWaitingRequest
+	71,  // 71: determined.api.v1.Determined.TaskLogs:input_type -> determined.api.v1.TaskLogsRequest
+	72,  // 72: determined.api.v1.Determined.TaskLogsFields:input_type -> determined.api.v1.TaskLogsFieldsRequest
+	73,  // 73: determined.api.v1.Determined.GetTrialProfilerMetrics:input_type -> determined.api.v1.GetTrialProfilerMetricsRequest
+	74,  // 74: determined.api.v1.Determined.GetTrialProfilerAvailableSeries:input_type -> determined.api.v1.GetTrialProfilerAvailableSeriesRequest
+	75,  // 75: determined.api.v1.Determined.PostTrialProfilerMetricsBatch:input_type -> determined.api.v1.PostTrialProfilerMetricsBatchRequest
+	76,  // 76: determined.api.v1.Determined.GetMetrics:input_type -> determined.api.v1.GetMetricsRequest
+	77,  // 77: determined.api.v1.Determined.GetTrainingMetrics:input_type -> determined.api.v1.GetTrainingMetricsRequest
+	78,  // 78: determined.api.v1.Determined.GetValidationMetrics:input_type -> determined.api.v1.GetValidationMetricsRequest
+	79,  // 79: determined.api.v1.Determined.KillTrial:input_type -> determined.api.v1.KillTrialRequest
+	80,  // 80: determined.api.v1.Determined.GetTrialCheckpoints:input_type -> determined.api.v1.GetTrialCheckpointsRequest
+	81,  // 81: determined.api.v1.Determined.AllocationPreemptionSignal:input_type -> determined.api.v1.AllocationPreemptionSignalRequest
+	82,  // 82: determined.api.v1.Determined.AllocationPendingPreemptionSignal:input_type -> determined.api.v1.AllocationPendingPreemptionSignalRequest
+	83,  // 83: determined.api.v1.Determined.AckAllocationPreemptionSignal:input_type -> determined.api.v1.AckAllocationPreemptionSignalRequest
+	84,  // 84: determined.api.v1.Determined.MarkAllocationResourcesDaemon:input_type -> determined.api.v1.MarkAllocationResourcesDaemonRequest
+	85,  // 85: determined.api.v1.Determined.AllocationRendezvousInfo:input_type -> determined.api.v1.AllocationRendezvousInfoRequest
+	86,  // 86: determined.api.v1.Determined.PostAllocationProxyAddress:input_type -> determined.api.v1.PostAllocationProxyAddressRequest
+	87,  // 87: determined.api.v1.Determined.GetTaskAcceleratorData:input_type -> determined.api.v1.GetTaskAcceleratorDataRequest
+	88,  // 88: determined.api.v1.Determined.PostAllocationAcceleratorData:input_type -> determined.api.v1.PostAllocationAcceleratorDataRequest
+	89,  // 89: determined.api.v1.Determined.AllocationAllGather:input_type -> determined.api.v1.AllocationAllGatherRequest
+	90,  // 90: determined.api.v1.Determined.NotifyContainerRunning:input_type -> determined.api.v1.NotifyContainerRunningRequest
+	91,  // 91: determined.api.v1.Determined.GetCurrentTrialSearcherOperation:input_type -> determined.api.v1.GetCurrentTrialSearcherOperationRequest
+	92,  // 92: determined.api.v1.Determined.CompleteTrialSearcherValidation:input_type -> determined.api.v1.CompleteTrialSearcherValidationRequest
+	93,  // 93: determined.api.v1.Determined.ReportTrialSearcherEarlyExit:input_type -> determined.api.v1.ReportTrialSearcherEarlyExitRequest
+	94,  // 94: determined.api.v1.Determined.ReportTrialProgress:input_type -> determined.api.v1.ReportTrialProgressRequest
+	95,  // 95: determined.api.v1.Determined.PostTrialRunnerMetadata:input_type -> determined.api.v1.PostTrialRunnerMetadataRequest
+	96,  // 96: determined.api.v1.Determined.ReportTrialMetrics:input_type -> determined.api.v1.ReportTrialMetricsRequest
+	97,  // 97: determined.api.v1.Determined.ReportTrialTrainingMetrics:input_type -> determined.api.v1.ReportTrialTrainingMetricsRequest
+	98,  // 98: determined.api.v1.Determined.ReportTrialValidationMetrics:input_type -> determined.api.v1.ReportTrialValidationMetricsRequest
+	99,  // 99: determined.api.v1.Determined.ReportCheckpoint:input_type -> determined.api.v1.ReportCheckpointRequest
+	100, // 100: determined.api.v1.Determined.GetJobs:input_type -> determined.api.v1.GetJobsRequest
+	101, // 101: determined.api.v1.Determined.GetJobsV2:input_type -> determined.api.v1.GetJobsV2Request
+	102, // 102: determined.api.v1.Determined.GetJobQueueStats:input_type -> determined.api.v1.GetJobQueueStatsRequest
+	103, // 103: determined.api.v1.Determined.UpdateJobQueue:input_type -> determined.api.v1.UpdateJobQueueRequest
+	104, // 104: determined.api.v1.Determined.GetTemplates:input_type -> determined.api.v1.GetTemplatesRequest
+	105, // 105: determined.api.v1.Determined.GetTemplate:input_type -> determined.api.v1.GetTemplateRequest
+	106, // 106: determined.api.v1.Determined.PutTemplate:input_type -> determined.api.v1.PutTemplateRequest
+	107, // 107: determined.api.v1.Determined.PostTemplate:input_type -> determined.api.v1.PostTemplateRequest
+	108, // 108: determined.api.v1.Determined.PatchTemplateConfig:input_type -> determined.api.v1.PatchTemplateConfigRequest
+	109, // 109: determined.api.v1.Determined.DeleteTemplate:input_type -> determined.api.v1.DeleteTemplateRequest
+	110, // 110: determined.api.v1.Determined.GetNotebooks:input_type -> determined.api.v1.GetNotebooksRequest
+	111, // 111: determined.api.v1.Determined.GetNotebook:input_type -> determined.api.v1.GetNotebookRequest
+	112, // 112: determined.api.v1.Determined.IdleNotebook:input_type -> determined.api.v1.IdleNotebookRequest
+	113, // 113: determined.api.v1.Determined.KillNotebook:input_type -> determined.api.v1.KillNotebookRequest
+	114, // 114: determined.api.v1.Determined.SetNotebookPriority:input_type -> determined.api.v1.SetNotebookPriorityRequest
+	115, // 115: determined.api.v1.Determined.LaunchNotebook:input_type -> determined.api.v1.LaunchNotebookRequest
+	116, // 116: determined.api.v1.Determined.GetShells:input_type -> determined.api.v1.GetShellsRequest
+	117, // 117: determined.api.v1.Determined.GetShell:input_type -> determined.api.v1.GetShellRequest
+	118, // 118: determined.api.v1.Determined.KillShell:input_type -> determined.api.v1.KillShellRequest
+	119, // 119: determined.api.v1.Determined.SetShellPriority:input_type -> determined.api.v1.SetShellPriorityRequest
+	120, // 120: determined.api.v1.Determined.LaunchShell:input_type -> determined.api.v1.LaunchShellRequest
+	121, // 121: determined.api.v1.Determined.GetCommands:input_type -> determined.api.v1.GetCommandsRequest
+	122, // 122: determined.api.v1.Determined.GetCommand:input_type -> determined.api.v1.GetCommandRequest
+	123, // 123: determined.api.v1.Determined.KillCommand:input_type -> determined.api.v1.KillCommandRequest
+	124, // 124: determined.api.v1.Determined.SetCommandPriority:input_type -> determined.api.v1.SetCommandPriorityRequest
+	125, // 125: determined.api.v1.Determined.LaunchCommand:input_type -> determined.api.v1.LaunchCommandRequest
+	126, // 126: determined.api.v1.Determined.GetTensorboards:input_type -> determined.api.v1.GetTensorboardsRequest
+	127, // 127: determined.api.v1.Determined.GetTensorboard:input_type -> determined.api.v1.GetTensorboardRequest
+	128, // 128: determined.api.v1.Determined.KillTensorboard:input_type -> determined.api.v1.KillTensorboardRequest
+	129, // 129: determined.api.v1.Determined.SetTensorboardPriority:input_type -> determined.api.v1.SetTensorboardPriorityRequest
+	130, // 130: determined.api.v1.Determined.LaunchTensorboard:input_type -> determined.api.v1.LaunchTensorboardRequest
+	131, // 131: determined.api.v1.Determined.GetActiveTasksCount:input_type -> determined.api.v1.GetActiveTasksCountRequest
+	132, // 132: determined.api.v1.Determined.GetTask:input_type -> determined.api.v1.GetTaskRequest
+	133, // 133: determined.api.v1.Determined.GetTasks:input_type -> determined.api.v1.GetTasksRequest
+	134, // 134: determined.api.v1.Determined.GetModel:input_type -> determined.api.v1.GetModelRequest
+	135, // 135: determined.api.v1.Determined.PostModel:input_type -> determined.api.v1.PostModelRequest
+	136, // 136: determined.api.v1.Determined.PatchModel:input_type -> determined.api.v1.PatchModelRequest
+	137, // 137: determined.api.v1.Determined.ArchiveModel:input_type -> determined.api.v1.ArchiveModelRequest
+	138, // 138: determined.api.v1.Determined.UnarchiveModel:input_type -> determined.api.v1.UnarchiveModelRequest
+	139, // 139: determined.api.v1.Determined.MoveModel:input_type -> determined.api.v1.MoveModelRequest
+	140, // 140: determined.api.v1.Determined.DeleteModel:input_type -> determined.api.v1.DeleteModelRequest
+	141, // 141: determined.api.v1.Determined.GetModels:input_type -> determined.api.v1.GetModelsRequest
+	142, // 142: determined.api.v1.Determined.GetModelLabels:input_type -> determined.api.v1.GetModelLabelsRequest
+	143, // 143: determined.api.v1.Determined.GetModelVersion:input_type -> determined.api.v1.GetModelVersionRequest
+	144, // 144: determined.api.v1.Determined.GetModelVersions:input_type -> determined.api.v1.GetModelVersionsRequest
+	145, // 145: determined.api.v1.Determined.PostModelVersion:input_type -> determined.api.v1.PostModelVersionRequest
+	146, // 146: determined.api.v1.Determined.PatchModelVersion:input_type -> determined.api.v1.PatchModelVersionRequest
+	147, // 147: determined.api.v1.Determined.DeleteModelVersion:input_type -> determined.api.v1.DeleteModelVersionRequest
+	148, // 148: determined.api.v1.Determined.GetTrialMetricsByModelVersion:input_type -> determined.api.v1.GetTrialMetricsByModelVersionRequest
+	149, // 149: determined.api.v1.Determined.GetCheckpoint:input_type -> determined.api.v1.GetCheckpointRequest
+	150, // 150: determined.api.v1.Determined.PostCheckpointMetadata:input_type -> determined.api.v1.PostCheckpointMetadataRequest
+	151, // 151: determined.api.v1.Determined.CheckpointsRemoveFiles:input_type -> determined.api.v1.CheckpointsRemoveFilesRequest
+	152, // 152: determined.api.v1.Determined.PatchCheckpoints:input_type -> determined.api.v1.PatchCheckpointsRequest
+	153, // 153: determined.api.v1.Determined.DeleteCheckpoints:input_type -> determined.api.v1.DeleteCheckpointsRequest
+	154, // 154: determined.api.v1.Determined.GetTrialMetricsByCheckpoint:input_type -> determined.api.v1.GetTrialMetricsByCheckpointRequest
+	155, // 155: determined.api.v1.Determined.GetSearcherEvents:input_type -> determined.api.v1.GetSearcherEventsRequest
+	156, // 156: determined.api.v1.Determined.PostSearcherOperations:input_type -> determined.api.v1.PostSearcherOperationsRequest
+	157, // 157: determined.api.v1.Determined.ExpMetricNames:input_type -> determined.api.v1.ExpMetricNamesRequest
+	158, // 158: determined.api.v1.Determined.MetricBatches:input_type -> determined.api.v1.MetricBatchesRequest
+	159, // 159: determined.api.v1.Determined.TrialsSnapshot:input_type -> determined.api.v1.TrialsSnapshotRequest
+	160, // 160: determined.api.v1.Determined.TrialsSample:input_type -> determined.api.v1.TrialsSampleRequest
+	161, // 161: determined.api.v1.Determined.GetResourcePools:input_type -> determined.api.v1.GetResourcePoolsRequest
+	162, // 162: determined.api.v1.Determined.ResourceAllocationRaw:input_type -> determined.api.v1.ResourceAllocationRawRequest
+	163, // 163: determined.api.v1.Determined.ResourceAllocationAggregated:input_type -> determined.api.v1.ResourceAllocationAggregatedRequest
+	164, // 164: determined.api.v1.Determined.GetWorkspace:input_type -> determined.api.v1.GetWorkspaceRequest
+	165, // 165: determined.api.v1.Determined.GetWorkspaceProjects:input_type -> determined.api.v1.GetWorkspaceProjectsRequest
+	166, // 166: determined.api.v1.Determined.GetWorkspaces:input_type -> determined.api.v1.GetWorkspacesRequest
+	167, // 167: determined.api.v1.Determined.PostWorkspace:input_type -> determined.api.v1.PostWorkspaceRequest
+	168, // 168: determined.api.v1.Determined.PatchWorkspace:input_type -> determined.api.v1.PatchWorkspaceRequest
+	169, // 169: determined.api.v1.Determined.DeleteWorkspace:input_type -> determined.api.v1.DeleteWorkspaceRequest
+	170, // 170: determined.api.v1.Determined.ArchiveWorkspace:input_type -> determined.api.v1.ArchiveWorkspaceRequest
+	171, // 171: determined.api.v1.Determined.UnarchiveWorkspace:input_type -> determined.api.v1.UnarchiveWorkspaceRequest
+	172, // 172: determined.api.v1.Determined.PinWorkspace:input_type -> determined.api.v1.PinWorkspaceRequest
+	173, // 173: determined.api.v1.Determined.UnpinWorkspace:input_type -> determined.api.v1.UnpinWorkspaceRequest
+	174, // 174: determined.api.v1.Determined.GetProject:input_type -> determined.api.v1.GetProjectRequest
+	175, // 175: determined.api.v1.Determined.GetProjectColumns:input_type -> determined.api.v1.GetProjectColumnsRequest
+	176, // 176: determined.api.v1.Determined.GetProjectNumericMetricsRange:input_type -> determined.api.v1.GetProjectNumericMetricsRangeRequest
+	177, // 177: determined.api.v1.Determined.PostProject:input_type -> determined.api.v1.PostProjectRequest
+	178, // 178: determined.api.v1.Determined.AddProjectNote:input_type -> determined.api.v1.AddProjectNoteRequest
+	179, // 179: determined.api.v1.Determined.PutProjectNotes:input_type -> determined.api.v1.PutProjectNotesRequest
+	180, // 180: determined.api.v1.Determined.PatchProject:input_type -> determined.api.v1.PatchProjectRequest
+	181, // 181: determined.api.v1.Determined.DeleteProject:input_type -> determined.api.v1.DeleteProjectRequest
+	182, // 182: determined.api.v1.Determined.ArchiveProject:input_type -> determined.api.v1.ArchiveProjectRequest
+	183, // 183: determined.api.v1.Determined.UnarchiveProject:input_type -> determined.api.v1.UnarchiveProjectRequest
+	184, // 184: determined.api.v1.Determined.MoveProject:input_type -> determined.api.v1.MoveProjectRequest
+	185, // 185: determined.api.v1.Determined.MoveExperiment:input_type -> determined.api.v1.MoveExperimentRequest
+	186, // 186: determined.api.v1.Determined.MoveExperiments:input_type -> determined.api.v1.MoveExperimentsRequest
+	187, // 187: determined.api.v1.Determined.GetWebhooks:input_type -> determined.api.v1.GetWebhooksRequest
+	188, // 188: determined.api.v1.Determined.PostWebhook:input_type -> determined.api.v1.PostWebhookRequest
+	189, // 189: determined.api.v1.Determined.DeleteWebhook:input_type -> determined.api.v1.DeleteWebhookRequest
+	190, // 190: determined.api.v1.Determined.TestWebhook:input_type -> determined.api.v1.TestWebhookRequest
+	191, // 191: determined.api.v1.Determined.GetGroup:input_type -> determined.api.v1.GetGroupRequest
+	192, // 192: determined.api.v1.Determined.GetGroups:input_type -> determined.api.v1.GetGroupsRequest
+	193, // 193: determined.api.v1.Determined.CreateGroup:input_type -> determined.api.v1.CreateGroupRequest
+	194, // 194: determined.api.v1.Determined.UpdateGroup:input_type -> determined.api.v1.UpdateGroupRequest
+	195, // 195: determined.api.v1.Determined.DeleteGroup:input_type -> determined.api.v1.DeleteGroupRequest
+	196, // 196: determined.api.v1.Determined.GetPermissionsSummary:input_type -> determined.api.v1.GetPermissionsSummaryRequest
+	197, // 197: determined.api.v1.Determined.GetGroupsAndUsersAssignedToWorkspace:input_type -> determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceRequest
+	198, // 198: determined.api.v1.Determined.GetRolesByID:input_type -> determined.api.v1.GetRolesByIDRequest
+	199, // 199: determined.api.v1.Determined.GetRolesAssignedToUser:input_type -> determined.api.v1.GetRolesAssignedToUserRequest
+	200, // 200: determined.api.v1.Determined.GetRolesAssignedToGroup:input_type -> determined.api.v1.GetRolesAssignedToGroupRequest
+	201, // 201: determined.api.v1.Determined.SearchRolesAssignableToScope:input_type -> determined.api.v1.SearchRolesAssignableToScopeRequest
+	202, // 202: determined.api.v1.Determined.ListRoles:input_type -> determined.api.v1.ListRolesRequest
+	203, // 203: determined.api.v1.Determined.AssignRoles:input_type -> determined.api.v1.AssignRolesRequest
+	204, // 204: determined.api.v1.Determined.RemoveAssignments:input_type -> determined.api.v1.RemoveAssignmentsRequest
+	205, // 205: determined.api.v1.Determined.PostUserActivity:input_type -> determined.api.v1.PostUserActivityRequest
+	206, // 206: determined.api.v1.Determined.GetProjectsByUserActivity:input_type -> determined.api.v1.GetProjectsByUserActivityRequest
+	207, // 207: determined.api.v1.Determined.SearchExperiments:input_type -> determined.api.v1.SearchExperimentsRequest
+	208, // 208: determined.api.v1.Determined.BindRPToWorkspace:input_type -> determined.api.v1.BindRPToWorkspaceRequest
+	209, // 209: determined.api.v1.Determined.UnbindRPFromWorkspace:input_type -> determined.api.v1.UnbindRPFromWorkspaceRequest
+	210, // 210: determined.api.v1.Determined.OverwriteRPWorkspaceBindings:input_type -> determined.api.v1.OverwriteRPWorkspaceBindingsRequest
+	211, // 211: determined.api.v1.Determined.ListRPsBoundToWorkspace:input_type -> determined.api.v1.ListRPsBoundToWorkspaceRequest
+	212, // 212: determined.api.v1.Determined.ListWorkspacesBoundToRP:input_type -> determined.api.v1.ListWorkspacesBoundToRPRequest
+	213, // 213: determined.api.v1.Determined.Login:output_type -> determined.api.v1.LoginResponse
+	214, // 214: determined.api.v1.Determined.CurrentUser:output_type -> determined.api.v1.CurrentUserResponse
+	215, // 215: determined.api.v1.Determined.Logout:output_type -> determined.api.v1.LogoutResponse
+	216, // 216: determined.api.v1.Determined.GetUsers:output_type -> determined.api.v1.GetUsersResponse
+	217, // 217: determined.api.v1.Determined.GetUserSetting:output_type -> determined.api.v1.GetUserSettingResponse
+	218, // 218: determined.api.v1.Determined.ResetUserSetting:output_type -> determined.api.v1.ResetUserSettingResponse
+	219, // 219: determined.api.v1.Determined.PostUserSetting:output_type -> determined.api.v1.PostUserSettingResponse
+	220, // 220: determined.api.v1.Determined.GetUser:output_type -> determined.api.v1.GetUserResponse
+	221, // 221: determined.api.v1.Determined.GetUserByUsername:output_type -> determined.api.v1.GetUserByUsernameResponse
+	222, // 222: determined.api.v1.Determined.GetMe:output_type -> determined.api.v1.GetMeResponse
+	223, // 223: determined.api.v1.Determined.PostUser:output_type -> determined.api.v1.PostUserResponse
+	224, // 224: determined.api.v1.Determined.SetUserPassword:output_type -> determined.api.v1.SetUserPasswordResponse
+	225, // 225: determined.api.v1.Determined.PatchUser:output_type -> determined.api.v1.PatchUserResponse
+	226, // 226: determined.api.v1.Determined.PatchUsers:output_type -> determined.api.v1.PatchUsersResponse
+	227, // 227: determined.api.v1.Determined.AssignMultipleGroups:output_type -> determined.api.v1.AssignMultipleGroupsResponse
+	228, // 228: determined.api.v1.Determined.GetTelemetry:output_type -> determined.api.v1.GetTelemetryResponse
+	229, // 229: determined.api.v1.Determined.GetMaster:output_type -> determined.api.v1.GetMasterResponse
+	230, // 230: determined.api.v1.Determined.GetMasterConfig:output_type -> determined.api.v1.GetMasterConfigResponse
+	231, // 231: determined.api.v1.Determined.PatchMasterConfig:output_type -> determined.api.v1.PatchMasterConfigResponse
+	232, // 232: determined.api.v1.Determined.MasterLogs:output_type -> determined.api.v1.MasterLogsResponse
+	233, // 233: determined.api.v1.Determined.GetAgents:output_type -> determined.api.v1.GetAgentsResponse
+	234, // 234: determined.api.v1.Determined.GetAgent:output_type -> determined.api.v1.GetAgentResponse
+	235, // 235: determined.api.v1.Determined.GetSlots:output_type -> determined.api.v1.GetSlotsResponse
+	236, // 236: determined.api.v1.Determined.GetSlot:output_type -> determined.api.v1.GetSlotResponse
+	237, // 237: determined.api.v1.Determined.EnableAgent:output_type -> determined.api.v1.EnableAgentResponse
+	238, // 238: determined.api.v1.Determined.DisableAgent:output_type -> determined.api.v1.DisableAgentResponse
+	239, // 239: determined.api.v1.Determined.EnableSlot:output_type -> determined.api.v1.EnableSlotResponse
+	240, // 240: determined.api.v1.Determined.DisableSlot:output_type -> determined.api.v1.DisableSlotResponse
+	241, // 241: determined.api.v1.Determined.CreateExperiment:output_type -> determined.api.v1.CreateExperimentResponse
+	242, // 242: determined.api.v1.Determined.PutExperiment:output_type -> determined.api.v1.PutExperimentResponse
+	243, // 243: determined.api.v1.Determined.ContinueExperiment:output_type -> determined.api.v1.ContinueExperimentResponse
+	244, // 244: determined.api.v1.Determined.GetExperiment:output_type -> determined.api.v1.GetExperimentResponse
+	245, // 245: determined.api.v1.Determined.GetExperiments:output_type -> determined.api.v1.GetExperimentsResponse
+	246, // 246: determined.api.v1.Determined.GetModelDef:output_type -> determined.api.v1.GetModelDefResponse
+	247, // 247: determined.api.v1.Determined.GetTaskContextDirectory:output_type -> determined.api.v1.GetTaskContextDirectoryResponse
+	248, // 248: determined.api.v1.Determined.GetModelDefTree:output_type -> determined.api.v1.GetModelDefTreeResponse
+	249, // 249: determined.api.v1.Determined.GetModelDefFile:output_type -> determined.api.v1.GetModelDefFileResponse
+	250, // 250: determined.api.v1.Determined.GetExperimentLabels:output_type -> determined.api.v1.GetExperimentLabelsResponse
+	251, // 251: determined.api.v1.Determined.GetExperimentValidationHistory:output_type -> determined.api.v1.GetExperimentValidationHistoryResponse
+	252, // 252: determined.api.v1.Determined.ActivateExperiment:output_type -> determined.api.v1.ActivateExperimentResponse
+	253, // 253: determined.api.v1.Determined.ActivateExperiments:output_type -> determined.api.v1.ActivateExperimentsResponse
+	254, // 254: determined.api.v1.Determined.PauseExperiment:output_type -> determined.api.v1.PauseExperimentResponse
+	255, // 255: determined.api.v1.Determined.PauseExperiments:output_type -> determined.api.v1.PauseExperimentsResponse
+	256, // 256: determined.api.v1.Determined.CancelExperiment:output_type -> determined.api.v1.CancelExperimentResponse
+	257, // 257: determined.api.v1.Determined.CancelExperiments:output_type -> determined.api.v1.CancelExperimentsResponse
+	258, // 258: determined.api.v1.Determined.KillExperiment:output_type -> determined.api.v1.KillExperimentResponse
+	259, // 259: determined.api.v1.Determined.KillExperiments:output_type -> determined.api.v1.KillExperimentsResponse
+	260, // 260: determined.api.v1.Determined.ArchiveExperiment:output_type -> determined.api.v1.ArchiveExperimentResponse
+	261, // 261: determined.api.v1.Determined.ArchiveExperiments:output_type -> determined.api.v1.ArchiveExperimentsResponse
+	262, // 262: determined.api.v1.Determined.UnarchiveExperiment:output_type -> determined.api.v1.UnarchiveExperimentResponse
+	263, // 263: determined.api.v1.Determined.UnarchiveExperiments:output_type -> determined.api.v1.UnarchiveExperimentsResponse
+	264, // 264: determined.api.v1.Determined.PatchExperiment:output_type -> determined.api.v1.PatchExperimentResponse
+	265, // 265: determined.api.v1.Determined.DeleteExperiments:output_type -> determined.api.v1.DeleteExperimentsResponse
+	266, // 266: determined.api.v1.Determined.DeleteExperiment:output_type -> determined.api.v1.DeleteExperimentResponse
+	267, // 267: determined.api.v1.Determined.GetBestSearcherValidationMetric:output_type -> determined.api.v1.GetBestSearcherValidationMetricResponse
+	268, // 268: determined.api.v1.Determined.GetExperimentCheckpoints:output_type -> determined.api.v1.GetExperimentCheckpointsResponse
+	269, // 269: determined.api.v1.Determined.PreviewHPSearch:output_type -> determined.api.v1.PreviewHPSearchResponse
+	270, // 270: determined.api.v1.Determined.GetExperimentTrials:output_type -> determined.api.v1.GetExperimentTrialsResponse
+	271, // 271: determined.api.v1.Determined.CompareTrials:output_type -> determined.api.v1.CompareTrialsResponse
+	272, // 272: determined.api.v1.Determined.ReportTrialSourceInfo:output_type -> determined.api.v1.ReportTrialSourceInfoResponse
+	273, // 273: determined.api.v1.Determined.CreateTrial:output_type -> determined.api.v1.CreateTrialResponse
+	274, // 274: determined.api.v1.Determined.PutTrial:output_type -> determined.api.v1.PutTrialResponse
+	275, // 275: determined.api.v1.Determined.PatchTrial:output_type -> determined.api.v1.PatchTrialResponse
+	276, // 276: determined.api.v1.Determined.StartTrial:output_type -> determined.api.v1.StartTrialResponse
+	277, // 277: determined.api.v1.Determined.GetTrial:output_type -> determined.api.v1.GetTrialResponse
+	278, // 278: determined.api.v1.Determined.GetTrialWorkloads:output_type -> determined.api.v1.GetTrialWorkloadsResponse
+	279, // 279: determined.api.v1.Determined.TrialLogs:output_type -> determined.api.v1.TrialLogsResponse
+	280, // 280: determined.api.v1.Determined.TrialLogsFields:output_type -> determined.api.v1.TrialLogsFieldsResponse
+	281, // 281: determined.api.v1.Determined.AllocationReady:output_type -> determined.api.v1.AllocationReadyResponse
+	282, // 282: determined.api.v1.Determined.GetAllocation:output_type -> determined.api.v1.GetAllocationResponse
+	283, // 283: determined.api.v1.Determined.AllocationWaiting:output_type -> determined.api.v1.AllocationWaitingResponse
+	284, // 284: determined.api.v1.Determined.TaskLogs:output_type -> determined.api.v1.TaskLogsResponse
+	285, // 285: determined.api.v1.Determined.TaskLogsFields:output_type -> determined.api.v1.TaskLogsFieldsResponse
+	286, // 286: determined.api.v1.Determined.GetTrialProfilerMetrics:output_type -> determined.api.v1.GetTrialProfilerMetricsResponse
+	287, // 287: determined.api.v1.Determined.GetTrialProfilerAvailableSeries:output_type -> determined.api.v1.GetTrialProfilerAvailableSeriesResponse
+	288, // 288: determined.api.v1.Determined.PostTrialProfilerMetricsBatch:output_type -> determined.api.v1.PostTrialProfilerMetricsBatchResponse
+	289, // 289: determined.api.v1.Determined.GetMetrics:output_type -> determined.api.v1.GetMetricsResponse
+	290, // 290: determined.api.v1.Determined.GetTrainingMetrics:output_type -> determined.api.v1.GetTrainingMetricsResponse
+	291, // 291: determined.api.v1.Determined.GetValidationMetrics:output_type -> determined.api.v1.GetValidationMetricsResponse
+	292, // 292: determined.api.v1.Determined.KillTrial:output_type -> determined.api.v1.KillTrialResponse
+	293, // 293: determined.api.v1.Determined.GetTrialCheckpoints:output_type -> determined.api.v1.GetTrialCheckpointsResponse
+	294, // 294: determined.api.v1.Determined.AllocationPreemptionSignal:output_type -> determined.api.v1.AllocationPreemptionSignalResponse
+	295, // 295: determined.api.v1.Determined.AllocationPendingPreemptionSignal:output_type -> determined.api.v1.AllocationPendingPreemptionSignalResponse
+	296, // 296: determined.api.v1.Determined.AckAllocationPreemptionSignal:output_type -> determined.api.v1.AckAllocationPreemptionSignalResponse
+	297, // 297: determined.api.v1.Determined.MarkAllocationResourcesDaemon:output_type -> determined.api.v1.MarkAllocationResourcesDaemonResponse
+	298, // 298: determined.api.v1.Determined.AllocationRendezvousInfo:output_type -> determined.api.v1.AllocationRendezvousInfoResponse
+	299, // 299: determined.api.v1.Determined.PostAllocationProxyAddress:output_type -> determined.api.v1.PostAllocationProxyAddressResponse
+	300, // 300: determined.api.v1.Determined.GetTaskAcceleratorData:output_type -> determined.api.v1.GetTaskAcceleratorDataResponse
+	301, // 301: determined.api.v1.Determined.PostAllocationAcceleratorData:output_type -> determined.api.v1.PostAllocationAcceleratorDataResponse
+	302, // 302: determined.api.v1.Determined.AllocationAllGather:output_type -> determined.api.v1.AllocationAllGatherResponse
+	303, // 303: determined.api.v1.Determined.NotifyContainerRunning:output_type -> determined.api.v1.NotifyContainerRunningResponse
+	304, // 304: determined.api.v1.Determined.GetCurrentTrialSearcherOperation:output_type -> determined.api.v1.GetCurrentTrialSearcherOperationResponse
+	305, // 305: determined.api.v1.Determined.CompleteTrialSearcherValidation:output_type -> determined.api.v1.CompleteTrialSearcherValidationResponse
+	306, // 306: determined.api.v1.Determined.ReportTrialSearcherEarlyExit:output_type -> determined.api.v1.ReportTrialSearcherEarlyExitResponse
+	307, // 307: determined.api.v1.Determined.ReportTrialProgress:output_type -> determined.api.v1.ReportTrialProgressResponse
+	308, // 308: determined.api.v1.Determined.PostTrialRunnerMetadata:output_type -> determined.api.v1.PostTrialRunnerMetadataResponse
+	309, // 309: determined.api.v1.Determined.ReportTrialMetrics:output_type -> determined.api.v1.ReportTrialMetricsResponse
+	310, // 310: determined.api.v1.Determined.ReportTrialTrainingMetrics:output_type -> determined.api.v1.ReportTrialTrainingMetricsResponse
+	311, // 311: determined.api.v1.Determined.ReportTrialValidationMetrics:output_type -> determined.api.v1.ReportTrialValidationMetricsResponse
+	312, // 312: determined.api.v1.Determined.ReportCheckpoint:output_type -> determined.api.v1.ReportCheckpointResponse
+	313, // 313: determined.api.v1.Determined.GetJobs:output_type -> determined.api.v1.GetJobsResponse
+	314, // 314: determined.api.v1.Determined.GetJobsV2:output_type -> determined.api.v1.GetJobsV2Response
+	315, // 315: determined.api.v1.Determined.GetJobQueueStats:output_type -> determined.api.v1.GetJobQueueStatsResponse
+	316, // 316: determined.api.v1.Determined.UpdateJobQueue:output_type -> determined.api.v1.UpdateJobQueueResponse
+	317, // 317: determined.api.v1.Determined.GetTemplates:output_type -> determined.api.v1.GetTemplatesResponse
+	318, // 318: determined.api.v1.Determined.GetTemplate:output_type -> determined.api.v1.GetTemplateResponse
+	319, // 319: determined.api.v1.Determined.PutTemplate:output_type -> determined.api.v1.PutTemplateResponse
+	320, // 320: determined.api.v1.Determined.PostTemplate:output_type -> determined.api.v1.PostTemplateResponse
+	321, // 321: determined.api.v1.Determined.PatchTemplateConfig:output_type -> determined.api.v1.PatchTemplateConfigResponse
+	322, // 322: determined.api.v1.Determined.DeleteTemplate:output_type -> determined.api.v1.DeleteTemplateResponse
+	323, // 323: determined.api.v1.Determined.GetNotebooks:output_type -> determined.api.v1.GetNotebooksResponse
+	324, // 324: determined.api.v1.Determined.GetNotebook:output_type -> determined.api.v1.GetNotebookResponse
+	325, // 325: determined.api.v1.Determined.IdleNotebook:output_type -> determined.api.v1.IdleNotebookResponse
+	326, // 326: determined.api.v1.Determined.KillNotebook:output_type -> determined.api.v1.KillNotebookResponse
+	327, // 327: determined.api.v1.Determined.SetNotebookPriority:output_type -> determined.api.v1.SetNotebookPriorityResponse
+	328, // 328: determined.api.v1.Determined.LaunchNotebook:output_type -> determined.api.v1.LaunchNotebookResponse
+	329, // 329: determined.api.v1.Determined.GetShells:output_type -> determined.api.v1.GetShellsResponse
+	330, // 330: determined.api.v1.Determined.GetShell:output_type -> determined.api.v1.GetShellResponse
+	331, // 331: determined.api.v1.Determined.KillShell:output_type -> determined.api.v1.KillShellResponse
+	332, // 332: determined.api.v1.Determined.SetShellPriority:output_type -> determined.api.v1.SetShellPriorityResponse
+	333, // 333: determined.api.v1.Determined.LaunchShell:output_type -> determined.api.v1.LaunchShellResponse
+	334, // 334: determined.api.v1.Determined.GetCommands:output_type -> determined.api.v1.GetCommandsResponse
+	335, // 335: determined.api.v1.Determined.GetCommand:output_type -> determined.api.v1.GetCommandResponse
+	336, // 336: determined.api.v1.Determined.KillCommand:output_type -> determined.api.v1.KillCommandResponse
+	337, // 337: determined.api.v1.Determined.SetCommandPriority:output_type -> determined.api.v1.SetCommandPriorityResponse
+	338, // 338: determined.api.v1.Determined.LaunchCommand:output_type -> determined.api.v1.LaunchCommandResponse
+	339, // 339: determined.api.v1.Determined.GetTensorboards:output_type -> determined.api.v1.GetTensorboardsResponse
+	340, // 340: determined.api.v1.Determined.GetTensorboard:output_type -> determined.api.v1.GetTensorboardResponse
+	341, // 341: determined.api.v1.Determined.KillTensorboard:output_type -> determined.api.v1.KillTensorboardResponse
+	342, // 342: determined.api.v1.Determined.SetTensorboardPriority:output_type -> determined.api.v1.SetTensorboardPriorityResponse
+	343, // 343: determined.api.v1.Determined.LaunchTensorboard:output_type -> determined.api.v1.LaunchTensorboardResponse
+	344, // 344: determined.api.v1.Determined.GetActiveTasksCount:output_type -> determined.api.v1.GetActiveTasksCountResponse
+	345, // 345: determined.api.v1.Determined.GetTask:output_type -> determined.api.v1.GetTaskResponse
+	346, // 346: determined.api.v1.Determined.GetTasks:output_type -> determined.api.v1.GetTasksResponse
+	347, // 347: determined.api.v1.Determined.GetModel:output_type -> determined.api.v1.GetModelResponse
+	348, // 348: determined.api.v1.Determined.PostModel:output_type -> determined.api.v1.PostModelResponse
+	349, // 349: determined.api.v1.Determined.PatchModel:output_type -> determined.api.v1.PatchModelResponse
+	350, // 350: determined.api.v1.Determined.ArchiveModel:output_type -> determined.api.v1.ArchiveModelResponse
+	351, // 351: determined.api.v1.Determined.UnarchiveModel:output_type -> determined.api.v1.UnarchiveModelResponse
+	352, // 352: determined.api.v1.Determined.MoveModel:output_type -> determined.api.v1.MoveModelResponse
+	353, // 353: determined.api.v1.Determined.DeleteModel:output_type -> determined.api.v1.DeleteModelResponse
+	354, // 354: determined.api.v1.Determined.GetModels:output_type -> determined.api.v1.GetModelsResponse
+	355, // 355: determined.api.v1.Determined.GetModelLabels:output_type -> determined.api.v1.GetModelLabelsResponse
+	356, // 356: determined.api.v1.Determined.GetModelVersion:output_type -> determined.api.v1.GetModelVersionResponse
+	357, // 357: determined.api.v1.Determined.GetModelVersions:output_type -> determined.api.v1.GetModelVersionsResponse
+	358, // 358: determined.api.v1.Determined.PostModelVersion:output_type -> determined.api.v1.PostModelVersionResponse
+	359, // 359: determined.api.v1.Determined.PatchModelVersion:output_type -> determined.api.v1.PatchModelVersionResponse
+	360, // 360: determined.api.v1.Determined.DeleteModelVersion:output_type -> determined.api.v1.DeleteModelVersionResponse
+	361, // 361: determined.api.v1.Determined.GetTrialMetricsByModelVersion:output_type -> determined.api.v1.GetTrialMetricsByModelVersionResponse
+	362, // 362: determined.api.v1.Determined.GetCheckpoint:output_type -> determined.api.v1.GetCheckpointResponse
+	363, // 363: determined.api.v1.Determined.PostCheckpointMetadata:output_type -> determined.api.v1.PostCheckpointMetadataResponse
+	364, // 364: determined.api.v1.Determined.CheckpointsRemoveFiles:output_type -> determined.api.v1.CheckpointsRemoveFilesResponse
+	365, // 365: determined.api.v1.Determined.PatchCheckpoints:output_type -> determined.api.v1.PatchCheckpointsResponse
+	366, // 366: determined.api.v1.Determined.DeleteCheckpoints:output_type -> determined.api.v1.DeleteCheckpointsResponse
+	367, // 367: determined.api.v1.Determined.GetTrialMetricsByCheckpoint:output_type -> determined.api.v1.GetTrialMetricsByCheckpointResponse
+	368, // 368: determined.api.v1.Determined.GetSearcherEvents:output_type -> determined.api.v1.GetSearcherEventsResponse
+	369, // 369: determined.api.v1.Determined.PostSearcherOperations:output_type -> determined.api.v1.PostSearcherOperationsResponse
+	370, // 370: determined.api.v1.Determined.ExpMetricNames:output_type -> determined.api.v1.ExpMetricNamesResponse
+	371, // 371: determined.api.v1.Determined.MetricBatches:output_type -> determined.api.v1.MetricBatchesResponse
+	372, // 372: determined.api.v1.Determined.TrialsSnapshot:output_type -> determined.api.v1.TrialsSnapshotResponse
+	373, // 373: determined.api.v1.Determined.TrialsSample:output_type -> determined.api.v1.TrialsSampleResponse
+	374, // 374: determined.api.v1.Determined.GetResourcePools:output_type -> determined.api.v1.GetResourcePoolsResponse
+	375, // 375: determined.api.v1.Determined.ResourceAllocationRaw:output_type -> determined.api.v1.ResourceAllocationRawResponse
+	376, // 376: determined.api.v1.Determined.ResourceAllocationAggregated:output_type -> determined.api.v1.ResourceAllocationAggregatedResponse
+	377, // 377: determined.api.v1.Determined.GetWorkspace:output_type -> determined.api.v1.GetWorkspaceResponse
+	378, // 378: determined.api.v1.Determined.GetWorkspaceProjects:output_type -> determined.api.v1.GetWorkspaceProjectsResponse
+	379, // 379: determined.api.v1.Determined.GetWorkspaces:output_type -> determined.api.v1.GetWorkspacesResponse
+	380, // 380: determined.api.v1.Determined.PostWorkspace:output_type -> determined.api.v1.PostWorkspaceResponse
+	381, // 381: determined.api.v1.Determined.PatchWorkspace:output_type -> determined.api.v1.PatchWorkspaceResponse
+	382, // 382: determined.api.v1.Determined.DeleteWorkspace:output_type -> determined.api.v1.DeleteWorkspaceResponse
+	383, // 383: determined.api.v1.Determined.ArchiveWorkspace:output_type -> determined.api.v1.ArchiveWorkspaceResponse
+	384, // 384: determined.api.v1.Determined.UnarchiveWorkspace:output_type -> determined.api.v1.UnarchiveWorkspaceResponse
+	385, // 385: determined.api.v1.Determined.PinWorkspace:output_type -> determined.api.v1.PinWorkspaceResponse
+	386, // 386: determined.api.v1.Determined.UnpinWorkspace:output_type -> determined.api.v1.UnpinWorkspaceResponse
+	387, // 387: determined.api.v1.Determined.GetProject:output_type -> determined.api.v1.GetProjectResponse
+	388, // 388: determined.api.v1.Determined.GetProjectColumns:output_type -> determined.api.v1.GetProjectColumnsResponse
+	389, // 389: determined.api.v1.Determined.GetProjectNumericMetricsRange:output_type -> determined.api.v1.GetProjectNumericMetricsRangeResponse
+	390, // 390: determined.api.v1.Determined.PostProject:output_type -> determined.api.v1.PostProjectResponse
+	391, // 391: determined.api.v1.Determined.AddProjectNote:output_type -> determined.api.v1.AddProjectNoteResponse
+	392, // 392: determined.api.v1.Determined.PutProjectNotes:output_type -> determined.api.v1.PutProjectNotesResponse
+	393, // 393: determined.api.v1.Determined.PatchProject:output_type -> determined.api.v1.PatchProjectResponse
+	394, // 394: determined.api.v1.Determined.DeleteProject:output_type -> determined.api.v1.DeleteProjectResponse
+	395, // 395: determined.api.v1.Determined.ArchiveProject:output_type -> determined.api.v1.ArchiveProjectResponse
+	396, // 396: determined.api.v1.Determined.UnarchiveProject:output_type -> determined.api.v1.UnarchiveProjectResponse
+	397, // 397: determined.api.v1.Determined.MoveProject:output_type -> determined.api.v1.MoveProjectResponse
+	398, // 398: determined.api.v1.Determined.MoveExperiment:output_type -> determined.api.v1.MoveExperimentResponse
+	399, // 399: determined.api.v1.Determined.MoveExperiments:output_type -> determined.api.v1.MoveExperimentsResponse
+	400, // 400: determined.api.v1.Determined.GetWebhooks:output_type -> determined.api.v1.GetWebhooksResponse
+	401, // 401: determined.api.v1.Determined.PostWebhook:output_type -> determined.api.v1.PostWebhookResponse
+	402, // 402: determined.api.v1.Determined.DeleteWebhook:output_type -> determined.api.v1.DeleteWebhookResponse
+	403, // 403: determined.api.v1.Determined.TestWebhook:output_type -> determined.api.v1.TestWebhookResponse
+	404, // 404: determined.api.v1.Determined.GetGroup:output_type -> determined.api.v1.GetGroupResponse
+	405, // 405: determined.api.v1.Determined.GetGroups:output_type -> determined.api.v1.GetGroupsResponse
+	406, // 406: determined.api.v1.Determined.CreateGroup:output_type -> determined.api.v1.CreateGroupResponse
+	407, // 407: determined.api.v1.Determined.UpdateGroup:output_type -> determined.api.v1.UpdateGroupResponse
+	408, // 408: determined.api.v1.Determined.DeleteGroup:output_type -> determined.api.v1.DeleteGroupResponse
+	409, // 409: determined.api.v1.Determined.GetPermissionsSummary:output_type -> determined.api.v1.GetPermissionsSummaryResponse
+	410, // 410: determined.api.v1.Determined.GetGroupsAndUsersAssignedToWorkspace:output_type -> determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse
+	411, // 411: determined.api.v1.Determined.GetRolesByID:output_type -> determined.api.v1.GetRolesByIDResponse
+	412, // 412: determined.api.v1.Determined.GetRolesAssignedToUser:output_type -> determined.api.v1.GetRolesAssignedToUserResponse
+	413, // 413: determined.api.v1.Determined.GetRolesAssignedToGroup:output_type -> determined.api.v1.GetRolesAssignedToGroupResponse
+	414, // 414: determined.api.v1.Determined.SearchRolesAssignableToScope:output_type -> determined.api.v1.SearchRolesAssignableToScopeResponse
+	415, // 415: determined.api.v1.Determined.ListRoles:output_type -> determined.api.v1.ListRolesResponse
+	416, // 416: determined.api.v1.Determined.AssignRoles:output_type -> determined.api.v1.AssignRolesResponse
+	417, // 417: determined.api.v1.Determined.RemoveAssignments:output_type -> determined.api.v1.RemoveAssignmentsResponse
+	418, // 418: determined.api.v1.Determined.PostUserActivity:output_type -> determined.api.v1.PostUserActivityResponse
+	419, // 419: determined.api.v1.Determined.GetProjectsByUserActivity:output_type -> determined.api.v1.GetProjectsByUserActivityResponse
+	420, // 420: determined.api.v1.Determined.SearchExperiments:output_type -> determined.api.v1.SearchExperimentsResponse
+	421, // 421: determined.api.v1.Determined.BindRPToWorkspace:output_type -> determined.api.v1.BindRPToWorkspaceResponse
+	422, // 422: determined.api.v1.Determined.UnbindRPFromWorkspace:output_type -> determined.api.v1.UnbindRPFromWorkspaceResponse
+	423, // 423: determined.api.v1.Determined.OverwriteRPWorkspaceBindings:output_type -> determined.api.v1.OverwriteRPWorkspaceBindingsResponse
+	424, // 424: determined.api.v1.Determined.ListRPsBoundToWorkspace:output_type -> determined.api.v1.ListRPsBoundToWorkspaceResponse
+	425, // 425: determined.api.v1.Determined.ListWorkspacesBoundToRP:output_type -> determined.api.v1.ListWorkspacesBoundToRPResponse
+	213, // [213:426] is the sub-list for method output_type
+	0,   // [0:213] is the sub-list for method input_type
 	0,   // [0:0] is the sub-list for extension type_name
 	0,   // [0:0] is the sub-list for extension extendee
 	0,   // [0:0] is the sub-list for field type_name
@@ -3302,6 +3329,10 @@ type DeterminedClient interface {
 	SetUserPassword(ctx context.Context, in *SetUserPasswordRequest, opts ...grpc.CallOption) (*SetUserPasswordResponse, error)
 	// Patch a user's fields.
 	PatchUser(ctx context.Context, in *PatchUserRequest, opts ...grpc.CallOption) (*PatchUserResponse, error)
+	// Patch multiple users' activation status.
+	PatchUsers(ctx context.Context, in *PatchUsersRequest, opts ...grpc.CallOption) (*PatchUsersResponse, error)
+	// Assign multiple users to multiple groups.
+	AssignMultipleGroups(ctx context.Context, in *AssignMultipleGroupsRequest, opts ...grpc.CallOption) (*AssignMultipleGroupsResponse, error)
 	// Get telemetry information.
 	GetTelemetry(ctx context.Context, in *GetTelemetryRequest, opts ...grpc.CallOption) (*GetTelemetryResponse, error)
 	// Get master information.
@@ -3861,6 +3892,24 @@ func (c *determinedClient) SetUserPassword(ctx context.Context, in *SetUserPassw
 func (c *determinedClient) PatchUser(ctx context.Context, in *PatchUserRequest, opts ...grpc.CallOption) (*PatchUserResponse, error) {
 	out := new(PatchUserResponse)
 	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/PatchUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *determinedClient) PatchUsers(ctx context.Context, in *PatchUsersRequest, opts ...grpc.CallOption) (*PatchUsersResponse, error) {
+	out := new(PatchUsersResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/PatchUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *determinedClient) AssignMultipleGroups(ctx context.Context, in *AssignMultipleGroupsRequest, opts ...grpc.CallOption) (*AssignMultipleGroupsResponse, error) {
+	out := new(AssignMultipleGroupsResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/AssignMultipleGroups", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -6006,6 +6055,10 @@ type DeterminedServer interface {
 	SetUserPassword(context.Context, *SetUserPasswordRequest) (*SetUserPasswordResponse, error)
 	// Patch a user's fields.
 	PatchUser(context.Context, *PatchUserRequest) (*PatchUserResponse, error)
+	// Patch multiple users' activation status.
+	PatchUsers(context.Context, *PatchUsersRequest) (*PatchUsersResponse, error)
+	// Assign multiple users to multiple groups.
+	AssignMultipleGroups(context.Context, *AssignMultipleGroupsRequest) (*AssignMultipleGroupsResponse, error)
 	// Get telemetry information.
 	GetTelemetry(context.Context, *GetTelemetryRequest) (*GetTelemetryResponse, error)
 	// Get master information.
@@ -6488,6 +6541,12 @@ func (*UnimplementedDeterminedServer) SetUserPassword(context.Context, *SetUserP
 }
 func (*UnimplementedDeterminedServer) PatchUser(context.Context, *PatchUserRequest) (*PatchUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchUser not implemented")
+}
+func (*UnimplementedDeterminedServer) PatchUsers(context.Context, *PatchUsersRequest) (*PatchUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchUsers not implemented")
+}
+func (*UnimplementedDeterminedServer) AssignMultipleGroups(context.Context, *AssignMultipleGroupsRequest) (*AssignMultipleGroupsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignMultipleGroups not implemented")
 }
 func (*UnimplementedDeterminedServer) GetTelemetry(context.Context, *GetTelemetryRequest) (*GetTelemetryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTelemetry not implemented")
@@ -7318,6 +7377,42 @@ func _Determined_PatchUser_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeterminedServer).PatchUser(ctx, req.(*PatchUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Determined_PatchUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeterminedServer).PatchUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/determined.api.v1.Determined/PatchUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeterminedServer).PatchUsers(ctx, req.(*PatchUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Determined_AssignMultipleGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignMultipleGroupsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeterminedServer).AssignMultipleGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/determined.api.v1.Determined/AssignMultipleGroups",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeterminedServer).AssignMultipleGroups(ctx, req.(*AssignMultipleGroupsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -10983,6 +11078,14 @@ var _Determined_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PatchUser",
 			Handler:    _Determined_PatchUser_Handler,
+		},
+		{
+			MethodName: "PatchUsers",
+			Handler:    _Determined_PatchUsers_Handler,
+		},
+		{
+			MethodName: "AssignMultipleGroups",
+			Handler:    _Determined_AssignMultipleGroups_Handler,
 		},
 		{
 			MethodName: "GetTelemetry",

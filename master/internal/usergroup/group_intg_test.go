@@ -77,7 +77,7 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("add users to group", func(t *testing.T) {
 		testStart := time.Now()
-		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID)
+		err := AddUsersToGroupsTx(ctx, nil, []int{testGroup.ID}, false, testUser.ID)
 		require.NoError(t, err, "failed to add users to group")
 
 		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
@@ -114,11 +114,11 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("remove users from group", func(t *testing.T) {
 		testStart := time.Now()
-		err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, -500)
+		err := RemoveUsersFromGroupsTx(ctx, nil, []int{testGroup.ID}, -500)
 		require.True(t, errors.Is(err, db.ErrNotFound),
-			"failed to return ErrNotFound when removing non-existent users from group")
+			"failed to return ErrNotFound when removing only non-existent users from group")
 
-		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID, -500)
+		err = RemoveUsersFromGroupsTx(ctx, nil, []int{testGroup.ID}, testUser.ID, -500)
 		require.NoError(t, err,
 			"erroneously returned error when trying to remove a mix of users in a group and not")
 
@@ -133,14 +133,14 @@ func TestUserGroups(t *testing.T) {
 		require.Greater(t, updatedTestUser.ModifiedAt, testStart,
 			"Users.modified_at not updated when removed from group")
 
-		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
+		err = RemoveUsersFromGroupsTx(ctx, nil, []int{testGroup.ID}, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrNotFound),
 			"failed to return ErrNotFound when trying to remove users from group they're not in")
 	})
 
 	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound",
 		func(t *testing.T) {
-			err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
+			err := AddUsersToGroupsTx(ctx, nil, []int{testGroup.ID}, false, testUser.ID, 125674576, 12934728, 0, -15)
 			require.True(t, errors.Is(err, db.ErrNotFound),
 				"didn't return ErrNotFound when adding non-existent users to a group")
 
@@ -154,7 +154,7 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("AddUsersToGroup fails with ErrNotFound when attempting "+
 		"to add users to a non-existent group", func(t *testing.T) {
-		err := AddUsersToGroupTx(ctx, nil, -500, testUser.ID)
+		err := AddUsersToGroupsTx(ctx, nil, []int{-500}, false, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrNotFound),
 			"didn't return ErrNotFound when trying to add users to a non-existent group")
 	})
@@ -173,7 +173,7 @@ func TestUserGroups(t *testing.T) {
 		_, _, err := AddGroupWithMembers(ctx, tmpGroup)
 		require.NoError(t, err, "failed to create group")
 
-		err = AddUsersToGroupTx(ctx, nil, tmpGroup.ID, testUser.ID)
+		err = AddUsersToGroupsTx(ctx, nil, []int{tmpGroup.ID}, false, testUser.ID)
 		require.NoError(t, err, "failed to add user to group")
 
 		err = DeleteGroup(ctx, tmpGroup.ID)
@@ -192,9 +192,15 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("AddUsersToGroup returns ErrDuplicateRecord when adding users to a "+
 		"group they're already in", func(t *testing.T) {
-		err := AddUsersToGroupTx(ctx, nil, testGroupStatic.ID, testUser.ID)
+		err := AddUsersToGroupsTx(ctx, nil, []int{testGroupStatic.ID}, false, testUser.ID)
 		require.True(t, errors.Is(err, db.ErrDuplicateRecord),
 			"should have returned ErrDuplicateRecord")
+	})
+
+	t.Run("AddUsersToGroup can enable skipping ErrDuplicateRecord when adding users to a "+
+		"group they're already in", func(t *testing.T) {
+		err := AddUsersToGroupsTx(ctx, nil, []int{testGroupStatic.ID}, true, testUser.ID)
+		require.NoError(t, err, "errored when adding user to group they're already in")
 	})
 
 	t.Run("Static test group should exist at the end and test user should be in it",
@@ -337,8 +343,8 @@ func TestUserGroups(t *testing.T) {
 
 		require.ErrorIs(t, DeleteGroup(ctx, personalGroup.ID), db.ErrNotFound)
 		require.ErrorIs(t, UpdateGroupTx(ctx, nil, *personalGroup), db.ErrNotFound)
-		require.ErrorIs(t, AddUsersToGroupTx(ctx, nil, personalGroup.ID), db.ErrNotFound)
-		require.ErrorIs(t, RemoveUsersFromGroupTx(ctx, nil, personalGroup.ID), db.ErrNotFound)
+		require.ErrorIs(t, AddUsersToGroupsTx(ctx, nil, []int{personalGroup.ID}, false), db.ErrNotFound)
+		require.ErrorIs(t, RemoveUsersFromGroupsTx(ctx, nil, []int{personalGroup.ID}), db.ErrNotFound)
 
 		_, _, err = UpdateGroupAndMembers(ctx, personalGroup.ID, "", nil, nil)
 		require.ErrorIs(t, err, db.ErrNotFound)
@@ -380,7 +386,7 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 }
 
 func cleanUp(ctx context.Context, t *testing.T) {
-	err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
+	err := RemoveUsersFromGroupsTx(ctx, nil, []int{testGroup.ID}, testUser.ID)
 	if err != nil {
 		t.Logf("Error cleaning up group membership: %v", err)
 	}

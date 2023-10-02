@@ -1423,6 +1423,38 @@ export interface V1ArchiveProjectResponse {
 export interface V1ArchiveWorkspaceResponse {
 }
 /**
+ * Add and remove multiple users from multiple groups.
+ * @export
+ * @interface V1AssignMultipleGroupsRequest
+ */
+export interface V1AssignMultipleGroupsRequest {
+    /**
+     * The user ids of users to edit group associations.
+     * @type {Array<number>}
+     * @memberof V1AssignMultipleGroupsRequest
+     */
+    userIds: Array<number>;
+    /**
+     * The ids of groups to associate with users.
+     * @type {Array<number>}
+     * @memberof V1AssignMultipleGroupsRequest
+     */
+    addGroups: Array<number>;
+    /**
+     * The ids of groups to disassociate from users.
+     * @type {Array<number>}
+     * @memberof V1AssignMultipleGroupsRequest
+     */
+    removeGroups: Array<number>;
+}
+/**
+ * Response to AssignMultipleGroupsRequest.
+ * @export
+ * @interface V1AssignMultipleGroupsResponse
+ */
+export interface V1AssignMultipleGroupsResponse {
+}
+/**
  * AssignRolesRequest is the body of the request for the call to grant a user or group a role. It requires group_id, role_id, and either scope_workspace_id or scope_project_id.
  * @export
  * @interface V1AssignRolesRequest
@@ -6655,6 +6687,44 @@ export interface V1PatchUserResponse {
     user: V1User;
 }
 /**
+ * Update activation status for multiple users.
+ * @export
+ * @interface V1PatchUsersRequest
+ */
+export interface V1PatchUsersRequest {
+    /**
+     * A list of user IDs to update.
+     * @type {Array<number>}
+     * @memberof V1PatchUsersRequest
+     */
+    userIds: Array<number>;
+    /**
+     * Intended status (true to activate, false to deactivate).
+     * @type {boolean}
+     * @memberof V1PatchUsersRequest
+     */
+    activate: boolean;
+    /**
+     * Option to filter to users with these properties.
+     * @type {V1UserFilters}
+     * @memberof V1PatchUsersRequest
+     */
+    filters?: V1UserFilters;
+}
+/**
+ * Response to PatchUsersRequest.
+ * @export
+ * @interface V1PatchUsersResponse
+ */
+export interface V1PatchUsersResponse {
+    /**
+     * Details on success or error for each user.
+     * @type {Array<V1UserActionResult>}
+     * @memberof V1PatchUsersResponse
+     */
+    results: Array<V1UserActionResult>;
+}
+/**
  * PatchWorkspace is a partial update to a workspace with all optional fields.
  * @export
  * @interface V1PatchWorkspace
@@ -10454,6 +10524,44 @@ export interface V1User {
      * @memberof V1User
      */
     lastLogin?: Date;
+}
+/**
+ * Message for results of individual users in a multi-user action.
+ * @export
+ * @interface V1UserActionResult
+ */
+export interface V1UserActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1UserActionResult
+     */
+    error: string;
+    /**
+     * User ID.
+     * @type {number}
+     * @memberof V1UserActionResult
+     */
+    id: number;
+}
+/**
+ * Options to filter a subset of users.
+ * @export
+ * @interface V1UserFilters
+ */
+export interface V1UserFilters {
+    /**
+     * Case-insensitive partial match of string to username or display name.
+     * @type {string}
+     * @memberof V1UserFilters
+     */
+    name?: string;
+    /**
+     * Matches users with or without an admin flag.
+     * @type {boolean}
+     * @memberof V1UserFilters
+     */
+    admin?: boolean;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
@@ -16813,6 +16921,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling assignMultipleGroups.');
+            }
+            const localVarPath = `/api/v1/users/assignments`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -18230,6 +18376,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUsers.');
+            }
+            const localVarPath = `/api/v1/users`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -19306,6 +19490,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignMultipleGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).assignMultipleGroups(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -19973,6 +20176,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchUsers(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -20469,6 +20691,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
+            return InternalApiFp(configuration).assignMultipleGroups(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -20839,6 +21071,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options?: any) {
+            return InternalApiFp(configuration).patchUsers(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -21166,6 +21408,18 @@ export class InternalApi extends BaseAPI {
      */
     public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
         return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Assign multiple users to multiple groups.
+     * @param {V1AssignMultipleGroupsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
+        return InternalApiFp(this.configuration).assignMultipleGroups(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -21602,6 +21856,18 @@ export class InternalApi extends BaseAPI {
      */
     public patchTrial(trialId: number, body: V1PatchTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).patchTrial(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch multiple users' activation status.
+     * @param {V1PatchUsersRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public patchUsers(body: V1PatchUsersRequest, options?: any) {
+        return InternalApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
     }
     
     /**

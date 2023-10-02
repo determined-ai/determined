@@ -7,6 +7,17 @@ import "determined/user/v1/user.proto";
 import "determined/api/v1/pagination.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Message for results of individual users in a multi-user action.
+message UserActionResult {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "error", "id" ] }
+  };
+  // Optional error message.
+  string error = 1;
+  // User ID.
+  int32 id = 2;
+}
+
 // Get a list of users.
 message GetUsersRequest {
   // Sort users by the given field.
@@ -138,6 +149,38 @@ message PatchUserResponse {
   // The updated user.
   determined.user.v1.User user = 1;
 }
+
+// Options to filter a subset of users.
+message UserFilters {
+  // Case-insensitive partial match of string to username or display name.
+  string name = 1;
+  // Matches users with or without an admin flag.
+  optional bool admin = 2;
+}
+
+// Update activation status for multiple users.
+message PatchUsersRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "activate", "user_ids" ] }
+  };
+
+  // A list of user IDs to update.
+  repeated int32 user_ids = 1;
+  // Intended status (true to activate, false to deactivate).
+  bool activate = 2;
+  // Option to filter to users with these properties.
+  UserFilters filters = 3;
+}
+// Response to PatchUsersRequest.
+message PatchUsersResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each user.
+  repeated UserActionResult results = 1;
+}
+
 // Get user settings.
 message GetUserSettingRequest {}
 // Response to GetUserSettingRequest.

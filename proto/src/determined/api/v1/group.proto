@@ -114,3 +114,19 @@ message DeleteGroupRequest {
 // DeleteGroupResponse is the body of the response for the call
 // to delete a group.
 message DeleteGroupResponse {}
+
+// Add and remove multiple users from multiple groups.
+message AssignMultipleGroupsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "add_groups", "remove_groups", "user_ids" ] }
+  };
+
+  // The user ids of users to edit group associations.
+  repeated int32 user_ids = 1;
+  // The ids of groups to associate with users.
+  repeated int32 add_groups = 2;
+  // The ids of groups to disassociate from users.
+  repeated int32 remove_groups = 3;
+}
+// Response to AssignMultipleGroupsRequest.
+message AssignMultipleGroupsResponse {}

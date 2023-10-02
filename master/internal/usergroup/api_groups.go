@@ -224,6 +224,43 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 	return &apiv1.DeleteGroupResponse{}, nil
 }
 
+// AssignMultipleGroups will assign or un-assign groups from any included users.
+func (a *UserGroupAPIServer) AssignMultipleGroups(ctx context.Context, req *apiv1.AssignMultipleGroupsRequest,
+) (resp *apiv1.AssignMultipleGroupsResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
+
+	modUserIds := intsToUserIDs(req.UserIds)
+	addGroups := make([]int, len(req.AddGroups))
+	for i, ag := range req.AddGroups {
+		addGroups[i] = int(ag)
+	}
+	removeGroups := make([]int, len(req.RemoveGroups))
+	for i, rg := range req.RemoveGroups {
+		removeGroups[i] = int(rg)
+	}
+
+	// UpdateGroupsForMultipleUsers internals throws errors for personal groups
+	err = UpdateGroupsForMultipleUsers(ctx, modUserIds, addGroups, removeGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.AssignMultipleGroupsResponse{}, nil
+}
+
 func intsToUserIDs(ints []int32) []model.UserID {
 	ids := make([]model.UserID, len(ints))
 

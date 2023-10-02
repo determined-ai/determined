@@ -304,6 +304,32 @@ func TestPatchUser(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestPatchUsers(t *testing.T) {
+	// currently activate/deactivate only
+	api, _, ctx := setupAPITest(t, nil)
+	userID, err := user.Add(ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Active:   false,
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	resp, err := api.PatchUsers(ctx, &apiv1.PatchUsersRequest{
+		Activate: true,
+		UserIds:  []int32{int32(userID)},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "", resp.Results[0].Error)
+
+	resp2, err := api.GetUser(ctx, &apiv1.GetUserRequest{
+		UserId: int32(userID),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp2.User.Active, true)
+}
+
 func TestRenameUserThenReuseName(t *testing.T) {
 	username := uuid.New().String()
 	api, _, ctx := setupAPITest(t, nil)
