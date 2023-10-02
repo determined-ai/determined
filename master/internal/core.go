@@ -1059,8 +1059,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 		loreTarget, err := url.Parse(m.config.InternalConfig.LorePath)
 		if err != nil {
-			// QUESTION: how do we skip the need to do this with our config package?
-			return errors.Wrap(err, "failed to parse lore path")
+			return errors.Wrap(err, "failed to parse the given Lore path")
 		}
 
 		loreProxy := httputil.NewSingleHostReverseProxy(loreTarget)
