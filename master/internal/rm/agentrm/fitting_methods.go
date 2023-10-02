@@ -3,14 +3,13 @@ package agentrm
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/ft"
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 // Hard Constraints
 func agentPermittedSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
-	// TODO get the blacklist for task and check if agent is blacklisted
-	// blacklist, err := ft.NodeBlacklist(req)
-	return true
+	return !ft.DisallowedNodes(req.TaskID)[agent.Handler.Address().Local()]
 }
 
 func slotsSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
