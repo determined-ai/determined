@@ -770,6 +770,10 @@ Resources:
                 -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
             test $? -eq 0 || ( echo "Failed to generate master.yaml" && exit 1 )
 
+            # run docker container to echo requests as daemon
+            # docker run -p 8080:8080 -p 8443:8443 mendhak/http-https-echo:26
+
+
             docker run \
                 --name determined-master \
                 --network determined \
