@@ -66,7 +66,7 @@ export interface MetricResults {
     type: string;
     contains: string;
     values: Stats;
-    thresholds: Thresholds
+    thresholds: Thresholds;
 }
 interface Metric {
     [name: string]: MetricResults;
@@ -85,7 +85,7 @@ interface Stats {
 }
 
 interface ThresholdResults {
-    ok: boolean
+    ok: boolean;
 }
 
 interface Thresholds {
