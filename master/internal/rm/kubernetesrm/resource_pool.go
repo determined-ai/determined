@@ -484,7 +484,13 @@ func (k *kubernetesResourcePool) assignResources(
 		}
 	}
 
-	k.slotsUsedPerGroup[k.groups[req.JobID]] += req.SlotsNeeded
+	group := k.groups[req.JobID]
+	if group == nil {
+		ctx.Log().WithField("allocation-id", req.AllocationID).Errorf(
+			"cannot find group for job %s", req.JobID)
+		return
+	}
+	k.slotsUsedPerGroup[group] += req.SlotsNeeded
 
 	var resources []*k8sPodResources
 	if req.Restore {
@@ -646,14 +652,18 @@ func (k *kubernetesResourcePool) getOrCreateGroup(
 func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
-		group := k.groups[req.JobID]
+		group, ok := k.groups[req.JobID]
+		// TODO: fix this?
+		if !ok || group == nil {
+			ctx.Log().Errorf("schedulePendingTasks cannot find group for job %s", req.JobID)
+			continue
+		}
 		if !k.reqList.IsScheduled(req.AllocationID) {
 			if maxSlots := group.MaxSlots; maxSlots != nil {
 				if k.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
 					continue
 				}
 			}
-
 			k.assignResources(ctx, req)
 		}
 	}
