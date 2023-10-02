@@ -87,7 +87,10 @@ jobs:
 
       - name: Get Slack report contents
         id: slack-report
-        run: echo "message=$(cat performance/reports/*.results.txt)" >> $GITHUB_OUTPUT
+        run: |
+          echo 'message<<EOF' >> $GITHUB_OUTPUT
+          cat performance/reports/*.results.txt >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Post run report
         if: always()
