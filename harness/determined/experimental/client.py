@@ -71,7 +71,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialSortBy,
 )
 from determined.common.experimental.user import User
-from determined.common.experimental.workspace import Workspace
+from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 _determined = None  # type: Optional[Determined]
 
@@ -305,6 +305,15 @@ def get_workspace(name: str) -> Workspace:
     """
     assert _determined is not None
     return _determined.get_workspace(name)
+
+
+@_require_singleton
+def list_workspaces() -> List[Workspace]:
+    """
+    Get the list :class:`~determined.experimental.client.Workspace` of all Workspaces.
+    """
+    assert _determined is not None
+    return _determined.list_workspaces()
 
 
 @_require_singleton
