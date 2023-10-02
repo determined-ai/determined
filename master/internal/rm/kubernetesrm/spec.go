@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/determined-ai/determined/master/internal/ft"
+
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/docker/docker/api/types/mount"
@@ -216,6 +218,36 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 }
 
 func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
+	addTermToRequiredDuringSchedulingIgnoredDuringExecution(pod, k8sV1.NodeSelectorTerm{
+		MatchExpressions: []k8sV1.NodeSelectorRequirement{
+			{
+				Key:      clusterID,
+				Operator: k8sV1.NodeSelectorOpDoesNotExist,
+			},
+		},
+	})
+
+	// TODO once k8s supports
+	// RequiredDuringSchedulingRequiredDuringExecution
+	// we can add two node affininties for noExecuteNodeLabel and noScheduleNodeLabel
+	// so we can skip the step in k8s disable where we kill everything in non drain.
+}
+
+func addDisallowedNodesToPodSpec(pod *k8sV1.Pod, taskID model.TaskID) {
+	addTermToRequiredDuringSchedulingIgnoredDuringExecution(pod, k8sV1.NodeSelectorTerm{
+		MatchFields: []k8sV1.NodeSelectorRequirement{
+			{
+				Key:      "metadata.name",
+				Operator: k8sV1.NodeSelectorOpNotIn,
+				Values:   ft.DisallowedNodes(taskID).ToSlice(),
+			},
+		},
+	})
+}
+
+func addTermToRequiredDuringSchedulingIgnoredDuringExecution(
+	pod *k8sV1.Pod, term k8sV1.NodeSelectorTerm,
+) {
 	if pod.Spec.Affinity == nil {
 		pod.Spec.Affinity = &k8sV1.Affinity{}
 	}
@@ -229,15 +261,6 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 	}
 	nodeSelector := nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
 
-	term := k8sV1.NodeSelectorTerm{
-		MatchExpressions: []k8sV1.NodeSelectorRequirement{
-			{
-				Key:      clusterID,
-				Operator: k8sV1.NodeSelectorOpDoesNotExist,
-			},
-		},
-	}
-
 	// Make function idempotent.
 	for _, n := range nodeSelector.NodeSelectorTerms {
 		if reflect.DeepEqual(n, term) {
@@ -246,11 +269,6 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 	}
 
 	nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, term)
-
-	// TODO once k8s supports
-	// RequiredDuringSchedulingRequiredDuringExecution
-	// we can add two node affininties for noExecuteNodeLabel and noScheduleNodeLabel
-	// so we can skip the step in k8s disable where we kill everything in non drain.
 }
 
 func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
@@ -328,6 +346,7 @@ func (p *pod) configurePodSpec(
 	p.modifyPodSpec(podSpec, scheduler)
 
 	addNodeDisabledAffinityToPodSpec(podSpec, clusterIDNodeLabel())
+	addDisallowedNodesToPodSpec(podSpec, model.TaskID(p.submissionInfo.taskSpec.TaskID))
 
 	nonDeterminedContainers := make([]k8sV1.Container, 0)
 	for idx, container := range podSpec.Spec.Containers {

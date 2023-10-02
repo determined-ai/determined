@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 /*
@@ -11,10 +12,12 @@ write through cache the alerts. or nvm just use the db or in memory for first mi
 */
 
 // DisallowedNodes returns a list of nodes that should be blacklisted for the given allocation
-func DisallowedNodes(taskID model.TaskID) map[string]bool {
+func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	fmt.Println(taskID)
 
-	return map[string]bool{"agent1": true}
+	s := set.New[string]()
+	s.Insert("agent1")
+	return &s
 
 	// maybe just taskid is enough. go off of task id and GetAlerts
 	return nil
