@@ -14,6 +14,7 @@ interface DatePickerProps {
   onChange?: (beforeDate: Dayjs | null) => void;
   onOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
   picker?: PickerMode;
+  showTime?: boolean;
   width?: number;
   value?: Dayjs | null;
 }

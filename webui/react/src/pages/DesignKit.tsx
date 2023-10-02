@@ -1446,9 +1446,15 @@ const DatePickerSection: React.FC = () => {
           <code>Antd.DatePicker</code>, with the <code>style</code> prop replaced by our usage (
           <code>width</code>).
         </p>
+        <p>
+          The <code>picker</code> prop can be set to select a year or month. Alternatively the{' '}
+          <code>showTime</code> prop adds precision to the second.
+        </p>
       </AntDCard>
       <AntDCard title="Usage">
         DatePickers with labels:
+        <strong>Date-time picker</strong>
+        <DatePicker label="Choose a date and time" showTime onChange={noOp} />
         <strong>Clearable day picker</strong>
         <DatePicker label="Choose a date" onChange={noOp} />
         <strong>Un-clearable month picker</strong>
