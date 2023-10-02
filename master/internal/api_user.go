@@ -11,6 +11,9 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	bun "github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/internal/config"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -175,6 +178,17 @@ func (a *apiServer) GetUsers(
 	}
 	if req.Active != nil {
 		query.Where("u.active = ?", *req.Active)
+	}
+	if len(req.RoleIdAssignedDirectlyToUser) != 0 {
+		if !config.GetAuthZConfig().IsRBACEnabled() {
+			return nil, status.Error(codes.InvalidArgument,
+				"cannot filter by role id. RBAC must be enabled.")
+		}
+		query.Join("LEFT JOIN groups g ON (u.id = g.user_id)").
+			Join("LEFT JOIN role_assignments a ON (g.id = a.group_id)").
+			Join("LEFT JOIN role_assignment_scopes s ON (s.id = a.scope_id)").
+			Where("s.scope_workspace_id IS NULL").
+			Where("a.role_id IN (?)", bun.In(req.RoleIdAssignedDirectlyToUser))
 	}
 
 	orderBy, ok := orderByMap[req.OrderBy]
