@@ -1573,7 +1573,8 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.33.0-focal
+      # upgrade playwright container for node>20.1.0
+      - image: mcr.microsoft.com/playwright:v1.38.0-jammy
     resource_class: large
     steps:
       - checkout-with-sm
