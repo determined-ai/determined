@@ -306,7 +306,7 @@ const NavigationSideBar: React.FC = () => {
                 tooltip={settings.navbarCollapsed}
               />
               {Loadable.match(pinnedWorkspaces, {
-                Failed: () => null,
+                Failed: () => null, // TODO inform user if workspaces fail to load
                 Loaded: (workspaces) => (
                   <ul className={css.pinnedWorkspaces} role="list">
                     {workspaces
@@ -352,7 +352,7 @@ const NavigationSideBar: React.FC = () => {
                     )}
                   </ul>
                 ),
-                NotLoaded: () => <Spinner center spinning />, // TODO correctly handle error case
+                NotLoaded: () => <Spinner center spinning />,
               })}
             </section>
             <section className={css.bottom}>

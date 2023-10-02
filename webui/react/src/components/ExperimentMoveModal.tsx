@@ -187,7 +187,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
             name="projectId"
             rules={[{ message: 'Project is required', required: true }]}>
             {Loadable.match(loadableProjects, {
-              Failed: () => null,
+              Failed: () => null, // Inform the user if this fails to load
               Loaded: (loadableProjects) => (
                 <Select
                   filterOption={(input, option) =>
@@ -208,7 +208,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                   ))}
                 </Select>
               ),
-              NotLoaded: () => <Spinner center spinning />, // TODO correctly handle error state
+              NotLoaded: () => <Spinner center spinning />,
             })}
           </Form.Item>
         )}

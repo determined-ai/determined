@@ -61,7 +61,7 @@ function Spinner<T>({
     return Loadable.match(data, {
       Failed: () => <></>,
       Loaded: children,
-      NotLoaded: () => spinner, // TODO display an error state.
+      NotLoaded: () => spinner, // TODO circle back with design to find an appropriate error state here
     });
   }
 }

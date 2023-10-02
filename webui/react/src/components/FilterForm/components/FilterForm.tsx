@@ -38,7 +38,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
   return (
     <div className={css.base}>
       {Loadable.match(loadableData, {
-        Failed: () => null,
+        Failed: () => null, // TODO inform user if data fails to load
         Loaded: (data) => (
           <>
             <div className={css.header}>
@@ -87,7 +87,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
             </div>
           </>
         ),
-        NotLoaded: () => <Spinner spinning />, // TODO correctly handle error state
+        NotLoaded: () => <Spinner spinning />,
       })}
     </div>
   );

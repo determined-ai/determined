@@ -199,7 +199,7 @@ const ResourcepoolDetailInner: React.FC = () => {
   if (!pool || Loadable.isNotLoaded(resourcePools)) {
     return <Spinner center spinning />;
   } else if (Loadable.isFailed(resourcePools)) {
-    return null; // TODO handle error state
+    return null; // TODO inform user here if resource pools fail to load
   }
 
   return (
