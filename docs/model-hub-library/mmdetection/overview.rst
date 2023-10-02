@@ -35,9 +35,3 @@ following apply:
    distributed training and advanced hyperparameter search.
 -  You are a **MMDetection** user looking for a single platform to manage experiments, handle
    checkpoints with automated fault tolerance, and perform hyperparameter search/visualization.
-
-The easiest way to use MMDetection is to start with the provided `experiment configuration for
-Faster-RCNN
-<https://github.com/determined-ai/determined/tree/master/model_hub/examples/mmdetection/fasterrcnn.yaml>`_.
-The associated README_ is a tutorial on how to use MMDetection with Determined and covers how to
-modify the configuration for custom behavior.

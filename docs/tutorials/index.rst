@@ -20,16 +20,8 @@ you'll learn how to perform the following tasks:
  Get Started with a :ref:`Trial API <high-level-apis>`
 *******************************************************
 
-+---------------------------------+--------------------------------------------------------------+
-| Title                           | Description                                                  |
-+=================================+==============================================================+
-| :doc:`pytorch-mnist-tutorial`   | Based on the `PyTorch MNIST example`_, this tutorial shows   |
-|                                 | you how to port a simple image classification model for the  |
-|                                 | MNIST dataset.                                               |
-+---------------------------------+--------------------------------------------------------------+
-| :doc:`tf-mnist-tutorial`        | The TensorFlow Keras Fashion MNIST tutorial describes how to |
-|                                 | port a ``tf.keras`` model to Determined.                     |
-+---------------------------------+--------------------------------------------------------------+
+To get started with a :ref:`Trial API <high-level-apis>`, visit the :ref:`pytorch-mnist-tutorial`.
+This tutorial shows you how to port a simple image classification model for the MNIST dataset.
 
 ********************************
  Train Your Model in Determined
@@ -38,9 +30,9 @@ you'll learn how to perform the following tasks:
 :ref:`Training API Guides <apis-howto-overview>` include the :ref:`api-core-ug` and walk you through
 how to take your existing model code and train your model in Determined.
 
-**********
- Examples
-**********
+****************
+ Try an Example
+****************
 
 Examples let you build off of an existing model that already runs on Determined. Visit our
 :ref:`Examples <example-solutions>` to see if the model you'd like to train is already available.
@@ -52,4 +44,3 @@ Examples let you build off of an existing model that already runs on Determined.
 
    Run Your First Experiment <pytorch-mnist-local-qs>
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
-   TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>

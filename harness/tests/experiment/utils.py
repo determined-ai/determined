@@ -181,10 +181,6 @@ def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
 
 
-def gan_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../../examples/gan", path)
-
-
 def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
 
