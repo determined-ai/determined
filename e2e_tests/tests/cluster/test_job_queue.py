@@ -13,27 +13,29 @@ from tests import experiment as exp
 def test_job_queue_adjust_weight() -> None:
     config = conf.tutorials_path("mnist_pytorch/const.yaml")
     model = conf.tutorials_path("mnist_pytorch")
-    for _ in range(2):
-        exp.create_experiment(config, model)
+    exp_ids = [exp.create_experiment(config, model) for _ in range(2)]
 
-    jobs = JobInfo()
-    ok = jobs.refresh_until_populated()
-    assert ok
+    try:
+        jobs = JobInfo()
+        ok = jobs.refresh_until_populated()
+        assert ok
 
-    ordered_ids = jobs.get_ids()
-    subprocess.run(["det", "job", "update", ordered_ids[0], "--weight", "10"])
+        ordered_ids = jobs.get_ids()
+        subprocess.run(["det", "job", "update", ordered_ids[0], "--weight", "10"])
 
-    sleep(2)
-    jobs.refresh()
-    new_weight = jobs.get_job_weight(ordered_ids[0])
-    assert new_weight == "10"
+        sleep(2)
+        jobs.refresh()
+        new_weight = jobs.get_job_weight(ordered_ids[0])
+        assert new_weight == "10"
 
-    subprocess.run(["det", "job", "update-batch", f"{ordered_ids[1]}.weight=10"])
+        subprocess.run(["det", "job", "update-batch", f"{ordered_ids[1]}.weight=10"])
 
-    sleep(2)
-    jobs.refresh()
-    new_weight = jobs.get_job_weight(ordered_ids[1])
-    assert new_weight == "10"
+        sleep(2)
+        jobs.refresh()
+        new_weight = jobs.get_job_weight(ordered_ids[1])
+        assert new_weight == "10"
+    finally:
+        exp.kill_experiments(exp_ids)
 
 
 def get_raw_data() -> Tuple[List[Dict[str, str]], List[str]]:
