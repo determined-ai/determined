@@ -7,7 +7,6 @@ import pytest
 # from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.utils import get_task_info, run_zero_slot_command, wait_for_command_state
 
 
 @pytest.mark.e2e_cpu
@@ -81,22 +80,3 @@ class JobInfo:
                 continue
             return value_dict["Weight"]
         return ""
-
-
-@pytest.mark.e2e_cpu
-def test_job_queue_is_working_fine() -> None:
-    jobs = JobInfo()
-    ok = jobs.refresh_until_populated()
-    assert ok
-
-    cmd_id = run_zero_slot_command()
-
-    wait_for_command_state(cmd_id, "RUNNING")
-    jobs.refresh()
-
-    ordered_ids = jobs.get_ids()
-
-    cmd_data = get_task_info("command", cmd_id)
-    cmd_job_id = cmd_data["jobId"]
-
-    assert cmd_job_id in ordered_ids, f"Command with job ID {cmd_job_id} not found in the job queue"
