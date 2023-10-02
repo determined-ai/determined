@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
-import DatePicker from 'components/DatePicker';
+import DatePicker from 'components/kit/DatePicker';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import {
@@ -97,16 +97,16 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           allowClear={false}
           disabledDate={isAfterDateDisabled}
           label="From"
-          style={{ width: 130 }}
           value={value.afterDate}
+          width={130}
           onChange={handleAfterDateSelect}
         />
         <DatePicker
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
           label="To"
-          style={{ width: 130 }}
           value={value.beforeDate}
+          width={130}
           onChange={handleBeforeDateSelect}
         />
       </>
@@ -120,8 +120,8 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           disabledDate={isAfterDateDisabled}
           label="From"
           picker="month"
-          style={{ width: 130 }}
           value={value.afterDate}
+          width={130}
           onChange={handleAfterDateSelect}
         />
         <DatePicker
@@ -129,8 +129,8 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           disabledDate={isBeforeDateDisabled}
           label="To"
           picker="month"
-          style={{ width: 130 }}
           value={value.beforeDate}
+          width={130}
           onChange={handleBeforeDateSelect}
         />
       </>

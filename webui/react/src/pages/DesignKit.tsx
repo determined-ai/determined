@@ -14,6 +14,7 @@ import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
 import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
+import DatePicker from 'components/kit/DatePicker';
 import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -86,6 +87,7 @@ const ComponentTitles = {
   CodeEditor: 'CodeEditor',
   Color: 'Color',
   Columns: 'Columns',
+  DatePicker: 'DatePicker',
   Drawer: 'Drawer',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -1428,6 +1430,36 @@ const ListsSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Default list</strong>
         <ResponsiveTable columns={mockColumns} dataSource={mockRows} rowKey="id" />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const DatePickerSection: React.FC = () => {
+  return (
+    <ComponentSection id="DatePicker" title="DatePicker">
+      <AntDCard>
+        <p>
+          <code>DatePicker</code> is a form element for the user to select a specific time, date, or
+          month from a calendar UI. When using <code>onChange</code>, the returned value is a{' '}
+          <code>Dayjs</code> object. The component accepts a subset of the props for the{' '}
+          <code>Antd.DatePicker</code>, with the <code>style</code> prop replaced by our usage (
+          <code>width</code>).
+        </p>
+        <p>
+          The <code>picker</code> prop can be set to select a month. Alternatively the{' '}
+          <code>showTime</code> prop adds precision to the second.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        DatePickers with labels:
+        <strong>Date-time picker</strong>
+        <DatePicker label="Choose a date and time" showTime onChange={noOp} />
+        <strong>Clearable day picker</strong>
+        <DatePicker label="Choose a date" onChange={noOp} />
+        <hr />
+        <strong>Un-clearable month picker, without a label</strong>
+        <DatePicker allowClear={false} picker="month" onChange={noOp} />
       </AntDCard>
     </ComponentSection>
   );
@@ -3041,6 +3073,7 @@ const Components = {
   CodeEditor: <CodeEditorSection />,
   Color: <ColorSection />,
   Columns: <ColumnsSection />,
+  DatePicker: <DatePickerSection />,
   Drawer: <DrawerSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
