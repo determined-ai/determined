@@ -629,6 +629,10 @@ func (rp *resourcePool) moveJob(
 			rp.config.Scheduler.GetType())
 	}
 
+	if _, ok := rp.queuePositions[anchorID]; !ok {
+		return sproto.ErrJobNotFound(anchorID)
+	}
+
 	prioChange, secondAnchor, anchorPriority := tasklist.FindAnchor(
 		jobID,
 		anchorID,
