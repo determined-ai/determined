@@ -57,7 +57,7 @@ func New(
 	}
 
 	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
-	clusterID, err := db.GetOrCreateClusterID()
+	clusterID, err := db.GetOrCreateClusterID("")
 	if err != nil {
 		panic(fmt.Errorf("getting clusterID: %w", err))
 	}

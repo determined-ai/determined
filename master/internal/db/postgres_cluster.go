@@ -9,9 +9,13 @@ import (
 )
 
 // GetOrCreateClusterID queries the master uuid in the database, adding one if it doesn't exist.
-func (db *PgDB) GetOrCreateClusterID() (string, error) {
-	newUUID := uuid.New().String()
-
+func (db *PgDB) GetOrCreateClusterID(telemetryID string) (string, error) {
+	var newUUID string
+	if telemetryID != "" {
+		newUUID = telemetryID
+	} else {
+		newUUID = uuid.New().String()
+	}
 	if _, err := db.sql.Exec(`
 INSERT INTO cluster_id (cluster_id) SELECT ($1)
 WHERE NOT EXISTS ( SELECT * FROM cluster_id );
