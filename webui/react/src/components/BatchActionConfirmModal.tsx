@@ -13,8 +13,6 @@ interface Props {
   onClose?: () => void;
 }
 
-export const CONFIRM_BUTTON_LABEL = 'Confirm';
-
 const DANGEROUS_BATCH_ACTIONS: ExperimentAction[] = [
   ExperimentAction.Cancel,
   ExperimentAction.Delete,
@@ -39,7 +37,7 @@ const BatchActionConfirmModalComponent: React.FC<Props> = ({
       submit={{
         handleError,
         handler: onConfirm,
-        text: batchAction === ExperimentAction.Cancel ? CONFIRM_BUTTON_LABEL : batchAction,
+        text: batchAction,
       }}
       title={`Confirm Batch ${batchAction}`}
       onClose={onClose}>
