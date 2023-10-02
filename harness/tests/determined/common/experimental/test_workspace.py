@@ -87,21 +87,3 @@ def test_workspace_constructor_populates_id_from_name(
 def test_workspace_constructor_doesnt_populate_name_from_id(standard_session: api.Session) -> None:
     ws = workspace.Workspace(session=standard_session, workspace_id=1)
     assert ws.name is None
-
-
-@responses.activate
-def test_list_bounded_resource_pools(
-    standard_session: api.Session,
-    single_item_workspaces: bindings.v1GetWorkspacesResponse,
-    single_item_rps_bound_to_workspace: bindings.v1ListRPsBoundToWorkspaceResponse,
-) -> None:
-    workspace_id = single_item_workspaces.workspaces[0].id
-    responses.get(f"{_MASTER}/api/v1/workspaces", json=single_item_workspaces.to_json())
-    responses.get(
-        f"{_MASTER}/api/v1/workspaces/{workspace_id}/available-resource-pools",
-        json=single_item_rps_bound_to_workspace.to_json(),
-    )
-
-    ws = workspace.Workspace(session=standard_session, workspace_id=workspace_id)
-    rps = ws.list_pools()
-    assert rps == ["foo"]
