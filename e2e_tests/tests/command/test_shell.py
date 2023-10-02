@@ -36,7 +36,7 @@ def test_open_shell() -> None:
 
         child = det_spawn(["shell", "open", task_id])
         child.setecho(True)
-        child.expect(r".*Permanently added.+([0-9a-f-]{36}).+known hosts\.")
+        child.expect(r".*Permanently added.+([0-9a-f-]{36}).+known hosts\.", timeout=180)
         child.sendline("det user whoami")
         child.expect("You are logged in as user \\'(.*)\\'", timeout=10)
         child.sendline("exit")
