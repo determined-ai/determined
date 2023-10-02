@@ -229,23 +229,26 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 	}
 	nodeSelector := nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
 
-	term := k8sV1.NodeSelectorTerm{
-		MatchExpressions: []k8sV1.NodeSelectorRequirement{
-			{
-				Key:      clusterID,
-				Operator: k8sV1.NodeSelectorOpDoesNotExist,
-			},
-		},
+	if len(nodeSelector.NodeSelectorTerms) == 0 {
+		nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms,
+			k8sV1.NodeSelectorTerm{})
+	}
+
+	req := k8sV1.NodeSelectorRequirement{
+		Key:      clusterID,
+		Operator: k8sV1.NodeSelectorOpDoesNotExist,
 	}
 
 	// Make function idempotent.
-	for _, n := range nodeSelector.NodeSelectorTerms {
-		if reflect.DeepEqual(n, term) {
+	for _, r := range nodeSelector.NodeSelectorTerms[0].MatchExpressions {
+		if reflect.DeepEqual(r, req) {
 			return
 		}
 	}
 
-	nodeSelector.NodeSelectorTerms = append(nodeSelector.NodeSelectorTerms, term)
+	nodeSelector.NodeSelectorTerms[0].MatchExpressions = append(
+		nodeSelector.NodeSelectorTerms[0].MatchExpressions, req,
+	)
 
 	// TODO once k8s supports
 	// RequiredDuringSchedulingRequiredDuringExecution

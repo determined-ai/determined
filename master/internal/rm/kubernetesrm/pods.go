@@ -507,11 +507,11 @@ func (p *pods) dontReattachQueuedPreAgentDisabledPods(
 			if !reflect.DeepEqual(pod.Spec, before.Spec) {
 				p.deleteKubernetesResources(ctx, pods, configMaps)
 				return fmt.Errorf(
-					"unable to restore pod %s since it was queued and does not have "+
+					"unable to restore pod %s since it was queued and does not have the needed "+
 						"Determined's affinity to prevent scheduling on disabled nodes. "+
 						"This is expected to happen on allocations with queued pods "+
-						"when upgrading from before or equal to 0.25.1 "+
-						"to after or equal to 0.26.0", pod.Name)
+						"when upgrading from before 0.25.1 "+
+						"to after or equal to 0.26.1", pod.Name)
 			}
 		}
 	}
