@@ -86,7 +86,7 @@ run:
 		reports/$$(date +%s).junit.xml; \
 	docker cp \
 		perf-tests:/home/k6/results.txt \
-		reports/$$(date +%s).report.txt; \
+		reports/$$(date +%s).results.txt; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
@@ -103,7 +103,7 @@ run-local:
 		reports/local-$$(date +%s).junit.xml; \
 	docker cp \
 		perf-tests:/home/k6/results.txt \
-		reports/local-$$(date +%s).report.txt; \
+		reports/local-$$(date +%s).results.txt; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
