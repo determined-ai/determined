@@ -1,5 +1,5 @@
 import { HolderOutlined } from '@ant-design/icons';
-import { type SelectProps as AntdSelectProps, DatePicker } from 'antd';
+import { type SelectProps as AntdSelectProps } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import { useObservable } from 'micro-observables';
@@ -23,6 +23,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import Button from 'components/kit/Button';
+import DatePicker from 'components/kit/DatePicker';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';

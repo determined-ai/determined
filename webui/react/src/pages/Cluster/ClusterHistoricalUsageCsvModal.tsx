@@ -1,7 +1,8 @@
-import { DatePicker, Form, Modal, Select } from 'antd';
+import { Form, Modal, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import DatePicker from 'components/kit/DatePicker';
 import Icon from 'components/kit/Icon';
 import { handlePath, serverAddress } from 'routes/utils';
 import { ValueOf } from 'types';
@@ -64,18 +65,10 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
       onOk={handleOk}>
       <Form form={form} initialValues={{ afterDate, beforeDate, groupBy }} labelCol={{ span: 8 }}>
         <Form.Item label="Start" name="afterDate">
-          <DatePicker
-            allowClear={false}
-            disabledDate={isAfterDateDisabled}
-            style={{ minWidth: '150px' }}
-          />
+          <DatePicker allowClear={false} disabledDate={isAfterDateDisabled} width={150} />
         </Form.Item>
         <Form.Item label="End" name="beforeDate">
-          <DatePicker
-            allowClear={false}
-            disabledDate={isBeforeDateDisabled}
-            style={{ minWidth: '150px' }}
-          />
+          <DatePicker allowClear={false} disabledDate={isBeforeDateDisabled} width={150} />
         </Form.Item>
         <Form.Item label="Group by" name="groupBy">
           <Select

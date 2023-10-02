@@ -14,6 +14,7 @@ import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
 import CodeEditor from 'components/kit/CodeEditor';
 import { Column, Columns } from 'components/kit/Columns';
+import DatePicker from 'components/kit/DatePicker';
 import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -86,6 +87,7 @@ const ComponentTitles = {
   CodeEditor: 'CodeEditor',
   Color: 'Color',
   Columns: 'Columns',
+  DatePicker: 'DatePicker',
   Drawer: 'Drawer',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -1428,6 +1430,32 @@ const ListsSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Default list</strong>
         <ResponsiveTable columns={mockColumns} dataSource={mockRows} rowKey="id" />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const DatePickerSection: React.FC = () => {
+  return (
+    <ComponentSection id="DatePicker" title="DatePicker">
+      <AntDCard>
+        <p>
+          <code>DatePicker</code> is a form element for the user to select a specific date, month,
+          or year from a calendar UI. When using <code>onChange</code>, the returned value is a{' '}
+          <code>Dayjs</code> object. The component accepts a subset of the props for the{' '}
+          <code>Antd.DatePicker</code>, with the <code>style</code> prop replaced by our usage (
+          <code>width</code>).
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        DatePickers with labels:
+        <strong>Clearable day picker</strong>
+        <DatePicker label="Choose a date" onChange={noOp} />
+        <strong>Un-clearable month picker</strong>
+        <DatePicker allowClear={false} label="Choose a date" picker="month" onChange={noOp} />
+        <hr />
+        DatePicker set to year, without a label:
+        <DatePicker picker="year" />
       </AntDCard>
     </ComponentSection>
   );
@@ -3041,6 +3069,7 @@ const Components = {
   CodeEditor: <CodeEditorSection />,
   Color: <ColorSection />,
   Columns: <ColumnsSection />,
+  DatePicker: <DatePickerSection />,
   Drawer: <DrawerSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
