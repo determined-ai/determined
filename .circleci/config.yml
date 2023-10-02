@@ -1539,7 +1539,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1553,7 +1553,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1593,7 +1593,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1613,7 +1613,7 @@ jobs:
 
   test-unit-react-quarantined:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
         environment:
           CI: "true"
     steps:
@@ -1625,7 +1625,7 @@ jobs:
 
   test-unit-react-screenshot:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1663,7 +1663,7 @@ jobs:
 
   test-intg-downstream:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared
