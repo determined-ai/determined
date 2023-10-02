@@ -64,22 +64,33 @@ export const testGetRequestor = (
     }
 };
 
-const getGroupName = (resultName: string): string => "Group: " + resultName.substring(resultName.lastIndexOf(":") + 1, resultName.indexOf("}"))
+const getTestName = (resultName: string): string => "Test: " + resultName.substring(resultName.lastIndexOf(":") + 1, resultName.indexOf("}"))
 
 export const generateSlackResults = (results: Results): string => {
-    let resultString = "";
+    let successfulResultString = "";
+    let failureResultString = "";
+    let infoString = "";
+    let slackOutputString = "";
     let testFailures = 0;
-    const failedRequests = `Failed HTTP Requests: ${results.metrics["http_req_failed"].values["fails"]} \n`
+    const failedRequests = `Failed HTTP Requests: ${results.metrics["http_req_failed"].values["passes"]} \n`
     const failedRequestsPercent = `Percent Failed HTTP Requests: ${Number(results.metrics["http_req_failed"].values["rate"]) * 100}% \n`;
     const statNames = ["avg", "min", "med", "max", "p(90)", "p(95)"];
-    resultString = resultString.concat(failedRequests, failedRequestsPercent, " \n")
-    Object.keys(results.metrics).filter((key) => key.includes("::")).forEach((key) => {
-        resultString = resultString.concat(`${getGroupName(key)} \n`);
+    const thresholdStatKey = "p(95)\u003c1000";
+    infoString = infoString.concat(failedRequests, failedRequestsPercent)
+    Object.keys(results.metrics).filter((key) => key.includes("group: ::")).forEach((key) => {
+        const testPassed = results.metrics[key].thresholds[thresholdStatKey]?.ok
         const stats = results.metrics[key].values;
-        resultString = resultString.concat(...statNames.map((name) => `${name} = ${Number(stats[name]).toFixed(2)}ms   `), " \n\n");
-        if (results.metrics[key].thresholds["p(95)\u003c1000"]?.ok === false) testFailures++
+        const groupNameString = `${getTestName(key)} \n`;
+        const statsString = statNames.map((name) => `${name} = ${Number(stats[name]).toFixed(2)}ms   `)
+        if (!testPassed) {
+            testFailures++
+            failureResultString = failureResultString.concat(groupNameString, ...statsString, "\n\n");
+        } else {
+            successfulResultString = successfulResultString.concat(groupNameString, ...statsString, "\n\n");
+        }
     })
-    const failures = `Test Failures: ${testFailures}`;
-    resultString = resultString.concat(failures);
-    return resultString
+    const failures = `Test Failures: ${testFailures} \n`;
+    infoString = infoString.concat(failures)
+    slackOutputString = slackOutputString.concat(infoString, "\n\nFailed Tests\n\n", failureResultString, "\n\nSuccessful Tests\n\n", successfulResultString)
+    return slackOutputString
 }

@@ -1,4 +1,4 @@
-import { JSONObject, check, sleep, } from "k6";
+import { check, sleep, } from "k6";
 import { Options, Scenario, Threshold } from "k6/options";
 import http from "k6/http";
 import { jUnit, textSummary } from "./utils/k6-summary";
@@ -9,7 +9,7 @@ import {
     test,
     testGetRequestor,
 } from "./utils/helpers";
-import { Results } from "./utils/types";
+import { Results, TestConfiguration, SeededData, Authorization, TestGroup } from "./utils/types";
 
 const DEFAULT_CLUSTER_URL = "http://localhost:8080";
 
@@ -354,9 +354,9 @@ const scenarios: { [name: string]: Scenario } = {
     average_load: {
         executor: "ramping-vus",
         stages: [
-            { duration: "5m", target: 25 },
-            { duration: "10m", target: 25 },
-            { duration: "5m", target: 0 },
+            { duration: "5s", target: 25 },
+            { duration: "10s", target: 25 },
+            { duration: "5s", target: 0 },
         ],
     },
 };
@@ -371,13 +371,12 @@ export default (config: TestConfiguration): void => {
     sleep(1);
 };
 
-export function handleSummary(data: JSONObject) {
-    const results = data as unknown;
+export function handleSummary(data: Results) {
     return {
         "junit.xml": jUnit(data, {
             name: "K6 Load Tests",
         }),
         stdout: textSummary(data),
-        'results.txt': generateSlackResults(results as Results),
+        'results.txt': generateSlackResults(data),
     };
 }

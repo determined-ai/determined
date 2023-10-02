@@ -1,8 +1,8 @@
-interface Authorization {
+export interface Authorization {
     token: string;
 }
 
-interface Experiment {
+export interface Experiment {
     id: string;
     metricName: string;
     metricType: string;
@@ -10,16 +10,16 @@ interface Experiment {
     batchesMargin: string;
 }
 
-interface Task {
+export interface Task {
     id: string;
 }
 
-interface TestConfiguration {
+export interface TestConfiguration {
     auth: Authorization;
     seededData: SeededData;
 }
 
-interface TestGroup {
+export interface TestGroup {
     name: string;
     group: () => void;
     enabled?: boolean;
@@ -34,7 +34,7 @@ interface Model {
     versionNum: string;
 }
 
-interface SeededData {
+export interface SeededData {
     model: Model;
     task: Task;
     trial: Trial;
@@ -54,7 +54,7 @@ interface Check {
     passes: number;
     fails: number;
 }
-interface ResultGroup {
+export interface ResultGroup {
     name: string;
     path: string;
     id: string;
