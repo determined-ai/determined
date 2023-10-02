@@ -16,7 +16,7 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
     id: data.id || 0,
     isActive: data.active,
     isAdmin: data.admin,
-    lastAuthAt: data.lastLogin ? new Date(data.lastLogin).getTime() : undefined,
+    lastAuthAt: data.lastAuthAt ? new Date(data.lastAuthAt).getTime() : undefined,
     modifiedAt: new Date(data.modifiedAt || 1).getTime(),
     username: data.username,
   };

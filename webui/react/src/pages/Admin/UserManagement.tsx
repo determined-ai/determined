@@ -297,9 +297,9 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'lastAuthAt',
         defaultSortOrder:
-          defaultSortKey === V1GetUsersRequestSortBy.LASTLOGINTIME ? defaultSortOrder : undefined,
+          defaultSortKey === V1GetUsersRequestSortBy.LASTAUTHTIME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['lastAuthAt'],
-        key: V1GetUsersRequestSortBy.LASTLOGINTIME,
+        key: V1GetUsersRequestSortBy.LASTAUTHTIME,
         onCell: onRightClickableCell,
         render: (value: number | undefined): React.ReactNode => {
           return value ? (

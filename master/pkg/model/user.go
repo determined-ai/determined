@@ -42,7 +42,7 @@ type User struct {
 	Active        bool        `db:"active" json:"active"`
 	ModifiedAt    time.Time   `db:"modified_at" json:"modified_at"`
 	Remote        bool        `db:"remote" json:"remote"`
-	LastLogin     *time.Time  `db:"last_login" json:"last_login"`
+	LastAuthAt    *time.Time  `db:"last_auth_at" json:"last_auth_at"`
 }
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
@@ -63,7 +63,7 @@ type FullUser struct {
 	Active      bool        `db:"active" json:"active"`
 	ModifiedAt  time.Time   `db:"modified_at" json:"modified_at"`
 	Remote      bool        `db:"remote" json:"remote"`
-	LastLogin   *time.Time  `db:"last_login" json:"last_login"`
+	LastAuthAt  *time.Time  `db:"last_auth_at" json:"last_auth_at"`
 
 	AgentUID   null.Int    `db:"agent_uid" json:"agent_uid"`
 	AgentGID   null.Int    `db:"agent_gid" json:"agent_gid"`
@@ -82,7 +82,7 @@ func (u FullUser) ToUser() User {
 		Active:       u.Active,
 		ModifiedAt:   u.ModifiedAt,
 		Remote:       u.Remote,
-		LastLogin:    u.LastLogin,
+		LastAuthAt:   u.LastAuthAt,
 	}
 }
 
@@ -137,8 +137,8 @@ func (user *User) Proto() *userv1.User {
 		ModifiedAt:  timestamppb.New(user.ModifiedAt),
 		Remote:      user.Remote,
 	}
-	if user.LastLogin != nil {
-		u.LastLogin = timestamppb.New(*user.LastLogin)
+	if user.LastAuthAt != nil {
+		u.LastAuthAt = timestamppb.New(*user.LastAuthAt)
 	}
 	return u
 }

@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserNilLastLoginProto(t *testing.T) {
+func TestUserNilLastAuthAtProto(t *testing.T) {
 	u := User{}
-	require.Nil(t, u.Proto().LastLogin)
+	require.Nil(t, u.Proto().LastAuthAt)
 }
 
-func TestUserNonNilLastLoginProto(t *testing.T) {
+func TestUserNonNilLastAuthAtProto(t *testing.T) {
 	expectedTime := time.Now()
-	u := User{LastLogin: &expectedTime}
-	require.WithinDuration(t, expectedTime, u.Proto().LastLogin.AsTime(), time.Millisecond)
+	u := User{LastAuthAt: &expectedTime}
+	require.WithinDuration(t, expectedTime, u.Proto().LastAuthAt.AsTime(), time.Millisecond)
 }
