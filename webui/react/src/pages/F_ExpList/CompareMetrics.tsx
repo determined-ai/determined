@@ -94,6 +94,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
   return (
     <ChartGrid
       chartsProps={chartsProps}
+      group="CompareMetricsCharts"
       handleError={handleError}
       scale={scale}
       setScale={setScale}

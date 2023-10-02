@@ -5,7 +5,7 @@ import Section from 'components/Section';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
 import {
-  getScientificNotationTickValues,
+  // getScientificNotationTickValues,
   getUnitForMetricName,
 } from 'pages/TrialDetails/Profiles/utils';
 import { XAxisDomain } from 'types';
@@ -26,13 +26,13 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   return (
     <Section bodyBorder bodyNoPadding title="Throughput">
       <LineChart
-        experimentId={trial.id}
+        // experimentId={trial.id}
         handleError={handleError}
         series={throughputMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
         yLabel={yLabel}
-        yTickValues={getScientificNotationTickValues}
+        // yTickValues={getScientificNotationTickValues}
       />
     </Section>
   );

@@ -1,14 +1,13 @@
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { LineChart } from 'components/kit/LineChart';
+import { LineChart, OnClickPointType } from 'components/kit/LineChart';
 import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
-import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
 import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { paths } from 'routes/utils';
@@ -34,7 +33,7 @@ import { glasbeyColor } from 'utils/color';
 import { flattenObject, isPrimitive } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { metricToStr } from 'utils/metric';
-import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'utils/routes';
+import { routeToReactUrl } from 'utils/routes';
 import { openCommandResponse } from 'utils/wait';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -111,7 +110,6 @@ const LearningCurve: React.FC<Props> = ({
   selectedScale,
 }: Props) => {
   const { ui } = useUI();
-  const [trialIds, setTrialIds] = useState<number[]>([]);
   const [chartData, setChartData] = useState<Loadable<Serie[]>>(NotLoaded);
   const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
   const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
@@ -134,33 +132,12 @@ const LearningCurve: React.FC<Props> = ({
     }
   }, [experiment.hyperparameters, fullHParams, trialHps, experiment.config]);
 
-  const handleTrialClick = useCallback(
-    (event: MouseEvent, trialId: number) => {
+  const handleClickPoint: OnClickPointType = useCallback(
+    (trialId: number) => {
       const href = paths.trialDetails(trialId, experiment.id);
-      if (isNewTabClickEvent(event)) openBlank(href);
-      else routeToReactUrl(href);
+      routeToReactUrl(href);
     },
     [experiment.id],
-  );
-
-  const handleTrialFocus = useCallback((trialId: number | null) => {
-    setHighlightedTrialId(trialId != null ? trialId : undefined);
-  }, []);
-
-  const handlePointClick = useCallback(
-    (e: MouseEvent, point: UPlotPoint) => {
-      const trialId = trialIds[point.seriesIdx];
-      if (trialId) handleTrialClick(e, trialId);
-    },
-    [handleTrialClick, trialIds],
-  );
-
-  const handlePointFocus = useCallback(
-    (point?: UPlotPoint) => {
-      const trialId = point ? trialIds[point.seriesIdx] : undefined;
-      if (trialId) handleTrialFocus(trialId);
-    },
-    [handleTrialFocus, trialIds],
   );
 
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
@@ -210,7 +187,6 @@ const LearningCurve: React.FC<Props> = ({
         (event.promotedTrials || []).forEach((trialId) => (trialIdsMap[trialId] = trialId));
         (event.demotedTrials || []).forEach((trialId) => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
-        setTrialIds(newTrialIds);
 
         (event.trials || []).forEach((trial) => {
           const id = trial.trialId;
@@ -329,14 +305,11 @@ const LearningCurve: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.chart}>
             <LineChart
-              focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
-              handleError={handleError}
               scale={selectedScale}
               series={chartData}
               xLabel="Batches Processed"
               yLabel={metricToStr(selectedMetric)}
-              onPointClick={handlePointClick}
-              onPointFocus={handlePointFocus}
+              onClickPoint={handleClickPoint}
             />
           </div>
           <TableBatch

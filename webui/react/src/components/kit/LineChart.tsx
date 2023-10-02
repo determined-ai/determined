@@ -1,20 +1,16 @@
+import { ECElementEvent, EChartsOption } from 'echarts';
+import { CallbackDataParams, TopLevelFormatterParams } from 'echarts/types/dist/shared';
 import React, { ReactNode, useMemo } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
-import uPlot, { AlignedData, Plugin } from 'uplot';
 
-import {
-  getCssVar,
-  getTimeTickValues,
-  glasbeyColor,
-  metricToStr,
-} from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
-import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
-import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
-import { UPlotPoint } from 'components/kit/internal/UPlot/types';
-import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
-import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
+import {
+  CheckpointsDict,
+  ErrorHandler,
+  Scale,
+  Serie,
+  XAxisDomain,
+} from 'components/kit/internal/types';
 import useResize from 'components/kit/internal/useResize';
 import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
 import Message from 'components/kit/Message';
@@ -22,15 +18,17 @@ import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 
 import css from './LineChart.module.scss';
+import ReactECharts, { EchartsEventFunction } from './ReactEchart';
 
 export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';
 
+export type OnClickPointType = (id: number, data: ECElementEvent['data']) => void;
+
 /**
  * @typedef ChartProps {object}
  * Config for a single LineChart component.
- * @param {number} [focusedSeries] - Highlight one Serie's line and fade the others, given an index in the given series.
- * @param {number} [height=350] - Height in pixels.
+ * @param {number} [height=360] - Height in pixels.
  * @param {Scale} [scale=Scale.Linear] - Linear or Log Scale for the y-axis.
  * @param {Serie[]} series - Array of valid series to plot onto the chart.
  * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each metric's color, name, and type.
@@ -40,220 +38,171 @@ export const VALIDATION_SERIES_COLOR = '#F77B21';
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
 interface ChartProps {
-  experimentId?: number;
-  focusedSeries?: number;
   height?: number;
-  onPointClick?: (event: MouseEvent, point: UPlotPoint) => void;
-  onPointFocus?: (point: UPlotPoint | undefined) => void;
-  plugins?: Plugin[];
+  group?: string;
+  onClickPoint?: OnClickPointType;
   scale?: Scale;
+  checkpointsDict?: CheckpointsDict;
   series: Serie[] | Loadable<Serie[]>;
   showLegend?: boolean;
   title?: ReactNode;
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
-  yTickValues?: uPlot.Axis.Values;
 }
 
 interface LineChartProps extends Omit<ChartProps, 'series'> {
   series: Serie[] | Loadable<Serie[]>;
-  handleError: ErrorHandler;
+  handleError?: ErrorHandler;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
-  experimentId,
-  focusedSeries,
-  handleError,
-  height = 350,
-  onPointClick,
-  onPointFocus,
+  height = 360,
+  onClickPoint,
   scale = Scale.Linear,
-  plugins: propPlugins,
+  group,
   series: propSeries,
   showLegend = false,
   title,
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
-  yTickValues,
+  checkpointsDict,
 }: LineChartProps) => {
-  const series = Loadable.ensureLoadable(propSeries).getOrElse([]);
+  const series = useMemo(() => {
+    return Loadable.ensureLoadable(propSeries).getOrElse([]);
+  }, [propSeries]);
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
-  const hasPopulatedSeries: boolean = useMemo(
-    () => !!series.find((serie) => serie.data[xAxis]?.length),
-    [series, xAxis],
-  );
+  const onClick: EchartsEventFunction = {
+    eventName: 'click',
+    handler: (params) => {
+      onClickPoint?.(Number(params.seriesId), params.data);
+    },
+  };
 
-  const seriesColors: string[] = useMemo(
-    () => series.map((s, i) => s.color ?? glasbeyColor(i)),
-    [series],
-  );
+  const echartOption: EChartsOption = useMemo(() => {
+    let currentYAxis = 0;
 
-  const seriesNames: string[] = useMemo(() => {
-    return series.map((s) => {
-      return metricToStr({ group: s.metricType ?? 'unknown', name: s.name ?? 'unknown' });
-    });
-  }, [series]);
+    const formatterFunc = (params: TopLevelFormatterParams) => {
+      type SeriesType = {
+        marker: CallbackDataParams['marker'];
+        seriesName: string;
+        value: number;
+      };
+      const data = params as CallbackDataParams[];
 
-  const chartData: AlignedData = useMemo(() => {
-    const xSet = new Set<number>();
-    const yValues: Record<string, Record<string, number | null>> = {};
-
-    series.forEach((serie, serieIndex) => {
-      yValues[serieIndex] = {};
-      (serie.data[xAxis] || []).forEach((pt) => {
-        const xVal = pt[0];
-        xSet.add(xVal);
-        yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
-      });
-    });
-
-    const xValues: number[] = Array.from(xSet);
-    xValues.sort((a, b) => a - b);
-    const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
-      return xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null));
-    });
-
-    return [xValues, ...yValuesArray];
-  }, [series, xAxis]);
-
-  const xTickValues: uPlot.Axis.Values | undefined = useMemo(
-    () =>
-      xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
-        ? getTimeTickValues
-        : undefined,
-    [chartData, xAxis],
-  );
-
-  const chartOptions: Options = useMemo(() => {
-    const plugins: Plugin[] = propPlugins ?? [
-      tooltipsPlugin({
-        closeOnMouseExit: true,
-        isShownEmptyVal: false,
-        // use specified color on Serie, or glasbeyColor
-        seriesColors,
-      }),
-      closestPointPlugin({
-        onPointClick,
-        onPointFocus,
-        yScale: 'y',
-      }),
-    ];
-
-    return {
-      axes: [
-        {
-          font: `12px ${getCssVar('--theme-font-family')}`,
-          grid: { show: false },
-          incrs:
-            xAxis === XAxisDomain.Time
-              ? undefined
-              : [
-                  /* eslint-disable array-element-newline */
-                  1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000,
-                  50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000,
-                  /* eslint-enable array-element-newline */
-                ],
-          label: xLabel,
-          scale: 'x',
-          side: 2,
-          space: 120,
-          ticks: { show: false },
-          values: xTickValues,
-        },
-        {
-          font: `12px ${getCssVar('--theme-font-family')}`,
-          grid: { stroke: '#E3E3E3', width: 1 },
-          label: yLabel,
-          labelGap: 8,
-          scale: 'y',
-          side: 3,
-          ticks: { show: false },
-          values: yTickValues,
-        },
-      ],
-      cursor: {
-        drag: { x: true, y: false },
-      },
-      height: height - (hasPopulatedSeries ? 0 : 20),
-      legend: { show: false },
-      plugins,
-      scales: {
-        x: {
-          time: xAxis === XAxisDomain.Time,
-        },
-        y: {
-          distr: scale === Scale.Log ? 3 : 1,
-        },
-      },
-      series: [
-        { label: xLabel ?? xAxis ?? 'X' },
-        ...series.map((serie, idx) => {
+      const seriesList: SeriesType[] = data
+        .filter((d: CallbackDataParams) => d.seriesName)
+        .map((d: CallbackDataParams): SeriesType => {
           return {
-            alpha: focusedSeries === undefined || focusedSeries === idx ? 1 : 0.4,
-            label: seriesNames[idx],
-            points: { show: (serie.data[xAxis] || []).length <= 1 },
-            scale: 'y',
-            spanGaps: true,
-            stroke: seriesColors[idx],
-            type: 'line',
-            width: 2,
+            marker: d.marker,
+            seriesName: d.seriesName ?? '',
+            value: (d.value as number[])[1],
           };
-        }),
-      ],
+        })
+        .sort((a: SeriesType, b: SeriesType) => b.value - a.value);
+
+      const closestPoint = [...seriesList]
+        .sort((a: SeriesType, b: SeriesType) =>
+          Math.abs(a.value - currentYAxis) > Math.abs(b.value - currentYAxis) ? 1 : -1,
+        )
+        .shift();
+
+      const tooltip = `
+        <div>
+          <div>${(data[0].value as number[])[0]}</div>
+          ${seriesList
+            .map((d) => {
+              const fontWeight = closestPoint?.seriesName === d.seriesName ? 'bold' : 'normal';
+              return `
+              <div>
+                ${d.marker}
+                <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
+                ${d.value.toExponential(2) || '-'}
+              </div>
+            `;
+            })
+            .join('')}
+        </div>
+      `;
+      return tooltip;
     };
-  }, [
-    seriesColors,
-    onPointClick,
-    onPointFocus,
-    xLabel,
-    xTickValues,
-    yLabel,
-    yTickValues,
-    height,
-    xAxis,
-    scale,
-    series,
-    seriesNames,
-    hasPopulatedSeries,
-    propPlugins,
-    focusedSeries,
-  ]);
+
+    const option: EChartsOption = {
+      dataZoom: [
+        { realtime: true, show: true, type: 'slider' },
+        { realtime: true, show: true, type: 'inside', zoomLock: true },
+      ],
+      legend: showLegend
+        ? {
+            data: series.map((serie) => serie.name ?? ''),
+            left: '10%',
+            padding: [8, 200, 0, 0],
+            type: 'scroll',
+          }
+        : undefined,
+      series: series.map((serie) => ({
+        connectNulls: true,
+        data: serie.data[xAxis],
+        emphasis: { focus: 'series' },
+        id: serie.key,
+        itemStyle: { color: serie.color },
+        name: serie.name,
+        symbol: (value) => {
+          if (checkpointsDict === undefined) return 'cicle';
+          return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
+        },
+        symbolSize: (value) => {
+          if (checkpointsDict === undefined) return 4;
+          return value?.[0] in checkpointsDict ? 10 : 4;
+        },
+        type: 'line',
+      })),
+      toolbox: {
+        feature: {
+          dataView: { readOnly: true },
+          restore: {},
+          saveAsImage: { excludeComponents: ['toolbox', 'dataZoom'], name: 'line-chart' },
+        },
+      },
+      tooltip: {
+        axisPointer: {
+          label: {
+            formatter: (params) => {
+              if (params.axisDimension === 'y') {
+                currentYAxis = Number(params.value);
+              }
+              return String(params.value);
+            },
+          },
+          type: 'cross',
+        },
+        confine: true,
+        formatter: formatterFunc,
+        trigger: 'axis',
+      },
+      xAxis: { boundaryGap: false, name: xLabel },
+      yAxis: {
+        minorSplitLine: { show: true },
+        name: yLabel,
+        type: scale === Scale.Log ? 'log' : 'value',
+      },
+    };
+    return option;
+  }, [checkpointsDict, scale, series, showLegend, xAxis, xLabel, yLabel]);
 
   return (
-    <div className="diamond-cursor">
-      {title && <h5 className={css.chartTitle}>{title}</h5>}
-      <UPlotChart
-        allowDownload={hasPopulatedSeries}
-        data={chartData}
-        experimentId={experimentId}
-        handleError={handleError}
-        isLoading={isLoading}
-        options={chartOptions}
-        xAxis={xAxis}
-      />
-      {showLegend && (
-        <div className={css.legendContainer}>
-          {hasPopulatedSeries ? (
-            series.map((s, idx) => (
-              <li className={css.legendItem} key={idx}>
-                <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
-                  &mdash;
-                </span>
-                {seriesNames[idx]}
-              </li>
-            ))
-          ) : (
-            <li>&nbsp;</li>
-          )}
+    <>
+      <div>{title && <h5 className={css.chartTitle}>{title}</h5>}</div>
+      {isLoading ? (
+        <div>Loading</div>
+      ) : (
+        <div style={{ height: height }}>
+          <ReactECharts eventFunctions={[onClick]} group={group} option={echartOption} />
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -268,6 +217,7 @@ export type ChartsProps = ChartProps[];
  * @param {handleError} handleError - Error handler
  */
 export interface GroupProps {
+  group?: string;
   chartsProps: ChartsProps | Loadable<ChartsProps>;
   onXAxisChange: (ax: XAxisDomain) => void;
   scale: Scale;
@@ -284,12 +234,13 @@ const VirtualChartRenderer: React.FC<
   GridChildComponentProps<{
     chartsProps: ChartsProps;
     columnCount: number;
+    group?: string;
     scale: Scale;
     xAxis: XAxisDomain;
     handleError: ErrorHandler;
   }>
 > = ({ columnIndex, rowIndex, style, data }) => {
-  const { chartsProps, columnCount, scale, xAxis, handleError } = data;
+  const { chartsProps, columnCount, scale, xAxis, handleError, group } = data;
 
   const cellIndex = rowIndex * columnCount + columnIndex;
 
@@ -299,7 +250,13 @@ const VirtualChartRenderer: React.FC<
   return (
     <div className={css.chartgridCell} key={`${rowIndex}, ${columnIndex}`} style={style}>
       <div className={css.chartgridCellCard}>
-        <LineChart {...chartProps} handleError={handleError} scale={scale} xAxis={xAxis} />
+        <LineChart
+          group={group}
+          {...chartProps}
+          handleError={handleError}
+          scale={scale}
+          xAxis={xAxis}
+        />
       </div>
     </div>
   );
@@ -312,6 +269,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     onXAxisChange,
     scale,
     setScale,
+    group,
     handleError,
   }: GroupProps) => {
     const { refCallback, size } = useResize();
@@ -362,25 +320,24 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                     <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
                   )}
                 </div>
-                <SyncProvider>
-                  <FixedSizeGrid
-                    columnCount={columnCount}
-                    columnWidth={Math.floor(width / columnCount)}
-                    height={height - 40}
-                    itemData={{
-                      chartsProps,
-                      columnCount,
-                      handleError,
-                      scale,
-                      xAxis,
-                    }}
-                    rowCount={Math.ceil(chartsProps.length / columnCount)}
-                    rowHeight={465}
-                    style={{ height: '100%' }}
-                    width={width}>
-                    {VirtualChartRenderer}
-                  </FixedSizeGrid>
-                </SyncProvider>
+                <FixedSizeGrid
+                  columnCount={columnCount}
+                  columnWidth={Math.floor(width / columnCount)}
+                  height={height - 40}
+                  itemData={{
+                    chartsProps,
+                    columnCount,
+                    group,
+                    handleError,
+                    scale,
+                    xAxis,
+                  }}
+                  rowCount={Math.ceil(chartsProps.length / columnCount)}
+                  rowHeight={465}
+                  style={{ height: '100%' }}
+                  width={width}>
+                  {VirtualChartRenderer}
+                </FixedSizeGrid>
               </>
             )}
           </Spinner>

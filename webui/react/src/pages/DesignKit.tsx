@@ -51,9 +51,6 @@ import Logo from 'components/Logo';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
-import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -650,20 +647,6 @@ const ChartsSection: React.FC = () => {
     name: 'Line',
   };
 
-  const checkpointsDict: CheckpointsDict = {
-    2: {
-      endTime: '2023-02-02T04:54:41.095204Z',
-      experimentId: 6,
-      resources: {
-        'checkpoint_file': 3,
-        'workload_sequencer.pkl': 88,
-      },
-      state: 'COMPLETED',
-      totalBatches: 100,
-      trialId: 6,
-      uuid: 'f2684332-98e1-4a78-a1f7-c8107f15db2a',
-    },
-  };
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
   const createChartGrid = useChartGrid();
   return (
@@ -695,7 +678,7 @@ const ChartsSection: React.FC = () => {
           <Button onClick={streamLineData}>Stream line data</Button>
         </div>
         <LineChart
-          focusedSeries={1}
+          // focusedSeries={1}
           handleError={handleError}
           height={250}
           series={[line1, line2]}
@@ -740,21 +723,6 @@ const ChartsSection: React.FC = () => {
         {createChartGrid({
           chartsProps: [
             {
-              plugins: [
-                drawPointsPlugin(checkpointsDict),
-                tooltipsPlugin({
-                  getXTooltipHeader(xIndex) {
-                    const xVal = line1.data[xAxis]?.[xIndex]?.[0];
-
-                    if (xVal === undefined) return '';
-                    const checkpoint = checkpointsDict?.[Math.floor(xVal)];
-                    if (!checkpoint) return '';
-                    return '<div>⬦ Best Checkpoint <em>(click to view details)</em> </div>';
-                  },
-                  isShownEmptyVal: false,
-                  seriesColors: ['#009BDE'],
-                }),
-              ],
               series: [line1],
               showLegend: true,
               title: 'Sample1',

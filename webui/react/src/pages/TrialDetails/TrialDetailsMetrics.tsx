@@ -1,12 +1,8 @@
 import React, { useMemo, useState } from 'react';
 
-import { ChartGrid, ChartsProps } from 'components/kit/LineChart';
+import { ChartGrid, ChartsProps, OnClickPointType } from 'components/kit/LineChart';
 import Spinner from 'components/kit/Spinner';
 import { Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import { UPlotPoint } from 'components/UPlot/types';
-import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
-import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import {
   CheckpointWorkloadExtended,
@@ -113,42 +109,18 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
         .map((metric) => data?.[metricToKey(metric)])
         .filter((metricData) => !!metricData);
 
-      const xValSet = series.reduce((set, serie) => {
-        serie.data[xAxis]?.forEach((point) => set.add(point[0]));
-        return set;
-      }, new Set<number>());
-      const xVals = Array.from(xValSet).sort((a, b) => a - b);
+      const onPointClick: OnClickPointType = (id, data) => {
+        const xVal = (data as [x: number, y: number])[0];
 
-      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
-        const xVal = xVals[point.idx];
-        const selectedCheckpoint =
-          xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;
+        const selectedCheckpoint = xVal !== undefined ? checkpointsDict[xVal] : undefined;
         if (selectedCheckpoint) {
           openCheckpoint();
         }
       };
 
       out.push({
-        onPointClick,
-        plugins: [
-          closestPointPlugin({
-            checkpointsDict,
-            onPointClick,
-            yScale: 'y',
-          }),
-          drawPointsPlugin(checkpointsDict),
-          tooltipsPlugin({
-            getXTooltipHeader(xIndex) {
-              const xVal = xVals[xIndex];
-              if (xVal === undefined) return '';
-              const checkpoint = checkpointsDict?.[Math.floor(xVal)];
-              if (!checkpoint) return '';
-              return '<div>⬦ Best Checkpoint <em>(click to view details)</em> </div>';
-            },
-            isShownEmptyVal: false,
-            seriesColors: series.map((s) => s.color ?? '#009BDE'),
-          }),
-        ],
+        checkpointsDict: checkpointsDict,
+        onClickPoint: onPointClick,
         series,
         title: groupMetrics.length !== 0 ? stripPrefix(groupMetrics[0].name) : 'No Metric Name',
         xAxis,
@@ -156,13 +128,14 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       });
     });
     return Loaded(out);
-  }, [groupedMetrics, isMetricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
+  }, [isMetricsLoaded, groupedMetrics, checkpointsDict, xAxis, data, openCheckpoint]);
 
   return (
     <>
       {isMetricsLoaded ? (
         <ChartGrid
           chartsProps={chartsProps}
+          group={`Metrics ${experiment.id} ${trial?.id}`}
           handleError={handleError}
           scale={scale}
           setScale={setScale}
