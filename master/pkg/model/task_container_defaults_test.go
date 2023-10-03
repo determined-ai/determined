@@ -373,6 +373,11 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
 				RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
 			}},
+			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+				RawSendWebhook: &expconf.SendWebhookPolicy{
+					RawWebhookName: "different",
+				},
+			}},
 		},
 	}
 
@@ -399,8 +404,10 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
 			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
 		}},
-		expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
-			RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+			RawSendWebhook: &expconf.SendWebhookPolicy{
+				RawWebhookName: "different",
+			},
 		}},
 		expconf.LogPatternPolicy{RawPattern: "b", RawPolicy: &expconf.LogPolicy{
 			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},

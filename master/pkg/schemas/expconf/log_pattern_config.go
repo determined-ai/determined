@@ -6,6 +6,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
+	log "github.com/sirupsen/logrus"
 )
 
 // LogPatternPoliciesConfigV0 is a list of log pattern actions.
@@ -13,18 +14,26 @@ import (
 //go:generate ../gen.sh
 type LogPatternPoliciesConfigV0 []LogPatternPolicyV0
 
-// TODO test merging in task container defaults.
-/*
 // Merge implemenets the mergable interface.
 func (b LogPatternPoliciesConfigV0) Merge(
 	other LogPatternPoliciesConfigV0,
 ) LogPatternPoliciesConfigV0 {
-	// TODO add both together...
+	var out LogPatternPoliciesConfigV0
+	seen := make(map[string]bool)
+	for _, p := range append(other, b...) {
+		json, err := json.Marshal(p)
+		if err != nil {
+			log.Errorf("marshaling error %+v %v", p, err)
+		}
+		if seen[string(json)] {
+			continue
+		}
+		seen[string(json)] = true
 
-	// Yeah like don't define cluster level logs?
-	return append(b, other...)
+		out = append(out, p)
+	}
+	return out
 }
-*/
 
 // LogPatternPolicyV0 is an action to take if we match against trial logs.
 //

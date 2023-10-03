@@ -153,7 +153,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 			c.Slurm.SbatchArgs(), configRawSlurmConfig.SbatchArgs()...)
 	}
 
-	config.RawLogPatternPolicies = append(c.LogPatternPolicies, config.RawLogPatternPolicies...)
+	config.RawLogPatternPolicies = schemas.Merge(config.RawLogPatternPolicies, c.LogPatternPolicies)
 
 	configRawPbsConfig := config.RawPbsConfig
 	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
