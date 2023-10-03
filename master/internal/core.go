@@ -1205,13 +1205,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	user.RegisterAPIHandler(m.echo, userService)
 
-	telemetry.Init(
-		m.system,
-		m.db,
-		m.rm,
-		m.ClusterID,
-		m.config.Telemetry,
-	)
+	telemetry.Init(m.ClusterID, m.config.Telemetry)
+	go telemetry.PeriodicallyReportMasterTick(m.db, m.rm, m.system)
 
 	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
 		return err
