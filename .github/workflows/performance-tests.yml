@@ -87,6 +87,7 @@ jobs:
         run: make -C performance down
 
       - name: Get Slack report contents
+        if: always()
         id: slack-report
         run: |
           ls performance/reports

@@ -57,11 +57,11 @@ up-local:
 
 down:
 	$(PERSIST_CHECK)
-	det deploy aws down --cluster-id $(CLUSTER_ID) && \
+	det deploy aws down --cluster-id $(CLUSTER_ID) --yes && \
 	rm -f .det.url
 
 down-local:
-	det deploy local cluster-down --cluster-name performance
+	det deploy local cluster-down --cluster-name performance --yes
 
 persist:
 	det deploy aws up \
