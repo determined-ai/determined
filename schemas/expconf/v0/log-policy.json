@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-policy.json",
+    "title": "LogPolicy",
+    "$comment": "this is a union of all possible properties, with validation for the common properties",
+    "if": {
+        "required": [
+            "type"
+        ]
+    },
+    "then": {
+        "union": {
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'on_failure_dont_retry', 'on_failure_exclude_node' or 'send_webhook'",
+            "items": [
+                {
+                    "unionKey": "const:type=on_failure_dont_retry",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-policy-on-failure-dont-retry.json"
+                },
+                {
+                    "unionKey": "const:type=on_failure_exclude_node",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-policy-on-failure-exclude-node.json"
+                },
+                {
+                    "unionKey": "const:type=send_webhook",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-policy-send-webhook.json"
+                }
+            ]
+        }
+    },
+    "additionalProperties": false,
+    "eventuallyRequired": [
+        "type"
+    ],
+    "properties": {
+        "type": true,
+        "webhook_name": true,
+        "restarts": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 1
+        }
+    }
+}
