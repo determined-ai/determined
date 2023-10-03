@@ -2700,11 +2700,6 @@ workflows:
             - test-intg-agent
 
   test-e2e:
-    # temporarily only run e2e nightly
-    when:
-      and:
-        - equal: [scheduled_pipeline, <<pipeline.trigger_source>>]
-        - equal: [nightly_tests, <<pipeline.schedule.name>>]
     jobs:
       - build-proto
       - build-helm
