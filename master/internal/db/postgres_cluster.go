@@ -9,6 +9,7 @@ import (
 )
 
 // GetOrCreateClusterID queries the master uuid in the database, adding one if it doesn't exist.
+// If a nonempty telemetryID is provided, it will be the one added, otherwise a uuid is generated.
 func (db *PgDB) GetOrCreateClusterID(telemetryID string) (string, error) {
 	var newUUID string
 	if telemetryID != "" {
@@ -33,7 +34,15 @@ WHERE NOT EXISTS ( SELECT * FROM cluster_id );
 			"expecting exactly one cluster_id from cluster_id table, %d values found", len(uuidVal),
 		)
 	}
-	return uuidVal[0], nil
+
+	clusterID := uuidVal[0]
+	if telemetryID != "" && telemetryID != clusterID {
+		log.Warnf(
+			"a telemetry cluster id: %s was provided, but cluster is already initialized with id: %s. ignoring.",
+			telemetryID, clusterID)
+	}
+
+	return clusterID, nil
 }
 
 // UpdateClusterHeartBeat updates the clusterheartbeat column in the cluster_id table.
