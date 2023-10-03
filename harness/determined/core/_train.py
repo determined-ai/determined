@@ -121,6 +121,9 @@ class TrainContext:
         but may be accessed from the master using the CLI for post-processing.
         """
 
+        logger.info(
+            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
+        )
         self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def report_validation_metrics(
@@ -134,6 +137,9 @@ class TrainContext:
         metric using ``SearcherOperation.report_completed()`` in the Searcher API.
         """
 
+        logger.info(
+            f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
+        )
         self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_metrics(
@@ -155,6 +161,9 @@ class TrainContext:
                 When reporting metrics with the same ``group`` and ``steps_completed`` values,
                 the dictionary keys must not overlap.
         """
+        logger.info(
+            f"report_metrics(group={group}, steps_completed={steps_completed}, metrics={metrics})"
+        )
         self._report_trial_metrics(group, steps_completed, metrics)
 
     def get_tensorboard_path(self) -> pathlib.Path:
@@ -266,34 +275,10 @@ class DummyTrainContext(TrainContext):
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        """
-        Report trial metrics to the master.
-
-        You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
-        but may be accessed from the master using the CLI for post-processing.
-        """
-        logger.info(
-            f"_report_trial_metrics(group={group}, steps_completed={steps_completed},"
-            f"metrics={metrics})"
-        )
         logger.debug(
             f"_report_trial_metrics(group={group}, steps_completed={steps_completed},"
-            f" batch_metrics={batch_metrics})"
+            f"metrics={metrics}), batch_metrics={batch_metrics})"
         )
-
-    def report_training_metrics(
-        self,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
-        self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
-
-    def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
-
-    def report_metrics(self, group: str, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        self._report_trial_metrics(group, steps_completed, metrics)
 
     def upload_tensorboard_files(
         self,
