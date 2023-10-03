@@ -3404,7 +3404,9 @@ workflows:
             - check-if-nightly-tests-should-run
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
-          context: aws
+          context:
+            - aws
+            - hugging-face
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
