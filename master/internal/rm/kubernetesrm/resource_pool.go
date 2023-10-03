@@ -652,10 +652,9 @@ func (k *kubernetesResourcePool) getOrCreateGroup(
 func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
-		group, ok := k.groups[req.JobID]
-		// TODO: fix this?
-		if !ok || group == nil {
-			ctx.Log().Errorf("schedulePendingTasks cannot find group for job %s", req.JobID)
+		group := k.groups[req.JobID]
+		if group == nil {
+			ctx.Log().Warnf("schedulePendingTasks cannot find group for job %s", req.JobID)
 			continue
 		}
 		if !k.reqList.IsScheduled(req.AllocationID) {

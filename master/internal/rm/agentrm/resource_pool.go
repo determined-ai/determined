@@ -652,7 +652,11 @@ func (rp *resourcePool) moveJob(
 	}
 
 	if prioChange {
-		oldPriority := *rp.groups[jobID].Priority
+		group := rp.groups[jobID]
+		if group == nil {
+			return fmt.Errorf("moveJob cannot find group for job %s", jobID)
+		}
+		oldPriority := *group.Priority
 		err := rp.setGroupPriority(ctx, sproto.SetGroupPriority{
 			Priority:     anchorPriority,
 			ResourcePool: rp.config.PoolName,
