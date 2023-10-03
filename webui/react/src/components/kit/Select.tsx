@@ -118,6 +118,8 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
   }, []);
 
   const getPopupContainer = (triggerNode: Element) => {
+    // triggerNode.parentElement can be falsy, so instead of a ternary, we fall back
+    // to document.body
     return (attachDropdownToContainer && triggerNode.parentElement) || document.body;
   };
 
