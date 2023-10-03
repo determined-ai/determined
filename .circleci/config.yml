@@ -248,6 +248,7 @@ commands:
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
+
   install-protoc:
     steps:
       - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
@@ -666,7 +667,8 @@ commands:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
       - when:
-          condition: << parameters.extra-tags >>
+          condition:
+            << parameters.extra-tags >>
           steps:
             - run:
                 name: Add extra tags
@@ -1095,6 +1097,7 @@ commands:
       - run:
           no_output_timeout: 30m
           command: make package
+
 
   install-devcluster:
     steps:
@@ -1893,6 +1896,7 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
+
   test-unit-harness-gpu:
     docker:
       - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
@@ -1954,6 +1958,7 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
+
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2518,6 +2523,7 @@ jobs:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
+
 
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
