@@ -5445,10 +5445,10 @@ export type V1LocationType = ValueOf<typeof V1LocationType>
 export interface V1LogConfig {
     /**
      * The log level for Master Config.
-     * @type {string}
+     * @type {V1LogLevel}
      * @memberof V1LogConfig
      */
-    level?: string;
+    level?: V1LogLevel;
     /**
      * The color setting for log in Master Config.
      * @type {boolean}

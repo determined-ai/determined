@@ -11,54 +11,62 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def config(args: Namespace) -> None:
-    if args.log:
-        if args.level and args.color:
-            if args.color.lower() == "on":
-                master_config = bindings.v1Config(
-                    log=bindings.v1LogConfig(level=args.level, color=True)
+    resp = bindings.get_GetMasterConfig(cli.setup_session(args)).config
+    if args.json:
+        determined.cli.render.print_json(resp)
+    else:
+        print(yaml.safe_dump(resp, default_flow_style=False))
+
+
+@authentication.required
+def set_master_config(args: Namespace) -> None:
+    if args.__dict__["log.level"] and args.__dict__["log.color"]:
+        if args.__dict__["log.color"].lower() == "on":
+            master_config = bindings.v1Config(
+                log=bindings.v1LogConfig(
+                    level=parseLogLevel(args.__dict__["log.level"]), color=True
                 )
-            elif args.color.lower() == "off":
-                master_config = bindings.v1Config(
-                    log=bindings.v1LogConfig(level=args.level, color=False)
+            )
+        elif args.__dict__["log.color"].lower() == "off":
+            master_config = bindings.v1Config(
+                log=bindings.v1LogConfig(
+                    level=parseLogLevel(args.__dict__["log.level"]), color=False
                 )
-            else:
-                raise CliError(
-                    "Error: Invalid value for --color provided: "
-                    + args.color
-                    + ". This optional parameter only accepts 'on' and 'off' values."
-                )
-            field_mask = ["log"]
-        elif args.level:
-            master_config = bindings.v1Config(log=bindings.v1LogConfig(level=args.level))
-            field_mask = ["log.level"]
-        elif args.color:
-            if args.color.lower() == "on":
-                master_config = bindings.v1Config(log=bindings.v1LogConfig(color=True))
-            elif args.color.lower() == "off":
-                master_config = bindings.v1Config(log=bindings.v1LogConfig(color=False))
-            else:
-                raise CliError(
-                    "Error: Invalid value for --color provided: "
-                    + args.color
-                    + ". This optional parameter only accepts 'on' and 'off' values."
-                )
-            field_mask = ["log.color"]
+            )
         else:
             raise CliError(
-                "Error: No log level or log color provided. Either log level or log"
-                + "  color is required to make changes to the master config log setting."
+                "Error: Invalid value for --color provided: "
+                + args.__dict__["log.color"]
+                + ". This optional parameter only accepts 'on' and 'off' values."
             )
-        req = bindings.v1PatchMasterConfigRequest(
-            config=master_config, fieldMask=bindings.protobufFieldMask(paths=field_mask)
+        field_mask = ["log"]
+    elif args.__dict__["log.level"]:
+        master_config = bindings.v1Config(
+            log=bindings.v1LogConfig(level=parseLogLevel(args.__dict__["log.level"]))
         )
-        resp = bindings.patch_PatchMasterConfig(cli.setup_session(args), body=req).config
-    elif not args.log and (args.level or args.color):
-        raise CliError(
-            "Error: Invalid command: --level and/or --color used without --log. Please try"
-            + " again using 'det master config --log --level <level> --color <on/off>'."
-        )
+        field_mask = ["log.level"]
+    elif args.__dict__["log.color"]:
+        if args.__dict__["log.color"].lower() == "on":
+            master_config = bindings.v1Config(log=bindings.v1LogConfig(color=True))
+        elif args.__dict__["log.color"].lower() == "off":
+            master_config = bindings.v1Config(log=bindings.v1LogConfig(color=False))
+        else:
+            raise CliError(
+                "Error: Invalid value for --color provided: "
+                + args.__dict__["log.color"]
+                + ". This optional parameter only accepts 'on' and 'off' values."
+            )
+        field_mask = ["log.color"]
     else:
-        resp = bindings.get_GetMasterConfig(cli.setup_session(args)).config
+        raise CliError(
+            "Error: No config values provided, at least one value required to set master config. "
+            + "Currently, --log.level and --log.color are the supported set config attributes."
+        )
+    req = bindings.v1PatchMasterConfigRequest(
+        config=master_config, fieldMask=bindings.protobufFieldMask(paths=field_mask)
+    )
+    resp = bindings.patch_PatchMasterConfig(cli.setup_session(args), body=req).config
+
     if args.json:
         determined.cli.render.print_json(resp)
     else:
@@ -89,19 +97,60 @@ def logs(args: Namespace) -> None:
         print(format_log_entry(response.logEntry))
 
 
+def parseLogLevel(level: str) -> bindings.v1LogLevel:
+    if level.upper() == "INFO":
+        return bindings.v1LogLevel.INFO
+    elif level.upper() == "TRACE":
+        return bindings.v1LogLevel.TRACE
+    elif level.upper() == "DEBUG":
+        return bindings.v1LogLevel.DEBUG
+    elif level.upper() == "WARNING" or level.upper() == "WARN":
+        return bindings.v1LogLevel.WARNING
+    elif level.upper() == "ERROR":
+        return bindings.v1LogLevel.ERROR
+    elif level.upper() == "CRITICAL":
+        return bindings.v1LogLevel.CRITICAL
+    else:
+        raise CliError(
+            "Error: Invalid Log level provided. "
+            + "Acceptable levels are: INFO, TRACE, DEBUG, WARNING, ERROR and CRITICAL."
+        )
+
+
 # fmt: off
 
 args_description = [
     Cmd("master", None, "manage master", [
-        Cmd("config", config, "fetch or patch master config", [
-            Arg("--log", action="store_true",
-                help="patch log in master config"),
-            Arg("--level", type=str, default=None, required=False,
-                help="set log level in the master config"),
-            Arg("--color", type=str, default=None, required=False,
-                help="set log color in the master config"),
-            Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
-        ]),
+        Cmd(
+            "config",
+            None,
+            "manage master config",
+            [
+                Cmd(
+                    "show",
+                    config,
+                    "show master config",
+                    [
+                        Group(cli.output_format_args["json"],
+                              cli.output_format_args["yaml"])
+                    ],
+                    is_default=True,
+                ),
+                Cmd(
+                    "set",
+                    set_master_config,
+                    "set master config",
+                    [
+                        Arg("--log.level", type=str, default=None, required=False,
+                            help="set log level in the master config"),
+                        Arg("--log.color", type=str, default=None, required=False,
+                            help="set log color in the master config"),
+                        Group(cli.output_format_args["json"],
+                              cli.output_format_args["yaml"])
+                    ]
+                ),
+            ]
+        ),
         Cmd("info", get_master, "fetch master info", [
             Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
         ]),

@@ -7473,13 +7473,13 @@ class v1LocationType(DetEnum):
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None
-    level: "typing.Optional[str]" = None
+    level: "typing.Optional[v1LogLevel]" = None
 
     def __init__(
         self,
         *,
         color: "typing.Union[bool, None, Unset]" = _unset,
-        level: "typing.Union[str, None, Unset]" = _unset,
+        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
     ):
         if not isinstance(color, Unset):
             self.color = color
@@ -7493,7 +7493,7 @@ class v1LogConfig(Printable):
         if "color" in obj:
             kwargs["color"] = obj["color"]
         if "level" in obj:
-            kwargs["level"] = obj["level"]
+            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7502,7 +7502,7 @@ class v1LogConfig(Printable):
         if not omit_unset or "color" in vars(self):
             out["color"] = self.color
         if not omit_unset or "level" in vars(self):
-            out["level"] = self.level
+            out["level"] = None if self.level is None else self.level.value
         return out
 
 class v1LogEntry(Printable):
