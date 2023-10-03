@@ -24,7 +24,8 @@ export const authenticateVU = (clusterURL: string): string => {
   if (!__ENV.DET_ADMIN_USERNAME) {
     throw new Error("Username is required");
   }
-  if (!__ENV.DET_ADMIN_PASSWORD) {
+  if (__ENV.DET_ADMIN_PASSWORD === undefined) {
+    throw new Error("Password is required");
   }
   const loginCredentials = {
     username: __ENV.DET_ADMIN_USERNAME,
