@@ -63,6 +63,29 @@
     epochs:
       1
 
+- name: log policy on_failure_dont_retry
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policy-on-failure-dont-retry.json
+    - http://determined.ai/schemas/expconf/v0/log-policy.json
+  case:
+    type: on_failure_dont_retry
+
+- name: log policy on_failure_exclude_node
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policy-on-failure-exclude-node.json
+    - http://determined.ai/schemas/expconf/v0/log-policy.json
+  case:
+    type: on_failure_exclude_node
+    restarts: 1
+
+- name: log policy send_webhook
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-policy-send-webhook.json
+    - http://determined.ai/schemas/expconf/v0/log-policy.json
+  case:
+    type: send_webhook
+    webhook_name: "fish"
+
 - name: environment image string (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/environment-image.json

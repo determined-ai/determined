@@ -91,6 +91,29 @@ func TestPodSpecMerge(t *testing.T) {
 	require.Equal(t, e1PriorityExpected, schemas.Merge(e1, e0))
 }
 
+func TestLogPatterns(t *testing.T) {
+	inp := `[
+{"pattern": "a", "policy": {"type": "on_failure_dont_retry"}},
+{"pattern": "b", "policy": {"type": "on_failure_exclude_node"}},
+{"pattern": "c", "policy": {"type": "send_webhook"}}
+]`
+	expected := LogPatternPoliciesConfig{
+		LogPatternPolicy{RawPattern: "a", RawPolicy: &LogPolicy{
+			RawOnFailureDontRetry: &DontRetryPolicy{},
+		}},
+		LogPatternPolicy{RawPattern: "b", RawPolicy: &LogPolicy{
+			RawOnFailureExcludeNode: &OnFailureExcludeNodePolicy{},
+		}},
+		LogPatternPolicy{RawPattern: "c", RawPolicy: &LogPolicy{
+			RawSendWebhook: &SendWebhookPolicy{},
+		}},
+	}
+
+	var actual LogPatternPoliciesConfig
+	require.NoError(t, json.Unmarshal([]byte(inp), &actual))
+	require.Equal(t, expected, actual)
+}
+
 func TestName(t *testing.T) {
 	config := ExperimentConfig{
 		RawName: Name{

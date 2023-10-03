@@ -272,6 +272,7 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         "DevicesConfigV0",
         "HyperparametersV0",
         "LabelsV0",
+        "LogPatternPoliciesConfigV0",
         # Technically Name is a struct containing a string pointer, which exists only to
         # handle the semantics of runtime defaultables.  But it has the same mechanics as a map or
         # slice alias, so we include it here.
