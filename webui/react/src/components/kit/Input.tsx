@@ -7,7 +7,6 @@ import React, {
   ReactNode,
   RefAttributes,
   RefObject,
-  // useEffect,
 } from 'react';
 
 import { useInputEscape } from 'components/kit/internal/useInputEscape';
