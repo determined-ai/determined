@@ -78,6 +78,12 @@ export const patchUsers = generateDetApi<
   Api.V1PatchUsersResponse
 >(Config.patchUsers);
 
+export const assignMultipleGroups = generateDetApi<
+  Api.V1AssignMultipleGroupsRequest,
+  Api.V1AssignMultipleGroupsResponse,
+  Api.V1AssignMultipleGroupsResponse
+>(Config.assignMultipleGroups);
+
 export const getUserSetting = generateDetApi<
   EmptyParams,
   Api.V1GetUserSettingResponse,

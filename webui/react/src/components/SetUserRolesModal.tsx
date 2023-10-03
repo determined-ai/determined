@@ -64,8 +64,11 @@ const SetUserRolesModalComponent = ({
         <Form.Item
           label={ROLE_LABEL}
           name={ROLE_NAME}
-          rules={[{ message: `${ROLE_LABEL} is required`, required: true }]}>
-          <Select loading={Loadable.isNotLoaded(knownRoles)} mode="multiple">
+          rules={[{ message: 'This field is required', required: true }]}>
+          <Select
+            loading={Loadable.isNotLoaded(knownRoles)}
+            mode="multiple"
+            placeholder="Select Roles">
             {Loadable.isLoaded(knownRoles) ? (
               <>
                 {knownRoles.data.map((r: UserRole) => (

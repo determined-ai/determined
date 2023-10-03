@@ -5,6 +5,7 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
+import AddUsersToGroupsModalComponent from 'components/AddUsersToGroupsModal';
 import ChangeUserStatusModalComponent from 'components/ChangeUserStatusModal';
 import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
 import CreateUserModalComponent from 'components/CreateUserModal';
@@ -181,6 +182,7 @@ const UserManagement: React.FC = () => {
   const info = useObservable(determinedStore.info);
   const ChangeUserStatusModal = useModal(ChangeUserStatusModalComponent);
   const SetUserRolesModal = useModal(SetUserRolesModalComponent);
+  const AddUsersToGroupsModal = useModal(AddUsersToGroupsModalComponent);
 
   const canceler = useRef(new AbortController());
   const fetchUsers = useCallback((): void => {
@@ -261,6 +263,7 @@ const UserManagement: React.FC = () => {
     (key: string) => {
       switch (key) {
         case ActionMenuKey.AddToGroups:
+          AddUsersToGroupsModal.open();
           break;
         case ActionMenuKey.ChangeStatus:
           ChangeUserStatusModal.open();
@@ -270,7 +273,7 @@ const UserManagement: React.FC = () => {
           break;
       }
     },
-    [ChangeUserStatusModal, SetUserRolesModal],
+    [AddUsersToGroupsModal, ChangeUserStatusModal, SetUserRolesModal],
   );
 
   const clearTableSelection = useCallback(() => {
@@ -459,6 +462,12 @@ const UserManagement: React.FC = () => {
       <SetUserRolesModal.Component
         clearTableSelection={clearTableSelection}
         fetchUsers={fetchUsers}
+        userIds={selectedUserIds.map((id) => Number(id))}
+      />
+      <AddUsersToGroupsModal.Component
+        clearTableSelection={clearTableSelection}
+        fetchUsers={fetchUsers}
+        groupOptions={groups}
         userIds={selectedUserIds.map((id) => Number(id))}
       />
     </>

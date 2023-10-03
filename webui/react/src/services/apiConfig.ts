@@ -174,6 +174,16 @@ export const patchUsers: DetApi<
   request: (params) => detApi.Internal.patchUsers(params),
 };
 
+export const assignMultipleGroups: DetApi<
+  Service.AssignMultipleGroupsParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+> = {
+  name: 'assignMultipleGroups',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.assignMultipleGroups(params),
+};
+
 export const getUserSetting: DetApi<
   EmptyParams,
   Api.V1GetUserSettingResponse,

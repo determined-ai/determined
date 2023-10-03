@@ -1,32 +1,27 @@
 import Form from 'components/kit/Form';
-import { ValueOf } from 'components/kit/internal/types';
 import { Modal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import { makeToast } from 'components/kit/Toast';
-import { patchUsers } from 'services/api';
+import { assignMultipleGroups } from 'services/api';
+import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import handleError from 'utils/error';
 
-const STATUS_NAME = 'status';
-
-const StatusType = {
-  Activate: 'activate',
-  Deactivate: 'deactivate',
-} as const;
-
-type StatusType = ValueOf<typeof StatusType>;
+const GROUPS_NAME = 'groups';
 
 type FormInputs = {
-  [STATUS_NAME]: StatusType;
+  [GROUPS_NAME]: number[];
 };
 
 interface Props {
   userIds: number[];
+  groupOptions: V1GroupSearchResult[];
   clearTableSelection: () => void;
   fetchUsers: () => void;
 }
 
-const ChangeUserStatusModalComponent = ({
+const AddUsersToGroupsModalComponent = ({
   userIds,
+  groupOptions,
   clearTableSelection,
   fetchUsers,
 }: Props): JSX.Element => {
@@ -36,8 +31,13 @@ const ChangeUserStatusModalComponent = ({
     const values = await form.validateFields();
 
     try {
-      await patchUsers({ activate: values[STATUS_NAME] === StatusType.Activate, userIds });
-      makeToast({ title: 'Successfully changed status' });
+      const groupIds = Array.from(
+        new Set(values[GROUPS_NAME].flatMap((v) => (v !== undefined ? [v] : []))),
+      );
+      await assignMultipleGroups({ addGroups: groupIds, removeGroups: [], userIds });
+      makeToast({
+        title: 'Successfully set roles',
+      });
       clearTableSelection();
     } catch (e) {
       handleError(e);
@@ -51,20 +51,23 @@ const ChangeUserStatusModalComponent = ({
       cancel
       size="small"
       submit={{
-        form: 'ChangeUserStatusModalComponent',
+        form: 'AddUsersToGroupsModalComponent',
         handleError,
         handler: onSubmit,
         text: 'Submit',
       }}
-      title="Change Selected Users' Status">
+      title="Add Selected to Groups">
       <Form form={form} layout="vertical">
         <Form.Item
-          label="Status"
-          name={STATUS_NAME}
+          label="Groups"
+          name={GROUPS_NAME}
           rules={[{ message: 'This field is required', required: true }]}>
-          <Select allowClear placeholder="Select Staatus">
-            <Option value={StatusType.Activate}>Activate</Option>
-            <Option value={StatusType.Deactivate}>Deactivate</Option>
+          <Select mode="multiple" placeholder="Select Groups">
+            {groupOptions.map((go) => (
+              <Option key={go.group.groupId} value={go.group.groupId}>
+                {go.group.name}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
       </Form>
@@ -72,4 +75,4 @@ const ChangeUserStatusModalComponent = ({
   );
 };
 
-export default ChangeUserStatusModalComponent;
+export default AddUsersToGroupsModalComponent;
