@@ -61,7 +61,7 @@ down:
 	rm -f .det.url
 
 down-local:
-	det deploy local cluster-down --cluster-name performance --yes
+	det deploy local cluster-down --cluster-name performance
 
 persist:
 	det deploy aws up \
