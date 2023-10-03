@@ -41,6 +41,7 @@ function InlineForm<T>({
   ...formProps
 }: Props<T>): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
+  const [hasFormError, setHasFormError] = useState(false);
   const [previousValue, setPreviousValue] = useState<T>(initialValue); // had to set a state due to uncontrolled form reseting to the initialValue instead of previous value
   const [form] = Form.useForm();
   const shouldCollapseText = useMemo(() => String(initialValue).length >= 45, [initialValue]); // prevents layout breaking, specially if using Input.TextArea.
@@ -70,6 +71,25 @@ function InlineForm<T>({
   useEffect(() => {
     if (open !== undefined) setIsEditing(open);
   }, [open]);
+
+  React.useEffect(() => {
+    // Reacts to the input validation to enable/disable the "submit button"
+    let mounted = true;
+    if (isEditing) {
+      (async () => {
+        try {
+          await form.validateFields(['input']);
+          if (mounted) setHasFormError(false);
+        } catch {
+          if (mounted) setHasFormError(true);
+        }
+      })();
+    }
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputCurrentValue, isEditing, form]);
 
   const handleEdit = useCallback(() => {
     if (open === undefined) setIsEditing(true);
@@ -127,6 +147,7 @@ function InlineForm<T>({
           <>
             <Button
               data-testid={`submit-${testId}`}
+              disabled={hasFormError}
               icon={<Icon name="checkmark" title="confirm" />}
               type="primary"
               onClick={handleConfirm}
