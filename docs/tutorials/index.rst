@@ -20,8 +20,8 @@ you'll learn how to perform the following tasks:
  Get Started with a :ref:`Trial API <high-level-apis>`
 *******************************************************
 
-To get started with a :ref:`Trial API <high-level-apis>`, visit the :ref:`pytorch-mnist-tutorial`.
-This tutorial shows you how to port a simple image classification model for the MNIST dataset.
+To get started with a :ref:`Trial API <high-level-apis>`, visit :ref:`pytorch-mnist-tutorial`. This
+tutorial shows you how to port a simple image classification model for the MNIST dataset.
 
 ********************************
  Train Your Model in Determined
