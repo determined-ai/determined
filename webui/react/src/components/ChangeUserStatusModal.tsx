@@ -49,7 +49,7 @@ const ChangeUserStatusModalComponent = ({
         text: 'Submit',
       }}
       title="Change Selected Users' Status">
-      <Form form={form} layout="vertical" name="control-hooks">
+      <Form form={form} layout="vertical">
         <Form.Item label="Status" name="status" rules={[{ required: true }]}>
           <Select allowClear placeholder="Select a option and change input text above">
             <Option value="activate">Activate</Option>

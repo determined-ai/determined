@@ -386,7 +386,7 @@ export const removeRolesFromGroup: DetApi<
 };
 
 export const assignRolesToUser: DetApi<
-  Service.AssignRolesToUserParams,
+  Service.AssignRolesToUserParams[],
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse
 > = {
@@ -394,13 +394,15 @@ export const assignRolesToUser: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.assignRoles({
-      userRoleAssignments: params.roleIds.map((roleId) => ({
-        roleAssignment: {
-          role: { roleId },
-          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
-        },
-        userId: params.userId,
-      })),
+      userRoleAssignments: params.flatMap((param) =>
+        param.roleIds.map((roleId) => ({
+          roleAssignment: {
+            role: { roleId },
+            scopeWorkspaceId: param.scopeWorkspaceId || undefined,
+          },
+          userId: param.userId,
+        })),
+      ),
     }),
 };
 

@@ -77,11 +77,13 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
     try {
       if (values && selectedOption) {
         isUser(selectedOption)
-          ? await assignRolesToUser({
-              roleIds: [values.roleId],
-              scopeWorkspaceId: workspaceId,
-              userId: Number(values.userOrGroupId.substring(2)),
-            })
+          ? await assignRolesToUser([
+              {
+                roleIds: [values.roleId],
+                scopeWorkspaceId: workspaceId,
+                userId: Number(values.userOrGroupId.substring(2)),
+              },
+            ])
           : await assignRolesToGroup({
               groupId: Number(values.userOrGroupId.substring(2)),
               roleIds: [values.roleId],

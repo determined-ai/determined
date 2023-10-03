@@ -171,7 +171,7 @@ export const removeRolesFromGroup = generateDetApi<
 >(Config.removeRolesFromGroup);
 
 export const assignRolesToUser = generateDetApi<
-  Service.AssignRolesToUserParams,
+  Service.AssignRolesToUserParams[],
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse
 >(Config.assignRolesToUser);

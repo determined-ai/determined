@@ -16,6 +16,7 @@ import { makeToast } from 'components/kit/Toast';
 import { Loadable } from 'components/kit/utils/loadable';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Section from 'components/Section';
+import SetUserRolesModalComponent from 'components/SetUserRolesModal';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
@@ -166,6 +167,7 @@ const UserManagement: React.FC = () => {
 
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
   const nameRegex = useMemo(() => {
     if (settings.name === undefined) return new RegExp('.*');
@@ -175,9 +177,10 @@ const UserManagement: React.FC = () => {
   const filteredUsers = users.filter((user) => nameRegex.test(user.displayName || user.username));
 
   const { rbacEnabled } = useObservable(determinedStore.info);
-  const { canModifyUsers } = usePermissions();
+  const { canModifyUsers, canModifyPermissions } = usePermissions();
   const info = useObservable(determinedStore.info);
   const ChangeUserStatusModal = useModal(ChangeUserStatusModalComponent);
+  const SetUserRolesModal = useModal(SetUserRolesModalComponent);
 
   const canceler = useRef(new AbortController());
   const fetchUsers = useCallback((): void => {
@@ -243,13 +246,16 @@ const UserManagement: React.FC = () => {
     const menuItems: MenuItem[] = [{ key: ActionMenuKey.ChangeStatus, label: 'Change Status' }];
 
     if (rbacEnabled) {
-      menuItems.push(
-        { key: ActionMenuKey.SetRoles, label: 'Set Roles' },
-        { key: ActionMenuKey.AddToGroups, label: 'Add to Groups' },
-      );
+      if (canModifyPermissions) {
+        menuItems.push({ key: ActionMenuKey.SetRoles, label: 'Set Roles' });
+      }
+      if (canModifyUsers) {
+        menuItems.push({ key: ActionMenuKey.AddToGroups, label: 'Add to Groups' });
+      }
     }
+
     return menuItems;
-  }, [rbacEnabled]);
+  }, [rbacEnabled, canModifyPermissions, canModifyUsers]);
 
   const handleActionDropdown = useCallback(
     (key: string) => {
@@ -260,10 +266,11 @@ const UserManagement: React.FC = () => {
           ChangeUserStatusModal.open();
           break;
         case ActionMenuKey.SetRoles:
+          SetUserRolesModal.open();
           break;
       }
     },
-    [ChangeUserStatusModal],
+    [ChangeUserStatusModal, SetUserRolesModal],
   );
 
   const clearTableSelection = useCallback(() => {
@@ -390,6 +397,9 @@ const UserManagement: React.FC = () => {
         rowSelection={{
           columnWidth: '20px',
           fixed: true,
+          getCheckboxProps: (record) => ({
+            disabled: record.id === currentUser?.id, // disable the current user not to select onself
+          }),
           onChange: handleTableRowSelect,
           preserveSelectedRowKeys: false,
           selectedRowKeys: selectedUserIds,
@@ -414,6 +424,7 @@ const UserManagement: React.FC = () => {
     handleTableRowSelect,
     selectedUserIds,
     updateSettings,
+    currentUser?.id,
   ]);
 
   return (
@@ -441,6 +452,11 @@ const UserManagement: React.FC = () => {
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />
       <ChangeUserStatusModal.Component
+        clearTableSelection={clearTableSelection}
+        fetchUsers={fetchUsers}
+        userIds={selectedUserIds.map((id) => Number(id))}
+      />
+      <SetUserRolesModal.Component
         clearTableSelection={clearTableSelection}
         fetchUsers={fetchUsers}
         userIds={selectedUserIds.map((id) => Number(id))}
