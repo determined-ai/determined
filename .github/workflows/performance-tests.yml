@@ -2,7 +2,7 @@
 name: Run performance tests using latest published docker image
 on:
   # uncomment to iterate on workflow during PR
-  pull_request: {}
+  # pull_request: {}
   schedule:
     - cron: '0 2 * * 0-4'
 
