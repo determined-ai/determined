@@ -42,7 +42,7 @@ const ExperimentIcons: React.FC<Props> = ({ state, style, showTooltip = true }) 
       case JobState.UNSPECIFIED:
         return <Active />;
       default:
-        return <Icon color="cancel" name="cancelled" title="Cancelled" />;
+        return <Icon color="cancel" name="cancelled" title="Stopped" />;
     }
   }, [state, style]);
 
