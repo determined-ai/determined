@@ -1352,7 +1352,7 @@ jobs:
           name: Build and publish model_hub docker images
           command: |
             if [ ${CIRCLE_BRANCH} = 'main' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
-                # For master and release branches, we will tag and publish both the environment
+                # For main and release branches, we will tag and publish both the environment
                 # with the git hash as well as the version.  This will make that image available
                 # immediately for nightly tests.
                 make -C model_hub build-docker
