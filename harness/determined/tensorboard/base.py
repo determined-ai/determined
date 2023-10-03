@@ -148,7 +148,7 @@ class _TensorboardUploadThread(threading.Thread):
 
         self._work_queue: queue.Queue = queue.Queue(maxsize=work_queue_max_size)
 
-        super().__init__()
+        super().__init__(daemon=True, name="TensorboardUploadThread")
 
     def run(self) -> None:
         while True:

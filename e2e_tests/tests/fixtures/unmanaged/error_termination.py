@@ -3,15 +3,18 @@
 # Demonstrate an experiment which errors out.
 
 import random
+import tempfile
 
 from determined.experimental import core_v2
 
 
 def main():
+    checkpoint_storage = tempfile.mkdtemp()
     core_v2.init(
         defaults=core_v2.DefaultConfig(
             name="unmanaged-1-error",
         ),
+        checkpoint_storage=checkpoint_storage,
     )
 
     for i in range(100):

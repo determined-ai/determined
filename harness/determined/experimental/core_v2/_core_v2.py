@@ -1,5 +1,6 @@
 """Singleton-style Core API."""
 
+import atexit
 import dataclasses
 import logging
 import uuid
@@ -15,6 +16,7 @@ logger = logging.getLogger("determined.experimental.core_v2")
 
 _context = None  # type: Optional[core.Context]
 _client = None  # type: Optional[experimental.Determined]
+_atexit_registered = False  # type: bool
 
 
 @dataclasses.dataclass
@@ -233,6 +235,7 @@ def init(
     """
     global _context
     global _client
+    global _atexit_registered
 
     if _context is not None:
         _context.close()
@@ -252,6 +255,10 @@ def init(
     )
     _context.start()
     _set_globals()
+
+    if not _atexit_registered:
+        atexit.register(close)
+        _atexit_registered = True
 
 
 def close() -> None:

@@ -63,7 +63,7 @@ class _HeartbeatReporter(threading.Thread):
         self._trial_id = trial_id
         self._should_quit = False
 
-        super().__init__(daemon=True)
+        super().__init__(daemon=True, name="HeartbeatReporterThread")
 
     def _post_heartbeat(self) -> None:
         body = bindings.v1PatchTrialRequest(trialId=self._trial_id)
