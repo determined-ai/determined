@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
@@ -97,18 +98,25 @@ func runCheckpointGCTask(
 	}
 
 	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
+	gcJobID := jobID + ".gc"
 
 	resultChan := make(chan error, 1)
 	onExit := func(ae *task.AllocationExited) {
 		if err := db.CompleteTask(taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking GC task complete")
 		}
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(gcJobID); err != nil {
+			syslog.WithError(err).Error("deleting group priority change registry")
+		}
 		resultChan <- ae.Err
 	}
 
+	if err := tasklist.GroupPriorityChangeRegistry.Add(gcJobID, nil); err != nil {
+		return err
+	}
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
 		TaskID:            taskID,
-		JobID:             jobID,
+		JobID:             gcJobID,
 		JobSubmissionTime: jobSubmissionTime,
 		AllocationID:      allocationID,
 		Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", expID),
