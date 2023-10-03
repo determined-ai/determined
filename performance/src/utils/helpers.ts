@@ -72,15 +72,15 @@ const getTestName = (resultName: string): string =>
   );
 
 export const generateSlackResults = (results: Results): string => {
+  const NO_TESTS_FAILED_STRING = "No failed tests \n\n"
   let successfulResultString = "";
   let failureResultString = "";
   let infoString = "";
   let slackOutputString = "";
   let testFailures = 0;
   const failedRequests = `Failed HTTP Requests: ${results.metrics["http_req_failed"].values["passes"]} \n`;
-  const failedRequestsPercent = `Percent Failed HTTP Requests: ${
-    Number(results.metrics["http_req_failed"].values["rate"]) * 100
-  }% \n`;
+  const failedRequestsPercent = `Percent Failed HTTP Requests: ${Number(results.metrics["http_req_failed"].values["rate"]) * 100
+    }% \n`;
   const statNames = ["avg", "min", "med", "max", "p(90)", "p(95)"];
   const thresholdStatKey = "p(95)\u003c1000";
   infoString = infoString.concat(failedRequests, failedRequestsPercent);
@@ -113,7 +113,7 @@ export const generateSlackResults = (results: Results): string => {
   slackOutputString = slackOutputString.concat(
     infoString,
     "\n\nFailed Tests\n\n",
-    failureResultString,
+    testFailures === 0 ? NO_TESTS_FAILED_STRING : failureResultString,
     "\n\nSuccessful Tests\n\n",
     successfulResultString,
   );
