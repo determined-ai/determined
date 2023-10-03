@@ -78,16 +78,16 @@ function InlineForm<T>({
     if (isEditing) {
       (async () => {
         try {
-          await form.validateFields(['input'])
-          if (mounted) setHasFormError(false)
+          await form.validateFields(['input']);
+          if (mounted) setHasFormError(false);
         } catch {
-          if (mounted) setHasFormError(true)
+          if (mounted) setHasFormError(true);
         }
-      })()
+      })();
     }
     return () => {
       mounted = false;
-    }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputCurrentValue, isEditing, form]);
 
