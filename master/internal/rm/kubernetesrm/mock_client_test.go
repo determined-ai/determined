@@ -153,6 +153,13 @@ func (m *mockPodInterface) Delete(
 	return nil
 }
 
+func (m *mockPodInterface) delete(name string) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	delete(m.pods, name)
+}
+
 func (m *mockPodInterface) DeleteCollection(
 	ctx context.Context, options metaV1.DeleteOptions, listOptions metaV1.ListOptions,
 ) error {
