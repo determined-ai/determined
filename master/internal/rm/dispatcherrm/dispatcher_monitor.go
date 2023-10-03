@@ -1274,3 +1274,26 @@ func (m *launcherMonitor) fetchExternalJobs(resourcePool string) []*jobv1.Job {
 	})
 	return externalJobs
 }
+
+// getExternalJobQStats returns the job queue statistics for external jobs.
+// Dispatcher Resource Manager shows external jobs along with DeterminedAI jobs on the resource
+// pool page. Resource Pool page shows the jobs in two tabs "Active" and "Queued". These tabs
+// also show a prefix indicating the count of the number of jobs in each category. These counts
+// are calculated as part of the GetJobQStats and GetJobQueueStatsRequest methods. The below
+// method will be called inside those two methods so that those methods can return the counts
+// including both DeterminedAI and external jobs.
+func (m *launcherMonitor) getExternalJobQStats(resourcePool string) *jobv1.QueueStats {
+	stats := &jobv1.QueueStats{}
+	for _, jobInfo := range m.externalJobs.Values() {
+		if resourcePool != "" && resourcePool != jobInfo["partition"] {
+			continue
+		}
+		state := m.convertHpcStatus(jobInfo["state"])
+		if state == jobv1.State_STATE_SCHEDULED {
+			stats.ScheduledCount++
+		} else if state == jobv1.State_STATE_QUEUED {
+			stats.QueuedCount++
+		}
+	}
+	return stats
+}

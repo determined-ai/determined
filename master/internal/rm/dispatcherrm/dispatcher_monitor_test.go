@@ -744,3 +744,40 @@ func TestAddAndFetchExternalJobsInvalidInputs(t *testing.T) {
 	assert.Equal(t, actualJobDetails[0].AllocatedSlots, int32(0))
 	assert.Equal(t, actualJobDetails[0].SubmissionTime.Seconds, timestamppb.New(time.Time{}).Seconds)
 }
+
+func TestGetExternalJobQStats(t *testing.T) {
+	jobWatcher, _ := getJobWatcher()
+	jobDetails1 := map[string]string{
+		"jobID":      "1234",
+		"state":      "RUNNING",
+		"name":       "hello_world",
+		"partition":  "defq_GPU",
+		"userName":   "testuser1",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	jobDetails2 := map[string]string{
+		"jobID":      "1235",
+		"state":      "PENDING",
+		"name":       "hello_world",
+		"partition":  "defq",
+		"userName":   "testuser1",
+		"reasonCode": "None",
+		"reasonDesc": "",
+	}
+	jobWatcher.externalJobs.Store(jobDetails1["jobID"], jobDetails1)
+	jobWatcher.externalJobs.Store(jobDetails2["jobID"], jobDetails2)
+	assert.Equal(t, jobWatcher.externalJobs.Len(), 2, "Verify that two external jobs are added")
+
+	actualJobDetails := jobWatcher.getExternalJobQStats("")
+	assert.Equal(t, actualJobDetails.ScheduledCount, int32(1),
+		"Verify that scheduled jobs count is 1 when processing all resource pools")
+	assert.Equal(t, actualJobDetails.QueuedCount, int32(1),
+		"Verify that queued jobs count is 1 when processing all resource pools")
+
+	actualJobDetails = jobWatcher.getExternalJobQStats("defq")
+	assert.Equal(t, actualJobDetails.ScheduledCount, int32(0),
+		"Verify that scheduled jobs count is 0 when processing only defq resource pool")
+	assert.Equal(t, actualJobDetails.QueuedCount, int32(1),
+		"Verify that scheduled jobs count is 1 when processing only defq resource pool")
+}

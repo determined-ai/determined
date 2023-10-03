@@ -365,21 +365,6 @@ func (m *DispatcherResourceManager) GetJobQ(
 	return tasklist.ReduceToJobQInfo(reqs), nil
 }
 
-// GetJobQStats implements rm.ResourceManager.
-func (m *DispatcherResourceManager) GetJobQStats(
-	_ actor.Messenger,
-	msg sproto.GetJobQStats,
-) (*jobv1.QueueStats, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.syslog.WithField("resource-pool", msg.ResourcePool).
-		Debug("GetJobQStats for resource pool")
-	// TODO(HAL-2863): Fill this in for the given pool as discerned from the slurm resources
-	// info job.
-	return tasklist.JobStats(m.reqList), nil
-}
-
 // GetJobQueueStatsRequest implements rm.ResourceManager.
 // This and other job queue saturation points should be refactored to not take locks.
 func (m *DispatcherResourceManager) GetJobQueueStatsRequest(
@@ -389,7 +374,6 @@ func (m *DispatcherResourceManager) GetJobQueueStatsRequest(
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// TODO(HAL-2863): Fill this in per-pool as discerned from the slurm resources info job.
 	m.syslog.Tracef("GetJobQueueStatsRequest, pool count %d", len(msg.ResourcePools))
 
 	var resp apiv1.GetJobQueueStatsResponse
@@ -407,11 +391,28 @@ func (m *DispatcherResourceManager) GetJobQueueStatsRequest(
 	// Compute RPQueueStat results for each resource pool
 	for _, resourcePool := range msg.ResourcePools {
 		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
-			Stats:        tasklist.JobStatsByPool(m.reqList, resourcePool),
+			Stats:        m.getCombinedJobStats(resourcePool),
 			ResourcePool: resourcePool,
 		})
 	}
 	return &resp, nil
+}
+
+// getCombinedJobStats returns job queue statistics for a given resource pool for both
+// DeterminedAI and external jobs. If the resource pool is an empty string then job queue
+// statistics for all resource pools is returned.
+func (m *DispatcherResourceManager) getCombinedJobStats(resourcePool string) *jobv1.QueueStats {
+	var determinedJobStats *jobv1.QueueStats
+	if resourcePool != "" {
+		determinedJobStats = tasklist.JobStatsByPool(m.reqList, resourcePool)
+	} else {
+		determinedJobStats = tasklist.JobStats(m.reqList)
+	}
+	externalJobStats := m.jobWatcher.getExternalJobQStats(resourcePool)
+	combinedJobStats := &jobv1.QueueStats{}
+	combinedJobStats.QueuedCount = determinedJobStats.QueuedCount + externalJobStats.QueuedCount
+	combinedJobStats.ScheduledCount = determinedJobStats.ScheduledCount + externalJobStats.ScheduledCount
+	return combinedJobStats
 }
 
 // GetResourcePools retrieves details regarding hpc resources of the underlying system.
