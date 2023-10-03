@@ -194,7 +194,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       onCancel={() => setEditingPassword(false)}
                       onEdit={() => setEditingPassword(true)}
                       onSubmit={handleSavePassword}>
-                      <Input.Password autofocus />
+                      <Input.Password autoFocus />
                     </InlineForm>
                     <PasswordChangeModal.Component
                       newPassword={newPassword}

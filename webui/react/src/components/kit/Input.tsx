@@ -7,7 +7,7 @@ import React, {
   ReactNode,
   RefAttributes,
   RefObject,
-  useEffect,
+  // useEffect,
 } from 'react';
 
 import { useInputEscape } from 'components/kit/internal/useInputEscape';
@@ -50,7 +50,7 @@ interface TextAreaProps {
 }
 
 interface PasswordProps {
-  autofocus?: boolean;
+  autoFocus?: boolean;
   disabled?: boolean;
   placeholder?: string;
   prefix?: ReactNode;
@@ -78,26 +78,18 @@ type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>>
 
 Input.Group = AntdInput.Group;
 
-Input.Password = forwardRef<AntdInputRef, PasswordProps>(
-  ({ autofocus, ...props }: PasswordProps, ref) => {
-    const { onFocus, onBlur, inputRef } = useInputEscape(ref);
+Input.Password = forwardRef<AntdInputRef, PasswordProps>((props: PasswordProps, ref) => {
+  const { onFocus, onBlur, inputRef } = useInputEscape(ref);
 
-    useEffect(() => {
-      if (autofocus && inputRef?.current) {
-        inputRef.current.focus();
-      }
-    }, [autofocus, inputRef]);
-
-    return (
-      <AntdInput.Password
-        {...props}
-        ref={inputRef as RefObject<InputRef>}
-        onBlur={onBlur}
-        onFocus={onFocus}
-      />
-    );
-  },
-);
+  return (
+    <AntdInput.Password
+      {...props}
+      ref={inputRef as RefObject<InputRef>}
+      onBlur={onBlur}
+      onFocus={onFocus}
+    />
+  );
+});
 
 Input.TextArea = forwardRef<AntdInputRef, TextAreaProps>((props: TextAreaProps, ref) => {
   const { onFocus, onBlur, inputRef } = useInputEscape(ref);
