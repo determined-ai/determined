@@ -74,16 +74,21 @@ function InlineForm<T>({
 
   React.useEffect(() => {
     // Reacts to the input validation to enable/disable the "submit button"
+    let mounted = true;
     if (isEditing) {
-      form.validateFields(['input']).then(
-        () => {
-          setHasFormError(false);
-        },
-        () => {
-          setHasFormError(true);
-        },
-      );
+      (async () => {
+        try {
+          await form.validateFields(['input'])
+          if (mounted) setHasFormError(false)
+        } catch {
+          if (mounted) setHasFormError(true)
+        }
+      })()
     }
+    return () => {
+      mounted = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputCurrentValue, isEditing, form]);
 
   const handleEdit = useCallback(() => {
