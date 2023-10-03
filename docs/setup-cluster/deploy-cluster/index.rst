@@ -7,7 +7,9 @@
 .. meta::
    :description: Discover how to install and set up your Determined cluster locally, on AWS, on GCP, on Kubernetes, on Slurm or on premises.
 
-To install and set up Determined, follow the cluster deployment guide for your environment.
+Install and set up Determined using the cluster deployment guide for your environment.
+
+.. include:: ../../_shared/tip-keep-install-instructions.txt
 
 .. note::
 
@@ -72,7 +74,7 @@ Enable Determined to submit jobs to a Slurm cluster.
    :hidden:
 
    Quick Installation <basic>
-   Deploy on Prem <on-prem/overview>
+   Deploy on Prem <on-prem/index>
    Deploy on AWS <aws/overview>
    Deploy on GCP <gcp/overview>
    Deploy on Kubernetes <k8s/overview>

@@ -1,8 +1,8 @@
 .. _requirements:
 
-###########################
- Installation Requirements
-###########################
+##############
+ Requirements
+##############
 
 .. _system-requirements:
 

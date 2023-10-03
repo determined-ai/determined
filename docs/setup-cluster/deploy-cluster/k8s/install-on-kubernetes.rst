@@ -13,6 +13,8 @@
 This user guide describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__.
 using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
+.. include:: ../../../_shared/tip-keep-install-instructions.txt
+
 When the Determined Helm chart is installed, the following entities will be created:
 
 -  Deployment of the Determined master.
