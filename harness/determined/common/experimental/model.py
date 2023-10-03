@@ -20,11 +20,11 @@ class ModelVersion:
     Attributes:
         session: HTTP request session.
         model_version: (int) Version number assigned by the registry, starting from 1 and
-        incrementing each time a new model version is registered.
+            incrementing each time a new model version is registered.
         model_name: (str) Name of the parent model.
         checkpoint: (Mutable, Optional[checkpoint.Checkpoint]) Checkpoint associated with this
             model version.
-        model_id: (int) ID of the parent model.
+        model_id: (Mutable, Optional[int]) ID of the parent model.
         metadata: (Mutable, Optional[Dict]) Metadata of this model version.
         name: (Mutable, Optional[str]) Human-friendly name of this model version.
 
@@ -40,14 +40,12 @@ class ModelVersion:
         session: api.Session,
         model_version: int,
         model_name: str,
-        model_id: int,
     ):
         self._session = session
         self.model_name = model_name
         self.model_version = model_version
-        # TODO: model_id will be removed in (MLG-629)
-        self.model_id = model_id
 
+        self.model_id: Optional[int] = None
         self.checkpoint: Optional[checkpoint.Checkpoint] = None
         self.metadata: Optional[Dict[str, Any]] = None
         self.name: Optional[str] = None
@@ -114,7 +112,6 @@ class ModelVersion:
             model_version.checkpoint, self._session
         )
         self.metadata = model_version.metadata or {}
-        self.name = model_version.name or ""
         self.comment = model_version.comment or ""
         self.notes = model_version.notes or ""
         self.model_version = model_version.version
@@ -134,7 +131,6 @@ class ModelVersion:
             session,
             model_version=version_bindings.version,
             model_name=version_bindings.model.name,
-            model_id=version_bindings.model.id,
         )
         version._hydrate(version_bindings)
         return version
@@ -182,28 +178,28 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-
     Class representing a model in the model registry.
 
     A Model object is usually obtained from ``determined.experimental.client.create_model()``
     or ``determined.experimental.client.get_model()``. It contains methods for model
     versions and metadata.
-
-    Arguments:
-        model_id (int): The unique id of this model.
-        name (string): The name of the model.
     """
 
     def __init__(
         self,
         session: api.Session,
-        model_id: int,
         name: str,
     ):
+        """Construct a new Model object.
+
+        Args:
+            session (api.Session): The session to use for API calls.
+            name (string): The name of the model.
+        """
         self._session = session
-        self.model_id = model_id
         self.name = name
 
+        self.model_id: Optional[int] = None
         self.description: Optional[str] = None
         self.creation_time: Optional[datetime.datetime] = None
         self.last_updated_time: Optional[datetime.datetime] = None
@@ -389,6 +385,7 @@ class Model:
         )
 
     def _hydrate(self, model: bindings.v1Model) -> None:
+        self.model_id = model.id
         self.description = model.description or ""
         self.creation_time = util.parse_protobuf_timestamp(model.creationTime)
         self.last_updated_time = util.parse_protobuf_timestamp(model.lastUpdatedTime)
@@ -409,7 +406,6 @@ class Model:
     def _from_bindings(cls, model_bindings: bindings.v1Model, session: api.Session) -> "Model":
         model = cls(
             session,
-            model_id=model_bindings.id,
             name=model_bindings.name,
         )
         model._hydrate(model_bindings)
