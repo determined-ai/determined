@@ -48,17 +48,21 @@ func ByExternalToken(ctx context.Context, tokenText string,
 	if !ok || orgRoles.Role == model.NoRole {
 		return nil, nil, db.ErrNotFound
 	}
-	clusterAccess, ok := orgRoles.ClusterRoles[ext.ClusterID]
-	if ok {
-		if clusterAccess == model.NoRole {
-			return nil, nil, db.ErrNotFound
-		}
-		isAdmin = clusterAccess == model.AdminRole
+	if orgRoles.Role == model.AdminRole {
+		isAdmin = true
 	} else {
-		if orgRoles.DefaultClusterRole == model.NoRole {
-			return nil, nil, db.ErrNotFound
+		clusterAccess, ok := orgRoles.ClusterRoles[ext.ClusterID]
+		if ok {
+			if clusterAccess == model.NoRole {
+				return nil, nil, db.ErrNotFound
+			}
+			isAdmin = clusterAccess == model.AdminRole
+		} else {
+			if orgRoles.DefaultClusterRole == model.NoRole {
+				return nil, nil, db.ErrNotFound
+			}
+			isAdmin = orgRoles.DefaultClusterRole == model.AdminRole
 		}
-		isAdmin = orgRoles.DefaultClusterRole == model.AdminRole
 	}
 
 	scimLock.Lock()
