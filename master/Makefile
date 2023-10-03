@@ -141,7 +141,7 @@ fmt:
 
 .PHONY: test
 test: build/mock_gen.stamp
-	gotestsum --junitfile test.junit.xml -- -short -coverprofile=coverage.out -covermode count -cover ./...
+	gotestsum --junitfile test.junit.xml -- -race -short -coverprofile=coverage.out -covermode atomic -cover ./...
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
