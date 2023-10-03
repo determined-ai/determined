@@ -139,7 +139,6 @@ const TableActionBar: React.FC<Props> = ({
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
     useModal(ExperimentTensorBoardModal);
-  const totalExperiments = Loadable.getOrElse(0, total);
   const isMobile = useMobile();
 
   const experimentIds = useMemo(() => Array.from(selectedExperimentIds), [selectedExperimentIds]);
@@ -328,10 +327,10 @@ const TableActionBar: React.FC<Props> = ({
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
-    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
-      totalExperiments,
-      'experiment',
-    )}`;
+    const totalExperiments = Loadable.getOrElse(0, total);
+    let label = Loadable.isLoaded(total)
+      ? `${totalExperiments.toLocaleString()} ${pluralizer(totalExperiments, 'experiment')}`
+      : 'Loading experiments...';
 
     if (selectAll) {
       const all = !excludedExperimentIds?.size ? 'All ' : '';
@@ -344,7 +343,7 @@ const TableActionBar: React.FC<Props> = ({
     }
 
     return label;
-  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total, totalExperiments]);
+  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
