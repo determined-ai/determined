@@ -333,6 +333,7 @@ def test_models(client: _client.Determined) -> None:
         model.remove_metadata(["a", "b"])
 
         # break the cache again, testing get_model_by_id.
+        assert model.model_id is not None, "model_id was populated by create_model"
         model = client.get_model_by_id(model.model_id)
         assert model.labels == []
         assert model.metadata == {"c": 3}, model.metadata
