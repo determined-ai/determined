@@ -645,7 +645,7 @@ func cleanUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 		t.Logf("Error cleaning up role")
 	}
 
-	err = usergroup.RemoveUsersFromGroupTx(ctx, nil, testGroupStatic.ID, testUser.ID)
+	err = usergroup.RemoveUsersFromGroupsTx(ctx, nil, []int{testGroupStatic.ID}, testUser.ID)
 	if err != nil {
 		t.Logf("Error cleaning up group membership on (%v, %v): %v", testGroupStatic.ID, testUser.ID, err)
 	}
