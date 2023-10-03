@@ -7,4 +7,5 @@ type TelemetryConfig struct {
 	OtelEnabled              bool   `json:"otel_enabled"`
 	OtelExportedOtlpEndpoint string `json:"otel_endpoint"`
 	SegmentWebUIKey          string `json:"segment_webui_key"`
+	ClusterID                string `json:"cluster_id"`
 }

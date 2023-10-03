@@ -869,7 +869,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	m.ClusterID, err = m.db.GetOrCreateClusterID()
+	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}

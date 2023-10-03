@@ -706,23 +706,23 @@ func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error
 	return r0, r1, r2
 }
 
-// GetOrCreateClusterID provides a mock function with given fields:
-func (_m *DB) GetOrCreateClusterID() (string, error) {
-	ret := _m.Called()
+// GetOrCreateClusterID provides a mock function with given fields: telemetryID
+func (_m *DB) GetOrCreateClusterID(telemetryID string) (string, error) {
+	ret := _m.Called(telemetryID)
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (string, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(telemetryID)
 	}
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(telemetryID)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(telemetryID)
 	} else {
 		r1 = ret.Error(1)
 	}
