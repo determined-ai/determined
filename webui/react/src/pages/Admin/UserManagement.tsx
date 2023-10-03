@@ -5,10 +5,11 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
+import ChangeUserStatusModalComponent from 'components/ChangeUserStatusModal';
 import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
 import CreateUserModalComponent from 'components/CreateUserModal';
 import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import { makeToast } from 'components/kit/Toast';
@@ -62,6 +63,12 @@ const MenuKey = {
   Groups: 'groups',
   State: 'state',
   View: 'view',
+} as const;
+
+const ActionMenuKey = {
+  AddToGroups: 'add-to-groups',
+  ChangeStatus: 'change-status',
+  SetRoles: 'set-roles',
 } as const;
 
 const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
@@ -153,6 +160,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
 const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const pageRef = useRef<HTMLElement>(null);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
@@ -169,6 +177,7 @@ const UserManagement: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyUsers } = usePermissions();
   const info = useObservable(determinedStore.info);
+  const ChangeUserStatusModal = useModal(ChangeUserStatusModalComponent);
 
   const canceler = useRef(new AbortController());
   const fetchUsers = useCallback((): void => {
@@ -225,6 +234,41 @@ const UserManagement: React.FC = () => {
     ),
     [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
+
+  const handleTableRowSelect = useCallback((rowKeys: React.Key[]) => {
+    setSelectedUserIds(rowKeys);
+  }, []);
+
+  const actionDropdownMenu: MenuItem[] = useMemo(() => {
+    const menuItems: MenuItem[] = [{ key: ActionMenuKey.ChangeStatus, label: 'Change Status' }];
+
+    if (rbacEnabled) {
+      menuItems.push(
+        { key: ActionMenuKey.SetRoles, label: 'Set Roles' },
+        { key: ActionMenuKey.AddToGroups, label: 'Add to Groups' },
+      );
+    }
+    return menuItems;
+  }, [rbacEnabled]);
+
+  const handleActionDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case ActionMenuKey.AddToGroups:
+          break;
+        case ActionMenuKey.ChangeStatus:
+          ChangeUserStatusModal.open();
+          break;
+        case ActionMenuKey.SetRoles:
+          break;
+      }
+    },
+    [ChangeUserStatusModal],
+  );
+
+  const clearTableSelection = useCallback(() => {
+    setSelectedUserIds([]);
+  }, []);
 
   const filterIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
 
@@ -343,6 +387,13 @@ const UserManagement: React.FC = () => {
         loading={Loadable.isNotLoaded(loadableUsers)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
+        rowSelection={{
+          columnWidth: '20px',
+          fixed: true,
+          onChange: handleTableRowSelect,
+          preserveSelectedRowKeys: false,
+          selectedRowKeys: selectedUserIds,
+        }}
         settings={{
           ...settings,
           columns: DEFAULT_COLUMNS,
@@ -355,7 +406,15 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [filteredUsers, loadableUsers, settings, columns, updateSettings]);
+  }, [
+    settings,
+    columns,
+    filteredUsers,
+    loadableUsers,
+    handleTableRowSelect,
+    selectedUserIds,
+    updateSettings,
+  ]);
 
   return (
     <>
@@ -363,6 +422,11 @@ const UserManagement: React.FC = () => {
         className={css.usersTable}
         options={
           <Space>
+            {selectedUserIds.length > 0 && (
+              <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
+                <Button>Actions</Button>
+              </Dropdown>
+            )}
             <Button
               aria-label={CREATE_USER_LABEL}
               disabled={!info.userManagementEnabled || !canModifyUsers}
@@ -376,6 +440,11 @@ const UserManagement: React.FC = () => {
         {table}
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />
+      <ChangeUserStatusModal.Component
+        clearTableSelection={clearTableSelection}
+        fetchUsers={fetchUsers}
+        userIds={selectedUserIds.map((id) => Number(id))}
+      />
     </>
   );
 };
