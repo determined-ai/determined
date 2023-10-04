@@ -62,7 +62,7 @@ func runRoot() error {
 	}
 
 	m := internal.New(logStore, config)
-	return m.Run(context.TODO())
+	return m.Run(context.TODO(), nil)
 }
 
 // initializeConfig initializes master config with the validated configuration populated from config

@@ -608,7 +608,7 @@ func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
 	return 0, errors.New("listener not found")
 }
 
-func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error {
+func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLogInitDone chan struct{}) error {
 	// Create the base socket listener by either fetching one passed to us from systemd or creating a
 	// TCP listener manually.
 	var baseListener net.Listener
@@ -716,6 +716,11 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	} else {
 		log.Infof("accepting incoming connections on port %d", m.config.Port)
 	}
+
+	if gRPCLogInitDone != nil {
+		close(gRPCLogInitDone)
+	}
+
 	select {
 	case err := <-errs:
 		return err
@@ -854,7 +859,11 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 }
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
-func (m *Master) Run(ctx context.Context) error {
+//
+// gRPCLogInitDone is closed when the grpclog package's logger singletons are set. This is just
+// used by tests to soothe -race, since we asynchronously launch a gRPC server and connect with a
+// gRPC client, in the same program, using the same singletons.
+func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	log.Infof("Determined master %s (built with %s)", version.Version, runtime.Version())
 
 	var err error
@@ -1215,5 +1224,5 @@ func (m *Master) Run(ctx context.Context) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	return m.startServers(ctx, cert)
+	return m.startServers(ctx, cert, gRPCLogInitDone)
 }
