@@ -58,7 +58,8 @@ jobs:
 
       - name: Persist cluster if failure noticed
         if: steps.deploy.outcome == 'success' && steps.tests.outcome != 'success'
-        run: make -C performance persist
+        # run: make -C performance persist
+        run: echo 'skipping'
 
       - name: Unpersist cluster if tests passed
         if: steps.tests.outcome == 'success'
@@ -85,14 +86,24 @@ jobs:
         if: steps.deploy.outcome == 'success' && steps.tests.outcome == 'success'
         run: make -C performance down
 
-      # TODO(danh): get Slack report generated as part of k6 output
-      # - name: Post run report
-      #   if: always()
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.24.0
-      #   with:
-      #     # goes to #ci-bots
-      #     channel-id: 'C9LFPNA3Y'
-      #     slack-message: NYI
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.PERFORMANCE_SLACK_BOT_TOKEN }}
+      - name: Get Slack report contents
+        if: always()
+        id: slack-report
+        run: |
+          ls performance/reports
+          cat performance/reports/*.results.txt
+          echo 'message<<EOF' >> $GITHUB_OUTPUT
+          cat performance/reports/*.results.txt >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+      - name: Post run report
+        if: always()
+        id: slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          # goes to #ci-bots
+          channel-id: 'C9LFPNA3Y'
+          slack-message: |
+            ${{ steps.slack-report.outputs.message }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.PERFORMANCE_SLACK_BOT_TOKEN }}
