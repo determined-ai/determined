@@ -178,6 +178,10 @@ def edit(parsed_args: Namespace) -> None:
         user_obj.rename(new_username=parsed_args.username)
         changes.append("Username")
     
+    if parsed_args.admin is not None:
+        user_obj.change_admin(admin=parsed_args.admin)
+        changes.append("Admin")
+    
     if len(changes) > 0:
         print("Changes made to the following fields: " + ', '.join(changes))
     else:
@@ -239,6 +243,7 @@ args_description = [
             Arg("--username", default=None, help="new username name for target_user"),
             BoolOptArg("--remote", "--no-remote", dest="remote", default=None),
             BoolOptArg("--activate", "--deactivate", dest="activate", default=None),
+            BoolOptArg("--admin", "--no-admin", dest="admin", default=None),
         ]),
     ])
 ]  # type: List[Any]
