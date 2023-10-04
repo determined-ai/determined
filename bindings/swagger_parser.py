@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 import typing
 from dataclasses import dataclass, field
@@ -77,13 +78,16 @@ class Parameter:
     name: str
     type: TypeAnno
     required: bool
-    where: typing_extensions.Literal["query", "body", "path", "definitions"]
+    where: typing_extensions.Literal["query", "body", "path", "definitions", "formData"]
     serialized_name: typing.Optional[str] = None
     title: typing.Optional[str] = None
 
     def __post_init__(self):
         # validations
-        assert self.where in ("query", "body", "path", "definitions"), (self.name, self.where)
+        assert self.where in ("query", "body", "path", "definitions", "formData"), (
+            self.name,
+            self.where,
+        )
         assert self.where != "path" or self.required, self.name
         if self.where == "path":
             if not isinstance(self.type, (String, Int)):
@@ -93,6 +97,16 @@ class Parameter:
             if not isinstance(underlying_typ, (String, Int, Bool, DateTime, Float)):
                 if not (isinstance(underlying_typ, Ref) and underlying_typ.url_encodable):
                     raise AssertionError(f"bad type in query parameter {self.name}: {self.type}")
+        if self.where == "formData":
+            logging.warning(
+                f"""The bindings for endpoints that use `formData` are not currently supported!
+
+We need to properly support Multipart FormData
+in our binding generation and requests library before these bindings can be safely used.
+
+This is a temporary workaround. Ticket for fixing this properly: https://hpe-aiatscale.atlassian.net/browse/MLG-1019
+"""
+            )
 
 
 @dataclass
