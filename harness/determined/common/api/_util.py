@@ -124,12 +124,12 @@ def task_is_ready(
         if len(task.allocations) == 0:
             return False, None
 
+        if task.endTime is not None:
+            return True, "task has been terminated."
+
         is_ready = task.allocations[0].isReady
         if is_ready:
             return True, None
-
-        if task.endTime is not None:
-            return True, "task has been terminated."
 
         return False, ""
 
