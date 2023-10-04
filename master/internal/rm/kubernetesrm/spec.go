@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/determined-ai/determined/master/internal/ft"
+
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/docker/docker/api/types/mount"
@@ -218,6 +220,39 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 }
 
 func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
+	addNodeSelectorRequirement(pod, k8sV1.NodeSelectorRequirement{
+		Key:      clusterID,
+		Operator: k8sV1.NodeSelectorOpDoesNotExist,
+	}, addOnLabel)
+
+	// TODO once k8s supports
+	// RequiredDuringSchedulingRequiredDuringExecution
+	// we can add two node affininties for noExecuteNodeLabel and noScheduleNodeLabel
+	// so we can skip the step in k8s disable where we kill everything in non drain.
+}
+
+func addDisallowedNodesToPodSpec(pod *k8sV1.Pod, taskID model.TaskID) {
+	// Can't just replace []string{nodeName} with ft.DisallowedNodes(taskID).ToSlice() and not loop
+	// because of the k8s error given "Required value:
+	// must be only one value when `operator` is 'In' or 'NotIn' for node field selector".
+	for _, nodeName := range ft.DisallowedNodes(taskID).ToSlice() {
+		addNodeSelectorRequirement(pod, k8sV1.NodeSelectorRequirement{
+			Key:      "metadata.name",
+			Operator: k8sV1.NodeSelectorOpNotIn,
+			Values:   []string{nodeName},
+		}, addOnField)
+	}
+}
+
+const (
+	addOnLabel = true
+	addOnField = false
+)
+
+func addNodeSelectorRequirement(
+	pod *k8sV1.Pod, req k8sV1.NodeSelectorRequirement, onLabel bool,
+) {
+	// TODO make sure nick didn't bork this in a rebase.
 	if pod.Spec.Affinity == nil {
 		pod.Spec.Affinity = &k8sV1.Affinity{}
 	}
@@ -236,26 +271,25 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 			k8sV1.NodeSelectorTerm{})
 	}
 
-	req := k8sV1.NodeSelectorRequirement{
-		Key:      clusterID,
-		Operator: k8sV1.NodeSelectorOpDoesNotExist,
+	reqs := nodeSelector.NodeSelectorTerms[0].MatchExpressions
+	if onLabel {
+		reqs = nodeSelector.NodeSelectorTerms[0].MatchFields
 	}
 
 	// Make function idempotent.
-	for _, r := range nodeSelector.NodeSelectorTerms[0].MatchExpressions {
+	for _, r := range reqs {
 		if reflect.DeepEqual(r, req) {
 			return
 		}
 	}
 
-	nodeSelector.NodeSelectorTerms[0].MatchExpressions = append(
-		nodeSelector.NodeSelectorTerms[0].MatchExpressions, req,
-	)
-
-	// TODO once k8s supports
-	// RequiredDuringSchedulingRequiredDuringExecution
-	// we can add two node affininties for noExecuteNodeLabel and noScheduleNodeLabel
-	// so we can skip the step in k8s disable where we kill everything in non drain.
+	if onLabel {
+		nodeSelector.NodeSelectorTerms[0].MatchExpressions = append(
+			nodeSelector.NodeSelectorTerms[0].MatchExpressions, req)
+	} else {
+		nodeSelector.NodeSelectorTerms[0].MatchFields = append(
+			nodeSelector.NodeSelectorTerms[0].MatchFields, req)
+	}
 }
 
 func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
@@ -333,6 +367,7 @@ func (p *pod) configurePodSpec(
 	p.modifyPodSpec(podSpec, scheduler)
 
 	addNodeDisabledAffinityToPodSpec(podSpec, clusterIDNodeLabel())
+	addDisallowedNodesToPodSpec(podSpec, model.TaskID(p.submissionInfo.taskSpec.TaskID))
 
 	nonDeterminedContainers := make([]k8sV1.Container, 0)
 	for idx, container := range podSpec.Spec.Containers {
