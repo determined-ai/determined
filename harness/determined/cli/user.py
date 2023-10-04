@@ -155,9 +155,17 @@ def whoami(parsed_args: Namespace) -> None:
     print("You are logged in as user '{}'".format(user.username))
 
 @login_sdk_client
-def change_display_name(parsed_args: Namespace) -> None:
+def edit(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
-    user_obj.change_display_name(display_name=parsed_args.new_display_name)
+    changes = []
+    if parsed_args.display_name is not None:
+        user_obj.change_display_name(display_name=parsed_args.display_name)
+        changes.append("Display Name")
+    
+    if len(changes) > 0:
+        print("Changes made to the following fields: " + ' '.join(changes))
+    else:
+        print("No changes made")
 
 AGENT_USER_GROUP_ARGS = [
     Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
@@ -209,9 +217,9 @@ args_description = [
             *AGENT_USER_GROUP_ARGS,
         ]),
         Cmd("whoami", whoami, "print the active user", []),
-        Cmd("change-display-name", change_display_name, "change display name for user", [
+        Cmd("edit", edit, "print the active user", [
             Arg("target_user", default=None, help="name of user whose display name should be changed"),
-            Arg("new_display_name", default=None, help="new display name for target_user"),
+            Arg("--display-name", default=None, help="new display name for target_user"),
         ]),
     ])
 ]  # type: List[Any]
