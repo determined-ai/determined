@@ -2,7 +2,7 @@
 
 det deploy $@
 res=$?
-if [ $res -ne 0 ] && [ "${CLUSTER_ID}" != "" ]; then
+if [ $res -ne 0 ] && [ "$2" == "up" ] && [ "${CLUSTER_ID}" != "" ]; then
     det deploy $1 down --cluster-id ${CLUSTER_ID} --yes
 fi
 exit $res
