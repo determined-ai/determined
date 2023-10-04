@@ -8,6 +8,8 @@ This user guide describes how to deploy a Determined cluster on Amazon Web Servi
 :ref:`det deploy <determined-deploy>` tool makes it easy to create and install these resources. If
 you would rather create the cluster manually, see the :ref:`aws-manual-deployment` section below.
 
+.. include:: ../../../_shared/tip-keep-install-instructions.txt
+
 For more information about using Determined on AWS, see the :ref:`topic_guide_aws` topic guide.
 
 .. _determined-deploy:

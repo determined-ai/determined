@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/atomic"
 	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -126,7 +126,10 @@ func TestShipper(t *testing.T) {
 	}()
 
 	schedule := []int{0, 0, 1, 1, 0, 0, 2, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0}
-	progress := atomic.NewInt64(0)
+	var progress atomic.Int64
+
+	// Because the shipper singleton is not thread-safe, we cannot reset it later without this lock.
+	var shipperInitLock sync.Mutex
 
 	expected := map[int]int{} // Sent IDs to count of expected hits, access protected by waitgroup.
 	var wg sync.WaitGroup
@@ -138,10 +141,13 @@ func TestShipper(t *testing.T) {
 		for id, delay := range schedule {
 			time.Sleep(scheduledWaitToDuration(delay))
 			expected[id] = 3 // 3 sends, one for each trigger.
-			require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
+			shipperInitLock.Lock()
+			err := ReportExperimentStateChanged(ctx, model.Experiment{
 				ID:    id,
 				State: model.CompletedState,
-			}, config))
+			}, config)
+			shipperInitLock.Unlock()
+			require.NoError(t, err)
 			progress.Store(int64(id))
 		}
 	}()
@@ -183,10 +189,10 @@ func TestShipper(t *testing.T) {
 	t.Logf("chaosing shipper with %d/%d events sent", progress.Load(), len(schedule))
 	singletonShipper.Close()
 	t.Log("recreating shipper")
+	shipperInitLock.Lock()
 	singletonShipper = newShipper()
+	shipperInitLock.Unlock()
 
-	ctx, cancel = context.WithTimeout(ctx, 10*time.Second) // Turn this up to debug.
-	defer cancel()
 	select {
 	case <-done:
 		t.Log("waitgroup closed, checking results")
@@ -198,8 +204,10 @@ func TestShipper(t *testing.T) {
 				require.LessOrEqual(t, sends, 3, "event was not sent an excessive number of times")
 			}
 		}
-	case <-ctx.Done():
+	case <-time.After(10 * time.Second):
 		t.Errorf("did not receive all events in time")
+	case <-ctx.Done():
+		t.Errorf("exited: %s", ctx.Err())
 	}
 }
 

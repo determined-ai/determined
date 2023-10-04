@@ -1,14 +1,17 @@
 package telemetry
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"math/big"
 	"reflect"
+	"time"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -17,8 +20,52 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
 )
 
-// ReportMasterTick reports the master snapshot on a periodic tick.
-func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
+const (
+	minTickIntervalMins = 10
+	maxTickIntervalMins = 60
+)
+
+// telemetryRPFetcher exists mainly to avoid an annoying import cycle.
+type telemetryRPFetcher interface {
+	GetResourcePools(
+		actor.Messenger,
+		*apiv1.GetResourcePoolsRequest,
+	) (*apiv1.GetResourcePoolsResponse, error)
+}
+
+// PeriodicallyReportMasterTick periodically reports various telemetry information about the
+// running master. It should be called once per cluster.
+func PeriodicallyReportMasterTick(db db.DB, rm telemetryRPFetcher, system *actor.System) {
+	if defaultTelemeter == nil {
+		return
+	}
+
+	for {
+		reportMasterTick(db, rm, system)
+		time.Sleep(reportMasterTickDelay())
+	}
+}
+
+func reportMasterTickDelay() time.Duration {
+	bg := big.NewInt(maxTickIntervalMins - minTickIntervalMins)
+	randNum, err := rand.Int(rand.Reader, bg)
+	if err != nil {
+		syslog.Error(err)
+		return time.Duration(maxTickIntervalMins) * time.Minute
+	}
+	randInt := int(randNum.Int64()) + minTickIntervalMins
+	return time.Duration(randInt) * time.Minute
+}
+
+// reportMasterTick reports the master snapshot on a periodic tick.
+func reportMasterTick(db db.DB, rm telemetryRPFetcher, system *actor.System) {
+	resp, err := rm.GetResourcePools(system, &apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		// TODO(Brad): Make this routine more accepting of failures.
+		syslog.WithError(err).Error("failed to receive resource pool telemetry information")
+		return
+	}
+
 	resourceManagerType := ""
 
 	gpuTotalNum, gpuUsedNum := 0, 0
@@ -33,7 +80,7 @@ func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
 
 	dbInfo, err := db.PeriodicTelemetryInfo()
 	if err != nil {
-		logrus.WithError(err).Error("failed to retrieve telemetry information")
+		syslog.WithError(err).Error("failed to retrieve telemetry information")
 		return
 	}
 
@@ -46,20 +93,19 @@ func ReportMasterTick(resp *apiv1.GetResourcePoolsResponse, db db.DB) {
 	}
 
 	if err = json.Unmarshal(dbInfo, &props); err != nil {
-		logrus.WithError(err).Error("failed to retrieve telemetry information")
+		syslog.WithError(err).Error("failed to retrieve telemetry information")
 		return
 	}
 
-	DefaultTelemeter.track(
-		analytics.Track{
-			Event:      "master_tick",
-			Properties: props,
-		})
+	defaultTelemeter.track(analytics.Track{
+		Event:      "master_tick",
+		Properties: props,
+	})
 }
 
 // ReportProvisionerTick reports the state of all provision requests by a provisioner.
 func ReportProvisionerTick(instances []*model.Instance, instanceType string) {
-	DefaultTelemeter.track(
+	defaultTelemeter.track(
 		analytics.Track{
 			Event: "provisioner_tick",
 			Properties: map[string]interface{}{
@@ -71,7 +117,7 @@ func ReportProvisionerTick(instances []*model.Instance, instanceType string) {
 
 // ReportExperimentCreated reports that an experiment has been created.
 func ReportExperimentCreated(id int, config expconf.ExperimentConfig) {
-	DefaultTelemeter.track(
+	defaultTelemeter.track(
 		analytics.Track{
 			Event: "experiment_created",
 			Properties: map[string]interface{}{
@@ -91,7 +137,7 @@ func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 ) {
 	res, err := db.CompleteAllocationTelemetry(a.AllocationID)
 	if err != nil {
-		logrus.WithError(err).Warn("failed to fetch allocation telemetry")
+		syslog.WithError(err).Warn("failed to fetch allocation telemetry")
 		return
 	}
 
@@ -108,11 +154,11 @@ func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 	}
 
 	if err = json.Unmarshal(res, &props); err != nil {
-		logrus.WithError(err).Warn("failed to report allocation telemetry")
+		syslog.WithError(err).Warn("failed to report allocation telemetry")
 		return
 	}
 
-	DefaultTelemeter.track(
+	defaultTelemeter.track(
 		analytics.Track{
 			Event:      "allocation_terminal",
 			Properties: props,
@@ -120,35 +166,35 @@ func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
 	)
 }
 
-func fetchNumTrials(db *db.PgDB, experimentID int) *int64 {
+func fetchNumTrials(db db.DB, experimentID int) *int64 {
 	result, err := db.ExperimentNumTrials(experimentID)
 	if err != nil {
-		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
+		syslog.WithError(err).Warn("failed to fetch telemetry metrics")
 		return nil
 	}
 	return &result
 }
 
-func fetchNumSteps(db *db.PgDB, experimentID int) *int64 {
+func fetchNumSteps(db db.DB, experimentID int) *int64 {
 	result, err := db.ExperimentNumSteps(experimentID)
 	if err != nil {
-		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
+		syslog.WithError(err).Warn("failed to fetch telemetry metrics")
 		return nil
 	}
 	return &result
 }
 
-func fetchTotalStepTime(db *db.PgDB, experimentID int) *float64 {
+func fetchTotalStepTime(db db.DB, experimentID int) *float64 {
 	result, err := db.ExperimentTotalStepTime(experimentID)
 	if err != nil {
-		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
+		syslog.WithError(err).Warn("failed to fetch telemetry metrics")
 		return nil
 	}
 	return &result
 }
 
 // ReportExperimentStateChanged reports that the state of an experiment has changed.
-func ReportExperimentStateChanged(db *db.PgDB, e *model.Experiment) {
+func ReportExperimentStateChanged(db db.DB, e *model.Experiment) {
 	var numTrials *int64
 	var numSteps *int64
 	var totalStepTime *float64
@@ -161,7 +207,7 @@ func ReportExperimentStateChanged(db *db.PgDB, e *model.Experiment) {
 		totalStepTime = fetchTotalStepTime(db, e.ID)
 	}
 
-	DefaultTelemeter.track(
+	defaultTelemeter.track(
 		analytics.Track{
 			Event: "experiment_state_changed",
 			Properties: map[string]interface{}{
@@ -179,7 +225,7 @@ func ReportExperimentStateChanged(db *db.PgDB, e *model.Experiment) {
 
 // ReportUserCreated reports that a user has been created.
 func ReportUserCreated(admin, active bool) {
-	DefaultTelemeter.track(
+	defaultTelemeter.track(
 		analytics.Track{
 			Event: "user_created",
 			Properties: map[string]interface{}{

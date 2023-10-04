@@ -204,6 +204,14 @@ func addAgentUserGroup(
 		return err
 	}
 	_, err := idb.NewInsert().Model(&next).Returning("id").Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = idb.NewUpdate().Table("users").
+		Set("modified_at = NOW()").
+		Where("id = ?", userID).
+		Exec(ctx)
 	return err
 }
 

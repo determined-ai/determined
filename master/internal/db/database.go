@@ -19,7 +19,7 @@ import (
 type DB interface {
 	Migrate(migrationURL string, actions []string) error
 	Close() error
-	GetOrCreateClusterID() (string, error)
+	GetOrCreateClusterID(telemetryID string) (string, error)
 	CheckExperimentExists(id int) (bool, error)
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)

@@ -1,3 +1,4 @@
+import itertools
 import logging
 import pathlib
 import warnings
@@ -243,6 +244,15 @@ class Determined:
             raise errors.NotFoundException(f"Workspace {name} not found.")
         assert len(resp.workspaces) == 1, f"Multiple workspaces found with name {name}"
         return workspace.Workspace._from_bindings(resp.workspaces[0], self._session)
+
+    def list_workspaces(self) -> List[workspace.Workspace]:
+        def get_with_offset(offset: int) -> bindings.v1GetWorkspacesResponse:
+            return bindings.get_GetWorkspaces(self._session, offset=offset)
+
+        iter_workspaces = itertools.chain.from_iterable(
+            r.workspaces for r in api.read_paginated(get_with_offset)
+        )
+        return [workspace.Workspace._from_bindings(w, self._session) for w in iter_workspaces]
 
     def create_model(
         self,

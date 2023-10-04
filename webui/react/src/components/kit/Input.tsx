@@ -49,6 +49,7 @@ interface TextAreaProps {
 }
 
 interface PasswordProps {
+  autoFocus?: boolean;
   disabled?: boolean;
   placeholder?: string;
   prefix?: ReactNode;
@@ -78,6 +79,7 @@ Input.Group = AntdInput.Group;
 
 Input.Password = forwardRef<AntdInputRef, PasswordProps>((props: PasswordProps, ref) => {
   const { onFocus, onBlur, inputRef } = useInputEscape(ref);
+
   return (
     <AntdInput.Password
       {...props}

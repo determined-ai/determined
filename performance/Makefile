@@ -57,7 +57,7 @@ up-local:
 
 down:
 	$(PERSIST_CHECK)
-	det deploy aws down --cluster-id $(CLUSTER_ID) && \
+	det deploy aws down --cluster-id $(CLUSTER_ID) --yes && \
 	rm -f .det.url
 
 down-local:
@@ -84,6 +84,9 @@ run:
 	docker cp \
 		perf-tests:/home/k6/junit.xml \
 		reports/$$(date +%s).junit.xml; \
+	docker cp \
+		perf-tests:/home/k6/results.txt \
+		reports/$$(date +%s).results.txt; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
@@ -98,6 +101,9 @@ run-local:
 	docker cp \
 		perf-tests:/home/k6/junit.xml \
 		reports/local-$$(date +%s).junit.xml; \
+	docker cp \
+		perf-tests:/home/k6/results.txt \
+		reports/local-$$(date +%s).results.txt; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 

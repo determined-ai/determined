@@ -80,15 +80,26 @@ func RunMaster(ctx context.Context, c *config.Config) (
 	m := internal.New(logs, c)
 	logrus.AddHook(logs)
 	logrus.SetLevel(logrus.DebugLevel)
+
+	ctx, cancel := context.WithCancel(ctx)
+	gRPCLogInitDone := make(chan struct{})
 	go func() {
-		err := m.Run(ctx)
+		defer cancel()
+
+		err := m.Run(ctx, gRPCLogInitDone)
 		switch {
-		case err == context.Canceled:
+		case errors.Is(err, context.Canceled):
 			log.Println("master stopped")
 		case err != nil:
 			log.Println("error running master: ", err)
 		}
 	}()
+
+	select {
+	case <-gRPCLogInitDone:
+	case <-ctx.Done():
+		return nil, nil, nil, nil, ctx.Err()
+	}
 
 	cl, err := ConnectMaster(c)
 	if err != nil {

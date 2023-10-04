@@ -5,15 +5,15 @@ import React, { useState } from 'react';
 import Checkbox from 'components/kit/Checkbox';
 import { Modal } from 'components/kit/Modal';
 import { cancelExperiment, killExperiment } from 'services/api';
-import { ValueOf } from 'types';
+import { ExperimentAction, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 export const ActionType = {
-  Cancel: 'Cancel',
-  Kill: 'Kill',
+  Cancel: ExperimentAction.Cancel,
+  Kill: ExperimentAction.Kill,
 } as const;
 
-export type ActionType = ValueOf<typeof ActionType>;
+export type AvalableActions = ValueOf<typeof ActionType>;
 
 export const BUTTON_TEXT = 'Stop Experiment';
 export const CHECKBOX_TEXT = 'Save checkpoint before stopping';
@@ -24,7 +24,7 @@ interface Props {
 }
 
 const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }: Props) => {
-  const [type, setType] = useState<ActionType>(ActionType.Cancel);
+  const [type, setType] = useState<AvalableActions>(ActionType.Cancel);
 
   const handleCheckBoxChange = (event: CheckboxChangeEvent) => {
     setType(event.target.checked ? ActionType.Cancel : ActionType.Kill);

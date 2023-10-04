@@ -23,6 +23,7 @@ openssl req -new -config server.cnf -key "$key" -out "$csr"
 
 # Sign with rootca.
 echo "$rootca" | openssl x509 -req -days "$days" -sha512 -CAcreateserial \
+    -extensions req_v3_usr -extfile server.cnf \
     -in "$csr" -CA "$ca" -CAkey /dev/stdin -out "$cert"
 
 # Turn the certificate into a proper chain.

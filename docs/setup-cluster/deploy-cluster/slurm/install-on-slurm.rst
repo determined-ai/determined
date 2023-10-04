@@ -7,6 +7,8 @@
 This document describes how to deploy Determined on an HPC cluster managed by the Slurm or PBS
 workload managers.
 
+.. include:: ../../../_shared/tip-keep-install-instructions.txt
+
 The Determined master and launcher installation packages are configured for installation on a single
 login or administrator Slurm/PBS cluster node.
 
@@ -19,9 +21,9 @@ After the node has been selected and the
 install and configure the Determined master:
 
 #. Install the on-premises Determined master component (not including the Determined agent) as
-   described in the :doc:`/setup-cluster/deploy-cluster/on-prem/linux-packages` document. Perform
-   the installation and configuration steps, but stop before starting the ``determined-master``
-   service, and continue with the steps below.
+   described in :ref:`install-using-linux-packages`. Perform the installation and configuration
+   steps, but stop before starting the ``determined-master`` service, and continue with the steps
+   below.
 
 #. Install the launcher.
 

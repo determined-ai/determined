@@ -25,9 +25,13 @@
 /bindings/generate_bindings_py.py @determined-ai/ml-sys
 /e2e_tests/tests/*.py             @determined-ai/ml-sys
 /e2e_tests/tests/requirements.txt @determined-ai/ml-sys
-/e2e_tests/tests/command          @determined-ai/ml-sys
 /e2e_tests/tests/experiment       @determined-ai/ml-sys
 /e2e_tests/tests/nightly          @determined-ai/ml-sys
+
+# Backend owns some e2e tests.
+/e2e_tests/tests/cluster  @determined-ai/backend
+/e2e_tests/tests/command  @determined-ai/backend
+/e2e_tests/tests/template @determined-ai/backend
 
 # Owned by @determined-ai/web except for generated files
 /webui    @determined-ai/web

@@ -64,6 +64,18 @@ def test_gpt_neox_zero1() -> None:
     exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
 
 
+HUGGINGFACE_CONTEXT_ERR_MSG = """
+A HF_READ_ONLY_TOKEN environment variable is missing!
+
+If this error was raised in CircleCI, verify that the test was run using the
+`hugging-face` context. This context should be injecting the expected
+`HF_READ_ONLY_TOKEN`variable.
+
+If this error was raised in another context, set the HF_READ_ONLY_TOKEN env var manually with its
+value a valid HF authorization token.
+"""
+
+
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_textual_inversion_stable_diffusion_finetune() -> None:
@@ -91,7 +103,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
+            raise RuntimeError(HUGGINGFACE_CONTEXT_ERR_MSG)
         else:
             raise k
 
@@ -127,7 +139,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
+            raise RuntimeError(HUGGINGFACE_CONTEXT_ERR_MSG)
         else:
             raise k
 
