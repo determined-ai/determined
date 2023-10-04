@@ -13,6 +13,12 @@ Install and set up Determined using the cluster deployment guide for your enviro
 
 .. note::
 
+   Administrators should first consult :ref:`setup-checklist-temp` when setting up Determined for an
+   organization. This includes ensuring your system meets
+   :ref:`duplicate-advanced-setup-requirements`.
+
+.. note::
+
    To configure your cluster, visit :ref:`cluster-configuration`.
 
 *******

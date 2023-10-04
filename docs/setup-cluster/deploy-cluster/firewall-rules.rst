@@ -6,11 +6,14 @@
  Firewall Rules
 ################
 
-The firewall rules must satisfy the following network access requirements for the master and agents.
+DRAFT The firewall rules must satisfy the following network access requirements for the master and
+agents.
 
 ********
  Master
 ********
+
+NEEDS UPDATES
 
 -  Inbound TCP to the master's network port from the Determined agent instances, as well as all
    machines where developers want to use the Determined CLI or WebUI. The default port is ``8443``
@@ -21,6 +24,8 @@ The firewall rules must satisfy the following network access requirements for th
 ********
  Agents
 ********
+
+NEEDS UPDATES
 
 -  Inbound TCP from all ports on the master to all ports on the agent.
 
