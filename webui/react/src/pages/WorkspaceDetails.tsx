@@ -138,7 +138,7 @@ const WorkspaceDetails: React.FC = () => {
   );
 
   const addableUsers = useMemo(
-    () => users.filter((user) => !usersAssignedDirectlyIds.has(user.id)),
+    () => users.filter((user) => !usersAssignedDirectlyIds.has(user.id) && user.isActive),
     [users, usersAssignedDirectlyIds],
   );
   const addableUsersAndGroups = useMemo(
