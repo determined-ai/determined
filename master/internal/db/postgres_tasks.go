@@ -431,12 +431,21 @@ func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
 
 // RecordTaskEndStatsBun record end stats for tasks with bun.
 func RecordTaskEndStatsBun(stats *model.TaskStats) error {
-	if _, err := Bun().NewUpdate().Model(stats).Column("end_time").
-		Where("container_id = ?", stats.ContainerID).
+	query := Bun().NewUpdate().Model(stats).Column("end_time").
 		Where("allocation_id = ?", stats.AllocationID).
 		Where("event_type = ?", stats.EventType).
-		Where("end_time IS NULL").
-		Exec(context.TODO()); err != nil {
+		Where("end_time IS NULL")
+	if stats.ContainerID == nil {
+		// Just doing Where("container_id = ?", stats.ContainerID) in the null case
+		// generates WHERE container_id = NULL which doesn't seem to match on null rows.
+		// We don't use this case anywhere currently but this feels like an easy bug to write
+		// without this.
+		query = query.Where("container_id IS NULL")
+	} else {
+		query = query.Where("container_id = ?", stats.ContainerID)
+	}
+
+	if _, err := query.Exec(context.TODO()); err != nil {
 		return fmt.Errorf("recording task end stats %+v: %w", stats, err)
 	}
 

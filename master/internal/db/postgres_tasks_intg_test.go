@@ -142,12 +142,15 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 	}), "failed to add allocation")
 
 	var expected []*model.TaskStats
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		taskStats := &model.TaskStats{
 			AllocationID: allocationID,
 			EventType:    "IMAGEPULL",
 			ContainerID:  ptrs.Ptr(cproto.NewID()),
 			StartTime:    ptrs.Ptr(time.Now().Truncate(time.Millisecond)),
+		}
+		if i == 0 {
+			taskStats.ContainerID = nil
 		}
 		require.NoError(t, RecordTaskStatsBun(taskStats))
 

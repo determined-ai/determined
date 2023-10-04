@@ -59,7 +59,7 @@ func initTheOneBun(db *PgDB) {
 	}
 
 	// This will print every query that runs.
-	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
 	// This will print only the failed queries.
 	theOneBun.AddQueryHook(bundebug.NewQueryHook())
