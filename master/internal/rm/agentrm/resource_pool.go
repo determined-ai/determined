@@ -114,7 +114,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-	rp.getOrCreateGroup(ctx, msg.JobID)
+	rp.getOrCreateGroup(msg.JobID)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed Task"
 	}
@@ -365,9 +365,7 @@ func (rp *resourcePool) resourcesReleased(
 	}
 }
 
-func (rp *resourcePool) getOrCreateGroup(
-	ctx *actor.Context, jobID model.JobID,
-) *tasklist.Group {
+func (rp *resourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
 	if g, ok := rp.groups[jobID]; ok {
 		return g
 	}
@@ -712,7 +710,7 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(err)
 
 	case sproto.SetGroupWeight:
-		rp.getOrCreateGroup(ctx, msg.JobID).Weight = msg.Weight
+		rp.getOrCreateGroup(msg.JobID).Weight = msg.Weight
 
 	case sproto.SetGroupPriority:
 		err := rp.setGroupPriority(ctx, msg)
@@ -732,13 +730,12 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 }
 
 func (rp *resourcePool) setGroupPriority(ctx *actor.Context, msg sproto.SetGroupPriority) error {
-	g := rp.getOrCreateGroup(ctx, msg.JobID)
+	g := rp.getOrCreateGroup(msg.JobID)
 	if (g.Priority != nil && *g.Priority == msg.Priority) ||
 		rp.config.Scheduler.Priority == nil {
 		return nil
 	}
-	ctx.Log().Infof("setting priority for group of %s to %d",
-		msg.JobID, msg.Priority)
+	ctx.Log().Infof("setting priority for group of %s to %d", msg.JobID, msg.Priority)
 	g.Priority = &msg.Priority
 	time, err := tasklist.GetJobSubmissionTime(rp.taskList, msg.JobID)
 	if err != nil {
@@ -753,7 +750,7 @@ func (rp *resourcePool) setGroupPriority(ctx *actor.Context, msg sproto.SetGroup
 func (rp *resourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.SetGroupMaxSlots:
-		rp.getOrCreateGroup(ctx, msg.JobID).MaxSlots = msg.MaxSlots
+		rp.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
 
 	case sproto.SetAllocationName:
 		rp.receiveSetTaskName(ctx, msg)

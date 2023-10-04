@@ -182,7 +182,7 @@ func (k *kubernetesResourcePool) summarizePods(
 func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.SetGroupMaxSlots:
-		k.getOrCreateGroup(ctx, msg.JobID).MaxSlots = msg.MaxSlots
+		k.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
 
 	case sproto.SetAllocationName:
 		k.receiveSetAllocationName(ctx, msg)
@@ -234,7 +234,7 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-	k.getOrCreateGroup(ctx, msg.JobID)
+	k.getOrCreateGroup(msg.JobID)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed-k8-Task"
 	}
@@ -289,7 +289,7 @@ func (k *kubernetesResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		}
 
 	case sproto.SetGroupPriority:
-		group := k.getOrCreateGroup(ctx, msg.JobID)
+		group := k.getOrCreateGroup(msg.JobID)
 		// Check if there is already a submitted task in this group for which
 		// priority is immutable. If so, respond with an error.
 		for it := k.reqList.Iterator(); it.Next(); {
@@ -381,7 +381,7 @@ func (k *kubernetesResourcePool) moveJob(
 	}
 
 	if prioChange {
-		g := k.getOrCreateGroup(ctx, jobID)
+		g := k.getOrCreateGroup(jobID)
 		oldPriority := g.Priority
 		g.Priority = &anchorPriority
 
@@ -630,10 +630,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 	rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
 }
 
-func (k *kubernetesResourcePool) getOrCreateGroup(
-	ctx *actor.Context,
-	jobID model.JobID,
-) *tasklist.Group {
+func (k *kubernetesResourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
 	if g, ok := k.groups[jobID]; ok {
 		return g
 	}
