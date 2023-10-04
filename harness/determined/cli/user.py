@@ -6,7 +6,7 @@ from typing import Any, List
 from determined.cli import errors, login_sdk_client, render, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, BoolOptArg
 from determined.experimental import client
 
 FullUser = namedtuple(
@@ -162,6 +162,10 @@ def edit(parsed_args: Namespace) -> None:
         user_obj.change_display_name(display_name=parsed_args.display_name)
         changes.append("Display Name")
     
+    if parsed_args.remote is not None:
+        user_obj.change_remote(remote=parsed_args.remote)
+        changes.append("Remote")
+    
     if len(changes) > 0:
         print("Changes made to the following fields: " + ' '.join(changes))
     else:
@@ -220,6 +224,7 @@ args_description = [
         Cmd("edit", edit, "print the active user", [
             Arg("target_user", default=None, help="name of user whose display name should be changed"),
             Arg("--display-name", default=None, help="new display name for target_user"),
+            BoolOptArg("--remote", "--no-remote", dest="remote", default=None),
         ]),
     ])
 ]  # type: List[Any]
