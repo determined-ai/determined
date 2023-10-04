@@ -181,33 +181,33 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73, 0x2f, 0x7b, 0x75, 0x73, 0x65,
 	0x72, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x3a, 0x08,
 	0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x92, 0x41, 0x07, 0x0a, 0x05, 0x55, 0x73, 0x65,
-	0x72, 0x73, 0x12, 0x87, 0x01, 0x0a, 0x09, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72,
-	0x12, 0x23, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55,
-	0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2f, 0x82, 0xd3, 0xe4,
-	0x93, 0x02, 0x1f, 0x32, 0x17, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65,
-	0x72, 0x73, 0x2f, 0x7b, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x7d, 0x3a, 0x04, 0x75, 0x73,
-	0x65, 0x72, 0x92, 0x41, 0x07, 0x0a, 0x05, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x80, 0x01, 0x0a,
-	0x0a, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x24, 0x2e, 0x64, 0x65,
+	0x72, 0x73, 0x12, 0xaa, 0x01, 0x0a, 0x14, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c,
+	0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x12, 0x2e, 0x2e, 0x64, 0x65,
 	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x25, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x25, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x12,
-	0x32, 0x0d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73, 0x3a,
+	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2f, 0x2e, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31, 0x82, 0xd3,
+	0xe4, 0x93, 0x02, 0x1e, 0x32, 0x19, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73,
+	0x65, 0x72, 0x73, 0x2f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x3a,
 	0x01, 0x2a, 0x92, 0x41, 0x0a, 0x0a, 0x08, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x12,
-	0xaa, 0x01, 0x0a, 0x14, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70,
-	0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x12, 0x2e, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x73, 0x73,
-	0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2f, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x73, 0x73,
-	0x69, 0x67, 0x6e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x70, 0x6c, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31, 0x82, 0xd3, 0xe4, 0x93, 0x02,
-	0x1e, 0x32, 0x19, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73,
-	0x2f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x3a, 0x01, 0x2a, 0x92,
+	0x87, 0x01, 0x0a, 0x09, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x12, 0x23, 0x2e,
+	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
+	0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2f, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1f,
+	0x32, 0x17, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73, 0x2f,
+	0x7b, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x7d, 0x3a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x92,
+	0x41, 0x07, 0x0a, 0x05, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x80, 0x01, 0x0a, 0x0a, 0x50, 0x61,
+	0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x74,
+	0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25,
+	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
+	0x76, 0x31, 0x2e, 0x50, 0x61, 0x74, 0x63, 0x68, 0x55, 0x73, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x25, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x12, 0x32, 0x0d, 0x2f,
+	0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73, 0x3a, 0x01, 0x2a, 0x92,
 	0x41, 0x0a, 0x0a, 0x08, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x12, 0x90, 0x01, 0x0a,
 	0x0c, 0x47, 0x65, 0x74, 0x54, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x12, 0x26, 0x2e,
 	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
@@ -2397,9 +2397,9 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*GetMeRequest)(nil),                                 // 9: determined.api.v1.GetMeRequest
 	(*PostUserRequest)(nil),                              // 10: determined.api.v1.PostUserRequest
 	(*SetUserPasswordRequest)(nil),                       // 11: determined.api.v1.SetUserPasswordRequest
-	(*PatchUserRequest)(nil),                             // 12: determined.api.v1.PatchUserRequest
-	(*PatchUsersRequest)(nil),                            // 13: determined.api.v1.PatchUsersRequest
-	(*AssignMultipleGroupsRequest)(nil),                  // 14: determined.api.v1.AssignMultipleGroupsRequest
+	(*AssignMultipleGroupsRequest)(nil),                  // 12: determined.api.v1.AssignMultipleGroupsRequest
+	(*PatchUserRequest)(nil),                             // 13: determined.api.v1.PatchUserRequest
+	(*PatchUsersRequest)(nil),                            // 14: determined.api.v1.PatchUsersRequest
 	(*GetTelemetryRequest)(nil),                          // 15: determined.api.v1.GetTelemetryRequest
 	(*GetMasterRequest)(nil),                             // 16: determined.api.v1.GetMasterRequest
 	(*GetMasterConfigRequest)(nil),                       // 17: determined.api.v1.GetMasterConfigRequest
@@ -2610,9 +2610,9 @@ var file_determined_api_v1_api_proto_goTypes = []interface{}{
 	(*GetMeResponse)(nil),                                // 222: determined.api.v1.GetMeResponse
 	(*PostUserResponse)(nil),                             // 223: determined.api.v1.PostUserResponse
 	(*SetUserPasswordResponse)(nil),                      // 224: determined.api.v1.SetUserPasswordResponse
-	(*PatchUserResponse)(nil),                            // 225: determined.api.v1.PatchUserResponse
-	(*PatchUsersResponse)(nil),                           // 226: determined.api.v1.PatchUsersResponse
-	(*AssignMultipleGroupsResponse)(nil),                 // 227: determined.api.v1.AssignMultipleGroupsResponse
+	(*AssignMultipleGroupsResponse)(nil),                 // 225: determined.api.v1.AssignMultipleGroupsResponse
+	(*PatchUserResponse)(nil),                            // 226: determined.api.v1.PatchUserResponse
+	(*PatchUsersResponse)(nil),                           // 227: determined.api.v1.PatchUsersResponse
 	(*GetTelemetryResponse)(nil),                         // 228: determined.api.v1.GetTelemetryResponse
 	(*GetMasterResponse)(nil),                            // 229: determined.api.v1.GetMasterResponse
 	(*GetMasterConfigResponse)(nil),                      // 230: determined.api.v1.GetMasterConfigResponse
@@ -2825,9 +2825,9 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	9,   // 9: determined.api.v1.Determined.GetMe:input_type -> determined.api.v1.GetMeRequest
 	10,  // 10: determined.api.v1.Determined.PostUser:input_type -> determined.api.v1.PostUserRequest
 	11,  // 11: determined.api.v1.Determined.SetUserPassword:input_type -> determined.api.v1.SetUserPasswordRequest
-	12,  // 12: determined.api.v1.Determined.PatchUser:input_type -> determined.api.v1.PatchUserRequest
-	13,  // 13: determined.api.v1.Determined.PatchUsers:input_type -> determined.api.v1.PatchUsersRequest
-	14,  // 14: determined.api.v1.Determined.AssignMultipleGroups:input_type -> determined.api.v1.AssignMultipleGroupsRequest
+	12,  // 12: determined.api.v1.Determined.AssignMultipleGroups:input_type -> determined.api.v1.AssignMultipleGroupsRequest
+	13,  // 13: determined.api.v1.Determined.PatchUser:input_type -> determined.api.v1.PatchUserRequest
+	14,  // 14: determined.api.v1.Determined.PatchUsers:input_type -> determined.api.v1.PatchUsersRequest
 	15,  // 15: determined.api.v1.Determined.GetTelemetry:input_type -> determined.api.v1.GetTelemetryRequest
 	16,  // 16: determined.api.v1.Determined.GetMaster:input_type -> determined.api.v1.GetMasterRequest
 	17,  // 17: determined.api.v1.Determined.GetMasterConfig:input_type -> determined.api.v1.GetMasterConfigRequest
@@ -3038,9 +3038,9 @@ var file_determined_api_v1_api_proto_depIdxs = []int32{
 	222, // 222: determined.api.v1.Determined.GetMe:output_type -> determined.api.v1.GetMeResponse
 	223, // 223: determined.api.v1.Determined.PostUser:output_type -> determined.api.v1.PostUserResponse
 	224, // 224: determined.api.v1.Determined.SetUserPassword:output_type -> determined.api.v1.SetUserPasswordResponse
-	225, // 225: determined.api.v1.Determined.PatchUser:output_type -> determined.api.v1.PatchUserResponse
-	226, // 226: determined.api.v1.Determined.PatchUsers:output_type -> determined.api.v1.PatchUsersResponse
-	227, // 227: determined.api.v1.Determined.AssignMultipleGroups:output_type -> determined.api.v1.AssignMultipleGroupsResponse
+	225, // 225: determined.api.v1.Determined.AssignMultipleGroups:output_type -> determined.api.v1.AssignMultipleGroupsResponse
+	226, // 226: determined.api.v1.Determined.PatchUser:output_type -> determined.api.v1.PatchUserResponse
+	227, // 227: determined.api.v1.Determined.PatchUsers:output_type -> determined.api.v1.PatchUsersResponse
 	228, // 228: determined.api.v1.Determined.GetTelemetry:output_type -> determined.api.v1.GetTelemetryResponse
 	229, // 229: determined.api.v1.Determined.GetMaster:output_type -> determined.api.v1.GetMasterResponse
 	230, // 230: determined.api.v1.Determined.GetMasterConfig:output_type -> determined.api.v1.GetMasterConfigResponse
@@ -3327,12 +3327,12 @@ type DeterminedClient interface {
 	PostUser(ctx context.Context, in *PostUserRequest, opts ...grpc.CallOption) (*PostUserResponse, error)
 	// Set the requested user's password.
 	SetUserPassword(ctx context.Context, in *SetUserPasswordRequest, opts ...grpc.CallOption) (*SetUserPasswordResponse, error)
+	// Assign multiple users to multiple groups.
+	AssignMultipleGroups(ctx context.Context, in *AssignMultipleGroupsRequest, opts ...grpc.CallOption) (*AssignMultipleGroupsResponse, error)
 	// Patch a user's fields.
 	PatchUser(ctx context.Context, in *PatchUserRequest, opts ...grpc.CallOption) (*PatchUserResponse, error)
 	// Patch multiple users' activation status.
 	PatchUsers(ctx context.Context, in *PatchUsersRequest, opts ...grpc.CallOption) (*PatchUsersResponse, error)
-	// Assign multiple users to multiple groups.
-	AssignMultipleGroups(ctx context.Context, in *AssignMultipleGroupsRequest, opts ...grpc.CallOption) (*AssignMultipleGroupsResponse, error)
 	// Get telemetry information.
 	GetTelemetry(ctx context.Context, in *GetTelemetryRequest, opts ...grpc.CallOption) (*GetTelemetryResponse, error)
 	// Get master information.
@@ -3889,6 +3889,15 @@ func (c *determinedClient) SetUserPassword(ctx context.Context, in *SetUserPassw
 	return out, nil
 }
 
+func (c *determinedClient) AssignMultipleGroups(ctx context.Context, in *AssignMultipleGroupsRequest, opts ...grpc.CallOption) (*AssignMultipleGroupsResponse, error) {
+	out := new(AssignMultipleGroupsResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/AssignMultipleGroups", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *determinedClient) PatchUser(ctx context.Context, in *PatchUserRequest, opts ...grpc.CallOption) (*PatchUserResponse, error) {
 	out := new(PatchUserResponse)
 	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/PatchUser", in, out, opts...)
@@ -3901,15 +3910,6 @@ func (c *determinedClient) PatchUser(ctx context.Context, in *PatchUserRequest, 
 func (c *determinedClient) PatchUsers(ctx context.Context, in *PatchUsersRequest, opts ...grpc.CallOption) (*PatchUsersResponse, error) {
 	out := new(PatchUsersResponse)
 	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/PatchUsers", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *determinedClient) AssignMultipleGroups(ctx context.Context, in *AssignMultipleGroupsRequest, opts ...grpc.CallOption) (*AssignMultipleGroupsResponse, error) {
-	out := new(AssignMultipleGroupsResponse)
-	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/AssignMultipleGroups", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -6053,12 +6053,12 @@ type DeterminedServer interface {
 	PostUser(context.Context, *PostUserRequest) (*PostUserResponse, error)
 	// Set the requested user's password.
 	SetUserPassword(context.Context, *SetUserPasswordRequest) (*SetUserPasswordResponse, error)
+	// Assign multiple users to multiple groups.
+	AssignMultipleGroups(context.Context, *AssignMultipleGroupsRequest) (*AssignMultipleGroupsResponse, error)
 	// Patch a user's fields.
 	PatchUser(context.Context, *PatchUserRequest) (*PatchUserResponse, error)
 	// Patch multiple users' activation status.
 	PatchUsers(context.Context, *PatchUsersRequest) (*PatchUsersResponse, error)
-	// Assign multiple users to multiple groups.
-	AssignMultipleGroups(context.Context, *AssignMultipleGroupsRequest) (*AssignMultipleGroupsResponse, error)
 	// Get telemetry information.
 	GetTelemetry(context.Context, *GetTelemetryRequest) (*GetTelemetryResponse, error)
 	// Get master information.
@@ -6539,14 +6539,14 @@ func (*UnimplementedDeterminedServer) PostUser(context.Context, *PostUserRequest
 func (*UnimplementedDeterminedServer) SetUserPassword(context.Context, *SetUserPasswordRequest) (*SetUserPasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetUserPassword not implemented")
 }
+func (*UnimplementedDeterminedServer) AssignMultipleGroups(context.Context, *AssignMultipleGroupsRequest) (*AssignMultipleGroupsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignMultipleGroups not implemented")
+}
 func (*UnimplementedDeterminedServer) PatchUser(context.Context, *PatchUserRequest) (*PatchUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchUser not implemented")
 }
 func (*UnimplementedDeterminedServer) PatchUsers(context.Context, *PatchUsersRequest) (*PatchUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchUsers not implemented")
-}
-func (*UnimplementedDeterminedServer) AssignMultipleGroups(context.Context, *AssignMultipleGroupsRequest) (*AssignMultipleGroupsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AssignMultipleGroups not implemented")
 }
 func (*UnimplementedDeterminedServer) GetTelemetry(context.Context, *GetTelemetryRequest) (*GetTelemetryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTelemetry not implemented")
@@ -7363,6 +7363,24 @@ func _Determined_SetUserPassword_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Determined_AssignMultipleGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignMultipleGroupsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeterminedServer).AssignMultipleGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/determined.api.v1.Determined/AssignMultipleGroups",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeterminedServer).AssignMultipleGroups(ctx, req.(*AssignMultipleGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Determined_PatchUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PatchUserRequest)
 	if err := dec(in); err != nil {
@@ -7395,24 +7413,6 @@ func _Determined_PatchUsers_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeterminedServer).PatchUsers(ctx, req.(*PatchUsersRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Determined_AssignMultipleGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssignMultipleGroupsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeterminedServer).AssignMultipleGroups(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/determined.api.v1.Determined/AssignMultipleGroups",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeterminedServer).AssignMultipleGroups(ctx, req.(*AssignMultipleGroupsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -11076,16 +11076,16 @@ var _Determined_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Determined_SetUserPassword_Handler,
 		},
 		{
+			MethodName: "AssignMultipleGroups",
+			Handler:    _Determined_AssignMultipleGroups_Handler,
+		},
+		{
 			MethodName: "PatchUser",
 			Handler:    _Determined_PatchUser_Handler,
 		},
 		{
 			MethodName: "PatchUsers",
 			Handler:    _Determined_PatchUsers_Handler,
-		},
-		{
-			MethodName: "AssignMultipleGroups",
-			Handler:    _Determined_AssignMultipleGroups_Handler,
 		},
 		{
 			MethodName: "GetTelemetry",
