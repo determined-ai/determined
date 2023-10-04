@@ -36,7 +36,7 @@ const AddUsersToGroupsModalComponent = ({
       );
       await assignMultipleGroups({ addGroups: groupIds, removeGroups: [], userIds });
       makeToast({
-        title: 'Successfully set roles',
+        title: 'Successfully added to groups',
       });
       clearTableSelection();
     } catch (e) {

@@ -62,7 +62,7 @@ const ChangeUserStatusModalComponent = ({
           label="Status"
           name={STATUS_NAME}
           rules={[{ message: 'This field is required', required: true }]}>
-          <Select allowClear placeholder="Select Staatus">
+          <Select allowClear placeholder="Select Status">
             <Option value={StatusType.Activate}>Activate</Option>
             <Option value={StatusType.Deactivate}>Deactivate</Option>
           </Select>
