@@ -1,18 +1,36 @@
 package ft
 
 import (
-	"github.com/determined-ai/determined/master/internal/sproto"
+	"fmt"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 /*
 write through cache the alerts. or nvm just use the db or in memory for first milestone.
 */
 
-// NodeBlacklist returns a list of nodes that should be blacklisted for the given allocation
-func NodeBlacklist(ar *sproto.AllocateRequest) ([]string, error) {
+// DisallowedNodes returns a list of nodes that should be blacklisted for the given allocation
+func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
+	fmt.Println(taskID)
+
+	s := set.New[string]()
+	s.Insert("agent1")
+	s.Insert("gke-nblaskey-test2-node-pool-name-bae40778-jq79")
+	return &s
+
 	// maybe just taskid is enough. go off of task id and GetAlerts
-	return nil, nil
+	return nil
 }
+
+/*
+func CanTaskBeOnNode(taskID model.TaskID, agentID string) bool {
+	fmt.Println("CAN TASK BE ON NODE", taskID, agentID)
+	// TODO write through cache.
+	return true
+}
+*/
 
 func UserOwnsTask(userID, taskID string) (bool, error) {
 	return true, nil
