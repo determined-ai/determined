@@ -327,25 +327,28 @@ const TableActionBar: React.FC<Props> = ({
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
-    if (!Loadable.isLoaded(total)) return 'Loading experiments...';
+    return Loadable.match(total, {
+      Failed: () => null,
+      Loaded: (totalExperiments) => {
+        let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+          totalExperiments,
+          'experiment',
+        )}`;
 
-    const totalExperiments = Loadable.getOrElse(0, total);
-    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
-      totalExperiments,
-      'experiment',
-    )}`;
+        if (selectAll) {
+          const all = !excludedExperimentIds?.size ? 'All ' : '';
+          const totalSelected = Loadable.isLoaded(total)
+            ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
+            : '';
+          label = `${all}${totalSelected}experiments selected`;
+        } else if (selectedExperimentIds.size > 0) {
+          label = `${selectedExperimentIds.size} of ${label} selected`;
+        }
 
-    if (selectAll) {
-      const all = !excludedExperimentIds?.size ? 'All ' : '';
-      const totalSelected = Loadable.isLoaded(total)
-        ? (total.data - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' '
-        : '';
-      label = `${all}${totalSelected}experiments selected`;
-    } else if (selectedExperimentIds.size > 0) {
-      label = `${selectedExperimentIds.size} of ${label} selected`;
-    }
-
-    return label;
+        return label;
+      },
+      NotLoaded: () => 'Loading experiments...',
+    });
   }, [excludedExperimentIds, selectAll, selectedExperimentIds, total]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
