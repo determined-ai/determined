@@ -292,7 +292,7 @@ def create_stack(
 
 def list_stacks(boto3_session: boto3.session.Session) -> List[Dict[str, Any]]:
     cfn = boto3_session.client("cloudformation")
-    paginator = cfn.get_paginator('describe_stacks')
+    paginator = cfn.get_paginator("describe_stacks")
 
     output = []
     for response in paginator.paginate():
