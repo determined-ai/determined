@@ -6,7 +6,7 @@ from typing import Any, List
 from determined.cli import errors, login_sdk_client, render, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, Cmd, BoolOptArg
+from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd
 from determined.experimental import client
 
 FullUser = namedtuple(
@@ -158,31 +158,29 @@ def whoami(parsed_args: Namespace) -> None:
 def edit(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
     changes = []
+    patch_user = bindings.v1PatchUser()
     if parsed_args.display_name is not None:
-        user_obj.change_display_name(display_name=parsed_args.display_name)
+        patch_user.displayName = parsed_args.display_name
         changes.append("Display Name")
     
     if parsed_args.remote is not None:
-        user_obj.change_remote(remote=parsed_args.remote)
+        patch_user.remote = parsed_args.remote
         changes.append("Remote")
     
     if parsed_args.activate is not None:
-        if parsed_args.activate:
-            user_obj.activate()
-        else:
-            user_obj.deactivate()
-        
+        patch_user.active = parsed_args.activate
         changes.append("Active")
     
     if parsed_args.username is not None:
-        user_obj.rename(new_username=parsed_args.username)
+        patch_user.username = parsed_args.username
         changes.append("Username")
     
     if parsed_args.admin is not None:
-        user_obj.change_admin(admin=parsed_args.admin)
+        patch_user.admin = parsed_args.admin
         changes.append("Admin")
     
     if len(changes) > 0:
+        user_obj.edit_user(patch_user)
         print("Changes made to the following fields: " + ', '.join(changes))
     else:
         print("No changes made")
