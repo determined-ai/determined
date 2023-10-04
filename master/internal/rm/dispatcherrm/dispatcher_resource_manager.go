@@ -379,13 +379,13 @@ func (m *DispatcherResourceManager) GetJobQueueStatsRequest(
 	var resp apiv1.GetJobQueueStatsResponse
 	// If no list of resource pools has been specified, return data for all pools.
 	if len(msg.ResourcePools) == 0 {
-		hpcDetails, err := m.hpcDetailsCache.load()
+		resourcePools, err := m.GetResourcePools(nil, &apiv1.GetResourcePoolsRequest{})
 		if err != nil {
 			return nil, err
 		}
 
-		for _, p := range hpcDetails.Partitions {
-			msg.ResourcePools = append(msg.ResourcePools, p.PartitionName)
+		for _, p := range resourcePools.ResourcePools {
+			msg.ResourcePools = append(msg.ResourcePools, p.Name)
 		}
 	}
 	// Compute RPQueueStat results for each resource pool
