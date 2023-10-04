@@ -166,8 +166,16 @@ def edit(parsed_args: Namespace) -> None:
         user_obj.change_remote(remote=parsed_args.remote)
         changes.append("Remote")
     
+    if parsed_args.activate is not None:
+        if parsed_args.activate:
+            user_obj.activate()
+        else:
+            user_obj.deactivate()
+        
+        changes.append("Active")
+    
     if len(changes) > 0:
-        print("Changes made to the following fields: " + ' '.join(changes))
+        print("Changes made to the following fields: " + ', '.join(changes))
     else:
         print("No changes made")
 
@@ -225,6 +233,7 @@ args_description = [
             Arg("target_user", default=None, help="name of user whose display name should be changed"),
             Arg("--display-name", default=None, help="new display name for target_user"),
             BoolOptArg("--remote", "--no-remote", dest="remote", default=None),
+            BoolOptArg("--activate", "--deactivate", dest="activate", default=None),
         ]),
     ])
 ]  # type: List[Any]
