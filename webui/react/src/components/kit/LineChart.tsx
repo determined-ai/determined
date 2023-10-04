@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { ECElementEvent, EChartsOption } from 'echarts';
 import { CallbackDataParams, TopLevelFormatterParams } from 'echarts/types/dist/shared';
 import React, { ReactNode, useMemo } from 'react';
@@ -42,6 +43,7 @@ interface ChartProps {
   group?: string;
   onClickPoint?: OnClickPointType;
   scale?: Scale;
+  confine?: boolean;
   checkpointsDict?: CheckpointsDict;
   series: Serie[] | Loadable<Serie[]>;
   showLegend?: boolean;
@@ -63,6 +65,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   group,
   series: propSeries,
   showLegend = false,
+  confine = false,
   title,
   xAxis = XAxisDomain.Batches,
   xLabel,
@@ -110,7 +113,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         .shift();
 
       const tooltip = `
-        <div>
+        <div style="font-size: 11px;">
           <div>${(data[0].value as number[])[0]}</div>
           ${seriesList
             .map((d) => {
@@ -144,18 +147,36 @@ export const LineChart: React.FC<LineChartProps> = ({
         : undefined,
       series: series.map((serie) => ({
         connectNulls: true,
-        data: serie.data[xAxis],
+        data: (() => {
+          if (xAxis === XAxisDomain.Time) {
+            const set = new Set();
+            const arr: [x: Date, y: number][] = [];
+            for (const d of serie.data[xAxis] ?? []) {
+              const xValue = d[0];
+              const yValue = d[1];
+              if (set.has(xValue)) {
+                continue;
+              }
+              set.add(xValue);
+              arr.push([dayjs.unix(xValue).toDate(), yValue]);
+            }
+            return arr;
+          } else {
+            return serie.data[xAxis];
+          }
+        })(),
         emphasis: { focus: 'series' },
         id: serie.key,
         itemStyle: { color: serie.color },
         name: serie.name,
         symbol: (value) => {
-          if (checkpointsDict === undefined) return 'cicle';
+          if (checkpointsDict === undefined) return 'circle';
           return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
         },
         symbolSize: (value) => {
-          if (checkpointsDict === undefined) return 4;
-          return value?.[0] in checkpointsDict ? 10 : 4;
+          const DEFAULT_SIZE = 4;
+          if (checkpointsDict === undefined) return DEFAULT_SIZE;
+          return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
         },
         type: 'line',
       })),
@@ -173,16 +194,19 @@ export const LineChart: React.FC<LineChartProps> = ({
               if (params.axisDimension === 'y') {
                 currentYAxis = Number(params.value);
               }
-              return String(params.value);
+              return Number(params.value).toFixed(4).toString();
             },
           },
           type: 'cross',
         },
-        confine: true,
+        confine,
         formatter: formatterFunc,
         trigger: 'axis',
       },
-      xAxis: { boundaryGap: false, name: xLabel },
+      xAxis: {
+        name: xLabel,
+        type: xAxis === XAxisDomain.Time ? 'time' : 'category',
+      },
       yAxis: {
         minorSplitLine: { show: true },
         name: yLabel,
@@ -190,7 +214,7 @@ export const LineChart: React.FC<LineChartProps> = ({
       },
     };
     return option;
-  }, [checkpointsDict, scale, series, showLegend, xAxis, xLabel, yLabel]);
+  }, [checkpointsDict, confine, scale, series, showLegend, xAxis, xLabel, yLabel]);
 
   return (
     <>

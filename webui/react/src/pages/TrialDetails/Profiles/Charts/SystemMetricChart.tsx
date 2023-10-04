@@ -7,10 +7,7 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from 'pages/TrialDetails/Profiles/useFetchProfilerSeries';
-import {
-  // getScientificNotationTickValues,
-  getUnitForMetricName,
-} from 'pages/TrialDetails/Profiles/utils';
+import { getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
 import { XAxisDomain } from 'types';
 import handleError from 'utils/error';
 
@@ -96,13 +93,12 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
       }
       title="System Metrics">
       <LineChart
-        // experimentId={trial.id}
         handleError={handleError}
         series={systemMetrics.data}
+        showLegend
         xAxis={XAxisDomain.Time}
         xLabel="Time"
         yLabel={yLabel}
-        // yTickValues={getScientificNotationTickValues}
       />
     </Section>
   );

@@ -107,7 +107,6 @@ const ReactECharts: React.FC<Props> = ({ option, settings = {}, group, eventFunc
       ref={chartRef}
       style={{
         height: '100%',
-        padding: '12px',
         position: 'relative',
         width: '100%',
       }}

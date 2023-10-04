@@ -13,8 +13,6 @@ export interface Props {
   trial?: TrialDetails;
 }
 
-export const CHART_HEIGHT = 400;
-
 const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => {
   return (
     <div className={css.base}>
