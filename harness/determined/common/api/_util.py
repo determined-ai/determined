@@ -121,12 +121,11 @@ def task_is_ready(
         if progress_report:
             progress_report()
         assert task is not None, "task must be present."
-        if len(task.allocations) == 0:
-            return False, None
-
         if task.endTime is not None:
             return True, "task has been terminated."
 
+        if len(task.allocations) == 0:
+            return False, None
         is_ready = task.allocations[0].isReady
         if is_ready:
             return True, None
