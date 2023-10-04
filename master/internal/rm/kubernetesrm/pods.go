@@ -877,27 +877,28 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
 		return
 	}
-	p.syslog.Debugf("informer got new pod event for pod %s: %s ", pod.Name, event.Type)
+	syslog := p.syslog.WithField("pod", pod.Name)
+	syslog.WithField("event.Type", event.Type).Debug("received pod informer event")
 
 	podHandler, ok := p.podNameToPodHandler[pod.Name]
 	if !ok {
-		p.syslog.Warn("received pod status update for un-registered pod")
+		syslog.Debug("received status update for un-registered pod")
 		return
 	}
 
 	state, err := podHandler.podStatusUpdate(pod)
 	switch {
 	case err != nil:
-		p.syslog.WithError(err).Error("processing pod status update")
+		syslog.WithError(err).Error("error processing pod status update")
 		err := p.cleanUpPodHandler(podHandler)
 		if err != nil {
-			p.syslog.WithError(err).Error("cleaning up pod handler after update error")
+			syslog.WithError(err).Error("unable to cleanup pod handler after update error")
 		}
 		return
 	case state == cproto.Terminated:
 		err := p.cleanUpPodHandler(podHandler)
 		if err != nil {
-			p.syslog.WithError(err).Error("cleaning up pod handler after termination")
+			syslog.WithError(err).Error("unable to cleanup pod handler after termination")
 		}
 	}
 
