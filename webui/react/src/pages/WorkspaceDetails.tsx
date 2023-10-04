@@ -94,8 +94,15 @@ const WorkspaceDetails: React.FC = () => {
 
     const response = await getWorkspaceMembers({ nameFilter, workspaceId: id });
     const newGroupIds = new Set<number>();
-    setUsersAssignedDirectly(response.usersAssignedDirectly);
-    setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map((user) => user.id)));
+    setUsersAssignedDirectly(response.usersAssignedDirectly.filter((u) => u.isActive));
+    setUsersAssignedDirectlyIds(
+      new Set(
+        response.usersAssignedDirectly
+          .filter((u) => u.isActive)
+
+          .map((user) => user.id),
+      ),
+    );
     setGroupsAssignedDirectly(response.groups);
     response.groups.forEach((group) => {
       if (group.groupId) {
