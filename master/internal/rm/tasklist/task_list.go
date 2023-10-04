@@ -3,11 +3,10 @@ package tasklist
 import (
 	"strings"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/emirpasic/gods/sets/treeset"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // TaskList maintains all tasks in time order, and stores their allocation actor,

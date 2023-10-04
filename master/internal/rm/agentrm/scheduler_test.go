@@ -3,23 +3,19 @@ package agentrm
 import (
 	"testing"
 
-	"github.com/shopspring/decimal"
-
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
-
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
-
 	"github.com/google/uuid"
-
+	"github.com/shopspring/decimal"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 func newMaxSlot(maxSlot int) *int {

@@ -7,25 +7,22 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/exp/maps"
-
-	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
-	"github.com/determined-ai/determined/master/internal/rm/rmevents"
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
-
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // resourcePool manages the agent and task lifecycles.

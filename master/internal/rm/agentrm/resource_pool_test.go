@@ -4,22 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
-
-	"github.com/shopspring/decimal"
-
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
-
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
