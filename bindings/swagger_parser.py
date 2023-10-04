@@ -77,13 +77,16 @@ class Parameter:
     name: str
     type: TypeAnno
     required: bool
-    where: typing_extensions.Literal["query", "body", "path", "definitions"]
+    where: typing_extensions.Literal["query", "body", "path", "definitions", "formData"]
     serialized_name: typing.Optional[str] = None
     title: typing.Optional[str] = None
 
     def __post_init__(self):
         # validations
-        assert self.where in ("query", "body", "path", "definitions"), (self.name, self.where)
+        assert self.where in ("query", "body", "path", "definitions", "formData"), (
+            self.name,
+            self.where,
+        )
         assert self.where != "path" or self.required, self.name
         if self.where == "path":
             if not isinstance(self.type, (String, Int)):
