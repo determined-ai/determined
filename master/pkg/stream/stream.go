@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"encoding/json"
 	"sync"
 )
 
@@ -13,10 +14,8 @@ type DeleteFunc func(string, string) interface{}
 // Msg is an object with a message and a sequence number and json marshal caching.
 type Msg interface {
 	SeqNum() int64
-	//PrepareFn(upsert UpsertMsg, delete DeleteMsg) interface{}
-	//UpsertMsg(prepare UpsertFunc) interface{} // cache aversion of yourself for the purpose of upsert on the wire. This would have to take this prep function and pass the prep function to the upsert pmsg fn
-	//// publisher stream in internal, pass each publisher object the prep function. Know it works if you don't have to import websockets into the pkg stream object. When testing, just write in whatever is most useful for the test. Could be the full object.
-	//DeleteMsg(prepare DeleteFunc) interface{}
+	UpsertMsg() UpsertMsg
+	DeleteMsg() DeleteMsg
 }
 
 // Event contains the old and new version a Msg.  Inserts will have Before==nil, deletions will
@@ -34,11 +33,11 @@ type UpsertMsg struct {
 	Msg     Msg
 }
 
-func NewUpsertMsg(msg Msg, jsonKey string) UpsertMsg {
-	return UpsertMsg{
-		JsonKey: jsonKey,
-		Msg:     msg,
+func (u *UpsertMsg) MarshalJSON() ([]byte, error) {
+	data := map[string]Msg{
+		u.JsonKey: u.Msg,
 	}
+	return json.Marshal(data)
 }
 
 type DeleteMsg struct {
@@ -46,11 +45,11 @@ type DeleteMsg struct {
 	Deleted string
 }
 
-func NewDeleteMsg(key, deleted string) DeleteMsg {
-	return DeleteMsg{
-		Key:     key,
-		Deleted: deleted,
+func (d *DeleteMsg) MarshalJSON() ([]byte, error) {
+	data := map[string]string{
+		d.Key: d.Deleted,
 	}
+	return json.Marshal(data)
 }
 
 // Streamer aggregates many events and wakeups into a single slice of pre-marshaled messages.
@@ -137,7 +136,7 @@ func NewPublisher[T Msg]() *Publisher[T] {
 	return &Publisher[T]{}
 }
 
-func (p *Publisher[T]) Broadcast(events []Event[T]) {
+func (p *Publisher[T]) Broadcast(events []Event[T], upsertKey, deleteKey string) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -151,17 +150,17 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 			for _, ev := range events {
 				var msg interface{}
 				if ev.After != nil && sub.filter(*ev.After) {
-					if ev.upsertCache == nil {
-						ev.upsertCache = sub.Streamer.PrepareFn(ev.After)
-					}
 					// update, insert, or fallin: send the record to the client.
+					if ev.upsertCache == nil {
+						ev.upsertCache = sub.Streamer.PrepareFn((*ev.After).UpsertMsg())
+					}
 					// msg = (*ev.After).UpsertMsg(sub.UpsertFunc)
 					msg = ev.upsertCache
 				} else if ev.Before != nil && sub.filter(*ev.Before) {
-					if ev.deleteCache == nil {
-						ev.deleteCache = sub.Streamer.PrepareFn(ev.Before)
-					}
 					// deletion or fallout: tell the client the record is deleted.
+					if ev.deleteCache == nil {
+						ev.deleteCache = sub.Streamer.PrepareFn((*ev.Before).DeleteMsg())
+					}
 					// msg = (*ev.Before).DeleteMsg(sub.DeleteFunc)
 					msg = ev.deleteCache
 				} else {

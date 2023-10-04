@@ -16,7 +16,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
-const TrialsDeleteKey = "trials_deleted"
+const (
+	TrialsDeleteKey = "trials_deleted"
+	TrialsUpsertKey = "trial"
+)
 
 // TrialMsg is a stream.Msg.
 // determined:streamable
@@ -53,25 +56,40 @@ func (tm *TrialMsg) SeqNum() int64 {
 	return tm.Seq
 }
 
-func (tm *TrialMsg) UpsertMsg(upsertFunc stream.UpsertFunc) interface{} {
-	wrapper := struct {
-		Trial *TrialMsg `json:"trial"`
-	}{tm}
-
-	if upsertFunc != nil {
-		return upsertFunc(tm)
+func (tm *TrialMsg) UpsertMsg() stream.UpsertMsg {
+	return stream.UpsertMsg{
+		JsonKey: TrialsUpsertKey,
+		Msg:     tm,
 	}
-	return prepareMessageWithCache(wrapper, &tm.upsertCache)
 }
 
-func (tm *TrialMsg) DeleteMsg(deleteFunc stream.DeleteFunc) interface{} {
+func (tm *TrialMsg) DeleteMsg() stream.DeleteMsg {
 	deleted := strconv.FormatInt(int64(tm.ID), 10)
-
-	if deleteFunc != nil {
-		return deleteFunc(TrialsDeleteKey, deleted)
+	return stream.DeleteMsg{
+		Key:     TrialsDeleteKey,
+		Deleted: deleted,
 	}
-	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
 }
+
+//func (tm *TrialMsg) UpsertMsg(upsertFunc stream.UpsertFunc) interface{} {
+//	wrapper := struct {
+//		Trial *TrialMsg `json:"trial"`
+//	}{tm}
+//
+//	if upsertFunc != nil {
+//		return upsertFunc(tm)
+//	}
+//	return prepareMessageWithCache(wrapper, &tm.upsertCache)
+//}
+
+//func (tm *TrialMsg) DeleteMsg(deleteFunc stream.DeleteFunc) interface{} {
+//	deleted := strconv.FormatInt(int64(tm.ID), 10)
+//
+//	if deleteFunc != nil {
+//		return deleteFunc(TrialsDeleteKey, deleted)
+//	}
+//	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
+//}
 
 // TrialSubscriptionSpec is what a user submits to define a trial subscription.
 // determined:streamable
@@ -89,7 +107,10 @@ func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx conte
 
 	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
-		out = append(out, stream.NewDeleteMsg(TrialsDeleteKey, known))
+		out = append(out, stream.DeleteMsg{
+			Key:     TrialsDeleteKey,
+			Deleted: known,
+		})
 		return out, nil
 	}
 
@@ -130,9 +151,12 @@ func TrialCollectStartupMsgs(known string, spec TrialSubscriptionSpec, ctx conte
 	}
 
 	// step 4: emit deletions and updates to the client
-	out = append(out, stream.NewDeleteMsg(TrialsDeleteKey, missing))
+	out = append(out, stream.DeleteMsg{
+		Key:     TrialsDeleteKey,
+		Deleted: missing,
+	})
 	for _, msg := range trialMsgs {
-		out = append(out, stream.NewUpsertMsg(msg, "trial"))
+		out = append(out, stream.UpsertMsg{JsonKey: TrialsUpsertKey, Msg: msg})
 	}
 	return out, nil
 }

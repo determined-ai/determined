@@ -1,4 +1,4 @@
-package api
+package stream
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type ReadWriter interface {
+type WebsocketLike interface {
 	ReadJSON(interface{}) error
 	Write(interface{}) error
 }

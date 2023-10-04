@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
@@ -110,7 +109,7 @@ func (ps PublisherSet) Start(ctx context.Context) {
 	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
 }
 
-func writeAll(socketLike api.ReadWriter, msgs []interface{}) error {
+func writeAll(socketLike WebsocketLike, msgs []interface{}) error {
 	for _, msg := range msgs {
 		err := socketLike.Write(msg)
 		if err != nil {
@@ -121,7 +120,7 @@ func writeAll(socketLike api.ReadWriter, msgs []interface{}) error {
 }
 
 // XXX: entrypoint should be renamed
-func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, prepareFunc func(interface{}) interface{}) error {
+func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, prepareFunc func(interface{}) interface{}) error {
 	streamer := stream.NewStreamer(prepareFunc)
 	ss := NewSubscriptionSet(streamer, ps)
 
@@ -239,7 +238,16 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket api.ReadWriter, pr
 // Websocket is an Echo websocket endpoint.
 func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	ctx := c.Request().Context()
-	return ps.entrypoint(ctx, &api.WrappedWebsocket{Conn: socket}, prepareWebsocket)
+	return ps.entrypoint(ctx, &WrappedWebsocket{Conn: socket}, prepareWebsocket)
+}
+
+func prepareWebsocket(msg interface{}) interface{} {
+	if _, ok := msg.(stream.UpsertMsg); ok {
+		return prepareMessageWithCache(msg, nil)
+	} else if deleted, ok := msg.(stream.DeleteMsg); ok {
+		return newDeletedMsg(deleted.Key, deleted.Deleted)
+	}
+	return nil
 }
 
 func publishLoop[T stream.Msg](
@@ -352,6 +360,7 @@ func startup[T stream.Msg, S any](
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
+	prepare func(interface{}) interface{},
 ) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
@@ -376,7 +385,13 @@ func startup[T stream.Msg, S any](
 		return nil, err
 	}
 	msgs = append(msgs, newmsgs...)
-	return msgs, nil
+
+	preparedMsgs := make([]interface{}, 0, len(msgs))
+	for _, msg := range msgs {
+		preparedMsgs = append(preparedMsgs, prepare(msg))
+	}
+
+	return preparedMsgs, nil
 }
 
 // is startup a verb or noun?
@@ -388,7 +403,7 @@ func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
 
 	var msgs []interface{}
 	var err error
-	msgs, err = startup(msgs, err, ctx, ss.Trials, known.Trials, sub.Trials)
+	msgs, err = startup(msgs, err, ctx, ss.Trials, known.Trials, sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn)
 	// msgs, err = startup(msgs, err, ctx, ss.Experiments, known.Experiments, sub.Experiments)
 	return msgs, err
 }
@@ -471,21 +486,12 @@ func prepareMessageWithCache(
 	return *cache
 }
 
-func prepareWebsocket(msg interface{}) interface{} {
-	if _, ok := msg.(stream.UpsertMsg); ok {
-		return prepareMessageWithCache(msg, nil)
-	} else if deleted, ok := msg.(stream.DeleteMsg); ok {
-		return newDeletedMsg(deleted.Key, deleted.Deleted)
-	}
-	return nil
-}
-
-func newDeletedInterface(key, deleted string, deleteFunc stream.DeleteFunc) interface{} {
-	if deleteFunc == nil {
-		return newDeletedMsg(key, deleted)
-	}
-	return deleteFunc(key, deleted)
-}
+//func newDeletedInterface(key, deleted string, deleteFunc stream.DeleteFunc) interface{} {
+//	if deleteFunc == nil {
+//		return newDeletedMsg(key, deleted)
+//	}
+//	return deleteFunc(key, deleted)
+//}
 
 func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {
 	strMsg := fmt.Sprintf("{\"%v\": \"%v\"}", key, deleted)
@@ -495,14 +501,4 @@ func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {
 		return nil
 	}
 	return msg
-}
-
-func newDeletedMsgWithCache(
-	key string, deleted string, cache **websocket.PreparedMessage,
-) *websocket.PreparedMessage {
-	if *cache != nil {
-		return *cache
-	}
-	*cache = newDeletedMsg(key, deleted)
-	return *cache
 }
