@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -119,6 +121,49 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	aOut, err = db.AllocationByID(aIn.AllocationID)
 	require.NoError(t, err, "failed to re-retrieve allocation")
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
+}
+
+func TestRecordAndEndTaskStats(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	tID := model.NewTaskID()
+	require.NoError(t, db.AddTask(&model.Task{
+		TaskID:    tID,
+		TaskType:  model.TaskTypeTrial,
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+	}), "failed to add task")
+
+	allocationID := model.AllocationID(tID + "allocationID")
+	require.NoError(t, db.AddAllocation(&model.Allocation{
+		TaskID:       tID,
+		AllocationID: allocationID,
+	}), "failed to add allocation")
+
+	var expected []*model.TaskStats
+	for i := 0; i < 2; i++ {
+		taskStats := &model.TaskStats{
+			AllocationID: allocationID,
+			EventType:    "IMAGEPULL",
+			ContainerID:  ptrs.Ptr(cproto.NewID()),
+			StartTime:    ptrs.Ptr(time.Now().Truncate(time.Millisecond)),
+		}
+		require.NoError(t, RecordTaskStatsBun(taskStats))
+
+		taskStats.EndTime = ptrs.Ptr(time.Now().Truncate(time.Millisecond))
+		require.NoError(t, RecordTaskEndStatsBun(taskStats))
+		expected = append(expected, taskStats)
+	}
+
+	var actual []*model.TaskStats
+	err := Bun().NewSelect().
+		Model(&actual).
+		Where("allocation_id = ?", allocationID).
+		Scan(context.TODO(), &actual)
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, expected, actual)
 }
 
 func TestAllocationState(t *testing.T) {

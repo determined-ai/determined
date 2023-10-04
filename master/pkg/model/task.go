@@ -12,6 +12,7 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasklog"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -137,8 +138,13 @@ type AllocationState string
 type TaskStats struct {
 	AllocationID AllocationID
 	EventType    string
-	StartTime    *time.Time
-	EndTime      *time.Time
+	// ContainerID is sent by the agent. This won't always be present in the database
+	// This is a weird table since sometimes it is one row per allocation
+	// (like in record queued stats) and sometimes it is many per allocation like in
+	// pulled time.
+	ContainerID *cproto.ID
+	StartTime   *time.Time
+	EndTime     *time.Time
 }
 
 // ResourceAggregates is the model for resource_aggregates in the database.
