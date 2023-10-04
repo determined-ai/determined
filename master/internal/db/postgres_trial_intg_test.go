@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1260,7 +1261,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		return &tr
 	}
 
-	batchNum := 0
+	var batchNum atomic.Int64
 
 	writeToTrial := func(tr *model.Trial, tx *sqlx.Tx) {
 		coinFlip := func() bool {
@@ -1269,12 +1270,12 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 		}
 		t.Logf("writing to trial %d", tr.ID)
 
-		batchNum++
+		batchNum.Add(1)
 		metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
 		require.NoError(t, err)
 		trialMetrics := &trialv1.TrialMetrics{
 			TrialId:        int32(tr.ID),
-			StepsCompleted: int32(batchNum),
+			StepsCompleted: int32(batchNum.Load()),
 			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 		}
 		if coinFlip() {
