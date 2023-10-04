@@ -9,11 +9,11 @@
    :hidden:
 
    How It Works <architecture/index>
-   Tutorials <tutorials/index>
+   Tutorials <tutorials/_index>
    Quickstart for Model Developers <tutorials/quickstart-mdldev>
-   Examples <example-solutions/examples>
+   Examples <example-solutions/index>
    Model Hub Library <model-hub-library/index>
-   How-To Articles <articles/index>
+   How-To Articles <articles/_index>
 
 .. toctree::
    :caption: Set Up
@@ -25,60 +25,18 @@
    Workspaces and Projects <setup-cluster/workspaces>
    Logging and Elasticsearch <setup-cluster/elasticsearch-logging-backend>
    Cluster Usage History <setup-cluster/historical-cluster-usage-data>
-   Monitor Experiment Through Webhooks  <integrations/notification/index>
    Upgrade <setup-cluster/upgrade>
    Troubleshooting <setup-cluster/troubleshooting>
 
 .. toctree::
-   :caption: Model Developer Guide
+   :caption: Fixed
    :hidden:
-
-   Overview <model-dev-guide/index>
-   Distributed Training <model-dev-guide/dtrain/index>
-   Prepare Container Environment <model-dev-guide/prepare-container/index>
-   Prepare Data <model-dev-guide/load-model-data>
-   API Guides <model-dev-guide/api-guides/index>
-   Hyperparameter Tuning <model-dev-guide/hyperparameter/index>
-   Submit Experiment <model-dev-guide/submit-experiment>
-   How to Debug Models <model-dev-guide/debug-models>
-   Model Management <model-dev-guide/model-management/index>
-   Best Practices <model-dev-guide/best-practices/index>
-
-.. toctree::
-   :caption: Reference
-   :hidden:
-
-   Overview <reference/index>
-   Python SDK <reference/python-sdk>
-   REST API <reference/rest-api>
-   Training Reference <reference/training/index>
-   Experiment Configuration Reference <reference/training/experiment-config-reference>
-   Model Hub Reference <reference/model-hub/index>
-   Deployment Reference <reference/deploy/index>
-   Job Configuration Reference <reference/interface/job-config-reference>
-   Custom Searcher Reference <reference/searcher/custom-searcher-reference>
-   CLI Reference <reference/cli-reference>
-
-.. toctree::
-   :caption: Tools
-   :hidden:
-
-   Overview <interfaces/index>
-   CLI User Guide <interfaces/cli-ug>
-   Commands and Shells <interfaces/commands-and-shells>
-   WebUI Interface <interfaces/webui-if>
-   Jupyter Notebooks <interfaces/notebooks>
-   TensorBoards <interfaces/tensorboard>
-   Exposing Custom Ports <interfaces/proxy-ports>
-
-.. toctree::
-   :caption: Integrations
-   :hidden:
-
-   Works with Determined <integrations/ecosystem/ecosystem-integration>
-   IDE Integration <interfaces/ide-integration>
-   Pachyderm <integrations/pachyderm/pachyderm>
-   Prometheus and Grafana <integrations/prometheus/prometheus>
+   
+   Model Dev Guide <model-dev-guide/_index>
+   Reference <reference/_index>
+   Tools <tools/_index>
+   Integrations <integrations/_index>
+ 
    attributions
 
 #############################

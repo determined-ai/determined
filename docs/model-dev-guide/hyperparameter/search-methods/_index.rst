@@ -63,10 +63,6 @@ You can also implement your own :ref:`custom search methods <topic-guides_hp-tun
 
 .. toctree::
    :maxdepth: 1
-   :hidden:
+   :glob:
 
-   hp-adaptive-asha
-   hp-grid
-   hp-random
-   hp-single
-   hp-custom
+   ./*

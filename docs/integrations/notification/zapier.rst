@@ -1,6 +1,6 @@
-################
- Through Zapier
-################
+######
+Zapier
+######
 
 This section will walk through the steps needed to set up Zapier webhook to to receive updates from
 Determined.

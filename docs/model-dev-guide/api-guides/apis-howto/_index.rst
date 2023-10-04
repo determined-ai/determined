@@ -109,8 +109,7 @@ Known limitations:
 .. toctree::
    :caption: Training
    :hidden:
+   :glob:
 
-   api-core-ug
-   api-pytorch-ug
-   api-keras-ug
-   deepspeed/index
+   ./* 
+   ./*/_index

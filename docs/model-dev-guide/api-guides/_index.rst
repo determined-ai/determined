@@ -15,6 +15,7 @@
 .. toctree::
    :caption: API Guides
    :hidden:
+   :glob:
 
-   apis-howto/index
-   batch-processing/batch-process-api-ug
+   ./* 
+   ./*/_index

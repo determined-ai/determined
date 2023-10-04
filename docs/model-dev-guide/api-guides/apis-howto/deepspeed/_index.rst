@@ -44,8 +44,6 @@ Determined DeepSpeed documentation:
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob: 
 
-   API Usage Guide <deepspeed>
-   Autotuning <autotuning>
-   advanced
-   pytorch2deepspeed
+   ./*

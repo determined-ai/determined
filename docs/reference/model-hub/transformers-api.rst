@@ -15,14 +15,14 @@
 The ``__init__`` method replicated below makes heavy use of the :ref:`helper functions
 <transformers-functions>` in the next section.
 
-.. literalinclude:: ../../../../model_hub/model_hub/huggingface/_trial.py
+.. literalinclude:: ../../../model_hub/model_hub/huggingface/_trial.py
    :language: python
    :pyobject: BaseTransformerTrial.__init__
 
 The ``evaluate_batch`` method replicated below should work for most models and tasks but can be
 overwritten for more custom behavior in a subclass.
 
-.. literalinclude:: ../../../../model_hub/model_hub/huggingface/_trial.py
+.. literalinclude:: ../../../model_hub/model_hub/huggingface/_trial.py
    :language: python
    :pyobject: BaseTransformerTrial.train_batch
 

@@ -1,5 +1,3 @@
-.. _pachyderm-integration:
-
 ###########
  Pachyderm
 ###########

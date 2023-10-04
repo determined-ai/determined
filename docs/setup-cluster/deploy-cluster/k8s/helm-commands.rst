@@ -5,7 +5,7 @@
 +-----------------------------------------------------------------+
 | Configuration Reference                                         |
 +=================================================================+
-| :doc:`/reference/deploy/config/helm-config-reference`           |
+| :doc:`/reference/deploy/helm-config-reference`                  |
 +-----------------------------------------------------------------+
 
 `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ is a command-line tool for

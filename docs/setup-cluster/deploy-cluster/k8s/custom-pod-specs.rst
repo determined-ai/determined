@@ -81,7 +81,7 @@ Determined supports configuring the following fields:
 
    For those fields, use ``det user link-with-agent-user`` instead.
 
-   Example of configuring a :ref:`pachyderm-integration` notebook plugin to run in ``det notebook``:
+   Example of configuring a pachyderm notebook plugin to run in ``det notebook``:
 
    .. code:: yaml
 
@@ -101,7 +101,7 @@ Determined supports configuring the following fields:
 
 Default pod specs must be configured when :ref:`installing or upgrading <install-on-kubernetes>`
 Determined. The default pod specs are configured in ``values.yaml`` of the
-:doc:`/reference/deploy/config/helm-config-reference` under ``taskContainerDefaults.cpuPodSpec`` and
+:doc:`/reference/deploy/helm-config-reference` under ``taskContainerDefaults.cpuPodSpec`` and
 ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to all tasks that use GPUs
 (e.g., experiments, notebooks). ``cpuPodSpec`` is applied to all tasks that only use CPUs (e.g.,
 TensorBoards, CPU-only notebooks). Fields that are not specified will remain at their default

@@ -228,4 +228,4 @@
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
    <master-config-reference>`.
 
-.. include:: ../../../_shared/note-dtrain-learn-more.txt
+.. include:: ../../_shared/note-dtrain-learn-more.txt
