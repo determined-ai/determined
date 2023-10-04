@@ -1,37 +1,10 @@
 .. toctree::
    :hidden:
 
-   Welcome <self>
-
-.. toctree::
-   :caption: Get Started
-   :maxdepth: 2
-   :hidden:
-
-   How It Works <architecture/index>
+   Get Started <get-started/_index>
+   Set Up <setup-cluster/_index>
    Tutorials <tutorials/_index>
-   Quickstart for Model Developers <tutorials/quickstart-mdldev>
-   Examples <example-solutions/index>
-   Model Hub Library <model-hub-library/index>
-   How-To Articles <articles/_index>
-
-.. toctree::
-   :caption: Set Up
-   :hidden:
-
-   Installation Guide <setup-cluster/deploy-cluster/index>
-   Security <setup-cluster/security/index>
-   User Accounts <setup-cluster/users>
-   Workspaces and Projects <setup-cluster/workspaces>
-   Logging and Elasticsearch <setup-cluster/elasticsearch-logging-backend>
-   Cluster Usage History <setup-cluster/historical-cluster-usage-data>
-   Upgrade <setup-cluster/upgrade>
-   Troubleshooting <setup-cluster/troubleshooting>
-
-.. toctree::
-   :caption: Fixed
-   :hidden:
-   
+   Model Hub Library <model-hub-library/_index>
    Model Dev Guide <model-dev-guide/_index>
    Reference <reference/_index>
    Tools <tools/_index>

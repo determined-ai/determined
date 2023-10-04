@@ -19,12 +19,7 @@ To install Determined on-premise, first :ref:`install Docker <install-docker>`. 
 Determined by your preferred method.
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
+   :glob: 
 
-   requirements
-   docker
-   deploy
-   linux-packages
-   homebrew
-   wsl
+   ./*

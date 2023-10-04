@@ -48,14 +48,7 @@ To install Determined on the HPC cluster, ensure that the
 -  `Podman <https://docs.podman.io>`__
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
+   :glob:
 
-   slurm-requirements
-   hpc-launching-architecture
-   hpc-security-considerations
-   install-on-slurm
-   upgrade-on-hpc
-   singularity
-   slurm-known-issues
-   hpc-with-agent
+   ./*

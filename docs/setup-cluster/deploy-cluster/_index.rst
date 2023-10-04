@@ -70,11 +70,7 @@ Enable Determined to submit jobs to a Slurm cluster.
 
 .. toctree::
    :hidden:
+   :glob:
 
-   Quick Installation <basic>
-   Deploy on Prem <on-prem/overview>
-   Deploy on AWS <aws/overview>
-   Deploy on GCP <gcp/overview>
-   Deploy on Kubernetes <k8s/overview>
-   Deploy on Slurm/PBS <slurm/overview>
-   Cluster Configuration <cluster-configuration>
+   ./* 
+   ./*/_index 

@@ -23,7 +23,7 @@ Determined's benefits including:
 -  :ref:`Automated cluster management, fault tolerance, and job rescheduling <features>` so you
    don't have to worry about provisioning resources or babysitting your experiments.
 
-.. include:: ../../_shared/note-dtrain-learn-more.txt
+.. include:: ../_shared/note-dtrain-learn-more.txt
 
 Given the benefits above, we think this library will be particularly useful to you if any of the
 following apply:

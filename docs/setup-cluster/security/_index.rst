@@ -27,10 +27,6 @@ These security features apply only to Determined Enterprise Edition, except for 
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob: 
 
-   oauth
-   tls
-   oidc
-   saml
-   scim
-   rbac
+   ./* 

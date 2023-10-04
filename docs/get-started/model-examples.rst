@@ -1,8 +1,8 @@
 .. _example-solutions:
 
-##########
- Examples
-##########
+###############
+ Model Examples
+###############
 
 Get started quickly by using an example machine learning model that has been converted to
 Determined's APIs. Visit the ``examples/`` subdirectory of the `Determined GitHub repo

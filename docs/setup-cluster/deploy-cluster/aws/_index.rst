@@ -70,7 +70,6 @@ peripheral resources, which are optionally configurable based on user requiremen
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob: 
 
-   install-on-aws
-   dynamic-agents-aws
-   aws-spot
+   ./* 

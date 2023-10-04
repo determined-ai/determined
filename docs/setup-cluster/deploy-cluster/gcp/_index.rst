@@ -82,6 +82,6 @@ additional detail on these resources. You can deploy these resources in GCP by f
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob: 
 
-   install-gcp
-   dynamic-agents-gcp
+   ./* 

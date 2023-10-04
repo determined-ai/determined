@@ -155,12 +155,6 @@ These ``kubectl`` commands list and delete pods which are running Determined tas
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob:
 
-   install-on-kubernetes
-   setup-aks-cluster
-   setup-eks-cluster
-   setup-gke-cluster
-   k8s-dev-guide
-   custom-pod-specs
-   helm-commands
-   troubleshooting
+   ./* 
