@@ -292,16 +292,18 @@ def create_stack(
 
 def list_stacks(boto3_session: boto3.session.Session) -> List[Dict[str, Any]]:
     cfn = boto3_session.client("cloudformation")
-    response = cfn.describe_stacks()
+    paginator = cfn.get_paginator('describe_stacks')
 
     output = []
-    for stack in response["Stacks"]:
-        for tag in stack["Tags"]:
-            if (
-                tag["Key"] == constants.defaults.STACK_TAG_KEY
-                and tag["Value"] == constants.defaults.STACK_TAG_VALUE
-            ):
-                output.append(stack)
+    for response in paginator.paginate():
+        for stack in response["Stacks"]:
+            for tag in stack["Tags"]:
+                if (
+                    tag["Key"] == constants.defaults.STACK_TAG_KEY
+                    and tag["Value"] == constants.defaults.STACK_TAG_VALUE
+                ) or (tag["Key"] == constants.deployment_types.TYPE_TAG_KEY):
+                    output.append(stack)
+                    break
     return output
 
 
