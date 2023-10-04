@@ -327,10 +327,13 @@ const TableActionBar: React.FC<Props> = ({
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
+    if (!Loadable.isLoaded(total)) return 'Loading experiments...';
+
     const totalExperiments = Loadable.getOrElse(0, total);
-    let label = Loadable.isLoaded(total)
-      ? `${totalExperiments.toLocaleString()} ${pluralizer(totalExperiments, 'experiment')}`
-      : 'Loading experiments...';
+    let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+      totalExperiments,
+      'experiment',
+    )}`;
 
     if (selectAll) {
       const all = !excludedExperimentIds?.size ? 'All ' : '';
