@@ -1,6 +1,7 @@
 package dispatcherrm
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -167,14 +168,14 @@ func Test_allContainersRunning(t *testing.T) {
 	jobWatcher, events := getJobWatcher()
 
 	// Initialize to 0 for this test.
-	numTimesWriteExperimentLogCalled := 0
+	var numTimesWriteExperimentLogCalled atomic.Int64
 	go func() {
 		for e := range events {
 			_, ok := e.(dispatchExpLogMessage)
 			if !ok {
 				continue
 			}
-			numTimesWriteExperimentLogCalled++
+			numTimesWriteExperimentLogCalled.Add(1)
 		}
 	}()
 
@@ -196,7 +197,7 @@ func Test_allContainersRunning(t *testing.T) {
 	// Verify that we wrote a message to the experiment log indicating that
 	// 1 out of 3 containers are running.
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 1
+		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
@@ -208,7 +209,7 @@ func Test_allContainersRunning(t *testing.T) {
 	// Verify that we wrote a message to the experiment log indicating that
 	// 2 out of 3 containers are running.
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 2
+		return numTimesWriteExperimentLogCalled.Load() == 2
 	}, "numTimesWriteExperimentLogCalled != 2")
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
@@ -222,7 +223,7 @@ func Test_allContainersRunning(t *testing.T) {
 	// Verify that we wrote a message to the experiment log indicating that
 	// 3 out of 3 containers are running.
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 3
+		return numTimesWriteExperimentLogCalled.Load() == 3
 	}, "numTimesWriteExperimentLogCalled != 3")
 }
 
@@ -366,14 +367,14 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 	jobWatcher, events := getJobWatcher()
 
 	// Initialize to 0 for this test.
-	numTimesWriteExperimentLogCalled := 0
+	var numTimesWriteExperimentLogCalled atomic.Int64
 	go func() {
 		for e := range events {
 			_, ok := e.(dispatchExpLogMessage)
 			if !ok {
 				continue
 			}
-			numTimesWriteExperimentLogCalled++
+			numTimesWriteExperimentLogCalled.Add(1)
 		}
 	}()
 
@@ -391,7 +392,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 	retValue := jobWatcher.obtainJobStateFromWlmQueueDetails(DispatchID1, qStats, job)
 
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 1
+		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
 	// Expect a return value of "true", since the job state was "PD" (pending).
@@ -407,7 +408,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 	// We only write to the experiment log when the reason code changes, and
 	// since the reason code has not changed, the count should still be 1.
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 1
+		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
 	// Expect a return value of "true", since the job state was "PD" (pending).
@@ -427,7 +428,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 	// We only write to the experiment log when the reason code changes, and
 	// since the reason code changed, the count should now be 2.
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 2
+		return numTimesWriteExperimentLogCalled.Load() == 2
 	}, "numTimesWriteExperimentLogCalled != 2")
 
 	// Expect a return value of "true", since the job state was "PD" (pending).
@@ -479,21 +480,22 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	}
 
 	jobWatcher, events := getJobWatcher()
-	numTimesWriteExperimentLogCalled := 0
-	writeExperimentLogMessageReceived := ""
+	var numTimesWriteExperimentLogCalled atomic.Int64
+	var writeExperimentLogMessageReceived atomic.Value
+	writeExperimentLogMessageReceived.Store("")
 	go func() {
 		for e := range events {
 			event, ok := e.(dispatchExpLogMessage)
 			if !ok {
 				continue
 			}
-			numTimesWriteExperimentLogCalled++
-			writeExperimentLogMessageReceived = event.Message
+			numTimesWriteExperimentLogCalled.Add(1)
+			writeExperimentLogMessageReceived.Store(event.Message)
 		}
 	}()
 
 	// Initialize to 0 for this test.
-	numTimesWriteExperimentLogCalled = 0
+	numTimesWriteExperimentLogCalled.Store(0)
 
 	// Create a job.
 	job := getJob(DispatchID1, time.Now())
@@ -503,7 +505,7 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	jobWatcher.dispatchIDToHPCJobID.Store(DispatchID1, HpcJobID1)
 
 	// Clear the message.
-	writeExperimentLogMessageReceived = ""
+	writeExperimentLogMessageReceived.Store("")
 
 	// Call the function again with a different reason code than before.
 	retValue := jobWatcher.obtainJobStateFromWlmQueueDetails(DispatchID1, qStats, job)
@@ -513,14 +515,14 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 
 	// The "writeExperimentLog()" function should have been called once.
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 1
+		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
-	assert.Equal(t, writeExperimentLogMessageReceived,
+	assert.Equal(t, writeExperimentLogMessageReceived.Load(),
 		"HPC job waiting on pre-condition: The job's PrologSlurmctld program is still running.")
 
 	// Clear the message.
-	writeExperimentLogMessageReceived = ""
+	writeExperimentLogMessageReceived.Store("")
 
 	// Call the function again with the same reason code as before.
 	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(DispatchID1, qStats, job)
@@ -532,15 +534,15 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	// since neither the job state not reason code have changed since from
 	// the previous time we called "obtainJobStateFromWlmQueueDetails()".
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 1
+		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
 	// The "writeExperimentLog()" function should not have been called, so
 	// there should be no message set.
-	assert.Equal(t, writeExperimentLogMessageReceived, "")
+	assert.Equal(t, writeExperimentLogMessageReceived.Load(), "")
 
 	// Clear the message.
-	writeExperimentLogMessageReceived = ""
+	writeExperimentLogMessageReceived.Store("")
 
 	// Change the reason code to "None", to pretend that the prolog script
 	// completed, so the reason code is no longer "Prolog".
@@ -557,13 +559,13 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	// the reason code changed from "Prolog" to "None" from the previous time
 	// we called "obtainJobStateFromWlmQueueDetails()".
 	assertConditionWithin(t, time.Second, func() bool {
-		return numTimesWriteExperimentLogCalled == 2
+		return numTimesWriteExperimentLogCalled.Load() == 2
 	}, "numTimesWriteExperimentLogCalled != 2")
 
-	assert.Equal(t, writeExperimentLogMessageReceived, "HPC job pre-condition cleared.")
+	assert.Equal(t, writeExperimentLogMessageReceived.Load(), "HPC job pre-condition cleared.")
 
 	// Clear the message.
-	writeExperimentLogMessageReceived = ""
+	writeExperimentLogMessageReceived.Store("")
 
 	// Call the function again with the same reason code of "None" again.
 	retValue = jobWatcher.obtainJobStateFromWlmQueueDetails(DispatchID1, qStats, job)
@@ -574,11 +576,11 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	// The "writeExperimentLog()" function should not have been called again,
 	// since neither the job state not reason code have changed since from
 	// the previous time we called "obtainJobStateFromWlmQueueDetails()".
-	assert.Equal(t, numTimesWriteExperimentLogCalled, 2)
+	assert.Equal(t, numTimesWriteExperimentLogCalled.Load(), int64(2))
 
 	// The "writeExperimentLog()" function should not have been called, so
 	// there should be no message set.
-	assert.Equal(t, writeExperimentLogMessageReceived, "")
+	assert.Equal(t, writeExperimentLogMessageReceived.Load(), "")
 }
 
 // TODO carolina/bradley: add to utils.
