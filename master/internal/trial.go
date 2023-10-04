@@ -528,6 +528,8 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 
 	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
+	// TODO here
+
 	// Decide if this is permanent.
 	switch {
 	case model.StoppingStates[t.state]:

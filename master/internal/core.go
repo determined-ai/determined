@@ -852,6 +852,24 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
 		return "", fmt.Errorf("decoding task logs: %w", err)
 	}
+
+	// TODO(ft) move this to a seperate function.
+	// TODO(ft) do all logs have same taskID? Or should we just assume that they don't need to.
+	// TODO(ft) do all logs stream through here? K8S I think we are planning to add log through
+	// k8s api too.
+	for _, l := range logs {
+		if l.Log == "testalert" { // TODO(ft) look up what regexes we care about per task.
+
+			// So what I would like to do is just call this.
+			{
+				if err := f.DisallowNode(taskID); err != nil {
+					log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+				}
+			}
+			l.TaskID
+		}
+	}
+
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return "", errors.Wrap(err, "receiving task logs")
 	}

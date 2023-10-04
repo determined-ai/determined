@@ -24,6 +24,11 @@ func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	return nil
 }
 
+func DisallowNode(taskID model.TaskID, nodeName string) error {
+	// TODO add to a state
+	return nil
+}
+
 /*
 func CanTaskBeOnNode(taskID model.TaskID, agentID string) bool {
 	fmt.Println("CAN TASK BE ON NODE", taskID, agentID)
