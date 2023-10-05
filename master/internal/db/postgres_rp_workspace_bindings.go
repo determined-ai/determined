@@ -201,9 +201,10 @@ func GetUnboundRPs(
 	return unboundRPs, nil
 }
 
-// RP is a helper strct for Bun query.
-type RP struct {
-	Name string
+// staticRPRow is a helper strct for Bun query.
+type staticRPRow struct {
+	// Name must explicitly specify type due to https://github.com/uptrace/bun/issues/810.
+	Name string `bun:"name,type:text"`
 }
 
 // ReadRPsAvailableToWorkspace returns the names of resource pools available to a
@@ -223,9 +224,9 @@ func ReadRPsAvailableToWorkspace(
 	if err != nil {
 		return nil, nil, err
 	}
-	unboundRPs := []*RP{}
+	unboundRPs := []*staticRPRow{}
 	for _, unboundRPName := range unboundRPNames {
-		unboundRPs = append(unboundRPs, &RP{unboundRPName})
+		unboundRPs = append(unboundRPs, &staticRPRow{unboundRPName})
 	}
 
 	var rpNames []string

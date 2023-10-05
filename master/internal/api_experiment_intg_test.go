@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 	"unsafe"
@@ -50,11 +51,15 @@ import (
 )
 
 type mockStream[T any] struct {
+	mu   sync.Mutex
 	ctx  context.Context
 	data []T
 }
 
 func (m *mockStream[T]) Send(resp T) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.data = append(m.data, resp)
 	return nil
 }
@@ -64,6 +69,16 @@ func (m *mockStream[T]) SetTrailer(metadata.MD)        {}
 func (m *mockStream[T]) Context() context.Context      { return m.ctx }
 func (m *mockStream[T]) SendMsg(mes interface{}) error { return nil }
 func (m *mockStream[T]) RecvMsg(mes interface{}) error { return nil }
+
+func (m *mockStream[T]) getData() []T {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	out := make([]T, len(m.data))
+	copy(out, m.data)
+
+	return out
+}
 
 var (
 	authZExp   *mocks.ExperimentAuthZ
