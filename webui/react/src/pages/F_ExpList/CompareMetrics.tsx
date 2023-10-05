@@ -45,7 +45,7 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
           series.push({
             ...m[key],
             color: colorMap[t.experimentId],
-            metricType: undefined,
+            metricType: '',
             name: expNameById[t.experimentId]
               ? `${expNameById[t.experimentId]} (${t.experimentId})`
               : String(t.experimentId),
