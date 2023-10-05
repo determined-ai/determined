@@ -397,7 +397,7 @@ func (k *kubernetesResourcePool) moveJob(
 		}
 	}
 
-	jobPosition, err := k.queuePositions.GetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
+	jobPosition, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
 	if err != nil {
 		return err
 	}

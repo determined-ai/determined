@@ -686,7 +686,7 @@ func (rp *resourcePool) moveJob(
 		}
 	}
 
-	jobPosition, err := rp.queuePositions.GetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
+	jobPosition, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
 	if err != nil {
 		return err
 	}
@@ -739,9 +739,8 @@ func (rp *resourcePool) setGroupPriority(ctx *actor.Context, msg sproto.SetGroup
 	g.Priority = &msg.Priority
 	time, err := tasklist.GetJobSubmissionTime(rp.taskList, msg.JobID)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to get job submission time for %s", msg.JobID)
-		ctx.Log().Error(err)
-		return err
+		ctx.Log().Errorf("failed to get job submission time: %s", err)
+		return nil
 	}
 	rp.queuePositions[msg.JobID] = tasklist.InitializeQueuePosition(time, false)
 	return nil
