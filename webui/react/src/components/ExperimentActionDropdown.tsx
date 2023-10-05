@@ -2,6 +2,7 @@ import { GridCell } from '@hpe.com/glide-data-grid';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
+import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
@@ -60,6 +61,7 @@ const dropdownActions = [
   Action.Unarchive,
   Action.Cancel,
   Action.Kill,
+  Action.Edit,
   Action.Move,
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
@@ -78,6 +80,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: Props) => {
   const id = experiment.id;
+  const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const confirm = useConfirm();
   const {
@@ -91,6 +94,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
+
+  const handleEditComplete = useCallback(() => {
+    onComplete?.(ExperimentAction.Edit, id);
+  }, [id, onComplete]);
 
   const handleMoveComplete = useCallback(() => {
     onComplete?.(ExperimentAction.Move, id);
@@ -205,6 +212,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               title: 'Confirm Experiment Deletion',
             });
             break;
+          case Action.Edit:
+            ExperimentEditModal.open();
+            break;
           case Action.Move:
             ExperimentMoveModal.open();
             break;
@@ -234,6 +244,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       confirm,
+      ExperimentEditModal,
       ExperimentMoveModal,
       experiment.workspaceId,
       handleHyperparameterSearch,
@@ -265,6 +276,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleMoveComplete}
+      />
+      <ExperimentEditModal.Component
+        description={experiment.description ?? ''}
+        experimentId={experiment.id}
+        experimentName={experiment.name}
+        fetchExperimentDetails={handleEditComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </>

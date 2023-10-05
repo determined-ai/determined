@@ -16,6 +16,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
 import { getCssVar } from 'components/kit/Theme';
+import { notification } from 'components/kit/Toast';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -375,7 +376,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -545,6 +546,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           break;
         case ExperimentAction.Unarchive:
           updateExperiment({ archived: false });
+          break;
+        case ExperimentAction.Edit:
+          notification.success({ message: 'Experiment updated successfully' });
           break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:
