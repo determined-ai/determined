@@ -152,8 +152,10 @@ const ClusterHistoricalUsage: React.FC = () => {
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByUsername}
-                hoursTotal={series?.hoursTotal?.total}
+                hoursByLabel={{
+                  ...series.hoursByUsername,
+                  total: series?.hoursTotal?.total,
+                }}
                 time={series.time}
               />
             ),
@@ -169,8 +171,10 @@ const ClusterHistoricalUsage: React.FC = () => {
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByExperimentLabel}
-                hoursTotal={series?.hoursTotal?.total}
+                hoursByLabel={{
+                  ...series.hoursByExperimentLabel,
+                  total: series?.hoursTotal?.total,
+                }}
                 time={series.time}
               />
             ),
@@ -186,8 +190,10 @@ const ClusterHistoricalUsage: React.FC = () => {
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
                 groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByResourcePool}
-                hoursTotal={series?.hoursTotal?.total}
+                hoursByLabel={{
+                  ...series.hoursByResourcePool,
+                  total: series?.hoursTotal?.total,
+                }}
                 time={series.time}
               />
             ),

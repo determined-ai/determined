@@ -119,8 +119,6 @@ export const LineChart: React.FC<LineChartProps> = ({
     return [xValues, ...yValuesArray];
   }, [series, xAxis]);
 
-  console.log(chartData);
-
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
