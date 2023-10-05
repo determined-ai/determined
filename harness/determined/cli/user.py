@@ -238,12 +238,37 @@ args_description = [
         ]),
         Cmd("whoami", whoami, "print the active user", []),
         Cmd("edit", edit, "print the active user", [
-            Arg("target_user", default=None, help="name of user whose display name should be changed"),
+            Arg(
+                "target_user",
+                default=None,
+                help="name of user whose display name should be changed"
+            ),
             Arg("--display-name", default=None, help="new display name for target_user"),
             Arg("--username", default=None, help="new username name for target_user"),
-            BoolOptArg("--remote", "--no-remote", dest="remote", default=None),
-            BoolOptArg("--activate", "--deactivate", dest="activate", default=None),
-            BoolOptArg("--admin", "--no-admin", dest="admin", default=None),
+            BoolOptArg(
+                "--remote",
+                "--no-remote", 
+                dest="remote", 
+                default=None, 
+                true_help="set as remote user", 
+                false_help="set as non-remote user"
+            ),
+            BoolOptArg(
+                "--activate", 
+                "--deactivate", 
+                dest="activate", 
+                default=None, 
+                true_help="set user as active",
+               false_help="deactivate user"
+            ),
+            BoolOptArg(
+                "--admin", 
+                "--no-admin", 
+                dest="admin", 
+                default=None, 
+                true_help="grant user admin permissions", 
+                false_help="remove admin permissions from user"
+            ),
         ]),
     ])
 ]  # type: List[Any]
