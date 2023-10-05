@@ -441,6 +441,7 @@ const UserManagement: React.FC = () => {
               <Columns>
                 {/* input is uncontrolled to prevent settings overwriting during composition */}
                 <Input
+                  allowClear
                   defaultValue={settings.name}
                   placeholder="Display name or user name"
                   prefix={<Icon color="cancel" decorative name="search" />}
