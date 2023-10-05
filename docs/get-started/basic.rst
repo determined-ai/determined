@@ -38,7 +38,7 @@ Install the Determined library and start a cluster locally.
    # If your machine does not have GPUs:
    det deploy local cluster-up --no-gpu
 
-.. include:: ../../_shared/note-pip-install-determined.txt
+.. include:: ../_shared/note-pip-install-determined.txt
 
 ******************
  Step 3 - Sign In
@@ -46,4 +46,4 @@ Install the Determined library and start a cluster locally.
 
 Once Determined is installed and Docker is running, you can sign in.
 
-.. include:: ../../_shared/basic-installation.txt
+.. include:: ../_shared/basic-installation.txt

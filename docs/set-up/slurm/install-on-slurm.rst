@@ -15,11 +15,11 @@ login or administrator Slurm/PBS cluster node.
 ***************************
 
 After the node has been selected and the
-:doc:`/setup-cluster/deploy-cluster/slurm/slurm-requirements` have been fulfilled and configured,
+:doc:`/set-up/slurm/slurm-requirements` have been fulfilled and configured,
 install and configure the Determined master:
 
 #. Install the on-premises Determined master component (not including the Determined agent) as
-   described in the :doc:`/setup-cluster/deploy-cluster/on-prem/linux-packages` document. Perform
+   described in the :doc:`/set-up/on-prem/linux-packages` document. Perform
    the installation and configuration steps, but stop before starting the ``determined-master``
    service, and continue with the steps below.
 

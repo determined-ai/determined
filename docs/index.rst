@@ -2,7 +2,8 @@
    :hidden:
 
    Get Started <get-started/_index>
-   Set Up <setup-cluster/_index>
+   Set Up <set-up/_index>
+   Manage <manage/_index>
    Tutorials <tutorials/_index>
    Model Hub Library <model-hub-library/_index>
    Model Dev Guide <model-dev-guide/_index>

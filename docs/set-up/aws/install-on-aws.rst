@@ -48,7 +48,7 @@ Installation
 
    pip install determined
 
-.. include:: ../../../_shared/note-pip-install-determined.txt
+.. include:: ../../_shared/note-pip-install-determined.txt
 
 Deploying
 =========

@@ -50,7 +50,7 @@ There are several disadvantages to this model as well:
 Before users can make use of Determined agents, a system administrator must provide the following:
 
 #. The system administrator installs the on-premise Determined master component as described in the
-   :doc:`/setup-cluster/deploy-cluster/on-prem/linux-packages` document, and the Determined agent on
+   :doc:`/set-up/on-prem/linux-packages` document, and the Determined agent on
    all nodes of the cluster, but does not enable or start the ``determined-agent.service``.
 
 #. The system administrator creates a custom resource pool in the :ref:`cluster-resource-pools`

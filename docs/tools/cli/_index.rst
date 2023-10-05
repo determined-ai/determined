@@ -1,0 +1,9 @@
+#####
+CLI
+#####
+
+.. toctree::
+    :hidden:
+    :glob:
+
+    ./* 

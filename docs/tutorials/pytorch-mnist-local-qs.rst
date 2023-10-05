@@ -29,7 +29,7 @@ Our goal is to integrate the `PyTorch MNIST training example
 
 **Prerequisites**
 
--  :doc:`Installation Requirements </setup-cluster/deploy-cluster/on-prem/requirements>`
+-  :doc:`Installation Requirements </set-up/on-prem/requirements>`
 
 ********************
  Download the Files
