@@ -111,8 +111,8 @@ spec:
       {{- end}}
       volumes:
         - name: master-config
-          configMap:
-            name: determined-master-config-{{ .Release.Name }}
+          secret:
+            secretName: determined-master-config-{{ .Release.Name }}
         {{- if .Values.tlsSecret }}
         - name: tls-secret
           secret:

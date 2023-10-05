@@ -50,11 +50,13 @@ const RoleRenderer: React.FC<Props> = ({
           // Try to add the new role and then remove the old role
           // to keep the permission
           isUserWithRoleInfo(userOrGroupWithRoleInfo)
-            ? await assignRolesToUser({
-                roleIds: [roleIdValue],
-                scopeWorkspaceId: workspaceId,
-                userId: userOrGroupId,
-              })
+            ? await assignRolesToUser([
+                {
+                  roleIds: [roleIdValue],
+                  scopeWorkspaceId: workspaceId,
+                  userId: userOrGroupId,
+                },
+              ])
             : await assignRolesToGroup({
                 groupId: userOrGroupId,
                 roleIds: [roleIdValue],

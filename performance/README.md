@@ -1,6 +1,37 @@
 # Performance Tests
 
+## Nightly Runs
+
+The code here is used to run performance tests nightly against the latest
+published [determined master
+image](https://hub.docker.com/r/determinedai/determined-master).
+
+The automation for this is defined in a GitHub Actions workflow [in this
+repo](../.github/workflows/performance-tests.yml). Reports from those runs will
+be posted directly to our internal [#ci-bots Slack
+channel](https://hpe-aiatscale.slack.com/archives/C9LFPNA3Y).
+
 ## Iterating
+
+### Local Dev Requirements
+
+Iterating on the performance test scripts or deployment code requires the
+following CLIs:
+
+- `npm`
+- `make`
+- `jq`
+- `docker`
+    - just the CLI is required, any backend will be fine to use (e.g. `colima`,
+      `podman`, etc)
+- `det`
+    - this can be either built locally using `make build` in the repo root, or
+      installed to a separate PyVenv using `pip install determined` for the
+      latest version
+- `aws`
+    - the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables
+      will be necessary for both this and the `det` CLI to use the `up`, `down`
+      `persist`, and `unpersist` Make targets
 
 ### Performance Test Source
 

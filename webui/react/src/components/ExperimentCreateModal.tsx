@@ -134,7 +134,9 @@ const ExperimentCreateModalComponent = ({
     setModalState((prev) => {
       if (prev.error) return { ...prev, error: undefined };
       const values = form.getFieldsValue();
-      prev.config.name = values[EXPERIMENT_NAME];
+      if (!prev.isAdvancedMode) {
+        prev.config.name = values[EXPERIMENT_NAME];
+      }
       if (values[MAX_LENGTH]) {
         const maxLengthType = getMaxLengthType(prev.config);
         if (maxLengthType) {
@@ -213,9 +215,6 @@ const ExperimentCreateModalComponent = ({
       const formValues = form.getFieldsValue();
       const newConfig = structuredClone(config);
 
-      if (formValues[EXPERIMENT_NAME]) {
-        newConfig.name = formValues[EXPERIMENT_NAME];
-      }
       if (formValues[MAX_LENGTH]) {
         const maxLengthType = getMaxLengthType(newConfig);
         if (maxLengthType === undefined) {
