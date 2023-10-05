@@ -1034,7 +1034,7 @@ export interface WorkspacePermissionsArgs {
 export interface WorkspaceMembersResponse {
   assignments: Api.V1RoleWithAssignments[];
   groups: Api.V1Group[];
-  usersAssignedDirectly: User[];
+  usersAssignedDirectly: DetailedUser[];
 }
 
 export interface Webhook {
