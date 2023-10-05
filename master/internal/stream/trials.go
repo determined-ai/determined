@@ -73,26 +73,6 @@ func (tm *TrialMsg) DeleteMsg() stream.DeleteMsg {
 	}
 }
 
-//func (tm *TrialMsg) UpsertMsg(upsertFunc stream.UpsertFunc) interface{} {
-//	wrapper := struct {
-//		Trial *TrialMsg `json:"trial"`
-//	}{tm}
-//
-//	if upsertFunc != nil {
-//		return upsertFunc(tm)
-//	}
-//	return prepareMessageWithCache(wrapper, &tm.upsertCache)
-//}
-
-//func (tm *TrialMsg) DeleteMsg(deleteFunc stream.DeleteFunc) interface{} {
-//	deleted := strconv.FormatInt(int64(tm.ID), 10)
-//
-//	if deleteFunc != nil {
-//		return deleteFunc(TrialsDeleteKey, deleted)
-//	}
-//	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
-//}
-
 // TrialSubscriptionSpec is what a user submits to define a trial subscription.
 // determined:streamable
 type TrialSubscriptionSpec struct {

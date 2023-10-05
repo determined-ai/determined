@@ -653,13 +653,6 @@ func prepareMessageWithCache(
 	return *cache
 }
 
-//func newDeletedInterface(key, deleted string, deleteFunc stream.DeleteFunc) interface{} {
-//	if deleteFunc == nil {
-//		return newDeletedMsg(key, deleted)
-//	}
-//	return deleteFunc(key, deleted)
-//}
-
 func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {
 	strMsg := fmt.Sprintf("{\"%v\": \"%v\"}", key, deleted)
 	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, []byte(strMsg))
