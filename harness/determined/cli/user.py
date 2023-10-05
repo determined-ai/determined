@@ -247,26 +247,26 @@ args_description = [
             Arg("--username", default=None, help="new username name for target_user"),
             BoolOptArg(
                 "--remote",
-                "--no-remote", 
-                dest="remote", 
-                default=None, 
-                true_help="set as remote user", 
+                "--no-remote",
+                dest="remote",
+                default=None,
+                true_help="set as remote user",
                 false_help="set as non-remote user"
             ),
             BoolOptArg(
-                "--activate", 
-                "--deactivate", 
-                dest="activate", 
-                default=None, 
+                "--activate",
+                "--deactivate",
+                dest="activate",
+                default=None,
                 true_help="set user as active",
-               false_help="deactivate user"
+                false_help="deactivate user"
             ),
             BoolOptArg(
-                "--admin", 
-                "--no-admin", 
-                dest="admin", 
-                default=None, 
-                true_help="grant user admin permissions", 
+                "--admin",
+                "--no-admin",
+                dest="admin",
+                default=None,
+                true_help="grant user admin permissions",
                 false_help="remove admin permissions from user"
             ),
         ]),
