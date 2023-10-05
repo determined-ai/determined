@@ -36,6 +36,9 @@ const (
 
 	gcTask  = "gc"
 	cmdTask = "cmd"
+
+	autoscalerSafeToEvictAnnotation = "cluster-autoscaler.kubernetes.io/safe-to-evict"
+	autoscalerSafeToEvictDefault    = "false"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -323,10 +326,18 @@ func (p *pod) configurePodSpec(
 
 	podSpec.ObjectMeta.Name = p.podName
 	podSpec.ObjectMeta.Namespace = p.namespace
+
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+
+	if podSpec.ObjectMeta.Annotations == nil {
+		podSpec.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if _, ok := podSpec.ObjectMeta.Annotations[autoscalerSafeToEvictAnnotation]; !ok {
+		podSpec.ObjectMeta.Annotations[autoscalerSafeToEvictAnnotation] = autoscalerSafeToEvictDefault
+	}
 
 	p.modifyPodSpec(podSpec, scheduler)
 
