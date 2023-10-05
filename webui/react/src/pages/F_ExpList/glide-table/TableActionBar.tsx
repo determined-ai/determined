@@ -337,7 +337,8 @@ const TableActionBar: React.FC<Props> = ({
 
         if (selectAll) {
           const all = !excludedExperimentIds?.size ? 'All ' : '';
-          const totalSelected = (totalExperiments - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' ';
+          const totalSelected =
+            (totalExperiments - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' ';
           label = `${all}${totalSelected}experiments selected`;
         } else if (selectedExperimentIds.size > 0) {
           label = `${selectedExperimentIds.size} of ${label} selected`;
