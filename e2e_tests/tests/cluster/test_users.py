@@ -1072,6 +1072,7 @@ def test_logout_all(clean_auth: None, login_admin: None) -> None:
     # Change Determined password back to "".
     change_user_password(constants.DEFAULT_DETERMINED_USER, "")
 
+
 @pytest.mark.e2e_cpu
 def test_user_edit(clean_auth: None, login_admin: None) -> None:
     u_patch = api_utils.create_test_user(False)
@@ -1118,6 +1119,6 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
     assert modded_user is not None
     assert modded_user.displayName == new_display_name
     assert modded_user.username == new_username
-    assert modded_user.active == True
-    assert modded_user.remote == True
-    assert modded_user.admin == True
+    assert modded_user.active
+    assert modded_user.remote
+    assert modded_user.admin
