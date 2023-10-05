@@ -271,17 +271,17 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const shared = (
     <>
-      <ExperimentMoveModal.Component
-        experimentIds={[id]}
-        sourceProjectId={experiment.projectId}
-        sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={handleMoveComplete}
-      />
       <ExperimentEditModal.Component
         description={experiment.description ?? ''}
         experimentId={experiment.id}
         experimentName={experiment.name}
         fetchExperimentDetails={handleEditComplete}
+      />
+      <ExperimentMoveModal.Component
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onSubmit={handleMoveComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </>
