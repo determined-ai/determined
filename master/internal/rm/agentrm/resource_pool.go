@@ -624,6 +624,9 @@ func (rp *resourcePool) moveJob(
 			rp.config.Scheduler.GetType())
 	}
 
+	if _, ok := rp.groups[jobID]; !ok {
+		return sproto.ErrJobNotFound(jobID)
+	}
 	if _, ok := rp.queuePositions[anchorID]; !ok {
 		return sproto.ErrJobNotFound(anchorID)
 	}

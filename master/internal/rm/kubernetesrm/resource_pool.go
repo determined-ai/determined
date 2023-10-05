@@ -358,6 +358,9 @@ func (k *kubernetesResourcePool) moveJob(
 		return nil
 	}
 
+	if _, ok := k.groups[jobID]; !ok {
+		return sproto.ErrJobNotFound(jobID)
+	}
 	if _, ok := k.queuePositions[anchorID]; !ok {
 		return sproto.ErrJobNotFound(anchorID)
 	}
