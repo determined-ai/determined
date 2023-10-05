@@ -1,10 +1,8 @@
 import dayjs from 'dayjs';
 import Message from 'determined-ui/Message';
 import React, { useMemo } from 'react';
-import uPlot, { AlignedData, Series } from 'uplot';
 
-import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { glasbeyColor } from 'utils/color';
+import { LineChart } from 'components/kit/LineChart';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
@@ -34,20 +32,26 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   label,
   time,
 }: ClusterHistoricalUsageChartProps) => {
-  const chartData: AlignedData = useMemo(() => {
-    const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
-
-    const data: AlignedData = [timeUnix];
-    if (hoursTotal) {
-      data.push(hoursTotal);
+  const data: Serie[] = Object.keys(hoursByLabel).map((label) => (
+    {
+      data: { [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) =>
+        [
+          Date.parse(time[idx])/1000,
+          pt,
+        ]) },
+      metricType: '',
+      name: label,
     }
+  ));
 
-    Object.keys(hoursByLabel).forEach((label) => {
-      data.push(hoursByLabel[label]);
-    });
-
-    return data;
-  }, [hoursByLabel, hoursTotal, time]);
+  // const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
+  // const data: AlignedData = [timeUnix];
+  // if (hoursTotal) {
+  //   data.push(hoursTotal);
+  // }
+  // Object.keys(hoursByLabel).forEach((label) => {
+  //   data.push(hoursByLabel[label]);
+  // });
 
   const hasData = useMemo(() => {
     return Object.keys(hoursByLabel).reduce(
@@ -56,93 +60,15 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
     );
   }, [hoursByLabel]);
 
-  const singlePoint = useMemo(
-    // one series, and that one series has one point
-    () => Object.keys(hoursByLabel).length === 1 && Object.values(hoursByLabel)[0].length === 1,
-    [hoursByLabel],
-  );
-
-  const chartOptions: Options = useMemo(() => {
-    let dateFormat = 'MM-DD';
-    let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
-    if (groupBy === GroupBy.Month) {
-      dateFormat = 'YYYY-MM';
-      timeSeries = { label: 'Month', value: '{YYYY}-{MM}' };
-    }
-
-    const series: Series[] = [timeSeries];
-    if (hoursTotal) {
-      series.push({
-        label: 'total',
-        show: false,
-        stroke: glasbeyColor(series.length - 1),
-        width: 2,
-      });
-    }
-    Object.keys(hoursByLabel).forEach((label) => {
-      series.push({
-        label,
-        stroke: glasbeyColor(series.length - 1),
-        width: 2,
-      });
-    });
-
-    return {
-      axes: [
-        {
-          label: timeSeries.label,
-          space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
-            const rangeSecs = scaleMax - scaleMin;
-            const rangeDays = rangeSecs / (24 * 60 * 60);
-            const pxPerDay = plotDim / rangeDays;
-            return Math.max(60, pxPerDay * (groupBy === GroupBy.Month ? 28 : 1));
-          },
-          values: (self, splits) => {
-            return splits.map((i) => {
-              const date = dayjs.utc(i * 1000);
-              return date.hour() === 0 ? date.format(dateFormat) : '';
-            });
-          },
-        },
-        { label: label ? label : 'GPU Hours', values: formatValues },
-      ],
-      height,
-      key: chartKey,
-      scales: {
-        x: {
-          auto: !singlePoint,
-          range:
-            dateRange ??
-            (singlePoint
-              ? [
-                  new Date(`${new Date().getFullYear()}-01-01`).getTime() / 1000,
-                  new Date(`${new Date().getFullYear() + 1}-01-01`).getTime() / 1000,
-                ]
-              : undefined),
-        },
-      },
-      series,
-      tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-    };
-  }, [
-    chartKey,
-    dateRange,
-    formatValues,
-    groupBy,
-    height,
-    hoursByLabel,
-    hoursTotal,
-    label,
-    singlePoint,
-  ]);
-
-  if (!hasData) {
-    return <Message icon="warning" title="No data to plot." />;
-  }
+  // const singlePoint = useMemo(
+  //   // one series, and that one series has one point
+  //   () => Object.keys(hoursByLabel).length === 1 && Object.values(hoursByLabel)[0].length === 1,
+  //   [hoursByLabel],
+  // );
 
   return (
     <div className={css.base}>
-      <UPlotChart data={chartData} options={chartOptions} />
+      <LineChart series={data} handleError={handleError} xAxis={XAxisDomain.Time} />
     </div>
   );
 };

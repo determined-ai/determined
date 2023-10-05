@@ -1,0 +1,10 @@
+.pivoter {
+  [role='tablist'] > div {
+    &:global(.ant-tabs-nav-wrap)::before {
+      box-shadow: none;
+    }
+    > div {
+      transform: translate(0) !important;
+    }
+  }
+}

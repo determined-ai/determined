@@ -15,6 +15,8 @@ import { useObservable } from 'utils/observable';
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
 
+import css from './Clusters.module.scss';
+
 const TabType = {
   HistoricalUsage: 'historical-usage',
   Logs: 'logs',
@@ -92,7 +94,9 @@ const Cluster: React.FC = () => {
       ]}
       id="cluster"
       title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
-      <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
+      <div className={css.pivoter}>
+        <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
+      </div>
     </Page>
   );
 };
