@@ -15,6 +15,7 @@ export { Option, OptGroup, SelectValue };
 type Options = DefaultOptionType | DefaultOptionType[];
 export interface SelectProps<T extends SelectValue = SelectValue> {
   allowClear?: boolean;
+  attachDropdownToContainer?: boolean;
   autoFocus?: boolean;
   defaultValue?: T;
   disableTags?: boolean;
@@ -63,6 +64,7 @@ const countOptions = (children: React.ReactNode, options?: Options): number => {
 
 const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(function Select(
   {
+    attachDropdownToContainer,
     disabled,
     disableTags = false,
     searchable = true,
@@ -115,6 +117,12 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     return !!label && label.toLocaleLowerCase().includes(search.toLocaleLowerCase());
   }, []);
 
+  const getPopupContainer = (triggerNode: Element) => {
+    // triggerNode.parentElement can be falsy, so instead of a ternary, we fall back
+    // to document.body
+    return (attachDropdownToContainer && triggerNode.parentElement) || document.body;
+  };
+
   return (
     <div className={classes.join(' ')} ref={divRef}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
@@ -122,6 +130,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         disabled={disabled || loading}
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
+        getPopupContainer={getPopupContainer}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
         options={options}
