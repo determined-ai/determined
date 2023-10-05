@@ -338,6 +338,7 @@ export interface GetUsersParams extends PaginationParams {
   name?: string;
   roleIdAssignedDirectlyToUser?: Array<number>;
   sortBy?: Api.V1GetUsersRequestSortBy;
+  roleIdAssignedDirectlyToUser?: number[];
 }
 export interface GetUserParams {
   userId: number;
