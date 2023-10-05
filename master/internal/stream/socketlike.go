@@ -9,6 +9,7 @@ import (
 type WebsocketLike interface {
 	ReadJSON(interface{}) error
 	Write(interface{}) error
+	Close() error
 }
 
 type WrappedWebsocket struct {

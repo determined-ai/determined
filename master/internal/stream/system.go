@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -12,11 +13,20 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	detContext "github.com/determined-ai/determined/master/internal/context"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
+	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 )
 
-// JsonB is the golang equivalent of the postgres jsonb column type.
-type JsonB interface{}
+// JSONB is the golang equivalent of the postgres jsonb column type.
+type JSONB interface{}
+
+const (
+	minReconn = 1 * time.Second
+	maxReconn = 10 * time.Second
+	trialChan = "stream_trial_chan"
+)
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
@@ -25,6 +35,8 @@ type JsonB interface{}
 type PublisherSet struct {
 	Trials *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
+	bootemChan chan struct{}
+	bootLock   sync.Mutex
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -36,7 +48,7 @@ type SubscriptionSet struct {
 	// Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 }
 
-// subscriptionState contains per-type subscription state
+// subscriptionState contains per-type subscription state.
 type subscriptionState[T stream.Msg, S any] struct {
 	Subscription               stream.Subscription[T]
 	FilterMaker                FilterMaker[T, S]
@@ -44,17 +56,47 @@ type subscriptionState[T stream.Msg, S any] struct {
 	CollectSubscriptionModMsgs CollectSubscriptionModMsgsFunc[S]
 }
 
-type CollectStartupMsgsFunc[S any] func(known string, spec S, ctx context.Context) (
+// CollectStartupMsgsFunc collects messages that were missed prior to startup.
+type CollectStartupMsgsFunc[S any] func(
+	ctx context.Context,
+	user model.User,
+	known string,
+	spec S,
+) (
 	[]interface{}, error,
 )
 
-type CollectSubscriptionModMsgsFunc[S any] func(addSpec S, ctx context.Context) (
+// CollectSubscriptionModMsgsFunc collects messages that are missed due to modifying a subscription.
+type CollectSubscriptionModMsgsFunc[S any] func(ctx context.Context, addSpec S) (
 	[]interface{}, error,
 )
 
-func NewPublisherSet() PublisherSet {
-	return PublisherSet{
+func newDBListener(channel string) (*pq.Listener, error) {
+	reportProblem := func(ev pq.ListenerEventType, err error) {
+		if err != nil {
+			log.Errorf("reportProblem: %v\n", err.Error())
+		}
+	}
+	listener := pq.NewListener(
+		// XXX: update this to use master config rather than hardcoded for a local db
+		"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		minReconn,
+		maxReconn,
+		reportProblem,
+	)
+	err := listener.Listen(channel)
+	if err != nil {
+		return nil, err
+	}
+	return listener, nil
+}
+
+// NewPublisherSet constructor for PublisherSet.
+func NewPublisherSet() *PublisherSet {
+	return &PublisherSet{
 		Trials: stream.NewPublisher[*TrialMsg](),
+		// Experiments: stream.NewPublisher[*ExperimentMsg](),
+		bootemChan: make(chan struct{}),
 	}
 }
 
@@ -84,8 +126,9 @@ type KnownKeySet struct {
 	// Experiments string `json:"experiments"`
 }
 
-// SubscriptionSpecSet is both the type for .Add and .Drop of the SubscriptionModMsg type that a streaming
-// client can write to the websocket to change their message type.
+// SubscriptionSpecSet is both the type for .Add and .Drop of
+// the SubscriptionModMsg type that a streaming client
+// can write to the websocket to change their message type.
 type SubscriptionSpecSet struct {
 	Trials *TrialSubscriptionSpec `json:"trials"`
 	// Experiments *ExperimentSubscriptionSpec `json:"experiments"`
@@ -103,10 +146,25 @@ type FilterMaker[T stream.Msg, S any] interface {
 	MakeFilter() func(T) bool
 }
 
-func (ps PublisherSet) Start(ctx context.Context) {
-	// start each publisher
-	go publishLoop(ctx, "stream_trial_chan", ps.Trials)
-	// go publishLoop(ctx, "stream_experiment_chan", ps.Experiments)
+func start[T stream.Msg](
+	ctx context.Context,
+	channel string,
+	publisher *stream.Publisher[T],
+) error {
+	return publishLoop(ctx, channel, publisher)
+}
+
+// Start starts each Publisher in the PublisherSet.
+func (ps *PublisherSet) Start(ctx context.Context) error {
+	eg := errgroupx.WithContext(ctx)
+
+	eg.Go(
+		func(c context.Context) error {
+			return start(ctx, trialChan, ps.Trials)
+		},
+	)
+	// eg.Go(start(ctx, "stream_experiment_chan", ps.Experiments))
+	return eg.Wait()
 }
 
 func writeAll(socketLike WebsocketLike, msgs []interface{}) error {
@@ -119,15 +177,40 @@ func writeAll(socketLike WebsocketLike, msgs []interface{}) error {
 	return nil
 }
 
-// XXX: entrypoint should be renamed
-func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, prepareFunc func(message stream.PreparableMessage) interface{}) error {
+func (ps *PublisherSet) entrypoint(
+	ssupCtx context.Context,
+	socket WebsocketLike,
+	c echo.Context,
+	prepareFunc func(message stream.PreparableMessage) interface{},
+) error {
+	// clean up socket
+	defer func() {
+		if err := socket.Close(); err != nil {
+			log.Debugf("error while cleaning up socket: %s", err)
+		}
+	}()
+	ctx := c.Request().Context()
+
+	// get permission change channel
+	var bootemChan chan struct{}
+	func() {
+		ps.bootLock.Lock()
+		defer ps.bootLock.Unlock()
+		bootemChan = ps.bootemChan
+	}()
+
 	streamer := stream.NewStreamer(prepareFunc)
-	ss := NewSubscriptionSet(streamer, ps)
+	user := c.(*detContext.DetContext).MustGetUser()
+	ss, err := NewSubscriptionSet(ctx, streamer, ps, user)
+	if err != nil {
+		return errors.Wrap(err, "creating subscription set")
+	}
+	defer ss.UnsubscribeAll()
 
 	defer ss.UnsubscribeAll()
 	// First read the startup message.
 	var startupMsg StartupMsg
-	err := socket.ReadJSON(&startupMsg)
+	err = socket.ReadJSON(&startupMsg)
 	// XXX: errors here don't seem to appear on the websocket side...?
 	if err != nil {
 		return errors.Wrap(err, "reading startup message")
@@ -140,7 +223,7 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, pre
 	//   - disappearances
 	//   - fallin
 	//   - fallout
-	msgs, err := ss.Startup(startupMsg, ctx)
+	msgs, err := ss.Startup(ctx, user, startupMsg)
 	if err != nil {
 		return errors.Wrapf(err, "gathering startup messages")
 	}
@@ -156,13 +239,21 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, pre
 	//   - fallin
 	//   - fallout
 	//
-	// (note that online appearences and disappearances are not supported; we'll detect those
-	// situations and just break the connection to the relevant streaming clients).
+	// (note that online appearances and disappearances are not supported; we'll detect those
+	// situations and just break the connection to streaming clients).
 
 	// detect context cancelation, and bring it into the websocket thread
 	go func() {
-		<-ctx.Done()
-		streamer.Close()
+		select {
+		case <-ctx.Done():
+			streamer.Close()
+		case <-ssupCtx.Done():
+			// close streamer if supervisor is down
+			streamer.Close()
+		case <-bootemChan:
+			// close this streamer if online appearance/dissapearnce occurred
+			streamer.Close()
+		}
 	}()
 
 	// reads is where we collect SubscriptionModMsg messages we read from the websocket until
@@ -209,25 +300,25 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, pre
 	for {
 		mods, msgs, closed := waitForSomething()
 
-		// were we closed?
+		// is the streamer closed?
 		if closed {
 			return nil
 		}
 
 		// any modifications to our subscriptions?
 		for _, mod := range mods {
-			temp, err := ss.SubscriptionMod(mod, ctx)
+			temp, err := ss.SubscriptionMod(ctx, mod)
 			if err != nil {
 				return errors.Wrapf(err, "error modifying subscriptions")
 			}
 			msgs = append(msgs, temp...)
-			// TODO: also append a sync message (or one sync per SubscriptionModMsg)
+			// XXX: also append a sync message (or one sync per SubscriptionModMsg)
 		}
 
 		// write msgs to the websocket
 		err = writeAll(socket, msgs)
 		if err != nil {
-			// TODO: don't log broken pipe errors.
+			// XXX: don't log broken pipe errors.
 			if err != nil {
 				return errors.Wrapf(err, "error writing to socket")
 			}
@@ -236,9 +327,12 @@ func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, pre
 }
 
 // Websocket is an Echo websocket endpoint.
-func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
-	ctx := c.Request().Context()
-	return ps.entrypoint(ctx, &WrappedWebsocket{Conn: socket}, prepareWebsocket)
+func (ps *PublisherSet) Websocket(
+	ssupCtx context.Context,
+	socket *websocket.Conn,
+	c echo.Context,
+) error {
+	return ps.entrypoint(ssupCtx, &WrappedWebsocket{Conn: socket}, c, prepareWebsocket)
 }
 
 func prepareWebsocket(msg stream.PreparableMessage) interface{} {
@@ -250,22 +344,71 @@ func prepareWebsocket(msg stream.PreparableMessage) interface{} {
 	return nil
 }
 
+func (ps *PublisherSet) bootStreamers() {
+	ps.bootLock.Lock()
+	defer ps.bootLock.Unlock()
+	close(ps.bootemChan)
+	ps.bootemChan = make(chan struct{})
+}
+
+// BootemLoop listens for permission changes, updates the PublisherSet
+// to signal to boot streamers, returns an error in the event of a failure to listen.
+func BootemLoop(ctx context.Context, ps *PublisherSet) error {
+	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
+	if err != nil {
+		log.Errorf("unable to get permission change listener: %s", err)
+		return err
+	}
+	if permListener == nil {
+		// no listener means we don't have permissions configured at all
+		return nil
+	}
+	defer func() {
+		err := permListener.Close()
+		if err != nil {
+			log.Debugf("error occurred while closing permission listener: %s", err)
+		}
+	}()
+
+	for {
+		select {
+		// did permissions change?
+		case <-permListener.Notify:
+			log.Debugf("permission change detected, booting streamers")
+			func() {
+				ps.bootStreamers()
+			}()
+		// is the listener still alive?
+		case <-time.After(30 * time.Second):
+			pingErrChan := make(chan error)
+			go func() {
+				err = permListener.Ping()
+				pingErrChan <- errors.Wrap(err, "no active connection")
+			}()
+			if err := <-pingErrChan; err != nil {
+				log.Errorf("permission listener failed %s", err)
+				return err
+			}
+		// are we canceled?
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+// publishLoop monitors for new events and broadcasts them to Publishers.
 func publishLoop[T stream.Msg](
 	ctx context.Context,
 	channelName string,
 	publisher *stream.Publisher[T],
-) {
-	// TODO: is there a better recovery technique than this?
-	// XXX: at least boot all the connected streamers, they'll all be invalid now
-	for {
-		err := doPublishLoop(ctx, channelName, publisher)
-		if err != nil {
-			log.Errorf("publishLoop failed (will restart): %v", err.Error())
-			continue
-		}
-		// exited without error
-		break
+) error {
+	err := doPublishLoop(ctx, channelName, publisher)
+	if err != nil {
+		log.Errorf("publishLoop failed: %s", err)
+		publisher.CloseAllStreamers()
+		return err
 	}
+	return nil
 }
 
 func doPublishLoop[T stream.Msg](
@@ -273,27 +416,17 @@ func doPublishLoop[T stream.Msg](
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	minReconn := 1 * time.Second
-	maxReconn := 10 * time.Second
-
-	reportProblem := func(ev pq.ListenerEventType, err error) {
-		if err != nil {
-			fmt.Printf("reportProblem: %v\n", err.Error())
-		}
-	}
-
-	listener := pq.NewListener(
-		"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
-		minReconn,
-		maxReconn,
-		reportProblem,
-	)
-
-	// start listening
-	err := listener.Listen(channelName)
+	listener, err := newDBListener(channelName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
+	// clean up listener
+	defer func() {
+		err := listener.Close()
+		if err != nil {
+			log.Debugf("error while cleaning up %s event listener: %s", channelName, err)
+		}
+	}()
 
 	for {
 		var events []stream.Event[T]
@@ -302,11 +435,17 @@ func doPublishLoop[T stream.Msg](
 		case <-ctx.Done():
 			// fmt.Printf("publishTrials canceled\n")
 			return nil
-
 		// The pq listener example includes a timeout case, so we do too.
 		// (https://pkg.go.dev/github.com/lib/pq/example/listen)
 		case <-time.After(30 * time.Second):
-			go listener.Ping()
+			pingErrChan := make(chan error)
+			go func() {
+				err = listener.Ping()
+				pingErrChan <- errors.Wrap(err, "no active connection")
+			}()
+			if err := <-pingErrChan; err != nil {
+				return err
+			}
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
@@ -335,28 +474,54 @@ func doPublishLoop[T stream.Msg](
 			}
 			// Broadcast all the events.
 			publisher.Broadcast(events)
-			break
 		}
 	}
-
-	return nil
 }
 
-func NewSubscriptionSet(streamer *stream.Streamer, ps PublisherSet) SubscriptionSet {
+func newPermFilter[T stream.Msg](
+	ctx context.Context,
+	user model.User,
+	permFilterFn func(context.Context, model.User) (func(T) bool, error),
+	err *error,
+) func(T) bool {
+	if *err != nil {
+		return nil
+	}
+	out, tempErr := permFilterFn(ctx, user)
+	if tempErr != nil {
+		*err = tempErr
+		return nil
+	}
+	return out
+}
+
+// NewSubscriptionSet constructor for SubscriptionSet.
+func NewSubscriptionSet(
+	ctx context.Context,
+	streamer *stream.Streamer,
+	ps *PublisherSet,
+	user model.User,
+) (SubscriptionSet, error) {
+	var err error
 	return SubscriptionSet{
 		Trials: &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
-			stream.NewSubscription(streamer, ps.Trials),
+			stream.NewSubscription(
+				streamer,
+				ps.Trials,
+				newPermFilter(ctx, user, TrialMakePermissionFilter, &err),
+			),
 			NewTrialFilterMaker(),
 			TrialCollectStartupMsgs,
 			TrialCollectSubscriptionModMsgs,
 		},
-	}
+	}, err
 }
 
 func startup[T stream.Msg, S any](
+	ctx context.Context,
+	user model.User,
 	msgs []interface{},
 	err error,
-	ctx context.Context,
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
@@ -370,7 +535,7 @@ func startup[T stream.Msg, S any](
 		return msgs, nil
 	}
 
-	// configure intial filter
+	// configure initial filter
 	state.FilterMaker.AddSpec(*spec)
 
 	// Sync subscription with publishers.  Do this before initial scan so that we don't
@@ -380,7 +545,7 @@ func startup[T stream.Msg, S any](
 
 	// Scan for historical msgs matching newly-added subscriptions.
 	var newmsgs []interface{}
-	newmsgs, err = state.CollectStartupMsgs(known, *spec, ctx)
+	newmsgs, err = state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
 		return nil, err
 	}
@@ -394,8 +559,8 @@ func startup[T stream.Msg, S any](
 	return preparedMsgs, nil
 }
 
-// is startup a verb or noun?
-func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
+// Startup handles starting up the Subscription objects in the SubscriptionSet.
+func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startupMsg StartupMsg) (
 	[]interface{}, error,
 ) {
 	known := startupMsg.Known
@@ -403,15 +568,15 @@ func (ss *SubscriptionSet) Startup(startupMsg StartupMsg, ctx context.Context) (
 
 	var msgs []interface{}
 	var err error
-	msgs, err = startup(msgs, err, ctx, ss.Trials, known.Trials, sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn)
+	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn)
 	// msgs, err = startup(msgs, err, ctx, ss.Experiments, known.Experiments, sub.Experiments)
 	return msgs, err
 }
 
 func subMod[T stream.Msg, S any](
+	ctx context.Context,
 	msgs []interface{},
 	err error,
-	ctx context.Context,
 	state *subscriptionState[T, S],
 	addSpec *S,
 	dropSpec *S,
@@ -440,7 +605,7 @@ func subMod[T stream.Msg, S any](
 	if addSpec != nil {
 		// Scan for historical msgs matching newly-added subscriptions.
 		var newmsgs []interface{}
-		newmsgs, err = state.CollectSubscriptionModMsgs(*addSpec, ctx)
+		newmsgs, err = state.CollectSubscriptionModMsgs(ctx, *addSpec)
 		if err != nil {
 			return nil, err
 		}
@@ -449,7 +614,8 @@ func subMod[T stream.Msg, S any](
 	return msgs, nil
 }
 
-func (ss *SubscriptionSet) SubscriptionMod(msg SubscriptionModMsg, ctx context.Context) (
+// SubscriptionMod modifies a subscription based on the SubscriptionModMsg.
+func (ss *SubscriptionSet) SubscriptionMod(ctx context.Context, msg SubscriptionModMsg) (
 	[]interface{}, error,
 ) {
 	add := msg.Add
@@ -457,11 +623,12 @@ func (ss *SubscriptionSet) SubscriptionMod(msg SubscriptionModMsg, ctx context.C
 
 	var msgs []interface{}
 	var err error
-	msgs, err = subMod(msgs, err, ctx, ss.Trials, add.Trials, drop.Trials)
+	msgs, err = subMod(ctx, msgs, err, ss.Trials, add.Trials, drop.Trials)
 	// msgs, err = subMod(msgs, err, ctx, ss.Experiments, add.Experiments, drop.Experiments)
 	return msgs, err
 }
 
+// UnsubscribeAll unsubscribes all Subscription's in the SubscriptionSet.
 func (ss *SubscriptionSet) UnsubscribeAll() {
 	ss.Trials.Subscription.Configure(nil)
 	// ss.Experiments.Subscription.Configure(nil)

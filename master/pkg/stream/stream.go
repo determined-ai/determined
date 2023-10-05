@@ -78,6 +78,7 @@ func NewStreamer(prepareFn func(message PreparableMessage) interface{}) *Streame
 	return &Streamer{Cond: cond, PrepareFn: prepareFn}
 }
 
+// Close closes a streamer.
 func (s *Streamer) Close() {
 	s.Cond.L.Lock()
 	defer s.Cond.L.Unlock()
@@ -85,6 +86,7 @@ func (s *Streamer) Close() {
 	s.Closed = true
 }
 
+// Subscription manages a streamer's subscription to messages of type T.
 type Subscription[T Msg] struct {
 	// Which streamer is collecting messages from this Subscription?
 	Streamer *Streamer
@@ -92,14 +94,27 @@ type Subscription[T Msg] struct {
 	Publisher *Publisher[T]
 	// Decide if the streamer wants this message.
 	filter func(T) bool
+	// Decide if the streamer has permission to view this message.
+	permissionFilter func(T) bool
 	// wakeupID prevent duplicate wakeups if multiple events in a single Broadcast are relevant
 	wakeupID int64
 }
 
-func NewSubscription[T Msg](streamer *Streamer, publisher *Publisher[T]) Subscription[T] {
-	return Subscription[T]{Streamer: streamer, Publisher: publisher}
+// NewSubscription creates a new Subscription to messages of type T.
+func NewSubscription[T Msg](
+	streamer *Streamer,
+	publisher *Publisher[T],
+	permFilter func(T) bool,
+) Subscription[T] {
+	return Subscription[T]{
+		Streamer:         streamer,
+		Publisher:        publisher,
+		permissionFilter: permFilter,
+	}
 }
 
+// Configure updates a Subscription's filters and updates the associated Publisher
+// in the event of creating or deleting a Subscription.
 func (s *Subscription[T]) Configure(filter func(T) bool) {
 	if filter == nil && s.filter == nil {
 		// no change, no synchronization needed
@@ -122,24 +137,42 @@ func (s *Subscription[T]) Configure(filter func(T) bool) {
 			s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
 			break
 		}
-	} else {
-		// Modify an existing registraiton.
-		// (just save filter, below)
-	}
+	} // else modify an existing registration, update subscription filter
+
 	// Remember the new filter.
 	s.filter = filter
 }
 
+// Publisher is responsible for publishing messages of type T
+// to streamers associate with active subscriptions.
 type Publisher[T Msg] struct {
 	Lock          sync.Mutex
 	Subscriptions []*Subscription[T]
 	WakeupID      int64
 }
 
+// NewPublisher creates a new Publisher for message type T.
 func NewPublisher[T Msg]() *Publisher[T] {
 	return &Publisher[T]{}
 }
 
+// CloseAllStreamers closes all streamers associated with this Publisher.
+func (p *Publisher[T]) CloseAllStreamers() {
+	p.Lock.Lock()
+	defer p.Lock.Unlock()
+	seenStreamersSet := make(map[*Streamer]struct{})
+	for _, sub := range p.Subscriptions {
+		if _, ok := seenStreamersSet[sub.Streamer]; !ok {
+			sub.Streamer.Close()
+			seenStreamersSet[sub.Streamer] = struct{}{}
+		}
+	}
+	p.Subscriptions = nil
+}
+
+// Broadcast receives a list of events, determines if they are
+// applicable to the publisher's subscriptions, and sends
+// appropriate messages to corresponding streamers.
 func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
