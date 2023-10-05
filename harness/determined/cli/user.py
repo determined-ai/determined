@@ -154,6 +154,7 @@ def whoami(parsed_args: Namespace) -> None:
     user = client.whoami()
     print("You are logged in as user '{}'".format(user.username))
 
+
 @login_sdk_client
 def edit(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
@@ -162,28 +163,29 @@ def edit(parsed_args: Namespace) -> None:
     if parsed_args.display_name is not None:
         patch_user.displayName = parsed_args.display_name
         changes.append("Display Name")
-    
+
     if parsed_args.remote is not None:
         patch_user.remote = parsed_args.remote
         changes.append("Remote")
-    
+
     if parsed_args.activate is not None:
         patch_user.active = parsed_args.activate
         changes.append("Active")
-    
+
     if parsed_args.username is not None:
         patch_user.username = parsed_args.username
         changes.append("Username")
-    
+
     if parsed_args.admin is not None:
         patch_user.admin = parsed_args.admin
         changes.append("Admin")
-    
+
     if len(changes) > 0:
         user_obj.edit_user(patch_user)
-        print("Changes made to the following fields: " + ', '.join(changes))
+        print("Changes made to the following fields: " + ", ".join(changes))
     else:
         print("No changes made")
+
 
 AGENT_USER_GROUP_ARGS = [
     Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
