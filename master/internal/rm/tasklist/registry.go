@@ -39,7 +39,7 @@ func (r *Registry[K, V]) Add(key K, value V) error {
 	defer r.mu.Unlock()
 
 	if _, ok := r.data[key]; ok {
-		return fmt.Errorf("group %v already exists", key)
+		return fmt.Errorf("key %v already exists", key)
 	}
 	r.data[key] = entry[V]{
 		value: value,
@@ -55,7 +55,7 @@ func (r *Registry[K, V]) Delete(key K) error {
 
 	e, ok := r.data[key]
 	if !ok {
-		return fmt.Errorf("group %v does not exist", key)
+		return fmt.Errorf("key %v does not exist", key)
 	}
 	close(e.done)
 	delete(r.data, key)
@@ -63,7 +63,7 @@ func (r *Registry[K, V]) Delete(key K) error {
 }
 
 // OnDelete registers a callback to be called when the given key is deleted. If the key does not
-// exist, the callback is called immediately.
+// exist, the callback is called async.
 func (r *Registry[K, V]) OnDelete(key K, callback func()) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

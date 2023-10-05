@@ -93,8 +93,8 @@ func AssignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 // JobSortState models a job queue, and the positions of all jobs within it.
 type JobSortState map[model.JobID]decimal.Decimal
 
-// GetJobPosition gets the job position in the queue, relative to the anchors.
-func (j JobSortState) GetJobPosition(
+// SetJobPosition sets the job position in the queue, relative to the anchors.
+func (j JobSortState) SetJobPosition(
 	jobID model.JobID,
 	anchor1 model.JobID,
 	anchor2 model.JobID,
