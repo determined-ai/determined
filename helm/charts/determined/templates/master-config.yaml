@@ -1,12 +1,12 @@
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
    name: determined-master-config-{{ .Release.Name }}
    namespace: {{ .Release.Namespace }}
    labels:
      app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
-data:
+stringData:
   master.yaml: |
     log:
       level: {{ .Values.logLevel  | quote | default "info" }}
