@@ -128,4 +128,8 @@ def compare_stats() -> None:
 
     print(f"Agent time: logs={gpu_from_log}, api={gpu_from_api}")
     # make sure agent stats get from script is less than 5% difference with those get from api
-    assert abs(gpu_from_log - gpu_from_api) <= max(max(gpu_from_api, gpu_from_log) * 0.05, 10)
+    max_diff = max(gpu_from_api, gpu_from_log) * 0.05
+    # slurm and pbs needs looser tolerances
+    if api_utils.is_hpc():
+        max_diff = max(max_diff, 10)
+    assert abs(gpu_from_log - gpu_from_api) <= max_diff

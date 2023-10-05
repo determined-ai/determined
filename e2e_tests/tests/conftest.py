@@ -15,7 +15,7 @@ from tests import config
 from tests.experiment import profile_test
 from tests.nightly.compute_stats import compare_stats
 
-from .cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
+from .cluster.test_users import logged_in_user
 from .cluster_log_manager import ClusterLogManager
 
 _INTEG_MARKERS = {
@@ -186,7 +186,7 @@ def checkpoint_storage_config(request: SubRequest) -> Dict[str, Any]:
         "--json",
     ]
 
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(config.ADMIN_CREDENTIALS):
         output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
 
     checkpoint_config = json.loads(output)["checkpoint_storage"]
@@ -211,7 +211,7 @@ def using_k8s(request: SubRequest) -> bool:
         "--json",
     ]
 
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(config.ADMIN_CREDENTIALS):
         output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
 
     rp = json.loads(output)["resource_manager"]["type"]

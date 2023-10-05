@@ -13,7 +13,7 @@ from determined.common.api._util import NTSC_Kind, wait_for_ntsc_state
 from determined.common.api.errors import APIException
 from tests import api_utils
 from tests import config as conf
-from tests.cluster.test_users import ADMIN_CREDENTIALS, change_user_password, logged_in_user
+from tests.cluster.test_users import change_user_password, logged_in_user
 from tests.experiment import run_basic_test, wait_for_experiment_state
 
 from .test_agent_user_group import _delete_workspace_and_check
@@ -22,15 +22,15 @@ from .test_groups import det_cmd, det_cmd_json
 
 @pytest.mark.e2e_cpu
 def test_workspace_org() -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         change_user_password("determined", "")
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(master_url)
     sess = api.Session(master_url, None, None, None)
     admin_auth = authentication.Authentication(
-        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password
+        master_url, conf.ADMIN_CREDENTIALS.username, conf.ADMIN_CREDENTIALS.password
     )
-    admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
+    admin_sess = api.Session(master_url, conf.ADMIN_CREDENTIALS.username, admin_auth, None)
 
     test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []

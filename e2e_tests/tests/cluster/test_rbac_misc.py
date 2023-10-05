@@ -5,6 +5,7 @@ import pytest
 
 from determined import cli
 from determined.common.api import authentication, bindings, errors
+from tests import config as conf
 from tests import utils
 from tests.api_utils import (
     configure_token_store,
@@ -13,8 +14,6 @@ from tests.api_utils import (
     get_random_string,
 )
 from tests.cluster.test_rbac import create_workspaces_with_users, rbac_disabled
-
-from .test_users import ADMIN_CREDENTIALS
 
 
 @pytest.mark.e2e_cpu_rbac
@@ -33,7 +32,7 @@ def test_cluster_admin_only_calls() -> None:
             add_password=True,
             user=bindings.v1User(username=get_random_string(), active=True, admin=False),
         )
-        configure_token_store(ADMIN_CREDENTIALS)
+        configure_token_store(conf.ADMIN_CREDENTIALS)
         cli.rbac.assign_role(
             utils.CliArgsMock(
                 username_to_assign=u_admin_role.username,

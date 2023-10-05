@@ -906,12 +906,12 @@ def verify_completed_experiment_metadata(
         for t in trials:
             last_workload_matches_last_checkpoint(t.workloads)
 
-    # When the experiment completes, all slots should now be free. This
-    # requires terminating the experiment's last container, which might
-    # take some time (especially on Slurm where our polling is longer).
-    max_secs_to_free_slots = 300
     shared = os.environ.get("SHARED_CLUSTER", False)
     if not shared:
+        # When the experiment completes, all slots should now be free. This requires terminating the
+        # experiment's last container, which might take some time (especially on Slurm where our
+        # polling is longer).
+        max_secs_to_free_slots = 300 if api_utils.is_hpc() else 30
         for _ in range(max_secs_to_free_slots):
             if cluster_utils.num_free_slots() == cluster_utils.num_slots():
                 break

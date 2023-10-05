@@ -14,7 +14,7 @@ from tests.cluster.test_rbac import (
     create_workspaces_with_users,
     rbac_disabled,
 )
-from tests.cluster.test_users import ADMIN_CREDENTIALS, det_run, logged_in_user
+from tests.cluster.test_users import det_run, logged_in_user
 
 
 def seed_workspace(ws: bindings.v1Workspace) -> None:
@@ -26,7 +26,7 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
         workspaceId=ws.id,
     ).project.id
 
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         print("creating experiment")
         experiment_id = exp.create_experiment(
             conf.fixtures_path("no_op/single-very-many-long-steps.yaml"),
@@ -45,7 +45,7 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
 def test_job_global_perm() -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         experiment_id = exp.create_experiment(
             conf.fixtures_path("no_op/single.yaml"),
             conf.fixtures_path("no_op"),
@@ -116,7 +116,7 @@ def test_job_filtering() -> None:
         jobs_per_ws = 5
         max_jobs = jobs_per_ws * len(workspaces)
         expectations: Dict[api.authentication.Credentials, int] = {
-            ADMIN_CREDENTIALS: max_jobs,
+            conf.ADMIN_CREDENTIALS: max_jobs,
             creds[0]: max_jobs,
             creds[1]: jobs_per_ws,
             creds[2]: jobs_per_ws,

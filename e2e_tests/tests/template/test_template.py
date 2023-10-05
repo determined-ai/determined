@@ -144,7 +144,7 @@ def test_rbac_template_create() -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
 def test_rbac_template_delete() -> None:
-    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
     with rbac.create_workspaces_with_users(
         [
             [  # can delete
@@ -177,7 +177,7 @@ def test_rbac_template_delete() -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
 def test_rbac_template_view() -> None:
-    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
     with rbac.create_workspaces_with_users(
         [
             [  # can view
@@ -199,7 +199,7 @@ def test_rbac_template_view() -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
 def test_rbac_template_patch_config() -> None:
-    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
     with rbac.create_workspaces_with_users(
         [
             [  # can update
@@ -233,7 +233,7 @@ def test_rbac_template_patch_config() -> None:
 @pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
 @pytest.mark.parametrize("kind", all_ntsc)
 def test_rbac_template_ntsc_create(kind: NTSC_Kind) -> None:
-    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
     with rbac.create_workspaces_with_users(
         [
             [
@@ -252,7 +252,7 @@ def test_rbac_template_ntsc_create(kind: NTSC_Kind) -> None:
             body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
             workspaceId=workspaces[0].id,
         ).project.id
-        with user.logged_in_user(rbac.ADMIN_CREDENTIALS):
+        with user.logged_in_user(conf.ADMIN_CREDENTIALS):
             experiment_id = exp.create_experiment(
                 conf.fixtures_path("no_op/single.yaml"),
                 conf.fixtures_path("no_op"),
@@ -275,7 +275,7 @@ def test_rbac_template_ntsc_create(kind: NTSC_Kind) -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
 def test_rbac_template_exp_create() -> None:
-    admin_session = api_utils.determined_test_session(rbac.ADMIN_CREDENTIALS)
+    admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
     with rbac.create_workspaces_with_users(
         [
             [

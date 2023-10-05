@@ -8,4 +8,4 @@ searcher:
   max_length:
     batches: 1000
 max_restarts: 0
-entrypoint: python3 data_validator.py 
+entrypoint: python3 data_validator.py

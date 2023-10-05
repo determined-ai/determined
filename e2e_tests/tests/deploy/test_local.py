@@ -13,7 +13,7 @@ from determined.common.api import bindings
 from tests import config as conf
 from tests import experiment as exp
 
-from ..cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
+from ..cluster.test_users import logged_in_user
 
 
 def det_deploy(subcommand: List) -> None:
@@ -75,12 +75,12 @@ def agent_down(arguments: List) -> None:
 
 
 def agent_enable(arguments: List) -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         subprocess.run(["det", "-m", conf.make_master_url(), "agent", "enable"] + arguments)
 
 
 def agent_disable(arguments: List) -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         subprocess.run(["det", "-m", conf.make_master_url(), "agent", "disable"] + arguments)
 
 

@@ -9,6 +9,7 @@ from determined.common.api._util import (
     wait_for_ntsc_state,
     task_is_ready,
     NTSC_Kind,
+    AnyNTSC,
 )
 from determined.common.api.authentication import Authentication, salt_and_hash
 from determined.common.api.logs import (

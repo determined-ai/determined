@@ -14,7 +14,7 @@ from tests import api_utils
 from tests import config as conf
 from tests import experiment, utils
 from tests.cluster.test_rbac import create_workspaces_with_users
-from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user_cli, logged_in_user
+from tests.cluster.test_users import log_in_user_cli, logged_in_user
 
 from .test_groups import det_cmd
 from .test_workspace_org import setup_workspaces
@@ -126,7 +126,7 @@ def register_model_version(
 
 @pytest.mark.test_model_registry_rbac
 def test_model_registry_rbac() -> None:
-    log_in_user_cli(ADMIN_CREDENTIALS)
+    log_in_user_cli(conf.ADMIN_CREDENTIALS)
     test_user_editor_creds = api_utils.create_test_user()
     test_user_workspace_admin_creds = api_utils.create_test_user()
     test_user_viewer_creds = api_utils.create_test_user()
@@ -134,7 +134,7 @@ def test_model_registry_rbac() -> None:
     test_user_model_registry_viewer_creds = api_utils.create_test_user()
     admin_session = api_utils.determined_test_session(admin=True)
     with setup_workspaces(admin_session) as [test_workspace]:
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(conf.ADMIN_CREDENTIALS):
             # Assign editor role to user in Uncategorized and test_workspace.
             det_cmd(
                 [
@@ -277,7 +277,7 @@ def test_model_registry_rbac() -> None:
 
         # Unassign view permissions to a certain workspace.
         # List should return models only in workspaces with permissions.
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(conf.ADMIN_CREDENTIALS):
             det_cmd(
                 [
                     "rbac",
@@ -308,7 +308,7 @@ def test_model_registry_rbac() -> None:
             )
 
         # Remove workspace admin role for this user from test_workspace.
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(conf.ADMIN_CREDENTIALS):
             det_cmd(
                 [
                     "rbac",
@@ -352,7 +352,7 @@ def test_model_rbac_deletes() -> None:
             add_password=True,
             user=bindings.v1User(username=get_random_string(), active=True, admin=False),
         )
-        api_utils.configure_token_store(ADMIN_CREDENTIALS)
+        api_utils.configure_token_store(conf.ADMIN_CREDENTIALS)
         cli.rbac.assign_role(
             utils.CliArgsMock(
                 username_to_assign=cluster_admin_creds.username,
@@ -479,7 +479,7 @@ def test_model_rbac_deletes() -> None:
                     assert "not found" in str(notFoundErr.value).lower()
         finally:
             for i in range(model_num):
-                admin_session = api_utils.determined_test_session(ADMIN_CREDENTIALS)
+                admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
                 try:
                     bindings.delete_DeleteModel(admin_session, modelName="model_" + str(i))
                 # model is has already been cleaned up

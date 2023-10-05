@@ -9,7 +9,7 @@ import pytest
 from tests import config as conf
 
 from .abstract_cluster import Cluster
-from .test_users import ADMIN_CREDENTIALS, logged_in_user
+from .test_users import logged_in_user
 from .utils import now_ts, set_master_port
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
@@ -129,7 +129,7 @@ class ManagedCluster(Cluster):
             pytest.fail(f"Agent didn't restart after {ticks} seconds")
 
     def fetch_config(self) -> Dict:
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(conf.ADMIN_CREDENTIALS):
             master_config = json.loads(
                 subprocess.run(
                     ["det", "-m", conf.make_master_url(), "master", "config", "--json"],

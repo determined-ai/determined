@@ -540,6 +540,19 @@ commands:
         type: boolean
         default: true
     steps:
+      # Wait for master before splitting tests, since so many splits depend on
+      # asking master for its configuration in order to apply skipifs.
+      - when:
+          condition:
+            and:
+              - not: <<parameters.managed-devcluster>>
+              - <<parameters.wait-for-master>>
+          steps:
+            - wait-for-master:
+                scheme: <<parameters.master-scheme>>
+                host: <<parameters.master-host>>
+                port: <<parameters.master-port>>
+
       - run:
           name: Split tests
           working_directory: ~/project/e2e_tests
@@ -565,16 +578,6 @@ commands:
               echo 'No test files found!'
               exit 1
             fi
-      - when:
-          condition:
-            and:
-              - not: <<parameters.managed-devcluster>>
-              - <<parameters.wait-for-master>>
-          steps:
-            - wait-for-master:
-                scheme: <<parameters.master-scheme>>
-                host: <<parameters.master-host>>
-                port: <<parameters.master-port>>
 
       - run:
           name: Run e2e tests

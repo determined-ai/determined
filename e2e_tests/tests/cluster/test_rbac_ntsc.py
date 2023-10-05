@@ -29,7 +29,7 @@ from tests.cluster.test_rbac import create_workspaces_with_users, rbac_disabled
 from tests.cluster.test_workspace_org import setup_workspaces
 
 from .test_groups import det_cmd_json
-from .test_users import ADMIN_CREDENTIALS, logged_in_user
+from .test_users import logged_in_user
 
 DEFAULT_WID = 1  # default workspace ID
 
@@ -61,10 +61,10 @@ def filter_out_ntsc(
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
 def test_notebook() -> None:
-    configure_token_store(ADMIN_CREDENTIALS)
+    configure_token_store(conf.ADMIN_CREDENTIALS)
     u_viewer_ws0 = create_test_user(add_password=True)
     u_editor_ws1 = create_test_user(add_password=True)
-    admin_session = determined_test_session(ADMIN_CREDENTIALS)
+    admin_session = determined_test_session(conf.ADMIN_CREDENTIALS)
 
     with setup_workspaces(count=2) as workspaces:
         cli.rbac.assign_role(
@@ -337,7 +337,7 @@ def test_ntsc_proxy() -> None:
             )
             deets = get_ntsc_details(determined_test_session(creds[0]), typ, created_id)
             assert deets.state == bindings.taskv1State.RUNNING, f"{typ} should be running"
-            err = api.task_is_ready(determined_test_session(ADMIN_CREDENTIALS), created_id)
+            err = api.task_is_ready(determined_test_session(conf.ADMIN_CREDENTIALS), created_id)
             assert err is None, f"{typ} should be ready {err}"
             assert (
                 get_proxy(creds[0], created_id) is None
@@ -410,7 +410,7 @@ def test_tsb_launch_on_trials() -> None:
             body=bindings.v1PostProjectRequest(name="test", workspaceId=workspace.id),
             workspaceId=workspace.id,
         ).project.id
-        with logged_in_user(ADMIN_CREDENTIALS):
+        with logged_in_user(conf.ADMIN_CREDENTIALS):
             experiment_id = exp.create_experiment(
                 conf.fixtures_path("no_op/single.yaml"),
                 conf.fixtures_path("no_op"),

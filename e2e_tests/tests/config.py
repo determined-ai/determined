@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 from determined.common import util
+from determined.common.api import authentication
 
 MASTER_SCHEME = "http"
 MASTER_IP = "localhost"
@@ -35,6 +36,7 @@ GPU_ENABLED = os.environ.get("DET_TEST_GPU_ENABLED", "1") not in ("0", "false")
 PROJECT_ROOT_PATH = Path(__file__).resolve().parents[2]
 EXAMPLES_PATH = PROJECT_ROOT_PATH / "examples"
 
+ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 SCIM_USERNAME = "determined"
 SCIM_PASSWORD = "password"

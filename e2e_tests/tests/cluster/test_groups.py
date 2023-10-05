@@ -6,7 +6,7 @@ import pytest
 
 from tests import config as conf
 
-from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
+from .test_users import get_random_string, logged_in_user
 
 
 def det_cmd(cmd: List[str], **kwargs: Any) -> subprocess.CompletedProcess:
@@ -32,7 +32,7 @@ def det_cmd_expect_error(cmd: List[str], expected: str) -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.parametrize("add_users", [[], ["admin", "determined"]])
 def test_group_creation(add_users: List[str]) -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         group_name = get_random_string()
         create_group_cmd = ["user-group", "create", group_name]
         for add_user in add_users:
@@ -75,7 +75,7 @@ def test_group_creation(add_users: List[str]) -> None:
 
 @pytest.mark.e2e_cpu_rbac
 def test_group_updates() -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         group_name = get_random_string()
         det_cmd(["user-group", "create", group_name], check=True)
 
@@ -111,7 +111,7 @@ def test_group_list_pagination(offset: int, limit: int) -> None:
     group_list = det_cmd_json(["user-group", "list", "--json"])["groups"]
     needed_groups = max(n - len(group_list), 0)
 
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         for _ in range(needed_groups):
             det_cmd(["user-group", "create", get_random_string()], check=True)
 
@@ -127,7 +127,7 @@ def test_group_list_pagination(offset: int, limit: int) -> None:
 
 @pytest.mark.e2e_cpu_rbac
 def test_group_errors() -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(conf.ADMIN_CREDENTIALS):
         fake_group = get_random_string()
         group_name = get_random_string()
         det_cmd(["user-group", "create", group_name], check=True)

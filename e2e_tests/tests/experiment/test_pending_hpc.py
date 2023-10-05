@@ -10,8 +10,6 @@ from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
-from ..cluster import test_slurm
-
 
 # Test only works on resource pool with 1 node 8 CPU slots.
 # Queries the determined master for resource pool information to determine if
@@ -31,11 +29,9 @@ def skip_if_not_suitable_resource_pool() -> None:
 
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
+@api_utils.skipif_not_hpc()
 def test_hpc_job_pending_reason() -> None:
     skip_if_not_suitable_resource_pool()
-    # Currently, this test fails while using the determined agent.
-    # The output is PBS or SLURM launcher specific
-    test_slurm.skip_if_not_hpc_scheduler()
 
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

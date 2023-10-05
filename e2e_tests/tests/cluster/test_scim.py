@@ -1,10 +1,10 @@
 import numbers
-import uuid
 from urllib import parse
 
 import pytest
 import requests
 
+from tests import api_utils
 from tests import config as conf
 
 
@@ -12,21 +12,21 @@ def make_scim_url(path: str) -> str:
     return parse.urljoin(conf.make_master_url(), "/scim/v2" + path)
 
 
-def get_random_string() -> str:
-    return str(uuid.uuid4())
-
-
 @pytest.mark.e2e_cpu
+@api_utils.skipif_scim_not_enabled()
 def test_create_scim_user() -> None:
-    username = get_random_string()
-    external_id = get_random_string()
+    username = api_utils.get_random_string()
+    external_id = api_utils.get_random_string()
 
     user_req = {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
         "userName": username,
         "externalId": external_id,
         "active": True,
-        "name": {"familyName": get_random_string(), "givenName": get_random_string()},
+        "name": {
+            "familyName": api_utils.get_random_string(),
+            "givenName": api_utils.get_random_string(),
+        },
     }
 
     r = requests.post(
@@ -84,6 +84,7 @@ def test_create_scim_user() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_scim_not_enabled()
 def test_okta_get_users() -> None:
     r = requests.get(
         make_scim_url("/Users"),
@@ -103,6 +104,7 @@ def test_okta_get_users() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_scim_not_enabled()
 def test_okta_get_groups() -> None:
     r = requests.get(
         make_scim_url("/Groups"),
@@ -122,8 +124,9 @@ def test_okta_get_groups() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_scim_not_enabled()
 def test_okta_search_user_not_found() -> None:
-    nonexistent_user = get_random_string()
+    nonexistent_user = api_utils.get_random_string()
 
     r = requests.get(
         make_scim_url("/Users"),
@@ -140,8 +143,9 @@ def test_okta_search_user_not_found() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_scim_not_enabled()
 def test_okta_user_not_found() -> None:
-    nonexistent_user = get_random_string()
+    nonexistent_user = api_utils.get_random_string()
 
     r = requests.get(
         make_scim_url(f"/Users/{nonexistent_user}"),
@@ -157,20 +161,25 @@ def test_okta_user_not_found() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_scim_not_enabled()
 def test_okta_create_user() -> None:
-    username = get_random_string() + "@okta.example.com"
-    given_name = get_random_string()
-    family_name = get_random_string()
+    username = api_utils.get_random_string() + "@okta.example.com"
+    given_name = api_utils.get_random_string()
+    family_name = api_utils.get_random_string()
 
     user_req = {
         "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
         "userName": username,
         "name": {"givenName": given_name, "familyName": family_name},
         "emails": [
-            {"primary": True, "value": get_random_string() + "@okta.example.com", "type": "work"}
+            {
+                "primary": True,
+                "value": api_utils.get_random_string() + "@okta.example.com",
+                "type": "work",
+            }
         ],
-        "displayName": get_random_string(),
-        "externalId": get_random_string(),
+        "displayName": api_utils.get_random_string(),
+        "externalId": api_utils.get_random_string(),
         "groups": [],
         "active": True,
     }
