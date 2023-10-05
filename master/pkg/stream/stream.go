@@ -28,7 +28,10 @@ type Event[T Msg] struct {
 	deleteCache interface{}
 }
 
+type PreparableMessage interface{}
+
 type UpsertMsg struct {
+	PreparableMessage
 	JsonKey string
 	Msg     Msg
 }
@@ -41,6 +44,7 @@ func (u *UpsertMsg) MarshalJSON() ([]byte, error) {
 }
 
 type DeleteMsg struct {
+	PreparableMessage
 	Key     string
 	Deleted string
 }
@@ -62,10 +66,10 @@ type Streamer struct {
 	// Closed is set externally, and noticed eventually.
 	Closed bool
 	// PrepareFn is a user defined function that prepares Msgs for broadcast
-	PrepareFn func(interface{}) interface{}
+	PrepareFn func(message PreparableMessage) interface{}
 }
 
-func NewStreamer(prepareFn func(interface{}) interface{}) *Streamer {
+func NewStreamer(prepareFn func(message PreparableMessage) interface{}) *Streamer {
 	var lock sync.Mutex
 	cond := sync.NewCond(&lock)
 	if prepareFn == nil {
@@ -136,7 +140,7 @@ func NewPublisher[T Msg]() *Publisher[T] {
 	return &Publisher[T]{}
 }
 
-func (p *Publisher[T]) Broadcast(events []Event[T], upsertKey, deleteKey string) {
+func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 

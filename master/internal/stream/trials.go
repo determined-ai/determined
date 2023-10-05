@@ -189,7 +189,7 @@ func TrialCollectSubscriptionModMsgs(addSpec TrialSubscriptionSpec, ctx context.
 
 	var out []interface{}
 	for _, msg := range trialMsgs {
-		out = append(out, msg.UpsertMsg(nil))
+		out = append(out, msg.UpsertMsg())
 	}
 	return out, nil
 }

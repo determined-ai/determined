@@ -120,7 +120,7 @@ func writeAll(socketLike WebsocketLike, msgs []interface{}) error {
 }
 
 // XXX: entrypoint should be renamed
-func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, prepareFunc func(interface{}) interface{}) error {
+func (ps PublisherSet) entrypoint(ctx context.Context, socket WebsocketLike, prepareFunc func(message stream.PreparableMessage) interface{}) error {
 	streamer := stream.NewStreamer(prepareFunc)
 	ss := NewSubscriptionSet(streamer, ps)
 
@@ -241,7 +241,7 @@ func (ps PublisherSet) Websocket(socket *websocket.Conn, c echo.Context) error {
 	return ps.entrypoint(ctx, &WrappedWebsocket{Conn: socket}, prepareWebsocket)
 }
 
-func prepareWebsocket(msg interface{}) interface{} {
+func prepareWebsocket(msg stream.PreparableMessage) interface{} {
 	if _, ok := msg.(stream.UpsertMsg); ok {
 		return prepareMessageWithCache(msg, nil)
 	} else if deleted, ok := msg.(stream.DeleteMsg); ok {
@@ -360,7 +360,7 @@ func startup[T stream.Msg, S any](
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
-	prepare func(interface{}) interface{},
+	prepare func(message stream.PreparableMessage) interface{},
 ) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
