@@ -6,17 +6,22 @@ package stream
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 
+	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
 	"github.com/determined-ai/determined/master/test/streamdata"
 )
 
-func simpleUpsert(i interface{}) interface{} {
+func simpleUpsert(i stream.PreparableMessage) interface{} {
 	return i
 }
 
@@ -46,6 +51,10 @@ func (t *startupReadWriter) ReadJSON(data interface{}) error {
 
 func (t *startupReadWriter) Write(data interface{}) error {
 	t.data = append(t.data, data)
+	return nil
+}
+
+func (t *startupReadWriter) Close() error {
 	return nil
 }
 
@@ -81,6 +90,11 @@ func TestReadWriter(t *testing.T) {
 
 func TestStartup(t *testing.T) {
 	ctx := context.TODO()
+	e := echo.New()
+	c := e.NewContext(nil, nil)
+	echoCtx := &detContext.DetContext{Context: c}
+	echoCtx.SetRequest(&http.Request{})
+	echoCtx.SetUser(model.User{Username: uuid.New().String()})
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
 	defer func() {
 		fmt.Println("cleaning up?")
@@ -107,7 +121,7 @@ func TestStartup(t *testing.T) {
 		startupMessage: &startupMessage,
 	}
 	publisherSet := NewPublisherSet()
-	err := publisherSet.entrypoint(ctx, &tester, simpleUpsert)
+	err := publisherSet.entrypoint(ctx, &tester, echoCtx, simpleUpsert)
 	require.NoError(t, err)
 
 	deletions, trialMsgs, err := splitDeletionsAndTrials(tester.data)
@@ -115,6 +129,7 @@ func TestStartup(t *testing.T) {
 	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
 	require.Equal(t, "0", deletions[0], "expected deleted trials to be 0, not %s", deletions[0])
 	require.Equal(t, 0, len(trialMsgs), "received unexpected trial message")
+	tester.data = []interface{}{}
 
 	// don't know about trial 3, and trial 4 doesn't exist
 	startupMessage = StartupMsg{
@@ -130,87 +145,16 @@ func TestStartup(t *testing.T) {
 	}
 	tester.startupMessage = &startupMessage
 	publisherSet = NewPublisherSet()
-	err = publisherSet.entrypoint(ctx, &tester, simpleUpsert) // XXX: fix prepare func
+	err = publisherSet.entrypoint(ctx, &tester, echoCtx, simpleUpsert) // XXX: fix prepare func
 	require.NoError(t, err)
 	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.data)
 	require.NoError(t, err)
-	fmt.Println("deletions:", deletions)
 	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
 	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
 	require.Equal(t, 1, len(trialMsgs), "received unexpected trial message")
 	require.Equal(t, 3, trialMsgs[0].ID, "expected trialMsg with ID 3, received ID %d",
 		trialMsgs[0].ID)
-
-	fmt.Println("END OF TEST!")
-
-	// Subscribe to all known trials, but 4 doesn't exist
-	//startupMessage = StartupMsg{
-	//	Known: KnownKeySet{
-	//		Trials: "1,2,3,4",
-	//	},
-	//	Subscribe: SubscriptionSpecSet{
-	//		Trials: &TrialSubscriptionSpec{
-	//			TrialIds: []int{1, 2, 3, 4},
-	//			Since:    0,
-	//		},
-	//	},
-	//}
-	//tester.startupMessage = &startupMessage
-	//err = publisherSet.entrypoint(ctx, &tester, simpleUpsert, recordDeletion)
-	//require.NoError(t, err)
-	//deletions, trialMsgs, err = splitDeletionsAndTrials(tester.data)
-	//require.NoError(t, err)
-	//require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	//require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
-	//require.Equal(t, 0, len(trialMsgs), "received unexpected trial message")
-}
-
-func TestStartupTrial(t *testing.T) {
-	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
-
-	defer cleanup()
-
-	trials := streamdata.GenerateStreamTrials()
-	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
-
-	startupMessage := StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,3",
-		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1}, // trials 1,2,3
-				Since:         0,
-			},
-		},
-	}
-	messages := testSubscriptionSetStartup(t, startupMessage)
-	deletions, trialMsgs, err := splitDeletionsAndTrials(messages)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	require.Equal(t, "0", deletions[0], "expected deleted trials to be 0, not %s", deletions[0])
-	require.Equal(t, 0, len(trialMsgs), "received unexpected trial message")
-
-	// don't know about trial 3, and trial 4 doesn't exist
-	startupMessage = StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,4",
-		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1}, // trials 1,2,3
-				Since:         0,
-			},
-		},
-	}
-	messages = testSubscriptionSetStartup(t, startupMessage)
-	deletions, trialMsgs, err = splitDeletionsAndTrials(messages)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
-	require.Equal(t, 1, len(trialMsgs), "received unexpected trial message")
-	require.Equal(t, 3, trialMsgs[0].ID, "expected trialMsg with ID 3, received ID %d",
-		trialMsgs[0].ID)
+	tester.data = []interface{}{}
 
 	// Subscribe to all known trials, but 4 doesn't exist
 	startupMessage = StartupMsg{
@@ -224,8 +168,10 @@ func TestStartupTrial(t *testing.T) {
 			},
 		},
 	}
-	messages = testSubscriptionSetStartup(t, startupMessage)
-	deletions, trialMsgs, err = splitDeletionsAndTrials(messages)
+	tester.startupMessage = &startupMessage
+	err = publisherSet.entrypoint(ctx, &tester, echoCtx, simpleUpsert)
+	require.NoError(t, err)
+	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.data)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
 	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
@@ -251,15 +197,4 @@ func splitDeletionsAndTrials(messages []interface{}) ([]string, []*TrialMsg, err
 		}
 	}
 	return deletions, trialMsgs, nil
-}
-
-func testSubscriptionSetStartup(t *testing.T, startupMessage StartupMsg) []interface{} {
-	ctx := context.TODO()
-	streamer := stream.NewStreamer(simpleUpsert) // XXX: fix prepare func
-	publisherSet := NewPublisherSet()
-	subSet := NewSubscriptionSet(streamer, publisherSet)
-	messages, err := subSet.Startup(startupMessage, ctx)
-	require.NoError(t, err, "error running startup")
-
-	return messages
 }
