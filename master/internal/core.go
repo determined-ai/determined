@@ -870,6 +870,8 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 		}
 	}
 
+	// TODO add logs into here explaining what is going on
+
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return "", errors.Wrap(err, "receiving task logs")
 	}

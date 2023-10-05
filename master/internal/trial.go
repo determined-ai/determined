@@ -579,6 +579,38 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			WithError(exit.Err).
 			Errorf("trial encountered transient system error")
 	case exit.Err != nil && !sproto.IsTransientSystemError(exit.Err):
+		{ // TODO seperate func for these two stuff
+			notRetries, err := logpattern.ShouldRetry(model.TaskID)
+			if err != nil {
+				return err // I think this error is reasonable here?
+			}
+
+			// TODO just insert these logs into it...
+			if len(notRetries) > 0 {
+				var exitReasons []string
+				for _, r := range notRetries {
+					exitReasons = append(exitReasons,
+						fmt.Sprintf("(log %s matched regex %s)", r.Regex, r.Log))
+				}
+				t.syslog.
+					WithError(exit.Err).
+					Errorf("trial failed and not retrying due to logs matching a don't retry policy" +
+						" check trial logs for more info") // TODO improve this message
+				// TODO is this error wicked?
+				return t.transition(model.StateWithReason{
+					State: model.ErrorState,
+					InformationalReason: fmt.Sprintf(
+						"trial failed and matched logs to a don't retry policy\n %s",
+						strings.Join(exitReasons, ",\n"),
+					),
+				})
+			}
+		}
+
+		// TODO forget it, lets not add another restarts.
+		// I'm not super convinced people will care enough and excluding the node
+		// seems reasonable.
+
 		t.syslog.
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
@@ -592,6 +624,10 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				InformationalReason: "trial exceeded max restarts",
 			})
 		}
+
+		// if TODO cap check here.
+		// WE FAILED because
+
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,

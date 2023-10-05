@@ -1,4 +1,4 @@
-package ft
+package ft // rename ft
 
 import (
 	"fmt"
@@ -24,24 +24,43 @@ func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	return nil
 }
 
-func DisallowNode(taskID model.TaskID, nodeName string) error {
-	// TODO add to a state
+// log_policy_webhook
+// id | task_id | regex | log | alert_report_time
+func AddWebhookAlert(taskID model.TaskID, regex string, log string) error {
 	return nil
 }
 
+// log_policy_dont_retry
+// id | task_id | regex | log | alert_report_time
+func AddDontRetry(taskID model.TaskID, regex string, log string) error {
+	return nil
+}
+
+// log_policy_retry_on_different_node
+// id | task_id | allocation_id | regex | log | restarts_left | alert_report_time
+//
+// To be explicit 1 restarts left means we have exactly one restart left.
+func AddRetryOnDifferentNode(
+	taskID model.TaskID, allocID model.AllocationID, regex string, log string,
+) error {
+	return nil
+}
+
+type RetryInfo struct {
+	Regex string
+	Log   string // TODO this could be a model.Log but just the string I think is fine for now.
+}
+
+func ShouldRetry(taskID model.TaskID) ([]RetryInfo, error) {
+	return []RetryInfo{}, err
+}
+
 /*
-func CanTaskBeOnNode(taskID model.TaskID, agentID string) bool {
-	fmt.Println("CAN TASK BE ON NODE", taskID, agentID)
-	// TODO write through cache.
-	return true
+type RetryInfo struct {
+	Regex string
+	Log   string // TODO this could be a model.Log but just the string I think is fine for now.
+}
+
+func ShouldRetryOnDifferentNode(taskID model.TaskID) ([]RetryDifferentNodeInfo, error) {
 }
 */
-
-func UserOwnsTask(userID, taskID string) (bool, error) {
-	return true, nil
-}
-
-// GetAlertsMerged mapping of action to relative alert(s)
-func GetAlertsMerged(taskID string) (map[any]any, error) {
-	return nil, nil
-}
