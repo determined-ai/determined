@@ -366,6 +366,12 @@ export interface PatchUsersParams {
   userIds: number[];
 }
 
+export interface AssignMultipleGroupsParams {
+  userIds: number[];
+  addGroups: number[];
+  removeGroups: number[];
+}
+
 export interface CreateGroupsParams {
   addUsers?: Array<number>;
   name: string;

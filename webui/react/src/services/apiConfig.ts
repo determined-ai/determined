@@ -174,6 +174,16 @@ export const patchUsers: DetApi<
   request: (params) => detApi.Internal.patchUsers(params),
 };
 
+export const assignMultipleGroups: DetApi<
+  Service.AssignMultipleGroupsParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+> = {
+  name: 'assignMultipleGroups',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.assignMultipleGroups(params),
+};
+
 export const getUserSetting: DetApi<
   EmptyParams,
   Api.V1GetUserSettingResponse,
@@ -386,7 +396,7 @@ export const removeRolesFromGroup: DetApi<
 };
 
 export const assignRolesToUser: DetApi<
-  Service.AssignRolesToUserParams,
+  Service.AssignRolesToUserParams[],
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse
 > = {
@@ -394,13 +404,15 @@ export const assignRolesToUser: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.assignRoles({
-      userRoleAssignments: params.roleIds.map((roleId) => ({
-        roleAssignment: {
-          role: { roleId },
-          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
-        },
-        userId: params.userId,
-      })),
+      userRoleAssignments: params.flatMap((param) =>
+        param.roleIds.map((roleId) => ({
+          roleAssignment: {
+            role: { roleId },
+            scopeWorkspaceId: param.scopeWorkspaceId || undefined,
+          },
+          userId: param.userId,
+        })),
+      ),
     }),
 };
 

@@ -102,7 +102,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         await patchUser({ userId: user.id, userParams: formData });
         if (canModifyPermissions) {
           rolesToAdd.size > 0 &&
-            (await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id }));
+            (await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: user.id }]));
           rolesToRemove.size > 0 &&
             (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
@@ -114,7 +114,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         const u = await postUser({ user: formData });
         const uid = u.user?.id;
         if (uid && rolesToAdd.size > 0) {
-          await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
+          await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: uid }]);
         }
         makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
         form.resetFields();
