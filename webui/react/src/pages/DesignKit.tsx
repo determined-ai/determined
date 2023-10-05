@@ -606,7 +606,7 @@ const ChartsSection: React.FC = () => {
       [XAxisDomain.Batches]: line1BatchesDataStreamed,
       [XAxisDomain.Time]: [],
     },
-    metricType: MetricType.Training,
+    groupType: GroupType.Training,
     name: 'Line',
   };
 
@@ -623,7 +623,7 @@ const ChartsSection: React.FC = () => {
         [stampToNum('2023-01-05T04:02:06Z'), 12],
       ],
     },
-    metricType: MetricType.Validation,
+    groupType: GroupType.Validation,
     name: 'Line',
   };
 
@@ -637,7 +637,7 @@ const ChartsSection: React.FC = () => {
         [stampToNum('2023-01-05T04:00:00Z'), 4],
       ],
     },
-    metricType: MetricType.Validation,
+    groupType: GroupType.Validation,
     name: 'Alt-Line',
   };
 
@@ -647,7 +647,7 @@ const ChartsSection: React.FC = () => {
       [XAxisDomain.Batches]: [[0, 1]],
       [XAxisDomain.Time]: [],
     },
-    metricType: MetricType.Training,
+    groupType: GroupType.Training,
     name: 'Line',
   };
 

@@ -6,7 +6,7 @@ import {
   getCssVar,
   getTimeTickValues,
   glasbeyColor,
-  metricToStr,
+  groupToStr,
 } from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
 import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
@@ -33,7 +33,7 @@ export const VALIDATION_SERIES_COLOR = '#F77B21';
  * @param {number} [height=350] - Height in pixels.
  * @param {Scale} [scale=Scale.Linear] - Linear or Log Scale for the y-axis.
  * @param {Serie[]} series - Array of valid series to plot onto the chart.
- * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each metric's color, name, and type.
+ * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each group's color, name, and type.
  * @param {string} [title] - Title for the chart.
  * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart (example: batches, time).
  * @param {string} [xLabel] - Directly set label below the x-axis.
@@ -93,7 +93,7 @@ export const LineChart: React.FC<LineChartProps> = ({
 
   const seriesNames: string[] = useMemo(() => {
     return series.map((s) => {
-      return metricToStr({ group: s.metricType ?? 'unknown', name: s.name ?? 'unknown' });
+      return groupToStr({ group: s.groupType ?? 'unknown', name: s.name ?? 'unknown' });
     });
   }, [series]);
 
