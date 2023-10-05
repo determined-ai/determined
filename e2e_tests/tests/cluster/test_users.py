@@ -1071,3 +1071,53 @@ def test_logout_all(clean_auth: None, login_admin: None) -> None:
     )
     # Change Determined password back to "".
     change_user_password(constants.DEFAULT_DETERMINED_USER, "")
+
+@pytest.mark.e2e_cpu
+def test_user_edit(clean_auth: None, login_admin: None) -> None:
+    u_patch = api_utils.create_test_user(False)
+    original_name = u_patch.username
+
+    master_url = conf.make_master_url()
+    certs.cli_cert = certs.default_load(master_url)
+    authentication.cli_auth = authentication.Authentication(
+        conf.make_master_url(), requested_user=original_name, password=""
+    )
+    sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
+
+    current_user = _fetch_user_by_username(sess, original_name)
+
+    # Log out.
+    log_out_user()
+
+    # login admin again.
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
+
+    new_display_name = get_random_string()
+    new_username = get_random_string()
+
+    assert current_user is not None and current_user.id
+    command = [
+        "user",
+        "edit",
+        original_name,
+        "--display-name",
+        new_display_name,
+        "--username",
+        new_username,
+        "--activate",
+        "--remote",
+        "--admin",
+    ]
+
+    child = det_spawn(command)
+    child.wait()
+    child.close()
+    assert child.status == 0
+
+    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    assert modded_user is not None
+    assert modded_user.displayName == new_display_name
+    assert modded_user.username == new_username
+    assert modded_user.active == True
+    assert modded_user.remote == True
+    assert modded_user.admin == True
