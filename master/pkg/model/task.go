@@ -343,22 +343,28 @@ func TaskLogFromProto(in *taskv1.TaskLog) *TaskLog {
 		level = ptrs.Ptr(TaskLogLevelFromProto(*in.Level))
 	}
 
+	var id *int
+	if in.Id != nil {
+		id = ptrs.Ptr(int(*in.Id))
+	}
+
+	var rankID *int
+	if in.RankId != nil {
+		rankID = ptrs.Ptr(int(*in.RankId))
+	}
+
 	out := &TaskLog{
+		ID:           id,
 		TaskID:       in.TaskId,
 		AllocationID: in.AllocationId,
 		AgentID:      in.AgentId,
 		ContainerID:  in.ContainerId,
+		RankID:       rankID,
 		Timestamp:    ptrs.Ptr(in.Timestamp.AsTime()),
 		Level:        level,
 		Log:          in.Log,
 		Source:       in.Source,
 		StdType:      in.Stdtype,
-	}
-	if in.Id != nil {
-		out.ID = ptrs.Ptr(int(*in.Id))
-	}
-	if in.RankId != nil {
-		out.RankID = ptrs.Ptr(int(*in.RankId))
 	}
 
 	return out

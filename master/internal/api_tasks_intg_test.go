@@ -83,8 +83,6 @@ func TestPostTaskLogs(t *testing.T) {
 	for i, a := range stream.getData() {
 		e := expected[i]
 
-		// This somewhat sucks we have to check field by field now but our types kinda
-		// suck like this based on how TaskLogsResponse is setup.
 		require.NotEmpty(t, a.Id)
 		require.Equal(t, e.Timestamp.AsTime(), a.Timestamp.AsTime())
 		require.NotEmpty(t, a.Message) //nolint: staticcheck
