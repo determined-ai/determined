@@ -64,9 +64,7 @@ func (as *allocationService) StartAllocation(
 
 	go func() {
 		_ = ref.awaitTermination()
-		if err := ref.Cleanup(); err != nil {
-			syslog.WithError(err).Error("cleaning up allocation")
-		}
+		ref.Cleanup()
 
 		as.mu.Lock()
 		delete(as.allocations, req.AllocationID)

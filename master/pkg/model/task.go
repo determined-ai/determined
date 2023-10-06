@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -289,6 +291,26 @@ func TaskLogLevelToProto(l string) logv1.LogLevel {
 		return logv1.LogLevel_LOG_LEVEL_CRITICAL
 	default:
 		return logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+	}
+}
+
+// TaskLogLevelFromLogrus returns an equivalent task log level from a logrus level.
+func TaskLogLevelFromLogrus(l logrus.Level) string {
+	switch l {
+	case logrus.TraceLevel:
+		return LogLevelTrace
+	case logrus.DebugLevel:
+		return LogLevelDebug
+	case logrus.InfoLevel:
+		return LogLevelInfo
+	case logrus.WarnLevel:
+		return LogLevelWarning
+	case logrus.ErrorLevel:
+		return LogLevelError
+	case logrus.FatalLevel, logrus.PanicLevel:
+		return LogLevelCritical
+	default:
+		return LogLevelUnspecified
 	}
 }
 
