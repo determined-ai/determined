@@ -361,9 +361,16 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			case doesNotContain:
 				queryString = "? NOT ILIKE ?"
 				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-			case empty, notEmpty:
-				queryString = "? ?"
+			case empty:
+				queryString = "? ? OR ? ? ? OR ? ? ?"
 				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(oSQL))
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(equal), "")
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(equal), "[]")
+			case notEmpty:
+				queryString = "? ? AND ? ? ? AND ? ? ?"
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(oSQL))
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(notEqual), "")
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(notEqual), "[]")
 			default:
 				queryArgs = append(queryArgs, bun.Safe(col),
 					bun.Safe(oSQL), *e.Value)
