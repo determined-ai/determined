@@ -121,7 +121,7 @@ class BoolOptArg(NamedTuple):
     true_name: str
     false_name: str
     dest: str
-    default: bool = False
+    default: Optional[bool] = None
     true_help: Optional[str] = None
     false_help: Optional[str] = None
 

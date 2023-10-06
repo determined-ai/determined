@@ -249,7 +249,6 @@ args_description = [
                 "--remote",
                 "--no-remote",
                 dest="remote",
-                default=None,
                 true_help="set as remote user",
                 false_help="set as non-remote user"
             ),
@@ -257,7 +256,6 @@ args_description = [
                 "--activate",
                 "--deactivate",
                 dest="activate",
-                default=None,
                 true_help="set user as active",
                 false_help="deactivate user"
             ),
@@ -265,7 +263,6 @@ args_description = [
                 "--admin",
                 "--no-admin",
                 dest="admin",
-                default=None,
                 true_help="grant user admin permissions",
                 false_help="remove admin permissions from user"
             ),
