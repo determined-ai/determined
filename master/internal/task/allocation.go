@@ -182,8 +182,6 @@ func newAllocation(
 		logCtx: req.LogContext,
 	}
 
-	a.closers = append(a.closers, a.purgeRestorableResources, a.markResourcesReleased)
-
 	rmEvents, err := a.requestResources()
 	if err != nil {
 		return nil, fmt.Errorf("requesting resources: %w", err)
@@ -316,9 +314,7 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 		return err
 	}
 	a.registerProxies(a.containerProxyAddresses())
-	a.closers = append(a.closers, func() {
-		a.unregisterProxies()
-	})
+	a.closers = append(a.closers, a.unregisterProxies)
 	return nil
 }
 
@@ -526,6 +522,9 @@ func (a *allocation) finalize(
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
 		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
 	}
+	a.purgeRestorableResources()
+	a.markResourcesReleased()
+
 	a.exited = &AllocationExited{UserRequestedStop: userRequestedStop, Err: exitErr, FinalState: a.state()}
 
 	log := fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason)
@@ -558,7 +557,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	a.closers = append(a.closers, func() {
 		for _, r := range a.resources {
 			if r.Exited == nil {
-				a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
+				a.syslog.Infof("allocation exited with unterminated resources: %v", r.Summary())
 				r.Kill(a.system, a.logCtx)
 			}
 		}
@@ -608,14 +607,10 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 					switch {
 					case r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil:
 						a.registerProxies(r.Started.Addresses)
-						a.closers = append(a.closers, func() {
-							a.unregisterProxies()
-						})
+						a.closers = append(a.closers, a.unregisterProxies)
 					case a.model.ProxyAddress != nil:
 						a.registerProxies(a.containerProxyAddresses())
-						a.closers = append(a.closers, func() {
-							a.unregisterProxies()
-						})
+						a.closers = append(a.closers, a.unregisterProxies)
 					}
 				}
 			}
@@ -710,9 +705,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
 			a.resources[msg.ResourcesID].Rank == 0 {
 			a.registerProxies(msg.ResourcesStarted.Addresses)
-			a.closers = append(a.closers, func() {
-				a.unregisterProxies()
-			})
+			a.closers = append(a.closers, a.unregisterProxies)
 		}
 
 		containerID := coalesceString(msg.ContainerIDStr(), "")
