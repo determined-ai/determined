@@ -494,7 +494,7 @@ func (a *allocation) Cleanup() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	// FYI, if we haven't exited something went terribly wrong (bug).
+	// FYI, if we haven't exited something went terribly wrong (it is bug).
 	if a.exited != nil {
 		return
 	}
