@@ -19519,7 +19519,7 @@ var (
 
 	pattern_Determined_AllocationWaiting_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "allocations", "allocation_id", "waiting"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_PostTaskLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "task-logs"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_PostTaskLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "task", "logs"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_TaskLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "tasks", "task_id", "logs"}, "", runtime.AssumeColonVerbOpt(true)))
 

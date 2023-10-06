@@ -811,11 +811,11 @@ service Determined {
   // Persist the given task logs.
   rpc PostTaskLogs(PostTaskLogsRequest) returns (PostTaskLogsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/task-logs"
+      post: "/api/v1/task/logs"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Jobs", "Tasks" ]
+      tags: "Internal"
     };
   }
 

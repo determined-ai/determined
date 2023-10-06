@@ -371,44 +371,40 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
-func CreateTaskLogFromProto(protoTaskLog *taskv1.TaskLog) (*model.TaskLog, error) {
-	logID := int(*protoTaskLog.Id)
-	rankID := int(*protoTaskLog.RankId)
-	timestamp := time.Unix(protoTaskLog.Timestamp.GetSeconds(), int64(protoTaskLog.Timestamp.GetNanos()))
-
-	return &model.TaskLog{
-		ID:           &logID,
-		StringID:     protoTaskLog.StringId,
-		TaskID:       protoTaskLog.TaskId,
-		AllocationID: &protoTaskLog.AllocationId,
-		AgentID:      protoTaskLog.AgentId,
-		ContainerID:  protoTaskLog.ContainerId,
-		RankID:       &rankID,
-		Timestamp:    &timestamp,
-		Level:        &protoTaskLog.Level,
-		Log:          protoTaskLog.Log,
-		Source:       protoTaskLog.Source,
-		StdType:      protoTaskLog.Stdtype,
-	}, nil
-}
-
-func (a *apiServer) PostTaskLogs(ctx context.Context, req *apiv1.PostTaskLogsRequest,
+func (a *apiServer) PostTaskLogs(
+	ctx context.Context, req *apiv1.PostTaskLogsRequest,
 ) (*apiv1.PostTaskLogsResponse, error) {
-	// var logs []*model.TaskLog
-	// logs = req.logs
-	// if err := json.NewDecoder(ctx.Request().Body).Decode(&logs); err != nil {
-	// 	return "", err
-	// }
-	var err error
+	if len(req.Logs) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "len logs must be greater than 0")
+	}
+	taskID := req.Logs[0].TaskId
+
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(taskID),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
+
 	logs := make([]*model.TaskLog, len(req.Logs))
 	for i := range req.Logs {
-		if logs[i], err = CreateTaskLogFromProto(req.Logs[i]); err != nil {
-			return nil, err
+		if req.Logs[i].Id != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"ID must be nil on logs got %d instead", *req.Logs[i].Id)
 		}
+		if req.Logs[i].TaskId != taskID {
+			// There isn't a hard reason for this requirement other than we would have to RBAC
+			// against all provided taskIDs. This usecase seems pretty unlikely.
+			return nil, status.Errorf(codes.InvalidArgument,
+				"can only post logs of a single taskID per task log request got '%s' and '%s'",
+				taskID, req.Logs[i].TaskId)
+		}
+
+		logs[i] = model.TaskLogFromProto(req.Logs[i])
 	}
+
 	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
-		return &apiv1.PostTaskLogsResponse{}, errors.Wrap(err, "receiving task logs")
+		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
 	}
+
 	return &apiv1.PostTaskLogsResponse{}, nil
 }
 

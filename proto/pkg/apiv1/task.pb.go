@@ -225,6 +225,7 @@ type PostTaskLogsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The logs to persist.
 	Logs []*taskv1.TaskLog `protobuf:"bytes,1,rep,name=logs,proto3" json:"logs,omitempty"`
 }
 
