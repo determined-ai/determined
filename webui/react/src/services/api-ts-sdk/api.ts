@@ -886,11 +886,11 @@ export interface V1AcceleratorData {
      */
     acceleratorType?: string;
     /**
-     * An array of IDs of the accelerators associated with the allocation.
+     * An array of UUIDs of the accelerators associated with the allocation.
      * @type {Array<string>}
      * @memberof V1AcceleratorData
      */
-    accelerators?: Array<string>;
+    acceleratorUuids?: Array<string>;
 }
 /**
  * Acknowledge the receipt of some stop signal.

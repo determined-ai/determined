@@ -770,7 +770,7 @@ class trialv1Trial(Printable):
 
 class v1AcceleratorData(Printable):
     acceleratorType: "typing.Optional[str]" = None
-    accelerators: "typing.Optional[typing.Sequence[str]]" = None
+    acceleratorUuids: "typing.Optional[typing.Sequence[str]]" = None
     allocationId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
     nodeName: "typing.Optional[str]" = None
@@ -780,7 +780,7 @@ class v1AcceleratorData(Printable):
         self,
         *,
         acceleratorType: "typing.Union[str, None, Unset]" = _unset,
-        accelerators: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        acceleratorUuids: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         allocationId: "typing.Union[str, None, Unset]" = _unset,
         containerId: "typing.Union[str, None, Unset]" = _unset,
         nodeName: "typing.Union[str, None, Unset]" = _unset,
@@ -788,8 +788,8 @@ class v1AcceleratorData(Printable):
     ):
         if not isinstance(acceleratorType, Unset):
             self.acceleratorType = acceleratorType
-        if not isinstance(accelerators, Unset):
-            self.accelerators = accelerators
+        if not isinstance(acceleratorUuids, Unset):
+            self.acceleratorUuids = acceleratorUuids
         if not isinstance(allocationId, Unset):
             self.allocationId = allocationId
         if not isinstance(containerId, Unset):
@@ -805,8 +805,8 @@ class v1AcceleratorData(Printable):
         }
         if "acceleratorType" in obj:
             kwargs["acceleratorType"] = obj["acceleratorType"]
-        if "accelerators" in obj:
-            kwargs["accelerators"] = obj["accelerators"]
+        if "acceleratorUuids" in obj:
+            kwargs["acceleratorUuids"] = obj["acceleratorUuids"]
         if "allocationId" in obj:
             kwargs["allocationId"] = obj["allocationId"]
         if "containerId" in obj:
@@ -822,8 +822,8 @@ class v1AcceleratorData(Printable):
         }
         if not omit_unset or "acceleratorType" in vars(self):
             out["acceleratorType"] = self.acceleratorType
-        if not omit_unset or "accelerators" in vars(self):
-            out["accelerators"] = self.accelerators
+        if not omit_unset or "acceleratorUuids" in vars(self):
+            out["acceleratorUuids"] = self.acceleratorUuids
         if not omit_unset or "allocationId" in vars(self):
             out["allocationId"] = self.allocationId
         if not omit_unset or "containerId" in vars(self):

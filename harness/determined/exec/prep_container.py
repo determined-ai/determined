@@ -365,9 +365,26 @@ if __name__ == "__main__":
         # based only on task logs.
         hostname = os.environ.get("HOSTNAME", "")
         agent_id = os.environ.get("DET_AGENT_ID", "")
+        container_id = os.environ.get("DET_CONTAINER_ID", "")
+        _, accelerator_type = gpu.get_gpus()
         logging.info(
             f"Running task container on agent_id={agent_id}, hostname={hostname} "
             f"with visible GPUs {resources.gpu_uuids}"
+        )
+        bindings.post_PostAllocationAcceleratorData(
+            sess,
+            allocationId=info.allocation_id,
+            body=bindings.v1PostAllocationAcceleratorDataRequest(
+                allocationId=info.allocation_id,
+                acceleratorData=bindings.v1AcceleratorData(
+                    containerId=container_id,
+                    acceleratorType="cpu" if accelerator_type == "" else accelerator_type,
+                    acceleratorUuids=resources.gpu_uuids,
+                    allocationId=info.allocation_id,
+                    nodeName=agent_id,
+                    taskId=info.task_id,
+                ),
+            ),
         )
         for process in gpu.get_gpu_processes():
             logging.warning(

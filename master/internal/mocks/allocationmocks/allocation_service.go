@@ -99,6 +99,20 @@ func (_m *AllocationService) SendLog(ctx context.Context, id model.AllocationID,
 	_m.Called(ctx, id, log)
 }
 
+// SetAcceleratorData provides a mock function with given fields: ctx, accData
+func (_m *AllocationService) SetAcceleratorData(ctx context.Context, accData model.AcceleratorData) error {
+	ret := _m.Called(ctx, accData)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.AcceleratorData) error); ok {
+		r0 = rf(ctx, accData)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SetProxyAddress provides a mock function with given fields: ctx, id, addr
 func (_m *AllocationService) SetProxyAddress(ctx context.Context, id model.AllocationID, addr string) error {
 	ret := _m.Called(ctx, id, addr)

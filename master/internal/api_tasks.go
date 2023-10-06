@@ -118,6 +118,32 @@ func (a *apiServer) canDoActionsOnTask(
 	return nil
 }
 
+func (a *apiServer) canGetTaskAcceleration(ctx context.Context, taskID string) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+	isExp, exp, err := expFromTaskID(ctx, model.TaskID(taskID))
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		var ok bool
+		if ok, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
+			return err
+		} else if !ok {
+			return api.NotFoundErrs("task", taskID, true)
+		}
+		return nil
+	}
+
+	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("task", taskID, true))
+	}
+
+	return nil
+}
+
 func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -247,14 +273,59 @@ func (a *apiServer) GetTaskAcceleratorData(
 	ctx context.Context,
 	req *apiv1.GetTaskAcceleratorDataRequest,
 ) (*apiv1.GetTaskAcceleratorDataResponse, error) {
-	return nil, grpcutil.UnimplementedError
+	if req.TaskId == "" {
+		return nil, status.Error(codes.InvalidArgument, "task ID missing")
+	}
+
+	if err := a.canGetTaskAcceleration(ctx, req.TaskId); err != nil {
+		return nil, err
+	}
+
+	var res []model.AcceleratorData
+	err := db.Bun().NewSelect().
+		ColumnExpr("alloc_acc.*").
+		TableExpr("allocation_accelerators alloc_acc").
+		Join("LEFT JOIN allocations alloc ON alloc_acc.allocation_id = alloc.allocation_id").
+		Where("alloc.task_id = ?", req.TaskId).Scan(ctx, &res)
+	if err != nil {
+		return nil, fmt.Errorf("querying allocation accelerators: %w", err)
+	}
+
+	var accelerationData []*apiv1.AcceleratorData
+	for _, r := range res {
+		accelerationData = append(accelerationData, r.Proto())
+	}
+	return &apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: accelerationData}, nil
 }
 
 func (a *apiServer) PostAllocationAcceleratorData(
 	ctx context.Context,
 	req *apiv1.PostAllocationAcceleratorDataRequest,
 ) (*apiv1.PostAllocationAcceleratorDataResponse, error) {
-	return nil, grpcutil.UnimplementedError
+	if req.AllocationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
+	accData := &model.AcceleratorData{
+		ContainerID:      req.AcceleratorData.ContainerId,
+		AllocationID:     model.AllocationID(req.AllocationId),
+		NodeName:         req.AcceleratorData.NodeName,
+		AcceleratorType:  req.AcceleratorData.AcceleratorType,
+		AcceleratorUuids: req.AcceleratorData.AcceleratorUuids,
+	}
+	err := task.DefaultService.SetAcceleratorData(
+		ctx,
+		*accData,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PostAllocationAcceleratorDataResponse{}, nil
 }
 
 // TaskLogBackend is an interface task log backends, such as elastic or postgres,

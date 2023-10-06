@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 import subprocess
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Tuple
 
 gpu_fields = [
     "index",
@@ -109,15 +109,23 @@ def _get_rocm_gpus() -> List[GPU]:
     return gpus
 
 
-def get_gpus() -> List[GPU]:
+def get_gpus() -> Tuple[List[GPU], str]:
     result = _get_nvidia_gpus()
     if result:
-        return result
-    return _get_rocm_gpus()
+        return result, "cuda"
+    result = _get_rocm_gpus()
+    if result:
+        return result, "rocm"
+    else:
+        return [], ""
 
 
 def get_gpu_uuids() -> List[str]:
-    return [gpu.uuid for gpu in sorted(get_gpus(), key=lambda gpu: gpu.id)]
+    gpus, _ = get_gpus()
+    if gpus:
+        return [gpu.uuid for gpu in sorted(gpus, key=lambda gpu: gpu.id)]
+    else:
+        return []
 
 
 class GPUProcess(NamedTuple):
