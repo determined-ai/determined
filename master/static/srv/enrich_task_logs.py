@@ -124,7 +124,6 @@ class LogShipper(threading.Thread):
             # Timeout met.
             self.ship()
 
-
     def ship(self) -> None:
         if len(self.logs) <= 0:
             return

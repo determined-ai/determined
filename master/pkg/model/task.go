@@ -353,7 +353,7 @@ func TaskLogFromProto(in *taskv1.TaskLog) *TaskLog {
 		rankID = ptrs.Ptr(int(*in.RankId))
 	}
 
-	out := &TaskLog{
+	return &TaskLog{
 		ID:           id,
 		TaskID:       in.TaskId,
 		AllocationID: in.AllocationId,
@@ -366,8 +366,6 @@ func TaskLogFromProto(in *taskv1.TaskLog) *TaskLog {
 		Source:       in.Source,
 		StdType:      in.Stdtype,
 	}
-
-	return out
 }
 
 const (
