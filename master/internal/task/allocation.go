@@ -1052,104 +1052,84 @@ func (a *allocation) terminated(reason string) {
 		return
 	}
 
+	// Release must happen last
+	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
 		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
 	}
-	exit := &AllocationExited{FinalState: a.state()}
-	a.exited = exit
-	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
-
-	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-	defer a.unregisterProxies()
-
-	level := ptrs.Ptr(model.LogLevelInfo)
-	if a.exitErr != nil {
-		level = ptrs.Ptr(model.LogLevelError)
-	}
-	defer func() {
-		a.sendTaskLog(&model.TaskLog{
-			Level: level,
-			Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
-		})
-	}()
 
 	if err := a.purgeRestorableResources(); err != nil {
 		a.syslog.WithError(err).Error("failed to purge restorable resources")
 	}
 
-	defer a.markResourcesReleased()
+	a.markResourcesReleased()
 
+	exitReason, userRequestedStop, severity, exitErr := a.calculateExitStatus(reason)
+	a.syslog.Log(severity, exitReason)
+	a.sendTaskLog(&model.TaskLog{
+		Level: ptrs.Ptr(model.TaskLogLevelFromLogrus(severity)),
+		Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
+	})
+	a.exited = &AllocationExited{
+		UserRequestedStop: userRequestedStop,
+		Err:               exitErr,
+		FinalState:        a.state(),
+	}
+
+	if len(a.req.ProxyPorts) != 0 {
+		a.unregisterProxies()
+	}
 	if a.req.Preemptible {
-		defer preemptible.Unregister(a.req.AllocationID.String())
+		preemptible.Unregister(a.req.AllocationID.String())
 	}
 	if a.rendezvous != nil {
-		defer a.rendezvous.close()
+		a.rendezvous.close()
 	}
 	if cfg := a.req.IdleTimeout; cfg != nil {
-		defer idle.Unregister(cfg.ServiceID)
+		idle.Unregister(cfg.ServiceID)
 	}
+}
+
+func (a *allocation) calculateExitStatus(reason string) (
+	exitReason string,
+	userRequestedStop bool,
+	severity logrus.Level,
+	exitErr error,
+) {
 	switch {
 	case a.killedWhileRunning:
-		exitReason = fmt.Sprintf("allocation killed after %s", reason)
-		a.syslog.Info(exitReason)
-		return
+		return fmt.Sprintf("allocation killed after %s", reason), false, logrus.InfoLevel, nil
 	case a.req.Preemptible && preemptible.Acknowledged(a.req.AllocationID.String()):
-		exitReason = fmt.Sprintf("allocation preempted after %s", reason)
-		a.syslog.Info(exitReason)
-		return
+		return fmt.Sprintf("allocation preempted after %s", reason), false, logrus.InfoLevel, nil
 	case a.exitErr == nil && len(a.resources.exited()) > 0:
-		// This is true because searcher and preemption exits both ack preemption.
-		exit.UserRequestedStop = true
-		exitReason = fmt.Sprintf("allocation stopped early after %s", reason)
-		a.syslog.Info(exitReason)
-		return
+		return fmt.Sprintf("allocation stopped early after %s", reason), true, logrus.InfoLevel, nil
 	case a.exitErr != nil:
 		switch err := a.exitErr.(type) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsGracefully {
-					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
-					a.syslog.Info(exitReason)
-					return
+					return "allocation terminated daemon processes as part of normal exit", false, logrus.InfoLevel, nil
 				}
-				exitReason = fmt.Sprintf("allocation failed: %s", err)
-				a.syslog.Info(exitReason)
-				exit.Err = err
-				return
+				return fmt.Sprintf("allocation failed: %s", err), false, logrus.ErrorLevel, err
 			case sproto.AgentError, sproto.AgentFailed:
-				exitReason = fmt.Sprintf("allocation failed due to agent failure: %s", err)
-				a.syslog.Warn(exitReason)
-				exit.Err = err
-				return
+				return fmt.Sprintf("allocation failed due to agent failure: %s", err), false, logrus.ErrorLevel, err
 			case sproto.TaskAborted, sproto.ResourcesAborted:
-				exitReason = fmt.Sprintf("allocation aborted: %s", err.FailureType)
-				a.syslog.Debug(exitReason)
-				exit.Err = err
-				return
+				return fmt.Sprintf("allocation aborted: %s", err.FailureType), false, logrus.InfoLevel, err
 			case sproto.RestoreError:
-				exitReason = fmt.Sprintf("allocation failed due to restore error: %s", err)
-				a.syslog.Warn(exitReason)
-				exit.Err = err
-				return
-
+				return fmt.Sprintf("allocation failed due to restore error: %s", err), false, logrus.ErrorLevel, err
 			default:
 				panic(fmt.Errorf("unexpected allocation failure: %w", err))
 			}
 		default:
-			exitReason = fmt.Sprintf("allocation handler crashed due to error: %s", err)
-			a.syslog.Error(exitReason)
-			exit.Err = err
-			return
+			return fmt.Sprintf("allocation handler crashed due to error: %s", err), false, logrus.ErrorLevel, err
 		}
 	case len(a.resources) == 0:
-		exitReason = fmt.Sprintf("allocation aborted after %s", reason)
-		a.syslog.Info(exitReason)
-		return
+		return fmt.Sprintf("allocation aborted after %s", reason), false, logrus.InfoLevel, nil
 	default:
-		// If we ever exit without a reason and we have no exited resources, something has gone
-		// wrong.
+		// If we ever exit without a reason and we have no exited resources, something has gone wrong.
 		panic("allocation exited early without a valid reason")
 	}
 }
