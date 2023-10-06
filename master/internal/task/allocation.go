@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -144,6 +142,8 @@ type allocation struct {
 	logCtx          detLogger.Context
 	restored        bool
 	portsRegistered bool
+
+	closers []func()
 }
 
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
@@ -487,11 +487,67 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 
 // Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
-func (a *allocation) Cleanup() error {
-	var err *multierror.Error
-
+// This function should look _very_ similar to a.terminated.
+func (a *allocation) Cleanup() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
+	// FYI, if we haven't exited something went terribly wrong (bug).
+	if a.exited != nil {
+		return
+	}
+
+	if a.exitErr == nil {
+		a.exitErr = errors.New("unknown error occurred")
+	}
+	exitReason := a.exitErr.Error()
+
+	a.finalize(exitReason, false, logrus.ErrorLevel, a.exitErr)
+}
+
+func (a *allocation) finalize(
+	exitReason string,
+	userRequestedStop bool,
+	severity logrus.Level,
+	exitErr error,
+) {
+	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+	defer a.cleanup()
+
+	a.setMostProgressedModelState(model.AllocationStateTerminated)
+	a.exited = &AllocationExited{UserRequestedStop: userRequestedStop, Err: exitErr, FinalState: a.state()}
+
+	log := fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason)
+	a.syslog.Log(severity, log)
+	a.sendTaskLog(&model.TaskLog{Level: ptrs.Ptr(model.TaskLogLevelFromLogrus(severity)), Log: log})
+}
+
+func (a *allocation) cleanup() {
+	if err := a.db.UpdateAllocationState(a.model); err != nil {
+		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
+	}
+
+	for _, r := range a.resources {
+		if r.Exited == nil {
+			a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
+			r.Kill(a.system, a.logCtx)
+		}
+	}
+
+	a.markResourcesReleased()
+
+	if a.req.Preemptible {
+		preemptible.Unregister(a.req.AllocationID.String())
+	}
+	if a.rendezvous != nil {
+		a.rendezvous.close()
+	}
+	if cfg := a.req.IdleTimeout; cfg != nil {
+		idle.Unregister(cfg.ServiceID)
+	}
+	if len(a.req.ProxyPorts) != 0 {
+		a.unregisterProxies()
+	}
 
 	// a.portsRegistered  is set to true right after ports are registered.
 	// This variable ensures to release ports even if there's a failure after restoring ports.
@@ -501,52 +557,9 @@ func (a *allocation) Cleanup() error {
 		}
 	}
 
-	// TODO(DET-9697): This logic is gross, and it is unclear if all the proper cleanup logic for th
-	// "oops" case is running given the diff between this and `a.terminated()`. We should refactor
-	// them to reduce code duplication and ensure correctness. Consider `a.closers = []func(){}` to
-	// consolidate "deferred" closers in a state machine.
-	// Just in-case code.
-	if a.exited == nil {
-		if a.exitErr == nil {
-			a.exitErr = errors.New("unknown error occurred")
-		}
-		a.exited = &AllocationExited{Err: a.exitErr, FinalState: a.state()}
-
-		a.syslog.WithError(a.exitErr).Error("exit did not run properly")
-		a.sendTaskLog(&model.TaskLog{
-			Log: fmt.Sprintf("%s was terminated: %s", a.req.Name, a.exitErr.Error()),
-		})
-
-		for _, r := range a.resources {
-			if r.Exited == nil {
-				a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
-				r.Kill(a.system, a.logCtx)
-			}
-		}
-
-		if a.resourcesStarted {
-			a.markResourcesReleased()
-		}
-
-		a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-
-		if a.req.Preemptible {
-			preemptible.Unregister(a.req.AllocationID.String())
-		}
-		if cfg := a.req.IdleTimeout; cfg != nil {
-			idle.Unregister(cfg.ServiceID)
-		}
-		if a.rendezvous != nil {
-			a.rendezvous.close()
-		}
-		if cfg := a.req.IdleTimeout; cfg != nil {
-			idle.Unregister(cfg.ServiceID)
-		}
-		if pErr := a.purgeRestorableResources(); pErr != nil {
-			err = multierror.Append(err, fmt.Errorf("purging restorable resources: %w", pErr))
-		}
+	if err := a.purgeRestorableResources(); err != nil {
+		a.syslog.WithError(err).Error("failed to purge restorable resources")
 	}
-	return err.ErrorOrNil()
 }
 
 // resourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
@@ -1051,45 +1064,7 @@ func (a *allocation) terminated(reason string) {
 		// This occurred when an allocation completed and was preempted in quick succession.
 		return
 	}
-
-	// Release must happen last
-	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-
-	a.setMostProgressedModelState(model.AllocationStateTerminated)
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
-		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
-	}
-
-	if err := a.purgeRestorableResources(); err != nil {
-		a.syslog.WithError(err).Error("failed to purge restorable resources")
-	}
-
-	a.markResourcesReleased()
-
-	exitReason, userRequestedStop, severity, exitErr := a.calculateExitStatus(reason)
-	a.syslog.Log(severity, exitReason)
-	a.sendTaskLog(&model.TaskLog{
-		Level: ptrs.Ptr(model.TaskLogLevelFromLogrus(severity)),
-		Log:   fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason),
-	})
-	a.exited = &AllocationExited{
-		UserRequestedStop: userRequestedStop,
-		Err:               exitErr,
-		FinalState:        a.state(),
-	}
-
-	if len(a.req.ProxyPorts) != 0 {
-		a.unregisterProxies()
-	}
-	if a.req.Preemptible {
-		preemptible.Unregister(a.req.AllocationID.String())
-	}
-	if a.rendezvous != nil {
-		a.rendezvous.close()
-	}
-	if cfg := a.req.IdleTimeout; cfg != nil {
-		idle.Unregister(cfg.ServiceID)
-	}
+	a.finalize(a.calculateExitStatus(reason))
 }
 
 func (a *allocation) calculateExitStatus(reason string) (
