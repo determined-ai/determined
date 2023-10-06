@@ -143,7 +143,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   const fetchTrialSummary = useCallback(async () => {
     // If the trial ids have not changed then we do not need to
     // show the loading state again.
-    if (!_.isEqual(previousTrials, trials)) setLoadableData(NotLoaded);
+    if (!_.isEqual(_.map(previousTrials, 'id'), _.map(trials, 'id'))) setLoadableData(NotLoaded);
 
     if (trials.length === 0) {
       // If there are no trials selected then
