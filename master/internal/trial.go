@@ -199,6 +199,8 @@ func (t *trial) exit(reason *model.ExitedReason) {
 }
 
 func (t *trial) close() error {
+	logpattern.ReportTaskDone(t.TaskID)
+
 	t.wg.Close()
 	if !t.idSet {
 		return nil
@@ -521,6 +523,7 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
+	// defer cleanupBlocklist() // TODO
 	if exit.Err != nil {
 		t.syslog.WithError(exit.Err).Error("trial allocation failed")
 	}
@@ -625,8 +628,25 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			})
 		}
 
-		// if TODO cap check here.
-		// WE FAILED because
+		// TODO(FT) let's do this change later. We actually need to ask it by taskID and
+		// the change looks non trivial and is easy to pitch as an improvement follow on.
+		//
+		// Likely need to add taskID to sproto.CapacityCheck{}.
+		//
+		// This feels like this is a diaster change that will break a bunch of stuff somehow.
+		// Maybe not. The intention now is we can now exclude nodes so before deciding to reschedule
+		// we ensure that our job can actually run and not just get stucked in queued forever.
+		// This might be able to go in maybeAllocateTask too?
+		//
+		// Is validate resources right? Did someone brick it?
+		/*
+			if err = t.rm.ValidateResources(
+				t.system,
+				t.config.Resources().ResourcePool(),
+				t.config.Resources().SlotsPerTrial(), false); err != nil {
+				return nil, nil, fmt.Errorf("validating resources: %v", err)
+			}
+		*/
 
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
