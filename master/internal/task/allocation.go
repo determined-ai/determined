@@ -182,6 +182,8 @@ func newAllocation(
 		logCtx: req.LogContext,
 	}
 
+	a.closers = append(a.closers, a.purgeRestorableResources, a.markResourcesReleased)
+
 	rmEvents, err := a.requestResources()
 	if err != nil {
 		return nil, fmt.Errorf("requesting resources: %w", err)
@@ -314,6 +316,9 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 		return err
 	}
 	a.registerProxies(a.containerProxyAddresses())
+	a.closers = append(a.closers, func() {
+		a.unregisterProxies()
+	})
 	return nil
 }
 
@@ -399,6 +404,7 @@ func (a *allocation) WatchRendezvous(rID sproto.ResourcesID) (RendezvousWatcher,
 
 	if a.rendezvous == nil {
 		a.rendezvous = newRendezvous(a.model.AllocationID, a.resources, rendezvousTimeoutDuration)
+		a.closers = append(a.closers, a.rendezvous.close)
 		a.wg.Go(func(ctx context.Context) {
 			t := time.NewTimer(rendezvousTimeoutDuration)
 			defer t.Stop()
@@ -512,54 +518,19 @@ func (a *allocation) finalize(
 	exitErr error,
 ) {
 	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
-	defer a.cleanup()
+	for _, cl := range a.closers {
+		defer cl()
+	}
 
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
+	if err := a.db.UpdateAllocationState(a.model); err != nil {
+		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
+	}
 	a.exited = &AllocationExited{UserRequestedStop: userRequestedStop, Err: exitErr, FinalState: a.state()}
 
 	log := fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason)
 	a.syslog.Log(severity, log)
 	a.sendTaskLog(&model.TaskLog{Level: ptrs.Ptr(model.TaskLogLevelFromLogrus(severity)), Log: log})
-}
-
-func (a *allocation) cleanup() {
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
-		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
-	}
-
-	for _, r := range a.resources {
-		if r.Exited == nil {
-			a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
-			r.Kill(a.system, a.logCtx)
-		}
-	}
-
-	a.markResourcesReleased()
-
-	if a.req.Preemptible {
-		preemptible.Unregister(a.req.AllocationID.String())
-	}
-	if a.rendezvous != nil {
-		a.rendezvous.close()
-	}
-	if cfg := a.req.IdleTimeout; cfg != nil {
-		idle.Unregister(cfg.ServiceID)
-	}
-	if len(a.req.ProxyPorts) != 0 {
-		a.unregisterProxies()
-	}
-
-	// a.portsRegistered  is set to true right after ports are registered.
-	// This variable ensures to release ports even if there's a failure after restoring ports.
-	if a.portsRegistered {
-		for _, port := range a.model.Ports {
-			portregistry.ReleasePort(port)
-		}
-	}
-
-	if err := a.purgeRestorableResources(); err != nil {
-		a.syslog.WithError(err).Error("failed to purge restorable resources")
-	}
 }
 
 // resourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
@@ -580,16 +551,25 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	}
 
 	a.setMostProgressedModelState(model.AllocationStateAssigned)
-	if err := a.resources.append(msg.Resources); err != nil {
+	err := a.resources.append(msg.Resources)
+	if err != nil {
 		return errors.Wrapf(err, "appending resources")
 	}
+	a.closers = append(a.closers, func() {
+		for _, r := range a.resources {
+			if r.Exited == nil {
+				a.syslog.Infof("allocation exited with unterminated reservation: %v", r.Summary())
+				r.Kill(a.system, a.logCtx)
+			}
+		}
+	})
 
 	if err := a.db.UpdateAllocationState(a.model); err != nil {
 		return errors.Wrap(err, "updating allocation state")
 	}
 
 	now := time.Now().UTC()
-	err := a.db.RecordTaskStats(&model.TaskStats{
+	err = a.db.RecordTaskStats(&model.TaskStats{
 		AllocationID: msg.ID,
 		EventType:    "QUEUED",
 		StartTime:    &msg.JobSubmissionTime,
@@ -601,12 +581,18 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 
 	if a.req.Preemptible {
 		preemptible.Register(a.req.AllocationID.String())
+		a.closers = append(a.closers, func() {
+			preemptible.Unregister(a.req.AllocationID.String())
+		})
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
 		idle.Register(*cfg, func(ctx context.Context, err error) {
 			a.syslog.WithError(err).Infof("killing %s due to inactivity", a.req.Name)
 			a.Signal(TerminateAllocation, err.Error())
+		})
+		a.closers = append(a.closers, func() {
+			idle.Unregister(cfg.ServiceID)
 		})
 	}
 
@@ -622,8 +608,14 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 					switch {
 					case r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil:
 						a.registerProxies(r.Started.Addresses)
+						a.closers = append(a.closers, func() {
+							a.unregisterProxies()
+						})
 					case a.model.ProxyAddress != nil:
 						a.registerProxies(a.containerProxyAddresses())
+						a.closers = append(a.closers, func() {
+							a.unregisterProxies()
+						})
 					}
 				}
 			}
@@ -640,7 +632,12 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		if err != nil {
 			return errors.Wrap(err, "getting ports")
 		}
-		a.portsRegistered = true
+		a.closers = append(a.closers, func() {
+			for _, port := range a.model.Ports {
+				portregistry.ReleasePort(port)
+			}
+		})
+
 		err = db.UpdateAllocationPorts(a.model)
 		if err != nil {
 			return fmt.Errorf("updating allocation db")
@@ -713,6 +710,9 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
 			a.resources[msg.ResourcesID].Rank == 0 {
 			a.registerProxies(msg.ResourcesStarted.Addresses)
+			a.closers = append(a.closers, func() {
+				a.unregisterProxies()
+			})
 		}
 
 		containerID := coalesceString(msg.ContainerIDStr(), "")
@@ -1064,6 +1064,7 @@ func (a *allocation) terminated(reason string) {
 		// This occurred when an allocation completed and was preempted in quick succession.
 		return
 	}
+
 	a.finalize(a.calculateExitStatus(reason))
 }
 
@@ -1140,12 +1141,13 @@ func (a *allocation) markResourcesReleased() {
 	telemetry.ReportAllocationTerminal(a.db, a.model, a.resources.firstDevice())
 }
 
-func (a *allocation) purgeRestorableResources() error {
+func (a *allocation) purgeRestorableResources() {
 	_, err := db.Bun().NewDelete().Model((*taskmodel.ResourcesWithState)(nil)).
 		Where("allocation_id = ?", a.model.AllocationID).
 		Exec(context.TODO())
-
-	return err
+	if err != nil {
+		a.syslog.WithError(err).Error("failed to purge restorable resources")
+	}
 }
 
 const killedLogSubstr = "exit code 137"
