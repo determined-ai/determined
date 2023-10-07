@@ -43,6 +43,8 @@ interface ChartProps {
   group?: string;
   onClickPoint?: OnClickPointType;
   scale?: Scale;
+  yValueFormatter?: (value: number) => string;
+  xValueRange?: [min: number, max: number];
   confine?: boolean;
   checkpointsDict?: CheckpointsDict;
   series: Serie[] | Loadable<Serie[]>;
@@ -63,6 +65,8 @@ export const LineChart: React.FC<LineChartProps> = ({
   onClickPoint,
   scale = Scale.Linear,
   group,
+  yValueFormatter,
+  xValueRange,
   series: propSeries,
   showLegend = false,
   confine = false,
@@ -122,7 +126,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               <div>
                 ${d.marker}
                 <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
-                ${d.value.toExponential(2) || '-'}
+                ${yValueFormatter ? yValueFormatter(d.value) : d.value.toFixed(4)}
               </div>
             `;
             })
@@ -190,12 +194,17 @@ export const LineChart: React.FC<LineChartProps> = ({
       tooltip: {
         axisPointer: {
           label: {
-            formatter: (params) => {
-              if (params.axisDimension === 'y') {
-                currentYAxis = Number(params.value);
-              }
-              return Number(params.value).toFixed(4).toString();
-            },
+            formatter:
+              xAxis === XAxisDomain.Time
+                ? undefined
+                : (params) => {
+                    const value = params.value;
+                    if (params.axisDimension === 'y' && typeof value === 'number') {
+                      currentYAxis = value;
+                      return value.toFixed(4).toString();
+                    }
+                    return value.toString();
+                  },
           },
           type: 'cross',
         },
@@ -204,17 +213,37 @@ export const LineChart: React.FC<LineChartProps> = ({
         trigger: 'axis',
       },
       xAxis: {
+        ...(xAxis === XAxisDomain.Time
+          ? {
+              max: xValueRange ? dayjs.unix(xValueRange[1]).toDate() : undefined,
+              min: xValueRange ? dayjs.unix(xValueRange[0]).toDate() : undefined,
+              type: 'time',
+            }
+          : { max: xValueRange?.[1], min: xValueRange?.[0], type: 'category' }),
         name: xLabel,
-        type: xAxis === XAxisDomain.Time ? 'time' : 'category',
       },
       yAxis: {
+        // write like this due to type issue
+        ...(scale === Scale.Log
+          ? { type: 'log' }
+          : { axisLabel: { formatter: yValueFormatter }, type: 'value' }),
         minorSplitLine: { show: true },
         name: yLabel,
-        type: scale === Scale.Log ? 'log' : 'value',
       },
     };
     return option;
-  }, [checkpointsDict, confine, scale, series, showLegend, xAxis, xLabel, yLabel]);
+  }, [
+    checkpointsDict,
+    confine,
+    scale,
+    series,
+    showLegend,
+    xAxis,
+    xLabel,
+    xValueRange,
+    yLabel,
+    yValueFormatter,
+  ]);
 
   return (
     <>

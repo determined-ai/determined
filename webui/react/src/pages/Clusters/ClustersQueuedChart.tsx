@@ -1,4 +1,5 @@
 import { Radio } from 'antd';
+import dayjs from 'dayjs';
 import React, { useMemo, useState } from 'react';
 
 import Section from 'components/Section';
@@ -27,9 +28,9 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
     };
   }, [poolStats, viewDays]);
 
-  const dateRange: [number, number] = useMemo(() => {
-    const now = Date.now() / 1000;
-    return [now - viewDays * 86400, now];
+  const dateRange: [min: number, max: number] = useMemo(() => {
+    const now = dayjs();
+    return [now.subtract(viewDays, 'day').unix(), now.unix()];
   }, [viewDays]);
 
   if (!queuedStats) return <div />;
@@ -48,11 +49,8 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         }
         title="Avg Queue Time">
         <ClusterHistoricalUsageChart
-          chartKey={viewDays}
           dateRange={dateRange}
-          formatValues={(_: uPlot, splits: number[]) =>
-            splits.map((n) => durationInEnglish(n * 1000))
-          }
+          formatYvalue={(yVal) => durationInEnglish(yVal * 1000)}
           hoursByLabel={queuedStats.hoursAverage}
           label=" "
           time={queuedStats.time}

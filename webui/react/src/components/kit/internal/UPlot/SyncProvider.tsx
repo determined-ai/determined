@@ -1,5 +1,5 @@
 import { observable } from 'micro-observables';
-import React, { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import { generateUUID } from 'components/kit/internal/functions';
@@ -101,21 +101,7 @@ class SyncService {
   }
 }
 
-interface Props {
-  children: React.ReactNode;
-  // pass a new key when you want the zoom to be reset,
-  // e.g. when changing the x-axis. by default it will
-  // reset when the component remounts
-  syncKey?: string;
-}
-
 const SyncContext = createContext<SyncService | null>(null);
-
-export const SyncProvider: React.FC<Props> = ({ syncKey, children }) => {
-  const syncService = useMemo(() => new SyncService(syncKey), [syncKey]);
-
-  return <SyncContext.Provider value={syncService}>{children}</SyncContext.Provider>;
-};
 
 export const useChartSync = (): {
   options: Partial<uPlot.Options>;
