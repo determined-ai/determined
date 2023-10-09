@@ -16,8 +16,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
-// TrialsDeleteKey specifies the key for delete trials.
-const TrialsDeleteKey = "trials_deleted"
+const (
+	// TrialsDeleteKey specifies the key for delete trials.
+	TrialsDeleteKey = "trials_deleted"
+	// TrialsUpsertKey specifies the key for upsert trials.
+	TrialsUpsertKey = "trial"
+)
 
 // TrialMsg is a stream.Msg.
 // determined:streamable
@@ -56,18 +60,21 @@ func (tm *TrialMsg) SeqNum() int64 {
 	return tm.Seq
 }
 
-// UpsertMsg creates a Trial upserted prepared message.
-func (tm *TrialMsg) UpsertMsg() *websocket.PreparedMessage {
-	wrapper := struct {
-		Trial *TrialMsg `json:"trial"`
-	}{tm}
-	return prepareMessageWithCache(wrapper, &tm.upsertCache)
+// UpsertMsg creates a Trial stream upsert message.
+func (tm *TrialMsg) UpsertMsg() stream.UpsertMsg {
+	return stream.UpsertMsg{
+		JsonKey: TrialsUpsertKey,
+		Msg:     tm,
+	}
 }
 
-// DeleteMsg creates a Trial deleted prepared message.
-func (tm *TrialMsg) DeleteMsg() *websocket.PreparedMessage {
+// DeleteMsg creates a Trial stream delete message.
+func (tm *TrialMsg) DeleteMsg() stream.DeleteMsg {
 	deleted := strconv.FormatInt(int64(tm.ID), 10)
-	return newDeletedMsgWithCache(TrialsDeleteKey, deleted, &tm.deleteCache)
+	return stream.DeleteMsg{
+		Key:     TrialsDeleteKey,
+		Deleted: deleted,
+	}
 }
 
 // TrialSubscriptionSpec is what a user submits to define a trial subscription.
@@ -105,13 +112,16 @@ func TrialCollectStartupMsgs(
 	known string,
 	spec TrialSubscriptionSpec,
 ) (
-	[]*websocket.PreparedMessage, error,
+	[]interface{}, error,
 ) {
-	var out []*websocket.PreparedMessage
+	var out []interface{}
 
 	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
-		out = append(out, newDeletedMsg(TrialsDeleteKey, known))
+		out = append(out, stream.DeleteMsg{
+			Key:     TrialsDeleteKey,
+			Deleted: known,
+		})
 		return out, nil
 	}
 	// step 0: get user's permitted access scopes
@@ -180,9 +190,12 @@ func TrialCollectStartupMsgs(
 	}
 
 	// step 4: emit deletions and updates to the client
-	out = append(out, newDeletedMsg(TrialsDeleteKey, missing))
+	out = append(out, stream.DeleteMsg{
+		Key:     TrialsDeleteKey,
+		Deleted: missing,
+	})
 	for _, msg := range trialMsgs {
-		out = append(out, msg.UpsertMsg())
+		out = append(out, stream.UpsertMsg{JsonKey: TrialsUpsertKey, Msg: msg})
 	}
 	return out, nil
 }
@@ -190,7 +203,7 @@ func TrialCollectStartupMsgs(
 // TrialCollectSubscriptionModMsgs scrapes the database when a
 // user submits a new TrialSubscriptionSpec for initial matches.
 func TrialCollectSubscriptionModMsgs(ctx context.Context, addSpec TrialSubscriptionSpec) (
-	[]*websocket.PreparedMessage, error,
+	[]interface{}, error,
 ) {
 	if len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {
 		return nil, nil
@@ -214,7 +227,7 @@ func TrialCollectSubscriptionModMsgs(ctx context.Context, addSpec TrialSubscript
 		return nil, err
 	}
 
-	var out []*websocket.PreparedMessage
+	var out []interface{}
 	for _, msg := range trialMsgs {
 		out = append(out, msg.UpsertMsg())
 	}

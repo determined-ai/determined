@@ -1,16 +1,21 @@
 package stream
 
 import (
+	"encoding/json"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
+
+// UpsertFunc is a function that overrides the default upsert
+type UpsertFunc func(interface{}) interface{}
+
+// DeleteFunc is a function that overrides the default deletion
+type DeleteFunc func(string, string) interface{}
 
 // Msg is an object with a message and a sequence number and json marshal caching.
 type Msg interface {
 	SeqNum() int64
-	UpsertMsg() *websocket.PreparedMessage
-	DeleteMsg() *websocket.PreparedMessage
+	UpsertMsg() UpsertMsg
+	DeleteMsg() DeleteMsg
 }
 
 // Event contains the old and new version a Msg.  Inserts will have Before==nil, deletions will
@@ -18,6 +23,37 @@ type Msg interface {
 type Event[T Msg] struct {
 	Before *T `json:"before"`
 	After  *T `json:"after"`
+
+	upsertCache interface{}
+	deleteCache interface{}
+}
+
+type PreparableMessage interface{}
+
+type UpsertMsg struct {
+	PreparableMessage
+	JsonKey string
+	Msg     Msg
+}
+
+func (u *UpsertMsg) MarshalJSON() ([]byte, error) {
+	data := map[string]Msg{
+		u.JsonKey: u.Msg,
+	}
+	return json.Marshal(data)
+}
+
+type DeleteMsg struct {
+	PreparableMessage
+	Key     string
+	Deleted string
+}
+
+func (d *DeleteMsg) MarshalJSON() ([]byte, error) {
+	data := map[string]string{
+		d.Key: d.Deleted,
+	}
+	return json.Marshal(data)
 }
 
 // Streamer aggregates many events and wakeups into a single slice of pre-marshaled messages.
@@ -26,16 +62,21 @@ type Event[T Msg] struct {
 type Streamer struct {
 	Cond *sync.Cond
 	// Msgs are pre-marshaled messages to send to the streaming client.
-	Msgs []*websocket.PreparedMessage
+	Msgs []interface{}
 	// Closed is set externally, and noticed eventually.
 	Closed bool
+	// PrepareFn is a user defined function that prepares Msgs for broadcast
+	PrepareFn func(message PreparableMessage) interface{}
 }
 
 // NewStreamer creates a new Steamer.
-func NewStreamer() *Streamer {
+func NewStreamer(prepareFn func(message PreparableMessage) interface{}) *Streamer {
 	var lock sync.Mutex
 	cond := sync.NewCond(&lock)
-	return &Streamer{Cond: cond}
+	if prepareFn == nil {
+		panic("PrepareFn must be provided")
+	}
+	return &Streamer{Cond: cond, PrepareFn: prepareFn}
 }
 
 // Close closes a streamer.
@@ -145,7 +186,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	for _, sub := range p.Subscriptions {
 		func() {
 			for _, ev := range events {
-				var msg *websocket.PreparedMessage
+				var msg interface{}
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					// update, insert, or fallin: send the record to the client.
