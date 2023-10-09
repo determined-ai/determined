@@ -63,8 +63,10 @@ class SyncService {
     if (chartMin === undefined || chartMax === undefined) return;
 
     this.bounds.update((b) => {
-      const resetAxis = axis !== this.axis;
-      this.axis = axis;
+      const resetAxis = axis !== this.axis && !!axis && !!this.axis;
+      if (axis) {
+        this.axis = axis;
+      }
 
       const previousMin =
         b.dataBounds?.min !== undefined && isFinite(b.dataBounds?.min) && !resetAxis
