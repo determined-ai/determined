@@ -866,7 +866,8 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 		}
 
 		regex := "testdisallow"
-		if l.Log == regex { // TODO(ft) look up what regexes we care about per task.
+		if strings.Contains(l.Log, regex) { // TODO(ft) look up what regexes we care about per task.
+			fmt.Println(regex)
 			if err := ft.AddRetryOnDifferentNode(
 				c.Request().Context(), model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 			); err != nil {
@@ -874,14 +875,26 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 			}
 		}
 
-		regex = "testdisallow"
-		if l.Log == regex {
+		regex = "testdontretry"
+		if strings.Contains(l.Log, regex) {
+			fmt.Println(regex)
 			if err := ft.AddDontRetry(
 				c.Request().Context(), model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 			); err != nil {
 				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
 			}
 		}
+
+		regex = "testwebhook"
+		if strings.Contains(l.Log, regex) {
+			fmt.Println(regex)
+			if err := ft.AddWebhookAlert(
+				c.Request().Context(), model.TaskID(l.TaskID), "webhookName", *l.AgentID, regex, l.Log,
+			); err != nil {
+				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+			}
+		}
+
 	}
 
 	// TODO add logs into here explaining what is going on
@@ -915,6 +928,10 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
+	}
+
+	if err := ft.InitializeLogPatternPolicies(ctx); err != nil {
+		return fmt.Errorf("initializing log pattern policies: %w", err)
 	}
 
 	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)

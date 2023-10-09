@@ -13,23 +13,30 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// START TODO (maybe seperate file? PROB NOT)
-
 var (
-	blockListCache map[model.TaskID]*set.Set[string]
+	blockListCache = make(map[model.TaskID]*set.Set[string])
 	mu             sync.RWMutex
 )
 
-func InitializeLogPatternActions() error {
+func InitializeLogPatternPolicies(ctx context.Context) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// TODO load non done tasks into memory for block list.
-	// TODO is this ever going to be an performance issue?
-	// I mean worse case it is like a scan of tasks on restart?
-	//
-	// The alternative is to change like endTasks to add a column as invalid here.
-	// I think that might be reasonable just to make this not evena  question.
+	var blockedNodes []*retryOnDifferentNode
+	if err := db.Bun().NewSelect().Model(&blockedNodes).
+		Where("active = true").
+		Scan(ctx, blockListCache); err != nil {
+		return fmt.Error("getting blocked nodes: %w", err)
+	}
+
+	blockListCache = make(map[model.TaskID]*set.Set[string])
+	for _, b := range blockedNodes {
+		if _, ok := blockListCache[b.TaskID]; !ok {
+			blockListCache[b.TaskID] = ptrs.Ptr(set.New[string]())
+		}
+		blockListCache[taskID].Insert(b.NodeName)
+	}
+
 	return nil
 }
 
@@ -38,7 +45,12 @@ func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	return blockListCache[taskID] // TODO copy the map returning.
+	disallowedNodes := blockListCache[taskID]
+	if disallowedNodes != nil {
+		return disallowedNodes
+	}
+
+	return ptrs.Ptr(set.New[string]())
 }
 
 // ReportTaskDone cleans up taskID to disallowed nodes cache.
@@ -64,6 +76,9 @@ type retryOnDifferentNode struct {
 func AddRetryOnDifferentNode(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
+	mu.Lock()
+	defer mu.Unlock()
+
 	m := &retryOnDifferentNode{
 		TaskID:        taskID,
 		NodeName:      nodeName,
@@ -75,8 +90,8 @@ func AddRetryOnDifferentNode(
 		return fmt.Errorf("inserting log policy retry on different node alert %+v: %w", m, err)
 	}
 
-	mu.Lock()
-	defer mu.Unlock()
+	// TODO actually maybe here we should do the cap check on the taskID.
+	// Like getAgents and decide this should be killed?
 
 	if _, ok := blockListCache[taskID]; !ok {
 		blockListCache[taskID] = ptrs.Ptr(set.New[string]())
@@ -85,11 +100,33 @@ func AddRetryOnDifferentNode(
 	return nil
 }
 
-// END TODO
+type sendWebhook struct {
+	bun.BaseModel `bun:"table:log_policy_send_webhook"`
 
-// log_policy_webhook
-// id | task_id | regex | log | alert_report_time
-func AddWebhookAlert(taskID model.TaskID, regex string, log string) error {
+	ID            int          `bun:"id,pk,autoincrement"`
+	TaskID        model.TaskID `bun:"task_id"`
+	Regex         string       `bun:"regex"`
+	NodeName      string       `bun:"node_name"`
+	TriggeringLog string       `bun:"triggering_log"`
+}
+
+func AddWebhookAlert(
+	ctx context.Context, taskID model.TaskID, webhookName, nodeName, regex, triggeringLog string,
+) error {
+	m := &sendWebhook{
+		TaskID:        taskID,
+		NodeName:      nodeName,
+		Regex:         regex,
+		TriggeringLog: triggeringLog,
+	}
+	if _, err := db.Bun().NewInsert().Model(m).Exec(ctx); err != nil {
+		return fmt.Errorf("adding send webhook policy %+v: %w", m, err)
+	}
+
+	// Or a cooldown? Or maybe just let people spam it honestly
+	// Maybe do once per insert, so if this has already been seen do nothing???
+	// TODO actually send the webhook here
+
 	return nil
 }
 
@@ -107,6 +144,8 @@ type dontRetry struct {
 func AddDontRetry(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
+	// First taskID, nodeName, regex, triggeringLog combo?
+	// How do we dedupe it? We only really want one trigger per config???
 	m := &dontRetry{
 		TaskID:        taskID,
 		NodeName:      nodeName,
@@ -130,8 +169,8 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	var models []*dontRetry
 	if err := db.Bun().NewSelect().Model(&models).
 		Where("task_id = ?", taskID).
-		Scan(ctx, models); err != nil {
-		return nil, fmt.Errorf("getting taskID %s should retry: %w", err)
+		Scan(ctx, &models); err != nil {
+		return nil, fmt.Errorf("getting taskID %s should retry: %w", taskID, err)
 	}
 
 	var out []RetryInfo

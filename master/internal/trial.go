@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
@@ -594,19 +595,36 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				var exitReasons []string
 				for _, r := range notRetries {
 					exitReasons = append(exitReasons,
-						fmt.Sprintf("(log %s matched regex %s)", r.TriggeringLog, r.Regex))
+						fmt.Sprintf("(log '%q' matched regex %s)", r.TriggeringLog, r.Regex))
 				}
 				t.syslog.
 					WithError(exit.Err).
 					Errorf("trial failed and not retrying due to logs matching a don't retry policy" +
 						" check trial logs for more info") // TODO improve this message
-				// TODO is this error wicked?
+
+				// This breaks some abstraction layer but I think it is needed.
+				// t.transition throws away InformationalReason sometimes
+				// (actually always for this case).
+				// TODO this code should probaly go in t.transition
+
+				reason := ""
+				for _, l := range append([]string{
+					"trial failed and matched logs to a don't retry policy",
+				}, exitReasons...) {
+					reason += l + "\n"
+					tasklogger.Insert(&model.TaskLog{
+						TaskID:    string(t.taskID),
+						Timestamp: ptrs.Ptr(time.Now().UTC()),
+						Level:     ptrs.Ptr(model.LogLevelError),
+						Source:    ptrs.Ptr("master"),
+						StdType:   ptrs.Ptr("stdout"),
+						Log:       l + "\n",
+					})
+				}
+
 				return t.transition(model.StateWithReason{
-					State: model.ErrorState,
-					InformationalReason: fmt.Sprintf(
-						"trial failed and matched logs to a don't retry policy\n %s",
-						strings.Join(exitReasons, ",\n"),
-					),
+					State:               model.ErrorState,
+					InformationalReason: reason,
 				})
 			}
 		}
