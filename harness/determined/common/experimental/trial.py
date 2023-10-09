@@ -84,7 +84,16 @@ class Trial:
         self.summary_metrics: Optional[Dict[str, Any]] = None
         self.state: Optional[TrialState] = None
 
-    def logs(
+    def logs(self, *args: Any, **kwargs: Any) -> Iterable[str]:
+        warnings.warn(
+            "Trial.logs() has been deprecated and will be removed in a future version."
+            "Please call Trial.iter_logs() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.iter_logs(*args, **kwargs)
+
+    def iter_logs(
         self,
         follow: bool = False,
         *,
