@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-det deploy $@
+det deploy "$@"
 status=$?
 # if we tried to bring up a cluster and it failed, recover by trying to bring the cluster down
 if [ $status -ne 0 ] && [ "$2" == "up" ] && [ "${CLUSTER_ID}" != "" ]; then
