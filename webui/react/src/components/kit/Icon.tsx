@@ -1,15 +1,8 @@
 import {
-  CheckOutlined,
-  EditOutlined,
   ExclamationCircleOutlined,
-  FileOutlined,
   HolderOutlined,
-  InfoCircleOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  PoweroffOutlined,
   ProjectOutlined,
-  PushpinOutlined,
 } from '@ant-design/icons';
 import React, { useMemo } from 'react';
 
@@ -68,6 +61,7 @@ import PanelIcon from './icons/panel.svg';
 import ParcoordsIcon from './icons/parcoords.svg';
 import PauseIcon from './icons/pause.svg';
 import PencilIcon from './icons/pencil.svg';
+import PinIcon from './icons/pin.svg';
 import PlayIcon from './icons/play.svg';
 import PopoutIcon from './icons/popout.svg';
 import PowerIcon from './icons/power.svg';
@@ -197,6 +191,7 @@ export const svgIcons = [
   'trace',
   'webhooks',
   'external',
+  'pin',
 ] as const;
 
 type SvgIconName = (typeof svgIcons)[number];
@@ -260,6 +255,7 @@ const svgIconMap: Record<SvgIconName, React.FC> & {
   'parcoords': ParcoordsIcon,
   'pause': PauseIcon,
   'pencil': PencilIcon,
+  'pin': PinIcon,
   'play': PlayIcon,
   'popout': PopoutIcon,
   'power': PowerIcon,
@@ -291,19 +287,7 @@ const svgIconMap: Record<SvgIconName, React.FC> & {
   'workspaces': WorkspacesIcon,
 };
 
-const antdIcons = [
-  'check',
-  'edit',
-  'exclamation-circle',
-  'file',
-  'holder',
-  'info-circle',
-  'minus-circle',
-  'plus',
-  'power-off',
-  'project',
-  'pushpin',
-] as const;
+const antdIcons = ['exclamation-circle', 'holder', 'minus-circle', 'project'] as const;
 
 type AntdIconName = (typeof antdIcons)[number];
 
@@ -312,17 +296,10 @@ type AntdIconName = (typeof antdIcons)[number];
 const antdIconMap: Record<AntdIconName, React.FC> & {
   [x in SvgIconName]?: never;
 } = {
-  'check': CheckOutlined,
-  'edit': EditOutlined,
   'exclamation-circle': ExclamationCircleOutlined,
-  'file': FileOutlined,
   'holder': HolderOutlined,
-  'info-circle': InfoCircleOutlined,
   'minus-circle': MinusCircleOutlined,
-  'plus': PlusOutlined,
-  'power-off': PoweroffOutlined,
   'project': ProjectOutlined,
-  'pushpin': PushpinOutlined,
 };
 
 export const IconNameArray = [...svgIcons, ...antdIcons];

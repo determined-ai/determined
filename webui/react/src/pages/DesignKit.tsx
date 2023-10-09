@@ -1,4 +1,3 @@
-import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -281,27 +280,20 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>With icon</strong>
-        With SVG Icon
+        With Icon
         <Space>
           <Button icon={<Icon name="panel" title="compare" />} />
           <Button icon={<Icon name="panel" title="compare" />}>SVG icon</Button>
-          <Button icon={<PoweroffOutlined />} />
-          <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+          <Button icon={<Icon name="power" title="power" />} />
+          <Button icon={<Icon name="power" title="power" />}>SVG icon</Button>
         </Space>
-        With font icon
-        <Space>
-          <Button icon={<Icon name="play" size="large" title="Play" />} />
-          <Button icon={<Icon name="play" size="large" title="Play" />}>Large font icon</Button>
-          <Button icon={<Icon name="play" size="tiny" title="Play" />} />
-          <Button icon={<Icon name="play" size="tiny" title="Play" />}>Tiny font icon</Button>
-        </Space>
-        As Dropdown trigger with icon
+        As Dropdown trigger with Icon
         <Space>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />} />
+            <Button icon={<Icon name="power" title="power" />} />
           </Dropdown>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+            <Button icon={<Icon name="power" title="power" />}>SVG icon</Button>
           </Dropdown>
           <Dropdown menu={menu}>
             <Button icon={<Icon name="play" size="large" title="Play" />} />
@@ -312,13 +304,13 @@ const ButtonsSection: React.FC = () => {
         </Space>
         With icon and text displayed in a column
         <Space>
-          <Button column icon={<PoweroffOutlined />} size="small">
+          <Button column icon={<Icon name="power" title="power" />} size="small">
             Column Small
           </Button>
-          <Button column icon={<PoweroffOutlined />} size="middle">
+          <Button column icon={<Icon name="power" title="power" />} size="middle">
             Column Middle
           </Button>
-          <Button column icon={<PoweroffOutlined />} size="large">
+          <Button column icon={<Icon name="power" title="power" />} size="large">
             Column Large
           </Button>
         </Space>

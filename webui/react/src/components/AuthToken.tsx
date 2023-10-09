@@ -1,4 +1,4 @@
-import { CopyOutlined } from '@ant-design/icons';
+import { Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
@@ -6,6 +6,7 @@ import Message from 'components/kit/Message';
 import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'utils/dom';
+import Icon from './kit/Icon';
 
 const AuthToken: React.FC = () => {
   const token = globalStorage.authToken || 'Auth token not found.';
@@ -27,9 +28,14 @@ const AuthToken: React.FC = () => {
   }, [token]);
 
   return (
-    <Message
-      action={
-        <Button icon={<CopyOutlined />} key="copy" type="primary" onClick={handleCopyToClipboard}>
+    <Result
+      className={css.base}
+      extra={[
+        <Button
+          icon={<Icon decorative name="clipboard" />}
+          key="copy"
+          type="primary"
+          onClick={handleCopyToClipboard}>
           Copy token to clipboard
         </Button>
       }

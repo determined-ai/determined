@@ -1,4 +1,3 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
@@ -12,7 +11,6 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Message from 'components/kit/Message';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import Tooltip from 'components/kit/Tooltip';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
@@ -512,9 +510,11 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
-                <Tooltip content="How aggressively to perform early stopping of underperforming trials">
-                  <InfoCircleOutlined />
-                </Tooltip>
+                <Icon
+                  name="info"
+                  showTooltip
+                  title="How aggressively to perform early stopping of underperforming trials"
+                />
               </div>
             }
             name="mode"
@@ -553,9 +553,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
-                <Tooltip content="Use 0 for max possible parallelism">
-                  <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
-                </Tooltip>
+                <Icon name="info" showTooltip title="Use 0 for max possible parallelism" />
               </div>
             }
             name="max_concurrent_trials"

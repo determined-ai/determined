@@ -162,7 +162,7 @@ function InlineForm<T>({
         ) : (
           <Button
             data-testid={`edit-${testId}`}
-            icon={<Icon name="pencil" size="small" title="edit" />}
+            icon={<Icon name="pencil" size="small" title="Edit" />}
             type="default"
             onClick={handleEdit}
           />
