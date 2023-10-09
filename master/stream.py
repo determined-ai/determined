@@ -31,10 +31,16 @@ def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
                 "trial_ids":      [$trial_ids],
                 "experiment_ids": [$experiment_ids],
                 "since": 0
+            },
+            "experiments": {
+                "experiment_ids": [$experiment_ids],
+                "since": 0
             }
         },
         "known": {
-            "trials":  "$trial_ids"
+            "trials":  "$trial_ids",
+            "metrics": "$metric_ids",
+            "experiments": "$experiment_ids",
         }
     }
     """

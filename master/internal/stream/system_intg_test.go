@@ -5,7 +5,9 @@ package stream
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
@@ -407,4 +409,113 @@ func TestTrialUpdate(t *testing.T) {
 		},
 	)
 	require.NoError(t, errgrp.Wait())
+}
+
+//func TestExperimentUpdate(t *testing.T) {
+//	startupMessage := StartupMsg{
+//		Known: KnownKeySet{
+//			Experiments: "1",
+//		},
+//		Subscribe: SubscriptionSpecSet{
+//			Experiments: &ExperimentSubscriptionSpec{
+//				ExperimentIds: []int{1},
+//				Since:         0,
+//			},
+//		},
+//	}
+//
+//	_, testUser, ps, tester, errgrp, pgDB, cleanup := setup(t, startupMessage)
+//	defer func() {
+//		cleanup()
+//	}()
+//
+//	trials := streamdata.GenerateStreamTrials()
+//	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
+//
+//	errgrp.Go(ps.Start)
+//	// run the entrypoint against our tester
+//	errgrp.Go(func(ctx context.Context) error {
+//		// rb is not sure if the test should care which ctx to use, since in testing
+//		// the publisher set is 1:1 with a single connection
+//		return ps.entrypoint(context.Background(), ctx, testUser, &tester, simpleUpsert)
+//	})
+
+// Now we can write our test as if we are the client talking to a websocket
+//testBody := func(ctx context.Context) error {
+//	for len(tester.Data) == 0 {
+//		time.Sleep(time.Second) // perhaps a shorter time for a wait loop?
+//	}
+//	deletions, expMsgs, err := splitDeletionsAndUpserts[*ExperimentMsg](tester.Data)
+//	require.NoError(t, err)
+//	if len(deletions) != 1 || deletions[0] != "" {
+//		return fmt.Errorf("received unexpected deletion message")
+//	}
+//	if len(expMsgs) != 0 {
+//		return fmt.Errorf("received unexpected trial message")
+//	}
+//
+//	// send messages, check responses
+//	err = streamdata.ModExperiment(ctx, streamdata.Experiment{
+//		ID:    1,
+//		State: model.CanceledState,
+//		Notes: "test note",
+//	})
+//	if err != nil {
+//		return err
+//	}
+//
+//	for len(tester.Data) < 2 {
+//		time.Sleep(time.Second)
+//	}
+//	msgMap, err := preparableMsgToMap(tester.Data[1])
+//	if err != nil {
+//		return err
+//	}
+//	if msg, ok := msgMap["experiment"].(map[string]interface{}); !ok || msg["state"] != string(model.CanceledState) {
+//		return fmt.Errorf("updated state should be canceled, not %s", msg["state"])
+//	}
+//	return nil
+//}
+//}
+
+func preparableMsgToMap(message interface{}) (map[string]interface{}, error) {
+	_, ok := message.(stream.PreparableMessage)
+
+	if !ok {
+		return nil, fmt.Errorf("provided message is not a preparable message")
+	}
+
+	bytes, err := json.Marshal(message)
+	if err != nil {
+		return nil, err
+	}
+
+	output := map[string]interface{}{}
+	err = json.Unmarshal(bytes, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
+}
+
+func splitDeletionsAndUpserts[M stream.Msg](messages []interface{}) ([]string, []M, error) {
+	var deletions []string
+	var upserts []M
+	typeHolder := new(M)
+	for _, msg := range messages {
+		if deletion, ok := msg.(stream.DeleteMsg); ok {
+			deletions = append(deletions, deletion.Deleted)
+		} else if upsert, ok := msg.(stream.UpsertMsg); ok {
+			upsertM, ok := upsert.Msg.(M)
+			if !ok {
+				return nil, nil, fmt.Errorf("expected %T, but received %T", *typeHolder, upsert.Msg)
+			}
+			upserts = append(upserts, upsertM)
+		} else {
+			return nil, nil, fmt.Errorf("expected a string or %T, but received %T", *typeHolder,
+				reflect.TypeOf(msg))
+		}
+	}
+	return deletions, upserts, nil
 }
