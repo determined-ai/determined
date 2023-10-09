@@ -23,7 +23,7 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
+import { ExperimentAction, ExperimentItem, ProjectExperiment, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -38,7 +38,11 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (action: ExperimentAction, id: number) => void | Promise<void>;
+  onComplete?: (
+    action: ExperimentAction,
+    id: number,
+    data?: Partial<ExperimentItem>,
+  ) => void | Promise<void>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
@@ -95,9 +99,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
 
-  const handleEditComplete = useCallback(() => {
-    onComplete?.(ExperimentAction.Edit, id);
-  }, [id, onComplete]);
+  const handleEditComplete = useCallback(
+    (data: Partial<ExperimentItem>) => {
+      onComplete?.(ExperimentAction.Edit, id, data);
+    },
+    [id, onComplete],
+  );
 
   const handleMoveComplete = useCallback(() => {
     onComplete?.(ExperimentAction.Move, id);
@@ -275,7 +282,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         description={experiment.description ?? ''}
         experimentId={experiment.id}
         experimentName={experiment.name}
-        fetchExperimentDetails={handleEditComplete}
+        onEditComplete={handleEditComplete}
       />
       <ExperimentMoveModal.Component
         experimentIds={[id]}

@@ -4,6 +4,7 @@ import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { patchExperiment } from 'services/api';
+import { ExperimentItem } from 'types';
 import handleError from 'utils/error';
 
 export const NAME_LABEL = 'Name';
@@ -19,7 +20,7 @@ interface Props {
   description: string;
   experimentId: number;
   experimentName: string;
-  fetchExperimentDetails: () => void;
+  onEditComplete: (data: Partial<ExperimentItem>) => void;
 }
 
 const FORM_ID = 'edit-experiment-form';
@@ -28,7 +29,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   experimentName,
   experimentId,
   description,
-  fetchExperimentDetails,
+  onEditComplete,
 }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
@@ -41,7 +42,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
         body: { description: formData.description, name: formData.experimentName },
         experimentId,
       });
-      fetchExperimentDetails();
+      onEditComplete({ description: formData.description, name: formData.experimentName });
     } catch (e) {
       handleError(e, {
         publicMessage: 'Unable to update experiment',
@@ -77,7 +78,14 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
           initialValue={experimentName}
           label={NAME_LABEL}
           name="experimentName"
-          rules={[{ max: 128, message: 'Name must be 1 ~ 128 characters', required: true, whitespace: true }]}>
+          rules={[
+            {
+              max: 128,
+              message: 'Name must be 1 ~ 128 characters',
+              required: true,
+              whitespace: true,
+            },
+          ]}>
           <Input />
         </Form.Item>
         <Form.Item initialValue={description} label={DESCRIPTION_LABEL} name="description">

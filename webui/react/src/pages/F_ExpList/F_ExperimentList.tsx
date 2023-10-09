@@ -515,7 +515,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[]): void => {
+    (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
       const idSet = new Set(successfulIds);
       const updateExperiment = (updated: Partial<ExperimentItem>) => {
         setExperiments((prev) =>
@@ -548,6 +548,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           updateExperiment({ archived: false });
           break;
         case ExperimentAction.Edit:
+          if (data) updateExperiment(data);
           notification.success({ message: 'Experiment updated successfully' });
           break;
         case ExperimentAction.Move:
@@ -571,7 +572,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number) => handleActionSuccess(action, [id]),
+    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
+      handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
 
