@@ -32,26 +32,26 @@ type startupReadWriter struct {
 	startupMessage *StartupMsg
 }
 
-func (t *startupReadWriter) ReadJSON(data interface{}) error {
-	if t.startupMessage == nil {
+func (s *startupReadWriter) ReadJSON(data interface{}) error {
+	if s.startupMessage == nil {
 		return fmt.Errorf("startup message has been sent")
 	}
 	targetMsg, ok := data.(*StartupMsg)
 	if !ok {
 		return fmt.Errorf("target message type is not a pointer to StartupMsg")
 	}
-	targetMsg.Known = t.startupMessage.Known
-	targetMsg.Subscribe = t.startupMessage.Subscribe
-	t.startupMessage = nil
+	targetMsg.Known = s.startupMessage.Known
+	targetMsg.Subscribe = s.startupMessage.Subscribe
+	s.startupMessage = nil
 	return nil
 }
 
-func (t *startupReadWriter) Write(data interface{}) error {
-	t.data = append(t.data, data)
+func (s *startupReadWriter) Write(data interface{}) error {
+	s.data = append(s.data, data)
 	return nil
 }
 
-func (t *startupReadWriter) Close() error {
+func (s *startupReadWriter) Close() error {
 	return nil
 }
 
@@ -95,7 +95,6 @@ func TestStartup(t *testing.T) {
 		cleanup()
 	}()
 
-	fmt.Println("START OF TEST!")
 	trials := streamdata.GenerateStreamTrials()
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
@@ -105,7 +104,7 @@ func TestStartup(t *testing.T) {
 		},
 		Subscribe: SubscriptionSpecSet{
 			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1}, // trials 1,2,3
+				ExperimentIds: []int{1}, // trials 1,2,3 exist
 				Since:         0,
 			},
 		},
@@ -132,7 +131,7 @@ func TestStartup(t *testing.T) {
 		},
 		Subscribe: SubscriptionSpecSet{
 			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1}, // trials 1,2,3
+				ExperimentIds: []int{1},
 				Since:         0,
 			},
 		},
