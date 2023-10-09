@@ -61,7 +61,7 @@ func (d *DeleteMsg) MarshalJSON() ([]byte, error) {
 // Subscription per type T.  One Streamer is intended to belong to one websocket connection.
 type Streamer struct {
 	Cond *sync.Cond
-	// Msgs are pre-marshalled messages to send to the streaming client.
+	// Msgs are pre-marshaled messages to send to the streaming client.
 	Msgs []interface{}
 	// Closed is set externally, and noticed eventually.
 	Closed bool

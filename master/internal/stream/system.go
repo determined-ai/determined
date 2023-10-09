@@ -205,8 +205,6 @@ func (ps *PublisherSet) entrypoint(
 		return errors.Wrap(err, "creating subscription set")
 	}
 	defer ss.UnsubscribeAll()
-
-	defer ss.UnsubscribeAll()
 	// First read the startup message.
 	var startupMsg StartupMsg
 	err = socket.ReadJSON(&startupMsg)
