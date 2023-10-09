@@ -3,7 +3,6 @@ package stream
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -335,16 +334,7 @@ func (ps *PublisherSet) Websocket(
 		log.Errorf("unable to run PublisherSet: expected DetContext but received %t", reflect.TypeOf(c))
 	}
 	user := detCtx.MustGetUser()
-	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket}, prepareWebsocket)
-}
-
-func prepareWebsocket(msg stream.PreparableMessage) interface{} {
-	if _, ok := msg.(stream.UpsertMsg); ok {
-		return prepareMessageWithCache(msg, nil)
-	} else if deleted, ok := msg.(stream.DeleteMsg); ok {
-		return newDeletedMsg(deleted.Key, deleted.Deleted)
-	}
-	return nil
+	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket}, prepareWebsocketMessage)
 }
 
 func (ps *PublisherSet) bootStreamers() {
@@ -637,30 +627,15 @@ func (ss *SubscriptionSet) UnsubscribeAll() {
 	// ss.Experiments.Subscription.Configure(nil)
 }
 
-func prepareMessageWithCache(
-	obj interface{}, cache **websocket.PreparedMessage,
-) *websocket.PreparedMessage {
-	if *cache != nil {
-		return *cache
-	}
+func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
 	jbytes, err := json.Marshal(obj) // maybe json.RawMessage
 	if err != nil {
 		log.Errorf("error marshaling message for streaming: %v", err.Error())
 		return nil
 	}
-	*cache, err = websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
+	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
 	if err != nil {
 		log.Errorf("error preparing message for streaming: %v", err.Error())
-		return nil
-	}
-	return *cache
-}
-
-func newDeletedMsg(key string, deleted string) *websocket.PreparedMessage {
-	strMsg := fmt.Sprintf("{\"%v\": \"%v\"}", key, deleted)
-	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, []byte(strMsg))
-	if err != nil {
-		log.Errorf("error marshaling deletion message for streaming: %v", err.Error())
 		return nil
 	}
 	return msg
