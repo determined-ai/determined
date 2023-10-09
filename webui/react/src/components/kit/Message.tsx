@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 
 import Icon, { IconName } from 'components/kit/Icon';
 import { XOR } from 'components/kit/internal/types';
+import Header from 'components/kit/Typography/Header';
 
 import { ValueOf } from './internal/types';
 import css from './Message.module.scss';
@@ -40,7 +41,7 @@ const Message: React.FC<Props> = ({ description, title, icon, type }: Props) => 
   return (
     <div className={css.base}>
       {getIcon(type, icon)}
-      <div className={css.title}>{title}</div>
+      <Header>{title}</Header>
       {description && <span>{description}</span>}
     </div>
   );

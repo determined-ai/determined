@@ -30,6 +30,7 @@ import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/in
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import Message, { MessageType } from 'components/kit/Message';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Notes, { Props as NotesProps } from 'components/kit/Notes';
@@ -100,6 +101,7 @@ const ComponentTitles = {
   InputShortcut: 'InputShortcut',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Message: 'Message',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
   Notes: 'Notes',
@@ -3061,6 +3063,25 @@ const SpinnerSection = () => {
   );
 };
 
+const MessageSection: React.FC = () => {
+  return (
+    <ComponentSection id="Message" title="Message">
+      <AntDCard>
+        <Paragraph>
+          A <code>{'<Message>'}</code> displays persistent information related to the application state.
+        </Paragraph>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Message description="With description added to Message" title="Info Message" type={MessageType.Info} />
+        <Message title="Error Message" type={MessageType.Error} />
+        <Message title="Warning Message" type={MessageType.Warning} />
+        <Message title="Info Message" type={MessageType.Info} />
+        <Message icon={<Icon decorative name="home" />} title="Custom Message" />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Avatar: <AvatarSection />,
@@ -3086,6 +3107,7 @@ const Components = {
   InputShortcut: <InputShortcutSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Message: <MessageSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
   Notes: <NotesSection />,
