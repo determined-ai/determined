@@ -80,6 +80,7 @@ func TestPostTaskLogs(t *testing.T) {
 	}, stream)
 	require.NoError(t, err)
 
+	require.Len(t, stream.getData(), len(expected))
 	for i, a := range stream.getData() {
 		e := expected[i]
 
