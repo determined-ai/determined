@@ -8,7 +8,6 @@ import {
   glasbeyColor,
   metricToStr,
 } from 'components/kit/internal/functions';
-import Message from 'components/kit/internal/Message';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
 import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
@@ -18,6 +17,7 @@ import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/clo
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
 import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
+import Message, { MessageType } from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 
@@ -122,9 +122,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+        chartData.length > 0 &&
+        chartData[0].length > 0 &&
+        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
     [chartData, xAxis],
@@ -154,11 +154,11 @@ export const LineChart: React.FC<LineChartProps> = ({
             xAxis === XAxisDomain.Time
               ? undefined
               : [
-                  /* eslint-disable array-element-newline */
-                  1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000,
-                  50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000,
-                  /* eslint-enable array-element-newline */
-                ],
+                /* eslint-disable array-element-newline */
+                1, 2, 3, 4, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10_000, 25_000,
+                50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000,
+                /* eslint-enable array-element-newline */
+              ],
           label: xLabel,
           scale: 'x',
           side: 2,
@@ -347,7 +347,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       return Array.from(xOpts).sort();
     }, [chartsProps]);
 
-    if (chartsProps.length === 0 && !isLoading) return <Message title="No data available." />;
+    if (chartsProps.length === 0 && !isLoading) return <Message title="No data available." type={MessageType.Warning} />;
 
     return (
       <div className={css.scrollContainer}>
