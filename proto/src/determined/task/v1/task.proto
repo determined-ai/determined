@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/taskv1";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 import "determined/device/v1/device.proto";
+import "determined/log/v1/log.proto";
 
 // The current state of the task.
 enum State {
@@ -234,4 +235,33 @@ message AllocationSummary {
   optional int32 priority = 9;
   // ProxyPortConfig configures a proxy the allocation should start.
   repeated ProxyPortConfig proxy_ports = 10;
+}
+
+// TaskLog is the model for a task log in the database
+message TaskLog {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id", "log" ] }
+  };
+  // The ID of the log.
+  optional int32 id = 1;
+  // The ID of the task.
+  string task_id = 2;
+  // The ID of the allocation.
+  optional string allocation_id = 3;
+  // The agent the logs came from.
+  optional string agent_id = 4;
+  // The ID of the container or, in the case of k8s, the pod name.
+  optional string container_id = 5;
+  // The rank ID.
+  optional int32 rank_id = 6;
+  // The timestamp of the log.
+  optional google.protobuf.Timestamp timestamp = 7;
+  // The level of this log.
+  optional determined.log.v1.LogLevel level = 8;
+  // The text of the log entry.
+  string log = 9;
+  // The source of the log entry.
+  optional string source = 10;
+  // The output stream (e.g. stdout, stderr).
+  optional string stdtype = 11;
 }

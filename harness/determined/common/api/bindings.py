@@ -9957,6 +9957,29 @@ class v1PostSearcherOperationsRequest(Printable):
             out["triggeredByEvent"] = None if self.triggeredByEvent is None else self.triggeredByEvent.to_json(omit_unset)
         return out
 
+class v1PostTaskLogsRequest(Printable):
+    """Request to PostTaskLogs."""
+
+    def __init__(
+        self,
+        *,
+        logs: "typing.Sequence[v1TaskLog]",
+    ):
+        self.logs = logs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostTaskLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "logs": [v1TaskLog.from_json(x) for x in obj["logs"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "logs": [x.to_json(omit_unset) for x in self.logs],
+        }
+        return out
+
 class v1PostTemplateResponse(Printable):
     """Response to PostTemplateRequest."""
 
@@ -12987,6 +13010,104 @@ class v1Task(Printable):
         }
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        return out
+
+class v1TaskLog(Printable):
+    agentId: "typing.Optional[str]" = None
+    allocationId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    id: "typing.Optional[int]" = None
+    level: "typing.Optional[v1LogLevel]" = None
+    rankId: "typing.Optional[int]" = None
+    source: "typing.Optional[str]" = None
+    stdtype: "typing.Optional[str]" = None
+    timestamp: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        log: str,
+        taskId: str,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        id: "typing.Union[int, None, Unset]" = _unset,
+        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
+        rankId: "typing.Union[int, None, Unset]" = _unset,
+        source: "typing.Union[str, None, Unset]" = _unset,
+        stdtype: "typing.Union[str, None, Unset]" = _unset,
+        timestamp: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.log = log
+        self.taskId = taskId
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(id, Unset):
+            self.id = id
+        if not isinstance(level, Unset):
+            self.level = level
+        if not isinstance(rankId, Unset):
+            self.rankId = rankId
+        if not isinstance(source, Unset):
+            self.source = source
+        if not isinstance(stdtype, Unset):
+            self.stdtype = stdtype
+        if not isinstance(timestamp, Unset):
+            self.timestamp = timestamp
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TaskLog":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "log": obj["log"],
+            "taskId": obj["taskId"],
+        }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        if "level" in obj:
+            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
+        if "rankId" in obj:
+            kwargs["rankId"] = obj["rankId"]
+        if "source" in obj:
+            kwargs["source"] = obj["source"]
+        if "stdtype" in obj:
+            kwargs["stdtype"] = obj["stdtype"]
+        if "timestamp" in obj:
+            kwargs["timestamp"] = obj["timestamp"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "log": self.log,
+            "taskId": self.taskId,
+        }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
+        if not omit_unset or "level" in vars(self):
+            out["level"] = None if self.level is None else self.level.value
+        if not omit_unset or "rankId" in vars(self):
+            out["rankId"] = self.rankId
+        if not omit_unset or "source" in vars(self):
+            out["source"] = self.source
+        if not omit_unset or "stdtype" in vars(self):
+            out["stdtype"] = self.stdtype
+        if not omit_unset or "timestamp" in vars(self):
+            out["timestamp"] = self.timestamp
         return out
 
 class v1TaskLogsFieldsResponse(Printable):
@@ -19735,6 +19856,27 @@ def post_PostSearcherOperations(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostSearcherOperations", _resp)
+
+def post_PostTaskLogs(
+    session: "api.Session",
+    *,
+    body: "v1PostTaskLogsRequest",
+) -> None:
+    """Persist the given task logs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/task/logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostTaskLogs", _resp)
 
 def post_PostTemplate(
     session: "api.Session",

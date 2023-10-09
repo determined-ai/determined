@@ -14,14 +14,89 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
+
+func TestPostTaskLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, task := createTestTrial(t, api, curUser)
+	_, task2 := createTestTrial(t, api, curUser)
+
+	_, err := api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{})
+	require.ErrorContains(t, err, "greater than 0")
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{TaskId: string(task.TaskID), Id: ptrs.Ptr(int32(2))},
+		},
+	})
+	require.ErrorContains(t, err, "ID must be nil")
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{TaskId: string(task.TaskID)},
+			{TaskId: string(task2.TaskID)},
+		},
+	})
+	require.ErrorContains(t, err, "single taskID per task log")
+
+	expected := []*taskv1.TaskLog{
+		{
+			TaskId: string(task.TaskID),
+			Log:    "test",
+		},
+		{
+			TaskId:       string(task.TaskID),
+			AllocationId: ptrs.Ptr("alloc_id"),
+			AgentId:      ptrs.Ptr("agent_id"),
+			ContainerId:  ptrs.Ptr("container_id"),
+			RankId:       ptrs.Ptr(int32(9)),
+			Timestamp:    timestamppb.New(time.Now().Truncate(time.Millisecond)),
+			Level:        ptrs.Ptr(logv1.LogLevel_LOG_LEVEL_WARNING),
+			Log:          "log_text",
+			Source:       ptrs.Ptr("source"),
+			Stdtype:      ptrs.Ptr("stderr"),
+		},
+	}
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: expected,
+	})
+	require.NoError(t, err)
+
+	stream := &mockStream[*apiv1.TaskLogsResponse]{ctx: ctx}
+	err = api.TaskLogs(&apiv1.TaskLogsRequest{
+		TaskId: string(task.TaskID),
+	}, stream)
+	require.NoError(t, err)
+
+	require.Len(t, stream.getData(), len(expected))
+	for i, a := range stream.getData() {
+		e := expected[i]
+
+		require.NotEmpty(t, a.Id)
+		require.Equal(t, e.Timestamp.AsTime(), a.Timestamp.AsTime())
+		require.NotEmpty(t, a.Message) //nolint: staticcheck
+		require.Equal(t, e.TaskId, a.TaskId)
+		require.Equal(t, e.AllocationId, a.AllocationId)
+		require.Equal(t, e.AgentId, a.AgentId)
+		require.Equal(t, e.ContainerId, a.ContainerId)
+		require.Equal(t, e.RankId, a.RankId)
+		require.Equal(t, e.Log, a.Log)
+		require.Equal(t, e.Source, a.Source)
+		require.Equal(t, e.Stdtype, a.Stdtype)
+	}
+}
 
 func TestTaskAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)

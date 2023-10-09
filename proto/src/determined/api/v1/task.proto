@@ -45,6 +45,18 @@ message GetTaskContextDirectoryResponse {
   string b64_tgz = 1;
 }
 
+// Request to PostTaskLogs.
+message PostTaskLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "logs" ] }
+  };
+  // The logs to persist.
+  repeated task.v1.TaskLog logs = 1;
+}
+
+// Response to PostTaskLogs.
+message PostTaskLogsResponse {}
+
 // Request a count of active tasks by type.
 message GetActiveTasksCountRequest {}
 

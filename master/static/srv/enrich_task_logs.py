@@ -74,7 +74,7 @@ class LogCollector(threading.Thread):
 
                     m = level.match(line)
                     if m:
-                        parsed_metadata["level"] = m.group("level")
+                        parsed_metadata["level"] = f'LOG_LEVEL_{m.group("level")}'
                         line = m.group("log")
 
                     self.ship_queue.put(
@@ -132,7 +132,13 @@ class LogShipper(threading.Thread):
         tries = 0
         while tries < max_tries:
             try:
-                api.post(self.master_url, "task-logs", self.logs, cert=self.cert)
+                api.post(
+                    self.master_url,
+                    "api/v1/task/logs",
+                    {"logs": self.logs},
+                    cert=self.cert,
+                    authenticated=True,
+                )
                 self.logs = []
                 return
             except Exception as e:

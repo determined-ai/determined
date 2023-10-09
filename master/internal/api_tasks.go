@@ -371,6 +371,43 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func (a *apiServer) PostTaskLogs(
+	ctx context.Context, req *apiv1.PostTaskLogsRequest,
+) (*apiv1.PostTaskLogsResponse, error) {
+	if len(req.Logs) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "len logs must be greater than 0")
+	}
+	taskID := req.Logs[0].TaskId
+
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(taskID),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
+
+	logs := make([]*model.TaskLog, len(req.Logs))
+	for i := range req.Logs {
+		if req.Logs[i].Id != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"ID must be nil on logs got %d instead", *req.Logs[i].Id)
+		}
+		if req.Logs[i].TaskId != taskID {
+			// There isn't a hard reason for this requirement other than we would have to RBAC
+			// against all provided taskIDs. This usecase seems pretty unlikely.
+			return nil, status.Errorf(codes.InvalidArgument,
+				"can only post logs of a single taskID per task log request got '%s' and '%s'",
+				taskID, req.Logs[i].TaskId)
+		}
+
+		logs[i] = model.TaskLogFromProto(req.Logs[i])
+	}
+
+	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
+		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
+	}
+
+	return &apiv1.PostTaskLogsResponse{}, nil
+}
+
 func (a *apiServer) GetActiveTasksCount(
 	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {

@@ -336,6 +336,38 @@ type TaskLog struct {
 	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
 }
 
+// TaskLogFromProto converts a proto task log to a model task log.
+func TaskLogFromProto(in *taskv1.TaskLog) *TaskLog {
+	var level *string
+	if in.Level != nil {
+		level = ptrs.Ptr(TaskLogLevelFromProto(*in.Level))
+	}
+
+	var id *int
+	if in.Id != nil {
+		id = ptrs.Ptr(int(*in.Id))
+	}
+
+	var rankID *int
+	if in.RankId != nil {
+		rankID = ptrs.Ptr(int(*in.RankId))
+	}
+
+	return &TaskLog{
+		ID:           id,
+		TaskID:       in.TaskId,
+		AllocationID: in.AllocationId,
+		AgentID:      in.AgentId,
+		ContainerID:  in.ContainerId,
+		RankID:       rankID,
+		Timestamp:    ptrs.Ptr(in.Timestamp.AsTime()),
+		Level:        level,
+		Log:          in.Log,
+		Source:       in.Source,
+		StdType:      in.Stdtype,
+	}
+}
+
 const (
 	// RFC3339MicroTrailingZeroes unlike time.RFC3339Nano is a time format specifier that preserves
 	// trailing zeroes.
