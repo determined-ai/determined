@@ -4,8 +4,9 @@ import { useMemo } from 'react';
 
 import { Scale } from 'components/kit/internal/types';
 import ReactECharts from 'components/kit/ReactEchart';
+import { ColorScale } from 'utils/color';
 
-type PointType = [x: number, y: number, label: string];
+type PointType = [x: number, y: number, z: number, label: string];
 
 export interface SerieData {
   data: PointType[];
@@ -16,16 +17,10 @@ interface Props {
   series: SerieData;
   height?: number;
   group?: string;
-  tooltipFormatter?: (
-    x: number,
-    y: number,
-    xLabel: string,
-    yLabel: string,
-    label: string,
-  ) => string;
   xLabel?: string;
   yLabel?: string;
   scale?: Scale;
+  visualMapColorScale?: ColorScale[];
 }
 
 const ScatterPlot = ({
@@ -33,44 +28,56 @@ const ScatterPlot = ({
   series,
   height = 350,
   group,
-  tooltipFormatter,
   xLabel,
   yLabel,
   scale = Scale.Linear,
+  visualMapColorScale,
 }: Props): JSX.Element => {
+  const colorScale = (visualMapColorScale ?? []).map((v) => v.scale);
+  const colorRange = (visualMapColorScale ?? []).map((v) => v.color);
+
   const echartOption: EChartsOption = useMemo(() => {
     const option: EChartsOption = {
       series: {
         data: series.data,
-        encode: {
-          itemName: 2,
-          x: 0,
-          y: 1,
-        },
+        encode: { itemName: 3, x: 0, y: 1 },
         symbolSize: 10,
         type: 'scatter',
       },
       title: {
         left: 'center',
         text: title,
-        textStyle: {
-          fontSize: 10,
-        },
+        textStyle: { fontSize: 10 },
       },
       tooltip: {
-        axisPointer: {
-          type: 'cross',
-        },
+        axisPointer: { type: 'cross' },
         confine: true,
-        formatter: tooltipFormatter
-          ? (param: TopLevelFormatterParams) => {
-              const p = param as CallbackDataParams;
-              const data = p.data as PointType;
-              return tooltipFormatter(data[0], data[1], xLabel ?? '', yLabel ?? '', p.name);
-            }
-          : undefined,
+        formatter: (param: TopLevelFormatterParams) => {
+          const p = param as CallbackDataParams;
+          const data = p.data as PointType;
+
+          return `
+          <div style="font-size: 11px">
+            <div>${xLabel}: ${data[0]}</div>
+            <div>${yLabel}:  ${data[1]}</div>
+            <div>Trial ID: ${p.name}</div>
+          </div>
+        `;
+        },
         trigger: 'item',
       },
+      visualMap: visualMapColorScale
+        ? {
+            calculable: true,
+            dimension: 2,
+            inRange: { color: colorRange },
+            max: Math.max(...colorScale),
+            min: Math.min(...colorScale),
+            orient: 'vertical',
+            right: 5,
+            top: 'center',
+          }
+        : undefined,
       xAxis: [{ type: 'value' }],
       yAxis: [
         {
@@ -80,7 +87,7 @@ const ScatterPlot = ({
       ],
     };
     return option;
-  }, [series.data, title, tooltipFormatter, xLabel, yLabel, scale]);
+  }, [series.data, title, visualMapColorScale, colorRange, colorScale, scale, xLabel, yLabel]);
 
   return (
     <div style={{ height }}>

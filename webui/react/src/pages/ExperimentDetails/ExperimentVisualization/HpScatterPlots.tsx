@@ -73,27 +73,14 @@ const ScatterPlots: React.FC<Props> = ({
       for (let i = 0; i < (chartData?.hpValues?.[hParam].length ?? 0); i++) {
         const xValue = chartData?.hpValues[hParam][i];
         const yValue = chartData?.metricValues[hParam][i];
-        if (xValue && yValue) {
-          data[hParam].data.push([xValue, yValue, chartData?.trialIds?.[i].toString()]);
+        if (xValue !== undefined && yValue !== undefined) {
+          data[hParam].data.push([xValue, yValue, 0, chartData?.trialIds?.[i].toString() ?? '']);
         }
       }
     }
 
     return data;
   }, [chartData?.hpValues, chartData?.metricValues, chartData?.trialIds, selectedHParams]);
-
-  const tooltipFormatter = useCallback(
-    (x: number, y: number, xLabel: string, yLabel: string, label: string): string => {
-      return `
-      <div style="font-size: 11px">
-        <div>${xLabel}: ${x}</div>
-        <div>${yLabel}:  ${y}</div>
-        <div>Trial ID: ${label}</div>
-      </div>
-    `;
-    },
-    [],
-  );
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
 
@@ -268,7 +255,6 @@ const ScatterPlots: React.FC<Props> = ({
                       ? `${metricToStr(selectedMetric, 60)} (y) vs ${hParam} (x)`
                       : undefined
                   }
-                  tooltipFormatter={tooltipFormatter}
                   xLabel={hParam}
                   yLabel={selectedMetric ? metricToStr(selectedMetric, 60) : undefined}
                 />
@@ -293,7 +279,6 @@ const ScatterPlots: React.FC<Props> = ({
                 ? `${metricToStr(selectedMetric, 60)} (y) vs ${activeHParam} (x)`
                 : undefined
             }
-            tooltipFormatter={tooltipFormatter}
             xLabel={activeHParam}
             yLabel={selectedMetric ? metricToStr(selectedMetric, 60) : undefined}
           />

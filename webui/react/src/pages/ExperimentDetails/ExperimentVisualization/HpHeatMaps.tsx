@@ -4,12 +4,11 @@ import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Message from 'components/kit/Message';
+import ScatterPlot, { SerieData } from 'components/kit/ScatterPlot';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
-import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
-import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
@@ -26,9 +25,7 @@ import {
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { rgba2str, str2rgba } from 'utils/color';
 import { flattenObject, isBoolean, isObject, isString } from 'utils/data';
-import { metricToStr } from 'utils/metric';
 
 import { ViewType } from './ExperimentVisualizationFilters';
 import css from './HpHeatMaps.module.scss';
@@ -104,70 +101,39 @@ const HpHeatMaps: React.FC<Props> = ({
     return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
   }, [chartData, smallerIsBetter, ui.theme]);
 
-  const chartProps = useMemo(() => {
-    if (!chartData || !selectedMetric) return undefined;
-
-    const props: Record<string, UPlotScatterProps> = {};
-    const rgbaStroke0 = str2rgba(colorScale[0].color);
-    const rgbaStroke1 = str2rgba(colorScale[1].color);
-    const rgbaFill0 = structuredClone(rgbaStroke0);
-    const rgbaFill1 = structuredClone(rgbaStroke1);
-    rgbaFill0.a = 0.3;
-    rgbaFill1.a = 0.3;
-    const fill = [rgba2str(rgbaFill0), rgba2str(rgbaFill1)].join(' ');
-    const stroke = [rgba2str(rgbaStroke0), rgba2str(rgbaStroke1)].join(' ');
-
-    selectedHParams.forEach((hParam1) => {
-      selectedHParams.forEach((hParam2) => {
+  const seriesData: Record<string, SerieData> = useMemo(() => {
+    const data: Record<string, SerieData> = {};
+    for (const hParam1 of selectedHParams) {
+      for (const hParam2 of selectedHParams) {
         const key = generateHpKey(hParam1, hParam2);
-        const xLabel = hParam2;
-        const yLabel = hParam1;
-        const title = `${yLabel} (y) vs ${xLabel} (x)`;
-        const xHpLabels = chartData?.hpLabels[hParam2];
-        const yHpLabels = chartData?.hpLabels[hParam1];
-        const isXLogarithmic = chartData?.hpLogScales[hParam2];
-        const isYLogarithmic = chartData?.hpLogScales[hParam1];
-        const isXCategorical = xHpLabels?.length !== 0;
-        const isYCategorical = yHpLabels?.length !== 0;
-        const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
-        const yScaleKey = isYCategorical ? 'yCategorical' : isYLogarithmic ? 'yLog' : 'y';
-        const xSplits = isXCategorical
-          ? new Array(xHpLabels.length).fill(0).map((x, i) => i)
-          : undefined;
-        const ySplits = isYCategorical
-          ? new Array(yHpLabels.length).fill(0).map((x, i) => i)
-          : undefined;
-        const xValues = isXCategorical ? xHpLabels : undefined;
-        const yValues = isYCategorical ? yHpLabels : undefined;
 
-        props[key] = {
-          data: [
-            null,
-            [
-              chartData?.hpValues[hParam2] || [],
-              chartData?.hpValues[hParam1] || [],
-              null,
-              chartData?.hpMetrics[key] || [],
-              chartData?.hpMetrics[key] || [],
-              chartData?.trialIds || [],
-            ],
-          ] as FacetedData,
-          options: {
-            axes: [
-              { scale: xScaleKey, splits: xSplits, values: xValues },
-              { scale: yScaleKey, splits: ySplits, values: yValues },
-            ],
-            cursor: { drag: { setScale: false, x: false, y: false } },
-            series: [{}, { fill, stroke }],
-            title,
-          },
-          tooltipLabels: [xLabel, yLabel, null, metricToStr(selectedMetric), null, 'trial ID'],
+        data[key] = {
+          data: [],
         };
-      });
-    });
+        for (let i = 0; i < (chartData?.hpValues?.[hParam2].length ?? 0); i++) {
+          const xValue = chartData?.hpValues[hParam2][i];
+          const yValue = chartData?.hpValues[hParam1][i];
+          const zValue = chartData?.hpMetrics[key][i];
+          if (
+            xValue !== undefined &&
+            yValue !== undefined &&
+            zValue !== undefined &&
+            typeof xValue === 'number' &&
+            typeof yValue === 'number'
+          ) {
+            data[key].data.push([
+              xValue,
+              yValue,
+              zValue,
+              chartData?.trialIds?.[i].toString() ?? '',
+            ]);
+          }
+        }
+      }
+    }
 
-    return props;
-  }, [chartData, colorScale, selectedHParams, selectedMetric]);
+    return data;
+  }, [chartData?.hpMetrics, chartData?.hpValues, chartData?.trialIds, selectedHParams]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam(generateHpKey(hParam1, hParam2));
@@ -348,46 +314,46 @@ const HpHeatMaps: React.FC<Props> = ({
         <Spinner spinning />
       </div>
     );
+  } else if (!chartData || !selectedMetric) {
+    return <Message title="No data to plot." />;
   }
 
   return (
     <div className={css.base} ref={baseRef}>
       <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
-          {chartProps ? (
-            <>
-              <div className={css.legend}>
-                <ColorLegend
-                  colorScale={colorScale}
-                  title={<MetricBadgeTag metric={selectedMetric} />}
-                />
-              </div>
-              <div className={css.charts}>
-                <Grid
-                  border={true}
-                  minItemWidth={resize.width > 320 ? 350 : 270}
-                  mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
-                  {selectedHParams.map((hParam1) =>
-                    selectedHParams.map((hParam2) => {
-                      const key = generateHpKey(hParam1, hParam2);
-                      return (
-                        <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
-                          <UPlotScatter
-                            colorScaleDistribution={selectedScale}
-                            data={chartProps[key].data}
-                            options={chartProps[key].options}
-                            tooltipLabels={chartProps[key].tooltipLabels}
-                          />
-                        </div>
-                      );
-                    }),
-                  )}
-                </Grid>
-              </div>
-            </>
-          ) : (
-            <Message icon="warning" title="No data to plot." />
-          )}
+          <>
+            <div className={css.legend}>
+              <ColorLegend
+                colorScale={colorScale}
+                title={<MetricBadgeTag metric={selectedMetric} />}
+              />
+            </div>
+            <div className={css.charts}>
+              <Grid
+                border={true}
+                minItemWidth={resize.width > 320 ? 350 : 270}
+                mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
+                {selectedHParams.map((hParam1) =>
+                  selectedHParams.map((hParam2) => {
+                    const key = generateHpKey(hParam1, hParam2);
+                    return (
+                      <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                        <ScatterPlot
+                          scale={selectedScale}
+                          series={seriesData[key]}
+                          title={`${hParam1} (y) vs ${hParam2} (x)`}
+                          visualMapColorScale={colorScale}
+                          xLabel={hParam2}
+                          yLabel={hParam1}
+                        />
+                      </div>
+                    );
+                  }),
+                )}
+              </Grid>
+            </div>
+          </>
         </div>
       </Section>
       <GalleryModal
@@ -396,16 +362,15 @@ const HpHeatMaps: React.FC<Props> = ({
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
         onPrevious={handleGalleryPrevious}>
-        {chartProps && activeHParam && (
-          <UPlotScatter
-            colorScaleDistribution={selectedScale}
-            data={chartProps[activeHParam].data}
-            options={{
-              ...chartProps[activeHParam].options,
-              cursor: { drag: undefined },
-              height: galleryHeight,
-            }}
-            tooltipLabels={chartProps[activeHParam].tooltipLabels}
+        {activeHParam && (
+          <ScatterPlot
+            height={600}
+            scale={selectedScale}
+            series={seriesData[activeHParam]}
+            title={`${parseHpKey(activeHParam)[0]} (y) vs ${parseHpKey(activeHParam)[1]} (x)`}
+            visualMapColorScale={colorScale}
+            xLabel={parseHpKey(activeHParam)[1]}
+            yLabel={parseHpKey(activeHParam)[0]}
           />
         )}
       </GalleryModal>
