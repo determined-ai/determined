@@ -45,6 +45,7 @@ import (
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/internal/ft"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
@@ -858,15 +859,28 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	// TODO(ft) do all logs stream through here? K8S I think we are planning to add log through
 	// k8s api too.
 	for _, l := range logs {
-		if l.Log == "testalert" { // TODO(ft) look up what regexes we care about per task.
+		if l.AgentID == nil {
+			return "", fmt.Errorf("agentID must be non nil") // TODO can we get away with this?
+			// It feels kinda annoying to let our database have a possible null that theoretically
+			// shouldn't happen.
+		}
 
-			// So what I would like to do is just call this.
-			{
-				if err := f.DisallowNode(taskID); err != nil {
-					log.Errorf("error disallowing node") // Failing adding logs seems super bad.
-				}
+		regex := "testdisallow"
+		if l.Log == regex { // TODO(ft) look up what regexes we care about per task.
+			if err := ft.AddRetryOnDifferentNode(
+				c.Request().Context(), model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
+			); err != nil {
+				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
 			}
-			l.TaskID
+		}
+
+		regex = "testdisallow"
+		if l.Log == regex {
+			if err := ft.AddDontRetry(
+				c.Request().Context(), model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
+			); err != nil {
+				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+			}
 		}
 	}
 

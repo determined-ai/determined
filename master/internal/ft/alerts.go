@@ -1,10 +1,13 @@
 package ft // rename ft
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
 
 	"github.com/uptrace/bun"
@@ -35,7 +38,7 @@ func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	return s[taskID] // TODO copy the map returning.
+	return blockListCache[taskID] // TODO copy the map returning.
 }
 
 // ReportTaskDone cleans up taskID to disallowed nodes cache.
@@ -52,20 +55,20 @@ type retryOnDifferentNode struct {
 
 	ID            int          `bun:"id,pk,autoincrement"`
 	TaskID        model.TaskID `bun:"task_id"`
-	Regex         string       `bun:"regex"`
 	NodeName      string       `bun:"node_name"`
+	Regex         string       `bun:"regex"`
 	TriggeringLog string       `bun:"triggering_log"`
 }
 
 // AddRetryOnDifferentNode comment.
 func AddRetryOnDifferentNode(
-	context context.Context, taskID model.TaskID, nodeName, regex, log string,
+	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
 	m := &retryOnDifferentNode{
 		TaskID:        taskID,
-		Regex:         regex,
 		NodeName:      nodeName,
-		TriggeringLog: log,
+		Regex:         regex,
+		TriggeringLog: triggeringLog,
 	}
 	_, err := db.Bun().NewInsert().Model(m).Exec(ctx)
 	if err != nil {
@@ -76,7 +79,7 @@ func AddRetryOnDifferentNode(
 	defer mu.Unlock()
 
 	if _, ok := blockListCache[taskID]; !ok {
-		blockListCache[taskID] = set.New[string]()
+		blockListCache[taskID] = ptrs.Ptr(set.New[string]())
 	}
 	blockListCache[taskID].Insert(nodeName)
 	return nil
@@ -90,19 +93,58 @@ func AddWebhookAlert(taskID model.TaskID, regex string, log string) error {
 	return nil
 }
 
-// log_policy_dont_retry
-// id | task_id | regex | log | alert_report_time
-func AddDontRetry(taskID model.TaskID, regex string, log string) error {
+type dontRetry struct {
+	bun.BaseModel `bun:"table:log_policy_dont_retry"`
+
+	ID            int          `bun:"id,pk,autoincrement"`
+	TaskID        model.TaskID `bun:"task_id"`
+	Regex         string       `bun:"regex"`
+	NodeName      string       `bun:"node_name"`
+	TriggeringLog string       `bun:"triggering_log"`
+}
+
+// AddDontRetry comment.
+func AddDontRetry(
+	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
+) error {
+	m := &dontRetry{
+		TaskID:        taskID,
+		NodeName:      nodeName,
+		Regex:         regex,
+		TriggeringLog: triggeringLog,
+	}
+	if _, err := db.Bun().NewInsert().Model(m).Exec(ctx); err != nil {
+		return fmt.Errorf("adding don't retry policy %+v: %w", m, err)
+	}
+
 	return nil
 }
 
 type RetryInfo struct {
-	Regex string
-	Log   string // TODO this could be a model.Log but just the string I think is fine for now.
+	Regex         string
+	TriggeringLog string // TODO this could be a model.Log but just the string I think is fine for now.
 }
 
-func ShouldRetry(taskID model.TaskID) ([]RetryInfo, error) {
-	return []RetryInfo{}, err
+// ShouldRetry comment.
+func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) {
+	var models []*dontRetry
+	if err := db.Bun().NewSelect().Model(&models).
+		Where("task_id = ?", taskID).
+		Scan(ctx, models); err != nil {
+		return nil, fmt.Errorf("getting taskID %s should retry: %w", err)
+	}
+
+	var out []RetryInfo
+	for _, m := range models {
+		out = append(out, RetryInfo{
+			Regex: m.Regex,
+			// model.Log would be cool since it has like containerID. and nodeName / podID.
+			// I think this is fine for now.
+			TriggeringLog: m.TriggeringLog,
+		})
+	}
+
+	return out, nil
 }
 
 /*

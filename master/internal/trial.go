@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	logpattern "github.com/determined-ai/determined/master/internal/ft"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -199,7 +200,7 @@ func (t *trial) exit(reason *model.ExitedReason) {
 }
 
 func (t *trial) close() error {
-	logpattern.ReportTaskDone(t.TaskID)
+	logpattern.ReportTaskDone(t.taskID)
 
 	t.wg.Close()
 	if !t.idSet {
@@ -583,7 +584,7 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			Errorf("trial encountered transient system error")
 	case exit.Err != nil && !sproto.IsTransientSystemError(exit.Err):
 		{ // TODO seperate func for these two stuff
-			notRetries, err := logpattern.ShouldRetry(model.TaskID)
+			notRetries, err := logpattern.ShouldRetry(context.TODO(), t.taskID)
 			if err != nil {
 				return err // I think this error is reasonable here?
 			}
@@ -593,7 +594,7 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				var exitReasons []string
 				for _, r := range notRetries {
 					exitReasons = append(exitReasons,
-						fmt.Sprintf("(log %s matched regex %s)", r.Regex, r.Log))
+						fmt.Sprintf("(log %s matched regex %s)", r.TriggeringLog, r.Regex))
 				}
 				t.syslog.
 					WithError(exit.Err).
