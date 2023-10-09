@@ -1,14 +1,11 @@
 import type { EChartsOption, SetOptionOpts } from 'echarts';
-import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
+import { LineChart, ScatterChart } from 'echarts/charts';
 import {
-  DatasetComponent,
   DataZoomComponent,
-  GridComponent,
   LegendComponent,
   TitleComponent,
   ToolboxComponent,
   TooltipComponent,
-  TransformComponent,
   VisualMapComponent,
 } from 'echarts/components';
 import * as echarts from 'echarts/core';
@@ -25,10 +22,6 @@ echarts.use([
   ToolboxComponent,
   DataZoomComponent,
   LegendComponent,
-  GridComponent,
-  DatasetComponent,
-  TransformComponent,
-  BarChart,
   LineChart,
   ScatterChart,
   LabelLayout,
