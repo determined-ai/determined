@@ -16,6 +16,7 @@ import { Column, Columns } from 'components/kit/Columns';
 import Empty from 'components/kit/Empty';
 import Pagination from 'components/kit/Pagination';
 import { getCssVar } from 'components/kit/Theme';
+import { notification } from 'components/kit/Toast';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -514,7 +515,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[]): void => {
+    (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
       const idSet = new Set(successfulIds);
       const updateExperiment = (updated: Partial<ExperimentItem>) => {
         setExperiments((prev) =>
@@ -546,6 +547,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         case ExperimentAction.Unarchive:
           updateExperiment({ archived: false });
           break;
+        case ExperimentAction.Edit:
+          if (data) updateExperiment(data);
+          notification.success({ message: 'Experiment updated successfully' });
+          break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:
           setExperiments((prev) =>
@@ -567,7 +572,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number) => handleActionSuccess(action, [id]),
+    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
+      handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
 

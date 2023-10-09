@@ -4,7 +4,7 @@ import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { DropdownEvent } from 'components/kit/Dropdown';
-import { ExperimentAction, ProjectExperiment } from 'types';
+import { ExperimentAction, ExperimentItem, ProjectExperiment } from 'types';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Event) => void) {
@@ -37,7 +37,7 @@ export interface TableContextMenuProps extends MenuProps {
   experiment: ProjectExperiment;
   link?: string;
   onClose: (e?: DropdownEvent | Event) => void;
-  onComplete?: (action: ExperimentAction, id: number) => void;
+  onComplete?: (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => void;
   open: boolean;
   x: number;
   y: number;
@@ -57,8 +57,8 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   useOutsideClickHandler(containerRef, onClose);
 
   const handleComplete = useCallback(
-    (action: ExperimentAction, id: number) => {
-      onComplete?.(action, id);
+    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => {
+      onComplete?.(action, id, data);
       onClose();
     },
     [onClose, onComplete],

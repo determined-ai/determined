@@ -2,6 +2,7 @@ import { GridCell } from '@hpe.com/glide-data-grid';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
+import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import Button from 'components/kit/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
@@ -22,7 +23,7 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { ExperimentAction, ProjectExperiment, ValueOf } from 'types';
+import { ExperimentAction, ExperimentItem, ProjectExperiment, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -37,7 +38,11 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (action: ExperimentAction, id: number) => void | Promise<void>;
+  onComplete?: (
+    action: ExperimentAction,
+    id: number,
+    data?: Partial<ExperimentItem>,
+  ) => void | Promise<void>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
@@ -60,6 +65,7 @@ const dropdownActions = [
   Action.Unarchive,
   Action.Cancel,
   Action.Kill,
+  Action.Edit,
   Action.Move,
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
@@ -78,6 +84,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: Props) => {
   const id = experiment.id;
+  const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const confirm = useConfirm();
   const {
@@ -91,6 +98,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
+
+  const handleEditComplete = useCallback(
+    (data: Partial<ExperimentItem>) => {
+      onComplete?.(ExperimentAction.Edit, id, data);
+    },
+    [id, onComplete],
+  );
 
   const handleMoveComplete = useCallback(() => {
     onComplete?.(ExperimentAction.Move, id);
@@ -205,6 +219,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               title: 'Confirm Experiment Deletion',
             });
             break;
+          case Action.Edit:
+            ExperimentEditModal.open();
+            break;
           case Action.Move:
             ExperimentMoveModal.open();
             break;
@@ -234,6 +251,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       confirm,
+      ExperimentEditModal,
       ExperimentMoveModal,
       experiment.workspaceId,
       handleHyperparameterSearch,
@@ -260,6 +278,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const shared = (
     <>
+      <ExperimentEditModal.Component
+        description={experiment.description ?? ''}
+        experimentId={experiment.id}
+        experimentName={experiment.name}
+        onEditComplete={handleEditComplete}
+      />
       <ExperimentMoveModal.Component
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}

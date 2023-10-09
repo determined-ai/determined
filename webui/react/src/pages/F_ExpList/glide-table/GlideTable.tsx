@@ -37,6 +37,7 @@ import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import {
   ExperimentAction,
+  ExperimentItem,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
@@ -80,7 +81,11 @@ export interface GlideTableProps {
   heatmapSkipped: string[];
   height: number;
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
-  onContextMenuComplete?: (action: ExperimentAction, id: number) => void;
+  onContextMenuComplete?: (
+    action: ExperimentAction,
+    id: number,
+    data?: Partial<ExperimentItem>,
+  ) => void;
   onHeatmapSelection?: (selection: string[]) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
@@ -185,8 +190,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   });
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number) => {
-      onContextMenuComplete?.(action, id);
+    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => {
+      onContextMenuComplete?.(action, id, data);
     },
     [onContextMenuComplete],
   );

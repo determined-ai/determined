@@ -31,7 +31,7 @@ const ModalTrigger: React.FC = () => {
         description={experiment.description ?? ''}
         experimentId={experiment.id}
         experimentName={experiment.name}
-        fetchExperimentDetails={callback}
+        onEditComplete={callback}
       />
     </>
   );

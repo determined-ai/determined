@@ -573,7 +573,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         description={experiment.description ?? ''}
         experimentId={experiment.id}
         experimentName={experiment.name}
-        fetchExperimentDetails={fetchExperimentDetails}
+        onEditComplete={fetchExperimentDetails}
       />
       {modalHyperparameterSearchContextHolder}
     </>
