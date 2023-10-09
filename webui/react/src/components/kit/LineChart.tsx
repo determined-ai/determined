@@ -15,11 +15,11 @@ import {
 import useResize from 'components/kit/internal/useResize';
 import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
 import Message from 'components/kit/Message';
+import ReactECharts, { EchartsEventFunction } from 'components/kit/ReactEchart';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 
 import css from './LineChart.module.scss';
-import ReactECharts, { EchartsEventFunction } from './ReactEchart';
 
 export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';
@@ -178,7 +178,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
         },
         symbolSize: (value) => {
-          const DEFAULT_SIZE = 4;
+          const DEFAULT_SIZE = 2;
           if (checkpointsDict === undefined) return DEFAULT_SIZE;
           return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
         },
@@ -219,7 +219,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               min: xValueRange ? dayjs.unix(xValueRange[0]).toDate() : undefined,
               type: 'time',
             }
-          : { max: xValueRange?.[1], min: xValueRange?.[0], type: 'category' }),
+          : { max: xValueRange?.[1], min: xValueRange?.[0], minInterval: 1, type: 'value' }), // minInterval is 1 for batch and epoch
         name: xLabel,
       },
       yAxis: {
