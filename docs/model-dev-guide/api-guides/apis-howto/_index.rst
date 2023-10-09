@@ -115,4 +115,4 @@ Known limitations:
    api-core-ug-basic
    api-pytorch-ug
    api-keras-ug
-   deepspeed/index
+   deepspeed/_index

@@ -33,8 +33,8 @@ by default in this version of Determined are described below.
 | AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-2b7e2a1``  |
 +-------------+--------------------------------------------------------------------------+
 
-See :doc:`/model-dev-guide/prepare-container/set-environment-images` for the images Docker Hub
-location, and add each tagged image needed by your experiments to the image cache.
+See :ref:`set-environment-images` for the images Docker Hub location, and add each tagged image
+needed by your experiments to the image cache.
 
 .. _referencing-local-image-paths:
 

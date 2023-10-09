@@ -155,5 +155,5 @@ epoch-based metric data in the WebUI.
 Now you can try editing your own script for the purpose of reporting epoch-based metrics to the
 Determined master.
 
-For more tutorials, visit the :doc:`/tutorials/index` to learn the basics of working with Determined
+For more tutorials, visit the :ref:`tutorials-index` to learn the basics of working with Determined
 and how to port your existing code to the Determined environment.

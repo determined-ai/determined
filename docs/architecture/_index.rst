@@ -42,4 +42,4 @@ Learn more:
 
    introduction
    system-architecture
-   Distributed Training <../model-dev-guide/dtrain/index>
+   Distributed Training <../model-dev-guide/dtrain/_index>

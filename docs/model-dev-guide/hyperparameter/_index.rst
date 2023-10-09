@@ -84,4 +84,4 @@ following sections.
    hp-constraints-det
    instrument-model-code
    handle-trial-errors
-   Search Methods <search-methods/index>
+   Search Methods <search-methods/_index>

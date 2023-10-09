@@ -9,7 +9,7 @@
 
 Install and set up Determined using the cluster deployment guide for your environment.
 
-.. include:: ../../_shared/tip-keep-install-instructions.txt
+.. include:: ../_shared/tip-keep-install-instructions.txt
 
 .. note::
 
@@ -74,9 +74,9 @@ Enable Determined to submit jobs to a Slurm cluster.
    :hidden:
 
    Quick Installation <basic>
-   Deploy on Prem <on-prem/index>
-   Deploy on AWS <aws/overview>
-   Deploy on GCP <gcp/overview>
-   Deploy on Kubernetes <k8s/overview>
-   Deploy on Slurm/PBS <slurm/overview>
-   Cluster Configuration <cluster-configuration>
+   Deploy on Prem <deploy-cluster/on-prem/_index>
+   Deploy on AWS <deploy-cluster/aws/_index>
+   Deploy on GCP <deploy-cluster/gcp/_index>
+   Deploy on Kubernetes <deploy-cluster/k8s/_index>
+   Deploy on Slurm/PBS <deploy-cluster/slurm/_index>
+   Cluster Configuration <deploy-cluster/cluster-configuration>

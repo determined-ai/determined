@@ -1,3 +1,5 @@
+:orphan:
+
 .. _torch-batch-processing-ug:
 
 ############################
