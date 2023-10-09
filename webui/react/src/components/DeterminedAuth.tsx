@@ -115,7 +115,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <Input
           autoFocus
           placeholder="username"
-          prefix={<Icon name="user-small" size="small" title="Username" />}
+          prefix={<Icon name="user" size="small" title="Username" />}
         />
       </Form.Item>
       <Form.Item name="password">

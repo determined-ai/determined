@@ -154,7 +154,7 @@ function InlineForm<T>({
             />
             <Button
               data-testid={`reset-${testId}`}
-              icon={<Icon name="close-small" size="tiny" title="cancel" />}
+              icon={<Icon name="close" size="tiny" title="cancel" />}
               type="default"
               onClick={handleCancel}
             />

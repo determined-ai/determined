@@ -292,7 +292,7 @@ const NavigationSideBar: React.FC = () => {
                     </WorkspaceQuickSearch>
                     {canCreateWorkspace && (
                       <Button
-                        icon={<Icon name="add-small" size="tiny" title="Create workspace" />}
+                        icon={<Icon name="add" size="tiny" title="Create workspace" />}
                         type="text"
                         onClick={WorkspaceCreateModal.open}
                       />
@@ -337,7 +337,7 @@ const NavigationSideBar: React.FC = () => {
                     {canCreateWorkspace && (
                       <li>
                         <NavigationItem
-                          icon="add-small"
+                          icon="add"
                           iconSize="tiny"
                           label="New Workspace"
                           labelRender={
