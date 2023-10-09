@@ -217,7 +217,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
           /**
            * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-           * dynamic min/max ranges via uPlot.Scales.
+           * dynamic min/max ranges via Scales.
            */
           const trialMetric = Number.isFinite(trial.metric) ? trial.metric : undefined;
 

@@ -654,7 +654,7 @@ const ChartsSection: React.FC = () => {
       <AntDCard>
         <p>
           Line Charts (<code>{'<LineChart>'}</code>) are a universal component to create charts for
-          learning curve, metrics, cluster history, etc. We currently use the uPlot library.
+          learning curve, metrics, cluster history, etc.
         </p>
       </AntDCard>
       <AntDCard title="Label options">

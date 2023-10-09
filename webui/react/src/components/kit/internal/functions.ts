@@ -360,10 +360,6 @@ export const glasbeyColor = (sequence: number): string => {
   return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 };
 
-export const getTimeTickValues: uPlot.Axis.Values = (_self, rawValue) => {
-  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss.SSS').slice(0, -2));
-};
-
 const DEFAULT_PRECISION = 6;
 export const humanReadableNumber = (num: number, precision = DEFAULT_PRECISION): string => {
   const stringNum = num.toString();

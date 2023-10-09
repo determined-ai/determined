@@ -26,16 +26,6 @@ export type MetricsAggregateInterface = {
   names: string[];
 };
 
-export type OldMetricsAggregateInterface = {
-  // group information by { [time]: { [name]: value, ... }, ... }
-  data?: uPlot.AlignedData;
-  initialTimestamp?: number;
-  isEmpty: boolean;
-  // set to false when the 1st event is received
-  isLoading: boolean;
-  names: string[];
-};
-
 export interface ChartProps {
   trial: TrialDetails;
 }

@@ -1,5 +1,3 @@
-import uPlot from 'uplot';
-
 // key should be lowercase to match the metric name
 const MetricNameUnit = {
   cpu_util_simple: '%',
@@ -18,13 +16,4 @@ export const getUnitForMetricName = (metricName: string): string => {
   return metricName in MetricNameUnit
     ? MetricNameUnit[metricName as keyof typeof MetricNameUnit]
     : metricName;
-};
-
-export const getScientificNotationTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
-  return rawValue.map((val) => {
-    if (val === 0) return val;
-    return val > 9_999 || val < -9_999 || (0 < val && val < 0.0001) || (-0.0001 < val && val < 0)
-      ? val.toExponential(2)
-      : val;
-  });
 };
