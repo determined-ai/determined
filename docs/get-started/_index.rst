@@ -1,0 +1,3 @@
+:orphan:
+
+get started index

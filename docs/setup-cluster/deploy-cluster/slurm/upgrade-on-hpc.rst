@@ -8,8 +8,7 @@ This procedure describes how to upgrade Determined on an HPC cluster managed by 
 workload managers. Use this procedure when an earlier version of Determined is installed,
 configured, and functioning properly.
 
-#. Review the latest :doc:`/setup-cluster/deploy-cluster/slurm/slurm-requirements` and ensure all
-   dependencies have been met.
+#. Review the latest :ref:`slurm-requirements` and ensure all dependencies have been met.
 
 #. Upgrade the launcher.
 

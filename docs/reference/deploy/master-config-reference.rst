@@ -65,7 +65,7 @@ is not routable between machines. Determined already filters out common interfac
 appropriate interface, the ``dtrain_network_interface`` option can be used to set it explicitly
 (e.g., ``eth11``).
 
-.. include:: ../../../_shared/note-dtrain-learn-more.txt
+.. include:: ../../_shared/note-dtrain-learn-more.txt
 
 ``cpu_pod_spec``
 ================

@@ -30,9 +30,8 @@ scheduling and prioritization to the HPC workload manager (either Slurm or PBS).
 enables existing HPC workloads and Determined workloads to coexist and Determined workloads to
 access all of the advanced capabilities of the HPC workload manager.
 
-To install Determined on the HPC cluster, ensure that the
-:doc:`/setup-cluster/deploy-cluster/slurm/slurm-requirements` are met, then follow the steps in the
-:doc:`/setup-cluster/deploy-cluster/slurm/install-on-slurm` document.
+To install Determined on the HPC cluster, ensure that the :ref:`slurm-requirements` are met, then
+follow the steps in the :ref:`install-on-slurm` document.
 
 ***********
  Reference

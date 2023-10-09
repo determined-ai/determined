@@ -16,9 +16,8 @@ login or administrator Slurm/PBS cluster node.
  Install Determined Master
 ***************************
 
-After the node has been selected and the
-:doc:`/setup-cluster/deploy-cluster/slurm/slurm-requirements` have been fulfilled and configured,
-install and configure the Determined master:
+After the node has been selected and the :ref:`slurm-requirements` have been fulfilled and
+configured, install and configure the Determined master:
 
 #. Install the on-premises Determined master component (not including the Determined agent) as
    described in :ref:`install-using-linux-packages`. Perform the installation and configuration
@@ -191,8 +190,8 @@ install and configure the Determined master:
    A successful configuration reports the hostname of the compute node selected by Slurm to run the
    job.
 
-#. Run a simple distributed training job such as the :doc:`/tutorials/pytorch-mnist-tutorial` to
-   verify that it completes successfully. This validates Determined master and launcher
-   communication, access to the shared filesystem, GPU scheduling, and highspeed interconnect
-   configuration. For more complete validation, ensure that the ``slots_per_trial`` is at least
-   twice the number of GPUs available on a single node.
+#. Run a simple distributed training job such as the :ref:`pytorch-mnist-tutorial` to verify that it
+   completes successfully. This validates Determined master and launcher communication, access to
+   the shared filesystem, GPU scheduling, and highspeed interconnect configuration. For more
+   complete validation, ensure that the ``slots_per_trial`` is at least twice the number of GPUs
+   available on a single node.

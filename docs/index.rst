@@ -8,62 +8,61 @@
    :maxdepth: 2
    :hidden:
 
-   How It Works <architecture/index>
-   Tutorials <tutorials/index>
+   How It Works <architecture/_index>
+   Tutorials <tutorials/_index>
    Quickstart for Model Developers <tutorials/quickstart-mdldev>
    Examples <example-solutions/examples>
-   Model Hub Library <model-hub-library/index>
-   How-To Articles <articles/index>
+   Model Hub Library <model-hub-library/_index>
 
 .. toctree::
    :caption: Set Up
    :hidden:
 
-   Installation Guide <setup-cluster/deploy-cluster/index>
-   Security <setup-cluster/security/index>
-   User Accounts <setup-cluster/users>
-   Workspaces and Projects <setup-cluster/workspaces>
-   Logging and Elasticsearch <setup-cluster/elasticsearch-logging-backend>
-   Cluster Usage History <setup-cluster/historical-cluster-usage-data>
-   Monitor Experiment Through Webhooks  <integrations/notification/index>
-   Upgrade <setup-cluster/upgrade>
-   Troubleshooting <setup-cluster/troubleshooting>
+   Installation Guide <setup-cluster/_index>
+   Security <manage/security/_index>
+   User Accounts <manage/users>
+   Workspaces and Projects <manage/workspaces>
+   Logging and Elasticsearch <manage/elasticsearch-logging-backend>
+   Cluster Usage History <manage/historical-cluster-usage-data>
+   Monitor Experiment Through Webhooks  <integrations/notification/_index>
+   Upgrade <manage/upgrade>
+   Troubleshooting <manage/troubleshooting>
 
 .. toctree::
    :caption: Model Developer Guide
    :hidden:
 
-   Overview <model-dev-guide/index>
-   Distributed Training <model-dev-guide/dtrain/index>
-   Prepare Container Environment <model-dev-guide/prepare-container/index>
+   Overview <model-dev-guide/_index>
+   Distributed Training <model-dev-guide/dtrain/_index>
+   Prepare Container Environment <model-dev-guide/prepare-container/_index>
    Prepare Data <model-dev-guide/load-model-data>
-   API Guides <model-dev-guide/api-guides/index>
-   Hyperparameter Tuning <model-dev-guide/hyperparameter/index>
+   API Guides <model-dev-guide/api-guides/_index>
+   Hyperparameter Tuning <model-dev-guide/hyperparameter/_index>
    Submit Experiment <model-dev-guide/submit-experiment>
    How to Debug Models <model-dev-guide/debug-models>
-   Model Management <model-dev-guide/model-management/index>
-   Best Practices <model-dev-guide/best-practices/index>
+   Model Management <model-dev-guide/model-management/_index>
+   Best Practices <model-dev-guide/best-practices/_index>
 
 .. toctree::
    :caption: Reference
    :hidden:
 
-   Overview <reference/index>
+   Overview <reference/_index>
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
-   Training Reference <reference/training/index>
+   Training Reference <reference/training/_index>
    Experiment Configuration Reference <reference/training/experiment-config-reference>
-   Model Hub Reference <reference/model-hub/index>
-   Deployment Reference <reference/deploy/index>
-   Job Configuration Reference <reference/interface/job-config-reference>
-   Custom Searcher Reference <reference/searcher/custom-searcher-reference>
+   Model Hub Reference <reference/model-hub/_index>
+   Deployment Reference <reference/deploy/_index>
+   Job Configuration Reference <reference/job-config-reference>
+   Custom Searcher Reference <reference/custom-searcher-reference>
    CLI Reference <reference/cli-reference>
 
 .. toctree::
    :caption: Tools
    :hidden:
 
-   Overview <interfaces/index>
+   Overview <tools/_index>
    CLI User Guide <interfaces/cli-ug>
    Commands and Shells <interfaces/commands-and-shells>
    WebUI Interface <interfaces/webui-if>
@@ -75,10 +74,11 @@
    :caption: Integrations
    :hidden:
 
-   Works with Determined <integrations/ecosystem/ecosystem-integration>
-   IDE Integration <interfaces/ide-integration>
-   Pachyderm <integrations/pachyderm/pachyderm>
-   Prometheus and Grafana <integrations/prometheus/prometheus>
+   Works with Determined <integrations/_index>
+   PyCharm <integrations/ide/pycharm>
+   VSCode <integrations/ide/vscode>
+   Pachyderm <integrations/data-transformers/pachyderm>
+   Prometheus and Grafana <integrations/prometheus/_index>
    attributions
 
 #############################
@@ -104,21 +104,21 @@ almost any deep learning model using Determined.
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-            <a class="tile" href="architecture/index.html">
+            <a class="tile" href="architecture/_index.html">
                <img class="tile-icon" src="_static/images/tools.png" alt="tools icon">
                <h2 class="tile-title">How It Works</h2>
                <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
             </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="tutorials/index.html">
+            <a class="tile" href="tutorials/_index.html">
                <img class="tile-icon" src="_static/images/getting-started.png" alt="getting started icon">
                <h2 class="tile-title">Tutorials</h2>
                <p class="tile-description">Try Determined and learn the basics including how to port your existing code to the Determined environment.</p>
             </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="setup-cluster/deploy-cluster/index.html">
+            <a class="tile" href="setup-cluster/deploy-cluster/_index.html">
                <img class="tile-icon" src="_static/images/integrations.png" alt="integrations icon">
                <h2 class="tile-title">Set Up Determined</h2>
                <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
@@ -132,14 +132,14 @@ almost any deep learning model using Determined.
             </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="training/index.html">
+            <a class="tile" href="model-dev-guide/_index.html">
                <img class="tile-icon" src="_static/images/developer-guide.png" alt="developer guide icon">
                <h2 class="tile-title">Model Developer Guide</h2>
                <p class="tile-description">Find user guides. Learn how to work with Training APIs and configure your distributed training experiments.</p>
             </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="reference/index.html">
+            <a class="tile" href="reference/_index.html">
                <img class="tile-icon" src="_static/images/reference.png" alt="reference icon">
                <h2 class="tile-title">Reference</h2>
                <p class="tile-description">Explore API libraries and configuration settings.</p>

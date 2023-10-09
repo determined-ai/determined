@@ -1,3 +1,5 @@
+.. _tf-mnist-tutorial:
+
 #########################################
  TensorFlow Keras Fashion MNIST Tutorial
 #########################################
