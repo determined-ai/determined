@@ -431,22 +431,25 @@ func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
 
 // RecordTaskEndStatsBun record end stats for tasks with bun.
 func RecordTaskEndStatsBun(stats *model.TaskStats) error {
-	_, err := Bun().NewRaw(`UPDATE task_stats AS t
-		SET end_time = ?
-		FROM (
-			SELECT allocation_id, event_type, end_time
-			FROM task_stats
-			Where allocation_id = ? AND event_type = ? AND end_time IS NULL
-			ORDER BY start_time
-			FOR UPDATE
-		) AS t2
-		WHERE t.allocation_id = t2.allocation_id AND t.event_type = t2.event_type AND t.end_time IS NULL`,
-		stats.EndTime,
-		stats.AllocationID,
-		stats.EventType).
-		Exec(context.TODO())
+	query := Bun().NewUpdate().Model(stats).Column("end_time").
+		Where("allocation_id = ?", stats.AllocationID).
+		Where("event_type = ?", stats.EventType).
+		Where("end_time IS NULL")
+	if stats.ContainerID == nil {
+		// Just doing Where("container_id = ?", stats.ContainerID) in the null case
+		// generates WHERE container_id = NULL which doesn't seem to match on null rows.
+		// We don't use this case anywhere currently but this feels like an easy bug to write
+		// without this.
+		query = query.Where("container_id IS NULL")
+	} else {
+		query = query.Where("container_id = ?", stats.ContainerID)
+	}
 
-	return err
+	if _, err := query.Exec(context.TODO()); err != nil {
+		return fmt.Errorf("recording task end stats %+v: %w", stats, err)
+	}
+
+	return nil
 }
 
 // EndAllTaskStats called at master starts, in case master previously crashed.
@@ -457,7 +460,11 @@ FROM cluster_id, allocations
 WHERE allocations.allocation_id = task_stats.allocation_id
 AND allocations.end_time IS NOT NULL
 AND task_stats.end_time IS NULL`)
-	return err
+	if err != nil {
+		return fmt.Errorf("ending all task stats: %w", err)
+	}
+
+	return nil
 }
 
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.

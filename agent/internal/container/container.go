@@ -416,6 +416,7 @@ func (c *Container) shimDockerEvents() events.Publisher[docker.Event] {
 				TaskType: model.TaskType(c.spec.TaskType),
 				Stats: &model.TaskStats{
 					AllocationID: c.allocationID,
+					ContainerID:  &c.containerID,
 					EventType:    e.Stats.Kind,
 					StartTime:    e.Stats.StartTime,
 					EndTime:      e.Stats.EndTime,
