@@ -6,15 +6,12 @@ package stream
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 
-	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
@@ -58,7 +55,7 @@ func (t *startupReadWriter) Close() error {
 	return nil
 }
 
-func TestReadWriter(t *testing.T) {
+func TestStartupReadWriter(t *testing.T) {
 	startupMessage := StartupMsg{
 		Known: KnownKeySet{Trials: "1,2,3"},
 		Subscribe: SubscriptionSpecSet{
@@ -89,12 +86,9 @@ func TestReadWriter(t *testing.T) {
 }
 
 func TestStartup(t *testing.T) {
+	ssupCtx := context.TODO()
 	ctx := context.TODO()
-	e := echo.New()
-	c := e.NewContext(nil, nil)
-	echoCtx := &detContext.DetContext{Context: c}
-	echoCtx.SetRequest(&http.Request{})
-	echoCtx.SetUser(model.User{Username: uuid.New().String()})
+	testUser := model.User{Username: uuid.New().String()}
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
 	defer func() {
 		fmt.Println("cleaning up?")
@@ -121,7 +115,7 @@ func TestStartup(t *testing.T) {
 		startupMessage: &startupMessage,
 	}
 	publisherSet := NewPublisherSet()
-	err := publisherSet.entrypoint(ctx, &tester, echoCtx, simpleUpsert)
+	err := publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
 	require.NoError(t, err)
 
 	deletions, trialMsgs, err := splitDeletionsAndTrials(tester.data)
@@ -145,7 +139,7 @@ func TestStartup(t *testing.T) {
 	}
 	tester.startupMessage = &startupMessage
 	publisherSet = NewPublisherSet()
-	err = publisherSet.entrypoint(ctx, &tester, echoCtx, simpleUpsert) // XXX: fix prepare func
+	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert) // XXX: fix prepare func
 	require.NoError(t, err)
 	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.data)
 	require.NoError(t, err)
@@ -169,7 +163,7 @@ func TestStartup(t *testing.T) {
 		},
 	}
 	tester.startupMessage = &startupMessage
-	err = publisherSet.entrypoint(ctx, &tester, echoCtx, simpleUpsert)
+	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
 	require.NoError(t, err)
 	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.data)
 	require.NoError(t, err)

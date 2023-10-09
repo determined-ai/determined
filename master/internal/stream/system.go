@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -179,8 +180,9 @@ func writeAll(socketLike WebsocketLike, msgs []interface{}) error {
 
 func (ps *PublisherSet) entrypoint(
 	ssupCtx context.Context,
+	ctx context.Context,
+	user model.User,
 	socket WebsocketLike,
-	c echo.Context,
 	prepareFunc func(message stream.PreparableMessage) interface{},
 ) error {
 	// clean up socket
@@ -189,8 +191,6 @@ func (ps *PublisherSet) entrypoint(
 			log.Debugf("error while cleaning up socket: %s", err)
 		}
 	}()
-	ctx := c.Request().Context()
-
 	// get permission change channel
 	var bootemChan chan struct{}
 	func() {
@@ -200,7 +200,6 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	streamer := stream.NewStreamer(prepareFunc)
-	user := c.(*detContext.DetContext).MustGetUser()
 	ss, err := NewSubscriptionSet(ctx, streamer, ps, user)
 	if err != nil {
 		return errors.Wrap(err, "creating subscription set")
@@ -332,7 +331,13 @@ func (ps *PublisherSet) Websocket(
 	socket *websocket.Conn,
 	c echo.Context,
 ) error {
-	return ps.entrypoint(ssupCtx, &WrappedWebsocket{Conn: socket}, c, prepareWebsocket)
+	reqCtx := c.Request().Context()
+	detCtx, ok := c.(*detContext.DetContext)
+	if !ok {
+		log.Errorf("unable to run PublisherSet: expected DetContext but received %t", reflect.TypeOf(c))
+	}
+	user := detCtx.MustGetUser()
+	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket}, prepareWebsocket)
 }
 
 func prepareWebsocket(msg stream.PreparableMessage) interface{} {
