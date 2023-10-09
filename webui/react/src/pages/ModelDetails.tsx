@@ -9,7 +9,7 @@ import Notes from 'components/kit/Notes';
 import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';

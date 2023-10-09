@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -209,7 +209,7 @@ const TrialDetailsComp: React.FC = () => {
   if (trialDetails.error !== undefined && !isNotFound(trialDetails.error)) {
     const message = `Unable to fetch Trial ${trialId}`;
     return (
-      <Message message={trialDetails.error.message} title={message} type={MessageType.Warning} />
+      <Message description={trialDetails.error.message} title={message} type={MessageType.Warning} />
     );
   }
 

@@ -5,10 +5,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
+import Message, { MessageType } from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects } from 'services/api';
 import workspaceStore from 'stores/workspaces';
@@ -159,7 +159,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           ) : (
             <>
               {treeData.length === 0 ? (
-                <Message title="No matching workspace or projects" type={MessageType.Empty} />
+                <Message title="No matching workspace or projects" type={MessageType.Warning} />
               ) : (
                 <Tree defaultExpandAll selectable={false} treeData={treeData} />
               )}

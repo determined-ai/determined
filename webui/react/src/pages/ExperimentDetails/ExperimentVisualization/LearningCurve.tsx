@@ -6,7 +6,7 @@ import { LineChart } from 'components/kit/LineChart';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
@@ -312,7 +312,7 @@ const LearningCurve: React.FC<Props> = ({
     return <Message title={pageError.message} />;
   } else if ((hasLoaded && !hasTrials) || !selectedMetric) {
     return isExperimentTerminal ? (
-      <Message title="No learning curve data to show." type={MessageType.Empty} />
+      <Message title="No learning curve data to show." type={MessageType.Warning} />
     ) : (
       <div className={css.waiting}>
         <Alert

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';

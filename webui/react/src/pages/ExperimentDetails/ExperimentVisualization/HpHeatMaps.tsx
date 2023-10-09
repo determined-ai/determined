@@ -6,7 +6,7 @@ import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
@@ -339,7 +339,7 @@ const HpHeatMaps: React.FC<Props> = ({
     return <Message title={pageError.message} />;
   } else if ((hasLoaded && !chartData) || !selectedMetric) {
     return isExperimentTerminal ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
+      <Message title="No data to plot." type={MessageType.Warning} />
     ) : (
       <div>
         <Alert
@@ -387,7 +387,7 @@ const HpHeatMaps: React.FC<Props> = ({
               </div>
             </>
           ) : (
-            <Message title="No data to plot." type={MessageType.Empty} />
+            <Message title="No data to plot." type={MessageType.Warning} />
           )}
         </div>
       </Section>

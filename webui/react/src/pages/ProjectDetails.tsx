@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import DynamicTabs from 'components/DynamicTabs';
 import Spinner from 'components/kit/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useProjectActionMenu } from 'components/ProjectActionDropdown';

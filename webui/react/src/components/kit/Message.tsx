@@ -16,22 +16,24 @@ export type MessageType = ValueOf<typeof MessageType>;
 
 export type Props = XOR<
   {
-    body?: string;
+    description?: string;
     title: string;
     icon: ReactNode;
   }, {
-    body?: string;
+    description?: string;
     title: string;
-    type: MessageType;
+    type?: MessageType;
   }
 >
 
-const Message: React.FC<Props> = ({ body, title, icon, type }: Props) => {
+const Message: React.FC<Props> = ({ description, title, icon, type }: Props) => {
   const getIcon = (type?: MessageType, icon?: ReactNode) => {
     if (type) {
       return <Icon decorative name={type as IconName} size="big" />;
-    } else {
+    } else if (icon) {
       return icon;
+    } else {
+      return <Icon decorative name="info" size="big" />;
     }
   };
 
@@ -39,7 +41,7 @@ const Message: React.FC<Props> = ({ body, title, icon, type }: Props) => {
     <div className={css.base}>
       {getIcon(type, icon)}
       <div className={css.title}>{title}</div>
-      {body && <span>{body}</span>}
+      {description && <span>{description}</span>}
     </div>
   );
 };

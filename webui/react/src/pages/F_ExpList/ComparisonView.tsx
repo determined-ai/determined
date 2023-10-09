@@ -95,7 +95,7 @@ const ComparisonView: React.FC<Props> = ({
         children
       )}
       {selectedExperiments.length === 0 ? (
-        <Message body="Select experiments you would like to compare." title="No experiments selected." type={MessageType.Warning} />
+        <Message description="Select experiments you would like to compare." title="No experiments selected." type={MessageType.Warning} />
 
       ) : (
         <Pivot items={tabs} />

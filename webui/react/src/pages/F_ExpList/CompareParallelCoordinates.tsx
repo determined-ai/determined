@@ -3,7 +3,7 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Spinner from 'components/kit/Spinner';
-import Message from 'components/Message';
+import Message from 'components/kit/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import { useGlasbey } from 'hooks/useGlasbey';

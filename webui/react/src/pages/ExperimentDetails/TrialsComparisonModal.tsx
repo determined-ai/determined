@@ -10,7 +10,7 @@ import Select, { Option, SelectValue } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message from 'components/Message';
+import Message from 'components/kit/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';

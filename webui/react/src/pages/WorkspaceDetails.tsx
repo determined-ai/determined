@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
-import Message from 'components/Message';
+import Message from 'components/kit/Message';
 import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';

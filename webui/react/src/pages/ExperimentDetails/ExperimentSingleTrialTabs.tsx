@@ -8,7 +8,7 @@ import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import Tooltip from 'components/kit/Tooltip';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
@@ -48,7 +48,7 @@ type Params = {
 };
 
 const NeverTrials: React.FC = () => (
-  <Message title="Experiment will not have trials" type={MessageType.Alert} />
+  <Message title="Experiment will not have trials" type={MessageType.Warning} />
 );
 
 const TAB_KEYS = Object.values(TabType);

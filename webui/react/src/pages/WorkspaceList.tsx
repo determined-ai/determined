@@ -13,7 +13,7 @@ import Spinner from 'components/kit/Spinner';
 import Toggle from 'components/kit/Toggle';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
+import Message, { MessageType } from 'components/kit/Message';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
@@ -378,7 +378,7 @@ const WorkspaceList: React.FC = () => {
             title="No Workspaces"
           />
         ) : (
-          <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
+          <Message title="No workspaces matching the current filters" type={MessageType.Warning} />
         )}
       </Spinner>
       <WorkspaceCreateModal.Component />
