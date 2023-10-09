@@ -139,7 +139,8 @@ func TrialCollectStartupMsgs(
 		Table("trials").
 		Column("trials.id").
 		Join("JOIN experiments e ON trials.experiment_id = e.id").
-		Join("JOIN projects p ON e.project_id = p.id")
+		Join("JOIN projects p ON e.project_id = p.id").
+		OrderExpr("id ASC")
 	q = permFilter(q)
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
