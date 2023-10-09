@@ -112,6 +112,9 @@ func (ksb *keySetBuilder) Add(n int64) {
 }
 
 func (ksb *keySetBuilder) Finish() string {
+	if !ksb.started {
+		return ""
+	}
 	// emit final value
 	ksb.emit()
 	return ksb.out.String()
