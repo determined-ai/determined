@@ -77,7 +77,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
           initialValue={experimentName}
           label={NAME_LABEL}
           name="experimentName"
-          rules={[{ max: 128, message: 'Name must be 1 ~ 128 characters', required: true }]}>
+          rules={[{ max: 128, message: 'Name must be 1 ~ 128 characters', required: true, whitespace: true }]}>
           <Input />
         </Form.Item>
         <Form.Item initialValue={description} label={DESCRIPTION_LABEL} name="description">
