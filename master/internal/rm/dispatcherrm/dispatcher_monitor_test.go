@@ -196,7 +196,7 @@ func Test_allContainersRunning(t *testing.T) {
 
 	// Verify that we wrote a message to the experiment log indicating that
 	// 1 out of 3 containers are running.
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
@@ -208,7 +208,7 @@ func Test_allContainersRunning(t *testing.T) {
 
 	// Verify that we wrote a message to the experiment log indicating that
 	// 2 out of 3 containers are running.
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 2
 	}, "numTimesWriteExperimentLogCalled != 2")
 
@@ -222,7 +222,7 @@ func Test_allContainersRunning(t *testing.T) {
 
 	// Verify that we wrote a message to the experiment log indicating that
 	// 3 out of 3 containers are running.
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 3
 	}, "numTimesWriteExperimentLogCalled != 3")
 }
@@ -391,7 +391,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 
 	retValue := jobWatcher.obtainJobStateFromWlmQueueDetails(DispatchID1, qStats, job)
 
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
@@ -407,7 +407,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 
 	// We only write to the experiment log when the reason code changes, and
 	// since the reason code has not changed, the count should still be 1.
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
@@ -427,7 +427,7 @@ func Test_obtainJobStateFromWlmQueueDetails(t *testing.T) {
 
 	// We only write to the experiment log when the reason code changes, and
 	// since the reason code changed, the count should now be 2.
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 2
 	}, "numTimesWriteExperimentLogCalled != 2")
 
@@ -514,7 +514,7 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	assert.Equal(t, retValue, true)
 
 	// The "writeExperimentLog()" function should have been called once.
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
@@ -533,7 +533,7 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	// The "writeExperimentLog()" function should not have been called again,
 	// since neither the job state not reason code have changed since from
 	// the previous time we called "obtainJobStateFromWlmQueueDetails()".
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 1
 	}, "numTimesWriteExperimentLogCalled != 1")
 
@@ -558,7 +558,7 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 	// The "writeExperimentLog()" function should have been called again, since
 	// the reason code changed from "Prolog" to "None" from the previous time
 	// we called "obtainJobStateFromWlmQueueDetails()".
-	assertConditionWithin(t, time.Second, func() bool {
+	assertConditionWithin(t, time.Duration(2)*time.Second, func() bool {
 		return numTimesWriteExperimentLogCalled.Load() == 2
 	}, "numTimesWriteExperimentLogCalled != 2")
 

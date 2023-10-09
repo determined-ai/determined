@@ -1583,10 +1583,30 @@ func (m *DispatcherResourceManager) stopLauncherJob(msg KillDispatcherResources)
 		// Get the HPC job ID, if it's available, to include in the log message.
 		hpcJobID, _ := m.dispatchIDToHPCJobID.Load(dispatchID)
 
-		m.syslog.WithField("dispatch-id", dispatchID).
+		logger := m.syslog.WithField("dispatch-id", dispatchID).
 			WithField("hpc-job-id", hpcJobID).
-			WithField("impersonated-user", impersonatedUser).
-			Infof("terminating job initiated by user")
+			WithField("impersonated-user", impersonatedUser)
+
+		// When the job monitor's queue is large, it may take a while for the
+		// job monitor to query the launcher for confirmation that the Workload
+		// Manager (Slurm/PBS) has terminated the job. Therefore, don't keep
+		// sending termination requests to the launcher if a termination request
+		// has already been sent, but we're just waiting for the job monitor to
+		// query the launcher for termination confirmation.  As a safeguard
+		// against a termination request that was sent to the launcher, but the
+		// launcher didn't act upon it, allow another termination request to be
+		// sent again if it's been 300 seconds (5 minutes) since the job monitor
+		// last sent a job termination request to the launcher.
+		if m.jobWatcher.isJobMarkedAsTerminated(dispatchID) &&
+			time.Since(m.jobWatcher.getLastJobTerminationRequestTime(dispatchID)).Seconds() < 300 {
+			logger.WithField("canceled-job-position", m.jobWatcher.getJobListPosition(dispatchID)).
+				WithField("current-job-position", m.jobWatcher.currentJobPosition.Load()).
+				WithField("last-update", m.jobWatcher.getLastJobStatusCheckTime(dispatchID).Format("2006-01-02 15:04:05")).
+				Info("termination request already sent, waiting for acknowledgement of termination")
+			return
+		}
+
+		logger.Info("terminating job initiated by user")
 
 		// Terminate and cleanup, on failure leave Dispatch in DB for later retry
 		if m.terminateDispatcherJob(dispatchID, impersonatedUser, false) {

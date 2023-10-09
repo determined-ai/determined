@@ -75,16 +75,18 @@ type containerInfo struct {
 
 // launcherJob describes a new launcher job, the progress of which we need to track.
 type launcherJob struct {
-	user                   string
-	dispatcherID           string
-	hpcJobID               string
-	payloadName            string
-	jobPendingReasonCode   string
-	lastJobStatusCheckTime time.Time
-	totalContainers        int
-	runningContainers      mapx.Map[int, containerInfo]
-	jobWasTerminated       bool
-	launchInProgress       bool // Launch proceeding concurrent with monitoring
+	user                          string
+	dispatcherID                  string
+	hpcJobID                      string
+	payloadName                   string
+	jobPendingReasonCode          string
+	lastJobStatusCheckTime        time.Time
+	lastJobTerminationRequestTime time.Time
+	totalContainers               int
+	runningContainers             mapx.Map[int, containerInfo]
+	jobWasTerminated              bool
+	launchInProgress              bool // Launch proceeding concurrent with monitoring
+	position                      atomic.Int32
 }
 
 // launcherMonitorEvent is a union of all events emitted by the launcherMonitor.
@@ -116,6 +118,7 @@ type launcherMonitor struct {
 	checkLauncherJob      chan *launcherJob
 	processingWatchedJobs atomic.Bool
 	dispatchIDToHPCJobID  *mapx.Map[string, string]
+	currentJobPosition    atomic.Int32
 	externalJobs          mapx.Map[string, map[string]string]
 }
 
@@ -156,15 +159,16 @@ func (m *launcherMonitor) monitorJob(
 	user string, dispatchID string, payloadName string, launchPending bool,
 ) {
 	m.newLauncherJob <- &launcherJob{
-		user:                   user,
-		dispatcherID:           dispatchID,
-		payloadName:            payloadName,
-		jobPendingReasonCode:   "",
-		lastJobStatusCheckTime: time.Now(),
-		totalContainers:        0,
-		runningContainers:      mapx.New[int, containerInfo](),
-		jobWasTerminated:       false,
-		launchInProgress:       launchPending,
+		user:                          user,
+		dispatcherID:                  dispatchID,
+		payloadName:                   payloadName,
+		jobPendingReasonCode:          "",
+		lastJobStatusCheckTime:        time.Time{},
+		lastJobTerminationRequestTime: time.Time{},
+		totalContainers:               0,
+		runningContainers:             mapx.New[int, containerInfo](),
+		jobWasTerminated:              false,
+		launchInProgress:              launchPending,
 	}
 }
 
@@ -445,6 +449,37 @@ func (m *launcherMonitor) isJobBeingMonitored(dispatchID string) bool {
 	return ok
 }
 
+// Returns a map with the position of each dispatch ID in the job monitior's
+// queue. This is useful for logging purposes to report where in the queue
+// a canceled job is residing. When a large number of jobs are canceled at
+// once, it may take a while for the job monitor to process each canceled job,
+// leaving the user wondering why their job hasn't been canceled.  By providing
+// a way to report where the canceled job resides in the queue, we can at least
+// have an idea as to why it's taking a long time for the job to be canceled.
+func (m *launcherMonitor) setJobListPositions(sortedDispatchIDs []string) {
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		for i, dispatchID := range sortedDispatchIDs {
+			if job, ok := inmap[dispatchID]; ok {
+				job.position.Store(int32(i))
+				continue
+			}
+
+			m.syslog.WithField("dispatch-id", dispatchID).
+				Debug("cannot set position of job, " +
+					"because the dispatch ID was not found in the monitored jobs")
+		}
+	})
+}
+
+// Get the position of the specified job in the job monitor's queue.
+func (m *launcherMonitor) getJobListPosition(dispatchID string) int32 {
+	if job, ok := m.monitoredJobs.Load(dispatchID); ok {
+		return job.position.Load()
+	}
+
+	return -1
+}
+
 // processWatchedJobs is called periodically to poll for the completion status
 // of launched jobs. The exit status of any completed job is reported to Determined; such
 // jobs are them removed from further consideration.
@@ -456,10 +491,18 @@ func (m *launcherMonitor) processWatchedJobs() {
 
 	qStats := m.queuesFromCluster()
 
+	// A queue of jobs to be processed, ordered by the time that their
+	// job status was last checked.
 	sortedDispatchIDs := m.getDispatchIDsSortedByLastJobStatusCheckTime()
 
+	// Create a map with the position of each job in the queue.
+	m.setJobListPositions(sortedDispatchIDs)
+
 	// Loop through the jobs in the monitoredJobs map and update status accordingly
-	for _, dispatchID := range sortedDispatchIDs {
+	for i, dispatchID := range sortedDispatchIDs {
+		// Store the queue position of the job we're currently processing.
+		m.currentJobPosition.Store(int32(i))
+
 		if job, ok = m.getJobByDispatchID(dispatchID); !ok {
 			m.syslog.WithField("dispatch-id", dispatchID).
 				Warn("could not find launched job for dispatch")
@@ -477,9 +520,18 @@ func (m *launcherMonitor) processWatchedJobs() {
 		}
 
 		if m.obtainJobStateFromWlmQueueDetails(dispatchID, qStats, job) {
-			m.updateLastJobStatusCheckTime(dispatchID)
-			delete(qStats, job.hpcJobID)
-			continue // An optimization to avoid per-job use of updateJobStatus (below)
+			// The 'qStats' data is obtained once before the start of the loop.
+			// If the job is canceled while we're processing the jobs, then
+			// 'qStats' contains stale data for that job, so only trust the
+			// 'qStats' data if the job has not been terminated.
+			if !m.isJobMarkedAsTerminated(dispatchID) {
+				m.updateLastJobStatusCheckTime(dispatchID)
+				delete(qStats, job.hpcJobID)
+				continue // An optimization to avoid per-job use of updateJobStatus (below)
+			}
+
+			m.syslog.WithField("dispatch-id", dispatchID).
+				Debug("ignoring stale data from WLM queue details, because the job was terminated")
 		}
 
 		if removeJob := m.updateJobStatus(job); removeJob {
@@ -693,15 +745,34 @@ func (m *launcherMonitor) isJobBeingRemoved(dispatchID string) bool {
 }
 
 func (m *launcherMonitor) markJobAsTerminated(dispatchID string) {
-	job, ok := m.monitoredJobs.Load(dispatchID)
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		if job, ok := inmap[dispatchID]; ok {
+			job.jobWasTerminated = true
+			job.lastJobTerminationRequestTime = time.Now()
+			return
+		}
 
-	if ok {
-		job.jobWasTerminated = true
-	} else {
 		m.syslog.WithField("dispatch-id", dispatchID).
-			Trace("cannot mark dispatch job for termination, " +
-				"because it is not found in the monitored jobs")
-	}
+			Debug("cannot mark job for termination, " +
+				"because the dispatch ID was not found in the monitored jobs")
+	})
+}
+
+func (m *launcherMonitor) isJobMarkedAsTerminated(dispatchID string) bool {
+	terminated := false
+
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		if job, ok := inmap[dispatchID]; ok {
+			terminated = job.jobWasTerminated
+			return
+		}
+
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Debug("cannot check if job is marked for termination, " +
+				"because the dispatch ID was not found in the monitored jobs")
+	})
+
+	return terminated
 }
 
 func (m *launcherMonitor) removeJobFromMonitoredList(dispatchID string) {
@@ -715,8 +786,51 @@ func (m *launcherMonitor) updateLastJobStatusCheckTime(dispatchID string) {
 	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
 		if job, ok := inmap[dispatchID]; ok {
 			job.lastJobStatusCheckTime = time.Now()
+			return
 		}
+
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Debug("cannot update last job status check time, " +
+				"because the dispatch ID was not found in the monitored jobs")
 	})
+}
+
+func (m *launcherMonitor) getLastJobStatusCheckTime(dispatchID string) time.Time {
+	// Initialize to the zero value of type Time, which is
+	// January 1, year 1, 00:00:00.000000000 UTC.
+	val := time.Time{}
+
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		if job, ok := inmap[dispatchID]; ok {
+			val = job.lastJobStatusCheckTime
+			return
+		}
+
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Debug("cannot get the last job status check time, " +
+				"because the dispatch ID was not found in the monitored jobs")
+	})
+
+	return val
+}
+
+func (m *launcherMonitor) getLastJobTerminationRequestTime(dispatchID string) time.Time {
+	// Initialize to the zero value of type Time, which is
+	// January 1, year 1, 00:00:00.000000000 UTC.
+	val := time.Time{}
+
+	m.monitoredJobs.WithLock(func(inmap map[string]*launcherJob) {
+		if job, ok := inmap[dispatchID]; ok {
+			val = job.lastJobTerminationRequestTime
+			return
+		}
+
+		m.syslog.WithField("dispatch-id", dispatchID).
+			Debug("cannot get the last job termination request time, " +
+				"because the dispatch ID was not found in the monitored jobs")
+	})
+
+	return val
 }
 
 func (m *launcherMonitor) clearJobsToRemoveMap() {
