@@ -185,13 +185,6 @@ func (ps *PublisherSet) entrypoint(
 	socket WebsocketLike,
 	prepareFunc func(message stream.PreparableMessage) interface{},
 ) error {
-	// clean up socket
-	defer func() {
-		if err := socket.Close(); err != nil {
-			log.Debugf("error while cleaning up socket: %s", err)
-		}
-	}()
-
 	// get permission change channel
 	var bootemChan chan struct{}
 	func() {
