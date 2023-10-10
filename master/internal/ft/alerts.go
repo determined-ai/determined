@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -18,15 +20,23 @@ var (
 	mu             sync.RWMutex
 )
 
+// There are two reasons for this using a cache
+//  1. Avoid the possibility this feature causes a major slowdown to Scheduler
+//     that won't be obvious till it run at scale.
+//  2. Avoid putting possible transient db errors in the path of the Scheduler.
+//
+// I think there is going to be a decent chance this cache approach will somehow leak tasks
+// in the future but I think even if we never removed items from the cache
+// we would still probaly be okay.
 func InitializeLogPatternPolicies(ctx context.Context) error {
 	mu.Lock()
 	defer mu.Unlock()
 
 	var blockedNodes []*retryOnDifferentNode
 	if err := db.Bun().NewSelect().Model(&blockedNodes).
-		Where("active = true").
-		Scan(ctx, blockListCache); err != nil {
-		return fmt.Error("getting blocked nodes: %w", err)
+		Where("task_ended = true").
+		Scan(ctx, &blockedNodes); err != nil {
+		return fmt.Errorf("getting blocked nodes: %w", err)
 	}
 
 	blockListCache = make(map[model.TaskID]*set.Set[string])
@@ -34,7 +44,7 @@ func InitializeLogPatternPolicies(ctx context.Context) error {
 		if _, ok := blockListCache[b.TaskID]; !ok {
 			blockListCache[b.TaskID] = ptrs.Ptr(set.New[string]())
 		}
-		blockListCache[taskID].Insert(b.NodeName)
+		blockListCache[b.TaskID].Insert(b.NodeName)
 	}
 
 	return nil
@@ -44,6 +54,8 @@ func InitializeLogPatternPolicies(ctx context.Context) error {
 func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	mu.RLock()
 	defer mu.RUnlock()
+
+	fmt.Println("DISALKLOWED NODES", taskID, blockListCache[taskID])
 
 	disallowedNodes := blockListCache[taskID]
 	if disallowedNodes != nil {
@@ -70,6 +82,7 @@ type retryOnDifferentNode struct {
 	NodeName      string       `bun:"node_name"`
 	Regex         string       `bun:"regex"`
 	TriggeringLog string       `bun:"triggering_log"`
+	TaskEnded     bool         `bun:"task_ended"`
 }
 
 // AddRetryOnDifferentNode comment.
@@ -84,11 +97,30 @@ func AddRetryOnDifferentNode(
 		NodeName:      nodeName,
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
+		TaskEnded:     false,
 	}
-	_, err := db.Bun().NewInsert().Model(m).Exec(ctx)
+	res, err := db.Bun().NewInsert().Model(m).
+		On("CONFLICT (task_id, node_name, regex) DO NOTHING"). // Only care about the first log.
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("inserting log policy retry on different node alert %+v: %w", m, err)
 	}
+	if num, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("retry different node rows affected: %w", err)
+	} else if num == 0 {
+		return nil
+	}
+
+	// TODO make master log function in tasklogger
+	tasklogger.Insert(&model.TaskLog{
+		TaskID:    string(taskID),
+		Timestamp: ptrs.Ptr(time.Now().UTC()),
+		Level:     ptrs.Ptr(model.LogLevelError),
+		Source:    ptrs.Ptr("master"),
+		StdType:   ptrs.Ptr("stdout"),
+		Log: fmt.Sprintf("(log '%q' matched regex %s) therefore will not schedule on %s\n",
+			triggeringLog, regex, nodeName),
+	})
 
 	// TODO actually maybe here we should do the cap check on the taskID.
 	// Like getAgents and decide this should be killed?
@@ -107,6 +139,7 @@ type sendWebhook struct {
 	TaskID        model.TaskID `bun:"task_id"`
 	Regex         string       `bun:"regex"`
 	NodeName      string       `bun:"node_name"`
+	WebhookName   string       `bun:"webhook_name"`
 	TriggeringLog string       `bun:"triggering_log"`
 }
 
@@ -118,14 +151,32 @@ func AddWebhookAlert(
 		NodeName:      nodeName,
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
+		WebhookName:   webhookName,
 	}
-	if _, err := db.Bun().NewInsert().Model(m).Exec(ctx); err != nil {
+	res, err := db.Bun().NewInsert().Model(m).
+		On("CONFLICT (task_id, regex, webhook_name) DO NOTHING"). // Only care about the first log.
+		Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("adding send webhook policy %+v: %w", m, err)
 	}
+	if num, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("retry different node rows affected: %w", err)
+	} else if num == 0 {
+		return nil
+	}
 
-	// Or a cooldown? Or maybe just let people spam it honestly
-	// Maybe do once per insert, so if this has already been seen do nothing???
-	// TODO actually send the webhook here
+	// TODO make master log function in tasklogger
+	tasklogger.Insert(&model.TaskLog{
+		TaskID:    string(taskID),
+		Timestamp: ptrs.Ptr(time.Now().UTC()),
+		Level:     ptrs.Ptr(model.LogLevelError),
+		Source:    ptrs.Ptr("master"),
+		StdType:   ptrs.Ptr("stdout"),
+		Log: fmt.Sprintf("(log '%q' matched regex %s) therefore sent webhook to webhook name %s\n",
+			triggeringLog, regex, webhookName),
+	})
+
+	// TODO actually send this webhook
 
 	return nil
 }

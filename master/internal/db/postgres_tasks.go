@@ -119,10 +119,10 @@ WHERE task_id = $1
 func completeTrialsTasks(ex sqlx.Execer, trialID int, endTime time.Time) error {
 	if _, err := ex.Exec(`
 UPDATE log_policy_retry_on_different_node
-SET ended = true
+SET task_ended = true
 FROM trial_id_task_id
 WHERE trial_id_task_id.task_id = log_policy_retry_on_different_node.task_id
-  AND NOT log_policy_retry_on_different_node.ended
+  AND NOT log_policy_retry_on_different_node.task_ended
   AND trial_id_task_id.trial_id = $1
   AND end_time IS NULL`, trialID); err != nil {
 		return fmt.Errorf("completing task: %w", err)
