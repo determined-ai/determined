@@ -1,6 +1,6 @@
 {
     "setup-cluster/deploy-cluster/basic": "../basic.html",
-    "setup-cluster/deploy-cluster/index": "_index.html",
+    "setup-cluster/deploy-cluster/index": "../_index.html",
     "setup-cluster/deploy-cluster/slurm/overview": "_index.html",
     "setup-cluster/deploy-cluster/on-prem/index": "_index.html",
     "setup-cluster/deploy-cluster/k8s/overview": "_index.html",
@@ -147,7 +147,7 @@
     "cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/setup-gke-cluster": "../../../setup-cluster/deploy-cluster/k8s/setup-gke-cluster.html",
     "cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/k8s-dev-guide": "../../../setup-cluster/deploy-cluster/k8s/k8s-dev-guide.html",
     "cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/install-on-kubernetes": "../../../setup-cluster/deploy-cluster/k8s/install-on-kubernetes.html",
-    "cluster-setup-guide/deploy-cluster/index": "../../setup-cluster/deploy-cluster/_index.html",
+    "cluster-setup-guide/deploy-cluster/index": "../../setup-cluster/_index.html",
     "cluster-setup-guide/security/rbac": "../../manage/security/rbac.html",
     "cluster-setup-guide/security/saml": "../../manage/security/saml.html",
     "cluster-setup-guide/security/overview": "../../manage/security/_index.html",
