@@ -1,7 +1,7 @@
 import { ModalFuncProps, Select } from 'antd';
-import Input from 'determined-ui/kit/Input';
-import Tags, { tagsActionHelper } from 'determined-ui/kit/Tags';
-import { makeToast } from 'determined-ui/kit/Toast';
+import Input from 'determined-ui/Input';
+import Tags, { tagsActionHelper } from 'determined-ui/Tags';
+import { makeToast } from 'determined-ui/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

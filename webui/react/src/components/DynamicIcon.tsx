@@ -1,4 +1,4 @@
-import useUI, { DarkLight } from 'determined-ui/kit/Theme';
+import useUI, { DarkLight } from 'determined-ui/Theme';
 import React, { CSSProperties, useMemo } from 'react';
 
 import { hex2hsl, hsl2str } from 'utils/color';

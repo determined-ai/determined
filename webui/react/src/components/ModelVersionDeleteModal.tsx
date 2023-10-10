@@ -1,4 +1,4 @@
-import { Modal } from 'determined-ui/kit/Modal';
+import { Modal } from 'determined-ui/Modal';
 
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';

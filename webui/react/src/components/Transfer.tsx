@@ -1,4 +1,4 @@
-import Input from 'determined-ui/kit/Input';
+import Input from 'determined-ui/Input';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';

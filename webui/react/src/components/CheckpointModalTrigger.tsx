@@ -1,6 +1,6 @@
-import Button from 'determined-ui/kit/Button';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback } from 'react';
 
 import ModelCreateModal from 'components/ModelCreateModal';

@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import { UIProvider } from 'determined-ui/Theme';
 import { HelmetProvider } from 'react-helmet-async';
 
 import {

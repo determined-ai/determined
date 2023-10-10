@@ -1,8 +1,8 @@
-import { LineChart } from 'determined-ui/kit/LineChart';
+import { LineChart } from 'determined-ui/LineChart';
 import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

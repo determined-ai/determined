@@ -1,12 +1,12 @@
 import { Space } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import Button from 'determined-ui/kit/Button';
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import { makeToast } from 'determined-ui/kit/Toast';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

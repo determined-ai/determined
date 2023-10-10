@@ -1,5 +1,5 @@
-import { getStateColorCssVar, ShirtSize } from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import { getStateColorCssVar, ShirtSize } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';

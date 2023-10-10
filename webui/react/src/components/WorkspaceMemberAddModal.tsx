@@ -1,9 +1,9 @@
 import { Select } from 'antd';
-import Form from 'determined-ui/kit/Form';
-import Icon from 'determined-ui/kit/Icon';
-import { Modal } from 'determined-ui/kit/Modal';
-import Nameplate from 'determined-ui/kit/Nameplate';
-import { makeToast } from 'determined-ui/kit/Toast';
+import Form from 'determined-ui/Form';
+import Icon from 'determined-ui/Icon';
+import { Modal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
+import { makeToast } from 'determined-ui/Toast';
 import React, { useCallback, useId, useState } from 'react';
 
 import UserBadge from 'components/UserBadge';

@@ -1,4 +1,4 @@
-import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
 import React, { useCallback, useMemo } from 'react';
 
 import { UpdateSettings } from 'hooks/useSettings';

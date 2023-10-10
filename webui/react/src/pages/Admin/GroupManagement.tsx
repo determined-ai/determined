@@ -1,10 +1,10 @@
 import { Space, Table } from 'antd';
-import Button from 'determined-ui/kit/Button';
-import Dropdown from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import Nameplate from 'determined-ui/kit/Nameplate';
-import { makeToast } from 'determined-ui/kit/Toast';
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
+import { makeToast } from 'determined-ui/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

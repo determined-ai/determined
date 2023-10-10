@@ -1,4 +1,4 @@
-import { getStateColorCssVar, StateOfUnion } from 'determined-ui/kit/Theme';
+import { getStateColorCssVar, StateOfUnion } from 'determined-ui/Theme';
 import React from 'react';
 
 import Bar from 'components/Bar';

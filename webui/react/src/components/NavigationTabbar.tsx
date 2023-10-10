@@ -1,8 +1,8 @@
-import Icon, { IconName } from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Icon, { IconName } from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 

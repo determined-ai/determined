@@ -1,5 +1,5 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
-import { Theme } from 'determined-ui/kit/Theme';
+import { Theme } from 'determined-ui/Theme';
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 import { CompoundRunState, JobState, RunState } from 'types';

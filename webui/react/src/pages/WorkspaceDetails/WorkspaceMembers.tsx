@@ -1,10 +1,10 @@
 import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import Button from 'determined-ui/kit/Button';
-import Dropdown from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import Nameplate from 'determined-ui/kit/Nameplate';
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';

@@ -1,7 +1,7 @@
-import Button from 'determined-ui/kit/Button';
-import { shortcutToString } from 'determined-ui/kit/InputShortcut';
-import { useModal } from 'determined-ui/kit/Modal';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Button from 'determined-ui/Button';
+import { shortcutToString } from 'determined-ui/InputShortcut';
+import { useModal } from 'determined-ui/Modal';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';

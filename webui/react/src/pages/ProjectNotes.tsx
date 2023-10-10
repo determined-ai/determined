@@ -1,5 +1,5 @@
-import { useModal } from 'determined-ui/kit/Modal';
-import Notes from 'determined-ui/kit/Notes';
+import { useModal } from 'determined-ui/Modal';
+import Notes from 'determined-ui/Notes';
 import React, { useCallback, useState } from 'react';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';

@@ -1,6 +1,6 @@
 import { Dropdown, DropDownProps, type MenuProps } from 'antd';
-import Button from 'determined-ui/kit/Button';
-import Icon from 'determined-ui/kit/Icon';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
 import { useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 

@@ -1,4 +1,4 @@
-import { Loadable, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import { Loadable, NotLoaded } from 'determined-ui/utils/loadable';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {

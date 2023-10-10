@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from 'determined-ui/kit/Button';
-import { useModal } from 'determined-ui/kit/Modal';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
+import { UIProvider } from 'determined-ui/Theme';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -29,7 +29,7 @@ vi.mock('services/api', () => ({
 }));
 
 vi.mock('stores/cluster', async (importOriginal) => {
-  const loadable = await import('determined-ui/kit/utils/loadable');
+  const loadable = await import('determined-ui/utils/loadable');
   const observable = await import('utils/observable');
 
   const store = { resourcePools: observable.observable(loadable.Loaded([])) };
@@ -45,7 +45,7 @@ vi.mock('utils/wait', () => ({
   waitPageUrl: () => '',
 }));
 
-vi.mock('determined-ui/kit/CodeEditor', () => ({
+vi.mock('determined-ui/CodeEditor', () => ({
   __esModule: true,
   default: () => <></>,
 }));

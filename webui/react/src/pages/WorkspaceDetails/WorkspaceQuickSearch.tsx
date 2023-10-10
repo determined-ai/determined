@@ -1,9 +1,9 @@
 import { Modal, Tree } from 'antd';
-import Icon from 'determined-ui/kit/Icon';
-import Input from 'determined-ui/kit/Input';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
 import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
 

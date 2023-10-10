@@ -1,10 +1,9 @@
 import { Modal, Tag, Typography } from 'antd';
-import { XOR } from 'determined-ui/kit/internal/types';
-import usePrevious from 'determined-ui/kit/internal/usePrevious';
+import usePrevious from 'determined-ui/internal/usePrevious';
 import Message from 'determined-ui/Message';
-import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

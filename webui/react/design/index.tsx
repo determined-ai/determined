@@ -1,6 +1,6 @@
-import { UIProvider } from 'determined-ui/kit/Theme';
-import { ConfirmationProvider } from 'determined-ui/kit/useConfirm';
-import { Loaded } from 'determined-ui/kit/utils/loadable';
+import { UIProvider } from 'determined-ui/Theme';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { Loaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';

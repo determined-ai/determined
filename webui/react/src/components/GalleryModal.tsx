@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
-import Button from 'determined-ui/kit/Button';
-import Icon from 'determined-ui/kit/Icon';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';

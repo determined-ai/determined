@@ -1,4 +1,4 @@
-import useUI from 'determined-ui/kit/Theme';
+import useUI from 'determined-ui/Theme';
 import { useCallback, useEffect, useRef } from 'react';
 
 type PollingFn = (() => Promise<void>) | (() => void);

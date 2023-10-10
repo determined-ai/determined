@@ -1,4 +1,4 @@
-import useUI from 'determined-ui/kit/Theme';
+import useUI from 'determined-ui/Theme';
 import { useEffect, useState } from 'react';
 
 import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk';

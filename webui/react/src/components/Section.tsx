@@ -1,4 +1,4 @@
-import Spinner from 'determined-ui/kit/Spinner';
+import Spinner from 'determined-ui/Spinner';
 import React from 'react';
 
 import { isString } from 'utils/data';

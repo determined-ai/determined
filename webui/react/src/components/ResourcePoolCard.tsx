@@ -1,11 +1,11 @@
-import Card from 'determined-ui/kit/Card';
-import { MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI, { DarkLight, ShirtSize } from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Card from 'determined-ui/Card';
+import { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import useUI, { DarkLight, ShirtSize } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
 
 import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg?url';

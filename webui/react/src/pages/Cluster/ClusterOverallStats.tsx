@@ -1,6 +1,6 @@
-import Card from 'determined-ui/kit/Card';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Card from 'determined-ui/Card';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { ReactNode, useEffect, useMemo } from 'react';
 
 import OverviewStats from 'components/OverviewStats';

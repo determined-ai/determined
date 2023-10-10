@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import Button from 'determined-ui/kit/Button';
+import Button from 'determined-ui/Button';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import css from './TableBatch.module.scss';

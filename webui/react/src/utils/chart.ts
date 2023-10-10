@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Theme } from 'determined-ui/kit/Theme';
+import { Theme } from 'determined-ui/Theme';
 import uPlot from 'uplot';
 
 import { Primitive, Range } from 'types';

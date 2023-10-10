@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'determined-ui/kit/Theme';
-import { ConfirmationProvider } from 'determined-ui/kit/useConfirm';
+import { UIProvider } from 'determined-ui/Theme';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import React, { useCallback, useEffect } from 'react';
 
 import { patchUser as mockPatchUser } from 'services/api';

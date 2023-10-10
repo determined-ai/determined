@@ -1,4 +1,4 @@
-import Button from 'determined-ui/kit/Button';
+import Button from 'determined-ui/Button';
 import Message from 'determined-ui/Message';
 import React from 'react';
 

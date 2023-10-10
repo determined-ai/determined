@@ -1,4 +1,4 @@
-import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
 
 import { Conjunction } from 'components/FilterForm/components/type';
 

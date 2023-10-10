@@ -1,4 +1,4 @@
-import Spinner from 'determined-ui/kit/Spinner';
+import Spinner from 'determined-ui/Spinner';
 import React from 'react';
 
 /** placeholder page for depracated pages. displayed while the user is redirected */

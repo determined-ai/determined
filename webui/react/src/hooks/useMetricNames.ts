@@ -1,4 +1,4 @@
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 

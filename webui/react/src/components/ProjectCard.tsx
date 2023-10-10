@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
-import Card from 'determined-ui/kit/Card';
-import Icon from 'determined-ui/kit/Icon';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Card from 'determined-ui/Card';
+import Icon from 'determined-ui/Icon';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';

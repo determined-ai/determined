@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import { UIProvider } from 'determined-ui/Theme';
 
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -10,7 +10,7 @@ const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
 
-vi.mock('determined-ui/kit/Tooltip');
+vi.mock('determined-ui/Tooltip');
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(

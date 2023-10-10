@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
-import Button from 'determined-ui/kit/Button';
-import Form from 'determined-ui/kit/Form';
-import Input from 'determined-ui/kit/Input';
+import Button from 'determined-ui/Button';
+import Form from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
 import React, { useCallback, useId, useMemo, useState } from 'react';
 
 import css from './TextEditorModal.module.scss';

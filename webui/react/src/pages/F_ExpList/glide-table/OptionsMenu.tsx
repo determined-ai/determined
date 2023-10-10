@@ -1,7 +1,7 @@
-import Button from 'determined-ui/kit/Button';
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import Toggle from 'determined-ui/kit/Toggle';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import Toggle from 'determined-ui/Toggle';
 import { TypeOf } from 'io-ts';
 import { useMemo } from 'react';
 

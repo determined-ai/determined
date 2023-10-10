@@ -1,5 +1,5 @@
-import Icon from 'determined-ui/kit/Icon';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Icon from 'determined-ui/Icon';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';

@@ -7,7 +7,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
-import Spinner from 'determined-ui/kit/Spinner';
+import Spinner from 'determined-ui/Spinner';
 import _ from 'lodash';
 import React, {
   createContext,

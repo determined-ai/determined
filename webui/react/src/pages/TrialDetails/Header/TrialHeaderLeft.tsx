@@ -1,4 +1,4 @@
-import Icon from 'determined-ui/kit/Icon';
+import Icon from 'determined-ui/Icon';
 import React from 'react';
 import { Link } from 'react-router-dom';
 

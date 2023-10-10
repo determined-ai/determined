@@ -1,4 +1,4 @@
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 import _ from 'lodash';

@@ -1,8 +1,8 @@
-import Form from 'determined-ui/kit/Form';
-import Input from 'determined-ui/kit/Input';
-import { Modal } from 'determined-ui/kit/Modal';
-import { makeToast } from 'determined-ui/kit/Toast';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Form from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import { Modal } from 'determined-ui/Modal';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useId, useState } from 'react';
 
 import { login, setUserPassword } from 'services/api';

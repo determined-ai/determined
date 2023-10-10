@@ -1,6 +1,6 @@
-import { ChartGrid, ChartsProps } from 'determined-ui/kit/LineChart';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import { ChartGrid, ChartsProps } from 'determined-ui/LineChart';
+import Spinner from 'determined-ui/Spinner';
+import { Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useMemo, useState } from 'react';
 
 import { UPlotPoint } from 'components/UPlot/types';

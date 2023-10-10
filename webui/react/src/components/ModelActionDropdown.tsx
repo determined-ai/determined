@@ -1,5 +1,5 @@
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
-import { useModal } from 'determined-ui/kit/Modal';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';

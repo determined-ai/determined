@@ -1,5 +1,5 @@
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
 import { terminalRunStates } from 'constants/states';

@@ -1,8 +1,8 @@
 import { Space, Typography } from 'antd';
-import Icon from 'determined-ui/kit/Icon';
-import Spinner from 'determined-ui/kit/Spinner';
-import { StateOfUnion } from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import { StateOfUnion } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';

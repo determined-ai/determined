@@ -1,4 +1,4 @@
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import { getPermissionsSummary } from 'services/api';

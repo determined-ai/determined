@@ -1,6 +1,6 @@
 import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
-import Dropdown from 'determined-ui/kit/Dropdown';
+import Dropdown from 'determined-ui/Dropdown';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';

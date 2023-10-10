@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from 'determined-ui/kit/Button';
-import { DEFAULT_CANCEL_LABEL, useModal } from 'determined-ui/kit/Modal';
+import Button from 'determined-ui/Button';
+import { DEFAULT_CANCEL_LABEL, useModal } from 'determined-ui/Modal';
 import React from 'react';
 
 import { ExperimentAction as Action, ExperimentAction } from 'types';

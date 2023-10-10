@@ -1,6 +1,6 @@
-import Button from 'determined-ui/kit/Button';
-import { useModal } from 'determined-ui/kit/Modal';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo } from 'react';
 

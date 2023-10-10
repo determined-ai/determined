@@ -1,12 +1,12 @@
 import { Select } from 'antd';
-import Button from 'determined-ui/kit/Button';
-import Form, { FormInstance } from 'determined-ui/kit/Form';
-import Input from 'determined-ui/kit/Input';
-import InputNumber from 'determined-ui/kit/InputNumber';
+import Button from 'determined-ui/Button';
+import Form, { FormInstance } from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import InputNumber from 'determined-ui/InputNumber';
 import Message from 'determined-ui/Message';
-import { Modal } from 'determined-ui/kit/Modal';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import { Modal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
@@ -81,7 +81,7 @@ interface Props {
   workspace?: Workspace;
 }
 
-const CodeEditor = React.lazy(() => import('determined-ui/kit/CodeEditor'));
+const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const idPrefix = useId();

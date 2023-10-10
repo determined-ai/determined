@@ -1,5 +1,5 @@
 import { Rectangle } from '@hpe.com/glide-data-grid';
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
 // eslint-disable-next-line

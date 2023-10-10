@@ -1,11 +1,11 @@
 import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
 import { Space } from 'antd';
-import { Column, Columns } from 'determined-ui/kit/Columns';
+import { Column, Columns } from 'determined-ui/Columns';
 import Message from 'determined-ui/Message';
-import Pagination from 'determined-ui/kit/Pagination';
-import { getCssVar } from 'determined-ui/kit/Theme';
-import { notification } from 'determined-ui/kit/Toast';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
+import Pagination from 'determined-ui/Pagination';
+import { getCssVar } from 'determined-ui/Theme';
+import { notification } from 'determined-ui/Toast';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

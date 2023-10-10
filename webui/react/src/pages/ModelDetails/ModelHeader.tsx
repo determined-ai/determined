@@ -1,11 +1,12 @@
-import Button from 'determined-ui/kit/Button';
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
+import { Space, Typography } from 'antd';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
 import Message from 'determined-ui/Message';
-import { useModal } from 'determined-ui/kit/Modal';
-import Spinner from 'determined-ui/kit/Spinner';
-import Tags, { tagsActionHelper } from 'determined-ui/kit/Tags';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import Tags, { tagsActionHelper } from 'determined-ui/Tags';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';

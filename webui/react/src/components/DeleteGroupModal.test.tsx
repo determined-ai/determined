@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from 'determined-ui/kit/Button';
-import { useModal } from 'determined-ui/kit/Modal';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
+import { UIProvider } from 'determined-ui/Theme';
 import React from 'react';
 
 import { deleteGroup as mockDeleteGroup } from 'services/api';

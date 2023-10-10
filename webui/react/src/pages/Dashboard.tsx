@@ -1,9 +1,9 @@
-import Breadcrumb from 'determined-ui/kit/Breadcrumb';
-import Card from 'determined-ui/kit/Card';
-import Icon from 'determined-ui/kit/Icon';
+import Breadcrumb from 'determined-ui/Breadcrumb';
+import Card from 'determined-ui/Card';
+import Icon from 'determined-ui/Icon';
 import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';

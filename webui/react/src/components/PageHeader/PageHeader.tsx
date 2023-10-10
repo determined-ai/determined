@@ -1,6 +1,6 @@
-import Breadcrumb from 'determined-ui/kit/Breadcrumb';
-import { MenuItem } from 'determined-ui/kit/Dropdown';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Breadcrumb from 'determined-ui/Breadcrumb';
+import { MenuItem } from 'determined-ui/Dropdown';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useMemo } from 'react';
 
 import Link from 'components/Link';

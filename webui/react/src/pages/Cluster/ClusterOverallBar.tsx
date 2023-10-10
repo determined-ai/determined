@@ -1,7 +1,7 @@
-import Message, { MessageType } from 'determined-ui/Message';
-import Spinner from 'determined-ui/kit/Spinner';
-import { ShirtSize } from 'determined-ui/kit/Theme';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import { ShirtSize } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useMemo } from 'react';
 
 import Section from 'components/Section';

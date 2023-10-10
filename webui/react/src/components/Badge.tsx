@@ -3,8 +3,8 @@ import useUI, {
   getCssVar,
   getStateColorCssVar,
   StateOfUnion,
-} from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
+} from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { CSSProperties, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';

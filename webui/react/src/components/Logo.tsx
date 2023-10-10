@@ -1,4 +1,4 @@
-import useUI, { DarkLight } from 'determined-ui/kit/Theme';
+import useUI, { DarkLight } from 'determined-ui/Theme';
 import React, { useMemo } from 'react';
 
 import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg?url';

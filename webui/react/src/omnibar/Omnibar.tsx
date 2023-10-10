@@ -1,4 +1,4 @@
-import { matchesShortcut } from 'determined-ui/kit/InputShortcut';
+import { matchesShortcut } from 'determined-ui/InputShortcut';
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 

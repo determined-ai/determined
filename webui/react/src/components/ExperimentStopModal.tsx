@@ -1,6 +1,7 @@
-import Checkbox from 'determined-ui/kit/Checkbox';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import Checkbox from 'determined-ui/Checkbox';
 import Message from 'determined-ui/Message';
-import { Modal } from 'determined-ui/kit/Modal';
+import { Modal } from 'determined-ui/Modal';
 import React, { useState } from 'react';
 
 import { cancelExperiment, killExperiment } from 'services/api';

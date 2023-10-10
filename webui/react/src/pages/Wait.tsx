@@ -1,5 +1,5 @@
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 

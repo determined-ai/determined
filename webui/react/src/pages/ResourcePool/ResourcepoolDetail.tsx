@@ -1,9 +1,9 @@
 import { Divider, type TabsProps } from 'antd';
 import Message from 'determined-ui/Message';
-import Pivot from 'determined-ui/kit/Pivot';
-import Spinner from 'determined-ui/kit/Spinner';
-import { ShirtSize } from 'determined-ui/kit/Theme';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Pivot from 'determined-ui/Pivot';
+import Spinner from 'determined-ui/Spinner';
+import { ShirtSize } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 

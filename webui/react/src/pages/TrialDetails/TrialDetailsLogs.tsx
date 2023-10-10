@@ -1,17 +1,14 @@
-import ClipboardButton from 'determined-ui/kit/ClipboardButton';
+import ClipboardButton from 'determined-ui/ClipboardButton';
 import LogViewer, {
   FetchConfig,
   FetchDirection,
   FetchType,
-} from 'determined-ui/kit/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'determined-ui/kit/LogViewer/LogViewerSelect';
-import {
-  Settings,
-  settingsConfigForTrial,
-} from 'determined-ui/kit/LogViewer/LogViewerSelect.settings';
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
-import useConfirm from 'determined-ui/kit/useConfirm';
+} from 'determined-ui/LogViewer/LogViewer';
+import LogViewerSelect, { Filters } from 'determined-ui/LogViewer/LogViewerSelect';
+import { Settings, settingsConfigForTrial } from 'determined-ui/LogViewer/LogViewerSelect.settings';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import useConfirm from 'determined-ui/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useSettings } from 'hooks/useSettings';

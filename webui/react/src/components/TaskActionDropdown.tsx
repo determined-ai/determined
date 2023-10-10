@@ -1,7 +1,7 @@
-import Button from 'determined-ui/kit/Button';
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import useConfirm from 'determined-ui/kit/useConfirm';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import useConfirm from 'determined-ui/useConfirm';
 import React from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';

@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import Card from 'determined-ui/kit/Card';
+import Card from 'determined-ui/Card';
 import React from 'react';
 
 import css from './OverviewStats.module.scss';

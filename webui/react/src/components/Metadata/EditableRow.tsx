@@ -1,8 +1,8 @@
-import Button from 'determined-ui/kit/Button';
-import Dropdown from 'determined-ui/kit/Dropdown';
-import Form, { FormListFieldData } from 'determined-ui/kit/Form';
-import Icon from 'determined-ui/kit/Icon';
-import Input from 'determined-ui/kit/Input';
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Form, { FormListFieldData } from 'determined-ui/Form';
+import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
 import React, { useCallback } from 'react';
 
 import css from './EditableRow.module.scss';

@@ -1,4 +1,4 @@
-import { Modal } from 'determined-ui/kit/Modal';
+import { Modal } from 'determined-ui/Modal';
 import React from 'react';
 
 import { paths } from 'routes/utils';

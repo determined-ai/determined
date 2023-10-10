@@ -1,4 +1,4 @@
-import useUI, { Mode } from 'determined-ui/kit/Theme';
+import useUI, { Mode } from 'determined-ui/Theme';
 import React from 'react';
 
 import css from './ThemeToggle.module.scss';

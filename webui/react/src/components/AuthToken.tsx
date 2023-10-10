@@ -1,6 +1,7 @@
-import Button from 'determined-ui/kit/Button';
+import Button from 'determined-ui/Button';
 import Icon from 'determined-ui/Icon';
-import { makeToast } from 'determined-ui/kit/Toast';
+import Message from 'determined-ui/Message';
+import { makeToast } from 'determined-ui/Toast';
 import React, { useCallback } from 'react';
 
 import { globalStorage } from 'globalStorage';

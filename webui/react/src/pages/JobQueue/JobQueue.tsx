@@ -1,6 +1,6 @@
-import Icon from 'determined-ui/kit/Icon';
-import { DetError } from 'determined-ui/kit/internal/types';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Icon from 'determined-ui/Icon';
+import { DetError } from 'determined-ui/internal/types';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

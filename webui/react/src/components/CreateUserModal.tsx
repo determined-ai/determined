@@ -1,10 +1,10 @@
 import { Select, Switch, Typography } from 'antd';
-import Form, { hasErrors } from 'determined-ui/kit/Form';
-import Input from 'determined-ui/kit/Input';
-import { Modal } from 'determined-ui/kit/Modal';
-import Spinner from 'determined-ui/kit/Spinner';
-import { makeToast } from 'determined-ui/kit/Toast';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Form, { hasErrors } from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import { Modal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 

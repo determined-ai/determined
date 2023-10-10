@@ -1,4 +1,4 @@
-import Icon, { IconName } from 'determined-ui/kit/Icon';
+import Icon, { IconName } from 'determined-ui/Icon';
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 

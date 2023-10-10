@@ -1,5 +1,5 @@
 import { Modal as AntdModal } from 'antd';
-import { makeToast } from 'determined-ui/kit/Toast';
+import { makeToast } from 'determined-ui/Toast';
 
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';

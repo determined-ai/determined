@@ -1,4 +1,4 @@
-import { LineChart } from 'determined-ui/kit/LineChart';
+import { LineChart } from 'determined-ui/LineChart';
 import { string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect, useMemo } from 'react';
 

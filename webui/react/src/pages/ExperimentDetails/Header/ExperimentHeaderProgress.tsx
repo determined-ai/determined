@@ -1,6 +1,6 @@
 import { Progress } from 'antd';
-import { getStateColorCssVar } from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import { getStateColorCssVar } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
 import { ExperimentBase, JobState, RunState } from 'types';

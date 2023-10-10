@@ -1,5 +1,5 @@
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import ExperimentCreateModalComponent, {

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { DarkLight } from 'determined-ui/kit/Theme';
+import { DarkLight } from 'determined-ui/Theme';
 
 import { ImageAlert, ImageEmpty, ImageWarning, type Props } from './Image';
 

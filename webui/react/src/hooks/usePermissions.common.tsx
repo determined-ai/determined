@@ -1,5 +1,5 @@
 import { render, RenderResult } from '@testing-library/react';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import { UIProvider } from 'determined-ui/Theme';
 import React from 'react';
 
 import usePermissions from 'hooks/usePermissions';
@@ -20,7 +20,7 @@ vi.mock('services/api', () => ({
 }));
 
 vi.mock('stores/users', async (importOriginal) => {
-  const loadable = await import('determined-ui/kit/utils/loadable');
+  const loadable = await import('determined-ui/utils/loadable');
   const observable = await import('utils/observable');
   const store = {
     currentUser: observable.observable(

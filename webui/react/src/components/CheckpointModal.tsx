@@ -1,6 +1,6 @@
-import Button from 'determined-ui/kit/Button';
-import { Modal } from 'determined-ui/kit/Modal';
-import useConfirm from 'determined-ui/kit/useConfirm';
+import Button from 'determined-ui/Button';
+import { Modal } from 'determined-ui/Modal';
+import useConfirm from 'determined-ui/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
 import { ModalCloseReason } from 'hooks/useModal/useModal';

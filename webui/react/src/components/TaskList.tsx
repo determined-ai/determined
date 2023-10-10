@@ -5,11 +5,11 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
-import Button from 'determined-ui/kit/Button';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import { ShirtSize } from 'determined-ui/kit/Theme';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import { ShirtSize } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

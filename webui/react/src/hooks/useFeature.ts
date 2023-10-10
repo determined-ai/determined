@@ -1,4 +1,4 @@
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { map } from 'fp-ts/lib/Record';
 import { boolean, null as ioNull, partial, TypeOf, union } from 'io-ts';
 import { useObservable } from 'micro-observables';

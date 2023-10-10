@@ -1,4 +1,4 @@
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useState } from 'react';
 
 import { resetUserSetting } from 'services/api';

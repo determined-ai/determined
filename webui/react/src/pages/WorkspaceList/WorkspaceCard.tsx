@@ -1,9 +1,9 @@
 import { Typography } from 'antd';
-import Card from 'determined-ui/kit/Card';
-import { Columns } from 'determined-ui/kit/Columns';
+import Card from 'determined-ui/Card';
+import { Columns } from 'determined-ui/Columns';
 import Icon from 'determined-ui/Icon';
-import Spinner from 'determined-ui/kit/Spinner';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';

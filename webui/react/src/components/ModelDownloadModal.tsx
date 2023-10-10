@@ -1,5 +1,5 @@
-import ClipboardButton from 'determined-ui/kit/ClipboardButton';
-import { Modal } from 'determined-ui/kit/Modal';
+import ClipboardButton from 'determined-ui/ClipboardButton';
+import { Modal } from 'determined-ui/Modal';
 
 import { ModelVersion } from 'types';
 

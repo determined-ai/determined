@@ -1,5 +1,5 @@
-import { ShirtSize } from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import { ShirtSize } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
 import { floatToPercent } from 'utils/string';

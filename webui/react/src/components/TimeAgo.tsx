@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { ValueOf } from 'types';

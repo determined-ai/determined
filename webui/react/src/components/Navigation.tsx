@@ -1,7 +1,7 @@
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
-import { useInitApi } from 'determined-ui/kit/Toast';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { useInitApi } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useEffect } from 'react';
 
 import clusterStore from 'stores/cluster';

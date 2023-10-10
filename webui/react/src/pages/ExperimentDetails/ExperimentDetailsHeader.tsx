@@ -1,10 +1,10 @@
 import { Button, Space, Typography } from 'antd';
-import Icon from 'determined-ui/kit/Icon';
-import { useModal } from 'determined-ui/kit/Modal';
-import Spinner from 'determined-ui/kit/Spinner';
-import Tags from 'determined-ui/kit/Tags';
-import { getStateColorCssVar } from 'determined-ui/kit/Theme';
-import Tooltip from 'determined-ui/kit/Tooltip';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import Tags from 'determined-ui/Tags';
+import { getStateColorCssVar } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge from 'components/Badge';

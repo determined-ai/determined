@@ -14,10 +14,10 @@ import DataEditor, {
   Theme,
 } from '@hpe.com/glide-data-grid';
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
-import { DropdownEvent, MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import useUI, { getCssVar } from 'determined-ui/kit/Theme';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import { DropdownEvent, MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import useUI, { getCssVar } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { literal, union } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';

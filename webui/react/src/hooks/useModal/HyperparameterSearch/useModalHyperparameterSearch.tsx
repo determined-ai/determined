@@ -1,14 +1,14 @@
 import { Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
-import Button from 'determined-ui/kit/Button';
-import Checkbox from 'determined-ui/kit/Checkbox';
-import Form from 'determined-ui/kit/Form';
-import Icon from 'determined-ui/kit/Icon';
-import Input from 'determined-ui/kit/Input';
-import InputNumber from 'determined-ui/kit/InputNumber';
+import Button from 'determined-ui/Button';
+import Checkbox from 'determined-ui/Checkbox';
+import Form from 'determined-ui/Form';
+import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
+import InputNumber from 'determined-ui/InputNumber';
 import Message from 'determined-ui/Message';
-import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
+import { Loadable } from 'determined-ui/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 

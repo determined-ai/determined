@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import * as src from 'determined-ui/kit/LogViewer/LogViewer';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import * as src from 'determined-ui/LogViewer/LogViewer';
+import { UIProvider } from 'determined-ui/Theme';
 
 import { flakyIt } from 'quarantineTests';
 import { serverAddress } from 'routes/utils';
@@ -138,7 +138,7 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('determined-ui/kit/internal/useResize', () => {
+vi.mock('determined-ui/internal/useResize', () => {
   const refObject = { current: null };
   return {
     __esModule: true,
@@ -149,12 +149,12 @@ vi.mock('determined-ui/kit/internal/useResize', () => {
   };
 });
 
-vi.mock('determined-ui/kit/internal/useGetCharMeasureInContainer', () => ({
+vi.mock('determined-ui/internal/useGetCharMeasureInContainer', () => ({
   __esModule: true,
   default: () => ({ height: 18, width: 7 }),
 }));
 
-vi.mock('determined-ui/kit/internal/services', () => ({
+vi.mock('determined-ui/internal/services', () => ({
   __esModule: true,
   readLogStream: (
     serverAddress: (path: string) => string,

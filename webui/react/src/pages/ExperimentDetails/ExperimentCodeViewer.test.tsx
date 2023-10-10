@@ -1,7 +1,7 @@
 import { findAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'determined-ui/kit/Theme';
+import { UIProvider } from 'determined-ui/Theme';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 

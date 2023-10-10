@@ -1,7 +1,7 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import Button from 'determined-ui/kit/Button';
-import Icon from 'determined-ui/kit/Icon';
-import Input, { InputRef } from 'determined-ui/kit/Input';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import Input, { InputRef } from 'determined-ui/Input';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 

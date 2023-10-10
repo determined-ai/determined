@@ -1,8 +1,8 @@
-import Form from 'determined-ui/kit/Form';
-import { Modal } from 'determined-ui/kit/Modal';
-import Select, { Option } from 'determined-ui/kit/Select';
-import { makeToast } from 'determined-ui/kit/Toast';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import Form from 'determined-ui/Form';
+import { Modal } from 'determined-ui/Modal';
+import Select, { Option } from 'determined-ui/Select';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 
 import { assignRolesToUser } from 'services/api';

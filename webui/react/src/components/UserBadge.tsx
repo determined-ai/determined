@@ -1,4 +1,4 @@
-import Nameplate from 'determined-ui/kit/Nameplate';
+import Nameplate from 'determined-ui/Nameplate';
 import React from 'react';
 
 import UserAvatar from 'components/UserAvatar';

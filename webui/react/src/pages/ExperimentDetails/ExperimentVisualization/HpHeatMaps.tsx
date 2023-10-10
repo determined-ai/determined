@@ -1,6 +1,6 @@
 import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';

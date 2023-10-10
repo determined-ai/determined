@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Mode, UIProvider } from 'determined-ui/kit/Theme';
+import { Mode, UIProvider } from 'determined-ui/Theme';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 

@@ -1,5 +1,5 @@
-import Card from 'determined-ui/kit/Card';
-import { useModal } from 'determined-ui/kit/Modal';
+import Card from 'determined-ui/Card';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback, useMemo } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';

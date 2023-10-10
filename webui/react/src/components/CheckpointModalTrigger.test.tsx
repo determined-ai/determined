@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'determined-ui/kit/Theme';
-import { ConfirmationProvider } from 'determined-ui/kit/useConfirm';
+import { UIProvider } from 'determined-ui/Theme';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 

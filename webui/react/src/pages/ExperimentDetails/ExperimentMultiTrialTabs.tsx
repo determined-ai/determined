@@ -1,7 +1,7 @@
 import type { TabsProps } from 'antd';
-import Notes from 'determined-ui/kit/Notes';
-import Pivot from 'determined-ui/kit/Pivot';
-import Spinner from 'determined-ui/kit/Spinner';
+import Notes from 'determined-ui/Notes';
+import Pivot from 'determined-ui/Pivot';
+import Spinner from 'determined-ui/Spinner';
 import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';

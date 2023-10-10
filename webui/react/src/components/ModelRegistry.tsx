@@ -5,16 +5,16 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
-import Button from 'determined-ui/kit/Button';
-import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
-import Icon from 'determined-ui/kit/Icon';
-import Input from 'determined-ui/kit/Input';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
 import Message from 'determined-ui/Message';
-import { useModal } from 'determined-ui/kit/Modal';
-import Tags, { tagsActionHelper } from 'determined-ui/kit/Tags';
-import Toggle from 'determined-ui/kit/Toggle';
-import Tooltip from 'determined-ui/kit/Tooltip';
-import { Loadable } from 'determined-ui/kit/utils/loadable';
+import { useModal } from 'determined-ui/Modal';
+import Tags, { tagsActionHelper } from 'determined-ui/Tags';
+import Toggle from 'determined-ui/Toggle';
+import Tooltip from 'determined-ui/Tooltip';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
