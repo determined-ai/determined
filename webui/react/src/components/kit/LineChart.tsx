@@ -18,8 +18,14 @@ import Message from 'components/kit/Message';
 import ReactECharts, { EchartsEventFunction } from 'components/kit/ReactEchart';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './LineChart.module.scss';
+
+type SeriesDataType = {
+  x: number[];
+  y: { data: (number | '-')[]; name?: string; key?: number; color?: string }[];
+};
 
 export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';
@@ -79,6 +85,30 @@ export const LineChart: React.FC<LineChartProps> = ({
   const series = useMemo(() => {
     return Loadable.ensureLoadable(propSeries).getOrElse([]);
   }, [propSeries]);
+
+  const seriesData: SeriesDataType = useMemo(() => {
+    const allXValues = Array.from(
+      new Set(
+        series.flatMap((s) => {
+          const data = s.data[xAxis];
+          return data === undefined ? [] : data.map((d) => d[0]);
+        }),
+      ),
+    ).sort((a, b) => alphaNumericSorter(a, b));
+    const data: SeriesDataType = { x: allXValues, y: [] };
+    for (let i = 0; i < series.length; i++) {
+      data.y.push({ color: series[i].color, data: [], key: series[i].key, name: series[i].name });
+      const map = new Map();
+      for (const [key, value] of series[i].data[xAxis] ?? []) {
+        map.set(key, value);
+      }
+      for (const xVal of allXValues) {
+        data.y[i].data.push(map.has(xVal) ? map.get(xVal) : '-');
+      }
+    }
+    return data;
+  }, [series, xAxis]);
+
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
   const onClick: EchartsEventFunction = {
@@ -100,12 +130,12 @@ export const LineChart: React.FC<LineChartProps> = ({
       const data = params as CallbackDataParams[];
 
       const seriesList: SeriesType[] = data
-        .filter((d: CallbackDataParams) => d.seriesName)
+        .filter((d: CallbackDataParams) => d.seriesName && typeof d.value === 'number')
         .map((d: CallbackDataParams): SeriesType => {
           return {
             marker: d.marker,
             seriesName: d.seriesName ?? '',
-            value: (d.value as number[])[1],
+            value: typeof d.value === 'number' ? d.value : 0,
           };
         })
         .sort((a: SeriesType, b: SeriesType) => b.value - a.value);
@@ -118,7 +148,7 @@ export const LineChart: React.FC<LineChartProps> = ({
 
       const tooltip = `
         <div style="font-size: 11px;">
-          <div>${(data[0].value as number[])[0]}</div>
+          <div>${xAxis === XAxisDomain.Batches ? 'Batches Processed' : ''} ${data[0].name}</div>
           ${seriesList
             .map((d) => {
               const fontWeight = closestPoint?.seriesName === d.seriesName ? 'bold' : 'normal';
@@ -126,9 +156,8 @@ export const LineChart: React.FC<LineChartProps> = ({
               <div>
                 ${d.marker}
                 <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
-                ${yValueFormatter ? yValueFormatter(d.value) : d.value.toFixed(4)}
-              </div>
-            `;
+                ${yValueFormatter?.(d.value) ?? d.value.toFixed(4)}
+              </div>`;
             })
             .join('')}
         </div>
@@ -149,41 +178,57 @@ export const LineChart: React.FC<LineChartProps> = ({
             type: 'scroll',
           }
         : undefined,
-      series: series.map((serie) => ({
-        connectNulls: true,
-        data: (() => {
-          if (xAxis === XAxisDomain.Time) {
-            const set = new Set();
-            const arr: [x: Date, y: number][] = [];
-            for (const d of serie.data[xAxis] ?? []) {
-              const xValue = d[0];
-              const yValue = d[1];
-              if (set.has(xValue)) {
-                continue;
-              }
-              set.add(xValue);
-              arr.push([dayjs.unix(xValue).toDate(), yValue]);
-            }
-            return arr;
-          } else {
-            return serie.data[xAxis];
-          }
-        })(),
-        emphasis: { focus: 'series' },
-        id: serie.key,
-        itemStyle: { color: serie.color },
-        name: serie.name,
-        symbol: (value) => {
-          if (checkpointsDict === undefined) return 'circle';
-          return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
-        },
-        symbolSize: (value) => {
-          const DEFAULT_SIZE = 2;
-          if (checkpointsDict === undefined) return DEFAULT_SIZE;
-          return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
-        },
-        type: 'line',
-      })),
+      series:
+        xAxis === XAxisDomain.Time
+          ? series.map((serie) => ({
+              connectNulls: true,
+              data: (() => {
+                const set = new Set();
+                const arr: [x: Date, y: number][] = [];
+                for (const d of serie.data[xAxis] ?? []) {
+                  const xValue = d[0];
+                  const yValue = d[1];
+                  if (set.has(xValue)) {
+                    continue;
+                  }
+                  set.add(xValue);
+                  arr.push([dayjs.unix(xValue).toDate(), yValue]);
+                }
+                return arr;
+              })(),
+              emphasis: { focus: 'series' },
+              id: serie.key,
+              itemStyle: { color: serie.color },
+              name: serie.name,
+              symbol: (value) => {
+                if (checkpointsDict === undefined) return 'circle';
+                return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
+              },
+              symbolSize: (value) => {
+                const DEFAULT_SIZE = 4;
+                if (checkpointsDict === undefined) return DEFAULT_SIZE;
+                return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
+              },
+              type: 'line',
+            }))
+          : seriesData.y.map((serie) => ({
+              connectNulls: true,
+              data: serie.data,
+              emphasis: { focus: 'series' },
+              id: serie.key,
+              itemStyle: { color: serie.color },
+              name: serie.name,
+              symbol: (value) => {
+                if (checkpointsDict === undefined) return 'circle';
+                return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
+              },
+              symbolSize: (value) => {
+                const DEFAULT_SIZE = 4;
+                if (checkpointsDict === undefined) return DEFAULT_SIZE;
+                return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
+              },
+              type: 'line',
+            })),
       toolbox: {
         feature: {
           dataView: { readOnly: true },
@@ -209,7 +254,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           type: 'cross',
         },
         confine,
-        formatter: formatterFunc,
+        formatter: xAxis === XAxisDomain.Time ? undefined : formatterFunc,
         trigger: 'axis',
       },
       xAxis: {
@@ -219,7 +264,13 @@ export const LineChart: React.FC<LineChartProps> = ({
               min: xValueRange ? dayjs.unix(xValueRange[0]).toDate() : undefined,
               type: 'time',
             }
-          : { max: xValueRange?.[1], min: xValueRange?.[0], minInterval: 1, type: 'value' }), // minInterval is 1 for batch and epoch
+          : {
+              boundaryGap: false,
+              data: seriesData.x,
+              max: xValueRange?.[1],
+              min: xValueRange?.[0],
+              type: 'category',
+            }),
         name: xLabel,
       },
       yAxis: {
@@ -237,6 +288,8 @@ export const LineChart: React.FC<LineChartProps> = ({
     confine,
     scale,
     series,
+    seriesData.x,
+    seriesData.y,
     showLegend,
     xAxis,
     xLabel,
