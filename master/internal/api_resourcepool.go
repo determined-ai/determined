@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -72,6 +73,7 @@ func (a *apiServer) GetResourcePools(
 	if err != nil {
 		return nil, err
 	}
+	sort.Slice(filteredPools, func(i, j int) bool { return filteredPools[i].Name < filteredPools[j].Name })
 	resp.ResourcePools = filteredPools
 
 	if req.Unbound {
