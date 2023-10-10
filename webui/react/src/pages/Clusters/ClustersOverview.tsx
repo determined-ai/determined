@@ -10,6 +10,7 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { ClusterOverallBar } from 'pages/Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from 'pages/Cluster/ClusterOverallStats';
+import ClusterTopology from 'pages/Clusters/ClusterTopology';
 import clusterStore from 'stores/cluster';
 import { ResourcePool } from 'types';
 import { useObservable } from 'utils/observable';
@@ -43,6 +44,9 @@ const ClusterOverview: React.FC = () => {
     <>
       <ClusterOverallStats />
       <ClusterOverallBar />
+      <Section title="Topology">
+        <ClusterTopology />
+      </Section>
       <Section title="Resource Pools">
         <Card.Group size="medium">
           {Loadable.isLoaded(resourcePools) &&
