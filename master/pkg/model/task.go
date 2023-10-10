@@ -124,11 +124,12 @@ type Allocation struct {
 type AcceleratorData struct {
 	bun.BaseModel `bun:"table:allocation_accelerators"`
 
-	ContainerID      string       `db:"container_id" bun:"container_id,pk"`
+	ContainerID      string       `db:"container_id" bun:"container_id"`
 	AllocationID     AllocationID `db:"allocation_id" bun:"allocation_id,notnull"`
 	NodeName         string       `db:"node_name" bun:"node_name,notnull"`
 	AcceleratorType  string       `db:"accelerator_type" bun:"accelerator_type,notnull"`
 	AcceleratorUuids []string     `db:"accelerator_uuids" bun:"accelerator_uuids,array"`
+	ID               *int         `db:"id" bun:"id,pk,autoincrement"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
