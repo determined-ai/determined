@@ -63,12 +63,12 @@
    :hidden:
 
    Overview <tools/_index>
-   CLI User Guide <interfaces/cli-ug>
-   Commands and Shells <interfaces/commands-and-shells>
-   WebUI Interface <interfaces/webui-if>
-   Jupyter Notebooks <interfaces/notebooks>
-   TensorBoards <interfaces/tensorboard>
-   Exposing Custom Ports <interfaces/proxy-ports>
+   CLI User Guide <tools/cli/cli-ug>
+   Commands and Shells <tools/cli/commands-and-shells>
+   WebUI Interface <tools/webui-if>
+   Jupyter Notebooks <tools/notebooks>
+   TensorBoards <tools/tensorboard>
+   Exposing Custom Ports <tools/proxy-ports>
 
 .. toctree::
    :caption: Integrations
@@ -118,7 +118,7 @@ almost any deep learning model using Determined.
             </a>
          </div>
          <div class="tile-container">
-            <a class="tile" href="setup-cluster/deploy-cluster/_index.html">
+            <a class="tile" href="setup-cluster/_index.html">
                <img class="tile-icon" src="_static/images/integrations.png" alt="integrations icon">
                <h2 class="tile-title">Set Up Determined</h2>
                <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
