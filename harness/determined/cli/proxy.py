@@ -36,14 +36,15 @@ class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignor
     ) -> None:
         super().__init__(socket)
         self.ctx = ssl.create_default_context()
-        if cert_file == "False" or cert_file is False:
+        self.cert_name = cert_name
+        if cert_file is False:
+            self.ctx.check_hostname = False
             self.ctx.verify_mode = ssl.CERT_NONE
             return
 
         if cert_file is not None:
             assert isinstance(cert_file, str)
             self.ctx.load_verify_locations(cafile=cert_file)
-        self.cert_name = cert_name
 
     def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
         return self.ctx.wrap_socket(sock, server_hostname=self.cert_name or host)
