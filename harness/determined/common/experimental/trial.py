@@ -1,5 +1,6 @@
 import datetime
 import enum
+import inspect
 import warnings
 from typing import Any, Dict, Iterable, List, Optional, Union
 
@@ -85,6 +86,7 @@ class Trial:
         self.state: Optional[TrialState] = None
 
     def logs(self, *args: Any, **kwargs: Any) -> Iterable[str]:
+        """DEPRECATED: Use iter_logs instead."""
         warnings.warn(
             "Trial.logs() has been deprecated and will be removed in a future version."
             "Please call Trial.iter_logs() instead.",
@@ -184,6 +186,8 @@ class Trial:
             search_text=search_text,
         ):
             yield log.message
+
+    logs.__signature__ = inspect.signature(iter_logs)
 
     def kill(self) -> None:
         bindings.post_KillTrial(self._session, id=self.id)
