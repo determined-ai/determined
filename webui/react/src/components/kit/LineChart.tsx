@@ -8,6 +8,7 @@ import {
   glasbeyColor,
   groupToStr,
 } from 'components/kit/internal/functions';
+import ParallelCoordinatesComponent from 'components/kit/internal/ParallelCoordinates';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
 import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
@@ -389,3 +390,5 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     );
   },
 );
+
+export const ParallelCoordinates = ParallelCoordinatesComponent;
