@@ -1,7 +1,7 @@
+import Message from 'determined-ui/Message';
+import Pivot, { TabItem } from 'determined-ui/kit/Pivot';
 import React, { useMemo } from 'react';
 
-import Message from 'components/kit/Message';
-import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';

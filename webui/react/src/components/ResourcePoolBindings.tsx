@@ -1,10 +1,10 @@
+import Button from 'determined-ui/kit/Button';
+import { useModal } from 'determined-ui/kit/Modal';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import ResourcePoolBindingModalComponent from 'components/ResourcePoolBindingModal';
 import { ColumnDef } from 'components/Table/InteractiveTable';

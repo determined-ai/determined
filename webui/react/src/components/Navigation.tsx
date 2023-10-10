@@ -1,9 +1,9 @@
+import Spinner from 'determined-ui/kit/Spinner';
+import useUI from 'determined-ui/kit/Theme';
+import { useInitApi } from 'determined-ui/kit/Toast';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useEffect } from 'react';
 
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { useInitApi } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';

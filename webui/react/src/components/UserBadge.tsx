@@ -1,6 +1,6 @@
+import Nameplate from 'determined-ui/kit/Nameplate';
 import React from 'react';
 
-import Nameplate from 'components/kit/Nameplate';
 import UserAvatar from 'components/UserAvatar';
 import { User } from 'types';
 

@@ -1,6 +1,13 @@
 import { type SelectProps as AntdSelectProps } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
+import Button from 'determined-ui/kit/Button';
+import DatePicker from 'determined-ui/kit/DatePicker';
+import Icon from 'determined-ui/kit/Icon';
+import Input from 'determined-ui/kit/Input';
+import InputNumber from 'determined-ui/kit/InputNumber';
+import Select, { SelectValue } from 'determined-ui/kit/Select';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -21,13 +28,6 @@ import {
   SEARCHER_TYPE,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
-import Button from 'components/kit/Button';
-import DatePicker from 'components/kit/DatePicker';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import Select, { SelectValue } from 'components/kit/Select';
-import { Loadable } from 'components/kit/utils/loadable';
 import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';

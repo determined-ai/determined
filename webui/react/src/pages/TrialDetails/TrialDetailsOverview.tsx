@@ -1,7 +1,7 @@
+import Spinner from 'determined-ui/kit/Spinner';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';

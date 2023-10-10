@@ -1,5 +1,6 @@
+import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
+
 import { Conjunction } from 'components/FilterForm/components/type';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 
 import css from './ConjunctionContainer.module.scss';
 

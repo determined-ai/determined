@@ -1,11 +1,11 @@
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
+import Icon, { IconName, IconSize } from 'determined-ui/kit/Icon';
+import Tooltip from 'determined-ui/kit/Tooltip';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import Icon, { IconName, IconSize } from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import useResize from 'hooks/useResize';
 
 import css from './RadioGroup.module.scss';

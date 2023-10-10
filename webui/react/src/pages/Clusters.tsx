@@ -1,8 +1,8 @@
 import type { TabsProps } from 'antd';
+import Pivot from 'determined-ui/kit/Pivot';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';

@@ -1,7 +1,7 @@
+import { useModal } from 'determined-ui/kit/Modal';
 import { ReactElement, useCallback, useMemo } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
-import { useModal } from 'components/kit/Modal';
 import ModelCreateModal from 'components/ModelCreateModal';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentConfig } from 'types';

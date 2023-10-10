@@ -1,6 +1,6 @@
 import { Modal as AntdModal } from 'antd';
+import { makeToast } from 'determined-ui/kit/Toast';
 
-import { makeToast } from 'components/kit/Toast';
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';

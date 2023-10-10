@@ -1,11 +1,11 @@
+import Form from 'determined-ui/kit/Form';
+import Input from 'determined-ui/kit/Input';
+import InputNumber from 'determined-ui/kit/InputNumber';
+import { Modal } from 'determined-ui/kit/Modal';
+import Spinner from 'determined-ui/kit/Spinner';
+import { makeToast } from 'determined-ui/kit/Toast';
 import React, { useEffect, useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import { makeToast } from 'components/kit/Toast';
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import { DetailedUser } from 'types';

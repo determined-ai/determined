@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { UIProvider } from 'determined-ui/kit/Theme';
 import { HelmetProvider } from 'react-helmet-async';
 
-import { UIProvider } from 'components/kit/Theme';
 import {
   getExperimentDetails,
   getExpTrials,

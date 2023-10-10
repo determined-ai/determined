@@ -1,7 +1,8 @@
-import Form from 'components/kit/Form';
-import { Modal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import { makeToast } from 'components/kit/Toast';
+import Form from 'determined-ui/kit/Form';
+import { Modal } from 'determined-ui/kit/Modal';
+import Select, { Option } from 'determined-ui/kit/Select';
+import { makeToast } from 'determined-ui/kit/Toast';
+
 import { assignMultipleGroups } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import handleError from 'utils/error';

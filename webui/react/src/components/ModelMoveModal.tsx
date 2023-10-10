@@ -1,11 +1,11 @@
+import Form from 'determined-ui/kit/Form';
+import { Modal } from 'determined-ui/kit/Modal';
+import Select from 'determined-ui/kit/Select';
+import { makeToast } from 'determined-ui/kit/Toast';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useId } from 'react';
 
-import Form from 'components/kit/Form';
-import { Modal } from 'components/kit/Modal';
-import Select from 'components/kit/Select';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';

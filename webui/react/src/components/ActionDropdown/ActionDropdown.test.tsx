@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { ConfirmationProvider } from 'determined-ui/kit/useConfirm';
 
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
-import { ConfirmationProvider } from 'components/kit/useConfirm';
 import { ValueOf } from 'types';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });

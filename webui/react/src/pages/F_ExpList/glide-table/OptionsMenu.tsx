@@ -1,10 +1,10 @@
+import Button from 'determined-ui/kit/Button';
+import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import Toggle from 'determined-ui/kit/Toggle';
 import { TypeOf } from 'io-ts';
 import { useMemo } from 'react';
 
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Toggle from 'components/kit/Toggle';
 import { valueof } from 'ioTypes';
 
 import { TableViewMode } from './GlideTable';

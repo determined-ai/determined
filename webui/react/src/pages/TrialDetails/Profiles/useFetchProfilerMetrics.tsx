@@ -1,6 +1,6 @@
+import useUI from 'determined-ui/kit/Theme';
 import { useEffect, useState } from 'react';
 
-import useUI from 'components/kit/Theme';
 import { terminalRunStates } from 'constants/states';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';

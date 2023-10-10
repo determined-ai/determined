@@ -1,13 +1,13 @@
 import { Select, Switch, Typography } from 'antd';
+import Form, { hasErrors } from 'determined-ui/kit/Form';
+import Input from 'determined-ui/kit/Input';
+import { Modal } from 'determined-ui/kit/Modal';
+import Spinner from 'determined-ui/kit/Spinner';
+import { makeToast } from 'determined-ui/kit/Toast';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
-import Form, { hasErrors } from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePermissions from 'hooks/usePermissions';

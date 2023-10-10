@@ -1,10 +1,10 @@
+import Form from 'determined-ui/kit/Form';
+import Input from 'determined-ui/kit/Input';
+import { Modal } from 'determined-ui/kit/Modal';
+import { makeToast } from 'determined-ui/kit/Toast';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import { Modal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import { login, setUserPassword } from 'services/api';
 import userStore from 'stores/users';
 import handleError, { ErrorType } from 'utils/error';

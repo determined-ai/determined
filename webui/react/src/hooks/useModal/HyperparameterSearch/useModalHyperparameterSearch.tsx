@@ -1,17 +1,17 @@
 import { Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
+import Button from 'determined-ui/kit/Button';
+import Checkbox from 'determined-ui/kit/Checkbox';
+import Form from 'determined-ui/kit/Form';
+import Icon from 'determined-ui/kit/Icon';
+import Input from 'determined-ui/kit/Input';
+import InputNumber from 'determined-ui/kit/InputNumber';
+import Message from 'determined-ui/Message';
+import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Checkbox from 'components/kit/Checkbox';
-import Form from 'components/kit/Form';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import Message from 'components/kit/Message';
-import Select, { Option, SelectValue } from 'components/kit/Select';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';

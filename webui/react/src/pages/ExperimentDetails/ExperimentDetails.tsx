@@ -1,10 +1,10 @@
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/kit/Spinner';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';

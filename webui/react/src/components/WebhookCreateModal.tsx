@@ -1,9 +1,9 @@
 import { Select } from 'antd';
+import Form from 'determined-ui/kit/Form';
+import Input from 'determined-ui/kit/Input';
+import { Modal } from 'determined-ui/kit/Modal';
 import React, { useCallback, useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
 import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';

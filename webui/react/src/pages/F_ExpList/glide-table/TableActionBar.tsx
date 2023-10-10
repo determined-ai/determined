@@ -1,4 +1,12 @@
 import { Space } from 'antd';
+import Button from 'determined-ui/kit/Button';
+import { Column, Columns } from 'determined-ui/kit/Columns';
+import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
+import Icon, { IconName } from 'determined-ui/kit/Icon';
+import { useModal } from 'determined-ui/kit/Modal';
+import { makeToast } from 'determined-ui/kit/Toast';
+import Tooltip from 'determined-ui/kit/Tooltip';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -6,14 +14,6 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
-import Button from 'components/kit/Button';
-import { Column, Columns } from 'components/kit/Columns';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon, { IconName } from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
-import Tooltip from 'components/kit/Tooltip';
-import { Loadable } from 'components/kit/utils/loadable';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import {

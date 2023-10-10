@@ -1,12 +1,12 @@
-import React, { CSSProperties, useMemo } from 'react';
-
 import useUI, {
   DarkLight,
   getCssVar,
   getStateColorCssVar,
   StateOfUnion,
-} from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
+} from 'determined-ui/kit/Theme';
+import Tooltip from 'determined-ui/kit/Tooltip';
+import React, { CSSProperties, useMemo } from 'react';
+
 import { stateToLabel } from 'constants/states';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { hsl2str, str2hsl } from 'utils/color';

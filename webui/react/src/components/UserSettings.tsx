@@ -1,17 +1,21 @@
 import { Space } from 'antd';
+import Accordion from 'determined-ui/kit/Accordion';
+import Button from 'determined-ui/kit/Button';
+import Drawer from 'determined-ui/kit/Drawer';
+import Icon from 'determined-ui/kit/Icon';
+import InlineForm from 'determined-ui/kit/InlineForm';
+import Input from 'determined-ui/kit/Input';
+import InputShortcut, { KeyboardShortcut, shortcutToString } from 'determined-ui/kit/InputShortcut';
+import { useModal } from 'determined-ui/kit/Modal';
+import Select, { Option } from 'determined-ui/kit/Select';
+import Spinner from 'determined-ui/kit/Spinner';
+import useUI, { Mode } from 'determined-ui/kit/Theme';
+import { makeToast } from 'determined-ui/kit/Toast';
+import Paragraph from 'determined-ui/kit/Typography/Paragraph';
+import useConfirm from 'determined-ui/kit/useConfirm';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
-import Drawer from 'components/kit/Drawer';
-import Icon from 'components/kit/Icon';
-import InlineForm from 'components/kit/InlineForm';
-import Input from 'components/kit/Input';
-import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/kit/InputShortcut';
-import { useModal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import useUI, { Mode } from 'components/kit/Theme';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -39,10 +43,6 @@ import userSettings from 'stores/userSettings';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
-import Accordion from './kit/Accordion';
-import Button from './kit/Button';
-import Paragraph from './kit/Typography/Paragraph';
-import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';
 import UserSettingsModalComponent from './UserSettingsModal';
 

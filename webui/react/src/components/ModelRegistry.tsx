@@ -5,22 +5,22 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
+import Button from 'determined-ui/kit/Button';
+import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import Input from 'determined-ui/kit/Input';
+import Message from 'determined-ui/Message';
+import { useModal } from 'determined-ui/kit/Modal';
+import Tags, { tagsActionHelper } from 'determined-ui/kit/Tags';
+import Toggle from 'determined-ui/kit/Toggle';
+import Tooltip from 'determined-ui/kit/Tooltip';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
 import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import Message from 'components/kit/Message';
-import { useModal } from 'components/kit/Modal';
-import Tags, { tagsActionHelper } from 'components/kit/Tags';
-import Toggle from 'components/kit/Toggle';
-import Tooltip from 'components/kit/Tooltip';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import { ModelActionMenuKey as MenuKey, ModelActionDropdown } from 'components/ModelActionDropdown';
 import ModelCreateModal from 'components/ModelCreateModal';

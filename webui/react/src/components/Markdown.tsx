@@ -1,16 +1,16 @@
 import type { TabsProps } from 'antd';
+import Pivot from 'determined-ui/kit/Pivot';
+import Spinner from 'determined-ui/kit/Spinner';
+import { Loaded } from 'determined-ui/kit/utils/loadable';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import { Loaded } from 'components/kit/utils/loadable';
 import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
 
 import css from './Markdown.module.scss';
 
-const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
+const CodeEditor = React.lazy(() => import('determined-ui/kit/CodeEditor'));
 
 interface Props {
   disabled?: boolean;

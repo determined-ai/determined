@@ -1,16 +1,16 @@
 import { Card, type TabsProps } from 'antd';
+import Breadcrumb from 'determined-ui/kit/Breadcrumb';
+import Message from 'determined-ui/Message';
+import Notes from 'determined-ui/kit/Notes';
+import Pivot from 'determined-ui/kit/Pivot';
+import Spinner from 'determined-ui/kit/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
-import Message from 'components/kit/Message';
-import Notes from 'components/kit/Notes';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';

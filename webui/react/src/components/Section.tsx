@@ -1,6 +1,6 @@
+import Spinner from 'determined-ui/kit/Spinner';
 import React from 'react';
 
-import Spinner from 'components/kit/Spinner';
 import { isString } from 'utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'utils/string';
 

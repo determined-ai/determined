@@ -1,10 +1,10 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
+import Button from 'determined-ui/kit/Button';
+import Icon from 'determined-ui/kit/Icon';
+import Input, { InputRef } from 'determined-ui/kit/Input';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import Input, { InputRef } from 'components/kit/Input';
 import usePrevious from 'hooks/usePrevious';
 
 import css from './TableFilterDropdown.module.scss';

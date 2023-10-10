@@ -1,7 +1,7 @@
 import { Space } from 'antd';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Loadable } from 'components/kit/utils/loadable';
 import useMetricNames from 'hooks/useMetricNames';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';

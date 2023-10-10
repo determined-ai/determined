@@ -1,14 +1,14 @@
 import { Space } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import Button from 'determined-ui/kit/Button';
+import Dropdown from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import Message from 'determined-ui/Message';
+import { useModal } from 'determined-ui/kit/Modal';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Message from 'components/kit/Message';
-import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';

@@ -1,8 +1,8 @@
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/kit/Spinner';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import { useGlasbey } from 'hooks/useGlasbey';

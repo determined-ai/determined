@@ -1,13 +1,13 @@
 import { type TabsProps } from 'antd';
+import Message from 'determined-ui/Message';
+import Pivot from 'determined-ui/kit/Pivot';
+import Spinner from 'determined-ui/kit/Spinner';
+import useUI from 'determined-ui/kit/Theme';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import Message from 'components/kit/Message';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';

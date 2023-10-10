@@ -1,7 +1,7 @@
+import { Loadable, Loaded } from 'determined-ui/kit/utils/loadable';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
-import { Loadable, Loaded } from 'components/kit/utils/loadable';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 

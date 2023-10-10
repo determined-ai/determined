@@ -1,7 +1,7 @@
+import { Modal } from 'determined-ui/kit/Modal';
+import { makeToast } from 'determined-ui/kit/Toast';
 import React, { useCallback, useState } from 'react';
 
-import { Modal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
 import { UserOrGroupWithRoleInfo } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';

@@ -1,7 +1,7 @@
 import { DataEditorProps } from '@hpe.com/glide-data-grid';
 import dayjs from 'dayjs';
+import { Theme } from 'determined-ui/kit/Theme';
 
-import { Theme } from 'components/kit/Theme';
 import { ExperimentItem } from 'types';
 import {
   DURATION_MINUTE,

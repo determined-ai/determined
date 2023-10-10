@@ -1,6 +1,6 @@
+import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
 import React from 'react';
 
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import { Scale } from 'types';
 import { capitalize } from 'utils/string';
 

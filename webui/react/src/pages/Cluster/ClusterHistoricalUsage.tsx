@@ -1,9 +1,9 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
+import Button from 'determined-ui/kit/Button';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';

@@ -1,7 +1,7 @@
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useMemo } from 'react';
 
-import { Loadable } from 'components/kit/utils/loadable';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';

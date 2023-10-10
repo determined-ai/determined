@@ -1,10 +1,10 @@
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/kit/Button';
+import { useModal } from 'determined-ui/kit/Modal';
 import React, { useMemo } from 'react';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
 

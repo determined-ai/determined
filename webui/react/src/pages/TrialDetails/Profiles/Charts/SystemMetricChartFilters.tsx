@@ -1,6 +1,6 @@
+import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
 import React, { useCallback, useMemo } from 'react';
 
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import { UpdateSettings } from 'hooks/useSettings';
 import { AvailableSeriesType } from 'pages/TrialDetails/Profiles/types';
 

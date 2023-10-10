@@ -1,8 +1,8 @@
+import Form from 'determined-ui/kit/Form';
+import Input from 'determined-ui/kit/Input';
+import { Modal } from 'determined-ui/kit/Modal';
 import React, { useCallback, useId } from 'react';
 
-import Form from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import { Modal } from 'components/kit/Modal';
 import { patchProject } from 'services/api';
 import { Project } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';

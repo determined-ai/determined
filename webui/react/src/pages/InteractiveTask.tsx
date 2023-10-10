@@ -1,8 +1,8 @@
+import useUI from 'determined-ui/kit/Theme';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import useUI from 'components/kit/Theme';
 import TaskBar from 'components/TaskBar';
 import { getTask } from 'services/api';
 import { CommandState, CommandType, ValueOf } from 'types';

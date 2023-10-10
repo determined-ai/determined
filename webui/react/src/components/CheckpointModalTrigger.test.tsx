@@ -1,14 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { UIProvider } from 'determined-ui/kit/Theme';
+import { ConfirmationProvider } from 'determined-ui/kit/useConfirm';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import { UIProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-
-import { ConfirmationProvider } from './kit/useConfirm';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';

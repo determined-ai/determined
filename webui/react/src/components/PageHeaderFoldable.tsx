@@ -1,9 +1,9 @@
+import Button from 'determined-ui/kit/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import Tooltip from 'determined-ui/kit/Tooltip';
 import React, { useCallback, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import { isMouseEvent } from 'utils/routes';
 
 import css from './PageHeaderFoldable.module.scss';

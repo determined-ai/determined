@@ -1,3 +1,4 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import { observable, Observable, WritableObservable } from 'micro-observables';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,7 +13,6 @@ import {
   FormKind,
   Operator,
 } from 'components/FilterForm/components/type';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 
 export const ITEM_LIMIT = 50;

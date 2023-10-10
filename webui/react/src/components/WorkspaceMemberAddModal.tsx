@@ -1,11 +1,11 @@
 import { Select } from 'antd';
+import Form from 'determined-ui/kit/Form';
+import Icon from 'determined-ui/kit/Icon';
+import { Modal } from 'determined-ui/kit/Modal';
+import Nameplate from 'determined-ui/kit/Nameplate';
+import { makeToast } from 'determined-ui/kit/Toast';
 import React, { useCallback, useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
-import Icon from 'components/kit/Icon';
-import { Modal } from 'components/kit/Modal';
-import Nameplate from 'components/kit/Nameplate';
-import { makeToast } from 'components/kit/Toast';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';

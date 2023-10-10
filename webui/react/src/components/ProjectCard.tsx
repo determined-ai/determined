@@ -1,9 +1,9 @@
 import { Typography } from 'antd';
+import Card from 'determined-ui/kit/Card';
+import Icon from 'determined-ui/kit/Icon';
+import Tooltip from 'determined-ui/kit/Tooltip';
 import React from 'react';
 
-import Card from 'components/kit/Card';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';

@@ -1,9 +1,9 @@
 import { Card, Space } from 'antd';
+import Button from 'determined-ui/kit/Button';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/kit/Spinner';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import Spinner from 'components/kit/Spinner';
 import { Metadata } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 

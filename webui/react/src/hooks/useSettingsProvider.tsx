@@ -1,8 +1,8 @@
+import Spinner from 'determined-ui/kit/Spinner';
+import { Loadable, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
-import Spinner from 'components/kit/Spinner';
-import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

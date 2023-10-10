@@ -1,7 +1,7 @@
+import { getStateColorCssVar, StateOfUnion } from 'determined-ui/kit/Theme';
 import React from 'react';
 
 import Bar from 'components/Bar';
-import { getStateColorCssVar, StateOfUnion } from 'components/kit/Theme';
 import { floatToPercent } from 'utils/string';
 
 export interface Props {

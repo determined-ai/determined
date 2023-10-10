@@ -1,6 +1,6 @@
+import { makeToast } from 'determined-ui/kit/Toast';
 import Fuse from 'fuse.js';
 
-import { makeToast } from 'components/kit/Toast';
 import root from 'omnibar/tree-extension/trees/index';
 import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';
 import { getNodeChildren, isLeafNode, isNLNode, traverseTree } from 'omnibar/tree-extension/utils';

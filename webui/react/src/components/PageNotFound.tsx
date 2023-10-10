@@ -1,7 +1,7 @@
+import Button from 'determined-ui/kit/Button';
+import Message from 'determined-ui/Message';
 import React from 'react';
 
-import Button from 'components/kit/Button';
-import Message from 'components/kit/Message';
 import { paths } from 'routes/utils';
 
 import Link from './Link';

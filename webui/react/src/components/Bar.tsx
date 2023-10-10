@@ -1,7 +1,7 @@
+import { ShirtSize } from 'determined-ui/kit/Theme';
+import Tooltip from 'determined-ui/kit/Tooltip';
 import React from 'react';
 
-import { ShirtSize } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import { floatToPercent } from 'utils/string';
 
 import css from './Bar.module.scss';

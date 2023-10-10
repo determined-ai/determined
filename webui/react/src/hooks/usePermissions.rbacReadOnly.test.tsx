@@ -18,7 +18,7 @@ vi.mock('stores/determinedInfo', async (importOriginal) => {
 });
 
 vi.mock('stores/permissions', async (importOriginal) => {
-  const loadable = await import('components/kit/utils/loadable');
+  const loadable = await import('determined-ui/kit/utils/loadable');
   const observable = await import('utils/observable');
   const assigned = observable.observable(
     loadable.Loaded([

@@ -1,7 +1,7 @@
+import Form from 'determined-ui/kit/Form';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Form from 'components/kit/Form';
 import Link from 'components/Link';
 import { Metadata } from 'types';
 

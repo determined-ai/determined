@@ -1,10 +1,10 @@
 import { ModalFuncProps, Select } from 'antd';
+import Input from 'determined-ui/kit/Input';
+import Tags, { tagsActionHelper } from 'determined-ui/kit/Tags';
+import { makeToast } from 'determined-ui/kit/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Input from 'components/kit/Input';
-import Tags, { tagsActionHelper } from 'components/kit/Tags';
-import { makeToast } from 'components/kit/Toast';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';

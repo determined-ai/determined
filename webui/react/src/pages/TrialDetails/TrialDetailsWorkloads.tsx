@@ -1,11 +1,11 @@
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
+import Select, { Option, SelectValue } from 'determined-ui/kit/Select';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Select, { Option, SelectValue } from 'components/kit/Select';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';

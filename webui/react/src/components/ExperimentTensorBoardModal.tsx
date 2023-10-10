@@ -1,4 +1,5 @@
-import { Modal } from 'components/kit/Modal';
+import { Modal } from 'determined-ui/kit/Modal';
+
 import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';

@@ -1,6 +1,5 @@
+import Tooltip from 'determined-ui/kit/Tooltip';
 import React from 'react';
-
-import Tooltip from 'components/kit/Tooltip';
 
 import Badge, { BadgeProps } from './Badge';
 import css from './BadgeTag.module.scss';

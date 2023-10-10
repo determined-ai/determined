@@ -1,13 +1,13 @@
+import Button from 'determined-ui/kit/Button';
+import Dropdown from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback } from 'react';
 
 import FilterForm from 'components/FilterForm/components/FilterForm';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { FormKind } from 'components/FilterForm/components/type';
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { Loadable } from 'components/kit/utils/loadable';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 interface Props {

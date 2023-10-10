@@ -1,9 +1,8 @@
 import { TabsProps } from 'antd';
+import Pivot, { PivotTabType } from 'determined-ui/kit/Pivot';
 import _ from 'lodash';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-import Pivot, { PivotTabType } from 'components/kit/Pivot';
 
 interface DynamicTabBarProps extends Omit<TabsProps, 'activeKey' | 'type'> {
   basePath: string;

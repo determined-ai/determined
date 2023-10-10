@@ -1,7 +1,7 @@
 import { RefSelectProps } from 'antd/es/select';
+import Select, { OptGroup, Option, SelectValue } from 'determined-ui/kit/Select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import Select, { OptGroup, Option, SelectValue } from 'components/kit/Select';
 import { Metric } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 

@@ -1,5 +1,13 @@
 import { Space, Typography } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import Button from 'determined-ui/kit/Button';
+import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import Input from 'determined-ui/kit/Input';
+import { useModal } from 'determined-ui/kit/Modal';
+import Tags from 'determined-ui/kit/Tags';
+import Toggle from 'determined-ui/kit/Toggle';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -10,14 +18,6 @@ import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import { useModal } from 'components/kit/Modal';
-import Tags from 'components/kit/Tags';
-import Toggle from 'components/kit/Toggle';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import InteractiveTable, {
   ColumnDef,

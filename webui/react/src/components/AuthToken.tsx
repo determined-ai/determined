@@ -1,9 +1,8 @@
+import Button from 'determined-ui/kit/Button';
+import Icon from 'determined-ui/Icon';
+import { makeToast } from 'determined-ui/kit/Toast';
 import React, { useCallback } from 'react';
 
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import Message from 'components/kit/Message';
-import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'utils/dom';
 

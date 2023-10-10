@@ -1,8 +1,8 @@
+import Icon from 'determined-ui/kit/Icon';
+import Tooltip from 'determined-ui/kit/Tooltip';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';

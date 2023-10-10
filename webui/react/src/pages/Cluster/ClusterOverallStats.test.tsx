@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
-
-import { UIProvider } from 'components/kit/Theme';
+import { UIProvider } from 'determined-ui/kit/Theme';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 

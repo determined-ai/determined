@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/kit/Button';
+import { useModal } from 'determined-ui/kit/Modal';
 import React from 'react';
 
 import ExperimentEditModalComponent, {
@@ -7,8 +9,6 @@ import ExperimentEditModalComponent, {
   DESCRIPTION_LABEL,
   NAME_LABEL,
 } from 'components/ExperimentEditModal';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
 import { patchExperiment as mockPatchExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 

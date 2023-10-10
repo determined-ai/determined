@@ -1,13 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-
 import LogViewer, {
   FetchConfig,
   FetchDirection,
   FetchType,
-} from 'components/kit/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'components/kit/LogViewer/LogViewerSelect';
-import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogViewerSelect.settings';
+} from 'determined-ui/kit/LogViewer/LogViewer';
+import LogViewerSelect, { Filters } from 'determined-ui/kit/LogViewer/LogViewerSelect';
+import {
+  Settings,
+  settingsConfigForTask,
+} from 'determined-ui/kit/LogViewer/LogViewerSelect.settings';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';

@@ -1,12 +1,12 @@
 import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import Button from 'determined-ui/kit/Button';
+import Dropdown from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import { useModal } from 'determined-ui/kit/Modal';
+import Nameplate from 'determined-ui/kit/Nameplate';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';

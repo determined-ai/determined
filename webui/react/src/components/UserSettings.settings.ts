@@ -1,6 +1,6 @@
+import { KeyboardShortcut } from 'determined-ui/kit/InputShortcut';
 import { type } from 'io-ts';
 
-import { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { SettingsConfig } from 'hooks/useSettings';
 
 export interface Settings {

@@ -1,7 +1,6 @@
 import { Rectangle } from '@hpe.com/glide-data-grid';
+import Dropdown, { MenuItem } from 'determined-ui/kit/Dropdown';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
-
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {

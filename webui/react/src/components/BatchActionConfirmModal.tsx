@@ -1,6 +1,6 @@
+import { Modal } from 'determined-ui/kit/Modal';
 import React from 'react';
 
-import { Modal } from 'components/kit/Modal';
 import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';
 import { ExperimentAction } from 'types';
 import handleError from 'utils/error';

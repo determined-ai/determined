@@ -1,3 +1,5 @@
+import { Loadable, NotLoaded } from 'determined-ui/kit/utils/loadable';
+
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
   Conjunction,
@@ -7,7 +9,6 @@ import {
   FormKind,
   Operator,
 } from 'components/FilterForm/components/type';
-import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 
 // Remove `id` property from object

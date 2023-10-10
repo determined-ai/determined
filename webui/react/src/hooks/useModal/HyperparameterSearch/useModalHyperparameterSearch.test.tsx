@@ -1,8 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import Button from 'determined-ui/kit/Button';
 import React from 'react';
 
-import Button from 'components/kit/Button';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
@@ -13,7 +13,7 @@ const MODAL_TITLE = 'Hyperparameter Search';
 vi.mock('stores/cluster', async (importOriginal) => {
   const types = await import('types');
   const sdkTypes = await import('services/api-ts-sdk');
-  const loadable = await import('components/kit/utils/loadable');
+  const loadable = await import('determined-ui/kit/utils/loadable');
   const observable = await import('utils/observable');
 
   const store = {

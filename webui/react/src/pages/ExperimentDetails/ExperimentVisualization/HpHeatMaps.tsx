@@ -1,11 +1,11 @@
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/kit/Spinner';
+import useUI from 'determined-ui/kit/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';

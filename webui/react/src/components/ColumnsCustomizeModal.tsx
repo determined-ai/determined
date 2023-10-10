@@ -1,6 +1,6 @@
+import { Modal } from 'determined-ui/kit/Modal';
 import React, { useRef, useState } from 'react';
 
-import { Modal } from 'components/kit/Modal';
 import Transfer from 'components/Transfer';
 import handleError from 'utils/error';
 

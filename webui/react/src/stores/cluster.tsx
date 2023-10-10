@@ -1,7 +1,7 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import { Map } from 'immutable';
 import _ from 'lodash';
 
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import {
   addResourcePoolBindings,
   deleteResourcePoolBindings,

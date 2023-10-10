@@ -1,8 +1,8 @@
+import { ChartGrid, ChartsProps } from 'determined-ui/kit/LineChart';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/kit/utils/loadable';
 import _ from 'lodash';
 import React, { useMemo, useState } from 'react';
 
-import { ChartGrid, ChartsProps } from 'components/kit/LineChart';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors, useGlasbey } from 'hooks/useGlasbey';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';

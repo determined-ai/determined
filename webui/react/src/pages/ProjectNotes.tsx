@@ -1,8 +1,8 @@
+import { useModal } from 'determined-ui/kit/Modal';
+import Notes from 'determined-ui/kit/Notes';
 import React, { useCallback, useState } from 'react';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
-import { useModal } from 'components/kit/Modal';
-import Notes from 'components/kit/Notes';
 import ProjectNoteDeleteModalComponent from 'components/ProjectNoteDeleteModal';
 import usePermissions from 'hooks/usePermissions';
 import { addProjectNote, setProjectNotes } from 'services/api';

@@ -1,10 +1,10 @@
 import { Select } from 'antd';
+import Form from 'determined-ui/kit/Form';
+import { Modal } from 'determined-ui/kit/Modal';
+import Spinner from 'determined-ui/kit/Spinner';
+import { makeToast } from 'determined-ui/kit/Toast';
 import React, { useEffect, useId } from 'react';
 
-import Form from 'components/kit/Form';
-import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import { makeToast } from 'components/kit/Toast';
 import { updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';

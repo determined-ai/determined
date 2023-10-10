@@ -1,7 +1,7 @@
+import { LineChart } from 'determined-ui/kit/LineChart';
 import { string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect, useMemo } from 'react';
 
-import { LineChart } from 'components/kit/LineChart';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';

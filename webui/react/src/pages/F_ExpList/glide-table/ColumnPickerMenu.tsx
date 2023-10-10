@@ -1,16 +1,16 @@
 import { Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import Button from 'determined-ui/kit/Button';
+import Checkbox from 'determined-ui/kit/Checkbox';
+import Dropdown from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import Input from 'determined-ui/kit/Input';
+import Message from 'determined-ui/Message';
+import Pivot from 'determined-ui/kit/Pivot';
+import Spinner from 'determined-ui/kit/Spinner';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Checkbox from 'components/kit/Checkbox';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import Message from 'components/kit/Message';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
 import { useSettings } from 'hooks/useSettings';
 import {
   F_ExperimentListSettings,

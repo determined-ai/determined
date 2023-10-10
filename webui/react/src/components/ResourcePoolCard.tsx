@@ -1,3 +1,11 @@
+import Card from 'determined-ui/kit/Card';
+import { MenuItem } from 'determined-ui/kit/Dropdown';
+import Icon from 'determined-ui/kit/Icon';
+import { useModal } from 'determined-ui/kit/Modal';
+import Spinner from 'determined-ui/kit/Spinner';
+import useUI, { DarkLight, ShirtSize } from 'determined-ui/kit/Theme';
+import Tooltip from 'determined-ui/kit/Tooltip';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
 
 import awsLogoOnDark from 'assets/images/aws-logo-on-dark.svg?url';
@@ -5,14 +13,6 @@ import awsLogo from 'assets/images/aws-logo.svg?url';
 import gcpLogo from 'assets/images/gcp-logo.svg?url';
 import k8sLogo from 'assets/images/k8s-logo.svg?url';
 import staticLogo from 'assets/images/on-prem-logo.svg?url';
-import Card from 'components/kit/Card';
-import { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight, ShirtSize } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
-import { Loadable } from 'components/kit/utils/loadable';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';

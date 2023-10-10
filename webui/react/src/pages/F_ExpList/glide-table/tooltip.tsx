@@ -1,8 +1,7 @@
 import { DataEditorProps, GridMouseEventArgs } from '@hpe.com/glide-data-grid';
 import { Tooltip } from 'antd';
+import { Loadable } from 'determined-ui/kit/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
-
-import { Loadable } from 'components/kit/utils/loadable';
 
 import { ColumnDefs } from './columns';
 import { GlideTableProps } from './GlideTable';

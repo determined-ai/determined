@@ -1,8 +1,8 @@
+import { matchesShortcut } from 'determined-ui/kit/InputShortcut';
+import { useModal } from 'determined-ui/kit/Modal';
 import React, { useEffect } from 'react';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
-import { matchesShortcut } from 'components/kit/InputShortcut';
-import { useModal } from 'components/kit/Modal';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';

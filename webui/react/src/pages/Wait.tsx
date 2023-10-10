@@ -1,9 +1,9 @@
+import Spinner from 'determined-ui/kit/Spinner';
+import useUI from 'determined-ui/kit/Theme';
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
