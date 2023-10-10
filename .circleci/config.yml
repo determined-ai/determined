@@ -703,7 +703,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh .circleci/scripts/det_deploy.sh aws up \
+            MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
