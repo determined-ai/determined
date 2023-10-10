@@ -25,7 +25,7 @@ const generateStrongWeak = (theme: Theme): Theme => {
   return theme as Theme;
 };
 
-const themeBase = {
+export const themeBase = {
   // Color schemes
   colorScheme: 'normal',
 
@@ -255,6 +255,13 @@ export const themeLightHpe: Theme = generateStrongWeak(
 export const themeDarkHpe: Theme = generateStrongWeak(
   Object.assign({}, themeBase, themeDark, themeHpe),
 );
+
+export const getTheme = (newTheme: Partial<Theme>) => {
+  const themeL: Theme = generateStrongWeak(Object.assign({}, themeBase, themeLight, newTheme));
+  const themeD: Theme = generateStrongWeak(Object.assign({}, themeBase, themeDark, newTheme));
+
+  return { themeL, themeD };
+};
 
 export type Theme = Record<keyof typeof themeBase, string>;
 

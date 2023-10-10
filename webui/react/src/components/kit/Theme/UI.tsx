@@ -1,4 +1,5 @@
-import { ConfigProvider, theme } from 'antd';
+import { StyleProvider } from '@ant-design/cssinjs';
+import { App as AntdApp, ConfigProvider, theme } from 'antd';
 import { ThemeConfig } from 'antd/es/config-provider/context';
 import React, {
   Dispatch,
@@ -14,7 +15,8 @@ import React, {
 import { BrandingType, RecordKey } from 'components/kit/internal/types';
 
 import { themes } from './themes';
-import { DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
+import { DarkLight, getTheme, globalCssVars, Mode, Theme } from './themeUtils';
+export { StyleProvider };
 
 interface StateUI {
   chromeCollapsed: boolean;
@@ -237,13 +239,33 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   return { actions: uiActions, ui: context };
 };
 
+interface ThemeUpdates {
+  strong?: string;
+  weak?: string;
+  brand: string;
+  brandStrong?: string;
+  brandWeak?: string;
+}
+
+export const ThemeProvider: React.FC<{ children?: React.ReactNode; theme: ThemeUpdates }> = ({
+  children,
+  theme,
+}) => {
+  const updatedTheme = {
+    token: {
+      colorPrimary: theme.brand,
+    },
+  };
+
+  return <ConfigProvider theme={updatedTheme}>{children}</ConfigProvider>;
+};
+
 export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType }> = ({
   children,
   branding,
 }) => {
   const [state, dispatch] = useReducer(reducer, initUI);
   const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
-
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
     if (!event.matches) setSystemMode(getSystemMode());
   }, []);
@@ -286,11 +308,13 @@ export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: Brand
   const antdTheme = ANTD_THEMES[state.darkLight];
 
   return (
-    <ConfigProvider theme={antdTheme}>
-      <StateContext.Provider value={state}>
-        <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-      </StateContext.Provider>
-    </ConfigProvider>
+    <AntdApp>
+      <ConfigProvider theme={antdTheme}>
+        <StateContext.Provider value={state}>
+          <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+        </StateContext.Provider>
+      </ConfigProvider>
+    </AntdApp>
   );
 };
 

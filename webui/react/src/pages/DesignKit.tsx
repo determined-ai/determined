@@ -37,7 +37,7 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
+import useUI, { ThemeProvider } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -549,6 +549,26 @@ const ThemeSection: React.FC = () => (
           </li>
         </ul>
       </p>
+    </AntDCard>
+    <AntDCard title="Usage">
+      <ThemeProvider
+        theme={{
+          brand: 'green',
+        }}>
+        <Button type="primary">Hi</Button>
+      </ThemeProvider>
+      <ThemeProvider
+        theme={{
+          brand: 'orange',
+        }}>
+        <Toggle checked />
+      </ThemeProvider>
+      <ThemeProvider
+        theme={{
+          brand: 'yellow',
+        }}>
+        <Input />
+      </ThemeProvider>
     </AntDCard>
   </ComponentSection>
 );

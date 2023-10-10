@@ -1,11 +1,10 @@
-import { ConfigProvider } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
-import useUI from 'components/kit/Theme';
+import useUI, { ThemeProvider } from 'components/kit/Theme';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
@@ -33,14 +32,8 @@ interface FromValues {
 const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
-const buttonTheme = {
-  components: {
-    Button: {
-      colorPrimary: 'var(--theme-brand)',
-      colorPrimaryActive: 'var(--theme-brand-strong)',
-      colorPrimaryHover: 'var(--theme-brand-weak)',
-    },
-  },
+const theme = {
+  brand: 'rgba(247, 123, 33, 1.0)',
 };
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
@@ -128,11 +121,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <ConfigProvider theme={buttonTheme}>
+        <ThemeProvider theme={theme}>
           <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
             Sign In
           </Button>
-        </ConfigProvider>
+        </ThemeProvider>
       </Form.Item>
     </Form>
   );
