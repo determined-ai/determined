@@ -74,9 +74,9 @@ Enable Determined to submit jobs to a Slurm cluster.
    :hidden:
 
    Quick Installation <basic>
-   Deploy on Prem <deploy-cluster/on-prem/_index>
-   Deploy on AWS <deploy-cluster/aws/_index>
-   Deploy on GCP <deploy-cluster/gcp/_index>
-   Deploy on Kubernetes <deploy-cluster/k8s/_index>
-   Deploy on Slurm/PBS <deploy-cluster/slurm/_index>
-   Cluster Configuration <deploy-cluster/cluster-configuration>
+   Deploy on Prem <on-prem/_index>
+   Deploy on AWS <aws/_index>
+   Deploy on GCP <gcp/_index>
+   Deploy on Kubernetes <k8s/_index>
+   Deploy on Slurm/PBS <slurm/_index>
+   Cluster Configuration <cluster-configuration>
