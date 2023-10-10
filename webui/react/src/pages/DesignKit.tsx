@@ -57,7 +57,6 @@ import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import { BrandingType } from 'stores/determinedInfo';
 import {
   Background,
   Brand,
@@ -3124,7 +3123,7 @@ const DesignKit: React.FC = () => {
       <div className={css.base}>
         <nav className={css.default}>
           <Link reloadDocument to={'/'}>
-            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+            <Logo orientation="horizontal" />
           </Link>
           <ThemeToggle />
           <ul className={css.sections}>
@@ -3137,7 +3136,7 @@ const DesignKit: React.FC = () => {
         </nav>
         <nav className={css.mobile}>
           <Link reloadDocument to={'/'}>
-            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+            <Logo orientation="horizontal" />
           </Link>
           <div className={css.controls}>
             <ThemeToggle iconOnly />
