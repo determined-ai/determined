@@ -165,70 +165,99 @@ export const LineChart: React.FC<LineChartProps> = ({
       return tooltip;
     };
 
-    const option: EChartsOption = {
+    const generateOption = (): EChartsOption => {
+      if (xAxis === XAxisDomain.Time) {
+        const option: EChartsOption = {
+          series: series.map((serie) => ({
+            connectNulls: true,
+            data: (() => {
+              const set = new Set();
+              const arr: [x: Date, y: number][] = [];
+              for (const d of serie.data[xAxis] ?? []) {
+                const [xValue, yValue] = d;
+                if (set.has(xValue)) {
+                  continue;
+                }
+                set.add(xValue);
+                arr.push([dayjs.unix(xValue).toDate(), yValue]);
+              }
+              return arr;
+            })(),
+            emphasis: { focus: 'series' },
+            id: serie.key,
+            itemStyle: { color: serie.color },
+            name: serie.name,
+            type: 'line',
+          })),
+          xAxis: {
+            max: xValueRange ? dayjs.unix(xValueRange[1]).toDate() : undefined,
+            min: xValueRange ? dayjs.unix(xValueRange[0]).toDate() : undefined,
+            name: xLabel,
+            type: 'time',
+          },
+        };
+        return option;
+      } else {
+        const option: EChartsOption = {
+          series: seriesData.y.map((serie) => ({
+            connectNulls: true,
+            data: serie.data,
+            emphasis: { focus: 'series' },
+            id: serie.key,
+            itemStyle: { color: serie.color },
+            name: serie.name,
+            symbol: (value) => {
+              if (checkpointsDict === undefined) return 'circle';
+              return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
+            },
+            symbolSize: (value) => {
+              const DEFAULT_SIZE = 4;
+              if (checkpointsDict === undefined) return DEFAULT_SIZE;
+              return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
+            },
+            type: 'line',
+          })),
+          tooltip: {
+            axisPointer: {
+              label: {
+                formatter: (params) => {
+                  const value = params.value;
+                  if (params.axisDimension === 'y' && typeof value === 'number') {
+                    currentYAxis = value;
+                    return value.toFixed(4).toString();
+                  }
+                  return value.toString();
+                },
+              },
+            },
+            formatter: formatterFunc,
+          },
+          xAxis: {
+            boundaryGap: false,
+            data: seriesData.x,
+            max: xValueRange?.[1],
+            min: xValueRange?.[0],
+            name: xLabel,
+            type: 'category',
+          },
+        };
+        return option;
+      }
+    };
+
+    const baseOption: EChartsOption = {
       dataZoom: [
         { realtime: true, show: true, type: 'slider' },
         { realtime: true, show: true, type: 'inside', zoomLock: true },
       ],
       legend: showLegend
         ? {
-            data: series.map((serie) => serie.name ?? ''),
+            data: series.map((serie) => serie.name ?? 'n/a'),
             left: '10%',
             padding: [8, 200, 0, 0],
             type: 'scroll',
           }
         : undefined,
-      series:
-        xAxis === XAxisDomain.Time
-          ? series.map((serie) => ({
-              connectNulls: true,
-              data: (() => {
-                const set = new Set();
-                const arr: [x: Date, y: number][] = [];
-                for (const d of serie.data[xAxis] ?? []) {
-                  const xValue = d[0];
-                  const yValue = d[1];
-                  if (set.has(xValue)) {
-                    continue;
-                  }
-                  set.add(xValue);
-                  arr.push([dayjs.unix(xValue).toDate(), yValue]);
-                }
-                return arr;
-              })(),
-              emphasis: { focus: 'series' },
-              id: serie.key,
-              itemStyle: { color: serie.color },
-              name: serie.name,
-              symbol: (value) => {
-                if (checkpointsDict === undefined) return 'circle';
-                return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
-              },
-              symbolSize: (value) => {
-                const DEFAULT_SIZE = 4;
-                if (checkpointsDict === undefined) return DEFAULT_SIZE;
-                return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
-              },
-              type: 'line',
-            }))
-          : seriesData.y.map((serie) => ({
-              connectNulls: true,
-              data: serie.data,
-              emphasis: { focus: 'series' },
-              id: serie.key,
-              itemStyle: { color: serie.color },
-              name: serie.name,
-              symbol: (value) => {
-                if (checkpointsDict === undefined) return 'circle';
-                return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
-              },
-              symbolSize: (value) => {
-                const DEFAULT_SIZE = 4;
-                if (checkpointsDict === undefined) return DEFAULT_SIZE;
-                return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
-              },
-              type: 'line',
-            })),
       toolbox: {
         feature: {
           dataView: { readOnly: true },
@@ -236,52 +265,17 @@ export const LineChart: React.FC<LineChartProps> = ({
           saveAsImage: { excludeComponents: ['toolbox', 'dataZoom'], name: 'line-chart' },
         },
       },
-      tooltip: {
-        axisPointer: {
-          label: {
-            formatter:
-              xAxis === XAxisDomain.Time
-                ? undefined
-                : (params) => {
-                    const value = params.value;
-                    if (params.axisDimension === 'y' && typeof value === 'number') {
-                      currentYAxis = value;
-                      return value.toFixed(4).toString();
-                    }
-                    return value.toString();
-                  },
-          },
-          type: 'cross',
-        },
-        confine,
-        formatter: xAxis === XAxisDomain.Time ? undefined : formatterFunc,
-        trigger: 'axis',
-      },
-      xAxis: {
-        ...(xAxis === XAxisDomain.Time
-          ? {
-              max: xValueRange ? dayjs.unix(xValueRange[1]).toDate() : undefined,
-              min: xValueRange ? dayjs.unix(xValueRange[0]).toDate() : undefined,
-              type: 'time',
-            }
-          : {
-              boundaryGap: false,
-              data: seriesData.x,
-              max: xValueRange?.[1],
-              min: xValueRange?.[0],
-              type: 'category',
-            }),
-        name: xLabel,
-      },
+      tooltip: { axisPointer: { type: 'cross' }, confine, trigger: 'axis' },
       yAxis: {
-        // write like this due to type issue
-        ...(scale === Scale.Log
+        ...(scale === Scale.Log // write like this due to type issue
           ? { type: 'log' }
           : { axisLabel: { formatter: yValueFormatter }, type: 'value' }),
         minorSplitLine: { show: true },
         name: yLabel,
       },
     };
+
+    const option: EChartsOption = { ...baseOption, ...generateOption() };
     return option;
   }, [
     checkpointsDict,

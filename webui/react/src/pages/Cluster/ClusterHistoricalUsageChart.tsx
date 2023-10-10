@@ -76,7 +76,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         xAxis={XAxisDomain.Time}
         xLabel={groupBy === GroupBy.Month ? 'Month' : 'Day'}
         xValueRange={dateRange}
-        yLabel={label}
+        yLabel={label ? label : 'GPU Hours'}
         yValueFormatter={formatYvalue}
       />
     </div>
