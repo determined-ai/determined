@@ -7,7 +7,7 @@
 To install Determined on-premise, first :ref:`install Docker <install-docker>`. Then install
 Determined by one of the following methods:
 
-.. include:: ../../../../_shared/tip-keep-install-instructions.txt
+.. include:: ../../../_shared/tip-keep-install-instructions.txt
 
 -  :ref:`install-using-deploy`
 -  :ref:`install-using-linux-packages`
