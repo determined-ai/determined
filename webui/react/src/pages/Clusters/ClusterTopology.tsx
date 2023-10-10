@@ -9,13 +9,13 @@ import css from './ClusterTopology.module.scss';
 interface NodeElementProps {
   name: string;
   slots: number;
-  filledSlots: number;
+  enabledSlots: number;
 }
 
 const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   name,
   slots,
-  filledSlots,
+  enabledSlots,
 }) => {
   return (
     <div className={css.node}>
@@ -23,7 +23,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
       <span className={css.nodeCluster}>
         {Array.from(Array(slots)).map((_, idx) => (
           <span
-            className={`${css.nodeSlot} ${idx + 1 <= filledSlots ? css.filled : ''}`}
+            className={`${css.nodeSlot} ${idx + 1 <= enabledSlots ? css.filled : ''}`}
             key={`slot${idx}`}
           />
         ))}
@@ -38,10 +38,10 @@ const ClusterTopology: React.FC<PropsWithChildren> = () => {
   return (
     <div className={css.container}>
       {nodes.map(({ id, resources }) => {
-        const filledSlots = resources.reduce((acc, { enabled }) => (enabled ? acc++ : acc), 0);
+        const enabledSlots = resources.reduce((acc, { enabled }) => (enabled ? acc++ : acc), 0);
         const slots = resources.length;
 
-        return <NodeElement filledSlots={filledSlots} key={id} name={id} slots={slots} />;
+        return <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />;
       })}
     </div>
   );
