@@ -1,5 +1,6 @@
 import datetime
 import enum
+import inspect
 import warnings
 from typing import Any, Dict, Iterable, List, Optional, Union
 
@@ -84,7 +85,7 @@ class Trial:
         self.summary_metrics: Optional[Dict[str, Any]] = None
         self.state: Optional[TrialState] = None
 
-    def logs(
+    def iter_logs(
         self,
         follow: bool = False,
         *,
@@ -175,6 +176,19 @@ class Trial:
             search_text=search_text,
         ):
             yield log.message
+
+    def logs(self, *args: Any, **kwargs: Any) -> Iterable[str]:
+        """DEPRECATED: Use iter_logs instead."""
+        warnings.warn(
+            "Trial.logs() has been deprecated and will be removed in a future version."
+            "Please call Trial.iter_logs() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.iter_logs(*args, **kwargs)
+
+    # type-checking suppression can be removed when mypy issue #12472 is resolved (or logs removed)
+    logs.__signature__ = inspect.signature(iter_logs)  # type: ignore
 
     def kill(self) -> None:
         bindings.post_KillTrial(self._session, id=self.id)
