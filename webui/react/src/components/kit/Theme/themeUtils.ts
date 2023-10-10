@@ -256,11 +256,10 @@ export const themeDarkHpe: Theme = generateStrongWeak(
   Object.assign({}, themeBase, themeDark, themeHpe),
 );
 
-export const getTheme = (newTheme: Partial<Theme>) => {
-  const themeL: Theme = generateStrongWeak(Object.assign({}, themeBase, themeLight, newTheme));
-  const themeD: Theme = generateStrongWeak(Object.assign({}, themeBase, themeDark, newTheme));
-
-  return { themeL, themeD };
+export const createTheme = (newTheme: Partial<Theme>) => {
+  const lightTheme: Theme = generateStrongWeak(Object.assign({}, themeBase, themeLight, newTheme));
+  const darkTheme: Theme = generateStrongWeak(Object.assign({}, themeBase, themeDark, newTheme));
+  return { lightTheme, darkTheme };
 };
 
 export type Theme = Record<keyof typeof themeBase, string>;

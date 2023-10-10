@@ -4,7 +4,7 @@ import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
-import useUI, { ThemeProvider } from 'components/kit/Theme';
+import useUI, { ThemeProvider, createTheme } from 'components/kit/Theme';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
@@ -33,7 +33,7 @@ const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const theme = {
-  brand: 'rgba(247, 123, 33, 1.0)',
+  brand: 'green',
 };
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {

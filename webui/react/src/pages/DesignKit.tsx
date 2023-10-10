@@ -557,17 +557,36 @@ const ThemeSection: React.FC = () => (
         }}>
         <Button type="primary">Hi</Button>
       </ThemeProvider>
+      <hr />
       <ThemeProvider
         theme={{
           brand: 'orange',
         }}>
         <Toggle checked />
       </ThemeProvider>
+      <hr />
       <ThemeProvider
         theme={{
-          brand: 'yellow',
+          brand: 'purple',
+        }}>
+        <Pagination current={1}
+          pageSize={50}
+          total={500} />
+      </ThemeProvider>
+      <hr />
+      <ThemeProvider
+        theme={{
+          brand: 'teal',
         }}>
         <Input />
+      </ThemeProvider>
+      <hr />
+      <ThemeProvider
+        theme={{
+          brand: 'magenta',
+        }}>
+        <Spinner />
+        <p>The spinner does not work because it is styled using `--theme-brand`</p>
       </ThemeProvider>
     </AntDCard>
   </ComponentSection>

@@ -15,7 +15,8 @@
 
   .spin {
     animation: rotate 1s linear infinite;
-    color: var(--theme-brand);
+
+    // color: var(--theme-brand);
     display: flex;
   }
   &.center {
