@@ -11,3 +11,10 @@ the Python SDK to interact with Determined.
 Our `Works with Determined <https://github.com/determined-ai/works-with-determined>`__ repository
 includes examples of how to use Determined with a variety of ML ecosystem tools, including
 Pachyderm, DVC, Delta Lake, Seldon, Spark, Argo, Airflow, and Kubeflow.
+
+.. toctree::
+   :caption: Integrations
+   :hidden:
+
+   Notifications <notification/_index>
+   Prometheus <prometheus/_index>

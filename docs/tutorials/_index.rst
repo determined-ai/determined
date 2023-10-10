@@ -52,6 +52,7 @@ Examples let you build off of an existing model that already runs on Determined.
 .. toctree::
    :hidden:
 
+   Quickstart <quickstart-mdldev>
    Run Your First Experiment <pytorch-mnist-local-qs>
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>

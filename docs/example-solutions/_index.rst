@@ -1,3 +1,11 @@
 :orphan:
 
-orphan index page
+#######
+ Index
+#######
+
+
+.. toctree::
+   :hidden:
+
+   Examples <examples>

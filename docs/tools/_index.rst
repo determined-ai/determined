@@ -47,3 +47,14 @@
          </div>
       </div>
    </div>
+
+.. toctree::
+   :caption: Tools
+   :hidden:
+
+   CLI <cli/cli-ug>
+   Commands and Shells <cli/commands-and-shells>
+   Notebooks <notebooks>
+   Proxy Ports <proxy-ports>
+   Tensorboard <tensorboard>
+   WebUI <webui-if>
