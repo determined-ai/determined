@@ -1,84 +1,18 @@
 .. toctree::
    :hidden:
 
-   Welcome <self>
-
-.. toctree::
-   :caption: Get Started
-   :maxdepth: 2
-   :hidden:
-
-   How It Works <architecture/_index>
+   Get Started <get-started/_index>
+   How it Works <architecture/_index>
+   Set Up <setup-cluster/_index>
+   Manage <manage/_index>
    Tutorials <tutorials/_index>
-   Quickstart for Model Developers <tutorials/quickstart-mdldev>
-   Examples <example-solutions/examples>
+   Examples <example-solutions/_index>
    Model Hub Library <model-hub-library/_index>
+   Model Dev Guide <model-dev-guide/_index>
+   Reference <reference/_index>
+   Tools <tools/_index>
+   Integrations <integrations/_index>
 
-.. toctree::
-   :caption: Set Up
-   :hidden:
-
-   Installation Guide <setup-cluster/_index>
-   Security <manage/security/_index>
-   User Accounts <manage/users>
-   Workspaces and Projects <manage/workspaces>
-   Logging and Elasticsearch <manage/elasticsearch-logging-backend>
-   Cluster Usage History <manage/historical-cluster-usage-data>
-   Monitor Experiment Through Webhooks  <integrations/notification/_index>
-   Upgrade <manage/upgrade>
-   Troubleshooting <manage/troubleshooting>
-
-.. toctree::
-   :caption: Model Developer Guide
-   :hidden:
-
-   Overview <model-dev-guide/_index>
-   Distributed Training <model-dev-guide/dtrain/_index>
-   Prepare Container Environment <model-dev-guide/prepare-container/_index>
-   Prepare Data <model-dev-guide/load-model-data>
-   API Guides <model-dev-guide/api-guides/_index>
-   Hyperparameter Tuning <model-dev-guide/hyperparameter/_index>
-   Submit Experiment <model-dev-guide/submit-experiment>
-   How to Debug Models <model-dev-guide/debug-models>
-   Model Management <model-dev-guide/model-management/_index>
-   Best Practices <model-dev-guide/best-practices/_index>
-
-.. toctree::
-   :caption: Reference
-   :hidden:
-
-   Overview <reference/_index>
-   Python SDK <reference/python-sdk>
-   REST API <reference/rest-api>
-   Training Reference <reference/training/_index>
-   Experiment Configuration Reference <reference/training/experiment-config-reference>
-   Model Hub Reference <reference/model-hub/_index>
-   Deployment Reference <reference/deploy/_index>
-   Job Configuration Reference <reference/job-config-reference>
-   Custom Searcher Reference <reference/custom-searcher-reference>
-   CLI Reference <reference/cli-reference>
-
-.. toctree::
-   :caption: Tools
-   :hidden:
-
-   Overview <tools/_index>
-   CLI User Guide <tools/cli/cli-ug>
-   Commands and Shells <tools/cli/commands-and-shells>
-   WebUI Interface <tools/webui-if>
-   Jupyter Notebooks <tools/notebooks>
-   TensorBoards <tools/tensorboard>
-   Exposing Custom Ports <tools/proxy-ports>
-
-.. toctree::
-   :caption: Integrations
-   :hidden:
-
-   Works with Determined <integrations/_index>
-   PyCharm <integrations/ide/pycharm>
-   VSCode <integrations/ide/vscode>
-   Pachyderm <integrations/data-transformers/pachyderm>
-   Prometheus and Grafana <integrations/prometheus/_index>
    attributions
 
 #############################
