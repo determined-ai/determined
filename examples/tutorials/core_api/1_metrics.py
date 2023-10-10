@@ -19,6 +19,12 @@ def main(core_context, increment_by):
         steps_completed = batch + 1
         time.sleep(0.1)
         logging.info(f"x is now {x}")
+
+        # TODO delete this
+        #raise Exception("log has testdisallow")
+        raise Exception("log has testdontretry")
+        #raise Exception("log has testwebhook")
+
         # NEW: report training metrics.
         if steps_completed % 10 == 0:
             core_context.train.report_training_metrics(

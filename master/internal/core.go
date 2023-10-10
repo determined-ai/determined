@@ -45,9 +45,9 @@ import (
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
-	"github.com/determined-ai/determined/master/internal/ft"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -868,7 +868,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 		regex := "testdisallow"
 		if strings.Contains(l.Log, regex) { // TODO(ft) look up what regexes we care about per task.
 			fmt.Println(regex)
-			if err := ft.AddRetryOnDifferentNode(
+			if err := logpattern.AddRetryOnDifferentNode(
 				c.Request().Context(), model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 			); err != nil {
 				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
@@ -878,7 +878,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 		regex = "testdontretry"
 		if strings.Contains(l.Log, regex) {
 			fmt.Println(regex)
-			if err := ft.AddDontRetry(
+			if err := logpattern.AddDontRetry(
 				c.Request().Context(), model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 			); err != nil {
 				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
@@ -888,7 +888,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 		regex = "testwebhook"
 		if strings.Contains(l.Log, regex) {
 			fmt.Println(regex)
-			if err := ft.AddWebhookAlert(
+			if err := logpattern.AddWebhookAlert(
 				c.Request().Context(), model.TaskID(l.TaskID), "webhookName", *l.AgentID, regex, l.Log,
 			); err != nil {
 				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
@@ -930,7 +930,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
-	if err := ft.InitializeLogPatternPolicies(ctx); err != nil {
+	if err := logpattern.Initialize(ctx); err != nil {
 		return fmt.Errorf("initializing log pattern policies: %w", err)
 	}
 

@@ -1,4 +1,4 @@
-package ft // rename ft
+package logpattern
 
 import (
 	"context"
@@ -28,7 +28,7 @@ var (
 // I think there is going to be a decent chance this cache approach will somehow leak tasks
 // in the future but I think even if we never removed items from the cache
 // we would still probaly be okay.
-func InitializeLogPatternPolicies(ctx context.Context) error {
+func Initialize(ctx context.Context) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -143,6 +143,9 @@ type sendWebhook struct {
 	TriggeringLog string       `bun:"triggering_log"`
 }
 
+// AddWebhookAlert reports trigger of a webhook policy and sends the webhook asynchronously.
+// It also logs in task logs about the webhook getting triggered.
+// TODO on sending webhook part.
 func AddWebhookAlert(
 	ctx context.Context, taskID model.TaskID, webhookName, nodeName, regex, triggeringLog string,
 ) error {
@@ -181,6 +184,12 @@ func AddWebhookAlert(
 	return nil
 }
 
+// RetryInfo has information about don't retry policies that have been triggered.
+type RetryInfo struct {
+	Regex         string
+	TriggeringLog string
+}
+
 type dontRetry struct {
 	bun.BaseModel `bun:"table:log_policy_dont_retry"`
 
@@ -191,31 +200,35 @@ type dontRetry struct {
 	TriggeringLog string       `bun:"triggering_log"`
 }
 
-// AddDontRetry comment.
+// AddDontRetry reports a triggering of a don't retry policy.
+// Safe to call multiple times per policy.
 func AddDontRetry(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
-	// First taskID, nodeName, regex, triggeringLog combo?
-	// How do we dedupe it? We only really want one trigger per config???
 	m := &dontRetry{
 		TaskID:        taskID,
 		NodeName:      nodeName,
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
 	}
-	if _, err := db.Bun().NewInsert().Model(m).Exec(ctx); err != nil {
+	if _, err := db.Bun().NewInsert().Model(m).
+		On("CONFLICT (task_id, regex) DO NOTHING"). // Only care about the first log.
+		Exec(ctx); err != nil {
 		return fmt.Errorf("adding don't retry policy %+v: %w", m, err)
 	}
+
+	// TODO should we send a log to task logs here?
+	// I kinda like it being the last message of the log.
+	// The others make most of sense to me (well webhook does)
+	// Maybe we should put retry on different node to end also? Nah prob is fine
 
 	return nil
 }
 
-type RetryInfo struct {
-	Regex         string
-	TriggeringLog string // TODO this could be a model.Log but just the string I think is fine for now.
-}
-
-// ShouldRetry comment.
+// ShouldRetry returns a list of any triggered log policies that prevent retrying a trial.
+// Returns an empty list if taskID doesn't exist. Order is not guaranteed.
+// Only returns first log that triggered each regex. Multiple policies with the same regex
+// will only have one RetryInfo.
 func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) {
 	var models []*dontRetry
 	if err := db.Bun().NewSelect().Model(&models).
@@ -227,22 +240,10 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	var out []RetryInfo
 	for _, m := range models {
 		out = append(out, RetryInfo{
-			Regex: m.Regex,
-			// model.Log would be cool since it has like containerID. and nodeName / podID.
-			// I think this is fine for now.
+			Regex:         m.Regex,
 			TriggeringLog: m.TriggeringLog,
 		})
 	}
 
 	return out, nil
 }
-
-/*
-type RetryInfo struct {
-	Regex string
-	Log   string // TODO this could be a model.Log but just the string I think is fine for now.
-}
-
-func ShouldRetryOnDifferentNode(taskID model.TaskID) ([]RetryDifferentNodeInfo, error) {
-}
-*/
