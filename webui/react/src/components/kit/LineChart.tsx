@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { ECElementEvent, EChartsOption } from 'echarts';
 import { CallbackDataParams, TopLevelFormatterParams } from 'echarts/types/dist/shared';
+import _ from 'lodash';
 import React, { ReactNode, useMemo } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 
@@ -31,6 +32,12 @@ export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';
 
 export type OnClickPointType = (id: number, data: ECElementEvent['data']) => void;
+
+// JS Date adjust time to local time instead of UTC
+// This func adjusts the time for UTC
+const adjustLocalTimeToUTC = (unixTime: number): Date => {
+  return dayjs.unix(unixTime).subtract(dayjs.unix(unixTime).utcOffset(), 'm').toDate();
+};
 
 /**
  * @typedef ChartProps {object}
@@ -87,7 +94,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   }, [propSeries]);
 
   const seriesData: SeriesDataType = useMemo(() => {
-    const allXValues = Array.from(
+    const allXValues: number[] = Array.from(
       new Set(
         series.flatMap((s) => {
           const data = s.data[xAxis];
@@ -111,12 +118,18 @@ export const LineChart: React.FC<LineChartProps> = ({
 
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
-  const onClick: EchartsEventFunction = {
-    eventName: 'click',
-    handler: (params) => {
-      onClickPoint?.(Number(params.seriesId), params.data);
-    },
-  };
+  const EventFunctions: EchartsEventFunction[] = useMemo(() => {
+    return [
+      {
+        eventName: 'click',
+        handler: (params) => {
+          if (xAxis !== XAxisDomain.Time) {
+            onClickPoint?.(Number(params.name), [Number(params.name), Number(params.value)]);
+          }
+        },
+      },
+    ];
+  }, [onClickPoint, xAxis]);
 
   const echartOption: EChartsOption = useMemo(() => {
     let currentYAxis = 0;
@@ -179,19 +192,19 @@ export const LineChart: React.FC<LineChartProps> = ({
                   continue;
                 }
                 set.add(xValue);
-                arr.push([dayjs.unix(xValue).toDate(), yValue]);
+                arr.push([adjustLocalTimeToUTC(xValue), yValue]);
               }
               return arr;
             })(),
             emphasis: { focus: 'series' },
             id: serie.key,
             itemStyle: { color: serie.color },
-            name: serie.name,
+            name: serie.name ?? yLabel,
             type: 'line',
           })),
           xAxis: {
-            max: xValueRange ? dayjs.unix(xValueRange[1]).toDate() : undefined,
-            min: xValueRange ? dayjs.unix(xValueRange[0]).toDate() : undefined,
+            max: xValueRange ? adjustLocalTimeToUTC(xValueRange[1]) : undefined,
+            min: xValueRange ? adjustLocalTimeToUTC(xValueRange[0]) : undefined,
             name: xLabel,
             type: 'time',
           },
@@ -205,15 +218,15 @@ export const LineChart: React.FC<LineChartProps> = ({
             emphasis: { focus: 'series' },
             id: serie.key,
             itemStyle: { color: serie.color },
-            name: serie.name,
-            symbol: (value) => {
+            name: serie.name ?? yLabel,
+            symbol: (value, params) => {
               if (checkpointsDict === undefined) return 'circle';
-              return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
+              return Number(params.name) in checkpointsDict ? 'diamond' : 'circle';
             },
-            symbolSize: (value) => {
+            symbolSize: (value, params) => {
               const DEFAULT_SIZE = 4;
               if (checkpointsDict === undefined) return DEFAULT_SIZE;
-              return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
+              return Number(params.name) in checkpointsDict ? 10 : DEFAULT_SIZE;
             },
             type: 'line',
           })),
@@ -261,8 +274,9 @@ export const LineChart: React.FC<LineChartProps> = ({
       toolbox: {
         feature: {
           dataView: { readOnly: true },
+          dataZoom: { yAxisIndex: false },
           restore: {},
-          saveAsImage: { excludeComponents: ['toolbox', 'dataZoom'], name: 'line-chart' },
+          saveAsImage: { excludeComponents: ['toolbox', 'dataZoom', 'legend'], name: 'line-chart' },
         },
       },
       tooltip: { axisPointer: { type: 'cross' }, confine, trigger: 'axis' },
@@ -275,7 +289,7 @@ export const LineChart: React.FC<LineChartProps> = ({
       },
     };
 
-    const option: EChartsOption = { ...baseOption, ...generateOption() };
+    const option: EChartsOption = _.merge(baseOption, generateOption());
     return option;
   }, [
     checkpointsDict,
@@ -298,8 +312,12 @@ export const LineChart: React.FC<LineChartProps> = ({
       {isLoading ? (
         <div>Loading</div>
       ) : (
-        <div style={{ height: height }}>
-          <ReactECharts eventFunctions={[onClick]} group={group} option={echartOption} />
+        <div style={{ height }}>
+          {series.every((serie) => (serie.data[xAxis]?.length ?? 0) === 0) ? (
+            <div className={css.chartgridEmpty}>No data to plot.</div>
+          ) : (
+            <ReactECharts eventFunctions={EventFunctions} group={group} option={echartOption} />
+          )}
         </div>
       )}
     </>

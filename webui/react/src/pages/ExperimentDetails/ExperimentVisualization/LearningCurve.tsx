@@ -307,6 +307,7 @@ const LearningCurve: React.FC<Props> = ({
             <LineChart
               scale={selectedScale}
               series={chartData}
+              showLegend
               xLabel="Batches Processed"
               yLabel={metricToStr(selectedMetric)}
               onClickPoint={handleClickPoint}

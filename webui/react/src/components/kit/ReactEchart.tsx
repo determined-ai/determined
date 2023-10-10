@@ -1,4 +1,4 @@
-import type { EChartsOption, SetOptionOpts } from 'echarts';
+import type { EChartsOption } from 'echarts';
 import { LineChart, ScatterChart } from 'echarts/charts';
 import {
   DataZoomComponent,
@@ -9,7 +9,7 @@ import {
   VisualMapComponent,
 } from 'echarts/components';
 import * as echarts from 'echarts/core';
-import { LabelLayout, UniversalTransition } from 'echarts/features';
+import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 import React, { useEffect, useRef } from 'react';
 
@@ -25,7 +25,6 @@ echarts.use([
   LineChart,
   ScatterChart,
   LabelLayout,
-  UniversalTransition,
   CanvasRenderer,
   VisualMapComponent,
 ]);
@@ -39,11 +38,10 @@ export interface EchartsEventFunction {
 export interface Props {
   option: EChartsOption;
   eventFunctions?: EchartsEventFunction[];
-  settings?: SetOptionOpts;
   group?: string;
 }
 
-const ReactECharts: React.FC<Props> = ({ option, settings = {}, group, eventFunctions }: Props) => {
+const ReactECharts: React.FC<Props> = ({ option, group, eventFunctions }: Props) => {
   const { ui } = useUI();
   const chartRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
@@ -87,13 +85,12 @@ const ReactECharts: React.FC<Props> = ({ option, settings = {}, group, eventFunc
       echart?.setOption(
         { ...option, animation: false },
         {
-          ...settings,
           notMerge: false,
           replaceMerge: ['xAxis', 'yAxis', 'series'],
         },
       );
     }
-  }, [option, settings]);
+  }, [option]);
 
   return (
     <div

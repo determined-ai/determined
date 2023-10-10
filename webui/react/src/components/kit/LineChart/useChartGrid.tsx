@@ -7,5 +7,5 @@ export const useChartGrid = (): ((
   props: Omit<GroupProps, 'scale' | 'setScale'>,
 ) => JSX.Element) => {
   const [scale, setScale] = useState<Scale>(Scale.Linear);
-  return (props) => <ChartGrid {...props} scale={scale} setScale={setScale} />;
+  return (props) => <ChartGrid {...props} group="UseChartGrid" scale={scale} setScale={setScale} />;
 };

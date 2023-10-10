@@ -5,8 +5,8 @@
 .chartgridEmpty {
   align-items: center;
   display: flex;
+  height: 100%;
   justify-content: center;
-  min-height: 530px;
 }
 .chartgridContainer {
   --grid-spacing: 6px;
@@ -46,23 +46,4 @@
   justify-content: right;
   margin-bottom: 12px;
   padding-right: 6px;
-}
-.legendContainer {
-  margin-left: 35px;
-
-  .legendItem {
-    display: inline-block;
-    font-family: var(--theme-font-family);
-    font-size: 12px;
-    margin-right: 16px;
-
-    .colorButton {
-      font-weight: bold;
-      margin-right: 8px;
-    }
-
-    @supports (font-variation-settings: normal) {
-      font-family: var(--theme-font-family-var);
-    }
-  }
 }
