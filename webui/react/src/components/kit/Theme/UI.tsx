@@ -15,7 +15,7 @@ import React, {
 import { BrandingType, RecordKey } from 'components/kit/internal/types';
 
 import { themes } from './themes';
-import { DarkLight, createTheme, globalCssVars, Mode, Theme } from './themeUtils';
+import { createTheme, DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
 export { StyleProvider };
 
 interface StateUI {
@@ -58,7 +58,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) { }
+  constructor(private dispatch: Dispatch<ActionUI>) {}
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });
@@ -251,32 +251,28 @@ export const ThemeProvider: React.FC<{ children?: React.ReactNode; theme: ThemeU
   children,
   theme,
 }) => {
-
-
-  /*** 
+  /***
    1. There are two ways to update the theme currently
        a. setTheme via useUI which will update our css vars
        b. Using ConfigProvider via AntD
          1. The config provider takes in seed and component tokens, then provides styling for
-         components. 
-   
-   the theming in the app is ultimately provided by using a ConfigProvider in 
-   the UIProvider.
+         components.
 
+   the theming in the app is ultimately provided by using a ConfigProvider in
+   the UIProvider.
 
    2. The theme may applied to components in different ways:
      a. Button
         1. Themed solely using the ConfigProvider.
         2. Currently there is no way to to have css variables impact the color
         of the component.
-     b. Spinner, special case where the coloring is only based on a provided 
-        css var  
-        1. Easy enough to remove the custom styling. 
-   
+     b. Spinner, special case where the coloring is only based on a provided
+        css var
+        1. Easy enough to remove the custom styling.
 
    Paths forward:
     1. Determine what needs to be customizable and use the ConfigProvider to the best of its ability.
-    2. 
+    2.
   */
 
   // Example of creating and setting a new theme
@@ -290,8 +286,8 @@ export const ThemeProvider: React.FC<{ children?: React.ReactNode; theme: ThemeU
   const updatedTheme = {
     token: {
       colorPrimary: theme.brand,
-    }
-  }
+    },
+  };
 
   return <ConfigProvider theme={updatedTheme}>{children}</ConfigProvider>;
 };

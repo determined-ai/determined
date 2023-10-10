@@ -569,9 +569,7 @@ const ThemeSection: React.FC = () => (
         theme={{
           brand: 'purple',
         }}>
-        <Pagination current={1}
-          pageSize={50}
-          total={500} />
+        <Pagination current={1} pageSize={50} total={500} />
       </ThemeProvider>
       <hr />
       <ThemeProvider

@@ -4,7 +4,7 @@ import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
-import useUI, { ThemeProvider, createTheme } from 'components/kit/Theme';
+import useUI, { createTheme, ThemeProvider } from 'components/kit/Theme';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
