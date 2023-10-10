@@ -26,11 +26,14 @@ if __name__ == "__main__":
         auth = authentication.Authentication(args.master_addr, args.user)
         authorization_token = auth.get_session_token(must=True)
 
+    # The special string "noverify" is passed to our certs.Cert object as a boolean False.
+    cert_file = False if args.cert_file == "noverify" else args.cert_file
+
     if args.listener:
         with http_tunnel_listener(
             args.master_addr,
             [ListenerConfig(service_id=args.service_uuid, local_port=args.listener)],
-            args.cert_file,
+            cert_file,
             args.cert_name,
             authorization_token,
         ):
@@ -38,5 +41,5 @@ if __name__ == "__main__":
                 time.sleep(1)
     else:
         http_connect_tunnel(
-            args.master_addr, args.service_uuid, args.cert_file, args.cert_name, authorization_token
+            args.master_addr, args.service_uuid, cert_file, args.cert_name, authorization_token
         )

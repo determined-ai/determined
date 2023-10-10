@@ -163,9 +163,15 @@ def _open_shell(
         proxy_cmd = f"{sys.executable} -m determined.cli.tunnel {master} %h"
 
         cert_bundle_path = _prepare_cert_bundle(cache_dir)
-        if cert_bundle_path is not None:
-            assert isinstance(cert_bundle_path, str), cert_bundle_path
+        if cert_bundle_path is False:
+            proxy_cmd += " --cert-file noverify"
+        elif isinstance(cert_bundle_path, str):
             proxy_cmd += f' --cert-file "{cert_bundle_path}"'
+        elif cert_bundle_path is not None:
+            raise RuntimeError(
+                f"unexpected cert_bundle_path ({cert_bundle_path}) "
+                f"of type ({type(cert_bundle_path).__name__})"
+            )
 
         cert = certs.cli_cert
         assert cert is not None, "cli_cert was not configured"
