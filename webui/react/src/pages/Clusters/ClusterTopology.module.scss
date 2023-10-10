@@ -1,8 +1,13 @@
 .container {
-  align-items: flex-start;
+  background-color: var(--theme-surface);
+  border-radius: var(--theme-border-radius-weak);
+  box-shadow: 0 1.6px 3.6px 1.6px rgb(0 0 0 / 13%);
+  color: var(--theme-surface-on);
   display: flex;
-  flex-wrap: wrap;
+  flex-flow: column wrap;
   justify-content: flex-start;
+  padding: 30px;
+  width: 100%;
 
   .node {
     align-items: flex-start;
