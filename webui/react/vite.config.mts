@@ -192,5 +192,6 @@ export default defineConfig(({ mode }) => ({
     exclude: [...configDefaults.exclude, './src/e2e/*'],
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
+    testNamePattern: process.env.INCLUDE_FLAKY === 'true' ? /@flaky/ : /^(?!.*@flaky)/
   },
 }));

@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import * as src from 'determined-ui/LogViewer/LogViewer';
 import { UIProvider } from 'determined-ui/Theme';
 
-import { flakyIt } from 'quarantineTests';
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -294,22 +293,18 @@ describe('LogViewer', () => {
       });
     });
 
-    flakyIt(
-      'should render logs with streaming',
-      async () => {
-        setup({ decoder, onError: handleError, onFetch, serverAddress });
+    it('should render logs with streaming @flaky', async () => {
+      setup({ decoder, onError: handleError, onFetch, serverAddress });
 
-        await waitFor(
-          () => {
-            const lastLog = logsReference[logsReference.length - 1];
-            expect(lastLog.message).not.toBeNull();
-            expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-          },
-          { timeout: 6000 },
-        );
-      },
-      6500,
-    );
+      await waitFor(
+        () => {
+          const lastLog = logsReference[logsReference.length - 1];
+          expect(lastLog.message).not.toBeNull();
+          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+        },
+        { timeout: 6000 },
+      );
+    }, 6500);
 
     it('should show oldest logs', async () => {
       setup({ decoder, onError: handleError, onFetch, serverAddress });
