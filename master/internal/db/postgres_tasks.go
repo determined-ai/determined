@@ -121,10 +121,11 @@ func completeTrialsTasks(ex sqlx.Execer, trialID int, endTime time.Time) error {
 UPDATE log_policy_retry_on_different_node lp
 SET task_ended = true
 FROM trial_id_task_id tt
+JOIN tasks t ON t.task_id = tt.task_id
 WHERE tt.task_id = lp.task_id
   AND NOT lp.task_ended
   AND tt.trial_id = $1
-  AND tt.end_time IS NULL`, trialID); err != nil {
+  AND t.end_time IS NULL`, trialID); err != nil {
 		return fmt.Errorf("completing task: %w", err)
 	}
 

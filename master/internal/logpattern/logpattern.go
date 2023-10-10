@@ -28,13 +28,14 @@ var (
 // I think there is going to be a decent chance this cache approach will somehow leak tasks
 // in the future but I think even if we never removed items from the cache
 // we would still probaly be okay.
+// Initialize the blocked node list.
 func Initialize(ctx context.Context) error {
 	mu.Lock()
 	defer mu.Unlock()
 
 	var blockedNodes []*retryOnDifferentNode
 	if err := db.Bun().NewSelect().Model(&blockedNodes).
-		Where("task_ended = true").
+		Where("task_ended = false").
 		Scan(ctx, &blockedNodes); err != nil {
 		return fmt.Errorf("getting blocked nodes: %w", err)
 	}
@@ -54,8 +55,6 @@ func Initialize(ctx context.Context) error {
 func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	mu.RLock()
 	defer mu.RUnlock()
-
-	fmt.Println("DISALKLOWED NODES", taskID, blockListCache[taskID])
 
 	disallowedNodes := blockListCache[taskID]
 	if disallowedNodes != nil {
@@ -85,7 +84,7 @@ type retryOnDifferentNode struct {
 	TaskEnded     bool         `bun:"task_ended"`
 }
 
-// AddRetryOnDifferentNode comment.
+// AddRetryOnDifferentNode adds retry different node to database and block list cache.
 func AddRetryOnDifferentNode(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {

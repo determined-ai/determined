@@ -37,10 +37,97 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestRetryOnDifferentNode(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, Initialize(ctx))
+
+	require.Len(t, *DisallowedNodes(model.TaskID("fake task ID")), 0)
+
+	user := db.RequireMockUser(t, pgDB)
+	exp := db.RequireMockExperiment(t, pgDB, user)
+	trial, task := db.RequireMockTrial(t, pgDB, exp)
+
+	require.Len(t, *DisallowedNodes(task.TaskID), 0)
+
+	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "loga"))
+	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n1", "regexa", "logb"))
+	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "logc"))
+
+	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "dontappear"))
+	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "dontappear"))
+
+	// Check DB state is as expected.
+	var actual []*retryOnDifferentNode
+	require.NoError(t, db.Bun().NewSelect().Model(&actual).
+		ExcludeColumn("id", "task_id").
+		Where("task_id = ?", task.TaskID).
+		Scan(ctx, &actual))
+
+	require.ElementsMatch(t, []*retryOnDifferentNode{
+		{
+			NodeName:      "n0",
+			Regex:         "regexa",
+			TriggeringLog: "loga",
+			TaskEnded:     false,
+		},
+		{
+			NodeName:      "n1",
+			Regex:         "regexa",
+			TriggeringLog: "logb",
+			TaskEnded:     false,
+		},
+		{
+			NodeName:      "n0",
+			Regex:         "regexb",
+			TriggeringLog: "logc",
+			TaskEnded:     false,
+		},
+	}, actual)
+
+	// Safe across "restarts".
+	require.ElementsMatch(t, []string{"n0", "n1"},
+		DisallowedNodes(task.TaskID).ToSlice())
+
+	require.NoError(t, Initialize(ctx))
+
+	require.ElementsMatch(t, []string{"n0", "n1"},
+		DisallowedNodes(task.TaskID).ToSlice())
+
+	// Restarts won't load inactive alerts for perf.
+	_, err := db.Bun().NewUpdate().Model(&retryOnDifferentNode{}).
+		Set("task_ended = true").
+		Where("task_id = ?", task.TaskID).
+		Where("node_name = ?", "n0").
+		Exec(ctx)
+	require.NoError(t, err)
+
+	require.NoError(t, Initialize(ctx))
+
+	require.ElementsMatch(t, []string{"n1"},
+		DisallowedNodes(task.TaskID).ToSlice())
+
+	// Reporting task done won't update db state just the cache.
+	ReportTaskDone(task.TaskID)
+	require.Len(t, DisallowedNodes(task.TaskID).ToSlice(), 0)
+
+	require.NoError(t, Initialize(ctx))
+
+	require.ElementsMatch(t, []string{"n1"},
+		DisallowedNodes(task.TaskID).ToSlice())
+
+	// Moving trial to done will end it's task and have it no longer be in cache when restarted.
+	require.NoError(t, pgDB.UpdateTrial(trial.ID, model.CompletedState))
+
+	require.NoError(t, Initialize(ctx))
+
+	require.Len(t, DisallowedNodes(task.TaskID).ToSlice(), 0)
+}
+
 func TestShouldRetry(t *testing.T) {
 	ctx := context.Background()
 
-	resp, err := ShouldRetry(ctx, model.TaskID("fake Task ID"))
+	resp, err := ShouldRetry(ctx, model.TaskID("fake task ID"))
 	require.NoError(t, err)
 	require.Len(t, resp, 0)
 
