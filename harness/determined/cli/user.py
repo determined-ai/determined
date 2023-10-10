@@ -241,10 +241,10 @@ args_description = [
             Arg(
                 "target_user",
                 default=None,
-                help="name of user whose display name should be changed"
+                help="name of user that should be edited"
             ),
             Arg("--display-name", default=None, help="new display name for target_user"),
-            Arg("--username", default=None, help="new username name for target_user"),
+            Arg("--username", default=None, help="new username for target_user"),
             BoolOptArg(
                 "--remote",
                 "--no-remote",
