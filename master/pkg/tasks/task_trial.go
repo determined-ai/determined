@@ -126,10 +126,6 @@ func (s TrialSpec) ToTaskSpec() TaskSpec {
 
 	res.ExtraEnvVars = envVars
 
-	res.LoggingFields = map[string]string{
-		"trial_id": strconv.Itoa(s.TrialID),
-	}
-
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)
 	}

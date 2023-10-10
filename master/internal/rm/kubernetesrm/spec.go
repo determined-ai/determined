@@ -416,8 +416,6 @@ func (p *pod) createPodSpec(scheduler string) error {
 
 	var sidecars []k8sV1.Container
 
-	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
-
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         spec.Entrypoint,

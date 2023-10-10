@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-source /run/determined/task-signal-handling.sh
-source /run/determined/task-logging-setup.sh
+source /run/determined/task-setup.sh
 
 set -e
 
@@ -15,10 +14,8 @@ fi
 # to register the proxy with the Determined master.
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_context_directory
 
-trap_and_forward_signals
 if [ "$#" -eq 1 ]; then
-    /bin/sh -c "$@" &
+    exec /bin/sh -c "$@"
 else
-    "$@" &
+    exec "$@"
 fi
-wait_and_handle_signals $!

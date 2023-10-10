@@ -30,8 +30,10 @@ const (
 	NotebookIdleCheckResource = "check_idle.py"
 	// TaskCheckReadyLogsResource is the script to parse logs to check if a task is ready.
 	TaskCheckReadyLogsResource = "check_ready_logs.py"
-	// TaskEnrichLogsResource is the script to enrich logs for slurm (which doesn't run fluent).
-	TaskEnrichLogsResource = "enrich_task_logs.py"
+	// TaskShipLogsShellResource is the shell script to call the python script to ship logs.
+	TaskShipLogsShellResource = "ship-logs.sh"
+	// TaskShipLogsPythonResource is the python script to ship logs.
+	TaskShipLogsPythonResource = "ship_logs.py"
 	// TensorboardEntryScriptResource is the script to set up TensorBoard.
 	TensorboardEntryScriptResource = "tensorboard-entrypoint.sh"
 	// TrialEntrypointScriptResource is the script to set up a trial.
@@ -40,12 +42,8 @@ const (
 	AgentSetupScriptTemplateResource = "agent_setup_script.sh.template"
 	// K8InitContainerEntryScriptResource is the script to run the init container on k8s.
 	K8InitContainerEntryScriptResource = "k8_init_container_entrypoint.sh"
-	// TaskLoggingSetupScriptResource is the script to setup prerequistites for logging.
-	TaskLoggingSetupScriptResource = "task-logging-setup.sh"
-	// TaskLoggingTeardownScriptResource is the script to teardown stuff for logging.
-	TaskLoggingTeardownScriptResource = "task-logging-teardown.sh"
-	// TaskSignalHandlingScriptResource is the script to teardown stuff for logging.
-	TaskSignalHandlingScriptResource = "task-signal-handling.sh"
+	// TaskSetupScriptResource is the script to setup various things for all tasks.
+	TaskSetupScriptResource = "task-setup.sh"
 	// SingularityEntrypointWrapperScriptResource is the entrypoint for singularity containers.
 	SingularityEntrypointWrapperScriptResource = "singularity-entrypoint-wrapper.sh"
 )

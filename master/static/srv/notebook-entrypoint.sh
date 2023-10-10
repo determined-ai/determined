@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-source /run/determined/task-signal-handling.sh
-source /run/determined/task-logging-setup.sh
+source /run/determined/task-setup.sh
 
 set -e
 
@@ -43,7 +42,6 @@ set +x
 JUPYTER_LAB_LOG_FORMAT="%(levelname)s: [%(name)s] %(message)s"
 READINESS_REGEX='^.*Jupyter Server .* is running.*$'
 
-trap_and_forward_signals
 jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
     --ServerApp.allow_origin="*" \
     --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
@@ -61,4 +59,3 @@ jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
     --LabApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
     --ServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
     2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "${READINESS_REGEX}") >&2)
-wait_and_handle_signals $!

@@ -3,7 +3,6 @@ package kubernetesrm
 import (
 	"context"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -129,37 +128,10 @@ func createPodWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 	return newPod, aID, sub
 }
 
-var taskContainerFiles = []string{
-	"k8_init_container_entrypoint.sh",
-	"task-logging-setup.sh",
-	"task-logging-teardown.sh",
-	"task-signal-handling.sh",
-	"enrich_task_logs.py",
-	"singularity-entrypoint-wrapper.sh",
-}
-
 func setupEntrypoint(t *testing.T) {
-	err := etc.SetRootPath(".")
+	err := etc.SetRootPath("../../../static/srv")
 	if err != nil {
 		t.Logf("Failed to set root directory")
-	}
-
-	for _, file := range taskContainerFiles {
-		//nolint:gosec
-		f, _ := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
-		err = f.Close()
-		if err != nil {
-			t.Logf("failed to close %s", file)
-		}
-	}
-}
-
-func cleanup(t *testing.T) {
-	for _, file := range taskContainerFiles {
-		err := os.Remove(file)
-		if err != nil {
-			t.Logf("failed to remove %s", file)
-		}
 	}
 }
 
@@ -194,7 +166,6 @@ func checkReceiveTermination(
 
 func TestResourceCreationFailed(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	const correctMsg = "already exists"
 
@@ -219,7 +190,6 @@ func TestResourceCreationFailed(t *testing.T) {
 
 func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
@@ -279,7 +249,6 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 func TestMultipleContainerTerminate(t *testing.T) {
 	// Status update test involving two containers.
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	containerStatuses := []k8sV1.ContainerStatus{
 		{
@@ -342,7 +311,6 @@ func TestMultipleContainerTerminate(t *testing.T) {
 
 func TestReceivePodStatusUpdateAssigned(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	ref, aID, sub := createPodWithMockQueue(t, nil)
 	purge(aID, sub)
@@ -378,7 +346,6 @@ func TestReceivePodStatusUpdateAssigned(t *testing.T) {
 
 func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
@@ -489,7 +456,6 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 func TestMultipleContainersRunning(t *testing.T) {
 	// Status update test involving two containers.
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	typeMeta := metaV1.TypeMeta{Kind: "rest test"}
 	objectMeta := metaV1.ObjectMeta{
@@ -579,7 +545,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 
 func TestReceivePodEventUpdate(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	ref, aID, sub := createPodWithMockQueue(t, nil)
 	purge(aID, sub)
@@ -625,7 +590,6 @@ func TestReceivePodEventUpdate(t *testing.T) {
 
 func TestReceiveContainerLog(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	mockLogMessage := "mock log message"
 	ref, aID, sub := createPodWithMockQueue(t, nil)
@@ -700,7 +664,6 @@ func TestReceiveContainerLog(t *testing.T) {
 
 func TestKillTaskPod(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
@@ -723,7 +686,6 @@ func TestKillTaskPod(t *testing.T) {
 
 func TestResourceCreationCancelled(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	podInterface := &mockPodInterface{
 		pods:             make(map[string]*k8sV1.Pod),
@@ -776,7 +738,6 @@ func TestResourceCreationCancelled(t *testing.T) {
 
 func TestResourceDeletionFailed(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
@@ -821,7 +782,6 @@ func TestResourceDeletionFailed(t *testing.T) {
 
 func TestGetPodNodeInfo(t *testing.T) {
 	setupEntrypoint(t)
-	defer cleanup(t)
 
 	ref, aID, sub := createPodWithMockQueue(t, nil)
 	ref.slots = 99
