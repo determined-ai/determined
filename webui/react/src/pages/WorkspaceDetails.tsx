@@ -48,7 +48,7 @@ const WorkspaceDetails: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const loadableUsers = useObservable(userStore.getUsers());
-  const users = Loadable.getOrElse([], loadableUsers);
+  const users = loadableUsers.getOrElse([]);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
@@ -76,13 +76,15 @@ const WorkspaceDetails: React.FC = () => {
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(id));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
+  useEffect(() => userStore.startPolling(), []);
+
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({ limit: 100 }, { signal: canceler.signal });
+      const response = await getGroups({ limit: 500 }, { signal: canceler.signal });
 
       setGroups((prev) => {
         if (_.isEqual(prev, response.groups)) return prev;
-        return response.groups || [];
+        return response.groups ?? [];
       });
     } catch (e) {
       handleError(e);
