@@ -130,11 +130,11 @@ def rename_one(links, published, fullsrc, fulldst):
 
 def rename_into(links, published, src, dst, drop_src_root=False):
     """
-    Implement renaming many things into a directory.
+    Rename many things into a directory.
 
     drop_src_root=True indicates a `mv thing newdir/`, where `thing` isn't going to appear in the
     final destination path for any elements of `thing/`, because it will be called `newdir/`
-    isntead.
+    instead.
     """
     if not os.path.isdir(src):
         # src=basepath/base.rst, dst=dstpath/dst
@@ -149,10 +149,12 @@ def rename_into(links, published, src, dst, drop_src_root=False):
             # fulldst=dstpath/dst/[base/]a/b/c/d
             fullsrc = os.path.relpath(os.path.join(root, file), start=HERE)
             if drop_src_root:
+                # The fulldst=dstpath/dst/a/b/c/d case (remove basepath/base/).
                 relsrc = os.path.relpath(fullsrc, start=src)
-                fulldst = os.path.join(dst, relsrc)
             else:
-                fulldst = os.path.join(dst, fullsrc)
+                # The fulldst=dstpath/dst/base/a/b/c/d case (remove just basepath/).
+                relsrc = os.path.relpath(fullsrc, start=os.path.dirname(src))
+            fulldst = os.path.join(dst, relsrc)
             links = rename_one(links, published, fullsrc, fulldst)
     return links
 
