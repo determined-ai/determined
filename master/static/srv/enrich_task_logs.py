@@ -11,6 +11,7 @@ import threading
 import time
 from typing import Any, Dict, Iterator
 
+import determined as det
 from determined.common import api
 from determined.common.api import certs, errors
 
@@ -56,6 +57,38 @@ class LogCollector(threading.Thread):
         self.emit_stdout_logs = emit_stdout_logs
         super().__init__()
 
+    def monitor(self, line, parsed_metadata) -> None:
+        experiment_config = det.ExperimentConfig(det.get_cluster_info().trial._config)
+
+        for log_pattern_policy in experiment_config.get_log_pattern_policy():
+            m = re.compile(f"(.*){log_pattern_policy['pattern']}(.*)").match(line)
+            if m:
+                allocation_id = self.task_logging_metadata.get("allocation_id")
+                task_id = self.task_logging_metadata.get("task_id")
+                trial_id = self.task_logging_metadata.get("trail_id")
+
+                if log_pattern_policy["policy"]["type"] == "on_failure_dont_retry":
+                    # TODO send request to alert endpoint
+                    # self.ship_queue.put(
+                    #     {
+                    #         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    #         "log": "match\n",
+                    #         **self.task_logging_metadata,
+                    #         **parsed_metadata,
+                    #     }
+                    # )
+                    pass
+                elif log_pattern_policy["policy"]["type"] == "on_failure_exclude_node":
+                    # TODO send request to alert endpoint
+                    pass
+                elif log_pattern_policy["policy"]["type"] == "send_webhook":
+                    # TODO send request to webhook
+                    pass
+                else:
+                    raise ValueError(
+                        f"unhandled log pattern policy type: {log_pattern_policy['policy']['type']}"
+                    )
+
     def run(self) -> None:
         try:
             for line in sys.stdin:
@@ -85,8 +118,17 @@ class LogCollector(threading.Thread):
                             **parsed_metadata,
                         }
                     )
+                    self.monitor(line, parsed_metadata)
                 except Exception as e:
                     print(f"fatal error collecting log {e}", file=sys.stderr)
+                    # self.ship_queue.put(
+                    #     {
+                    #         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    #         "log": str(e) + "\n",
+                    #         **self.task_logging_metadata,
+                    #         **parsed_metadata,
+                    #     }
+                    # )
         finally:
             self.ship_queue.put(ShutdownMessage())
 
