@@ -1,4 +1,8 @@
+import { useObservable } from 'micro-observables';
 import React, { PropsWithChildren } from 'react';
+
+import { Loadable } from 'components/kit/utils/loadable';
+import clusterStore from 'stores/cluster';
 
 import css from './ClusterTopology.module.scss';
 
@@ -29,9 +33,16 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
 };
 
 const ClusterTopology: React.FC<PropsWithChildren> = () => {
+  const nodes = Loadable.waitFor(useObservable(clusterStore.agents));
+
   return (
     <div className={css.container}>
-      <NodeElement filledSlots={3} name="test123" slots={8} />
+      {nodes.map(({ id, resources }) => {
+        const filledSlots = resources.reduce((acc, { enabled }) => (enabled ? acc++ : acc), 0);
+        const slots = resources.length;
+
+        return <NodeElement filledSlots={filledSlots} key={id} name={id} slots={slots} />;
+      })}
     </div>
   );
 };
