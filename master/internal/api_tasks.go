@@ -21,11 +21,13 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -399,6 +401,49 @@ func (a *apiServer) PostTaskLogs(
 		}
 
 		logs[i] = model.TaskLogFromProto(req.Logs[i])
+
+		// TODO(ft) move this to a seperate function.
+		// TODO(ft) do all logs have same taskID? Or should we just assume that they don't need to.
+		// TODO(ft) do all logs stream through here? K8S I think we are planning to add log through
+		// k8s api too.
+		for _, l := range logs {
+			if l.AgentID == nil {
+				return nil, fmt.Errorf("agentID must be non nil") // TODO can we get away with this?
+				// It feels kinda annoying to let our database have a possible null that theoretically
+				// shouldn't happen.
+			}
+
+			regex := "testdisallow"
+			if strings.Contains(l.Log, regex) { // TODO(ft) look up what regexes we care about per task.
+				fmt.Println(regex)
+				if err := logpattern.AddRetryOnDifferentNode(
+					ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
+				); err != nil {
+					log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+				}
+			}
+
+			regex = "testdontretry"
+			if strings.Contains(l.Log, regex) {
+				fmt.Println(regex)
+				if err := logpattern.AddDontRetry(
+					ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
+				); err != nil {
+					log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+				}
+			}
+
+			regex = "testwebhook"
+			if strings.Contains(l.Log, regex) {
+				fmt.Println(regex)
+				if err := logpattern.AddWebhookAlert(
+					ctx, model.TaskID(l.TaskID), "webhookName", *l.AgentID, regex, l.Log,
+				); err != nil {
+					log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+				}
+			}
+
+		}
 	}
 
 	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {

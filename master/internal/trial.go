@@ -525,15 +525,12 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 }
 
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
-	// defer cleanupBlocklist() // TODO
 	if exit.Err != nil {
 		t.syslog.WithError(exit.Err).Error("trial allocation failed")
 	}
 	t.allocationID = nil
 
 	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-
-	// TODO here
 
 	// Decide if this is permanent.
 	switch {
@@ -587,10 +584,9 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 		{ // TODO seperate func for these two stuff
 			notRetries, err := logpattern.ShouldRetry(context.TODO(), t.taskID)
 			if err != nil {
-				return err // I think this error is reasonable here?
+				return err // I think "return err" is reasonable here? Or should we just retry?
 			}
 
-			// TODO just insert these logs into it...
 			if len(notRetries) > 0 {
 				var exitReasons []string
 				for _, r := range notRetries {

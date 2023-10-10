@@ -138,7 +138,6 @@ WHERE trial_id_task_id.task_id = tasks.task_id
   AND end_time IS NULL`, trialID, endTime); err != nil {
 		return fmt.Errorf("completing task: %w", err)
 	}
-
 	return nil
 }
 
