@@ -10,6 +10,8 @@ import (
 
 	context "context"
 
+	decimal "github.com/shopspring/decimal"
+
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	mock "github.com/stretchr/testify/mock"
@@ -1506,6 +1508,20 @@ func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
 		r0 = rf(allocation)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateJobPosition provides a mock function with given fields: jobID, position
+func (_m *DB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error {
+	ret := _m.Called(jobID, position)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.JobID, decimal.Decimal) error); ok {
+		r0 = rf(jobID, position)
 	} else {
 		r0 = ret.Error(0)
 	}

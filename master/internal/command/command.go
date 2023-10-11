@@ -4,28 +4,26 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
-
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/logger"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -204,6 +202,8 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
+	mu sync.Mutex
+
 	db *db.PgDB
 	rm rm.ResourceManager
 
@@ -226,8 +226,17 @@ type command struct {
 
 // Receive implements the actor.Actor interface.
 func (c *command) Receive(ctx *actor.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		priorityChange := func(priority int) error {
+			return c.SetPriority(ctx, priority, false)
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Add(c.jobID, priorityChange); err != nil {
+			return err
+		}
 		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		if !c.restored {
@@ -281,7 +290,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
 			ResourcePool: c.Config.Resources.ResourcePool,
@@ -309,6 +317,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
+			ctx.Log().WithError(err).Error("deleting command from GroupPriorityChangeRegistry")
+		}
 		if c.exitStatus == nil {
 			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
@@ -447,9 +458,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-	case sproto.NotifyRMPriorityChange:
-		ctx.Respond(c.setPriority(ctx, msg.Priority, false))
-
 	case sproto.ContainerLog:
 
 	case terminateForGC:
@@ -473,12 +481,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 
-	case sproto.RegisterJobPosition:
-		err := c.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
-		if err != nil {
-			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
-		}
-
 	case sproto.SetResourcePool:
 		ctx.Respond(fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType))
 
@@ -488,11 +490,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (c *command) SetPriority(ctx *actor.Context, priority int, forward bool) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.setPriority(ctx, priority, forward)
+}
+
 func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
 			Priority: priority,
-			Handler:  ctx.Self(),
+			JobID:    c.jobID,
 		}).(type) {
 		case nil:
 		case rmerrors.ErrUnsupported:
@@ -509,8 +518,8 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 	switch err := c.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
-		Weight:  weight,
-		Handler: ctx.Self(),
+		Weight: weight,
+		JobID:  c.jobID,
 	}).(type) {
 	case nil:
 	case rmerrors.ErrUnsupported:

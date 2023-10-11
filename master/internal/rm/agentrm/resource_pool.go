@@ -4,31 +4,31 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"sync"
 	"time"
-
-	"golang.org/x/exp/maps"
-
-	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
-	"github.com/determined-ai/determined/master/internal/rm/rmevents"
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
-
-	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // resourcePool manages the agent and task lifecycles.
 type resourcePool struct {
+	mu sync.Mutex
+
 	config *config.ResourcePoolConfig
 	cert   *tls.Certificate
 
@@ -42,10 +42,8 @@ type resourcePool struct {
 	agents           map[*actor.Ref]bool
 	agentStatesCache map[*actor.Ref]*agentState
 	taskList         *tasklist.TaskList
-	groups           map[*actor.Ref]*tasklist.Group
+	groups           map[model.JobID]*tasklist.Group
 	queuePositions   tasklist.JobSortState // secondary sort key based on job submission time
-	groupActorToID   map[*actor.Ref]model.JobID
-	IDToGroupActor   map[model.JobID]*actor.Ref
 	scalingInfo      *sproto.ScalingInfo
 
 	reschedule bool
@@ -84,10 +82,8 @@ func newResourcePool(
 
 		agents:         make(map[*actor.Ref]bool),
 		taskList:       tasklist.New(),
-		groups:         make(map[*actor.Ref]*tasklist.Group),
+		groups:         make(map[model.JobID]*tasklist.Group),
 		queuePositions: tasklist.InitializeJobSortState(false),
-		groupActorToID: make(map[*actor.Ref]model.JobID),
-		IDToGroupActor: make(map[model.JobID]*actor.Ref),
 		scalingInfo:    &sproto.ScalingInfo{},
 
 		reschedule: false,
@@ -118,7 +114,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-	rp.getOrCreateGroup(ctx, msg.Group)
+	rp.getOrCreateGroup(msg.JobID)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed Task"
 	}
@@ -134,8 +130,6 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 				false,
 			)
 		}
-		rp.groupActorToID[msg.Group] = msg.JobID
-		rp.IDToGroupActor[msg.JobID] = msg.Group
 	}
 
 	if msg.Restore {
@@ -371,13 +365,11 @@ func (rp *resourcePool) resourcesReleased(
 	}
 }
 
-func (rp *resourcePool) getOrCreateGroup(
-	ctx *actor.Context, handler *actor.Ref,
-) *tasklist.Group {
-	if g, ok := rp.groups[handler]; ok {
+func (rp *resourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
+	if g, ok := rp.groups[jobID]; ok {
 		return g
 	}
-	g := &tasklist.Group{Handler: handler, Weight: 1}
+	g := &tasklist.Group{JobID: jobID, Weight: 1}
 
 	if rp.config.Scheduler.Priority != nil {
 		if rp.config.Scheduler.Priority.DefaultPriority == nil {
@@ -386,10 +378,10 @@ func (rp *resourcePool) getOrCreateGroup(
 		g.Priority = rp.config.Scheduler.Priority.DefaultPriority
 	}
 
-	rp.groups[handler] = g
-	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{Ref: handler})
-	}
+	rp.groups[jobID] = g
+	tasklist.GroupPriorityChangeRegistry.OnDelete(jobID, func() {
+		rp.JobStopped(jobID)
+	})
 	return g
 }
 
@@ -413,6 +405,9 @@ func (rp *resourcePool) sendScalingInfo(ctx *actor.Context) {
 
 // Receive implements the actor.Actor interface.
 func (rp *resourcePool) Receive(ctx *actor.Context) error {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+
 	ctx.AddLabel("resource-pool", rp.config.PoolName)
 
 	reschedule := true
@@ -438,7 +433,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		return rp.receiveAgentMsg(ctx)
 
 	case
-		tasklist.GroupActorStopped,
 		sproto.SetGroupMaxSlots,
 		sproto.SetAllocationName,
 		sproto.AllocateRequest,
@@ -630,8 +624,7 @@ func (rp *resourcePool) moveJob(
 			rp.config.Scheduler.GetType())
 	}
 
-	groupAddr, ok := rp.IDToGroupActor[jobID]
-	if !ok {
+	if _, ok := rp.groups[jobID]; !ok {
 		return sproto.ErrJobNotFound(jobID)
 	}
 	if _, ok := rp.queuePositions[anchorID]; !ok {
@@ -657,27 +650,35 @@ func (rp *resourcePool) moveJob(
 	}
 
 	if prioChange {
-		oldPriority := *rp.groups[groupAddr].Priority
+		group := rp.groups[jobID]
+		if group == nil {
+			return fmt.Errorf("moveJob cannot find group for job %s", jobID)
+		}
+		oldPriority := *group.Priority
 		err := rp.setGroupPriority(ctx, sproto.SetGroupPriority{
 			Priority:     anchorPriority,
 			ResourcePool: rp.config.PoolName,
-			Handler:      rp.IDToGroupActor[jobID],
+			JobID:        jobID,
 		})
 		if err != nil {
 			return err
 		}
 
-		resp := ctx.Ask(rp.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
-			Priority: anchorPriority,
-		})
-		if resp.Error() != nil {
-			_ = rp.setGroupPriority(ctx, sproto.SetGroupPriority{
-				Priority:     oldPriority,
-				ResourcePool: rp.config.PoolName,
-				Handler:      rp.IDToGroupActor[jobID],
-			})
-			return resp.Error()
+		if priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID); ok {
+			if priorityChanger != nil {
+				if err := priorityChanger(anchorPriority); err != nil {
+					_ = rp.setGroupPriority(ctx, sproto.SetGroupPriority{
+						Priority:     oldPriority,
+						ResourcePool: rp.config.PoolName,
+						JobID:        jobID,
+					})
+					return err
+				}
+			}
+		} else {
+			return fmt.Errorf("unable to move job with ID %s", jobID)
 		}
+
 		if !tasklist.NeedMove(
 			rp.queuePositions[jobID],
 			rp.queuePositions[anchorID],
@@ -688,12 +689,13 @@ func (rp *resourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
+	jobPosition, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
 	if err != nil {
 		return err
 	}
-
-	ctx.Tell(groupAddr, msg)
+	if err := rp.db.UpdateJobPosition(jobID, jobPosition); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -711,7 +713,7 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(err)
 
 	case sproto.SetGroupWeight:
-		rp.getOrCreateGroup(ctx, msg.Handler).Weight = msg.Weight
+		rp.getOrCreateGroup(msg.JobID).Weight = msg.Weight
 
 	case sproto.SetGroupPriority:
 		err := rp.setGroupPriority(ctx, msg)
@@ -731,38 +733,26 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 }
 
 func (rp *resourcePool) setGroupPriority(ctx *actor.Context, msg sproto.SetGroupPriority) error {
-	g := rp.getOrCreateGroup(ctx, msg.Handler)
+	g := rp.getOrCreateGroup(msg.JobID)
 	if (g.Priority != nil && *g.Priority == msg.Priority) ||
 		rp.config.Scheduler.Priority == nil {
 		return nil
 	}
-	ctx.Log().Infof("setting priority for group of %s to %d",
-		msg.Handler.Address().String(), msg.Priority)
+	ctx.Log().Infof("setting priority for group of %s to %d", msg.JobID, msg.Priority)
 	g.Priority = &msg.Priority
-	jobID, ok := rp.groupActorToID[msg.Handler]
-	if ok {
-		time, err := tasklist.GetJobSubmissionTime(rp.taskList, jobID)
-		if err != nil {
-			ctx.Log().Errorf("failed to get job submission time: %s", err)
-			return nil
-		}
-		rp.queuePositions[jobID] = tasklist.InitializeQueuePosition(time, false)
+	time, err := tasklist.GetJobSubmissionTime(rp.taskList, msg.JobID)
+	if err != nil {
+		ctx.Log().Errorf("failed to get job submission time: %s", err)
+		return nil
 	}
+	rp.queuePositions[msg.JobID] = tasklist.InitializeQueuePosition(time, false)
 	return nil
 }
 
 func (rp *resourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case tasklist.GroupActorStopped:
-		if jobID, ok := rp.groupActorToID[msg.Ref]; ok {
-			delete(rp.queuePositions, jobID)
-			delete(rp.IDToGroupActor, jobID)
-		}
-		delete(rp.groupActorToID, msg.Ref)
-		delete(rp.groups, msg.Ref)
-
 	case sproto.SetGroupMaxSlots:
-		rp.getOrCreateGroup(ctx, msg.Handler).MaxSlots = msg.MaxSlots
+		rp.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
 
 	case sproto.SetAllocationName:
 		rp.receiveSetTaskName(ctx, msg)
@@ -777,6 +767,14 @@ func (rp *resourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (rp *resourcePool) JobStopped(jobID model.JobID) {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+
+	delete(rp.groups, jobID)
+	delete(rp.queuePositions, jobID)
 }
 
 func (rp *resourcePool) updateAgentStartStats(
