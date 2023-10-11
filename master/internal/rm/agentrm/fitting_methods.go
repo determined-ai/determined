@@ -3,13 +3,13 @@ package agentrm
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/ft"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 // Hard Constraints
 func agentPermittedSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
-	return !ft.DisallowedNodes(req.TaskID).Contains(agent.Handler.Address().Local())
+	return !logpattern.DisallowedNodes(req.TaskID).Contains(agent.Handler.Address().Local())
 }
 
 func slotsSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {

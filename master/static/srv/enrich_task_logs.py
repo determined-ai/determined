@@ -198,7 +198,8 @@ if __name__ == "__main__":
 
     task_logging_metadata = json.loads(task_logging_metadata_json)
     task_logging_metadata["stdtype"] = args.stdtype
-    task_logging_metadata["agent_id"] = socket.gethostname()
+    # TODO Ryan I think is fixing this bug, so hopefully rebase should fix this
+    task_logging_metadata["agent_id"] = os.environ.get("DET_AGENT_ID") # socket.gethostname()
     task_logging_metadata["source"] = "task"
     container_id = os.environ.get("DET_CONTAINER_ID")
     if container_id is not None:

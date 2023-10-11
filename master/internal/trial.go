@@ -13,10 +13,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
@@ -199,6 +201,8 @@ func (t *trial) exit(reason *model.ExitedReason) {
 }
 
 func (t *trial) close() error {
+	logpattern.ReportTaskDone(t.taskID)
+
 	t.wg.Close()
 	if !t.idSet {
 		return nil
@@ -577,6 +581,54 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			WithError(exit.Err).
 			Errorf("trial encountered transient system error")
 	case exit.Err != nil && !sproto.IsTransientSystemError(exit.Err):
+		{ // TODO seperate func for these two stuff
+			notRetries, err := logpattern.ShouldRetry(context.TODO(), t.taskID)
+			if err != nil {
+				return err // I think "return err" is reasonable here? Or should we just retry?
+			}
+
+			if len(notRetries) > 0 {
+				var exitReasons []string
+				for _, r := range notRetries {
+					exitReasons = append(exitReasons,
+						fmt.Sprintf("(log '%q' matched regex %s)", r.TriggeringLog, r.Regex))
+				}
+				t.syslog.
+					WithError(exit.Err).
+					Errorf("trial failed and not retrying due to logs matching a don't retry policy" +
+						" check trial logs for more info") // TODO improve this message
+
+				// This breaks some abstraction layer but I think it is needed.
+				// t.transition throws away InformationalReason sometimes
+				// (actually always for this case).
+				// TODO this code should probaly go in t.transition
+
+				reason := ""
+				for _, l := range append([]string{
+					"trial failed and matched logs to a don't retry policy",
+				}, exitReasons...) {
+					reason += l + "\n"
+					tasklogger.Insert(&model.TaskLog{
+						TaskID:    string(t.taskID),
+						Timestamp: ptrs.Ptr(time.Now().UTC()),
+						Level:     ptrs.Ptr(model.LogLevelError),
+						Source:    ptrs.Ptr("master"),
+						StdType:   ptrs.Ptr("stdout"),
+						Log:       l + "\n",
+					})
+				}
+
+				return t.transition(model.StateWithReason{
+					State:               model.ErrorState,
+					InformationalReason: reason,
+				})
+			}
+		}
+
+		// TODO forget it, lets not add another restarts.
+		// I'm not super convinced people will care enough and excluding the node
+		// seems reasonable.
+
 		t.syslog.
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
@@ -590,6 +642,27 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				InformationalReason: "trial exceeded max restarts",
 			})
 		}
+
+		// TODO(FT) let's do this change later. We actually need to ask it by taskID and
+		// the change looks non trivial and is easy to pitch as an improvement follow on.
+		//
+		// Likely need to add taskID to sproto.CapacityCheck{}.
+		//
+		// This feels like this is a diaster change that will break a bunch of stuff somehow.
+		// Maybe not. The intention now is we can now exclude nodes so before deciding to reschedule
+		// we ensure that our job can actually run and not just get stucked in queued forever.
+		// This might be able to go in maybeAllocateTask too?
+		//
+		// Is validate resources right? Did someone brick it?
+		/*
+			if err = t.rm.ValidateResources(
+				t.system,
+				t.config.Resources().ResourcePool(),
+				t.config.Resources().SlotsPerTrial(), false); err != nil {
+				return nil, nil, fmt.Errorf("validating resources: %v", err)
+			}
+		*/
+
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
