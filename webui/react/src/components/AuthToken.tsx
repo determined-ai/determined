@@ -1,13 +1,11 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import Message from 'components/kit/Message';
 import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'utils/dom';
-
-import css from './AuthToken.module.scss';
 
 const AuthToken: React.FC = () => {
   const token = globalStorage.authToken || 'Auth token not found.';
@@ -29,15 +27,14 @@ const AuthToken: React.FC = () => {
   }, [token]);
 
   return (
-    <Result
-      className={css.base}
-      extra={[
+    <Message
+      action={
         <Button icon={<CopyOutlined />} key="copy" type="primary" onClick={handleCopyToClipboard}>
           Copy token to clipboard
-        </Button>,
-      ]}
-      status="success"
-      subTitle={token}
+        </Button>
+      }
+      description={token}
+      icon="checkmark"
       title="Your Determined Authentication Token"
     />
   );

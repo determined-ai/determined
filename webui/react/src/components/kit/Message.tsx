@@ -1,48 +1,40 @@
 import React, { ReactNode } from 'react';
 
 import Icon, { IconName } from 'components/kit/Icon';
-import { XOR } from 'components/kit/internal/types';
 import Header from 'components/kit/Typography/Header';
 
-import { ValueOf } from './internal/types';
 import css from './Message.module.scss';
 
-export const MessageType = {
-  Error: 'error',
-  Info: 'info',
-  Warning: 'warning',
-} as const;
+interface base {
+  action?: React.ReactElement;
+  icon?: IconName | React.ReactElement;
+}
+interface descriptionRequired extends base {
+  description: ReactNode;
+  title?: string;
+}
+interface titleRequired extends base {
+  title: string;
+  description?: ReactNode;
+}
 
-export type MessageType = ValueOf<typeof MessageType>;
+export type Props = descriptionRequired | titleRequired;
 
-export type Props = XOR<
-  {
-    description?: string;
-    title: string;
-    icon: ReactNode;
-  }, {
-    description?: string;
-    title: string;
-    type?: MessageType;
-  }
->
-
-const Message: React.FC<Props> = ({ description, title, icon, type }: Props) => {
-  const getIcon = (type?: MessageType, icon?: ReactNode) => {
-    if (type) {
-      return <Icon decorative name={type as IconName} size="big" />;
-    } else if (icon) {
-      return icon;
+const Message: React.FC<Props> = ({ action, description, title, icon }: Props) => {
+  const getIcon = (icon?: IconName | React.ReactElement) => {
+    if (typeof icon === 'string') {
+      return <Icon decorative name={icon as IconName} size="big" />;
     } else {
-      return <Icon decorative name="info" size="big" />;
+      return icon;
     }
   };
 
   return (
     <div className={css.base}>
-      {getIcon(type, icon)}
-      <Header>{title}</Header>
-      {description && <span>{description}</span>}
+      {icon && getIcon(icon)}
+      {title && <Header>{title}</Header>}
+      {description && <p className={css.description}>{description}</p>}
+      {action}
     </div>
   );
 };

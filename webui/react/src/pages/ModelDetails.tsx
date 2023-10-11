@@ -5,11 +5,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
+import Message from 'components/kit/Message';
 import Notes from 'components/kit/Notes';
 import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/kit/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -377,7 +377,7 @@ const ModelDetails: React.FC = () => {
     return <Message title="Model name is empty" />;
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
-    return <Message title={message} type={MessageType.Warning} />;
+    return <Message icon="warning" title={message} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
   } else if (!model || Loadable.isNotLoaded(workspaces) || rbacLoading) {

@@ -1,8 +1,7 @@
-import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Empty from 'components/kit/Empty';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -367,15 +366,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
 
   if (pageError) {
-    return <Empty description={pageError.message} />;
+    return <Message description={pageError.message} />;
   } else if (hasLoaded && !chartData) {
     return isExperimentTerminal ? (
-      <Empty description="No data to plot." />
+      <Message description="No data to plot." />
     ) : (
       <div className={css.waiting}>
-        <Alert
+        <Message
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner spinning />
       </div>

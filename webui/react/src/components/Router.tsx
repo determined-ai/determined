@@ -84,8 +84,8 @@ const ErrorHandler = () => {
   return (
     <Message
       description="Encountered an error, please refresh."
+      icon="warning"
       title="Unexpected Error"
-      type="warning"
     />
   );
 };

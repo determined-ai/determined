@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import Message, { MessageType } from 'components/kit/Message';
+import Message from 'components/kit/Message';
 import Pivot, { TabItem } from 'components/kit/Pivot';
 import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
@@ -90,13 +90,16 @@ const ComparisonView: React.FC<Props> = ({
       open={open}
       onChange={onWidthChange}>
       {open && !hasPinnedColumns ? (
-        <Message title='Pin columns to see them in "Compare View"' type={MessageType.Info} />
+        <Message icon="info" title='Pin columns to see them in "Compare View"' />
       ) : (
         children
       )}
       {selectedExperiments.length === 0 ? (
-        <Message description="Select experiments you would like to compare." title="No experiments selected." type={MessageType.Warning} />
-
+        <Message
+          description="Select experiments you would like to compare."
+          icon="warning"
+          title="No experiments selected."
+        />
       ) : (
         <Pivot items={tabs} />
       )}

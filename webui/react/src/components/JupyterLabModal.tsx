@@ -1,4 +1,4 @@
-import { Alert, Select } from 'antd';
+import { Select } from 'antd';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
@@ -7,6 +7,7 @@ import Button from 'components/kit/Button';
 import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
+import Message from 'components/kit/Message';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
@@ -334,7 +335,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           />
         </Form.Item>
       </React.Suspense>
-      {configError && <Alert message={configError} type="error" />}
+      {configError && <Message icon="error" title={configError} />}
     </Form>
   );
 };

@@ -1,5 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Alert, Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
+import { Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import Form from 'components/kit/Form';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
+import Message from 'components/kit/Message';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import { Loadable } from 'components/kit/utils/loadable';
@@ -369,7 +370,7 @@ const useModalHyperparameterSearch = ({
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        {modalError && <Alert className={css.error} message={modalError} type="error" />}
+        {modalError && <Message icon="error" title={modalError} />}
         <div className={css.labelWithLink}>
           <p>Select hyperparameters and define the search space.</p>
           <Link
@@ -417,7 +418,7 @@ const useModalHyperparameterSearch = ({
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        {modalError && <Alert className={css.error} message={modalError} type="error" />}
+        {modalError && <Message icon="error" title={modalError} />}
         <Form.Item
           initialValue={searcher.name}
           label={

@@ -6,12 +6,12 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
+import Message from 'components/kit/Message';
 import Notes from 'components/kit/Notes';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/kit/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -293,7 +293,7 @@ const ModelVersionDetails: React.FC = () => {
     return <Message title={`Invalid Version ID ${versionNum}`} />;
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
-    return <Message title={message} type={MessageType.Warning} />;
+    return <Message icon="warning" title={message} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
   } else if (!modelVersion || rbacLoading) {

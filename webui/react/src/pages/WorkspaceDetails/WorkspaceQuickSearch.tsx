@@ -5,7 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
-import Message, { MessageType } from 'components/kit/Message';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
@@ -159,7 +159,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           ) : (
             <>
               {treeData.length === 0 ? (
-                <Message title="No matching workspace or projects" type={MessageType.Warning} />
+                <Message icon="warning" title="No matching workspace or projects" />
               ) : (
                 <Tree defaultExpandAll selectable={false} treeData={treeData} />
               )}

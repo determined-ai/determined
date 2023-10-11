@@ -4,9 +4,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import DynamicTabs from 'components/DynamicTabs';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/kit/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useProjectActionMenu } from 'components/ProjectActionDropdown';
@@ -132,7 +132,7 @@ const ProjectDetails: React.FC = () => {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Project ${projectId}`;
-    return <Message title={message} type={MessageType.Warning} />;
+    return <Message icon="warning" title={message} />;
   } else if (
     (!permissions.loading &&
       project &&

@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
-import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import { ErrorHandler, Note } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
+import Message from 'components/kit/Message';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 
 import NoteCard from './NoteCard';
@@ -138,7 +138,7 @@ const NoteCards: React.FC<Props> = ({
 
   if (notes.length === 0) {
     return (
-      <Empty
+      <Message
         description={
           <>
             <p>No notes for this project</p>

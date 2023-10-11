@@ -7,7 +7,7 @@ import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import { Column, Columns } from 'components/kit/Columns';
 import Input from 'components/kit/Input';
-import Message, { MessageType } from 'components/kit/Message';
+import Message from 'components/kit/Message';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
@@ -450,11 +450,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 ? 'Create a project with the "New Project" button or in the CLI.'
                 : 'User cannot create a project in this workspace.'
             }
+            icon="warning"
             title="Workspace contains no projects. "
-            type={MessageType.Warning}
           />
         ) : (
-          <Message title="No projects matching the current filters" type={MessageType.Warning} />
+          <Message icon="warning" title="No projects matching the current filters" />
         )}
       </Spinner>
       <ProjectCreateModal.Component workspaceId={workspace.id} />
