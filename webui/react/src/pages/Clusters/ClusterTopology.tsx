@@ -2,6 +2,7 @@ import { useObservable } from 'micro-observables';
 import React, { PropsWithChildren } from 'react';
 
 import { Loadable } from 'components/kit/utils/loadable';
+import Section from 'components/Section';
 import clusterStore from 'stores/cluster';
 
 import css from './ClusterTopology.module.scss';
@@ -38,14 +39,19 @@ const ClusterTopology: React.FC<PropsWithChildren> = () => {
   return (
     <>
       {nodes.length ? (
-        <div className={css.container}>
-          {nodes.map(({ id, resources }) => {
-            const enabledSlots = resources.reduce((acc, { enabled }) => (enabled ? acc++ : acc), 0);
-            const slots = resources.length;
+        <Section className={css.mainContainer} title="Topology">
+          <div className={css.nodesContainer}>
+            {nodes.map(({ id, resources }) => {
+              const enabledSlots = resources.reduce(
+                (acc, { enabled }) => (enabled ? acc++ : acc),
+                0,
+              );
+              const slots = resources.length;
 
-            return <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />;
-          })}
-        </div>
+              return <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />;
+            })}
+          </div>
+        </Section>
       ) : null}
     </>
   );

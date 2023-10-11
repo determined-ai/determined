@@ -31,6 +31,7 @@ import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';
 
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
+import ClusterTopology from './Clusters/ClusterTopology';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 
@@ -226,6 +227,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
+        <ClusterTopology />
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>

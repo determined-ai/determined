@@ -1,47 +1,50 @@
-.container {
+.mainContainer {
   background-color: var(--theme-surface);
   border-radius: var(--theme-border-radius-weak);
   box-shadow: 0 1.6px 3.6px 1.6px rgb(0 0 0 / 13%);
   color: var(--theme-surface-on);
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
   padding: 30px;
   width: 100%;
 
-  .node {
-    align-items: flex-start;
-    color: #6ba4f8;
+  .nodesContainer {
     display: flex;
-    flex-direction: column;
-    margin-bottom: 20px;
-    margin-right: 30px;
+    flex-flow: row wrap;
+    justify-content: flex-start;
 
-    .nodeName {
-      color: inherit;
-      font-size: var(--header-size-s);
-      text-transform: uppercase;
-    }
-    .nodeCluster {
-      align-items: center;
-      border: 2px solid #6ba4f8;
-      box-sizing: border-box;
+    .node {
+      align-items: flex-start;
+      color: #6ba4f8;
       display: flex;
-      justify-content: space-around;
-      padding: 10px;
+      flex-direction: column;
+      margin-bottom: 20px;
+      margin-right: 30px;
 
-      .nodeSlot {
-        background-color: #e7e7e6;
-        height: 25px;
-        margin-right: 10px;
-        width: 10px;
-
-        &:last-of-type {
-          margin-right: 0;
-        }
+      .nodeName {
+        color: inherit;
+        font-size: var(--header-size-s);
+        text-transform: uppercase;
       }
-      .filled {
-        background-color: #6ba4f8;
+      .nodeCluster {
+        align-items: center;
+        border: 2px solid #6ba4f8;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px;
+
+        .nodeSlot {
+          background-color: #e7e7e6;
+          height: 25px;
+          margin-right: 10px;
+          width: 10px;
+
+          &:last-of-type {
+            margin-right: 0;
+          }
+        }
+        .filled {
+          background-color: #6ba4f8;
+        }
       }
     }
   }
