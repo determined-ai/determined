@@ -293,16 +293,13 @@ class TrialReference:
         """Get a stream of metrics for this trial.
 
         Arguments:
-            group: The metric group to stream.  Valid values are "validation" and "training".
+            group: The metric group to stream.  Common values are "validation" and "training", but
+                group can be any value passed to master when reporting metrics during training
+                (usually via a context's `report_metrics`).
 
         Returns:
             An iterable of :class:`~determined.experimental.TrialMetrics` objects.
         """
-        if group not in ("training", "validation"):
-            raise ValueError(
-                f"Invalid metric group: {group}. Valid values are 'training' and 'validation'"
-            )
-
         return _stream_trials_metrics(self._session, [self.id], group=group)
 
     def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:

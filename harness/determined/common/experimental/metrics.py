@@ -8,7 +8,7 @@ from determined.common.api import bindings
 
 @dataclasses.dataclass
 class TrialMetrics:
-    """Specifies a metric that the trial reported.
+    """Specifies collection of metrics that the trial reported.
 
     Attributes:
         trial_id: The ID of the trial that reported the metric.
@@ -17,7 +17,7 @@ class TrialMetrics:
             reported.
         end_time: The time when the metric was reported.
         metrics: A dict of metrics that the trial reported.
-        batch_metrics: A dict of metrics that the trial reported for each batch.
+        batch_metrics: <do not use>
     """
 
     trial_id: int
