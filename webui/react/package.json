@@ -26,7 +26,7 @@
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
-    "e2e": "playwright test",
+    "e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:coverage": "vitest --run --coverage --silent",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'",
     "unimported": "unimported"

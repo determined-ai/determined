@@ -1573,16 +1573,14 @@ jobs:
 
   test-e2e-react:
     docker:
-      # upgrade playwright container for node>20.1.0
-      - image: mcr.microsoft.com/playwright:v1.38.0-jammy
+      - image: cimg/node:20.1.0
     resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
       - skip-if-github-only
-      - run: apt-get update && apt-get -y install make
       - react-get-deps
-      - run: npx playwright install --with-deps && npx playwright install chrome
+      - run: npx playwright install --with-deps && npx playwright install chrome firefox webkit
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
       - store_artifacts:
