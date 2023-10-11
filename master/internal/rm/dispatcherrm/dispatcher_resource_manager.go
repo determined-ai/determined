@@ -106,7 +106,7 @@ type DispatcherResourceManager struct {
 	// thinking about critical sections for logical consistency is still... critical).
 	mu                   sync.Mutex
 	reqList              *tasklist.TaskList
-	groups               map[*actor.Ref]*tasklist.Group
+	groups               map[model.JobID]*tasklist.Group
 	dispatchIDToHPCJobID *mapx.Map[string, string]
 	scheduledLaunches    mapx.Map[model.AllocationID, struct{}]
 	inflightCancelations mapx.Map[model.AllocationID, struct{}]
@@ -173,7 +173,7 @@ func New(
 		loggingConfig:   opts.LoggingOptions,
 
 		reqList:              tasklist.New(),
-		groups:               make(map[*actor.Ref]*tasklist.Group),
+		groups:               make(map[model.JobID]*tasklist.Group),
 		dispatchIDToHPCJobID: &dispatchIDtoHPCJobID,
 		scheduledLaunches:    mapx.New[model.AllocationID, struct{}](),
 		inflightCancelations: mapx.New[model.AllocationID, struct{}](),
@@ -611,7 +611,7 @@ func (m *DispatcherResourceManager) SetGroupMaxSlots(
 ) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.getOrCreateGroup(msg.Handler).MaxSlots = msg.MaxSlots
+	m.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
 }
 
 // SetGroupPriority implements rm.ResourceManager.
@@ -1860,7 +1860,7 @@ func (m *DispatcherResourceManager) sendManifestToDispatcher(
 }
 
 func (m *DispatcherResourceManager) addTask(msg sproto.AllocateRequest) {
-	m.getOrCreateGroup(msg.Group)
+	m.getOrCreateGroup(msg.JobID)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed-Launcher-Job"
 	}
@@ -1906,7 +1906,7 @@ func (m *DispatcherResourceManager) assignResources(req *sproto.AllocateRequest)
 			id:                     rID,
 			req:                    req,
 			rm:                     m,
-			group:                  m.groups[req.Group],
+			group:                  m.groups[req.JobID],
 			defaultRendezvousIface: m.rmConfig.ResolveRendezvousNetworkInterface(req.ResourcePool),
 			defaultProxyIface:      m.rmConfig.ResolveProxyNetworkInterface(req.ResourcePool),
 		},
@@ -1987,21 +1987,19 @@ func (m *DispatcherResourceManager) killAllInactiveDispatches() {
 	}
 }
 
-func (m *DispatcherResourceManager) getOrCreateGroup(handler *actor.Ref) *tasklist.Group {
-	if g, ok := m.groups[handler]; ok {
+func (m *DispatcherResourceManager) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
+	if g, ok := m.groups[jobID]; ok {
 		return g
 	}
 
 	priority := config.KubernetesDefaultPriority
-	g := &tasklist.Group{Handler: handler, Weight: 1, Priority: &priority}
-	m.groups[handler] = g
-	go func() {
-		_ = handler.AwaitTermination()
-
+	g := &tasklist.Group{JobID: jobID, Weight: 1, Priority: &priority}
+	m.groups[jobID] = g
+	tasklist.GroupPriorityChangeRegistry.OnDelete(jobID, func() {
 		m.mu.Lock()
 		defer m.mu.Unlock()
-		delete(m.groups, handler)
-	}()
+		delete(m.groups, jobID)
+	})
 	return g
 }
 
