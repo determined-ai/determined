@@ -70,6 +70,3 @@ class ExperimentConfig(dict):
         if isinstance(entrypoint, list) and any(not isinstance(e, str) for e in entrypoint):
             raise ValueError("invalid entrypoint in experiment config: {entrypoint}")
         return entrypoint
-
-    def get_log_pattern_policy(self) -> Dict:
-        return self.get("log_pattern_policies", {})

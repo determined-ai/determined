@@ -770,7 +770,7 @@ class trialv1Trial(Printable):
 
 class v1AcceleratorData(Printable):
     acceleratorType: "typing.Optional[str]" = None
-    accelerators: "typing.Optional[typing.Sequence[str]]" = None
+    acceleratorUuids: "typing.Optional[typing.Sequence[str]]" = None
     allocationId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
     nodeName: "typing.Optional[str]" = None
@@ -780,7 +780,7 @@ class v1AcceleratorData(Printable):
         self,
         *,
         acceleratorType: "typing.Union[str, None, Unset]" = _unset,
-        accelerators: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        acceleratorUuids: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         allocationId: "typing.Union[str, None, Unset]" = _unset,
         containerId: "typing.Union[str, None, Unset]" = _unset,
         nodeName: "typing.Union[str, None, Unset]" = _unset,
@@ -788,8 +788,8 @@ class v1AcceleratorData(Printable):
     ):
         if not isinstance(acceleratorType, Unset):
             self.acceleratorType = acceleratorType
-        if not isinstance(accelerators, Unset):
-            self.accelerators = accelerators
+        if not isinstance(acceleratorUuids, Unset):
+            self.acceleratorUuids = acceleratorUuids
         if not isinstance(allocationId, Unset):
             self.allocationId = allocationId
         if not isinstance(containerId, Unset):
@@ -805,8 +805,8 @@ class v1AcceleratorData(Printable):
         }
         if "acceleratorType" in obj:
             kwargs["acceleratorType"] = obj["acceleratorType"]
-        if "accelerators" in obj:
-            kwargs["accelerators"] = obj["accelerators"]
+        if "acceleratorUuids" in obj:
+            kwargs["acceleratorUuids"] = obj["acceleratorUuids"]
         if "allocationId" in obj:
             kwargs["allocationId"] = obj["allocationId"]
         if "containerId" in obj:
@@ -822,8 +822,8 @@ class v1AcceleratorData(Printable):
         }
         if not omit_unset or "acceleratorType" in vars(self):
             out["acceleratorType"] = self.acceleratorType
-        if not omit_unset or "accelerators" in vars(self):
-            out["accelerators"] = self.accelerators
+        if not omit_unset or "acceleratorUuids" in vars(self):
+            out["acceleratorUuids"] = self.acceleratorUuids
         if not omit_unset or "allocationId" in vars(self):
             out["allocationId"] = self.allocationId
         if not omit_unset or "containerId" in vars(self):
@@ -1559,6 +1559,37 @@ class v1ArchiveExperimentsResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
+class v1AssignMultipleGroupsRequest(Printable):
+    """Add and remove multiple users from multiple groups."""
+
+    def __init__(
+        self,
+        *,
+        addGroups: "typing.Sequence[int]",
+        removeGroups: "typing.Sequence[int]",
+        userIds: "typing.Sequence[int]",
+    ):
+        self.addGroups = addGroups
+        self.removeGroups = removeGroups
+        self.userIds = userIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AssignMultipleGroupsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "addGroups": obj["addGroups"],
+            "removeGroups": obj["removeGroups"],
+            "userIds": obj["userIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "addGroups": self.addGroups,
+            "removeGroups": self.removeGroups,
+            "userIds": self.userIds,
         }
         return out
 
@@ -6013,7 +6044,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     - SORT_BY_ACTIVE: Returns users sorted by if they are active.
     - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
     - SORT_BY_NAME: Returns users sorted by username unless display name exist.
-    - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+    - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
@@ -6022,7 +6053,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     ACTIVE = "SORT_BY_ACTIVE"
     MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
     NAME = "SORT_BY_NAME"
-    LAST_LOGIN_TIME = "SORT_BY_LAST_LOGIN_TIME"
+    LAST_AUTH_TIME = "SORT_BY_LAST_AUTH_TIME"
 
 class v1GetUsersResponse(Printable):
     """Response to GetUsersRequest."""
@@ -9122,6 +9153,64 @@ class v1PatchUserResponse(Printable):
         }
         return out
 
+class v1PatchUsersRequest(Printable):
+    """Update activation status for multiple users."""
+    filters: "typing.Optional[v1UserFilters]" = None
+
+    def __init__(
+        self,
+        *,
+        activate: bool,
+        userIds: "typing.Sequence[int]",
+        filters: "typing.Union[v1UserFilters, None, Unset]" = _unset,
+    ):
+        self.activate = activate
+        self.userIds = userIds
+        if not isinstance(filters, Unset):
+            self.filters = filters
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchUsersRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "activate": obj["activate"],
+            "userIds": obj["userIds"],
+        }
+        if "filters" in obj:
+            kwargs["filters"] = v1UserFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "activate": self.activate,
+            "userIds": self.userIds,
+        }
+        if not omit_unset or "filters" in vars(self):
+            out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        return out
+
+class v1PatchUsersResponse(Printable):
+    """Response to PatchUsersRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1UserActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchUsersResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1UserActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1PatchWorkspace(Printable):
     """PatchWorkspace is a partial update to a workspace with all optional fields."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -9866,6 +9955,29 @@ class v1PostSearcherOperationsRequest(Printable):
             out["searcherOperations"] = None if self.searcherOperations is None else [x.to_json(omit_unset) for x in self.searcherOperations]
         if not omit_unset or "triggeredByEvent" in vars(self):
             out["triggeredByEvent"] = None if self.triggeredByEvent is None else self.triggeredByEvent.to_json(omit_unset)
+        return out
+
+class v1PostTaskLogsRequest(Printable):
+    """Request to PostTaskLogs."""
+
+    def __init__(
+        self,
+        *,
+        logs: "typing.Sequence[v1TaskLog]",
+    ):
+        self.logs = logs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostTaskLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "logs": [v1TaskLog.from_json(x) for x in obj["logs"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "logs": [x.to_json(omit_unset) for x in self.logs],
+        }
         return out
 
 class v1PostTemplateResponse(Printable):
@@ -12900,6 +13012,104 @@ class v1Task(Printable):
             out["endTime"] = self.endTime
         return out
 
+class v1TaskLog(Printable):
+    agentId: "typing.Optional[str]" = None
+    allocationId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    id: "typing.Optional[int]" = None
+    level: "typing.Optional[v1LogLevel]" = None
+    rankId: "typing.Optional[int]" = None
+    source: "typing.Optional[str]" = None
+    stdtype: "typing.Optional[str]" = None
+    timestamp: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        log: str,
+        taskId: str,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        id: "typing.Union[int, None, Unset]" = _unset,
+        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
+        rankId: "typing.Union[int, None, Unset]" = _unset,
+        source: "typing.Union[str, None, Unset]" = _unset,
+        stdtype: "typing.Union[str, None, Unset]" = _unset,
+        timestamp: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.log = log
+        self.taskId = taskId
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(id, Unset):
+            self.id = id
+        if not isinstance(level, Unset):
+            self.level = level
+        if not isinstance(rankId, Unset):
+            self.rankId = rankId
+        if not isinstance(source, Unset):
+            self.source = source
+        if not isinstance(stdtype, Unset):
+            self.stdtype = stdtype
+        if not isinstance(timestamp, Unset):
+            self.timestamp = timestamp
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TaskLog":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "log": obj["log"],
+            "taskId": obj["taskId"],
+        }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        if "level" in obj:
+            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
+        if "rankId" in obj:
+            kwargs["rankId"] = obj["rankId"]
+        if "source" in obj:
+            kwargs["source"] = obj["source"]
+        if "stdtype" in obj:
+            kwargs["stdtype"] = obj["stdtype"]
+        if "timestamp" in obj:
+            kwargs["timestamp"] = obj["timestamp"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "log": self.log,
+            "taskId": self.taskId,
+        }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
+        if not omit_unset or "level" in vars(self):
+            out["level"] = None if self.level is None else self.level.value
+        if not omit_unset or "rankId" in vars(self):
+            out["rankId"] = self.rankId
+        if not omit_unset or "source" in vars(self):
+            out["source"] = self.source
+        if not omit_unset or "stdtype" in vars(self):
+            out["stdtype"] = self.stdtype
+        if not omit_unset or "timestamp" in vars(self):
+            out["timestamp"] = self.timestamp
+        return out
+
 class v1TaskLogsFieldsResponse(Printable):
     """Response to TaskLogsFieldsRequest."""
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
@@ -14232,7 +14442,7 @@ class v1User(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     displayName: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
-    lastLogin: "typing.Optional[str]" = None
+    lastAuthAt: "typing.Optional[str]" = None
     modifiedAt: "typing.Optional[str]" = None
     remote: "typing.Optional[bool]" = None
 
@@ -14245,7 +14455,7 @@ class v1User(Printable):
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
-        lastLogin: "typing.Union[str, None, Unset]" = _unset,
+        lastAuthAt: "typing.Union[str, None, Unset]" = _unset,
         modifiedAt: "typing.Union[str, None, Unset]" = _unset,
         remote: "typing.Union[bool, None, Unset]" = _unset,
     ):
@@ -14258,8 +14468,8 @@ class v1User(Printable):
             self.displayName = displayName
         if not isinstance(id, Unset):
             self.id = id
-        if not isinstance(lastLogin, Unset):
-            self.lastLogin = lastLogin
+        if not isinstance(lastAuthAt, Unset):
+            self.lastAuthAt = lastAuthAt
         if not isinstance(modifiedAt, Unset):
             self.modifiedAt = modifiedAt
         if not isinstance(remote, Unset):
@@ -14278,8 +14488,8 @@ class v1User(Printable):
             kwargs["displayName"] = obj["displayName"]
         if "id" in obj:
             kwargs["id"] = obj["id"]
-        if "lastLogin" in obj:
-            kwargs["lastLogin"] = obj["lastLogin"]
+        if "lastAuthAt" in obj:
+            kwargs["lastAuthAt"] = obj["lastAuthAt"]
         if "modifiedAt" in obj:
             kwargs["modifiedAt"] = obj["modifiedAt"]
         if "remote" in obj:
@@ -14298,12 +14508,74 @@ class v1User(Printable):
             out["displayName"] = self.displayName
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
-        if not omit_unset or "lastLogin" in vars(self):
-            out["lastLogin"] = self.lastLogin
+        if not omit_unset or "lastAuthAt" in vars(self):
+            out["lastAuthAt"] = self.lastAuthAt
         if not omit_unset or "modifiedAt" in vars(self):
             out["modifiedAt"] = self.modifiedAt
         if not omit_unset or "remote" in vars(self):
             out["remote"] = self.remote
+        return out
+
+class v1UserActionResult(Printable):
+    """Message for results of individual users in a multi-user action."""
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
+        return out
+
+class v1UserFilters(Printable):
+    """Options to filter a subset of users."""
+    admin: "typing.Optional[bool]" = None
+    name: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        admin: "typing.Union[bool, None, Unset]" = _unset,
+        name: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(admin, Unset):
+            self.admin = admin
+        if not isinstance(name, Unset):
+            self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserFilters":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "admin" in obj:
+            kwargs["admin"] = obj["admin"]
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "admin" in vars(self):
+            out["admin"] = self.admin
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
         return out
 
 class v1UserRoleAssignment(Printable):
@@ -15067,6 +15339,27 @@ def post_ArchiveWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveWorkspace", _resp)
+
+def patch_AssignMultipleGroups(
+    session: "api.Session",
+    *,
+    body: "v1AssignMultipleGroupsRequest",
+) -> None:
+    """Assign multiple users to multiple groups."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/users/assignments",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("patch_AssignMultipleGroups", _resp)
 
 def post_AssignRoles(
     session: "api.Session",
@@ -18119,6 +18412,7 @@ def get_GetUsers(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    roleIdAssignedDirectlyToUser: "typing.Optional[typing.Sequence[int]]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     """Get a list of users.
@@ -18134,6 +18428,7 @@ denote number of projects to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
+    - roleIdAssignedDirectlyToUser: Filter by roles id assigned directly to user for EE.
     - sortBy: Sort users by the given field.
 
  - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.
@@ -18143,7 +18438,7 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_ACTIVE: Returns users sorted by if they are active.
  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
- - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+ - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
     """
     _params = {
         "active": str(active).lower() if active is not None else None,
@@ -18152,6 +18447,7 @@ denote number of projects to skip from the end before returning results.
         "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "roleIdAssignedDirectlyToUser": roleIdAssignedDirectlyToUser,
         "sortBy": sortBy.value if sortBy is not None else None,
     }
     _resp = session._do_request(
@@ -19274,6 +19570,27 @@ def patch_PatchUser(
         return v1PatchUserResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUser", _resp)
 
+def patch_PatchUsers(
+    session: "api.Session",
+    *,
+    body: "v1PatchUsersRequest",
+) -> "v1PatchUsersResponse":
+    """Patch multiple users' activation status."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/users",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchUsersResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchUsers", _resp)
+
 def patch_PatchWorkspace(
     session: "api.Session",
     *,
@@ -19541,6 +19858,27 @@ def post_PostSearcherOperations(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostSearcherOperations", _resp)
+
+def post_PostTaskLogs(
+    session: "api.Session",
+    *,
+    body: "v1PostTaskLogsRequest",
+) -> None:
+    """Persist the given task logs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/task/logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostTaskLogs", _resp)
 
 def post_PostTemplate(
     session: "api.Session",

@@ -886,11 +886,11 @@ export interface V1AcceleratorData {
      */
     acceleratorType?: string;
     /**
-     * An array of IDs of the accelerators associated with the allocation.
+     * An array of UUIDs of the accelerators associated with the allocation.
      * @type {Array<string>}
      * @memberof V1AcceleratorData
      */
-    accelerators?: Array<string>;
+    acceleratorUuids?: Array<string>;
 }
 /**
  * Acknowledge the receipt of some stop signal.
@@ -1421,6 +1421,38 @@ export interface V1ArchiveProjectResponse {
  * @interface V1ArchiveWorkspaceResponse
  */
 export interface V1ArchiveWorkspaceResponse {
+}
+/**
+ * Add and remove multiple users from multiple groups.
+ * @export
+ * @interface V1AssignMultipleGroupsRequest
+ */
+export interface V1AssignMultipleGroupsRequest {
+    /**
+     * The user ids of users to edit group associations.
+     * @type {Array<number>}
+     * @memberof V1AssignMultipleGroupsRequest
+     */
+    userIds: Array<number>;
+    /**
+     * The ids of groups to associate with users.
+     * @type {Array<number>}
+     * @memberof V1AssignMultipleGroupsRequest
+     */
+    addGroups: Array<number>;
+    /**
+     * The ids of groups to disassociate from users.
+     * @type {Array<number>}
+     * @memberof V1AssignMultipleGroupsRequest
+     */
+    removeGroups: Array<number>;
+}
+/**
+ * Response to AssignMultipleGroupsRequest.
+ * @export
+ * @interface V1AssignMultipleGroupsResponse
+ */
+export interface V1AssignMultipleGroupsResponse {
 }
 /**
  * AssignRolesRequest is the body of the request for the call to grant a user or group a role. It requires group_id, role_id, and either scope_workspace_id or scope_project_id.
@@ -4432,7 +4464,7 @@ export interface V1GetUserSettingResponse {
     settings: Array<V1UserWebSetting>;
 }
 /**
- * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+ * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
  * @export
  * @enum {string}
  */
@@ -4444,7 +4476,7 @@ export const V1GetUsersRequestSortBy = {
     ACTIVE: 'SORT_BY_ACTIVE',
     MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME',
     NAME: 'SORT_BY_NAME',
-    LASTLOGINTIME: 'SORT_BY_LAST_LOGIN_TIME',
+    LASTAUTHTIME: 'SORT_BY_LAST_AUTH_TIME',
 } as const
 export type V1GetUsersRequestSortBy = ValueOf<typeof V1GetUsersRequestSortBy>
 /**
@@ -6655,6 +6687,44 @@ export interface V1PatchUserResponse {
     user: V1User;
 }
 /**
+ * Update activation status for multiple users.
+ * @export
+ * @interface V1PatchUsersRequest
+ */
+export interface V1PatchUsersRequest {
+    /**
+     * A list of user IDs to update.
+     * @type {Array<number>}
+     * @memberof V1PatchUsersRequest
+     */
+    userIds: Array<number>;
+    /**
+     * Intended status (true to activate, false to deactivate).
+     * @type {boolean}
+     * @memberof V1PatchUsersRequest
+     */
+    activate: boolean;
+    /**
+     * Option to filter to users with these properties.
+     * @type {V1UserFilters}
+     * @memberof V1PatchUsersRequest
+     */
+    filters?: V1UserFilters;
+}
+/**
+ * Response to PatchUsersRequest.
+ * @export
+ * @interface V1PatchUsersResponse
+ */
+export interface V1PatchUsersResponse {
+    /**
+     * Details on success or error for each user.
+     * @type {Array<V1UserActionResult>}
+     * @memberof V1PatchUsersResponse
+     */
+    results: Array<V1UserActionResult>;
+}
+/**
  * PatchWorkspace is a partial update to a workspace with all optional fields.
  * @export
  * @interface V1PatchWorkspace
@@ -7144,6 +7214,26 @@ export interface V1PostSearcherOperationsRequest {
  * @interface V1PostSearcherOperationsResponse
  */
 export interface V1PostSearcherOperationsResponse {
+}
+/**
+ * Request to PostTaskLogs.
+ * @export
+ * @interface V1PostTaskLogsRequest
+ */
+export interface V1PostTaskLogsRequest {
+    /**
+     * The logs to persist.
+     * @type {Array<V1TaskLog>}
+     * @memberof V1PostTaskLogsRequest
+     */
+    logs: Array<V1TaskLog>;
+}
+/**
+ * Response to PostTaskLogs.
+ * @export
+ * @interface V1PostTaskLogsResponse
+ */
+export interface V1PostTaskLogsResponse {
 }
 /**
  * Response to PostTemplateRequest.
@@ -9391,6 +9481,79 @@ export interface V1Task {
     endTime?: Date;
 }
 /**
+ * 
+ * @export
+ * @interface V1TaskLog
+ */
+export interface V1TaskLog {
+    /**
+     * The ID of the log.
+     * @type {number}
+     * @memberof V1TaskLog
+     */
+    id?: number;
+    /**
+     * The ID of the task.
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    taskId: string;
+    /**
+     * The ID of the allocation.
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    allocationId?: string;
+    /**
+     * The agent the logs came from.
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    agentId?: string;
+    /**
+     * The ID of the container or, in the case of k8s, the pod name.
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    containerId?: string;
+    /**
+     * The rank ID.
+     * @type {number}
+     * @memberof V1TaskLog
+     */
+    rankId?: number;
+    /**
+     * The timestamp of the log.
+     * @type {Date}
+     * @memberof V1TaskLog
+     */
+    timestamp?: Date;
+    /**
+     * The level of this log.
+     * @type {V1LogLevel}
+     * @memberof V1TaskLog
+     */
+    level?: V1LogLevel;
+    /**
+     * The text of the log entry.
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    log: string;
+    /**
+     * The source of the log entry.
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    source?: string;
+    /**
+     * The output stream (e.g. stdout, stderr).
+     * @type {string}
+     * @memberof V1TaskLog
+     */
+    stdtype?: string;
+}
+/**
  * Response to TaskLogsFieldsRequest.
  * @export
  * @interface V1TaskLogsFieldsResponse
@@ -10454,7 +10617,45 @@ export interface V1User {
      * @type {Date}
      * @memberof V1User
      */
-    lastLogin?: Date;
+    lastAuthAt?: Date;
+}
+/**
+ * Message for results of individual users in a multi-user action.
+ * @export
+ * @interface V1UserActionResult
+ */
+export interface V1UserActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1UserActionResult
+     */
+    error: string;
+    /**
+     * User ID.
+     * @type {number}
+     * @memberof V1UserActionResult
+     */
+    id: number;
+}
+/**
+ * Options to filter a subset of users.
+ * @export
+ * @interface V1UserFilters
+ */
+export interface V1UserFilters {
+    /**
+     * Case-insensitive partial match of string to username or display name.
+     * @type {string}
+     * @memberof V1UserFilters
+     */
+    name?: string;
+    /**
+     * Matches users with or without an admin flag.
+     * @type {boolean}
+     * @memberof V1UserFilters
+     */
+    admin?: boolean;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.
@@ -16814,6 +17015,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling assignMultipleGroups.');
+            }
+            const localVarPath = `/api/v1/users/assignments`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -18231,6 +18470,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUsers.');
+            }
+            const localVarPath = `/api/v1/users`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -18292,6 +18569,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/proxy_address`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Persist the given task logs.
+         * @param {V1PostTaskLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTaskLogs(body: V1PostTaskLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postTaskLogs.');
+            }
+            const localVarPath = `/api/v1/task/logs`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -19307,6 +19622,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignMultipleGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).assignMultipleGroups(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -19974,6 +20308,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchUsers(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -20002,6 +20355,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(allocationId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Persist the given task logs.
+         * @param {V1PostTaskLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTaskLogs(body: V1PostTaskLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTaskLogsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTaskLogs(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20470,6 +20842,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Assign multiple users to multiple groups.
+         * @param {V1AssignMultipleGroupsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
+            return InternalApiFp(configuration).assignMultipleGroups(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -20840,6 +21222,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Patch multiple users' activation status.
+         * @param {V1PatchUsersRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUsers(body: V1PatchUsersRequest, options?: any) {
+            return InternalApiFp(configuration).patchUsers(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -20859,6 +21251,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
             return InternalApiFp(configuration).postAllocationProxyAddress(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Persist the given task logs.
+         * @param {V1PostTaskLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postTaskLogs(body: V1PostTaskLogsRequest, options?: any) {
+            return InternalApiFp(configuration).postTaskLogs(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21167,6 +21569,18 @@ export class InternalApi extends BaseAPI {
      */
     public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
         return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Assign multiple users to multiple groups.
+     * @param {V1AssignMultipleGroupsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
+        return InternalApiFp(this.configuration).assignMultipleGroups(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -21607,6 +22021,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Patch multiple users' activation status.
+     * @param {V1PatchUsersRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public patchUsers(body: V1PatchUsersRequest, options?: any) {
+        return InternalApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
      * @param {string} allocationId The id of the allocation.
      * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -21629,6 +22055,18 @@ export class InternalApi extends BaseAPI {
      */
     public postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
         return InternalApiFp(this.configuration).postAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Persist the given task logs.
+     * @param {V1PostTaskLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public postTaskLogs(body: V1PostTaskLogsRequest, options?: any) {
+        return InternalApiFp(this.configuration).postTaskLogs(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -29148,17 +29586,18 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
          * @param {boolean} [admin] Filter by roles.
+         * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles id assigned directly to user for EE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options: any = {}): FetchArgs {
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -29199,6 +29638,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             if (admin !== undefined) {
                 localVarQueryParameter['admin'] = admin
+            }
+            
+            if (roleIdAssignedDirectlyToUser) {
+                localVarQueryParameter['roleIdAssignedDirectlyToUser'] = roleIdAssignedDirectlyToUser
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -29541,18 +29984,19 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
          * @param {boolean} [admin] Filter by roles.
+         * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles id assigned directly to user for EE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, roleIdAssignedDirectlyToUser, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -29737,18 +30181,19 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
          * @param {boolean} [active] Filter by status.
          * @param {boolean} [admin] Filter by roles.
+         * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles id assigned directly to user for EE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any) {
-            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options)(fetch, basePath);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options?: any) {
+            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, roleIdAssignedDirectlyToUser, options)(fetch, basePath);
         },
         /**
          * 
@@ -29868,19 +30313,20 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of users.
-     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_LOGIN_TIME: Returns users sorted by last login time.
+     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
      * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Filter by username or display name.
      * @param {boolean} [active] Filter by status.
      * @param {boolean} [admin] Filter by roles.
+     * @param {Array<number>} [roleIdAssignedDirectlyToUser] Filter by roles id assigned directly to user for EE.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, options?: any) {
-        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, options)(this.fetch, this.basePath)
+    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, active?: boolean, admin?: boolean, roleIdAssignedDirectlyToUser?: Array<number>, options?: any) {
+        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, active, admin, roleIdAssignedDirectlyToUser, options)(this.fetch, this.basePath)
     }
     
     /**
