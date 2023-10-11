@@ -389,6 +389,7 @@ func clearWebhooksTables(ctx context.Context, t *testing.T) {
 
 // CountEvents returns the total number of events from the DB.
 func CountEvents(ctx context.Context) (int, error) {
-	// TODO this is brittle and will be a flake.
+	// TODO this is brittle and will be a flake when we land logpattern tests
+	// which will add an event. This also could be testing more.
 	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
 }
