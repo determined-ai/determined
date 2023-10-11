@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
@@ -17,7 +18,6 @@ import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
 import handleError, { DetError, ErrorType } from 'utils/error';
 
-import Icon from './kit/Icon';
 import css from './ModelCreateModal.module.scss';
 
 const FORM_ID = 'create-model-form';

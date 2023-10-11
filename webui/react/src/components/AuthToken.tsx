@@ -3,10 +3,10 @@ import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
 import Message from 'components/kit/Message';
+import Icon from 'components/kit/Icon';
 import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'utils/dom';
-import Icon from './kit/Icon';
 
 const AuthToken: React.FC = () => {
   const token = globalStorage.authToken || 'Auth token not found.';
