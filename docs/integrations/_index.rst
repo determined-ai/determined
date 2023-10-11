@@ -13,8 +13,7 @@ includes examples of how to use Determined with a variety of ML ecosystem tools,
 Pachyderm, DVC, Delta Lake, Seldon, Spark, Argo, Airflow, and Kubeflow.
 
 .. toctree::
-   :caption: Integrations
    :hidden:
+   :glob:
 
-   Notifications <notification/_index>
-   Prometheus <prometheus/_index>
+   ./*/_index

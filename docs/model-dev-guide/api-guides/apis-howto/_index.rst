@@ -107,10 +107,9 @@ Known limitations:
 -  GPU profiling is not yet supported.
 
 .. toctree::
-   :caption: Training
+   :caption: Training APIs
    :hidden:
+   :glob:
 
-   api-core-ug
-   api-pytorch-ug
-   api-keras-ug
-   deepspeed/_index
+   ./*
+   ./*/_index

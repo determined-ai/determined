@@ -79,9 +79,7 @@ following sections.
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob:
 
-   configure-hp-ranges
-   hp-constraints-det
-   instrument-model-code
-   handle-trial-errors
-   Search Methods <search-methods/_index>
+   ./*
+   ./*/_index

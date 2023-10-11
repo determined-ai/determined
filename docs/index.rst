@@ -2,11 +2,9 @@
    :hidden:
 
    Get Started <get-started/_index>
-   How it Works <architecture/_index>
    Set Up <setup-cluster/_index>
    Manage <manage/_index>
    Tutorials <tutorials/_index>
-   Examples <example-solutions/_index>
    Model Hub Library <model-hub-library/_index>
    Model Dev Guide <model-dev-guide/_index>
    Reference <reference/_index>

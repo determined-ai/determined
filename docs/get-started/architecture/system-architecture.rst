@@ -1,3 +1,5 @@
+.. _system-architecture:
+
 #####################
  System Architecture
 #####################

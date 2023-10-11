@@ -73,7 +73,7 @@ Enable Determined to submit jobs to a Slurm cluster.
 .. toctree::
    :hidden:
 
-   Quick Installation <basic>
+   Quick Installation <../get-started/basic>
    Deploy on Prem <on-prem/_index>
    Deploy on AWS <aws/_index>
    Deploy on GCP <gcp/_index>

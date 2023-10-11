@@ -1,3 +1,5 @@
+.. _introduction-determined:
+
 ############################
  Introduction to Determined
 ############################

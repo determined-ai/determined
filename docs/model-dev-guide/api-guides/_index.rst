@@ -15,5 +15,7 @@
 .. toctree::
    :caption: API Guides
    :hidden:
+   :glob:
 
-   apis-howto/_index
+   ./*
+   ./*/_index

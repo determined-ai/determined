@@ -1,9 +1,8 @@
 :orphan:
 
-#######
- Index
-#######
-
+##########
+ Examples
+##########
 
 .. toctree::
    :hidden:
