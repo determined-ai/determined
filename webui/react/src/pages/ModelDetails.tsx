@@ -8,7 +8,7 @@ import Tags, { tagsActionHelper } from 'determined-ui/Tags';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { unstable_useBlocker, useParams } from 'react-router-dom';
 
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
@@ -462,6 +462,7 @@ const ModelDetails: React.FC = () => {
           disableTitle
           notes={{ contents: model.notes ?? '', name: 'Notes' }}
           onError={handleError}
+          onPageUnloadHook={unstable_useBlocker}
           onSave={saveNotes}
         />
         <MetadataCard

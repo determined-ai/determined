@@ -8,7 +8,7 @@ import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
@@ -270,6 +270,7 @@ const ModelVersionDetails: React.FC = () => {
               disableTitle
               notes={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
               onError={handleError}
+              onPageUnloadHook={unstable_useBlocker}
               onSave={saveNotes}
             />
           </div>
