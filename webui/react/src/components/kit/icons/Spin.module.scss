@@ -1,7 +1,7 @@
 @use 'sass:math';
 
 $axes: X Y Z;
-$size: 18px;
+$size: 100%;
 $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
 
 .base {
@@ -41,45 +41,6 @@ $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
     -webkit-mask-composite: source-out;
     mask-composite: subtract;
   }
-  .spinner__split {
-    animation: none;
-    border: none;
-    box-shadow: inset 0 0 0 2px;
-    color: var(--theme-surface-on);
-    position: relative;
-    transform: scale(3);
-
-    &::before,
-    &::after {
-      border-radius: 50%;
-      content: '';
-      position: absolute;
-    }
-    &::before {
-      -webkit-animation: load2 2s infinite ease 1.5s;
-      animation: load2 2s infinite ease 1.5s;
-      background: white;
-      border-radius: 0;
-      height: $size;
-      left: 0;
-      top: 0;
-      -webkit-transform-origin: math.div($size, 2) math.div($size, 2);
-      transform-origin: math.div($size, 2) math.div($size, 2);
-      width: math.div($size, 2);
-    }
-    &::after {
-      -webkit-animation: load2 2s infinite ease;
-      animation: load2 2s infinite ease;
-      background: white;
-      border-radius: 0;
-      height: $size;
-      left: math.div($size, 2);
-      top: 0;
-      -webkit-transform-origin: 0 9px;
-      transform-origin: 0 math.div($size, 2);
-      width: math.div($size, 2);
-    }
-  }
 }
 
 @each $axis in $axes {
@@ -96,16 +57,5 @@ $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
 @keyframes rotateHalf {
   to {
     transform: rotate(0.5turn);
-  }
-}
-
-@keyframes load2 {
-  0% {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  100% {
-    -webkit-transform: rotate(360deg);
-    transform: rotate(360deg);
   }
 }

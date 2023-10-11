@@ -2430,10 +2430,19 @@ const IconsSection: React.FC = () => {
             <Icon key={size} name="star" showTooltip size={size} title={size} />
           ))}
         </Space>
-        <p>All icons</p>
+        <p>Icon colors</p>
         <Space wrap>
+          <Icon color="cancel" name="star" showTooltip title="cancel" />
+          <Icon color="error" name="star" showTooltip title="error" />
+          <Icon color="success" name="star" showTooltip title="success" />
+        </Space>
+        <p>All icons</p>
+        <Space split={<span style={{ opacity: 0.3 }}>|</span>} wrap>
           {IconNameArray.map((name) => (
-            <Icon key={name} name={name} showTooltip title={name} />
+            <Space align="center" direction="vertical" key={name} size={0}>
+              <Icon name={name} showTooltip title={name} />
+              <p>{name}</p>
+            </Space>
           ))}
         </Space>
       </AntDCard>

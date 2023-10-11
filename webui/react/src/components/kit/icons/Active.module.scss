@@ -3,9 +3,8 @@
 .base {
   align-items: center;
   display: flex;
-  height: 24px;
   justify-content: center;
-  width: 24px;
+  width: 100%;
 
   .dots {
     $duration: 1s;

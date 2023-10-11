@@ -9,6 +9,7 @@ import React, { useMemo } from 'react';
 import Tooltip from 'components/kit/Tooltip';
 
 import css from './Icon.module.scss';
+import ActiveIcon from './icons/Active';
 import AddIcon from './icons/add.svg';
 import ArchiveIcon from './icons/archive.svg';
 import ArrowDownIcon from './icons/arrow-down.svg';
@@ -65,6 +66,7 @@ import PinIcon from './icons/pin.svg';
 import PlayIcon from './icons/play.svg';
 import PopoutIcon from './icons/popout.svg';
 import PowerIcon from './icons/power.svg';
+import QueuedIcon from './icons/Queue';
 import QueueIcon from './icons/queue.svg';
 import ResetIcon from './icons/reset.svg';
 import RowExtraLargeIcon from './icons/row-extra-large.svg';
@@ -79,6 +81,7 @@ import SearcherGridIcon from './icons/searcher-grid.svg';
 import SearcherRandomIcon from './icons/searcher-random.svg';
 import SettingsIcon from './icons/settings.svg';
 import ShellIcon from './icons/shell.svg';
+import { SpinBowtie, SpinHalf, SpinShadow } from './icons/Spin';
 import SpinnerIcon from './icons/spinner.svg';
 import StarIcon from './icons/star.svg';
 import StopIcon from './icons/stop.svg';
@@ -194,13 +197,7 @@ export const svgIcons = [
   'pin',
 ] as const;
 
-type SvgIconName = (typeof svgIcons)[number];
-
-// intersection here is to ensure the index access in the component returns
-// undefined | React.FC and not any
-const svgIconMap: Record<SvgIconName, React.FC> & {
-  [x in AntdIconName]?: never;
-} = {
+const svgIconMap: Partial<Record<IconName, React.FC>> = {
   'add': AddIcon,
   'archive': ArchiveIcon,
   'arrow-down': ArrowDownIcon,
@@ -285,30 +282,33 @@ const svgIconMap: Record<SvgIconName, React.FC> & {
   'warning': WarningIcon,
   'webhooks': SearcherRandomIcon, // duplicate of searcher-random
   'workspaces': WorkspacesIcon,
-};
+} as const;
 
 const antdIcons = ['exclamation-circle', 'holder', 'minus-circle', 'project'] as const;
 
-type AntdIconName = (typeof antdIcons)[number];
-
-// intersection here is to ensure the index access in the component returns
-// undefined | React.FC and not any
-const antdIconMap: Record<AntdIconName, React.FC> & {
-  [x in SvgIconName]?: never;
-} = {
+const antdIconMap: Partial<Record<IconName, React.FC>> = {
   'exclamation-circle': ExclamationCircleOutlined,
   'holder': HolderOutlined,
   'minus-circle': MinusCircleOutlined,
   'project': ProjectOutlined,
 };
 
-export const IconNameArray = [...svgIcons, ...antdIcons];
+const componentIcons = ['active', 'spin-bowtie', 'spin-half', 'spin-shadow', 'queued'] as const;
+
+const componentIconMap: Partial<Record<IconName, React.FC>> = {
+  'active': ActiveIcon,
+  'queued': QueuedIcon,
+  'spin-bowtie': SpinBowtie,
+  'spin-half': SpinHalf,
+  'spin-shadow': SpinShadow,
+};
+
+export const IconNameArray = [...svgIcons, ...antdIcons, ...componentIcons];
 
 export type IconName = (typeof IconNameArray)[number];
 
 type CommonProps = {
   color?: 'cancel' | 'error' | 'success';
-  name: IconName;
   size?: IconSize;
   showTooltip?: boolean;
 };
@@ -320,28 +320,43 @@ export type Props = CommonProps &
     {
       decorative: true;
     }
+  > &
+  XOR<
+    { name: IconName },
+    {
+      name: 'queued';
+      backgroundColor?: React.CSSProperties['backgroundColor'];
+      opacity?: React.CSSProperties['opacity'];
+    }
   >;
-const Icon: React.FC<Props> = (props: Props) => {
-  const { name, size = 'medium', color } = props;
-  const showTooltip = 'decorative' in props ? false : props.showTooltip ?? false;
-  const title = 'decorative' in props ? undefined : props.title;
-  const decorative = 'decorative' in props;
+const Icon: React.FC<Props> = ({
+  name,
+  size = 'medium',
+  color,
+  decorative,
+  title,
+  showTooltip = false,
+  backgroundColor,
+  opacity,
+}: Props) => {
   const classes = [css.base];
 
   const iconComponent = useMemo(() => {
-    const MappedIcon = svgIconMap[name] ?? antdIconMap[name];
+    if (name === 'queued')
+      return <QueuedIcon backgroundColor={backgroundColor} opacity={opacity} />;
+    const MappedIcon = svgIconMap[name] ?? antdIconMap[name] ?? componentIconMap[name];
     return MappedIcon && <MappedIcon />;
-  }, [name]);
+  }, [backgroundColor, name, opacity]);
 
   if (size) classes.push(css[size]);
   if (color) classes.push(css[color]);
 
   const icon = (
-    <span aria-label={decorative ? undefined : title} className={classes.join(' ')}>
+    <span aria-label={title} className={classes.join(' ')}>
       {iconComponent}
     </span>
   );
-  return showTooltip ? <Tooltip content={title}>{icon}</Tooltip> : icon;
+  return showTooltip && !decorative ? <Tooltip content={title}>{icon}</Tooltip> : icon;
 };
 
 export default Icon;

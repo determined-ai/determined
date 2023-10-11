@@ -371,29 +371,19 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const returnStatusIcon = useCallback(
     (iconNode: React.ReactNode): React.ReactNode => {
       {
-        const cssProps: React.CSSProperties = { height: '32px', width: '32px' };
-        switch (experiment.state) {
-          case JobState.SCHEDULED:
-          case JobState.SCHEDULEDBACKFILLED:
-          case JobState.QUEUED:
-          case RunState.Queued:
-            cssProps['backgroundColor'] = 'white';
-            cssProps['opacity'] = '0.25';
-            break;
-          case RunState.Running:
-            cssProps['borderColor'] = 'white';
-            break;
-          default:
-            break;
-        }
-
         return isShownAnimation(experiment.state) ? (
           <>
-            <ExperimentIcons showTooltip={false} state={experiment.state} style={cssProps} />
+            <ExperimentIcons
+              backgroundColor="white" // only gets applied for scheduled and queued states
+              opacity={0.25} // only gets applied for scheduled and queued states
+              showTooltip={false}
+              size="large"
+              state={experiment.state}
+            />
             <div className={css.icon}>{iconNode}</div>
           </>
         ) : (
-          <>{iconNode}</>
+          iconNode
         );
       }
     },

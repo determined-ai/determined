@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import { XOR } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Message from 'components/kit/Message';
 import Select, { Option, SelectValue } from 'components/kit/Select';
@@ -17,7 +16,7 @@ import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails } from 'types';
+import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails, XOR } from 'types';
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { humanReadableBytes, pluralizer } from 'utils/string';

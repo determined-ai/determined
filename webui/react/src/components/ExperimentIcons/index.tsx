@@ -25,9 +25,9 @@ const ExperimentIcons: React.FC<Props> = ({ state, style, showTooltip = true }) 
         return <Queue style={style} />;
       case RunState.Starting:
       case RunState.Pulling:
-        return <Spinner style={style} type="bowtie" />;
+        return <Spinner type="bowtie" />;
       case RunState.Running:
-        return <Spinner style={style} type="shadow" />;
+        return <Spinner type="shadow" />;
       case RunState.Paused:
         return <Icon color="cancel" name="pause" title="Paused" />;
       case RunState.Completed:
