@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import socket
-import sys
 import tarfile
 import uuid
 import warnings
@@ -26,35 +25,7 @@ def is_trial(info: det.ClusterInfo) -> bool:
 
 
 def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None:
-    context_directory_resp = None
-    try:
-        context_directory_resp = bindings.get_GetTaskContextDirectory(sess, taskId=info.task_id)
-    except Exception as e:
-        # Since this is the very first api call in the entrypoint script, and the call is made
-        # before you can debug with a startup hook, we offer an overly-detailed explanation to help
-        # sysadmins debug their cluster.
-        resp_content = str(e)
-        noverify = info.master_cert_file == "noverify"
-        cert_content = None if noverify else info.master_cert_file
-        if cert_content is not None:
-            with open(cert_content) as f:
-                cert_content = f.read()
-        print(
-            "Failed to download model definition from master.  This may be due to an address\n"
-            "resolution problem, a certificate problem, a firewall problem, or some other\n"
-            "networking error.\n"
-            "Debug information:\n"
-            f"    master_url: {info.master_url}\n"
-            f"    endpoint: api/v1/tasks/{info.task_id}/context_directory\n"
-            f"    tls_verify_name: {info.master_cert_name}\n"
-            f"    tls_noverify: {noverify}\n"
-            f"    tls_cert: {cert_content}\n"
-            f"    response content: {resp_content}\n",
-            file=sys.stderr,
-        )
-        raise
-
-    b64_tgz = context_directory_resp.b64Tgz
+    b64_tgz = bindings.get_GetTaskContextDirectory(sess, taskId=info.task_id).b64Tgz
     if not is_trial(info) and len(b64_tgz) == 0:
         return  # Non trials can have empty model defs.
     assert len(b64_tgz) > 0
