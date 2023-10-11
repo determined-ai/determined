@@ -721,7 +721,11 @@ const ChartsSection: React.FC = () => {
           height={250}
           series={[zeroline]}
           title="Chart with range [-1, 10]"
-          xRange={[-1, 10]}
+          xRange={{
+            [XAxisDomain.Batches]: [-1, 10],
+            [XAxisDomain.Time]: undefined,
+            [XAxisDomain.Epochs]: undefined,
+          }}
         />
       </AntDCard>
       <AntDCard title="States without data">

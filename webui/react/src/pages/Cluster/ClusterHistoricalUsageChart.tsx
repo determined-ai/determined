@@ -66,7 +66,11 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         showLegend
         xAxis={XAxisDomain.Time}
         xLabel={capitalizeWord(groupBy || '')}
-        xRange={adjustedDateRange}
+        xRange={{
+          [XAxisDomain.Time]: adjustedDateRange,
+          [XAxisDomain.Batches]: undefined,
+          [XAxisDomain.Epochs]: undefined,
+        }}
         yLabel={label || 'GPU Hours'}
         yTickValues={formatValues}
       />
