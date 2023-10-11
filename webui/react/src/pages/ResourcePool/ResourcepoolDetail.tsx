@@ -15,6 +15,9 @@ import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import ClustersQueuedChart from 'pages/Clusters/ClustersQueuedChart';
+import JobQueue from 'pages/JobQueue/JobQueue';
+import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import {
@@ -30,9 +33,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';
 
-import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
-import ClusterTopology from './Clusters/ClusterTopology';
-import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 
 type Params = {
@@ -227,7 +227,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        <ClusterTopology />
+        <Topology />
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>

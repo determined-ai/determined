@@ -5,7 +5,7 @@ import { Loadable } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import clusterStore from 'stores/cluster';
 
-import css from './ClusterTopology.module.scss';
+import css from './Topology.module.scss';
 
 interface NodeElementProps {
   name: string;
@@ -33,7 +33,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   );
 };
 
-const ClusterTopology: React.FC<PropsWithChildren> = () => {
+const Topology: React.FC<PropsWithChildren> = () => {
   const nodes = Loadable.waitFor(useObservable(clusterStore.agents));
 
   return (
@@ -57,4 +57,4 @@ const ClusterTopology: React.FC<PropsWithChildren> = () => {
   );
 };
 
-export default ClusterTopology;
+export default Topology;
