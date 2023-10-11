@@ -1094,7 +1094,7 @@ func Test_generateRunDeterminedLinkNames(t *testing.T) {
 					Path: "/determined_local_fs/dispatcher-wrapper.sh",
 				},
 				archive.Item{
-					Path: "/" + etc.TaskLoggingSetupScriptResource,
+					Path: "/" + etc.TaskSetupScriptResource,
 				},
 				archive.Item{
 					Path: "/run/determined/link-1",

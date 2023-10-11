@@ -668,7 +668,7 @@ func makeLocalVolume(archiveItem cproto.RunArchive) bool {
 		return false
 	}
 	// The helper scripts are read-only, so leave that archive as shared
-	if archiveItem.Archive.ContainsFilePrefix(etc.TaskLoggingSetupScriptResource) {
+	if archiveItem.Archive.ContainsFilePrefix(etc.TaskSetupScriptResource) {
 		return false
 	}
 	// The helper scripts are read-only, so leave that archive as shared
