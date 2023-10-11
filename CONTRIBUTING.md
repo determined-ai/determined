@@ -52,7 +52,7 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
   - python3-wheel
   - python3-dev
 - Node (>= 20.1.0, < 21)
-- NPM (>= 9.5.1)
+- NPM (>= 9.6.4)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
 - protobuf-compiler (>= 3.15)
