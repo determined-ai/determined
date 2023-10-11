@@ -5,7 +5,7 @@ import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
-import css from './PageMessage.module.scss';
+import Message from './kit/Message';
 
 interface Props {
   children: React.ReactNode;
@@ -16,15 +16,16 @@ const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
   const info = useObservable(determinedStore.info);
   return (
     <Page breadcrumb={[]} docTitle={title} noScroll>
-      <div className={css.base}>
-        <div className={css.content}>
+      <Message
+        description={children}
+        icon={
           <Logo
             branding={info.branding || BrandingType.Determined}
             orientation={Orientation.Vertical}
           />
-          {children}
-        </div>
-      </div>
+        }
+        title={title}
+      />
     </Page>
   );
 };
