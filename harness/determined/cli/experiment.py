@@ -668,10 +668,19 @@ def download_model_def(args: Namespace) -> None:
 @authentication.required
 def download(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    resp = bindings.get_GetExperiment(session=sess, experimentId=args.experiment_id)
-    exp = client.Experiment._from_bindings(resp.experiment, sess)
-    checkpoints = exp.top_n_checkpoints(
-        args.top_n, sort_by=args.sort_by, smaller_is_better=args.smaller_is_better
+    exp = client.Experiment(args.experiment_id, sess)
+
+    ckpt_order_by = None
+
+    if args.smaller_is_better is True:
+        ckpt_order_by = client.CheckpointOrderBy.ASC
+    if args.smaller_is_better is False:
+        ckpt_order_by = client.CheckpointOrderBy.DESC
+
+    checkpoints = exp.list_checkpoints(
+        sort_by=args.sort_by,
+        order_by=ckpt_order_by,
+        limit=args.top_n,
     )
 
     top_level = pathlib.Path(args.output_dir)

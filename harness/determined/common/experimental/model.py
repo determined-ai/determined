@@ -11,11 +11,11 @@ from determined.common.experimental import checkpoint, metrics
 
 
 class ModelVersion:
-    """
-    A class representing a combination of Model and Checkpoint.
+    """A class representing a combination of Model and Checkpoint.
 
-    It can be fetched using ``model.get_version()``. Once a model has been added to the registry,
-    checkpoints can be added to it. These registered checkpoints are ModelVersions.
+    This class can be fetched using the ``model.get_version()`` method. Once a model has been
+    added to the registry, checkpoints can be added to it. These registered checkpoints are
+    ModelVersions.
 
     Attributes:
         session: HTTP request session.

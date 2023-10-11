@@ -173,7 +173,7 @@ def test_end_to_end_adaptive() -> None:
     assert best is not None
     assert best > 0.93
 
-    # Check that Experiment returns a sorted order of top checkpoints
+    # Check that the Experiment returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
     d = Determined(conf.make_master_url())

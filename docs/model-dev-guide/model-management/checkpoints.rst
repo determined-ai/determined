@@ -25,13 +25,13 @@ The Checkpoint Export API is a subset of the features found in the
  Querying Checkpoints
 **********************
 
-The :class:`~determined.experimental.client.Experiment` class is a reference to an experiment.
-Within this class, there is a :meth:`~determined.experimental.client.Experiment.list_checkpoints`
-method. When called without arguments, this returns the experiment's checkpoints in sorted order
-using the ``metric`` and ``smaller_is_better`` values from the experiment configuration’s searcher
-field. These values are used to sort the experiment's checkpoints by validation performance. As an
-example, the searcher settings in the following experiment configuration file snippet will result in
-checkpoints being sorted by the loss metric in ascending order.
+Use the :class:`~determined.experimental.client.Experiment` class to reference an experiment. The
+:meth:`~determined.experimental.client.Experiment.list_checkpoints` method, when called without
+arguments, returns checkpoints sorted based on the ``metric`` and ``smaller_is_better`` values from
+the experiment configuration's searcher field.
+
+For example, in the following experiment configuration file snippet, Determined will sort
+checkpoints by the loss metric and in ascending order.
 
 .. code:: yaml
 
@@ -39,9 +39,9 @@ checkpoints being sorted by the loss metric in ascending order.
      metric: "loss"
      smaller_is_better: true
 
-The following snippet of Python code can be run after the specified experiment has generated a
-checkpoint. It gets a list of sorted :class:`~determined.experimental.client.Checkpoint` instances
-associated with the experiment and selects the one with the best validation metric.
+After generating a checkpoint for the specified experiment, you can run the Python code below. This
+code retrieves a list of sorted :class:`~determined.experimental.client.Checkpoint` instances
+associated with the experiment and selects the checkpoint with the best validation metric.
 
 .. code:: python
 
@@ -49,9 +49,8 @@ associated with the experiment and selects the one with the best validation metr
 
    checkpoint = client.get_experiment(id).list_checkpoints()[0]
 
-Checkpoints can be sorted by any metric using the ``sort_by`` keyword argument, which defines which
-metric to use, and ``order_by``, which defines whether to sort the checkpoints in ascending or
-descending order with respect to the specified metric.
+To sort checkpoints by any metric, use the ``sort_by`` argument to specify the metric and
+``order_by`` to define the sorting order (ascending or descending).
 
 .. code:: python
 
@@ -64,9 +63,9 @@ descending order with respect to the specified metric.
        )
    )
 
-You may also query checkpoints by preset checkpoint parameters, as defined by
-:class:`~determined.experimental.checkpoint.CheckpointSortBy`. The following code snippet fetches
-all checkpoints for the experiment sorted by the checkpoint's trial ID in descending order.
+To sort checkpoints using preset checkpoint parameters, use the
+:class:`~determined.experimental.checkpoint.CheckpointSortBy` class. The example below fetches all
+checkpoints for an experiment, sorting them by trial ID in descending order.
 
 .. code:: python
 
@@ -82,7 +81,7 @@ selection within a trial. It contains a
 :meth:`~determined.experimental.client.Trial.list_checkpoints` method, which mirrors
 :meth:`~determined.experimental.client.Experiment.list_checkpoints` for an experiment.
 
-The snippet below demonstrates various ways of selecting a checkpoint from a trial.
+The following code illustrates methods to select specific checkpoints from a trial:
 
 .. code:: python
 
