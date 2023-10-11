@@ -5,6 +5,7 @@
 | Example                                                       | Dataset          | Framework             |
 |:-------------------------------------------------------------:|:----------------:|:---------------------:|
 | [mnist\_pytorch](tutorials/mnist_pytorch)                     | MNIST            | PyTorch               |
+| [core\_api](tutorials/core_api)                               | Core API         | -                     |
 
 ## Computer Vision
 
