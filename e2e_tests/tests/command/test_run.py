@@ -103,7 +103,7 @@ def test_exit_code_reporting() -> None:
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
-# @pytest.mark.e2e_pbs
+@pytest.mark.e2e_pbs
 def test_basic_workflows(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
         _run_and_verify_exit_code_zero(
@@ -284,7 +284,7 @@ def test_singleton_command() -> None:
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
-# @pytest.mark.e2e_pbs
+@pytest.mark.e2e_pbs
 def test_environment_variables_command() -> None:
     _run_and_verify_exit_code_zero(
         [
