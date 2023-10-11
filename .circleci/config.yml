@@ -3230,7 +3230,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-distributed-nightly
-          context: aws
+          context:
+            - aws
+            - hugging-face
           filters: *upstream-feature-branch
           requires:
             - request-gpu-distributed-nightly
