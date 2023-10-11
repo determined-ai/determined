@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/determined-ai/determined/master/internal/ft"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 
 	"github.com/determined-ai/determined/master/internal/config"
 
@@ -232,10 +232,11 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 }
 
 func addDisallowedNodesToPodSpec(pod *k8sV1.Pod, taskID model.TaskID) {
-	// Can't just replace []string{nodeName} with ft.DisallowedNodes(taskID).ToSlice() and not loop
+	// Can't just replace []string{nodeName} with
+	// logpattern.DisallowedNodes(taskID).ToSlice() and not loop
 	// because of the k8s error given "Required value:
 	// must be only one value when `operator` is 'In' or 'NotIn' for node field selector".
-	for _, nodeName := range ft.DisallowedNodes(taskID).ToSlice() {
+	for _, nodeName := range logpattern.DisallowedNodes(taskID).ToSlice() {
 		addNodeSelectorRequirement(pod, k8sV1.NodeSelectorRequirement{
 			Key:      "metadata.name",
 			Operator: k8sV1.NodeSelectorOpNotIn,

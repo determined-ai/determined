@@ -47,6 +47,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -855,6 +856,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
 		return "", fmt.Errorf("decoding task logs: %w", err)
 	}
+
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return "", errors.Wrap(err, "receiving task logs")
 	}
@@ -884,6 +886,10 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
+	}
+
+	if err := logpattern.Initialize(ctx); err != nil {
+		return fmt.Errorf("initializing log pattern policies: %w", err)
 	}
 
 	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
