@@ -20,6 +20,10 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
 }) => {
   const singleSlot = slots === 1;
   const fewSlot = slots === 2;
+  const styles = [css.nodeSlot];
+
+  if (singleSlot) styles.push(css.singleSlot);
+  if (fewSlot) styles.push(css.fewSlot);
 
   return (
     <div className={css.node}>
@@ -27,9 +31,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
       <span className={css.nodeCluster}>
         {Array.from(Array(slots)).map((_, idx) => (
           <span
-            className={`${css.nodeSlot} ${idx + 1 <= enabledSlots ? css.active : ''} ${
-              singleSlot ? css.singleSlot : ''
-            } ${fewSlot ? css.fewSlot : ''}`}
+            className={`${styles.join(' ')} ${idx + 1 <= enabledSlots ? css.active : ''}`}
             key={`slot${idx}`}
           />
         ))}
