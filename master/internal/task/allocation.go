@@ -503,6 +503,7 @@ func (a *allocation) Cleanup() {
 		a.exitErr = errors.New("unknown error occurred")
 	}
 	exitReason := a.exitErr.Error()
+	a.SetExitStatus(exitReason, a.exitErr, ptrs.Ptr(int32(-1)))
 
 	a.finalize(exitReason, false, logrus.ErrorLevel, a.exitErr)
 }
@@ -526,7 +527,7 @@ func (a *allocation) finalize(
 	a.markResourcesReleased()
 
 	a.exited = &AllocationExited{UserRequestedStop: userRequestedStop, Err: exitErr, FinalState: a.state()}
-
+	a.SetExitStatus(exitReason, exitErr, nil)
 	log := fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason)
 	a.syslog.Log(severity, log)
 	a.sendTaskLog(&model.TaskLog{Level: ptrs.Ptr(model.TaskLogLevelFromLogrus(severity)), Log: log})
@@ -965,6 +966,29 @@ func (a *allocation) exitedWithoutErr() bool {
 		}
 	}
 	return true
+}
+
+func (a *allocation) SetExitStatus(exitReason string, exitErr error, statusCode *int32) {
+	switch err := exitErr.(type) {
+	case sproto.ResourcesFailure:
+		a.model.ExitErr = ptrs.Ptr(err.Error())
+		if err.ExitCode != nil {
+			a.model.StatusCode = ptrs.Ptr(int32(*err.ExitCode))
+		}
+	case nil:
+		a.model.ExitErr = nil
+	default:
+		a.model.ExitErr = ptrs.Ptr(err.Error())
+	}
+	a.model.ExitReason = &exitReason
+
+	if statusCode != nil {
+		a.model.StatusCode = statusCode
+	}
+
+	if err := db.AddAllocationExitStatus(context.TODO(), &a.model); err != nil {
+		a.syslog.WithError(err).Error("failed to add allocation exit status to db")
+	}
 }
 
 func (a *allocation) registerProxies(addresses []cproto.Address) {

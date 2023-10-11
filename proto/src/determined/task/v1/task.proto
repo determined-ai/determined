@@ -50,22 +50,26 @@ enum TaskType {
 // Allocation tracks a specific instance of a Task.
 message Allocation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "task_id", "state", "is_ready", "allocation_id" ]
-    }
+    json_schema: { required: [ "task_id", "state", "allocation_id", "slots" ] }
   };
   // Unique ID of task associated with the allocation.
   string task_id = 1;
   // The current state of the allocation.
   State state = 2;
   // Whether the allocation is ready to access.
-  bool is_ready = 3;
+  optional bool is_ready = 3;
   // Start timestamp.
-  string start_time = 4;
+  optional string start_time = 4;
   // End timestamp if completed.
-  string end_time = 5;
+  optional string end_time = 5;
   // Unique ID of the allocation.
   string allocation_id = 6;
+  // The number of slots associated with the allocation.
+  int32 slots = 7;
+  // The exit reason for the allocation.
+  optional string exit_reason = 8;
+  // The status code the allocation exits with.
+  optional int32 status_code = 9;
 }
 
 // Task is the model for a task in the database.
