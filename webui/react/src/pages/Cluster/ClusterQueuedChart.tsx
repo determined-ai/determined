@@ -27,6 +27,11 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
     };
   }, [poolStats, viewDays]);
 
+  const dateRange: [number, number] = useMemo(() => {
+    const now = Date.now() / 1000;
+    return [now - viewDays * 86400, now];
+  }, [viewDays]);
+
   if (!queuedStats) return <div />;
   return (
     <>
@@ -43,6 +48,7 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         }
         title="Avg Queue Time">
         <ClusterHistoricalUsageChart
+          dateRange={dateRange}
           formatValues={(_: uPlot, splits: number[]) =>
             splits.map((n) => durationInEnglish(n * 1000))
           }

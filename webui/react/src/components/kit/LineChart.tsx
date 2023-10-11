@@ -38,6 +38,7 @@ export const VALIDATION_SERIES_COLOR = '#F77B21';
  * @param {string} [title] - Title for the chart.
  * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart (example: batches, time).
  * @param {string} [xLabel] - Directly set label below the x-axis.
+ * @param {[number, number]} [xRange] - Set a minimum and maximum x-value regardless of plotted data.
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
 interface ChartProps {
@@ -53,6 +54,7 @@ interface ChartProps {
   title?: ReactNode;
   xAxis?: XAxisDomain;
   xLabel?: string;
+  xRange?: [number, number];
   yLabel?: string;
   yTickValues?: uPlot.Axis.Values;
 }
@@ -76,6 +78,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   title,
   xAxis = XAxisDomain.Batches,
   xLabel,
+  xRange,
   yLabel,
   yTickValues,
 }: LineChartProps) => {
@@ -182,10 +185,12 @@ export const LineChart: React.FC<LineChartProps> = ({
         drag: { x: true, y: false },
       },
       height: height - (hasPopulatedSeries ? 0 : 20),
+      key: xRange ? xRange[0] : undefined,
       legend: { show: false },
       plugins,
       scales: {
         x: {
+          range: xRange,
           time: xAxis === XAxisDomain.Time,
         },
         y: {
@@ -218,6 +223,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     yTickValues,
     height,
     xAxis,
+    xRange,
     scale,
     series,
     seriesNames,
