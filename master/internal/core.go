@@ -1053,17 +1053,14 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
 
-	if m.config.InternalConfig.LorePath != "" {
-		lorePrefix := "/lore"
-		loreGroup := m.echo.Group(lorePrefix)
-
-		loreTarget, err := url.Parse(m.config.InternalConfig.LorePath)
+	for _, ps := range m.config.InternalConfig.ProxiedServers {
+		psGroup := m.echo.Group(ps.PathPrefix)
+		psTarget, err := url.Parse(ps.Destination)
 		if err != nil {
-			return errors.Wrap(err, "failed to parse the given Lore path")
+			return errors.Wrap(err, "failed to parse the given proxied server path")
 		}
-
-		loreProxy := httputil.NewSingleHostReverseProxy(loreTarget)
-		loreGroup.Any("*", echo.WrapHandler(http.StripPrefix(lorePrefix, loreProxy)))
+		psProxy := httputil.NewSingleHostReverseProxy(psTarget)
+		psGroup.Any("*", echo.WrapHandler(http.StripPrefix(ps.PathPrefix, psProxy)))
 	}
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
