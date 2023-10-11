@@ -1580,7 +1580,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-github-only
       - react-get-deps
-      - run: npx playwright install --with-deps && npx playwright install chrome firefox webkit
+      - run: npx playwright install --with-deps chrome firefox webkit
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
       - store_artifacts:
