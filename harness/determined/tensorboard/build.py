@@ -35,7 +35,7 @@ def get_base_path(checkpoint_config: Dict[str, Any]) -> pathlib.Path:
     if checkpoint_config.get("base_path"):
         base_path = pathlib.Path(checkpoint_config["base_path"])
     else:
-        base_path = pathlib.Path("/", "tmp")
+        base_path = pathlib.Path("/run/determined/workdir/shared_fs/profiler_files/", "tmp")
 
     return base_path.joinpath(f"tensorboard-{allocation_id}-{rank}")
 

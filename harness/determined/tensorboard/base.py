@@ -95,6 +95,8 @@ class TensorboardManager(metaclass=abc.ABCMeta):
             relative_path = path.relative_to(self.base_path)
             mangled_relative_path = mangler(relative_path, rank)
             path_list.append(PathUploadInfo(path=path, mangled_relative_path=mangled_relative_path))
+        print("tensorboard syncing the following")
+        print(path_list)
         if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.upload(path_list)
         else:
