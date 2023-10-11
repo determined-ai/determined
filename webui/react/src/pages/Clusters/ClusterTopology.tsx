@@ -36,14 +36,18 @@ const ClusterTopology: React.FC<PropsWithChildren> = () => {
   const nodes = Loadable.waitFor(useObservable(clusterStore.agents));
 
   return (
-    <div className={css.container}>
-      {nodes.map(({ id, resources }) => {
-        const enabledSlots = resources.reduce((acc, { enabled }) => (enabled ? acc++ : acc), 0);
-        const slots = resources.length;
+    <>
+      {nodes.length ? (
+        <div className={css.container}>
+          {nodes.map(({ id, resources }) => {
+            const enabledSlots = resources.reduce((acc, { enabled }) => (enabled ? acc++ : acc), 0);
+            const slots = resources.length;
 
-        return <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />;
-      })}
-    </div>
+            return <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />;
+          })}
+        </div>
+      ) : null}
+    </>
   );
 };
 
