@@ -79,7 +79,7 @@ func TrialByID(ctx context.Context, id int) (*model.Trial, error) {
 }
 
 // TrialByTaskID looks up a trial by taskID, returning an error if none exists.
-// TODO test this function.
+// This errors if you called it with a non trial taskID.
 func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, error) {
 	t := &model.Trial{}
 	if err := Bun().NewSelect().Model(t).

@@ -135,12 +135,13 @@ func AddRetryOnDifferentNode(
 type sendWebhook struct {
 	bun.BaseModel `bun:"table:log_policy_send_webhook"`
 
-	ID            int          `bun:"id,pk,autoincrement"`
-	TaskID        model.TaskID `bun:"task_id"`
-	Regex         string       `bun:"regex"`
-	NodeName      string       `bun:"node_name"`
-	WebhookName   string       `bun:"webhook_name"`
-	TriggeringLog string       `bun:"triggering_log"`
+	ID            int                  `bun:"id,pk,autoincrement"`
+	TaskID        model.TaskID         `bun:"task_id"`
+	Regex         string               `bun:"regex"`
+	NodeName      string               `bun:"node_name"`
+	TriggeringLog string               `bun:"triggering_log"`
+	WebhookType   webhooks.WebhookType `bun:"webhook_type"`
+	WebhookURL    string               `bun:"webhook_url"`
 }
 
 // AddWebhookAlert reports trigger of a webhook policy and sends the webhook asynchronously.
@@ -149,16 +150,18 @@ type sendWebhook struct {
 func AddWebhookAlert(ctx context.Context,
 	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt webhooks.WebhookType,
 ) error {
-	// Persisting this mostly so that we don't trigger again.
+	// The reason we persist this is to avoid sending dupes.
+	// Maybe the webhook package could handle this but I think it makes sense for us to do it here.
 	m := &sendWebhook{
 		TaskID:        taskID,
 		NodeName:      nodeName,
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
-		WebhookName:   "TODO remove name", // and add url and wt
+		WebhookURL:    url,
+		WebhookType:   wt,
 	}
 	res, err := db.Bun().NewInsert().Model(m).
-		On("CONFLICT (task_id, regex, webhook_name) DO NOTHING"). // Only care about the first log.
+		On("CONFLICT (task_id, regex, webhook_type, webhook_url) DO NOTHING").
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("adding send webhook policy %+v: %w", m, err)

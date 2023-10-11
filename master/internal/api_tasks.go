@@ -437,9 +437,6 @@ func (a *apiServer) PostTaskLogs(
 
 		regex = "testwebhook"
 		if strings.Contains(l.Log, regex) {
-			// TODO throw this in expconf..
-			// TODO remove other thing in expcofn.
-			fmt.Println(regex)
 			url := "https://webhook.site/ce7c7e07-898a-4145-8ff4-84ef34f871fc"
 
 			wt := webhooks.WebhookTypeDefault
