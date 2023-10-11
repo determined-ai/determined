@@ -240,7 +240,7 @@ args_description = [
             *AGENT_USER_GROUP_ARGS,
         ]),
         Cmd("whoami", whoami, "print the active user", []),
-        Cmd("edit", edit, "print the active user", [
+        Cmd("edit", edit, "edit multiple user fields", [
             Arg(
                 "target_user",
                 default=None,
