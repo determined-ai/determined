@@ -702,13 +702,16 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 		// To be fixed by https://github.com/soheilhy/cmux/pull/69 which makes cmux an io.Closer.
 		return gRPCServer.Serve(grpcListener)
 	})
+	defer gRPCServer.Stop()
+
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
 		m.echo.HidePort = true
 		m.echo.Server.ConnContext = connsave.SaveConn
-		defer closeWithErrCheck("echo", m.echo)
 		return m.echo.StartServer(m.echo.Server)
 	})
+	defer closeWithErrCheck("echo", m.echo)
+
 	start("cmux listener", mux.Serve)
 
 	if systemdListener != nil {
