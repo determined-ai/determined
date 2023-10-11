@@ -124,14 +124,14 @@ visual-test-deps: node_modules/playwright-core/.local-browsers
 	npx playwright install-deps
 
 screenshots/HEAD: node_modules visual-test-deps
-	node scripts/designkit-screenshot.mjs HEAD
+	PLAYWRIGHT_BROWSERS_PATH=0 node scripts/designkit-screenshot.mjs HEAD
 
 screenshots/MAIN: node_modules visual-test-deps
 	cp -r node_modules/playwright-core/.local-browsers browsers
 	git checkout $(merge_base)
 	npm ci --no-audit
 	cp -r browsers node_modules/playwright-core/.local-browsers
-	node scripts/designkit-screenshot.mjs MAIN
+	PLAYWRIGHT_BROWSERS_PATH=0 node scripts/designkit-screenshot.mjs MAIN
 	git reset --hard HEAD
 	rm -rf new-scripts
 	git checkout -
