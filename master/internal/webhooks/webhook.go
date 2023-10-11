@@ -157,8 +157,8 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 		return TriggerTypeMetricThresholdExceeded
 	case webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE:
 		return TriggerTypeStateChange
-		// Doesn't have TriggerTypeLogPatternPolicy since it isn't exposed in proto.
-		// This is a footgun, so maybe just add it to proto...
+	case webhookv1.TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY:
+		return TriggerTypeLogPatternPolicy
 	// TODO
 	default:
 		// TODO(???): prob don't panic
@@ -185,8 +185,8 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE
 	case TriggerTypeMetricThresholdExceeded:
 		return webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED
-		// Doesn't have TriggerTypeLogPatternPolicy since it isn't exposed in proto.
-		// This is a footgun, so maybe just add it to proto...
+	case TriggerTypeLogPatternPolicy:
+		return webhookv1.TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY
 	// TODO
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
