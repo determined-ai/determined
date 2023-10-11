@@ -43,7 +43,6 @@ Examples let you build off of an existing model that already runs on Determined.
 
 .. toctree::
    :hidden:
+   :glob:
 
-   Quickstart <quickstart-mdldev>
-   Run Your First Experiment <pytorch-mnist-local-qs>
-   PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
+   ./*

@@ -45,6 +45,6 @@ respective versions.
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :glob:
 
-   checkpoints
-   model-registry-org
+   ./*

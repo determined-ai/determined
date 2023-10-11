@@ -1,3 +1,5 @@
+.. _architecture-index:
+
 ######################
  How Determined Works
 ######################
@@ -28,18 +30,17 @@ so you can spend your time building models instead of managing infrastructure.
 
 Learn more:
 
--  :doc:`Intro to Determined <introduction>`: Conceptual information about Determined including its
-   features and benefits.
--  :doc:`System Architecture <system-architecture>`: Learn about the main components of the
+-  :ref:`Intro to Determined <introduction-determined>`: Conceptual information about Determined
+   including its features and benefits.
+-  :ref:`System Architecture <system-architecture>`: Learn about the main components of the
    Determined system architecture.
--  :doc:`Distributed Training <../model-dev-guide/dtrain/dtrain-introduction>`: A conceptual
-   overview of distributed training with Determined.
+-  :ref:`Distributed Training <distributed-training-index>`: A conceptual overview of distributed
+   training with Determined.
 
 .. toctree::
    :maxdepth: 1
    :caption: How Determined Works
    :hidden:
+   :glob:
 
-   introduction
-   system-architecture
-   Distributed Training <../model-dev-guide/dtrain/_index>
+   ./*

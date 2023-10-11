@@ -1,6 +1,6 @@
-########################################
- Monitoring Experiment Through Webhooks
-########################################
+###############
+ Notifications
+###############
 
 Monitoring experiment status is a vital part of working with Determined. In order to integrate
 Determined into your existing workflows, you can make use of webhooks to update other systems,
@@ -186,6 +186,6 @@ actions.
 .. toctree::
    :caption: Notification
    :hidden:
+   :glob:
 
-   zapier
-   slack
+   ./*

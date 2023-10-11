@@ -1,7 +1,12 @@
 :orphan:
 
-#######
- Index
-#######
+#############
+ Get Started
+#############
 
-get started index
+.. toctree::
+   :hidden:
+   :glob:
+
+   ./*
+   ./*/_index

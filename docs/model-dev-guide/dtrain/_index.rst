@@ -1,3 +1,5 @@
+.. _distributed-training-index:
+
 .. _multi-gpu-training:
 
 ######################################
