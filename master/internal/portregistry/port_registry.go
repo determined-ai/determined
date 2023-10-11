@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
+
+	"github.com/determined-ai/determined/master/internal/config"
 )
 
 var (
@@ -15,6 +17,13 @@ var (
 func InitPortRegistry() {
 	// initialize tree with node -1 because tree cannot be empty.
 	portRegistryTree = rbt.NewWithIntComparator()
+	registerAnyReservedPorts()
+}
+
+func registerAnyReservedPorts() {
+	for _, port := range config.GetMasterConfig().ReservedPorts {
+		portRegistryTree.Put(port, struct{}{}) // we only care about key.
+	}
 }
 
 // IteratorAt(baseport node) or return base port
