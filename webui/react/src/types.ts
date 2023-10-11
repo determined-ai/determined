@@ -188,7 +188,7 @@ export const resourceStates: ResourceState[] = [
 ];
 
 export interface ResourceContainer {
-  id: string; // id of the job/task which is using the agent/node
+  id: string;
   state: ResourceState;
 }
 
