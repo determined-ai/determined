@@ -55,7 +55,9 @@ const Topology: React.FC<PropsWithChildren> = () => {
               );
               const slots = resources.length;
 
-              return <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />;
+              return slots ? (
+                <NodeElement enabledSlots={enabledSlots} key={id} name={id} slots={slots} />
+              ) : null;
             })}
           </div>
         </Section>
