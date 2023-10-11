@@ -198,8 +198,6 @@ func generateLogPatternSlackPayload(
 	regex,
 	triggeringLog string,
 ) ([]byte, error) {
-	// config := conf.GetMasterConfig().Webhooks.BaseURL
-
 	trial, err := db.TrialByTaskID(ctx, taskID)
 	if err != nil {
 		return nil, err
