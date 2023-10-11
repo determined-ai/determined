@@ -355,7 +355,7 @@ class Experiment:
         warnings.warn(
             "Experiment.top_checkpoint() has been deprecated and will be removed in a future "
             "version."
-            "Please call Experiment.list_checkpoints(...,limit=1) instead.",
+            "Please call Experiment.list_checkpoints(...,max_results=1) instead.",
             FutureWarning,
             stacklevel=2,
         )
@@ -369,7 +369,7 @@ class Experiment:
         checkpoints = self.list_checkpoints(
             sort_by=sort_by,
             order_by=order_by,
-            limit=1,
+            max_results=1,
         )
 
         if not checkpoints:
@@ -381,7 +381,7 @@ class Experiment:
         self,
         sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
         order_by: Optional[checkpoint.CheckpointOrderBy] = None,
-        limit: Optional[int] = None,
+        max_results: Optional[int] = None,
     ) -> List[checkpoint.Checkpoint]:
         """Returns a list of sorted :class:`~determined.experimental.Checkpoint` instances.
 
@@ -396,7 +396,7 @@ class Experiment:
             sort_by: (Optional) Parameter to sort checkpoints by. Accepts either
                 ``checkpoint.CheckpointSortBy`` or a string representing a validation metric name.
             order_by: (Optional) Order of sorted checkpoints (ascending or descending).
-            limit: (Optional) Maximum number of results to return. Defaults to no maximum.
+            max_results: (Optional) Maximum number of results to return. Defaults to no maximum.
 
         Returns:
             A list of sorted and ordered checkpoints.
@@ -411,7 +411,7 @@ class Experiment:
             return bindings.get_GetExperimentCheckpoints(
                 self._session,
                 id=self._id,
-                limit=limit,
+                limit=max_results,
                 offset=offset,
                 orderBy=order_by._to_bindings() if order_by else None,
                 sortByAttr=sort_by._to_bindings()
@@ -421,7 +421,10 @@ class Experiment:
                 states=[bindings.checkpointv1State.COMPLETED],
             )
 
-        resps = api.read_paginated(get_with_offset)
+        resps = api.read_paginated(
+            get_with_offset=get_with_offset,
+            pages=api.PageOpts.single if max_results else api.PageOpts.all,
+        )
 
         return [
             checkpoint.Checkpoint._from_bindings(c, self._session)
@@ -458,7 +461,7 @@ class Experiment:
         warnings.warn(
             "Experiment.top_n_checkpoints() has been deprecated and will be removed in a future "
             "version."
-            "Please call Experiment.list_checkpoints(...,limit=n) instead.",
+            "Please call Experiment.list_checkpoints(...,max_results=n) instead.",
             FutureWarning,
             stacklevel=2,
         )

@@ -680,7 +680,7 @@ def download(args: Namespace) -> None:
     checkpoints = exp.list_checkpoints(
         sort_by=args.sort_by,
         order_by=ckpt_order_by,
-        limit=args.top_n,
+        max_results=args.top_n,
     )
 
     top_level = pathlib.Path(args.output_dir)

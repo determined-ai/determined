@@ -271,7 +271,9 @@ def test_list_checkpoints_errors_on_only_order_by_set(
     expref = make_expref(1)
 
     with pytest.raises(AssertionError):
-        expref.list_checkpoints(sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC, limit=5)
+        expref.list_checkpoints(
+            sort_by=None, order_by=checkpoint.CheckpointOrderBy.ASC, max_results=5
+        )
 
 
 def test_list_checkpoints_errors_on_only_sort_by_set(
@@ -280,4 +282,6 @@ def test_list_checkpoints_errors_on_only_sort_by_set(
     expref = make_expref(1)
 
     with pytest.raises(AssertionError):
-        expref.list_checkpoints(sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None, limit=5)
+        expref.list_checkpoints(
+            sort_by=checkpoint.CheckpointSortBy.UUID, order_by=None, max_results=5
+        )
