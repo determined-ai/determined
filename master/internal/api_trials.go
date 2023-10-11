@@ -1152,7 +1152,6 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	}
 
 	if err := a.m.rm.ExternalPreemptionPending(
-		a.m.system,
 		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
 	); err != nil {
 		return nil, err
@@ -1170,7 +1169,6 @@ func (a *apiServer) NotifyContainerRunning(
 	}
 
 	if err := a.m.rm.NotifyContainerRunning(
-		a.m.system,
 		sproto.NotifyContainerRunning{
 			AllocationID: model.AllocationID(req.AllocationId),
 			NumPeers:     req.NumPeers,

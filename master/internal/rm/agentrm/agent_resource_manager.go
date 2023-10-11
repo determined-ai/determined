@@ -57,7 +57,6 @@ func New(
 
 // GetResourcePoolRef gets an actor ref to a resource pool by name.
 func (a ResourceManager) GetResourcePoolRef(
-	ctx actor.Messenger,
 	name string,
 ) (*actor.Ref, error) {
 	rp := a.Ref().Child(name)
@@ -68,16 +67,14 @@ func (a ResourceManager) GetResourcePoolRef(
 }
 
 // ValidateResourcePool validates existence of a resource pool.
-func (a ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
-	_, err := a.GetResourcePoolRef(ctx, name)
+func (a ResourceManager) ValidateResourcePool(name string) error {
+	_, err := a.GetResourcePoolRef(name)
 	return err
 }
 
 // CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
-func (a ResourceManager) CheckMaxSlotsExceeded(
-	ctx actor.Messenger, name string, slots int,
-) (bool, error) {
-	ref, err := a.GetResourcePoolRef(ctx, name)
+func (a ResourceManager) CheckMaxSlotsExceeded(name string, slots int) (bool, error) {
+	ref, err := a.GetResourcePoolRef(name)
 	if err != nil {
 		return false, err
 	}
@@ -91,9 +88,7 @@ func (a ResourceManager) CheckMaxSlotsExceeded(
 }
 
 // ResolveResourcePool fully resolves the resource pool name.
-func (a ResourceManager) ResolveResourcePool(
-	actorCtx actor.Messenger, name string, workspaceID, slots int,
-) (string, error) {
+func (a ResourceManager) ResolveResourcePool(name string, workspaceID, slots int) (string, error) {
 	ctx := context.TODO()
 	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
@@ -103,7 +98,7 @@ func (a ResourceManager) ResolveResourcePool(
 	if name == "" && slots == 0 {
 		if defaultAuxPool == "" {
 			req := sproto.GetDefaultAuxResourcePoolRequest{}
-			resp, err := a.GetDefaultAuxResourcePool(actorCtx, req)
+			resp, err := a.GetDefaultAuxResourcePool(req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to aux pool: %w", err)
 			}
@@ -115,7 +110,7 @@ func (a ResourceManager) ResolveResourcePool(
 	if name == "" && slots >= 0 {
 		if defaultComputePool == "" {
 			req := sproto.GetDefaultComputeResourcePoolRequest{}
-			resp, err := a.GetDefaultComputeResourcePool(actorCtx, req)
+			resp, err := a.GetDefaultComputeResourcePool(req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to compute pool: %w", err)
 			}
@@ -124,7 +119,7 @@ func (a ResourceManager) ResolveResourcePool(
 		name = defaultComputePool
 	}
 
-	resp, err := a.GetResourcePools(actorCtx, &apiv1.GetResourcePoolsRequest{})
+	resp, err := a.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	if err != nil {
 		return "", err
 	}
@@ -147,19 +142,17 @@ func (a ResourceManager) ResolveResourcePool(
 			name, workspaceID)
 	}
 
-	if err := a.ValidateResourcePool(actorCtx, name); err != nil {
+	if err := a.ValidateResourcePool(name); err != nil {
 		return "", fmt.Errorf("validating pool: %w", err)
 	}
 	return name, nil
 }
 
 // ValidateResources ensures enough resources are available for a command.
-func (a ResourceManager) ValidateResources(
-	ctx actor.Messenger, name string, slots int, command bool,
-) error {
+func (a ResourceManager) ValidateResources(name string, slots int, command bool) error {
 	// TODO: Replace this function usage with ValidateCommandResources
 	if slots > 0 && command {
-		switch resp, err := a.ValidateCommandResources(ctx,
+		switch resp, err := a.ValidateCommandResources(
 			sproto.ValidateCommandResourcesRequest{
 				ResourcePool: name,
 				Slots:        slots,
@@ -174,8 +167,7 @@ func (a ResourceManager) ValidateResources(
 }
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
-func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
-	name string, slots int) (
+func (a ResourceManager) ValidateResourcePoolAvailability(name string, slots int) (
 	[]command.LaunchWarning,
 	error,
 ) {
@@ -183,7 +175,7 @@ func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
 		return nil, nil
 	}
 
-	switch exceeded, err := a.CheckMaxSlotsExceeded(ctx, name, slots); {
+	switch exceeded, err := a.CheckMaxSlotsExceeded(name, slots); {
 	case err != nil:
 		return nil, fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
 	case exceeded:
@@ -196,10 +188,9 @@ func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
 // GetAgents gets the state of connected agents. Go around the RM and directly to the agents actor
 // to avoid blocking asks through it.
 func (a ResourceManager) GetAgents(
-	ctx actor.Messenger,
 	msg *apiv1.GetAgentsRequest,
 ) (resp *apiv1.GetAgentsResponse, err error) {
-	return resp, actorrm.AskAt(a.Ref().System(), sproto.AgentsAddr, msg, &resp)
+	return resp, a.AskAt(sproto.AgentsAddr, msg, &resp)
 }
 
 type agentResourceManager struct {
@@ -758,7 +749,6 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
 func (a ResourceManager) NotifyContainerRunning(
-	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {
 	// Agent Resource Manager does not implement a handler for the
@@ -775,10 +765,9 @@ type taskContainerDefaults struct {
 
 // TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
 func (a ResourceManager) TaskContainerDefaults(
-	ctx actor.Messenger,
 	pool string,
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (result model.TaskContainerDefaultsConfig, err error) {
 	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
-	return result, a.Ask(ctx, req, &result)
+	return result, a.Ask(req, &result)
 }

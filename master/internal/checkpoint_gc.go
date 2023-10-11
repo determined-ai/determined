@@ -51,7 +51,7 @@ func runCheckpointGCTask(
 		return nil
 	}
 
-	rp, err := rm.ResolveResourcePool(system, "", -1, 0)
+	rp, err := rm.ResolveResourcePool("", -1, 0)
 	if err != nil {
 		return fmt.Errorf("resolving resource pool: %w", err)
 	}
@@ -59,7 +59,6 @@ func runCheckpointGCTask(
 	// t.Base is just a shallow copy of the m.taskSpec on the master, so
 	// use caution when mutating it.
 	tcd, err := rm.TaskContainerDefaults(
-		system,
 		rp,
 		config.GetMasterConfig().TaskContainerDefaults)
 	if err != nil {

@@ -159,11 +159,11 @@ func (a *agents) createAgentActor(
 		resourcePool = "default"
 	}
 
-	if err := a.rm.ValidateResourcePool(ctx, resourcePool); err != nil {
+	if err := a.rm.ValidateResourcePool(resourcePool); err != nil {
 		return nil, fmt.Errorf("cannot find specified resource pool for agent %s: %w", id, err)
 	}
 
-	resourcePoolRef, err := a.rm.GetResourcePoolRef(ctx, resourcePool)
+	resourcePoolRef, err := a.rm.GetResourcePoolRef(resourcePool)
 	if err != nil {
 		return nil, fmt.Errorf("getting resource pool for agent: %w", err)
 	}

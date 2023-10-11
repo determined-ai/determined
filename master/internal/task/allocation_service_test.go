@@ -453,9 +453,9 @@ func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 	q := queue.New[sproto.ResourcesEvent]()
 	sub := sproto.NewAllocationSubscription(q, func() { subClosed.Store(true) })
 
-	rm.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
-	rm.On("Release", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		msg := args[1].(sproto.ResourcesReleased)
+	rm.On("Allocate", mock.Anything).Return(sub, nil)
+	rm.On("Release", mock.Anything).Return().Run(func(args mock.Arguments) {
+		msg := args[0].(sproto.ResourcesReleased)
 		if msg.ResourcesID == nil {
 			q.Put(sproto.ResourcesReleasedEvent{})
 		}

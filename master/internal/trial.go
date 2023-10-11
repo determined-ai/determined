@@ -702,7 +702,7 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 		Where("end_time IS NULL").
 		Where("state != ?", model.AllocationStateTerminated)
 
-	if t.rm.IsReattachableOnlyAfterStarted(t.system) {
+	if t.rm.IsReattachableOnlyAfterStarted() {
 		selectQuery.Where("start_time IS NOT NULL")
 	}
 

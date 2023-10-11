@@ -485,7 +485,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 
 			// delete jobs per experiment
-			resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
+			resp, err := a.m.rm.DeleteJob(sproto.DeleteJob{
 				JobID: exp.JobID,
 			})
 			if err != nil {

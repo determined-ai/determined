@@ -91,7 +91,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system,
 		activeConfig.Resources().ResourcePool(),
 		workspaceID,
 		activeConfig.Resources().SlotsPerTrial(),
@@ -100,14 +99,12 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
 	if err = m.rm.ValidateResources(
-		m.system,
 		poolName,
 		activeConfig.Resources().SlotsPerTrial(),
 		false); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		m.system,
 		poolName,
 		m.config.TaskContainerDefaults,
 	)
