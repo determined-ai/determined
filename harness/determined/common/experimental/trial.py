@@ -1,4 +1,5 @@
 import enum
+import warnings
 from typing import Any, Iterable, List, Optional, Union
 
 from determined.common import api
@@ -289,28 +290,46 @@ class TrialReference:
         return "Trial(id={})".format(self.id)
 
     def stream_metrics(self, group: str) -> Iterable[metrics.TrialMetrics]:
+        """Get a stream of metrics for this trial.
+
+        Arguments:
+            group: The metric group to stream.  Valid values are "validation" and "training".
+
+        Returns:
+            An iterable of :class:`~determined.experimental.TrialMetrics` objects.
         """
-        Streams metrics for this trial sorted by
-        trial_id, trial_run_id and steps_completed.
-        """
+        if group not in ("training", "validation"):
+            raise ValueError(
+                f"Invalid metric group: {group}. Valid values are 'training' and 'validation'"
+            )
+
         return _stream_trials_metrics(self._session, [self.id], group=group)
 
     def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:
-        """
-        @deprecated: Use stream_metrics instead with `group` set to "training"
+        """Streams training metrics for this trial.
 
-        Streams training metrics for this trial sorted by
-        trial_id, trial_run_id and steps_completed.
+        DEPRECATED: Use stream_metrics instead with `group` set to "training"
         """
+        warnings.warn(
+            "Trial.stream_training_metrics is deprecated."
+            "Use Trial.stream_metrics instead with `group` set to 'training'",
+            FutureWarning,
+            stacklevel=2,
+        )
+
         return _stream_training_metrics(self._session, [self.id])
 
     def stream_validation_metrics(self) -> Iterable[metrics.ValidationMetrics]:
-        """
-        @deprecated: Use stream_metrics instead with `group` set to "validation"
+        """Streams validation metrics for this trial.
 
-        Streams validation metrics for this trial sorted by
-        trial_id, trial_run_id and steps_completed.
+        DEPRECATED: Use stream_metrics instead with `group` set to "validation"
         """
+        warnings.warn(
+            "Trial.stream_validation_metrics is deprecated."
+            "Use Trial.stream_metrics instead with `group` set to 'validation'",
+            FutureWarning,
+            stacklevel=2,
+        )
         return _stream_validation_metrics(self._session, [self.id])
 
 
