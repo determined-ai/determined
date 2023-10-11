@@ -441,7 +441,6 @@ func (a *apiServer) PostTaskLogs(
 			// TODO remove other thing in expcofn.
 			fmt.Println(regex)
 			url := "https://webhook.site/ce7c7e07-898a-4145-8ff4-84ef34f871fc"
-			// TODO don't commit this, though it is for a personal worskapce so wouldn't be that bad.
 
 			wt := webhooks.WebhookTypeDefault
 			wt = webhooks.WebhookTypeSlack

@@ -200,19 +200,27 @@ func generateLogPatternSlackPayload(
 ) ([]byte, error) {
 	// config := conf.GetMasterConfig().Webhooks.BaseURL
 
+	trial, err := db.TrialByTaskID(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+
 	blocks := []SlackBlock{
 		{
 			Type: "section",
 			Text: SlackField{
 				Type: "mrkdwn",
-				Text: "Experiment ID 10, Trial ID 10, running on node nodeName, reported a log",
+				Text: fmt.Sprintf(
+					"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log",
+					trial.ExperimentID, trial.ID, nodeName,
+				),
 			},
 		},
 		{
 			Type: "section",
 			Text: SlackField{
 				Type: "mrkdwn",
-				Text: "```log message``` (TODO apply slack's code formatting to the log message)",
+				Text: fmt.Sprintf("```%s```", triggeringLog),
 			},
 		},
 		{
@@ -221,32 +229,37 @@ func generateLogPatternSlackPayload(
 				Type: "mrkdwn",
 				Text: "This log matched the regex",
 			},
-			Fields: &[]SlackField{
-				{
-					Type: "mrkdwn",
-					Text: "```regex``` (TODO apply slack's code formatting to the log message)",
-				},
+		},
+		{
+			Type: "section",
+			Text: SlackField{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("```%s```", regex),
 			},
 		},
 	}
 
-	// TODO
-	attachment := SlackAttachment{
-		Color: "good",
-		Blocks: []SlackBlock{
-			{
-				Type: "section",
-				Text: SlackField{
-					Type: "mrkdwn",
-					Text: "[View full logs here](https://example.com/x/y/z)",
-				},
+	path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
+	if baseURL := conf.GetMasterConfig().Webhooks.BaseURL; baseURL != "" {
+		blocks = append(blocks, SlackBlock{
+			Type: "section",
+			Text: SlackField{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("<%s%s | View full logs here>", baseURL, path),
 			},
-		},
+		})
+	} else {
+		blocks = append(blocks, SlackBlock{
+			Type: "section",
+			Text: SlackField{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("View full logs at %s", path),
+			},
+		})
 	}
 
 	messageBody := SlackMessageBody{
-		Blocks:      blocks,
-		Attachments: &[]SlackAttachment{attachment},
+		Blocks: blocks,
 	}
 
 	message, err := json.Marshal(messageBody)
