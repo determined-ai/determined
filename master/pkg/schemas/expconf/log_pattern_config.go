@@ -87,12 +87,13 @@ type DontRetryPolicyV0 struct {
 //
 //go:generate ../gen.sh
 type OnFailureExcludeNodePolicyV0 struct {
-	RawRestarts *int `json:"restarts"`
+	// This comment is needed to stop ../gen.sh from complaining.
 }
 
 // SendWebhookPolicyV0 will send a webhook.
 //
 //go:generate ../gen.sh
 type SendWebhookPolicyV0 struct {
-	RawWebhookName string `json:"webhook_name"`
+	RawWebhookType string `json:"webhook_type"`
+	RawWebhookURL  string `json:"webhook_url"`
 }

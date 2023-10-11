@@ -1445,14 +1445,6 @@ var (
     "properties": {
         "type": {
             "const": "on_failure_exclude_node"
-        },
-        "restarts": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "default": 1
         }
     }
 }
@@ -1465,14 +1457,21 @@ var (
     "type": "object",
     "required": [
         "type",
-        "webhook_name"
+        "webhook_type",
+        "webhook_url"
     ],
     "eventuallyRequired": [],
     "properties": {
         "type": {
             "const": "send_webhook"
         },
-        "webhook_name": {
+        "webhook_type": {
+            "enum": [
+                "default",
+                "slack"
+            ]
+        },
+        "webhook_url": {
             "type": [
                 "string"
             ]
@@ -1515,15 +1514,8 @@ var (
     ],
     "properties": {
         "type": true,
-        "webhook_name": true,
-        "restarts": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": 1,
-            "minimum": 1
-        }
+        "webhook_type": true,
+        "webhook_url": true
     }
 }
 `)

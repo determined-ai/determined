@@ -10,14 +10,6 @@
     "properties": {
         "type": {
             "const": "on_failure_exclude_node"
-        },
-        "restarts": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "default": 1
         }
     }
 }
