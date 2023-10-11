@@ -58,7 +58,6 @@ const ResourcepoolDetailInner: React.FC = () => {
   const { canManageResourcePoolBindings } = usePermissions();
   const agents = Loadable.getOrElse([], useObservable(clusterStore.agents));
   const resourcePools = useObservable(clusterStore.resourcePools);
-
   const pool = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools)) return;
 
@@ -227,7 +226,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        <Topology />
+        <Topology nodes={agents} />
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>
