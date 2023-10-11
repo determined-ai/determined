@@ -712,6 +712,18 @@ const ChartsSection: React.FC = () => {
           title="Series with all x=0"
         />
       </AntDCard>
+      <AntDCard title="Series with set x axis range">
+        <p>
+          The components accepts an <code>xRange</code> prop to set a minimum and maximum x value.
+        </p>
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[zeroline]}
+          title="Chart with range [-1, 10]"
+          xRange={[-1, 10]}
+        />
+      </AntDCard>
       <AntDCard title="States without data">
         <strong>Loading</strong>
         <LineChart
