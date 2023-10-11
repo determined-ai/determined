@@ -76,6 +76,7 @@ var payloadNameCompiledRegEx = regexp.MustCompile(`[^a-zA-Z0-9\-_]+`)
 func (t *TaskSpec) ToDispatcherManifest(
 	syslog *logrus.Entry,
 	allocationID string,
+	tlsEnabled bool,
 	masterHost string,
 	masterPort int,
 	certificateName string,
@@ -262,9 +263,13 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	launchParameters.SetCustom(customParams)
 
+	// Prepend the entrypoint like: `ship-logs.sh "$@"`.
+	shipLogsShell := filepath.Join(RunDir, taskShipLogsShell)
+	shipLogsPython := filepath.Join(RunDir, taskShipLogsPython)
+
 	// Add entrypoint command as argument
 	wrappedEntryPoint := append(
-		[]string{determinedLocalFs + "/" + dispatcherEntrypointScriptResource},
+		[]string{determinedLocalFs + "/" + dispatcherEntrypointScriptResource, shipLogsShell, shipLogsPython},
 		t.Entrypoint...)
 	launchParameters.SetArguments(wrappedEntryPoint)
 
@@ -283,9 +288,13 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// Add some data volumes
 	launchParameters.SetData(mounts)
 
+	masterScheme := "http"
+	if tlsEnabled {
+		masterScheme = "https"
+	}
 	envVars, err := getEnvVarsForLauncherManifest(
 		syslog, allocationID,
-		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp,
+		t, masterScheme, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp,
 		slotType, containerRunType, localTmp, t.slotsPerNode(isPbsLauncher))
 	if err != nil {
 		return nil, "", "", err
@@ -733,6 +742,7 @@ func getEnvVarsForLauncherManifest(
 	syslog *logrus.Entry,
 	allocationID string,
 	taskSpec *TaskSpec,
+	masterScheme string,
 	masterHost string,
 	masterPort int,
 	certificateName string,
@@ -787,7 +797,7 @@ func getEnvVarsForLauncherManifest(
 
 	// These environment variables are required in "harness/determined/_info.py". If
 	// they are not set, then task container will fail.
-	m["DET_MASTER"] = fmt.Sprintf("%s:%d", masterHost, masterPort)
+	m["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, masterHost, masterPort)
 	m["DET_MASTER_HOST"] = masterHost
 	m["DET_MASTER_IP"] = masterHost
 	m["DET_MASTER_PORT"] = fmt.Sprintf("%d", masterPort)

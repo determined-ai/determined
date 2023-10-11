@@ -743,7 +743,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
 				ctx,
 				allocationID,
-				"masterHost", 8888, "certName", 16, tt.slotType,
+				true, "masterHost", 8888, "certName", 16, tt.slotType,
 				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType,
 				tt.isPbsScheduler, nil, nil)
 
@@ -1027,12 +1027,12 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	}
 
 	envVars, err := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
-		"masterHost", 8888, "certName", false, device.CPU, "singularity", "/", 4)
+		"http", "masterHost", 8888, "certName", false, device.CPU, "singularity", "/", 4)
 
 	assert.NilError(t, err)
 	assert.Assert(t, len(envVars) > 0)
 
-	assert.Equal(t, envVars["DET_MASTER"], "masterHost:8888")
+	assert.Equal(t, envVars["DET_MASTER"], "http://masterHost:8888")
 	assert.Equal(t, envVars["DET_MASTER_HOST"], "masterHost")
 	assert.Equal(t, envVars["DET_MASTER_IP"], "masterHost")
 	assert.Equal(t, envVars["DET_MASTER_PORT"], "8888")
@@ -1053,21 +1053,21 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["ROCM_ENV"], "")
 
 	envVars, _ = getEnvVarsForLauncherManifest(ctx, allocationID, ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/", 4)
+		"http", "masterHost", 8888, "certName", false, device.CUDA, "singularity", "/", 4)
 	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cuda")
 	assert.Equal(t, envVars["CUDA_ENV"], "CUDA_VAL")
 	assert.Equal(t, envVars["CPU_ENV"], "")
 	assert.Equal(t, envVars["ROCM_ENV"], "")
 
 	envVars, _ = getEnvVarsForLauncherManifest(ctx, allocationID, ts,
-		"masterHost", 8888, "certName", false, device.ROCM, "singularity", "/", 4)
+		"http", "masterHost", 8888, "certName", false, device.ROCM, "singularity", "/", 4)
 	assert.Equal(t, envVars["DET_SLOT_TYPE"], "rocm")
 	assert.Equal(t, envVars["ROCM_ENV"], "ROCM_VAL")
 	assert.Equal(t, envVars["CPU_ENV"], "")
 	assert.Equal(t, envVars["CUDA_ENV"], "")
 
 	envVarsPodman, _ := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/", 0)
+		"http", "masterHost", 8888, "certName", false, device.CUDA, "podman", "/", 0)
 	assert.Equal(t, envVarsPodman["DET_CONTAINER_LOCAL_TMP"], "1")
 	val := envVarsPodman["DET_LOCALTMP"]
 	assert.Equal(t, val, "/")
@@ -1077,7 +1077,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 
 	// test DET_CONTAINER_LOCAL_TMP is not in ENVs, and DET_LOCALTMP set properly
 	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "enroot", varTmp, 0)
+		"http", "masterHost", 8888, "certName", false, device.CUDA, "enroot", varTmp, 0)
 	_, ok := envVarsEnroot["DET_CONTAINER_LOCAL_TMP"]
 	assert.Equal(t, ok, false)
 	val = envVarsEnroot["DET_LOCALTMP"]

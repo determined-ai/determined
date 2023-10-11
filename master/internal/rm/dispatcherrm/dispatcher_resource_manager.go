@@ -1440,6 +1440,7 @@ func (m *DispatcherResourceManager) startLauncherJob(
 	// Create the manifest that will be ultimately sent to the launcher.
 	manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
 		m.syslog, string(req.AllocationID),
+		m.masterTLSConfig.Enabled,
 		m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 		req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
 		m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
