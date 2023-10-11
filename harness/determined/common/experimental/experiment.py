@@ -548,7 +548,7 @@ class ExperimentReference(Experiment):
     ):
         warnings.warn(
             "'ExperimentReference' was renamed to 'Experiment' and will be removed in a future "
-            "release. Please consider replacing any code references to 'ExperimentReference' "
+            "release. Please replace all code references to 'ExperimentReference' "
             "with 'Experiment'.",
             FutureWarning,
             stacklevel=2,

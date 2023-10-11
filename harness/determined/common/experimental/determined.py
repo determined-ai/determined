@@ -118,10 +118,22 @@ class Determined:
         authentication.logout(self._session._master, user, self._session._cert)
 
     def list_users(self) -> List[user.User]:
-        users_bindings = bindings.get_GetUsers(session=self._session).users
-        if not users_bindings:
-            return []
-        return [user.User._from_bindings(user_b, self._session) for user_b in users_bindings]
+        def get_with_offset(offset: int) -> bindings.v1GetUsersResponse:
+            return bindings.get_GetUsers(
+                session=self._session,
+                offset=offset,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+
+        users = []
+        for r in resps:
+            if not r.users:
+                continue
+            for u in r.users:
+                users.append(user.User._from_bindings(u, self._session))
+
+        return users
 
     def create_experiment(
         self,
@@ -131,7 +143,7 @@ class Determined:
     ) -> experiment.Experiment:
         """
         Create an experiment with config parameters and model directory. The function
-        returns :class:`~determined.experimental.Experiment` of the experiment.
+        returns an :class:`~determined.experimental.Experiment`.
 
         Arguments:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
@@ -181,8 +193,7 @@ class Determined:
 
     def get_experiment(self, experiment_id: int) -> experiment.Experiment:
         """
-        Get the :class:`~determined.experimental.Experiment` representing the
-        experiment with the provided experiment ID.
+        Get an experiment (:class:`~determined.experimental.Experiment`) by experiment ID.
         """
         resp = bindings.get_GetExperiment(session=self._session, experimentId=experiment_id)
         return experiment.Experiment._from_bindings(resp.experiment, self._session)

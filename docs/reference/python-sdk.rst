@@ -33,9 +33,8 @@ The next step is to call create_experiment():
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an ``Experiment`` object, which has methods for controlling the lifetime
-of the experiment running on the cluster. In this example, we will just wait for the experiment to
-complete.
+The returned object is an ``Experiment`` object, which offers methods to manage the experiment's
+lifecycle. In the following example, we simply await the experiment's completion.
 
 .. code:: python
 
