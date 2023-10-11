@@ -22,8 +22,8 @@ def main(core_context, increment_by):
 
         # TODO delete this
         #raise Exception("log has testdisallow")
-        raise Exception("log has testdontretry")
-        #raise Exception("log has testwebhook")
+        #raise Exception("log has testdontretry")
+        raise Exception("log has testwebhook")
 
         # NEW: report training metrics.
         if steps_completed % 10 == 0:

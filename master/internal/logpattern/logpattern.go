@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -145,15 +146,16 @@ type sendWebhook struct {
 // AddWebhookAlert reports trigger of a webhook policy and sends the webhook asynchronously.
 // It also logs in task logs about the webhook getting triggered.
 // TODO on sending webhook part.
-func AddWebhookAlert(
-	ctx context.Context, taskID model.TaskID, webhookName, nodeName, regex, triggeringLog string,
+func AddWebhookAlert(ctx context.Context,
+	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt webhooks.WebhookType,
 ) error {
+	// Persisting this mostly so that we don't trigger again.
 	m := &sendWebhook{
 		TaskID:        taskID,
 		NodeName:      nodeName,
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
-		WebhookName:   webhookName,
+		WebhookName:   "TODO remove name", // and add url and wt
 	}
 	res, err := db.Bun().NewInsert().Model(m).
 		On("CONFLICT (task_id, regex, webhook_name) DO NOTHING"). // Only care about the first log.
@@ -174,11 +176,15 @@ func AddWebhookAlert(
 		Level:     ptrs.Ptr(model.LogLevelError),
 		Source:    ptrs.Ptr("master"),
 		StdType:   ptrs.Ptr("stdout"),
-		Log: fmt.Sprintf("(log '%q' matched regex %s) therefore sent webhook to webhook name %s\n",
-			triggeringLog, regex, webhookName),
+		Log: fmt.Sprintf("(log '%q' matched regex %s) therefore sent webhook\n",
+			triggeringLog, regex),
 	})
 
-	// TODO actually send this webhook
+	if err := webhooks.ReportLogPatternAction(
+		ctx, taskID, nodeName, regex, triggeringLog, url, wt,
+	); err != nil {
+		return err
+	}
 
 	return nil
 }

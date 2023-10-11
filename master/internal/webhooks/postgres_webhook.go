@@ -115,11 +115,145 @@ func ReportExperimentStateChanged(
 		es = append(es, Event{Payload: p, URL: t.Webhook.URL})
 	}
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
-		return err
+		return fmt.Errorf("report experiment state changed inserting event trigger: %w", err)
 	}
 
 	singletonShipper.Wake()
 	return nil
+}
+
+// ReportLogPatternHook is somewhat different than other webhook types since we don't persist
+// a webhook but instead have the hook url stored in experiment config. This code is a little
+// awkward now but I mostly attribute this to the existing code which feels hedged
+// between wanting to support different webhook triggers and only supporting one.
+func ReportLogPatternAction(ctx context.Context,
+	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt WebhookType,
+) error {
+	defer func() {
+		if rec := recover(); rec != nil { // TODO do we need this? I just copied from above.
+			log.Errorf("uncaught error in webhook log pattern report: %v", rec)
+		}
+	}()
+
+	p, err := generateLogPatternPayload(ctx, taskID, nodeName, regex, triggeringLog, wt)
+	if err != nil {
+		return fmt.Errorf("generating log pattern payload: %w", err)
+	}
+
+	if _, err := db.Bun().NewInsert().Model(&Event{Payload: p, URL: url}).Exec(ctx); err != nil {
+		return fmt.Errorf("report log pattern action inserting event trigger: %w", err)
+	}
+
+	singletonShipper.Wake()
+	return nil
+}
+
+func generateLogPatternPayload(
+	ctx context.Context,
+	taskID model.TaskID,
+	nodeName,
+	regex,
+	triggeringLog string,
+	wt WebhookType,
+) ([]byte, error) {
+	switch wt {
+	case WebhookTypeDefault:
+		p, err := json.Marshal(EventPayload{
+			ID:        uuid.New(),
+			Type:      TriggerTypeLogPatternPolicy,
+			Timestamp: time.Now().Unix(),
+			Condition: Condition{
+				LogPatternPolicyRegex: regex,
+			},
+			Data: EventData{
+				LogPatternPolicy: &LogPatternPolicyPayload{
+					TaskID:        taskID,
+					NodeName:      nodeName,
+					TriggeringLog: triggeringLog,
+				},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("marshaling json for log pattern payload: %w", err)
+		}
+
+		return p, nil
+
+	case WebhookTypeSlack:
+		p, err := generateLogPatternSlackPayload(ctx, taskID, nodeName, regex, triggeringLog)
+		if err != nil {
+			return nil, err
+		}
+		return p, nil
+
+	default:
+		return nil, fmt.Errorf("unknown webhook type %+v while generating log pattern payload", wt)
+	}
+}
+
+func generateLogPatternSlackPayload(
+	ctx context.Context,
+	taskID model.TaskID,
+	nodeName,
+	regex,
+	triggeringLog string,
+) ([]byte, error) {
+	// config := conf.GetMasterConfig().Webhooks.BaseURL
+
+	blocks := []SlackBlock{
+		{
+			Type: "section",
+			Text: SlackField{
+				Type: "mrkdwn",
+				Text: "Experiment ID 10, Trial ID 10, running on node nodeName, reported a log",
+			},
+		},
+		{
+			Type: "section",
+			Text: SlackField{
+				Type: "mrkdwn",
+				Text: "```log message``` (TODO apply slack's code formatting to the log message)",
+			},
+		},
+		{
+			Type: "section",
+			Text: SlackField{
+				Type: "mrkdwn",
+				Text: "This log matched the regex",
+			},
+			Fields: &[]SlackField{
+				{
+					Type: "mrkdwn",
+					Text: "```regex``` (TODO apply slack's code formatting to the log message)",
+				},
+			},
+		},
+	}
+
+	// TODO
+	attachment := SlackAttachment{
+		Color: "good",
+		Blocks: []SlackBlock{
+			{
+				Type: "section",
+				Text: SlackField{
+					Type: "mrkdwn",
+					Text: "[View full logs here](https://example.com/x/y/z)",
+				},
+			},
+		},
+	}
+
+	messageBody := SlackMessageBody{
+		Blocks:      blocks,
+		Attachments: &[]SlackAttachment{attachment},
+	}
+
+	message, err := json.Marshal(messageBody)
+	if err != nil {
+		return nil, fmt.Errorf("creating slack payload: %w", err)
+	}
+	return message, nil
 }
 
 func generateEventPayload(
@@ -169,7 +303,8 @@ func generateSlackPayload(
 	var wID int
 	var w *model.Workspace
 	config := conf.GetMasterConfig()
-	wName := activeConfig.Workspace()
+	wName := activeConfig.Workspace() // TODO this is just wrong?
+	// (we also have e.ProjectId
 	pName := activeConfig.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
 	baseURLIsSet := webUIBaseURL != ""

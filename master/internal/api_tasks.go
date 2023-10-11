@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -436,9 +437,16 @@ func (a *apiServer) PostTaskLogs(
 
 		regex = "testwebhook"
 		if strings.Contains(l.Log, regex) {
+			// TODO throw this in expconf..
+			// TODO remove other thing in expcofn.
 			fmt.Println(regex)
-			if err := logpattern.AddWebhookAlert(
-				ctx, model.TaskID(l.TaskID), "webhookName", *l.AgentID, regex, l.Log,
+			url := "https://webhook.site/ce7c7e07-898a-4145-8ff4-84ef34f871fc"
+			// TODO don't commit this, though it is for a personal worskapce so wouldn't be that bad.
+
+			wt := webhooks.WebhookTypeDefault
+			wt = webhooks.WebhookTypeSlack
+			if err := logpattern.AddWebhookAlert(ctx,
+				model.TaskID(l.TaskID), *l.AgentID, regex, l.Log, url, wt,
 			); err != nil {
 				log.Errorf("error disallowing node") // Failing adding logs seems super bad.
 			}
