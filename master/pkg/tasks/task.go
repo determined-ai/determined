@@ -224,6 +224,14 @@ func (t TaskSpec) EnvVars() map[string]string {
 	return e
 }
 
+// LogShipperWrappedEntrypoint returns the configured Entrypoint wrapped with ship_logs.py.
+func (t *TaskSpec) LogShipperWrappedEntrypoint() []string {
+	// Prepend the entrypoint like: `ship-logs.sh ship_logs.py "$@"`.
+	shipLogsShell := filepath.Join(RunDir, taskShipLogsShell)
+	shipLogsPython := filepath.Join(RunDir, taskShipLogsPython)
+	return append([]string{shipLogsShell, shipLogsPython}, t.Entrypoint...)
+}
+
 // ToDockerSpec converts a task spec to a docker container spec.
 func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 	var envVars []string
@@ -258,11 +266,6 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 		})
 	}
 
-	// Prepend the entrypoint like: `ship-logs.sh "$@"`.
-	shipLogsShell := filepath.Join(RunDir, taskShipLogsShell)
-	shipLogsPython := filepath.Join(RunDir, taskShipLogsPython)
-	entrypoint := append([]string{shipLogsShell, shipLogsPython}, t.Entrypoint...)
-
 	runArchives, rootArchives := t.Archives()
 	spec := cproto.Spec{
 		TaskType: string(t.TaskType),
@@ -275,7 +278,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 				User:         getUser(t.AgentUserGroup),
 				ExposedPorts: toPortSet(env.Ports()),
 				Env:          envVars,
-				Cmd:          entrypoint,
+				Cmd:          t.LogShipperWrappedEntrypoint(),
 				Image:        env.Image().For(deviceType),
 				WorkingDir:   t.WorkDir,
 			},

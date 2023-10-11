@@ -47,12 +47,17 @@ LOG_FORMAT = "%(levelname)s: [%(process)s] %(name)s: %(message)s"
 # 2022-05-12 16:32:48,757:gc_checkpoints: [rank=0] INFO: Determined checkpoint GC, ...
 # Below regex is used to extract the rank field from the log message.
 # Excluding empty spaces this regex matches rank in the above example as [rank=0]
-rank = re.compile(r"(?P<space1> ?)\[rank=(?P<rank_id>([0-9]+))\](?P<space2> ?)(?P<log>.*)")
+# Using the DOTALL flag means we keep the newline at the end of the pattern.
+rank = re.compile(
+    r"(?P<space1> ?)\[rank=(?P<rank_id>([0-9]+))\](?P<space2> ?)(?P<log>.*)", flags=re.DOTALL
+)
 # Below regex is used to extract the message severity from the log message.
 # Excluding empty spaces and delimiter(:) this regex matches message severity level in the above
-# example as INFO
+# example as INFO.
+# Using the DOTALL flag means we keep the newline at the end of the pattern.
 level = re.compile(
-    r"(?P<space1> ?)(?P<level>(DEBUG|INFO|WARNING|ERROR|CRITICAL)):(?P<space2> ?)(?P<log>.*)"
+    r"(?P<space1> ?)(?P<level>(DEBUG|INFO|WARNING|ERROR|CRITICAL)):(?P<space2> ?)(?P<log>.*)",
+    flags=re.DOTALL,
 )
 lineend = re.compile(rb"[\r\n]")
 

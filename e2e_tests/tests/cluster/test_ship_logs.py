@@ -181,6 +181,29 @@ class TestShipLogs:
         assert "".join(srv.logs) == "1\n2\n3\n\n", srv.logs
 
     @pytest.mark.e2e_cpu
+    def test_line_endings_are_kept(self) -> None:
+        # If re.DOTALL is not used in the regex patterns, then pattern matching can unintentionally
+        # strip the newlines out of the end of the line.
+        cmd = mkcmd(
+            r"""
+            print("match neither\n", end="")
+            print("[rank=0] match just rank\n", end="")
+            print("[rank=0] INFO: match rank and level\n", end="")
+            print("INFO: match just level\n", end="")
+            """
+        )
+        with ShipLogServer() as srv:
+            exit_code = self.run_ship_logs(srv.master_url(), cmd)
+        assert exit_code == 0, exit_code
+        expect_logs = [
+            "match neither\n",
+            "match just rank\n",
+            "match rank and level\n",
+            "match just level\n",
+        ]
+        assert srv.logs == expect_logs, srv.logs
+
+    @pytest.mark.e2e_cpu
     def test_stdout_stderr_ordering(self) -> None:
         # Stdout and stderr are collected on different threads, and therefore _can't_ be perfectly
         # synced.  But they should be "approximately" synced; i.e. each 1-second batch should
