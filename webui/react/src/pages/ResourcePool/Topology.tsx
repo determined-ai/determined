@@ -18,13 +18,18 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   slots,
   enabledSlots,
 }) => {
+  const singleSlot = slots === 1;
+  const fewSlot = slots === 2;
+
   return (
     <div className={css.node}>
       <span className={css.nodeName}>{name}</span>
       <span className={css.nodeCluster}>
         {Array.from(Array(slots)).map((_, idx) => (
           <span
-            className={`${css.nodeSlot} ${idx + 1 <= enabledSlots ? css.filled : ''}`}
+            className={`${css.nodeSlot} ${idx + 1 <= enabledSlots ? css.active : ''} ${
+              singleSlot ? css.singleSlot : ''
+            } ${fewSlot ? css.fewSlot : ''}`}
             key={`slot${idx}`}
           />
         ))}

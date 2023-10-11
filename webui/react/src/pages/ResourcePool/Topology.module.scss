@@ -13,7 +13,7 @@
 
     .node {
       align-items: flex-start;
-      color: #6ba4f8;
+      color: var(--theme-status-active-strong);
       display: flex;
       flex-direction: column;
       margin-bottom: 20px;
@@ -21,29 +21,35 @@
 
       .nodeName {
         color: inherit;
-        font-size: var(--header-size-s);
+        font-size: var(--header-size-xs);
         text-transform: uppercase;
       }
       .nodeCluster {
         align-items: center;
-        border: 2px solid #6ba4f8;
+        border: 2px solid var(--theme-status-active-strong);
         box-sizing: border-box;
         display: flex;
         justify-content: space-around;
-        padding: 10px;
+        padding: 6px;
 
         .nodeSlot {
-          background-color: #e7e7e6;
-          height: 25px;
-          margin-right: 10px;
-          width: 10px;
+          background-color: var(--theme-status-inactive-weak);
+          height: 20px;
+          margin-right: 6px;
+          width: 6px;
 
           &:last-of-type {
             margin-right: 0;
           }
         }
-        .filled {
-          background-color: #6ba4f8;
+        .singleSlot {
+          width: 90px;
+        }
+        .fewSlot {
+          width: 42px;
+        }
+        .active {
+          background-color: var(--theme-status-active-strong);
         }
       }
     }
