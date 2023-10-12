@@ -395,10 +395,8 @@ func (p *ProxiedServerConfig) Validate() []error {
 // Validate implements the check.Validatable interface.
 func (i *InternalConfig) Validate() []error {
 	var errs []error
-	// we don't support more than a single server for now.
-	if len(i.ProxiedServers) > 1 {
-		errs = append(errs, errors.New("only a single proxied server is supported"))
-	}
+	// We allow setting multiple proxied servers but leave it up to the developer
+	// to ensure that they don't conflict with eachother or other det routes.
 	for _, p := range i.ProxiedServers {
 		errs = append(errs, p.Validate()...)
 	}
