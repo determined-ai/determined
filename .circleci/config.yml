@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.26.1-rc3
+    default: 0.26.1
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
