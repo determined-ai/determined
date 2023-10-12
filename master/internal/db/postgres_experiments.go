@@ -239,9 +239,8 @@ func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Tr
 // TrainingTrialsSnapshot returns a training metric across each trial in an experiment at a
 // specific point of progress.
 func (db *PgDB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error,
-) {
+	metricName string, startTime time.Time, metricGroup string,
+) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error) {
 	var rows []snapshotWrapper
 	err = db.queryRows(`
 SELECT
@@ -260,8 +259,8 @@ WHERE t.experiment_id=$2
 ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and training metric %s",
-			experimentID, metricName)
+			"failed to get snapshot for experiment %d and metric %s.%s",
+			experimentID, metricGroup, metricName)
 	}
 	for _, row := range rows {
 		trial, err := snapshotWrapperToTrial(row)

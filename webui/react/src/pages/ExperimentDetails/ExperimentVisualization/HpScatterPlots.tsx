@@ -17,7 +17,6 @@ import {
   ExperimentBase,
   HyperparameterType,
   Metric,
-  metricTypeParamMap,
   Primitive,
   Scale,
 } from 'types';
@@ -154,8 +153,8 @@ const ScatterPlots: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.group],
-        undefined, // custom metric group
+        undefined,
+        selectedMetric.group,
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },

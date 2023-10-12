@@ -1920,11 +1920,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricType
-	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric group")
-	}
+	metricGroup := req.Group
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1960,14 +1956,12 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		var endTime time.Time
 		var err error
 		switch metricGroup {
-		case apiv1.MetricType_METRIC_TYPE_TRAINING:
-			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		case "validation":
 			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
 		default:
-			panic("Invalid metric type")
+			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
+				minBatches, maxBatches, metricName, startTime, metricGroup)
 		}
 		if err != nil {
 			return errors.Wrapf(err,

@@ -24,7 +24,6 @@ import {
   Hyperparameter,
   HyperparameterType,
   Metric,
-  metricTypeParamMap,
   RunState,
   Scale,
   Serie,
