@@ -156,17 +156,7 @@ To start an agent container with environment variables instead of a configuratio
    configure workload containers to use ``host`` network mode, as described :ref:`below
    <network-host>`. Alternatively, if the master machine has a static IP address from your router,
    you can use that. The key is ensuring that the master machine can be reliably addressed from both
-   inside and outside of Docker containers (because the Fluent Bit container will always use host
-   networking).
-
-Determined uses `Fluent Bit <https://fluentbit.io>`__ internally. The agent uses the
-``fluent/fluent-bit:1.9.3`` Docker image at runtime and will attempt to pull this image
-automatically. If the agent machines in the cluster cannot connect to Docker Hub, you'll need to
-manually load this image onto them before Determined can run.
-
-To use a different image for running Fluent Bit---generally to leverage a custom Docker registry, as
-the image doesn't usually require changing otherwise---you can use the agent's
-``--fluent-logging-image`` command-line option or ``fluent_logging_image`` config file option.
+   inside and outside of Docker containers.
 
 The ``--gpus`` flag should be used to specify which GPUs the agent container will have access to;
 without it, the agent will not have access to any GPUs. For example:

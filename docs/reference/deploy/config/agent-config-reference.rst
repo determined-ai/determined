@@ -125,29 +125,6 @@ Configuration settings for :ref:`TLS <tls>`.
 -  ``client_cert``/``client_key``: Paths to files containing the client TLS certificate and key to
    use when connecting to the master.
 
-************
- ``fluent``
-************
-
-fluentd settings.
-
-``image``
-=========
-
-Docker image to use for the managed Fluent Bit daemon. Defaults to ``fluent/fluent-bit:1.9.3``.
-
-``port``
-========
-
-TCP port for the Fluent Bit daemon to listen on. Defaults to port 24224. Should be unique when
-running multiple agents on the same node.
-
-``container_name``
-==================
-
-Name for the Fluent Bit container. Defaults to ``determined-fluent``. Should be unique when running
-multiple agents on the same node.
-
 ******************************
  ``agent_reconnect_attempts``
 ******************************

@@ -363,23 +363,6 @@ Supports customizing the resource requests made when scheduling Kubernetes pods.
 
 The service account Determined uses to interact with the Kubernetes API.
 
-``fluent``
-----------
-
-Options for configuring how Fluent Bit sidecars are run.
-
-``image``
-^^^^^^^^^
-
-   The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
-
-``uid``/``gid``
-^^^^^^^^^^^^^^^
-
-   The UID and GID to run the Fluent Bit sidecar as. If these are not specified, the container will
-   run as root when the associated task container is running as root and as a default non-root user
-   otherwise.
-
 .. _cluster-configuration-slurm:
 
 ``type: slurm`` or ``pbs``
@@ -1519,11 +1502,6 @@ Security-related configuration settings.
    -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed if the
       certificate is not signed by a well-known CA; cannot be specified if ``skip_verify`` is
       enabled.
-
-   -  ``additional_fluent_outputs``: An optional configuration string containing additional Fluent
-         Bit outputs for advanced users to specify logging integrations. See the `Fluent Bit
-         documentation <https://docs.fluentbit.io/manual/pipeline/outputs>`__ for the format and
-         supported logging outputs.
 
 **********
  ``scim``

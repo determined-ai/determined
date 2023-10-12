@@ -403,14 +403,6 @@ and connected:
 
    powershell.exe /c start http://$WSLIP:8080/det/clusters
 
-Determined internally makes use of `Fluent Bit <https://fluentbit.io>`__. The agent uses the
-``fluent/fluent-bit:1.9.3`` Docker image at runtime. It will attempt to pull the image
-automatically. If the agent machines in the cluster are not able to connect to Docker Hub, you must
-manually place the image onto the agent machines in the cluster before Determined can run. To
-specify a different image to use for running Fluent Bit (generally to make use of a custom Docker
-registry---the image should not normally need to be changed otherwise), use the agent's
-``--fluent-logging-image`` command-line option or ``fluent_logging_image`` config file option.
-
 To ensure proper GPU access for the agent container, use the ``--gpus`` flag to specify the GPUs.
 Failure to include this flag will result in the agent not having access to any GPUs. For example:
 
