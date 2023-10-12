@@ -36,8 +36,10 @@ Additional Resources:
 -  In :ref:`Optimizing Training <optimizing-training>`, you'll learn about out-of-the box tools you
    can use for instrumenting training.
 
-.. toctree::
-   :maxdepth: 2
-   :glob: 
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

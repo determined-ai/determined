@@ -15,12 +15,10 @@ Determined by one of the following methods:
 -  :ref:`install-using-homebrew`
 -  :ref:`install-using-wsl`
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
+.. container:: child-articles
 
-   deploy
-   linux-packages
-   docker
-   homebrew
-   wsl
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

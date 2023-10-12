@@ -106,9 +106,11 @@ Known limitations:
 -  Only agent-based deployments are available; Kubernetes is not yet supported.
 -  GPU profiling is not yet supported.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
-   ./*/_index
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+      ./*/_index

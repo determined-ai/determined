@@ -152,8 +152,11 @@ These ``kubectl`` commands list and delete pods which are running Determined tas
    # unless they are removing a deployment of Determined.
    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+

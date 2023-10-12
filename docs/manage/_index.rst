@@ -3,10 +3,11 @@
 ########
  Manage
 ########
+.. container:: child-articles
 
-.. toctree::
-   :glob:
-   :maxdepth: 2
+   .. toctree::
+      :glob:
+      :maxdepth: 2
 
-   ./*
-   ./*/_index
+      ./*
+      ./*/_index

@@ -12,8 +12,11 @@ Our `Works with Determined <https://github.com/determined-ai/works-with-determin
 includes examples of how to use Determined with a variety of ML ecosystem tools, including
 Pachyderm, DVC, Delta Lake, Seldon, Spark, Argo, Airflow, and Kubeflow.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*/_index
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*/_index
+

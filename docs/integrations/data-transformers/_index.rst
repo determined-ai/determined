@@ -4,8 +4,10 @@
  Data Transformers
 ###################
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

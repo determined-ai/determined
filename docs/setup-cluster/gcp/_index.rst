@@ -79,8 +79,10 @@ additional detail on these resources. You can deploy these resources in GCP by f
    (assuming it has the correct associated permissions), or the Terraform script can create a bucket
    with the cluster.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

@@ -70,9 +70,11 @@ Enable Determined to submit jobs to a Slurm cluster.
 
 -  :ref:`sysadmin-deploy-on-hpc`
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
-   ./*/_index
+   .. toctree::
+      :maxdepth: 2
+      :glob:
+
+      ./*
+      ./*/_index

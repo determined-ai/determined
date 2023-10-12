@@ -49,8 +49,11 @@ Examples let you build off of an existing model that already runs on Determined.
 
 .. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 
-.. toctree::
-   :hidden:
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+

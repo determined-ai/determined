@@ -17,8 +17,11 @@ Deloyment Reference includes reference documentation for configuring Determined 
 | :ref:`helm-config-reference`           | Helm chart configuration option reference.            |
 +----------------------------------------+-------------------------------------------------------+
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+

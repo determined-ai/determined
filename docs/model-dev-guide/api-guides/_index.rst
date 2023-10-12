@@ -12,9 +12,11 @@
 -  Inference API Guides: Learn how to use the :ref:`batch processing API
    <torch-batch-processing-ug>`.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
-   ./*/_index
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+      ./*/_index

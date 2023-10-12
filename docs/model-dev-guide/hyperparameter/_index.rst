@@ -76,9 +76,11 @@ parallelization of these methods.
 An intuitive interface is provided to use hyperparameter searching, and is described in the
 following sections.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
-   ./*/_index
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+      ./*/_index

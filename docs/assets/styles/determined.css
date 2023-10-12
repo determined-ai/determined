@@ -675,3 +675,12 @@ h6 {
     max-width: calc(33.33% - 20px);
   }
 }
+
+.child-articles { 
+  padding: 25px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.child-articles > div {
+  margin: 1em;
+}

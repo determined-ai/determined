@@ -14,8 +14,11 @@ Find resources and operations for preparing your container environment.
 |                               | and default Docker images.                                           |
 +-------------------------------+----------------------------------------------------------------------+
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+

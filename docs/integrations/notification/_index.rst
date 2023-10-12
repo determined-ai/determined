@@ -183,8 +183,10 @@ actions.
 
    We do not support editing webhooks. You can delete and recreate webhooks if needed.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

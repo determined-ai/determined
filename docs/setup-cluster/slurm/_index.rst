@@ -46,8 +46,10 @@ follow the steps in the :ref:`install-on-slurm` document.
 -  `NVIDIA Enroot <https://github.com/NVIDIA/enroot>`__
 -  `Podman <https://docs.podman.io>`__
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

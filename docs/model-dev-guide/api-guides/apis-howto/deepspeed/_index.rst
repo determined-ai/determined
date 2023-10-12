@@ -41,8 +41,10 @@ Determined DeepSpeed documentation:
    :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
    :class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext`.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./* 
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

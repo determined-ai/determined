@@ -230,8 +230,10 @@ finally with an implicit ``list``:
       -  ``det u create --admin hoid``
       -
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*

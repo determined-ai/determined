@@ -18,8 +18,11 @@ This section includes reference documentation for the model hub APIs:
 |                                   | Determined.                                                 |
 +-----------------------------------+-------------------------------------------------------------+
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+

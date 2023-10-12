@@ -20,9 +20,12 @@ Determined by your :ref:`preferred method <deploy-on-prem-options-index>`.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
-   ./*/_index
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
+      ./*/_index
+

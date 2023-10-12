@@ -42,8 +42,10 @@ Determined includes a built-in :doc:`model registry
 </model-dev-guide/model-management/model-registry-org>` to manage trained models and their
 respective versions.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
+   .. toctree::
+      :glob:
+      :maxdepth: 2
+
+      ./*
