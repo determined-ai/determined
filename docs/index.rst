@@ -2,6 +2,9 @@
  Determined AI Documentation
 #############################
 
+Find setup guides, examples, tutorials, API references, and more to learn how to quickly train
+almost any deep learning model using Determined.
+
 .. meta::
    :http-equiv=x-ua-compatible: IE=edge
    :description: Visit the Determined AI documentation home page and get quick access to information, tutorials, quickstarts, user guides, and reference material.
@@ -32,5 +35,3 @@
     
    attributions
 
-Find setup guides, examples, tutorials, API references, and more to learn how to quickly train
-almost any deep learning model using Determined.
