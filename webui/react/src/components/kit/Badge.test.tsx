@@ -10,14 +10,13 @@ import { generateAlphaNumeric } from 'utils/string';
 import Badge, { BadgeProps } from './Badge';
 
 const CONTENT = generateAlphaNumeric();
-const CONTENT_TOOLTIP = generateAlphaNumeric();
 
 const user = userEvent.setup();
 
-const setup = ({ text, badgeColor = undefined }: BadgeProps = { text: CONTENT }) => {
+const setup = (props: BadgeProps = { text: CONTENT }) => {
   return render(
     <UIProvider>
-      <Badge badgeColor={badgeColor} text={text} />
+      <Badge {...props} />
     </UIProvider>,
   );
 };
@@ -39,9 +38,6 @@ describe('Badge', () => {
       );
     };
     const view = render(<TestComponent />);
-    const slotFree = await view.getByText(stateToLabel(SlotState.Free));
-
-    expect(slotFree).toHaveClass('state neutral');
 
     await user.click(view.getByRole('button'));
 
@@ -50,25 +46,13 @@ describe('Badge', () => {
     });
   });
 
-  it('should apply className by type', () => {
-    const view = setup();
-    expect(view.getByText(CONTENT)).toHaveClass('header');
-  });
-
-  it('should display tooltip on hover', async () => {
-    const view = setup();
-    await user.hover(view.getByText(CONTENT));
-    await waitFor(() => {
-      expect(view.getByRole('tooltip').textContent).toEqual(CONTENT_TOOLTIP);
-    });
-  });
-
   it('should display correct style for potential', () => {
     const label = stateToLabel(ResourceState.Potential);
     const view = setup({
+      dashed: true,
       text: label,
     });
     const statePotential = view.getByText(label);
-    expect(statePotential).toHaveClass('dashed');
+    expect(statePotential).toHaveClass('base dashed');
   });
 });

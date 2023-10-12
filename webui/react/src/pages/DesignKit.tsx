@@ -176,6 +176,12 @@ const BadgeSection: React.FC = () => {
             text="DELETING"
           />
         </Space>
+        <strong>Badge With Tooltip</strong>
+        <Space>
+          <Tooltip content="tooltip">
+            <Badge dashed text="Hover for Tooltip" />
+          </Tooltip>
+        </Space>
       </AntDCard>
     </ComponentSection>
   );

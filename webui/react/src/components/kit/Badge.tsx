@@ -23,6 +23,7 @@ const Badge: React.FC<BadgeProps> = ({
     color: str2hsl(getCssVar('var(--theme-surface-on)')),
   },
   dashed = false,
+  ...props
 }: BadgeProps) => {
   const { ui } = useUI();
 
@@ -45,8 +46,11 @@ const Badge: React.FC<BadgeProps> = ({
   }, [dashed, badgeColor, ui.darkLight]);
 
   return (
-    <span className={classes.join(' ')} style={style}>
-      {text}
+    // Need this wrapper for tooltip to apply
+    <span {...props}>
+      <span className={classes.join(' ')} style={style}>
+        {text}
+      </span>
     </span>
   );
 };

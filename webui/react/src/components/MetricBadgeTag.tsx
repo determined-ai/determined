@@ -22,7 +22,7 @@ const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {
    */
   return (
     <span className={css.base}>
-      <Tooltip content={metric.group} mouseEnterDelay={TOOLTIP_DELAY}>
+      <Tooltip content={metric.group}>
         <Badge text={(metric.group ?? '').substring(0, 1).toUpperCase()} />
       </Tooltip>
       <Tooltip content={metric.name} mouseEnterDelay={TOOLTIP_DELAY}>
