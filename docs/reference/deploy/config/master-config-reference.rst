@@ -242,7 +242,7 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
 ^^^^^^^^
 
    The scheduling policy to use when allocating resources between different tasks (experiments,
-   Notebooks, etc.). Defaults to ``fair_share``.
+   notebooks, etc.). Defaults to ``fair_share``.
 
    -  ``fair_share``: Tasks receive a proportional amount of the available resources depending on
       the resource they require and their weight.
@@ -252,7 +252,7 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
    -  ``priority``: Tasks are scheduled based on their priority, which can range from the values 1
       to 99 inclusive. Lower priority numbers indicate higher-priority tasks. A lower-priority task
       will never be scheduled while a higher-priority task is pending. Zero-slot tasks (e.g.,
-      CPU-only Notebooks, TensorBoards) are prioritized separately from tasks requiring slots (e.g.,
+      CPU-only notebooks, TensorBoards) are prioritized separately from tasks requiring slots (e.g.,
       experiments running on GPUs). Task priority can be assigned using the ``resources.priority``
       field. If a task does not specify a priority it is assigned the ``default_priority``.
 
@@ -751,7 +751,7 @@ Notebooks, etc.). Defaults to ``fair_share``.
 
    Tasks are scheduled based on their priority, which can range from the values 1 to 99 inclusive.
    Lower priority numbers indicate higher-priority tasks. A lower-priority task will never be
-   scheduled while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only Notebooks,
+   scheduled while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only notebooks,
    TensorBoards) are prioritized separately from tasks requiring slots (e.g., experiments running on
    GPUs). Task priority can be assigned using the ``resources.priority`` field. If a task does not
    specify a priority it is assigned the ``default_priority``.
