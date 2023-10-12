@@ -96,14 +96,13 @@ func newMetricsBody(
 
 // BunSelectMetricsQuery sets up a bun select query for based on new metrics table
 // simplifying some weirdness we set up for pg10 support.
-func BunSelectMetricsQuery(mGroup model.MetricGroup, inclArchived bool) *bun.SelectQuery {
-	metricGroup := string(mGroup)
+func BunSelectMetricsQuery(metricGroup string, inclArchived bool) *bun.SelectQuery {
 	pType := customMetricGroupToPartitionType(&metricGroup)
 	q := Bun().NewSelect().
 		Where("partition_type = ?", pType).
 		Where("archived = ?", inclArchived)
 	if pType == GenericMetric {
-		q.Where("metric_group = ?", mGroup)
+		q.Where("metric_group = ?", metricGroup)
 	}
 	return q
 }

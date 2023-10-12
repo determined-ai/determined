@@ -189,8 +189,8 @@ const LearningCurve: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.group],
         undefined,
+        selectedMetric.group,
         selectedMaxTrial,
         MAX_DATAPOINTS,
         undefined,

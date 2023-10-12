@@ -531,14 +531,14 @@ func TrialMetricsJSONPath(isValidation bool) string {
 }
 
 // TrialSummaryMetricsJSONPath returns the JSON path to the trials metric summary.
-func TrialSummaryMetricsJSONPath(metricGroup MetricGroup) string {
+func TrialSummaryMetricsJSONPath(metricGroup string) string {
 	switch metricGroup {
-	case ValidationMetricGroup:
+	case ValidationMetricGroup.ToString():
 		return legacyValidationMetricsPath
-	case TrainingMetricGroup:
+	case TrainingMetricGroup.ToString():
 		return legacyTrainingMetricsPath
 	default:
-		return metricGroup.ToString()
+		return metricGroup
 	}
 }
 
@@ -546,9 +546,9 @@ func TrialSummaryMetricsJSONPath(metricGroup MetricGroup) string {
 func TrialSummaryMetricGroup(jsonPath string) MetricGroup {
 	var mGroup MetricGroup
 	switch jsonPath {
-	case TrialSummaryMetricsJSONPath(TrainingMetricGroup):
+	case TrialSummaryMetricsJSONPath(TrainingMetricGroup.ToString()):
 		mGroup = TrainingMetricGroup
-	case TrialSummaryMetricsJSONPath(ValidationMetricGroup):
+	case TrialSummaryMetricsJSONPath(ValidationMetricGroup.ToString()):
 		mGroup = ValidationMetricGroup
 	default:
 		mGroup = MetricGroup(jsonPath)

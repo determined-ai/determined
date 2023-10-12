@@ -2043,7 +2043,7 @@ func (a *apiServer) topTrials(
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup apiv1.MetricType,
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup string,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
@@ -2051,7 +2051,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID model.MetricGroup
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -2070,18 +2069,10 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	if !seenBefore {
 		startTime = zeroTime
 	}
-	switch metricGroup {
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = model.TrainingMetricGroup //nolint:goconst
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = model.ValidationMetricGroup //nolint:goconst
-	default:
-		panic("Invalid metric type")
-	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
 		[]string{metricName},
 		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
-		"batches", nil, metricID)
+		"batches", nil, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
@@ -2132,11 +2123,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	metricName := req.MetricName
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricType
-	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric group")
-	}
+	metricGroup := req.Group
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}

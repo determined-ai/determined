@@ -175,7 +175,7 @@ func MetricBatches(
 	var rows []*batchesWrapper
 	JSONKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
 
-	err = BunSelectMetricsQuery(metricGroup, false).
+	err = BunSelectMetricsQuery(metricGroup.ToString(), false).
 		TableExpr("trials t").
 		Join("INNER JOIN metrics m ON t.id=m.trial_id").
 		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
