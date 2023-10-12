@@ -26,7 +26,7 @@
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
-    "e2e": "PLAYWRIGHT_BROWSERS_PATH=0 xvfb-run playwright test",
+    "e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:coverage": "vitest --run --coverage --silent",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'",
     "unimported": "unimported"
@@ -89,7 +89,7 @@
     ]
   },
   "devDependencies": {
-    "@playwright/test": "^1.39.0",
+    "@playwright/test": "^1.34.0",
     "@testing-library/dom": "^8.20.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
