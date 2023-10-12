@@ -1,6 +1,7 @@
 import functools
 import re
-import socket
+import sys
+import threading
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import pytest
@@ -59,7 +60,6 @@ def test_trial_logs() -> None:
 @pytest.mark.e2e_cpu_elastic
 @pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
-@pytest.mark.timeout(5 * 60)
 @pytest.mark.parametrize(
     "task_type,task_config,log_regex",
     [
@@ -105,13 +105,34 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         return bindings.get_TaskLogsFields(session, taskId=task_id, follow=follow)
 
     try:
-        check_logs(
-            log_regex,
-            functools.partial(api.task_logs, session, task_id),
-            functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
-        )
-    except socket.timeout:
-        raise TimeoutError(f"timed out waiting for {task_type} with id {task_id}")
+        result: Optional[Exception] = None
+
+        def do_check_logs() -> None:
+            nonlocal result
+            try:
+                check_logs(
+                    log_regex,
+                    functools.partial(api.task_logs, session, task_id),
+                    functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
+                )
+            except Exception as e:
+                result = e
+
+        thread = threading.Thread(target=do_check_logs, daemon=True)
+        thread.start()
+        thread.join(timeout=5 * 60)
+        if thread.is_alive():
+            # The thread did not exit
+            raise ValueError("do_check_logs timed out")
+        elif isinstance(result, Exception):
+            # There was a failure on the thread.
+            raise result
+    except Exception:
+        print("============= test_task_logs_failed, logs from task =============")
+        for log in task_logs():
+            print(log.log, end="", file=sys.stderr)
+        print("============= end of task logs =============")
+        raise
 
     finally:
         command._kill(master_url, task_type, task_id)
@@ -127,9 +148,7 @@ def check_logs(
         if log_regex.match(log.message):
             break
     else:
-        for log in log_fn(follow=True):
-            print(log.message)
-        pytest.fail("ran out of logs without a match")
+        raise ValueError("ran out of logs without a match")
 
     # Just make sure these calls 200 and return some logs.
     assert any(log_fn(tail=10)), "tail returned no logs"
