@@ -8,7 +8,7 @@ You can use `Jupyter Notebooks <https://jupyter.org/>`__ to conveniently develop
 learning models, visualize the behavior of trained models, and manage the training lifecycle of a
 model manually. Determined makes launching and managing notebooks easy.
 
-Determined Notebooks provide the following benefits:
+Determined notebooks provide the following benefits:
 
 -  Jupyter Notebooks run in containerized environments on the cluster. This makes it easy to manage
    dependencies using images and virtual environments. The HTTP requests are passed through the
@@ -21,7 +21,7 @@ Determined Notebooks provide the following benefits:
    set ``notebook_timeout`` :ref:`option in your master config <master-config-notebook-timeout>`. To
    enable it for a particular notebook, set ``idle_timeout`` option in the notebook config.
 
-After a Notebook is terminated, it is not possible to restore the files that are not stored in the
+After a notebook is terminated, it is not possible to restore the files that are not stored in the
 persistent directories. **It is important to configure the cluster to mount persistent directories
 into the container and save files in the persistent directories in the container.** See
 :ref:`notebook-state` for more information.
