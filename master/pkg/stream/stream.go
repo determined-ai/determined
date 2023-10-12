@@ -190,10 +190,16 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					// update, insert, or fallin: send the record to the client.
-					msg = (*ev.After).UpsertMsg()
+					if ev.upsertCache == nil {
+						ev.upsertCache = sub.Streamer.PrepareFn((*ev.After).UpsertMsg())
+					}
+					msg = ev.upsertCache
 				case ev.Before != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before):
 					// deletion or fallout: tell the client the record is deleted.
-					msg = (*ev.Before).DeleteMsg()
+					if ev.deleteCache == nil {
+						ev.deleteCache = sub.Streamer.PrepareFn((*ev.Before).DeleteMsg())
+					}
+					msg = ev.deleteCache
 				default:
 					// ignore this message
 					continue
