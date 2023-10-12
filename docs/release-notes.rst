@@ -10,6 +10,51 @@
  Version 0.26
 **************
 
+Version 0.26.1
+==============
+
+**Release Date:** October 12, 2023
+
+**New Features**
+
+-  Experiments: Add an experiment continue feature to the CLI (``det e continue <experiment-id>``),
+   which allows for resuming or recovering training for an experiment whether it previously
+   succeeded or failed. This is limited to single-searcher experiments and using it may prevent the
+   user from replicating the continued experiment's results.
+
+**Improvements**
+
+-  Logging: Some API logs would previously only go to the standard output of the running master but
+   now will also appear in the output of ``det master logs``.
+
+-  Kubernetes: Increase the file context limit for notebooks, commands, TensorBoards, and shells
+   from approximately 1MB to roughly 95MB, the same limit as the agent resource manager.
+
+-  CLI: ``det notebook|shell|tensorboard open <id>`` will now wait for the item to be ready instead
+   of giving an error if it is not ready.
+
+-  Detached mode: Add support for S3 and GCS cloud storage for TensorBoard files.
+
+-  Kubernetes: On Kubernetes, ``max_slots_per_pod`` can now be configured at a resource pool level
+   through the master config option
+   ``resource_pools.task_container_defaults.kubernetes.max_slots_per_pod``.
+
+**Bug Fixes**
+
+-  TensorBoard: Fix an issue where TensorBoard files for an experiment were not getting deleted when
+   the experiment was deleted.
+
+-  Kubernetes: Fix an issue where custom node affinities on tasks were being ignored.
+
+   On Kubernetes, upgrading from a version before this feature to a version after this feature can
+   cause queued allocations with a custom node affinity to be killed. Users can pause queued
+   experiments to avoid this.
+
+**Known Issue**
+
+-  When using custom metric groups, the ``Learning Curve`` view in the experiment's visualization
+   tab does not render.
+
 Version 0.26.0
 ==============
 
