@@ -33,6 +33,7 @@ import { getGroups, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
+import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 import handleError, { ErrorType } from 'utils/error';
@@ -186,6 +187,7 @@ const UserManagement: React.FC = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const [refresh, setRefresh] = useState<Record<string, never>>({});
   const pageRef = useRef<HTMLElement>(null);
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
   const settings = useMemo(() => {
     return Loadable.match(loadableSettings, {
@@ -336,8 +338,6 @@ const UserManagement: React.FC = () => {
     setSelectedUserIds([]);
   }, []);
 
-  const filterIcon = useCallback(() => <Icon name="search" size="tiny" title="Search" />, []);
-
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {
       return (
@@ -430,7 +430,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, filterIcon, groups, info.userManagementEnabled, rbacEnabled, settings]);
+  }, [fetchUsers, groups, info.userManagementEnabled, rbacEnabled, settings]);
 
   return (
     <>
@@ -501,6 +501,16 @@ const UserManagement: React.FC = () => {
             })}
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="id"
+            rowSelection={{
+              columnWidth: '20px',
+              fixed: true,
+              getCheckboxProps: (record) => ({
+                disabled: record.id === currentUser?.id, // disable the current user not to select onself
+              }),
+              onChange: handleTableRowSelect,
+              preserveSelectedRowKeys: false,
+              selectedRowKeys: selectedUserIds,
+            }}
             settings={settings}
             showSorterTooltip={false}
             size="small"
