@@ -86,6 +86,9 @@ type DB interface {
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
 	TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
+		metricName string, startTime time.Time) (
+		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
+	GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 		metricName string, startTime time.Time, metricGroup string) (
 		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
 	ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,

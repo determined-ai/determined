@@ -1920,7 +1920,20 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
-	metricGroup := req.Group
+
+	var metricGroup string
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricGroup = "training"
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricGroup = "validation"
+	default:
+		metricGroup = req.Group
+	}
+	if metricGroup == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
+	}
+
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1956,11 +1969,14 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		var endTime time.Time
 		var err error
 		switch metricGroup {
+		case "training":
+			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
+				minBatches, maxBatches, metricName, startTime)
 		case "validation":
 			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
 		default:
-			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
+			newTrials, endTime, err = a.m.db.GenericTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime, metricGroup)
 		}
 		if err != nil {
@@ -2117,9 +2133,21 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	metricName := req.MetricName
-	metricGroup := req.Group
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
+
+	var metricGroup string
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricGroup = "training"
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricGroup = "validation"
+	default:
+		metricGroup = req.Group
+	}
+	if metricGroup == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 
 	var timeSinceLastAuth time.Time
