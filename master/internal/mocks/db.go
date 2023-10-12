@@ -677,6 +677,39 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	return r0, r1
 }
 
+// GenericTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime, metricGroup
+func (_m *DB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup string) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
+	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+
+	var r0 []*apiv1.TrialsSnapshotResponse_Trial
+	var r1 time.Time
+	var r2 error
+	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, string) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
+		return rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	}
+	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, string) []*apiv1.TrialsSnapshotResponse_Trial); ok {
+		r0 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*apiv1.TrialsSnapshotResponse_Trial)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time, string) time.Time); ok {
+		r1 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	} else {
+		r1 = ret.Get(1).(time.Time)
+	}
+
+	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time, string) error); ok {
+		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetExperimentStatus provides a mock function with given fields: experimentID
 func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error) {
 	ret := _m.Called(experimentID)
@@ -1260,39 +1293,6 @@ func (_m *DB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatche
 
 	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time) error); ok {
 		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// GenericTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime, metricGroup
-func (_m *DB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup string) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
-	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
-
-	var r0 []*apiv1.TrialsSnapshotResponse_Trial
-	var r1 time.Time
-	var r2 error
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, string) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
-		return rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
-	}
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, string) []*apiv1.TrialsSnapshotResponse_Trial); ok {
-		r0 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*apiv1.TrialsSnapshotResponse_Trial)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time, string) time.Time); ok {
-		r1 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
-	} else {
-		r1 = ret.Get(1).(time.Time)
-	}
-
-	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time, string) error); ok {
-		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 	} else {
 		r2 = ret.Error(2)
 	}
