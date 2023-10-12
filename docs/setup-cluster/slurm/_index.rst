@@ -47,14 +47,7 @@ follow the steps in the :ref:`install-on-slurm` document.
 -  `Podman <https://docs.podman.io>`__
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   slurm-requirements
-   hpc-launching-architecture
-   hpc-security-considerations
-   install-on-slurm
-   upgrade-on-hpc
-   singularity
-   slurm-known-issues
-   hpc-with-agent
+   ./*

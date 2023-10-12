@@ -42,10 +42,7 @@ Determined DeepSpeed documentation:
    :class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext`.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   API Usage Guide <deepspeed>
-   Autotuning <autotuning>
-   advanced
-   pytorch2deepspeed
+   ./* 

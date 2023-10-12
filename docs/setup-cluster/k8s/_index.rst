@@ -153,14 +153,7 @@ These ``kubectl`` commands list and delete pods which are running Determined tas
    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   install-on-kubernetes
-   setup-aks-cluster
-   setup-eks-cluster
-   setup-gke-cluster
-   k8s-dev-guide
-   custom-pod-specs
-   helm-commands
-   troubleshooting
+   ./*

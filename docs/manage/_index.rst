@@ -6,7 +6,7 @@
 
 .. toctree::
    :glob:
-   :hidden:
+   :maxdepth: 2
 
    ./*
    ./*/_index

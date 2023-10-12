@@ -18,10 +18,7 @@ Deloyment Reference includes reference documentation for configuring Determined 
 +----------------------------------------+-------------------------------------------------------+
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   Common Configuration Options <common-config-options>
-   Master Configuration Reference <master-config-reference>
-   Agent Configuration Reference <agent-config-reference>
-   Helm Chart Configuration Reference <helm-config-reference>
+   ./*

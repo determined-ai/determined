@@ -229,3 +229,9 @@ finally with an implicit ``list``:
       -  Create a new user named ``hoid`` who has admin privileges.
       -  ``det u create --admin hoid``
       -
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   ./*

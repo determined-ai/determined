@@ -13,8 +13,7 @@
    <torch-batch-processing-ug>`.
 
 .. toctree::
-   :caption: API Guides
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

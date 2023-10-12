@@ -80,8 +80,7 @@ additional detail on these resources. You can deploy these resources in GCP by f
    with the cluster.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   install-gcp
-   dynamic-agents-gcp
+   ./*

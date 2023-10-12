@@ -18,8 +18,7 @@
 +-------------------------------+----------------------------------------------------------------+
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   Huggingface Trainsformers <transformers/_index>
-   MMDetection <mmdetection/_index>
+   ./*/_index

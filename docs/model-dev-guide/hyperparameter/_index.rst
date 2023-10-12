@@ -77,8 +77,7 @@ An intuitive interface is provided to use hyperparameter searching, and is descr
 following sections.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

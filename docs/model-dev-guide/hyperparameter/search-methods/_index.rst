@@ -62,8 +62,7 @@ Determined also supports other common hyperparameter search algorithms:
 You can also implement your own :ref:`custom search methods <topic-guides_hp-tuning-det_custom>`.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

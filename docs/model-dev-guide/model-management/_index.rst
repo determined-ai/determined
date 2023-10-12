@@ -43,8 +43,7 @@ Determined includes a built-in :doc:`model registry
 respective versions.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

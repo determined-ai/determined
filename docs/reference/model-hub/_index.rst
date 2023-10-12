@@ -19,8 +19,7 @@ This section includes reference documentation for the model hub APIs:
 +-----------------------------------+-------------------------------------------------------------+
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   MMDetection API <mmdetection-api>
-   Transformers API <transformers-api>
+   ./*

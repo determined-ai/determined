@@ -107,8 +107,7 @@ Known limitations:
 -  GPU profiling is not yet supported.
 
 .. toctree::
-   :caption: Training APIs
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

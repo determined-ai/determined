@@ -68,9 +68,7 @@ peripheral resources, which are optionally configurable based on user requiremen
    create a bucket with the cluster.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   install-on-aws
-   dynamic-agents-aws
-   aws-spot
+   ./*

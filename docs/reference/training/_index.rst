@@ -23,13 +23,7 @@
 -  :doc:`experiment-config-reference`
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   det <api-det-reference>
-   det.core <api-core-reference>
-   det.pytorch <api-pytorch-reference>
-   det.pytorch.samplers <api-pytorch-samplers-reference>
-   det.pytorch.deepspeed <api-deepspeed-reference>
-   det.keras <api-keras-reference>
-   Experiment Configuration <experiment-config-reference>
+   ./*

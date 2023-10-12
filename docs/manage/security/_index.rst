@@ -25,8 +25,7 @@ These security features apply only to Determined Enterprise Edition, except for 
 +-------------------+----------------------------------------------------------------------------+
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

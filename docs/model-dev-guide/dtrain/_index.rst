@@ -37,11 +37,7 @@ Additional Resources:
    can use for instrumenting training.
 
 .. toctree::
-   :caption: Distributed Training
-   :hidden:
+   :maxdepth: 2
+   :glob: 
 
-   Distributed Training Concepts <dtrain-introduction>
-   Implementing Distributed Training <dtrain-implement>
-   Configuration Templates <config-templates>
-   Reproducibility <reproducibility>
-   Optimizing Training <optimize-training>
+   ./*

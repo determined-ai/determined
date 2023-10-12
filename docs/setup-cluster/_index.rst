@@ -71,12 +71,8 @@ Enable Determined to submit jobs to a Slurm cluster.
 -  :ref:`sysadmin-deploy-on-hpc`
 
 .. toctree::
-   :hidden:
+   :maxdepth: 2
+   :glob:
 
-   Quick Installation <../get-started/basic>
-   Deploy on Prem <on-prem/_index>
-   Deploy on AWS <aws/_index>
-   Deploy on GCP <gcp/_index>
-   Deploy on Kubernetes <k8s/_index>
-   Deploy on Slurm/PBS <slurm/_index>
-   Cluster Configuration <cluster-configuration>
+   ./*
+   ./*/_index

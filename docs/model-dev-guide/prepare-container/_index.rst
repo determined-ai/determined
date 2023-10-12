@@ -15,8 +15,7 @@ Find resources and operations for preparing your container environment.
 +-------------------------------+----------------------------------------------------------------------+
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

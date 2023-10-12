@@ -1,5 +1,10 @@
 /*! determined.css */
 
+:root {
+  --primary-color: #f37a22;
+  ----toc-l2-link: #323232;
+}
+
 /* Jump to sections instead of scrolling to them */
 html {
   scroll-behavior: auto !important;
@@ -11,13 +16,13 @@ html {
 }
 
 html[data-theme="light"] {
-  --pst-color-primary: #f37a22;
+  --pst-color-primary: var(--primary-color);
   --pst-color-inline-code: #323232;
   --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
 html[data-theme="dark"] {
-  --pst-color-primary: #f37a22;
+  --pst-color-primary: var(--primary-color);
   --pst-color-inline-code: #cecece;
   --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
@@ -597,4 +602,76 @@ h6 {
   font-stretch: normal;
   src: local("OpenSans-Bold"),
     url("_static/fonts/OpenSans/OpenSans-Bold.ttf") format("truetype");
+}
+
+
+/* Toctreee Cards */
+
+.bd-article .toctree-wrapper > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+  
+}
+
+.bd-article .toctree-l1 {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  /* gap: 20px; */
+  border: 1px solid #e5e5e5;
+  padding: 1em;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex: 1 1 calc(100% - 20px); /* Default to full width minus gap */
+  min-height: 200px;
+}
+
+.bd-article .toctree-l1 ul {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
+.bd-article .toctree-l1 > a {
+  font-size: 1.25em;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.bd-article .toctree-l2 > a {
+  font-size: .8rem !important;
+  color: var(--toc-l2-link);
+}
+
+.bd-article .toctree-l1 > a:hover,
+.bd-article .toctree-l1 > a:focus, 
+.bd-article .toctree-l2 > a:hover,
+.bd-article .toctree-l2 > a:focus  {
+  cursor: pointer;
+  color: var(--primary-color);
+  transition: color 0.3s ease;
+}
+
+
+/* Medium devices (tablets) */
+@media (min-width: 768px) {
+  .bd-article .toctree-l1 {
+    flex: 1 1 calc(50% - 20px);
+  }
+}
+
+/* Large devices (desktops) */
+@media (min-width: 992px) {
+  .bd-article .toctree-l1 {
+    flex: 1 1 calc(33.33% - 20px);
+  }
+
+  /* Target the last two .toctree-l1 elements */
+  .bd-article .toctree-wrapper > ul > .toctree-l1:nth-last-child(-n+2) {
+    flex: 1 1 calc(33.33% - 20px);
+    max-width: calc(33.33% - 20px);
+  }
 }

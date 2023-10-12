@@ -184,8 +184,7 @@ actions.
    We do not support editing webhooks. You can delete and recreate webhooks if needed.
 
 .. toctree::
-   :caption: Notification
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*

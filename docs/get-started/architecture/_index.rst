@@ -38,9 +38,7 @@ Learn more:
    training with Determined.
 
 .. toctree::
-   :maxdepth: 1
-   :caption: How Determined Works
-   :hidden:
+   :maxdepth: 2
    :glob:
 
    ./*
