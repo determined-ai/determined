@@ -901,11 +901,11 @@ export interface V1AcceleratorData {
      */
     acceleratorType?: string;
     /**
-     * An array of UUIDs of the accelerators associated with the allocation.
+     * An array of IDs of the accelerators associated with the allocation.
      * @type {Array<string>}
      * @memberof V1AcceleratorData
      */
-    acceleratorUuids?: Array<string>;
+    accelerators?: Array<string>;
 }
 /**
  * Acknowledge the receipt of some stop signal.
@@ -1160,7 +1160,7 @@ export interface V1Allocation {
      * @type {boolean}
      * @memberof V1Allocation
      */
-    isReady?: boolean;
+    isReady: boolean;
     /**
      * Start timestamp.
      * @type {string}
@@ -1179,24 +1179,6 @@ export interface V1Allocation {
      * @memberof V1Allocation
      */
     allocationId: string;
-    /**
-     * The number of slots associated with the allocation.
-     * @type {number}
-     * @memberof V1Allocation
-     */
-    slots: number;
-    /**
-     * The exit reason for the allocation.
-     * @type {string}
-     * @memberof V1Allocation
-     */
-    exitReason?: string;
-    /**
-     * The status code the allocation exits with.
-     * @type {number}
-     * @memberof V1Allocation
-     */
-    statusCode?: number;
 }
 /**
  * Arguments to an all gather.
@@ -3154,10 +3136,34 @@ export interface V1GetAgentsResponse {
 export interface V1GetAllocationResponse {
     /**
      * The id of the allocation.
-     * @type {V1Allocation}
+     * @type {string}
      * @memberof V1GetAllocationResponse
      */
-    allocation: V1Allocation;
+    allocationId: string;
+    /**
+     * The state of the allocation.
+     * @type {Taskv1State}
+     * @memberof V1GetAllocationResponse
+     */
+    state: Taskv1State;
+    /**
+     * The number of slots associated with the allocation.
+     * @type {number}
+     * @memberof V1GetAllocationResponse
+     */
+    slots: number;
+    /**
+     * The exit reason for the allocation.
+     * @type {string}
+     * @memberof V1GetAllocationResponse
+     */
+    exitReason?: string;
+    /**
+     * The status code the allocation exits with.
+     * @type {number}
+     * @memberof V1GetAllocationResponse
+     */
+    statusCode?: number;
 }
 /**
  * Response to GetBestSearcherValidationMetricRequest.
@@ -7197,26 +7203,6 @@ export interface V1PostSearcherOperationsRequest {
 export interface V1PostSearcherOperationsResponse {
 }
 /**
- * Request to PostTaskLogs.
- * @export
- * @interface V1PostTaskLogsRequest
- */
-export interface V1PostTaskLogsRequest {
-    /**
-     * The logs to persist.
-     * @type {Array<V1TaskLog>}
-     * @memberof V1PostTaskLogsRequest
-     */
-    logs: Array<V1TaskLog>;
-}
-/**
- * Response to PostTaskLogs.
- * @export
- * @interface V1PostTaskLogsResponse
- */
-export interface V1PostTaskLogsResponse {
-}
-/**
  * Response to PostTemplateRequest.
  * @export
  * @interface V1PostTemplateResponse
@@ -9460,79 +9446,6 @@ export interface V1Task {
      * @memberof V1Task
      */
     endTime?: Date;
-}
-/**
- * 
- * @export
- * @interface V1TaskLog
- */
-export interface V1TaskLog {
-    /**
-     * The ID of the log.
-     * @type {number}
-     * @memberof V1TaskLog
-     */
-    id?: number;
-    /**
-     * The ID of the task.
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    taskId: string;
-    /**
-     * The ID of the allocation.
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    allocationId?: string;
-    /**
-     * The agent the logs came from.
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    agentId?: string;
-    /**
-     * The ID of the container or, in the case of k8s, the pod name.
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    containerId?: string;
-    /**
-     * The rank ID.
-     * @type {number}
-     * @memberof V1TaskLog
-     */
-    rankId?: number;
-    /**
-     * The timestamp of the log.
-     * @type {Date}
-     * @memberof V1TaskLog
-     */
-    timestamp?: Date;
-    /**
-     * The level of this log.
-     * @type {V1LogLevel}
-     * @memberof V1TaskLog
-     */
-    level?: V1LogLevel;
-    /**
-     * The text of the log entry.
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    log: string;
-    /**
-     * The source of the log entry.
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    source?: string;
-    /**
-     * The output stream (e.g. stdout, stderr).
-     * @type {string}
-     * @memberof V1TaskLog
-     */
-    stdtype?: string;
 }
 /**
  * Response to TaskLogsFieldsRequest.
@@ -18592,44 +18505,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Persist the given task logs.
-         * @param {V1PostTaskLogsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postTaskLogs(body: V1PostTaskLogsRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling postTaskLogs.');
-            }
-            const localVarPath = `/api/v1/task/logs`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body
          * @param {*} [options] Override http request option.
@@ -20363,25 +20238,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Persist the given task logs.
-         * @param {V1PostTaskLogsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postTaskLogs(body: V1PostTaskLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTaskLogsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTaskLogs(body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body
          * @param {*} [options] Override http request option.
@@ -21250,16 +21106,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Persist the given task logs.
-         * @param {V1PostTaskLogsRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postTaskLogs(body: V1PostTaskLogsRequest, options?: any) {
-            return InternalApiFp(configuration).postTaskLogs(body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body
          * @param {*} [options] Override http request option.
@@ -22051,18 +21897,6 @@ export class InternalApi extends BaseAPI {
      */
     public postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
         return InternalApiFp(this.configuration).postAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Persist the given task logs.
-     * @param {V1PostTaskLogsRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public postTaskLogs(body: V1PostTaskLogsRequest, options?: any) {
-        return InternalApiFp(this.configuration).postTaskLogs(body, options)(this.fetch, this.basePath)
     }
     
     /**
