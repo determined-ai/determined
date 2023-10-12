@@ -476,12 +476,8 @@ func (k *kubernetesResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if k.pools[resourcePool] == nil {
-		sender := "unknown"
-		if ctx.Sender() != nil {
-			sender = ctx.Sender().Address().String()
-		}
-		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
-			resourcePool, ctx.Message(), sender)
+		err := errors.Errorf("cannot find resource pool %s for message %T",
+			resourcePool, ctx.Message())
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)

@@ -254,7 +254,7 @@ func (r *Ref) processMessage() bool {
 	}
 
 	// Any message not handled internally is sent to the actor implementation.
-	if ctx.Sender() == nil || !r.deadChildren[ctx.Sender().address] {
+	if ctx.sender == nil || !r.deadChildren[ctx.sender.address] {
 		r.err = r.actor.Receive(ctx)
 	}
 
