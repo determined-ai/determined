@@ -63,7 +63,7 @@ type CollectStartupMsgsFunc[S any] func(
 	known string,
 	spec S,
 ) (
-	[]interface{}, error,
+	[]stream.PreparableMessage, error,
 )
 
 // CollectSubscriptionModMsgsFunc collects messages that are missed due to modifying a subscription.
@@ -533,16 +533,15 @@ func startup[T stream.Msg, S any](
 	state.Subscription.Configure(filter)
 
 	// Scan for historical msgs matching newly-added subscriptions.
-	var newmsgs []interface{}
-	newmsgs, err = state.CollectStartupMsgs(ctx, user, known, *spec)
+	newmsgs, err := state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
 		return nil, err
 	}
-	msgs = append(msgs, newmsgs...)
 	preparedMsgs := make([]interface{}, 0, len(msgs))
-	for _, msg := range msgs {
+	for _, msg := range newmsgs {
 		preparedMsgs = append(preparedMsgs, prepare(msg))
 	}
+	msgs = append(msgs, preparedMsgs...)
 	return preparedMsgs, nil
 }
 
@@ -556,7 +555,6 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 	var msgs []interface{}
 	var err error
 	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn)
-	// msgs, err = startup(msgs, err, ctx, ss.Experiments, known.Experiments, sub.Experiments)
 	return msgs, err
 }
 

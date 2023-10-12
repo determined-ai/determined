@@ -112,9 +112,9 @@ func TrialCollectStartupMsgs(
 	known string,
 	spec TrialSubscriptionSpec,
 ) (
-	[]interface{}, error,
+	[]stream.PreparableMessage, error,
 ) {
-	var out []interface{}
+	var out []stream.PreparableMessage
 
 	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
