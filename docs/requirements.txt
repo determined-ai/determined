@@ -8,6 +8,7 @@ sphinx-copybutton>=0.4.0
 sphinx-sitemap>=2.2.0
 sphinx-tabs>=3.0
 myst_parser
+sphinx-design
 
 # Theme
 sphinx-book-theme==1.0.0
