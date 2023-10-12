@@ -13,19 +13,3 @@
 .dashed {
   border: dashed var(--theme-stroke-width) var(--theme-float-border-strong);
 }
-.id {
-  font-family: var(--theme-font-family-code);
-  font-size: 12px;
-}
-.header {
-  background-color: #132231;
-  border: 1px solid var(--theme-surface-border-strong);
-  color: #fff;
-}
-.state {
-  text-transform: uppercase;
-}
-.state.neutral {
-  background-color: var(--theme-float);
-  color: var(--theme-float-on);
-}
