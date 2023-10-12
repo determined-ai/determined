@@ -66,7 +66,7 @@ peripheral resources, which are optionally configurable based on user requiremen
 -  **Amazon Simple Storage Service (S3) Bucket**: The Determined cluster can leverage an existing S3
    bucket (assuming it has the correct associated permissions), or the CloudFormation script can
    create a bucket with the cluster.
-   
+
 .. container:: child-articles
 
    .. toctree::
@@ -74,4 +74,3 @@ peripheral resources, which are optionally configurable based on user requiremen
       :maxdepth: 2
 
       ./*
-

@@ -25,4 +25,3 @@ This section includes reference documentation for the model hub APIs:
       :maxdepth: 2
 
       ./*
-

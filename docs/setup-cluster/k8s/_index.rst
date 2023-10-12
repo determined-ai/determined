@@ -159,4 +159,3 @@ These ``kubectl`` commands list and delete pods which are running Determined tas
       :maxdepth: 2
 
       ./*
-

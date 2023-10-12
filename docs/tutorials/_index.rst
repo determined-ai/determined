@@ -56,4 +56,3 @@ Examples let you build off of an existing model that already runs on Determined.
       :maxdepth: 2
 
       ./*
-

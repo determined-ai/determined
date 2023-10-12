@@ -16,7 +16,6 @@ almost any deep learning model using Determined.
    :target_country: us
    :web_section_id: R12299
 
-
 .. toctree::
    :maxdepth: 2
 
@@ -32,6 +31,5 @@ almost any deep learning model using Determined.
 
 .. toctree::
    :hidden:
-    
-   attributions
 
+   attributions

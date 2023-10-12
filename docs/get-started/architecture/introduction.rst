@@ -1,8 +1,8 @@
 .. _introduction-determined:
 
-########
-Features
-########
+##########
+ Features
+##########
 
 .. _features:
 
@@ -15,8 +15,9 @@ It takes care of:
 -  Resource management for cutting cloud GPU costs.
 -  Experiment tracking for analysis and reproducibility.
 
-Configurable Interactive Jobs
-=============================
+*******************************
+ Configurable Interactive Jobs
+*******************************
 
 The behavior of interactive jobs, such as :ref:`TensorBoards <tensorboards>`, :ref:`notebooks
 <notebooks>`, :ref:`commands, and shells <commands-and-shells>`, can be influenced by setting a
@@ -32,8 +33,9 @@ except a TensorBoard, is launched.
 Options set via ``--config`` take precedence over values specified in the configuration file.
 Configuration settings are compatible with any Determined task unless otherwise specified.
 
-Determined CLI
-==============
+****************
+ Determined CLI
+****************
 
 One of the key components of the Determined platform is the :ref:`command-line interface (CLI)
 <cli-ug>`. The CLI serves as a primary entry point for interacting with Determined, providing a way
@@ -55,8 +57,9 @@ of the tasks you can perform with the Determined CLI:
    CLI allows users to easily launch and manage TensorBoard instances, making it simple to visualize
    and analyze the training progress of their models.
 
-Commands and Shells
-===================
+*********************
+ Commands and Shells
+*********************
 
 :ref:`Commands and shells <commands-and-shells>` support free-form tasks.
 
@@ -71,8 +74,9 @@ write code conforming to the trial APIs. Commands are useful for running existin
 manner; shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
 
-Configuration Templates
-=======================
+*************************
+ Configuration Templates
+*************************
 
 At a typical organization, many Determined configuration files will contain similar settings. For
 example, all of the training workloads run at a given organization might use the same checkpoint
@@ -90,8 +94,9 @@ the reproducibility of experiments that used a previous version of the configura
 A single configuration file can use at most one configuration template. A configuration template
 cannot use another configuration template.
 
-Queue Management
-================
+******************
+ Queue Management
+******************
 
 The Determined Queue Management system extends scheduler functionality to offer better visibility
 and control over scheduling decisions. It does this using the Job Queue, which provides better
@@ -105,8 +110,9 @@ queue, and resource pool.
 To begin managing job queues, go to the WebUI ``Job Queue`` section or use the ``det job`` set of
 CLI commands.
 
-Model Registry
-==============
+****************
+ Model Registry
+****************
 
 The Model Registry is a way to group conceptually related checkpoints (including ones across
 different experiments), store metadata and long-form notes about a model, and retrieve the latest
@@ -123,8 +129,9 @@ information.
 For more information about how to use the model registry, see `Organizing Models in the Model
 Registry <../post-training/model-registry.html>`_
 
-Notebooks
-=========
+***********
+ Notebooks
+***********
 
 `Jupyter Notebooks <https://jupyter.org/>`__ are a convenient way to develop and debug machine
 learning models, visualize the behavior of trained models, or even manage the training lifecycle of
@@ -151,8 +158,9 @@ Determined Notebooks have the following benefits:
    -  If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
       shut down automatically so you need to manually terminate the kernels.
 
-TensorBoards
-============
+**************
+ TensorBoards
+**************
 
 `TensorBoard <https://www.tensorflow.org/tensorboard>`__ is a widely used tool for visualizing and
 inspecting deep learning models. Determined makes it easy to use TensorBoard to examine a single
@@ -161,8 +169,9 @@ experiment or to compare multiple experiments.
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
-Workspaces and Projects
-=======================
+*************************
+ Workspaces and Projects
+*************************
 
 **Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
 experiments, and a workspace is a collection of projects. Learn more about workspaces and projects

@@ -24,4 +24,3 @@ Deloyment Reference includes reference documentation for configuring Determined 
       :maxdepth: 2
 
       ./*
-

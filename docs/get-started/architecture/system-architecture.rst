@@ -15,8 +15,9 @@ per compute server; a single machine can serve as both a master and an agent.
    :class: only-light
    :alt: Determined AI system architecture diagram describing master and agent components in light mode
 
-Master 
-------
+********
+ Master
+********
 
 The **master** is the central component of the Determined system. It is responsible for
 
@@ -26,9 +27,9 @@ The **master** is the central component of the Determined system. It is responsi
 -  Advancing the experiment, trial, and workload state machines over time.
 -  Hosting the WebUI and the REST API.
 
-
-Agent 
------ 
+*******
+ Agent
+*******
 
 An **agent** manages a number of **slots**, which are computing devices (typically a GPU or CPU). An
 agent has no state and only communicates with the master. Each agent is responsible for
@@ -37,8 +38,9 @@ agent has no state and only communicates with the master. Each agent is responsi
 -  Running the workloads that are requested by the master.
 -  Monitoring containers and sending information about them to the master.
 
-Task Container 
---------------
+****************
+ Task Container
+****************
 
 The **task container** runs a training task or other task(s) in a containerized environment.
 Training tasks are expected to have access to the data that will be used in training. The **agents**

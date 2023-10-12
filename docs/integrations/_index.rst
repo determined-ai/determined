@@ -19,4 +19,3 @@ Pachyderm, DVC, Delta Lake, Seldon, Spark, Argo, Airflow, and Kubeflow.
       :maxdepth: 2
 
       ./*/_index
-

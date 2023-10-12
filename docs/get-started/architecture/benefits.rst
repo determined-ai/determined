@@ -1,8 +1,8 @@
 .. _benefits:
 
-#########
+##########
  Benefits
-#########
+##########
 
 Determined is a deep learning training platform that simplifies infrastructure management for domain
 experts while enabling configuration-based deep learning functionality that engineering-oriented

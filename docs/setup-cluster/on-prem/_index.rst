@@ -28,4 +28,3 @@ Determined by your :ref:`preferred method <deploy-on-prem-options-index>`.
 
       ./*
       ./*/_index
-

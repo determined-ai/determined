@@ -24,4 +24,3 @@
       :maxdepth: 2
 
       ./*/_index
-

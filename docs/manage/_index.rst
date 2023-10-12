@@ -3,6 +3,7 @@
 ########
  Manage
 ########
+
 .. container:: child-articles
 
    .. toctree::

@@ -1,12 +1,12 @@
-
-#########
+##########
  Concepts
-#########
+##########
 
 .. _elastic-infrastructure:
 
-Elastic Infrastructure
-======================
+************************
+ Elastic Infrastructure
+************************
 
 When running in an AWS or GCP cloud environment, Determined can automatically provision and
 terminate GPU instances as the set of workloads on the cluster changes. This capability is called
@@ -38,8 +38,9 @@ Following the diagram, the execution would be:
    The time it takes to create a new instance depends on the cloud provider and the configured
    instance type, but >60 seconds is typical.
 
-Experiment
-==========
+************
+ Experiment
+************
 
 An *experiment* represents the basic unit of running the model training code. An experiment is a
 collection of one or more trials that are exploring a user-defined hyperparameter space. For
@@ -57,8 +58,9 @@ hyperparameters will be set. More information can be found at :ref:`hyperparamet
 
 .. _resource-pools:
 
-Resource Pools
-==============
+****************
+ Resource Pools
+****************
 
 To run tasks such as experiments or notebooks, Determined needs to have resources (CPUs, GPUs) on
 which to run the tasks. However, different tasks have different resource requirements and, given the
@@ -120,7 +122,7 @@ Here are some scenarios where it can be valuable to use multiple resource pools:
    sets and another pool that you use for training more mature models on large datasets.
 
 Limitations
------------
+===========
 
 Currently resource pools are completely independent from each other so it is not possible to launch
 an experiment that tries to use one pool and then falls back to another one if a certain condition
@@ -135,7 +137,7 @@ with CPU-only instances), that task can never get scheduled. Currently that task
 PENDING permanently.
 
 Set up Resource Pools
----------------------
+=====================
 
 Resource pools are configured using the :ref:`master configuration <master-config-reference>`. For
 each resource pool, you can configure scheduler and provider information.
@@ -145,7 +147,7 @@ If you are using static resource pools and launching agents by hand, you will ne
 join.
 
 Migrate to Resource Pools
--------------------------
+=========================
 
 Resource pools were introduced with Determined 0.14.0, resulting in changes to the :ref:`master
 configuration <master-config-reference>` format.
@@ -217,7 +219,7 @@ redefine the scheduler type at the pool-specific level:
          fitting_policy: worst
 
 Launch Tasks into Resource Pools
---------------------------------
+================================
 
 When creating a task, the job configuration file has a section called "resources". You can set the
 ``resource_pool`` subfield to specify the ``resource_pool`` that a task should be launched into.
@@ -237,15 +239,16 @@ auxiliary pool.
 
 .. _scheduling:
 
-Scheduling
-==========
+************
+ Scheduling
+************
 
 This document covers the supported scheduling policies. The first section describes the native
 scheduling capabilities supported by Determined. The next section describes how Determined schedules
 tasks when running on Kubernetes.
 
 Native Scheduler
-----------------
+================
 
 Administrators can configure the desired scheduler in master configuration file. It is also possible
 to configure different scheduling behavior for different :ref:`resource pools <resource-pools>`.
@@ -267,7 +270,7 @@ scheduling behavior of an individual task is influenced by several task configur
    priority.
 
 Fair-Share Scheduler
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 The master allocates cluster resources (*slots*) among the active experiments using a weighted
 fair-share scheduling policy. This policy aims for fair distribution of resources, taking into
@@ -288,7 +291,7 @@ experiment is set to 3 and the weight of the second experiment is set to 1, each
 assigned four slots.
 
 Task Priority
-^^^^^^^^^^^^^
+-------------
 
 The master allocates cluster resources (*slots*) to active tasks based on their *priority*.
 High-priority tasks are preferred to low-priority tasks. Low-priority tasks will be preempted to
@@ -356,7 +359,7 @@ scheduling decisions.
 .. _scheduling-on-kubernetes:
 
 Scheduling with Kubernetes
---------------------------
+==========================
 
 When using Determined on Kubernetes, Determined workloads, such as experiments, notebooks, and
 shells, are started by launching Kubernetes pods. The scheduling behavior that applies to those
@@ -365,7 +368,7 @@ workloads depends on how the Kubernetes scheduler has been configured.
 .. _gang-scheduling-on-kubernetes:
 
 Gang Scheduling
-^^^^^^^^^^^^^^^
+---------------
 
 By default, the Kubernetes scheduler does not perform gang scheduling or support preemption of pods.
 While it does take pod priority into account, it greedily schedules pods without consideration for
@@ -428,7 +431,7 @@ a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 .. _priority-scheduling-on-kubernetes:
 
 Priority Scheduling with Preemption
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 Determined also makes available a priority scheduler that extends the Kubernetes scheduler to
 support preemption with backfilling. This plugin will preempt existing pods if higher priority pods
@@ -478,14 +481,16 @@ more insight into scheduling decisions.
 
 .. _concept-trial:
 
-Trial
-=====
+*******
+ Trial
+*******
 
 A *trial* is a training task with a defined set of hyperparameters. A common degenerate case is an
 experiment with a single trial, which corresponds to training a single deep learning model.
 
-RBAC and User Groups
-====================
+**********************
+ RBAC and User Groups
+**********************
 
 **Role Based Access Control (RBAC)** enables administrators to control user access to various
 actions and data within Determined. RBAC feature requires Determined Enterprise Edition. Learn more
@@ -493,8 +498,9 @@ about RBAC and User Group usage at :ref:`rbac`.
 
 .. _topic-guides_yaml:
 
-YAML Configuration
-==================
+********************
+ YAML Configuration
+********************
 
 `YAML <https://yaml.org/>`__ is a markup language often used for configuration. Determined uses YAML
 for configuring tasks such as :ref:`experiments <experiment-config-reference>` and :ref:`notebooks
@@ -504,7 +510,7 @@ Determined. This is not a full description of YAML; see the `specification
 <https://yaml.org/spec/1.2/spec.html>`__ or other online guides for more details.
 
 YAML Types
-----------
+==========
 
 A value in YAML can be a ``null`` or number, string, or Boolean scalar, or an array or map
 collection. Collections can contain other collections nested to any depth, although, the Determined
@@ -517,7 +523,7 @@ way of expressing JSON objects that is meant to be easier for humans to read and
 allows comments and has fewer markup characters around the content.
 
 Maps
-^^^^
+----
 
 Maps represent unordered mappings from strings to YAML values. A map is written as a sequence of
 key-value pairs. Each key is followed by a colon and the corresponding value. The value can be on
@@ -539,7 +545,7 @@ The snippet above describes a map with one key, ``hyperparameters``; the corresp
 itself a map whose keys are ``base_learning_rate``, ``weight_cost``, etc.
 
 Arrays
-^^^^^^
+------
 
 An array contains multiple other YAML values in some order. An array is written as a sequence of
 values, each one preceded by a hyphen and a space. The hyphens for one list must all be indented by
@@ -556,7 +562,7 @@ An array is used in the experiment configuration to configure environment variab
        - C=C
 
 Scalars
-^^^^^^^
+-------
 
 Scalars generally behave naturally: ``null``, ``true``, ``2.718``, and ``"foo"`` all have the same
 meanings that they would in JSON (and many programming languages). However, YAML allows strings to
@@ -577,7 +583,7 @@ block represents a list containing several values whose types are listed in the 
    - foo bar       # string
 
 Example Experiment Configuration
---------------------------------
+================================
 
 A Determined configuration file consists of a YAML object with a particular structure: a map at the
 top level that is expected to have certain keys, with the value for each key expected to have a
@@ -612,7 +618,7 @@ In this example experiment configuration, numbers, strings, maps, and an array a
        - C=C
 
 Reference
----------
+=========
 
 -  YAML: https://learnxinyminutes.com/docs/yaml/
 -  Validate YAML: http://www.yamllint.com/
