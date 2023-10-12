@@ -1922,11 +1922,12 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	}
 
 	var metricGroup string
+	//nolint:staticcheck // SA1019: backward compatibility
 	switch req.MetricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricGroup = "training"
+		metricGroup = metricIDTraining
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricGroup = "validation"
+		metricGroup = metricIDValidation
 	default:
 		metricGroup = req.Group
 	}
@@ -1969,10 +1970,10 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		var endTime time.Time
 		var err error
 		switch metricGroup {
-		case "training":
+		case metricIDTraining:
 			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
-		case "validation":
+		case metricIDValidation:
 			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
 		default:
@@ -2138,11 +2139,12 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	var metricGroup string
+	//nolint:staticcheck // SA1019: backward compatibility
 	switch req.MetricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricGroup = "training"
+		metricGroup = metricIDTraining
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricGroup = "validation"
+		metricGroup = metricIDValidation
 	default:
 		metricGroup = req.Group
 	}
