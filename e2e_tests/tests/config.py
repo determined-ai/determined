@@ -48,40 +48,12 @@ def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/computer_vision", path)
 
 
-def nlp_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/nlp", path)
-
-
-def nas_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/nas", path)
-
-
-def meta_learning_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/meta_learning", path)
-
-
 def diffusion_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/diffusion", path)
 
 
-def gan_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/gan", path)
-
-
-def decision_trees_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/decision_trees", path)
-
-
 def features_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/features", path)
-
-
-def model_hub_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../model_hub/examples", path)
-
-
-def graphs_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/graphs", path)
 
 
 def deepspeed_examples_path(path: str) -> str:
@@ -90,10 +62,6 @@ def deepspeed_examples_path(path: str) -> str:
 
 def deepspeed_autotune_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/deepspeed_autotune", path)
-
-
-def custom_search_method_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/custom_search_method", path)
 
 
 def hf_trainer_examples_path(path: str) -> str:

@@ -15,9 +15,6 @@ SPHINXWRAPPER = ./sphinx-wrapper.py
 ../examples/build/stamp:
 	$(MAKE) -C ../examples build/stamp
 
-../model_hub/build-examples/stamp:
-	$(MAKE) -C ../model_hub build-examples/stamp
-
 ../proto/build/swagger/determined/api/v1/api.swagger.json:
 	$(MAKE) -C ../proto build
 
@@ -28,11 +25,10 @@ build/helm.stamp: ../helm/build/stamp
 	mkdir -p build
 	touch $@
 
-build/examples.stamp: ../examples/build/stamp ../model_hub/build-examples/stamp
+build/examples.stamp: ../examples/build/stamp
 	rm -rf site/downloads/examples
 	mkdir -p site/downloads/examples
 	cp ../examples/build/*.tgz site/downloads/examples
-	cp ../model_hub/build-examples/*.tgz site/downloads/examples
 	mkdir -p build
 	touch $@
 
