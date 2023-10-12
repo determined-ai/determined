@@ -111,6 +111,8 @@ extensions = [
     "sphinx_reredirects",
     "sphinx_tabs.tabs",
     "myst_parser",
+    "sphinx_design"
+
 ]
 
 myst_extensions = [

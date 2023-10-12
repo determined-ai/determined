@@ -16,8 +16,26 @@ almost any deep learning model using Determined.
    :target_country: us
    :web_section_id: R12299
 
+
+.. card-carousel:: 1
+
+    .. card:: Get Started
+      :width: 50%
+      :link: get-started/_index.html
+
+        content
+
+    .. card:: Set Up
+      :width: 50%
+      :link: setup-cluster/_index.html
+
+        Longer
+
+        content
+
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Get Started <get-started/_index>
    Set Up <setup-cluster/_index>
@@ -28,8 +46,6 @@ almost any deep learning model using Determined.
    Reference <reference/_index>
    Tools <tools/_index>
    Integrations <integrations/_index>
-
-.. toctree::
-   :hidden:
-
    attributions
+
+
