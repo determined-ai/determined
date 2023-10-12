@@ -3,13 +3,13 @@ import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import Button from 'components/kit/Button';
 import Dropdown from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import Message from 'components/kit/Message';
 import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
+import { StateBadge } from 'components/StateBadge';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
@@ -119,7 +119,7 @@ const WebhooksView: React.FC = () => {
         if (t.triggerType === V1TriggerType.EXPERIMENTSTATECHANGE) {
           return (
             <li className={css.listBadge} key={t.id}>
-              <Badge state={t.condition.state} type={BadgeType.State} />
+              <StateBadge state={t.condition.state} />
             </li>
           );
         }

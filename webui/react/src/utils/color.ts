@@ -5,7 +5,7 @@ import { GLASBEY } from 'constants/colors';
  * s - saturation between 0.0 and 1.0
  * l - lightness between 0.0 and 1.0
  */
-interface HslColor {
+export interface HslColor {
   h: number;
   l: number;
   s: number;

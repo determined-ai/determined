@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
 import Avatar from 'components/kit/Avatar';
+import Badge from 'components/kit/Badge';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -24,6 +25,7 @@ import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
+import { hex2hsl } from 'components/kit/internal/functions';
 import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
@@ -76,6 +78,7 @@ import css from './DesignKit.module.scss';
 const ComponentTitles = {
   Accordion: 'Accordion',
   Avatar: 'Avatar',
+  Badges: 'Badges',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Cards: 'Cards',
@@ -132,6 +135,49 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
       <h3 id={id}>{title}</h3>
       {children}
     </article>
+  );
+};
+
+const BadgeSection: React.FC = () => {
+  return (
+    <ComponentSection id="Badges" title="Badges">
+      <AntDCard>
+        <p>
+          <code>{'<Badge>'}</code> is a short piece of information or status descriptor for UI
+          elements.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Default Usage</strong>
+        <Space>
+          <Badge text="content" />
+        </Space>
+        <strong>Status Badge Variation</strong>
+        <Space>
+          <Badge
+            badgeColor={{ backgroundColor: hex2hsl('#FAFAFA'), color: hex2hsl('#303030') }}
+            dashed={true}
+            text="POTENTIAL"
+          />
+          <Badge
+            badgeColor={{ backgroundColor: hex2hsl('#6666CC'), color: hex2hsl('#FFFFFF') }}
+            text="PULLING IMAGE"
+          />
+          <Badge
+            badgeColor={{ backgroundColor: hex2hsl('#009DE0'), color: hex2hsl('#FFFFFF') }}
+            text="RUNNING"
+          />
+          <Badge
+            badgeColor={{ backgroundColor: hex2hsl('#267326'), color: hex2hsl('#FFFFFF') }}
+            text="COMPLETED"
+          />
+          <Badge
+            badgeColor={{ backgroundColor: hex2hsl('#CC0000'), color: hex2hsl('#FFFFFF') }}
+            text="DELETING"
+          />
+        </Space>
+      </AntDCard>
+    </ComponentSection>
   );
 };
 
@@ -3066,6 +3112,7 @@ const MessageSection: React.FC = () => {
 const Components = {
   Accordion: <AccordionSection />,
   Avatar: <AvatarSection />,
+  Badges: <BadgeSection />,
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
   Cards: <CardsSection />,

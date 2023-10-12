@@ -8,7 +8,6 @@ import {
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
@@ -65,6 +64,7 @@ import { getDisplayName } from 'utils/user';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
 import { useModal } from './kit/Modal';
+import { StateBadge } from './StateBadge';
 import css from './TaskList.module.scss';
 import WorkspaceFilter from './WorkspaceFilter';
 
@@ -422,7 +422,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         filterDropdown: stateFilterDropdown,
         filterIcon: <Icon name="filter" title="filter" />,
         filters: Object.values(CommandState).map((value) => ({
-          text: <Badge state={value} type={BadgeType.State} />,
+          text: <StateBadge state={value} />,
           value,
         })),
         isFiltered: (settings: Settings) => !!settings.state,

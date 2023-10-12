@@ -5,7 +5,6 @@ import Select, { OptGroup, Option, SelectValue } from 'components/kit/Select';
 import { Metric } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
-import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
 
 const allOptionId = 'ALL_RESULTS';
@@ -132,7 +131,7 @@ const MetricSelect: React.FC<Props> = ({
       numVisibleOptions === totalNumMetrics ? 'All' : `All ${numVisibleOptions} results`;
     return (
       <Option key={allOptionId} value={allOptionId}>
-        <BadgeTag label={allOptionLabel} />
+        <span>{allOptionLabel}</span>
       </Option>
     );
   }, [totalNumMetrics, visibleMetrics]);
@@ -152,7 +151,7 @@ const MetricSelect: React.FC<Props> = ({
       onSelect={handleMetricSelect}>
       {multiple && visibleMetrics.length > 0 && (
         <Option key={resetOptionId} value={resetOptionId}>
-          <BadgeTag label="Reset to Default" />
+          <span>{'Reset to Default'}</span>
         </Option>
       )}
       {multiple && visibleMetrics.length > 1 && allOption}

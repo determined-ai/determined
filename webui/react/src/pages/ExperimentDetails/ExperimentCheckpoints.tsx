@@ -2,12 +2,12 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
-import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { useModal } from 'components/kit/Modal';
 import useConfirm from 'components/kit/useConfirm';
 import ModelCreateModal from 'components/ModelCreateModal';
 import Section from 'components/Section';
+import { StateBadge } from 'components/StateBadge';
 import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import {
@@ -222,7 +222,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         column.filters = Object.values(CheckpointState)
           .filter((value) => value !== CheckpointState.Unspecified)
           .map((value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
+            text: <StateBadge state={value} />,
             value,
           }));
       } else if (column.key === Checkpointv1SortBy.SEARCHERMETRIC) {

@@ -2,7 +2,6 @@ import { Modal, Tag, Typography } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import usePrevious from 'components/kit/internal/usePrevious';
 import Message from 'components/kit/Message';
@@ -12,6 +11,7 @@ import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
+import { StateBadge } from 'components/StateBadge';
 import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
@@ -252,7 +252,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 <th scope="row">State</th>
                 {trialsDetails.map((trial) => (
                   <td key={trial.id} style={{ textAlign: 'center' }}>
-                    <Badge state={trial.state} type={BadgeType.State} />
+                    <StateBadge state={trial.state} />
                   </td>
                 ))}
               </tr>

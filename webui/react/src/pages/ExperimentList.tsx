@@ -2,7 +2,6 @@ import { Space, Typography } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
@@ -19,6 +18,7 @@ import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
+import { StateBadge } from 'components/StateBadge';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -534,7 +534,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           RunState.Completed,
           RunState.Error,
         ].map((value) => ({
-          text: <Badge state={value} type={BadgeType.State} />,
+          text: <StateBadge state={value} />,
           value,
         })),
         isFiltered: () => !!settings.state,

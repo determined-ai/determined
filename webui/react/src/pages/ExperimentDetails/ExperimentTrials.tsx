@@ -3,12 +3,12 @@ import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/in
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
-import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Dropdown from 'components/kit/Dropdown';
 import Link from 'components/Link';
 import Section from 'components/Section';
+import { StateBadge } from 'components/StateBadge';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import { defaultRowClassName, getFullPaginationConfig, Renderer } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -224,7 +224,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.isFiltered = (settings) => !!(settings as Settings).state;
         column.filters = (['ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR'] as RunState[]).map(
           (value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
+            text: <StateBadge state={value} />,
             value,
           }),
         );

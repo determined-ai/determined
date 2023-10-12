@@ -3,28 +3,21 @@ import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
 import { UIProvider } from 'components/kit/Theme';
-import { stateToLabel } from 'constants/states';
+import { badgeColorFromState, stateToLabel } from 'constants/states';
 import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
-import Badge, { BadgeProps, BadgeType } from './Badge';
+import Badge, { BadgeProps } from './Badge';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
 
 const user = userEvent.setup();
 
-const setup = ({
-  children = CONTENT,
-  tooltip = CONTENT_TOOLTIP,
-  type = BadgeType.Header,
-  ...props
-}: BadgeProps = {}) => {
+const setup = ({ text, badgeColor = undefined }: BadgeProps = { text: CONTENT }) => {
   return render(
     <UIProvider>
-      <Badge tooltip={tooltip} type={type} {...props}>
-        {children}
-      </Badge>
+      <Badge badgeColor={badgeColor} text={text} />
     </UIProvider>,
   );
 };
@@ -41,7 +34,7 @@ describe('Badge', () => {
       return (
         <UIProvider>
           <button role="button" onClick={() => setValue(SlotState.Running)} />
-          <Badge state={value} type={BadgeType.State} />
+          <Badge badgeColor={badgeColorFromState(value)} text={stateToLabel(value)} />
         </UIProvider>
       );
     };
@@ -73,11 +66,9 @@ describe('Badge', () => {
   it('should display correct style for potential', () => {
     const label = stateToLabel(ResourceState.Potential);
     const view = setup({
-      children: label,
-      state: ResourceState.Potential,
-      type: BadgeType.State,
+      text: label,
     });
     const statePotential = view.getByText(label);
-    expect(statePotential).toHaveClass('state neutral dashed');
+    expect(statePotential).toHaveClass('dashed');
   });
 });

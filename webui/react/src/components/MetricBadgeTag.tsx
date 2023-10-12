@@ -1,12 +1,16 @@
 import React from 'react';
 
+import Badge from 'components/kit/Badge';
+import Tooltip from 'components/kit/Tooltip';
 import { Metric } from 'types';
 
-import BadgeTag from './BadgeTag';
+import css from './MetricBadgeTag.module.scss';
 
 interface Props {
   metric: Metric;
 }
+
+const TOOLTIP_DELAY = 1.0;
 
 const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {
   /**
@@ -17,9 +21,14 @@ const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {
    * and validating it upon loading and discarding it if invalid.
    */
   return (
-    <BadgeTag label={metric.name} tooltip={metric.group}>
-      {(metric.group ?? '').substring(0, 1).toUpperCase()}
-    </BadgeTag>
+    <span className={css.base}>
+      <Tooltip content={metric.group} mouseEnterDelay={TOOLTIP_DELAY}>
+        <Badge text={(metric.group ?? '').substring(0, 1).toUpperCase()} />
+      </Tooltip>
+      <Tooltip content={metric.name} mouseEnterDelay={TOOLTIP_DELAY}>
+        <span className={css.label}>{metric.name}</span>
+      </Tooltip>
+    </span>
   );
 };
 

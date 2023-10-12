@@ -17,12 +17,12 @@ import handleError from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
-import Badge, { BadgeType } from './Badge';
 import css from './CheckpointModal.module.scss';
 import HumanReadableNumber from './HumanReadableNumber';
 import Button from './kit/Button';
 import useConfirm from './kit/useConfirm';
 import Link from './Link';
+import { StateBadge } from './StateBadge';
 
 export interface Props {
   checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
@@ -148,7 +148,7 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
             <span>Batch {checkpoint.totalBatches}</span>
           </div>,
         )}
-        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
+        {renderRow('State', <StateBadge state={state} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {searcherMetric &&

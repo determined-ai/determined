@@ -1,4 +1,5 @@
-import { StateOfUnion } from 'components/kit/Theme';
+import { BadgeColor } from 'components/kit/Badge';
+import { getCssVar, getStateColorCssVar, StateOfUnion } from 'components/kit/Theme';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   CheckpointState,
@@ -10,6 +11,7 @@ import {
   RunState,
   SlotState,
 } from 'types';
+import { str2hsl } from 'utils/color';
 
 export const activeCommandStates = [
   CommandState.Pulling,
@@ -180,3 +182,19 @@ export function stateToLabel(state: StateOfUnion): string {
     (state as string)
   );
 }
+
+export const badgeColorFromState = (state: StateOfUnion): BadgeColor => {
+  const style: BadgeColor = {
+    backgroundColor: str2hsl(getCssVar(getStateColorCssVar(state))),
+    color: str2hsl('#FFFFFF'),
+  };
+  if (
+    state === SlotState.Free ||
+    state === ResourceState.Warm ||
+    state === ResourceState.Potential
+  ) {
+    style.backgroundColor = str2hsl(getCssVar('var(--theme-surface)'));
+    style.color = str2hsl(getCssVar('var(--theme-float-on)'));
+  }
+  return style;
+};

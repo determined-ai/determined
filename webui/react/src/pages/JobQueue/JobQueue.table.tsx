@@ -1,9 +1,9 @@
 import React, { ReactNode } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import { StateBadge } from 'components/StateBadge';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
@@ -161,7 +161,7 @@ export const columns: ColumnDef<Job>[] = [
     render: (_: unknown, record: Job): ReactNode => {
       return (
         <div className={css.state}>
-          <Badge state={record.summary.state} type={BadgeType.State} />
+          <StateBadge state={record.summary.state} />
           {!!record?.progress && <span> {floatToPercent(record.progress, 1)}</span>}
         </div>
       );

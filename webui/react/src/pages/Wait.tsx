@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import Badge, { BadgeType } from 'components/Badge';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import PageMessage from 'components/PageMessage';
+import { StateBadge } from 'components/StateBadge';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
@@ -92,7 +92,7 @@ const Wait: React.FC = () => {
         <div className={css.message}>{message}</div>
         {waitStatus && (
           <div className={css.state}>
-            <Badge state={waitStatus?.state} type={BadgeType.State} />
+            <StateBadge state={waitStatus?.state} />
           </div>
         )}
         <Spinner spinning={isLoading} />

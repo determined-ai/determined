@@ -2,17 +2,11 @@
   align-items: center;
   display: flex;
 
-  .label,
-  .preLabel {
+  .label {
     font-size: 14px;
+    margin: 0 4px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .label {
-    margin-left: 4px;
-  }
-  .preLabel {
-    margin-right: 4px;
   }
 }

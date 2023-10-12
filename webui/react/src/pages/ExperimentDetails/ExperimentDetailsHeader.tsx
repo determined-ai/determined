@@ -1,7 +1,6 @@
 import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Badge from 'components/Badge';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
@@ -11,6 +10,7 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import Badge from 'components/kit/Badge';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
@@ -43,6 +43,7 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { hex2hsl } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
@@ -527,9 +528,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               {experiment.name}
             </div>
             {experiment.unmanaged && (
-              <Badge tooltip="Workload not managed by Determined" type="Header">
-                Unmanaged
-              </Badge>
+              <Tooltip content="Workload not managed by Determined">
+                <Badge
+                  badgeColor={{ backgroundColor: hex2hsl('#132231'), color: hex2hsl('#FFFFFF') }}
+                  text="Unmanaged"
+                />
+              </Tooltip>
             )}
             {trial ? (
               <>

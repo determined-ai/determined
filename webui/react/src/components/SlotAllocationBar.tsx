@@ -1,19 +1,17 @@
 import React, { useMemo } from 'react';
 
-import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import { getStateColorCssVar, ShirtSize } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { ResourceState, SlotState } from 'types';
 import { routeToReactUrl } from 'utils/routes';
 import { floatToPercent } from 'utils/string';
 
-import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';
+import { StateBadge } from './StateBadge';
 
 export interface Props {
   barOnly?: boolean;
@@ -180,9 +178,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         {states.map((state) =>
           stateTallies[state] ? (
             <Legend count={stateTallies[state]} key={state} totalSlots={totalSlots}>
-              <Badge state={state} type={BadgeType.State}>
-                {resourceStateToLabel[state]}
-              </Badge>
+              <StateBadge state={state} />
             </Legend>
           ) : null,
         )}
@@ -224,13 +220,13 @@ const SlotAllocationBar: React.FC<Props> = ({
   const renderLegend = () => (
     <ol>
       <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
-        <Badge state={SlotState.Running} type={BadgeType.State} />
+        <StateBadge state={SlotState.Running} />
       </Legend>
       <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
-        <Badge state={SlotState.Pending} type={BadgeType.State} />
+        <StateBadge state={SlotState.Pending} />
       </Legend>
       <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
-        <Badge state={SlotState.Free} type={BadgeType.State} />
+        <StateBadge state={SlotState.Free} />
       </Legend>
     </ol>
   );

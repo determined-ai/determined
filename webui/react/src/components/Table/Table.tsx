@@ -1,17 +1,18 @@
 import { Space, Typography } from 'antd';
 import React from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Badge from 'components/kit/Badge';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
 import { StateOfUnion } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import { StateBadge } from 'components/StateBadge';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import UserAvatar from 'components/UserAvatar';
@@ -32,6 +33,7 @@ import {
   TrialItem,
   Workspace,
 } from 'types';
+import { hex2hsl } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
@@ -115,7 +117,7 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
 
 export const stateRenderer: Renderer<{ state: StateOfUnion }> = (_, record) => (
   <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-    <Badge state={record.state} type={BadgeType.State} />
+    <StateBadge state={record.state} />
   </div>
 );
 
@@ -147,7 +149,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
       <ConditionalWrapper
         condition={canBeOpened(record)}
         wrapper={(children) => <Link onClick={() => openCommand(record)}>{children}</Link>}>
-        <Badge type={BadgeType.Id}>{record.id.split('-')[0]}</Badge>
+        <Badge text={record.id.split('-')[0]} />
       </ConditionalWrapper>
     </div>
   </Tooltip>
@@ -213,9 +215,12 @@ export const experimentNameRenderer = (
     <Link path={paths.experimentDetails(record.id)}>
       {value === undefined ? '' : value}&nbsp;&nbsp;
       {record.unmanaged && (
-        <Badge tooltip="Workload not managed by Determined" type="Header">
-          Unmanaged
-        </Badge>
+        <Tooltip content="Workload not managed by Determined">
+          <Badge
+            badgeColor={{ backgroundColor: hex2hsl('#132231'), color: hex2hsl('#FFFFFF') }}
+            text="Unmanaged"
+          />
+        </Tooltip>
       )}
     </Link>
   </Typography.Text>
