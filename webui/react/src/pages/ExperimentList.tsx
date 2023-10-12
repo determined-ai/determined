@@ -894,9 +894,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown menu={menuItems} onClick={handleDropdown}>
-            <div>
-              <Icon name="overflow-vertical" title="Action menu" />
-            </div>
+            <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
           </Dropdown>
         </div>
       </div>

@@ -83,17 +83,9 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'type',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
     key: 'type',
-    render: (_: unknown, record: Job): ReactNode => {
-      const title = jobTypeLabel(record.type);
-      const TypeCell = (
-        <Tooltip content={title} placement="topLeft">
-          <div>
-            <Icon name={jobTypeIconName(record.type)} title={jobTypeLabel(record.type)} />
-          </div>
-        </Tooltip>
-      );
-      return TypeCell;
-    },
+    render: (_: unknown, record: Job): ReactNode => (
+      <Icon name={jobTypeIconName(record.type)} showTooltip title={jobTypeLabel(record.type)} />
+    ),
     title: 'Type',
   },
   {

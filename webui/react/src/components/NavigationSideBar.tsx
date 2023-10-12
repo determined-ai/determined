@@ -89,11 +89,9 @@ export const NavigationItem: React.FC<ItemProps> = ({
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
-          <div className={css.icon}>
-            <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
-          </div>
+          <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
         ) : (
-          <div className={css.icon}>{props.icon}</div>
+          props.icon
         )}
         <div className={css.label}>{props.labelRender ? props.labelRender : props.label}</div>
       </Link>

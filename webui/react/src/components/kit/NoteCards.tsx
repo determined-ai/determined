@@ -213,9 +213,10 @@ const NoteCards: React.FC<Props> = ({
             disabled={disabled}
             extra={
               <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
-                <div style={{ cursor: 'pointer' }}>
-                  <Icon name="overflow-horizontal" title="Action menu" />
-                </div>
+                <Button
+                  icon={<Icon name="overflow-horizontal" title="Action menu" />}
+                  type="text"
+                />
               </Dropdown>
             }
             note={notes?.[currentPage]}
