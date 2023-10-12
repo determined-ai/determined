@@ -163,7 +163,7 @@ func (a *agents) createAgentActor(
 		return nil, fmt.Errorf("cannot find specified resource pool for agent %s: %w", id, err)
 	}
 
-	resourcePoolRef, err := a.rm.GetResourcePoolRef(resourcePool)
+	resourcePoolRef, err := a.rm.getResourcePoolRef(resourcePool)
 	if err != nil {
 		return nil, fmt.Errorf("getting resource pool for agent: %w", err)
 	}

@@ -78,8 +78,8 @@ func New(
 	return ResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
 
-// GetResourcePoolRef gets an actor ref to a resource pool by name.
-func (k ResourceManager) GetResourcePoolRef(
+// getResourcePoolRef gets an actor ref to a resource pool by name.
+func (k ResourceManager) getResourcePoolRef(
 	name string,
 ) (*actor.Ref, error) {
 	rp := k.Ref().Child(name)
@@ -166,7 +166,7 @@ func (k ResourceManager) ValidateResources(
 
 // ValidateResourcePool validates that the named resource pool exists.
 func (k ResourceManager) ValidateResourcePool(name string) error {
-	_, err := k.GetResourcePoolRef(name)
+	_, err := k.getResourcePoolRef(name)
 	return err
 }
 
@@ -176,7 +176,7 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 	name string,
 	slots int,
 ) ([]command.LaunchWarning, error) {
-	if _, err := k.GetResourcePoolRef(name); err != nil {
+	if _, err := k.getResourcePoolRef(name); err != nil {
 		return nil, fmt.Errorf("%s is an invalid resource pool", name)
 	}
 
@@ -198,6 +198,15 @@ func (k ResourceManager) NotifyContainerRunning(
 // IsReattachableOnlyAfterStarted always returns false for the k8s resource manager.
 func (k ResourceManager) IsReattachableOnlyAfterStarted() bool {
 	return false
+}
+
+// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
+func (k ResourceManager) TaskContainerDefaults(
+	pool string,
+	fallbackConfig model.TaskContainerDefaultsConfig,
+) (result model.TaskContainerDefaultsConfig, err error) {
+	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
+	return result, k.Ask(req, &result)
 }
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
@@ -224,7 +233,7 @@ func newKubernetesResourceManager(
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 	db *db.PgDB,
-) actor.Actor {
+) *kubernetesResourceManager {
 	return &kubernetesResourceManager{
 		config:                config,
 		poolsConfig:           poolsConfig,
@@ -491,15 +500,6 @@ func (k *kubernetesResourceManager) forwardToPool(
 type taskContainerDefaults struct {
 	fallbackDefault model.TaskContainerDefaultsConfig
 	resourcePool    string
-}
-
-// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
-func (k ResourceManager) TaskContainerDefaults(
-	pool string,
-	fallbackConfig model.TaskContainerDefaultsConfig,
-) (result model.TaskContainerDefaultsConfig, err error) {
-	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
-	return result, k.Ask(req, &result)
 }
 
 func (k *kubernetesResourceManager) aggregateTaskSummaries(

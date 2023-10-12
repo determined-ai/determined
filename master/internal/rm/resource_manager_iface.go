@@ -2,7 +2,6 @@ package rm
 
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -30,7 +29,6 @@ type ResourceManager interface {
 	IsReattachableOnlyAfterStarted() bool
 
 	// Resource pool stuff.
-	GetResourcePoolRef(name string) (*actor.Ref, error)
 	GetResourcePools(*apiv1.GetResourcePoolsRequest) (*apiv1.GetResourcePoolsResponse, error)
 	GetDefaultComputeResourcePool(
 		sproto.GetDefaultComputeResourcePoolRequest,
@@ -60,7 +58,4 @@ type ResourceManager interface {
 	GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error)
 	EnableSlot(*apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
 	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
-
-	// Escape hatch, do not use.
-	Ref() *actor.Ref
 }

@@ -3,10 +3,8 @@
 package mocks
 
 import (
-	actor "github.com/determined-ai/determined/master/pkg/actor"
-	apiv1 "github.com/determined-ai/determined/proto/pkg/apiv1"
-
 	command "github.com/determined-ai/determined/master/pkg/command"
+	apiv1 "github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	jobv1 "github.com/determined-ai/determined/proto/pkg/jobv1"
 
@@ -420,32 +418,6 @@ func (_m *ResourceManager) GetJobQueueStatsRequest(_a0 *apiv1.GetJobQueueStatsRe
 	return r0, r1
 }
 
-// GetResourcePoolRef provides a mock function with given fields: name
-func (_m *ResourceManager) GetResourcePoolRef(name string) (*actor.Ref, error) {
-	ret := _m.Called(name)
-
-	var r0 *actor.Ref
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*actor.Ref, error)); ok {
-		return rf(name)
-	}
-	if rf, ok := ret.Get(0).(func(string) *actor.Ref); ok {
-		r0 = rf(name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*actor.Ref)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetResourcePools provides a mock function with given fields: _a0
 func (_m *ResourceManager) GetResourcePools(_a0 *apiv1.GetResourcePoolsRequest) (*apiv1.GetResourcePoolsResponse, error) {
 	ret := _m.Called(_a0)
@@ -569,22 +541,6 @@ func (_m *ResourceManager) NotifyContainerRunning(_a0 sproto.NotifyContainerRunn
 // RecoverJobPosition provides a mock function with given fields: _a0
 func (_m *ResourceManager) RecoverJobPosition(_a0 sproto.RecoverJobPosition) {
 	_m.Called(_a0)
-}
-
-// Ref provides a mock function with given fields:
-func (_m *ResourceManager) Ref() *actor.Ref {
-	ret := _m.Called()
-
-	var r0 *actor.Ref
-	if rf, ok := ret.Get(0).(func() *actor.Ref); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*actor.Ref)
-		}
-	}
-
-	return r0
 }
 
 // Release provides a mock function with given fields: _a0

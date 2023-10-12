@@ -55,10 +55,8 @@ func New(
 	return rm
 }
 
-// GetResourcePoolRef gets an actor ref to a resource pool by name.
-func (a ResourceManager) GetResourcePoolRef(
-	name string,
-) (*actor.Ref, error) {
+// getResourcePoolRef gets an actor ref to a resource pool by name.
+func (a ResourceManager) getResourcePoolRef(name string) (*actor.Ref, error) {
 	rp := a.Ref().Child(name)
 	if rp == nil {
 		return nil, fmt.Errorf("cannot find resource pool: %s", name)
@@ -68,13 +66,13 @@ func (a ResourceManager) GetResourcePoolRef(
 
 // ValidateResourcePool validates existence of a resource pool.
 func (a ResourceManager) ValidateResourcePool(name string) error {
-	_, err := a.GetResourcePoolRef(name)
+	_, err := a.getResourcePoolRef(name)
 	return err
 }
 
 // CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
 func (a ResourceManager) CheckMaxSlotsExceeded(name string, slots int) (bool, error) {
-	ref, err := a.GetResourcePoolRef(name)
+	ref, err := a.getResourcePoolRef(name)
 	if err != nil {
 		return false, err
 	}

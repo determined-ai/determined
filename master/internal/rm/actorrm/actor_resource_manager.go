@@ -15,21 +15,20 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// ResourceManager shims a RM actor to the ResourceManager interface.
+// ResourceManager shims a deprecated RM actor to the ResourceManager interface.
 type ResourceManager struct {
 	ref *actor.Ref
 }
 
-// Wrap wraps an RM actor as an explicit interface.
+// Wrap wraps an RM actor as an explicit interface. This is deprecated. New resource managers
+// should satisfy the ResourceManager interface directly.
 func Wrap(ref *actor.Ref) *ResourceManager {
 	return &ResourceManager{ref: ref}
 }
 
-// GetResourcePoolRef is a default implementation to satisfy the interface, mostly for tests.
-func (r *ResourceManager) GetResourcePoolRef(
-	name string,
-) (*actor.Ref, error) {
-	return r.ref, nil
+// Ref gets the underlying RM actor, for internal actor use only.
+func (r *ResourceManager) Ref() *actor.Ref {
+	return r.ref
 }
 
 // ResolveResourcePool is a default implementation to satisfy the interface, mostly for tests.
@@ -63,11 +62,6 @@ func (r *ResourceManager) ValidateResourcePoolAvailability(
 // ValidateResourcePool is a default implementation to satisfy the interface, mostly for tests.
 func (r *ResourceManager) ValidateResourcePool(name string) error {
 	return nil
-}
-
-// Ref gets the underlying RM actor, for backwards compatibility. This is deprecated.
-func (r *ResourceManager) Ref() *actor.Ref {
-	return r.ref
 }
 
 // GetAllocationSummary requests a summary of the given allocation.

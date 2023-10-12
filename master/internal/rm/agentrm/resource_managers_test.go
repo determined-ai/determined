@@ -76,4 +76,5 @@ func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
 	})
 	assert.Assert(t, err == nil, err)
 	assert.Assert(t, resp.Fulfillable)
+	assert.NilError(t, rm.Ref().StopAndAwaitTermination())
 }
