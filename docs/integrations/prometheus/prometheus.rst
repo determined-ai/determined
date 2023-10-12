@@ -125,7 +125,7 @@ This example startup script includes the default setup docker commands provided 
    in the monitored cluster.
 
 #. Launch Prometheus with the provided `prometheus.yml
-   <https://github.com/determined-ai/works-with-determined#observability-tools>`__ configuration
+   <https://github.com/determined-ai/works-with-determined/blob/main/observability/prometheus/prometheus.yml>`__ configuration
    file.
 
 #. To replace the placeholder master address, you'll need to edit the Prometheus configuration file.
