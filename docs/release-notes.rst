@@ -24,8 +24,8 @@ Version 0.26.1
 
 **Improvements**
 
--  Logging: Some API logs would previously only go to the standard output of the running master but now will
-   also appear in the output of ``det master logs``.
+-  Logging: Some API logs would previously only go to the standard output of the running master but
+   now will also appear in the output of ``det master logs``.
 
 -  Kubernetes: Increase the file context limit for notebooks, commands, TensorBoards, and shells
    from approximately 1MB to roughly 95MB, the same limit as the agent resource manager.
@@ -41,13 +41,19 @@ Version 0.26.1
 
 **Bug Fixes**
 
--  TensorBoard: Fix an issue where TensorBoard files for an experiment were not getting deleted when the experiment was deleted.
+-  TensorBoard: Fix an issue where TensorBoard files for an experiment were not getting deleted when
+   the experiment was deleted.
 
 -  Kubernetes: Fix an issue where custom node affinities on tasks were being ignored.
 
-   On Kubernetes, upgrading from a version before this feature to a version after this feature
-   can cause queued allocations with a custom node affinity to be killed. Users can pause
-   queued experiments to avoid this.
+   On Kubernetes, upgrading from a version before this feature to a version after this feature can
+   cause queued allocations with a custom node affinity to be killed. Users can pause queued
+   experiments to avoid this.
+
+**Known Issue**
+
+-  When using custom metric groups, the ``Learning Curve`` view in the experiment's visualization
+   tab does not render.
 
 Version 0.26.0
 ==============
