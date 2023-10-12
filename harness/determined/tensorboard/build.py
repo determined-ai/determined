@@ -78,6 +78,7 @@ def build(
     checkpoint_config: Union[Dict[str, Any], str],
     container_path: Optional[str] = None,
     async_upload: bool = True,
+    sync_on_close: bool = True,
 ) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
@@ -113,6 +114,7 @@ def build(
             base_path,
             sync_path,
             async_upload=async_upload,
+            sync_on_close=sync_on_close,
         )
 
     elif type_name == "gcs":
@@ -122,6 +124,7 @@ def build(
             base_path,
             sync_path,
             async_upload=async_upload,
+            sync_on_close=sync_on_close,
         )
 
     elif type_name == "s3":
@@ -134,6 +137,7 @@ def build(
             base_path,
             sync_path,
             async_upload=async_upload,
+            sync_on_close=sync_on_close,
         )
 
     elif type_name == "azure":
@@ -150,6 +154,7 @@ def build(
             base_path,
             sync_path,
             async_upload=async_upload,
+            sync_on_close=sync_on_close,
         )
 
     else:
