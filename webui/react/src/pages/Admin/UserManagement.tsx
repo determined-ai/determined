@@ -164,12 +164,12 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
 const roleOptions = [
   { label: 'Admin', value: UserRole.ADMIN },
-  { label: 'Member', value: UserRole.MEMBER },
+  { label: 'Non-Admin', value: UserRole.MEMBER },
 ];
 
 const statusOptions = [
-  { label: 'Active', value: UserStatus.ACTIVE },
-  { label: 'Inactive', value: UserStatus.INACTIVE },
+  { label: 'Active Users', value: UserStatus.ACTIVE },
+  { label: 'Deactivated Users', value: UserStatus.INACTIVE },
 ];
 type UserManagementSettingsWithColumns = UserManagementSettings & {
   columns: string[];
@@ -366,7 +366,7 @@ const UserManagement: React.FC = () => {
         sorter: (a: DetailedUser, b: DetailedUser) => {
           return alphaNumericSorter(a.displayName || a.username, b.displayName || b.username);
         },
-        title: 'Name',
+        title: 'User',
       },
       {
         dataIndex: 'isActive',
@@ -443,14 +443,14 @@ const UserManagement: React.FC = () => {
                 <Input
                   allowClear
                   defaultValue={settings.name}
-                  placeholder="Display name or user name"
-                  prefix={<Icon color="cancel" decorative name="search" />}
+                  placeholder="Find user"
+                  prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
                   onChange={handleNameSearchApply}
                 />
                 <Select
                   allowClear
                   options={roleOptions}
-                  placeholder="All roles"
+                  placeholder="All Roles"
                   searchable={false}
                   value={settings.roleFilter}
                   onChange={handleRoleFilterApply}
@@ -458,7 +458,7 @@ const UserManagement: React.FC = () => {
                 <Select
                   allowClear
                   options={statusOptions}
-                  placeholder="All statuses"
+                  placeholder="All Users"
                   searchable={false}
                   value={settings.statusFilter}
                   width={100}
