@@ -4,6 +4,9 @@
  Quick Installation
 ####################
 
+.. meta::
+   :description: Learn how to quickly get started with Determined.
+
 If you have not used Determined before, and you want to quickly set up a new training environment,
 you are at the right place!
 
