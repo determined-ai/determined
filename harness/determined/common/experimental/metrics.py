@@ -14,9 +14,13 @@ class TrialMetrics:
         trial_id: The ID of the trial that reported the metric.
         trial_run_id: The ID of the trial run that reported the metric.
         steps_completed: The number of steps that the trial had completed when the metric was
-            reported.
+            reported. Most generally, the value passed to a call to report_metrics as
+            "steps_completed."
         end_time: The time when the metric was reported.
         metrics: A dict of metrics that the trial reported.
+        group: The group that the metric was reported under. Usually either "validation" or
+            "training", but this can be any value passed to master when reporting metrics during
+            training (usually via a context's `report_metrics`).
         batch_metrics: <do not use>
     """
 
