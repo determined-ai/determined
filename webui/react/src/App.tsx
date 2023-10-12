@@ -53,7 +53,6 @@ const AppView: React.FC = () => {
   const loadableUser = useObservable(userStore.currentUser);
   const loadableInfo = useObservable(determinedStore.loadableInfo);
   const isServerReachable = useObservable(determinedStore.isServerReachable);
-  const info = useObservable(determinedStore.info);
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
   const {
@@ -164,27 +163,23 @@ const AppView: React.FC = () => {
         {isAuthChecked ? (
           <>
             {isServerReachable ? (
-              <SettingsProvider>
-                <UIProvider branding={info.branding}>
-                  <AntdApp>
-                    <ConfirmationProvider>
-                      <Navigation>
-                        <JupyterLabGlobal
-                          enabled={
-                            Loadable.isLoaded(loadableUser) &&
-                            (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                          }
-                          workspace={workspace ?? undefined}
-                        />
-                        <Omnibar />
-                        <main>
-                          <Router routes={appRoutes} />
-                        </main>
-                      </Navigation>
-                    </ConfirmationProvider>
-                  </AntdApp>
-                </UIProvider>
-              </SettingsProvider>
+              <AntdApp>
+                <ConfirmationProvider>
+                  <Navigation>
+                    <JupyterLabGlobal
+                      enabled={
+                        Loadable.isLoaded(loadableUser) &&
+                        (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                      }
+                      workspace={workspace ?? undefined}
+                    />
+                    <Omnibar />
+                    <main>
+                      <Router routes={appRoutes} />
+                    </main>
+                  </Navigation>
+                </ConfirmationProvider>
+              </AntdApp>
             ) : (
               <PageMessage title="Server is Unreachable">
                 <p>
@@ -205,12 +200,17 @@ const AppView: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const info = useObservable(determinedStore.info);
   return (
     <HelmetProvider>
       <StoreProvider>
-        <DndProvider backend={HTML5Backend}>
-          <AppView />
-        </DndProvider>
+        <SettingsProvider>
+          <UIProvider branding={info.branding}>
+            <DndProvider backend={HTML5Backend}>
+              <AppView />
+            </DndProvider>
+          </UIProvider>
+        </SettingsProvider>
       </StoreProvider>
     </HelmetProvider>
   );
