@@ -1595,3 +1595,11 @@ requests and responses.
 =================
 
 The path to the IdP's certificate, used to validate assertions.
+
+********************
+ ``reserved_ports``
+********************
+
+Determined makes use of certain ports for inter-process communication, however this may cause
+conflicts with other software. If such conflicts arise, list here any ports that Determined should
+not use.
