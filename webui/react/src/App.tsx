@@ -159,12 +159,12 @@ const AppView: React.FC = () => {
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <div className={css.base}>
-        {isAuthChecked ? (
-          <>
-            {isServerReachable ? (
-              <SettingsProvider>
-                <UIProvider branding={info.branding} theme={themeLightDetermined}>
+      <UIProvider theme={themeLightDetermined}>
+        <div className={css.base}>
+          {isAuthChecked ? (
+            <>
+              {isServerReachable ? (
+                <SettingsProvider>
                   <AntdApp>
                     <ConfirmationProvider>
                       <Navigation>
@@ -182,22 +182,22 @@ const AppView: React.FC = () => {
                       </Navigation>
                     </ConfirmationProvider>
                   </AntdApp>
-                </UIProvider>
-              </SettingsProvider>
-            ) : (
-              <PageMessage title="Server is Unreachable">
-                <p>
-                  Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
-                  check the firewall and cluster settings.
-                </p>
-                <Button onClick={refreshPage}>Try Again</Button>
-              </PageMessage>
-            )}
-          </>
-        ) : (
-          <Spinner center spinning />
-        )}
-      </div>
+                </SettingsProvider>
+              ) : (
+                <PageMessage title="Server is Unreachable">
+                  <p>
+                    Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
+                    check the firewall and cluster settings.
+                  </p>
+                  <Button onClick={refreshPage}>Try Again</Button>
+                </PageMessage>
+              )}
+            </>
+          ) : (
+            <Spinner center spinning />
+          )}
+        </div>
+      </UIProvider>
     ),
     NotLoaded: () => <Spinner center spinning />,
   });
@@ -207,11 +207,11 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <DndProvider backend={HTML5Backend}>
-        <ThemeHandler>
+        <ThemeHandler lightTheme={themeLightDetermined} darkTheme={themeDarkDetermined}>
           <AppView />
         </ThemeHandler>
       </DndProvider>
-    </HelmetProvider>
+    </HelmetProvider >
   );
 };
 

@@ -15,7 +15,7 @@ import React, {
 import { BrandingType, RecordKey } from 'components/kit/internal/types';
 
 import { themes } from './themes';
-import { DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
+import { DarkLight, getCssVar, globalCssVars, Mode, Theme } from './themeUtils';
 
 interface StateUI {
   chromeCollapsed: boolean;
@@ -238,36 +238,33 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   return { actions: uiActions, ui: context };
 };
 
-export const ThemeHandler: React.FC<{ children?: React.ReactNode, lightTheme: Theme, darkTheme: Theme }> = ({
-  children,
-  lightTheme,
-  darkTheme
-}) => {
-
-  const systemMode = getSystemMode()
+export const ThemeHandler: React.FC<{
+  children?: React.ReactNode;
+  lightTheme: Theme;
+  darkTheme: Theme;
+}> = ({ children, lightTheme, darkTheme }) => {
   const [state, dispatch] = useReducer(reducer, initUI);
   const theme = state.mode === DarkLight.Dark ? darkTheme : lightTheme;
   // Update darkLight and theme when branding, system mode, or mode changes.
-
   useLayoutEffect(() => {
     const darkLight = DarkLight.Light;
     dispatch({
       type: StoreActionUI.SetTheme,
       value: { darkLight, theme },
     });
-  }, [systemMode, state.mode]);
+  }, [state.mode]);
 
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
     </StateContext.Provider>
-  )
-}
+  );
+};
 
-export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType, theme: Theme }> = ({
-  children,
-  theme
-}) => {
+export const UIProvider: React.FC<{
+  children?: React.ReactNode;
+  theme: Theme;
+}> = ({ children, theme }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   // Set global CSS variables shared across themes.
@@ -295,48 +292,17 @@ export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: Brand
         colorBgDefault: 'var(--theme-float)',
         colorTextLightSolid: 'var(--theme-float-on)',
       },
-      Checkbox: {
-        colorBgContainer: 'transparent',
-      },
-      DatePicker: {
-        colorBgContainer: 'transparent',
-      },
-      Input: {
-        colorBgContainer: 'transparent',
-      },
-      InputNumber: {
-        colorBgContainer: 'transparent',
-      },
-      Modal: {
-        colorBgElevated: 'var(--theme-stage)',
-      },
-      Pagination: {
-        colorBgContainer: 'transparent',
-      },
-      Radio: {
-        colorBgContainer: 'transparent',
-      },
-      Select: {
-        colorBgContainer: 'transparent',
-      },
-      Tree: {
-        colorBgContainer: 'transparent',
-      },
     },
     token: {
       borderRadius: 2,
-      colorLink: '#57a3fa',
-      colorLinkHover: '#8dc0fb',
       colorPrimary: '#1890ff',
       fontFamily: 'var(--theme-font-family)',
     },
-  }
+  };
 
   return (
-    <div ref={ref}>
-      <ConfigProvider theme={configTheme}>
-        {children}
-      </ConfigProvider >
+    <div ref={ref} >
+      <ConfigProvider theme={configTheme}>{children}</ConfigProvider>
     </div >
   );
 };

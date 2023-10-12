@@ -25,7 +25,7 @@ const generateStrongWeak = (theme: Theme): Theme => {
 };
 
 export interface ThemProps {
-  colorScheme: React.CSSProperties['colorScheme'],
+  colorScheme: React.CSSProperties['colorScheme'];
   fontFamily: React.CSSProperties['fontFamily'];
   fontFamilyVar: React.CSSProperties['fontFamily'];
   fontFamilyCode: string;

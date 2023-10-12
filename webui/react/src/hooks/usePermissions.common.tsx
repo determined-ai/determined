@@ -1,6 +1,6 @@
 import { render, RenderResult } from '@testing-library/react';
 import React from 'react';
-
+import { themeLightDetermined } from 'components/kit/Theme';
 import { UIProvider } from 'components/kit/Theme';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
@@ -62,7 +62,7 @@ const PermissionRenderer: React.FC<Props> = () => {
 
 export const setup = async (): Promise<RenderResult> => {
   return await render(
-    <UIProvider>
+    <UIProvider theme={themeLightDetermined}>
       <PermissionRenderer workspaceId={1} />
     </UIProvider>,
   );
