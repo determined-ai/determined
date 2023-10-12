@@ -3,7 +3,7 @@ import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
+import { themeDarkDetermined, themeLightDetermined } from 'components/kit/Theme';
 import 'uplot/dist/uPlot.min.css';
 import css from 'App.module.scss';
 import { UIProvider } from 'components/kit/Theme';
@@ -25,7 +25,7 @@ const router = createBrowserRouter([
   {
     element: (
       <HelmetProvider>
-        <UIProvider>
+        <UIProvider theme={themeLightDetermined}>
           <UserSettings.Provider value={fakeSettingsContext}>
             <ConfirmationProvider>
               <div className={css.base}>

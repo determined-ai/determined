@@ -21,9 +21,123 @@ const generateStrongWeak = (theme: Theme): Theme => {
       }
     }
   }
-
   return theme as Theme;
 };
+
+export interface ThemProps {
+  colorScheme: React.CSSProperties['colorScheme'],
+  fontFamily: React.CSSProperties['fontFamily'];
+  fontFamilyVar: React.CSSProperties['fontFamily'];
+  fontFamilyCode: string;
+  strong: React.CSSProperties['color'];
+  weak: React.CSSProperties['color'];
+  brand: React.CSSProperties['color'];
+  brandStrong: React.CSSProperties['color'];
+  brandWeak: React.CSSProperties['color'];
+  background: React.CSSProperties['color'];
+  backgroundStrong: React.CSSProperties['color'];
+  backgroundWeak: React.CSSProperties['color'];
+  backgroundOn: React.CSSProperties['color'];
+  backgroundOnStrong: React.CSSProperties['color'];
+  backgroundOnWeak: React.CSSProperties['color'];
+  backgroundBorder: React.CSSProperties['color'];
+  backgroundBorderStrong: React.CSSProperties['color'];
+  backgroundBorderWeak: React.CSSProperties['color'];
+  stage: React.CSSProperties['color'];
+  stageStrong: React.CSSProperties['color'];
+  stageWeak: React.CSSProperties['color'];
+  stageOn: React.CSSProperties['color'];
+  stageOnStrong: React.CSSProperties['color'];
+  stageOnWeak: React.CSSProperties['color'];
+  stageBorder: React.CSSProperties['color'];
+  stageBorderStrong: React.CSSProperties['color'];
+  stageBorderWeak: React.CSSProperties['color'];
+  surface: React.CSSProperties['color'];
+  surfaceStrong: React.CSSProperties['color'];
+  surfaceWeak: React.CSSProperties['color'];
+  surfaceOn: React.CSSProperties['color'];
+  surfaceOnStrong: React.CSSProperties['color'];
+  surfaceOnWeak: React.CSSProperties['color'];
+  surfaceBorder: React.CSSProperties['color'];
+  surfaceBorderStrong: React.CSSProperties['color'];
+  surfaceBorderWeak: React.CSSProperties['color'];
+  float: React.CSSProperties['color'];
+  floatStrong: React.CSSProperties['color'];
+  floatWeak: React.CSSProperties['color'];
+  floatOn: React.CSSProperties['color'];
+  floatOnStrong: React.CSSProperties['color'];
+  floatOnWeak: React.CSSProperties['color'];
+  floatBorder: React.CSSProperties['color'];
+  floatBorderStrong: React.CSSProperties['color'];
+  floatBorderWeak: React.CSSProperties['color'];
+  ix: React.CSSProperties['color'];
+  ixStrong: React.CSSProperties['color'];
+  ixWeak: React.CSSProperties['color'];
+  ixActive: React.CSSProperties['color'];
+  ixInactive: React.CSSProperties['color'];
+  ixOn: React.CSSProperties['color'];
+  ixOnStrong: React.CSSProperties['color'];
+  ixOnWeak: React.CSSProperties['color'];
+  ixOnActive: React.CSSProperties['color'];
+  ixOnInactive: React.CSSProperties['color'];
+  ixBorder: React.CSSProperties['color'];
+  ixBorderStrong: React.CSSProperties['color'];
+  ixBorderWeak: React.CSSProperties['color'];
+  ixBorderActive: React.CSSProperties['color'];
+  ixBorderInactive: React.CSSProperties['color'];
+  density: number;
+  targetFocus: React.CSSProperties['boxShadow'];
+  borderRadius: React.CSSProperties['borderRadius'];
+  borderRadiusStrong: React.CSSProperties['borderRadius'];
+  borderRadiusWeak: React.CSSProperties['borderRadius'];
+  strokeWidth: React.CSSProperties['strokeWidth'];
+  strokeWidthStrong: React.CSSProperties['strokeWidth'];
+  strokeWidthWeak: React.CSSProperties['strokeWidth'];
+  elevation: React.CSSProperties['boxShadow'];
+  elevationStrong: React.CSSProperties['boxShadow'];
+  elevationWeak: React.CSSProperties['boxShadow'];
+  overlay: React.CSSProperties['color'];
+  overlayStrong: React.CSSProperties['color'];
+  overlayWeak: React.CSSProperties['color'];
+  statusActive: React.CSSProperties['color'];
+  statusActiveStrong: React.CSSProperties['color'];
+  statusActiveWeak: React.CSSProperties['color'];
+  statusActiveOn: React.CSSProperties['color'];
+  statusActiveOnStrong: React.CSSProperties['color'];
+  statusActiveOnWeak: React.CSSProperties['color'];
+  statusCritical: React.CSSProperties['color'];
+  statusCriticalStrong: React.CSSProperties['color'];
+  statusCriticalWeak: React.CSSProperties['color'];
+  statusCriticalOn: React.CSSProperties['color'];
+  statusCriticalOnStrong: React.CSSProperties['color'];
+  statusCriticalOnWeak: React.CSSProperties['color'];
+  statusError: React.CSSProperties['color'];
+  statusInactive: React.CSSProperties['color'];
+  statusInactiveStrong: React.CSSProperties['color'];
+  statusInactiveWeak: React.CSSProperties['color'];
+  statusInactiveOn: React.CSSProperties['color'];
+  statusInactiveOnStrong: React.CSSProperties['color'];
+  statusInactiveOnWeak: React.CSSProperties['color'];
+  statusPending: React.CSSProperties['color'];
+  statusPendingStrong: React.CSSProperties['color'];
+  statusPendingWeak: React.CSSProperties['color'];
+  statusPendingOn: React.CSSProperties['color'];
+  statusPendingOnStrong: React.CSSProperties['color'];
+  statusPendingOnWeak: React.CSSProperties['color'];
+  statusPotential: React.CSSProperties['color'];
+  statusSuccess: React.CSSProperties['color'];
+  statusSuccessStrong: React.CSSProperties['color'];
+  statusSuccessWeak: React.CSSProperties['color'];
+  statusSuccessOn: React.CSSProperties['color'];
+  statusSuccessOnStrong: React.CSSProperties['color'];
+  statusSuccessOnWeak: React.CSSProperties['color'];
+  statusWarning: React.CSSProperties['color'];
+  statusWarningStrong: React.CSSProperties['color'];
+  statusWarningWeak: React.CSSProperties['color'];
+  statusWarningOn: React.CSSProperties['color'];
+  statusWarningOnStrong: React.CSSProperties['color'];
+  statusWarningOnWeak: React.CSSProperties['color'];
+}
 
 const themeBase = {
   // Color schemes

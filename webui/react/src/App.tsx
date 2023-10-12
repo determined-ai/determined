@@ -1,11 +1,11 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useReducer, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
-
+import { themeLightDetermined, themeDarkDetermined, ThemeHandler } from 'components/kit/Theme';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
@@ -30,7 +30,6 @@ import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
-import { StoreProvider } from 'stores';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
@@ -165,7 +164,7 @@ const AppView: React.FC = () => {
           <>
             {isServerReachable ? (
               <SettingsProvider>
-                <UIProvider branding={info.branding}>
+                <UIProvider branding={info.branding} theme={themeLightDetermined}>
                   <AntdApp>
                     <ConfirmationProvider>
                       <Navigation>
@@ -207,11 +206,11 @@ const AppView: React.FC = () => {
 const App: React.FC = () => {
   return (
     <HelmetProvider>
-      <StoreProvider>
-        <DndProvider backend={HTML5Backend}>
+      <DndProvider backend={HTML5Backend}>
+        <ThemeHandler>
           <AppView />
-        </DndProvider>
-      </StoreProvider>
+        </ThemeHandler>
+      </DndProvider>
     </HelmetProvider>
   );
 };

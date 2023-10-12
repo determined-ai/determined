@@ -1,4 +1,4 @@
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, theme as AntdTheme } from 'antd';
 import { ThemeConfig } from 'antd/es/config-provider/context';
 import React, {
   Dispatch,
@@ -8,6 +8,7 @@ import React, {
   useLayoutEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from 'react';
 
@@ -56,7 +57,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) {}
+  constructor(private dispatch: Dispatch<ActionUI>) { }
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });
@@ -91,7 +92,7 @@ const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Dark]: {
-    algorithm: theme.darkAlgorithm,
+    algorithm: AntdTheme.darkAlgorithm,
     components: {
       Button: {
         colorBgContainer: 'transparent',
@@ -136,7 +137,7 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
     },
   },
   [DarkLight.Light]: {
-    algorithm: theme.defaultAlgorithm,
+    algorithm: AntdTheme.defaultAlgorithm,
     components: {
       Button: {
         colorBgContainer: 'transparent',
@@ -237,60 +238,106 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   return { actions: uiActions, ui: context };
 };
 
-export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType }> = ({
+export const ThemeHandler: React.FC<{ children?: React.ReactNode, lightTheme: Theme, darkTheme: Theme }> = ({
   children,
-  branding,
+  lightTheme,
+  darkTheme
 }) => {
+
+  const systemMode = getSystemMode()
   const [state, dispatch] = useReducer(reducer, initUI);
-  const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
-
-  const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    if (!event.matches) setSystemMode(getSystemMode());
-  }, []);
-
-  useLayoutEffect(() => {
-    // Set global CSS variables shared across themes.
-    Object.keys(globalCssVars).forEach((key) => {
-      const value = (globalCssVars as Record<RecordKey, string>)[key];
-      document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
-    });
-
-    // Set each theme property as top level CSS variable.
-    Object.keys(state.theme).forEach((key) => {
-      const value = (state.theme as Record<RecordKey, string>)[key];
-      document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
-    });
-  }, [state.theme]);
-
-  // Detect browser/OS level dark/light mode changes.
-  useEffect(() => {
-    matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
-    matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
-
-    return () => {
-      matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
-      matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).removeEventListener('change', handleSchemeChange);
-    };
-  }, [handleSchemeChange]);
-
+  const theme = state.mode === DarkLight.Dark ? darkTheme : lightTheme;
   // Update darkLight and theme when branding, system mode, or mode changes.
-  useLayoutEffect(() => {
-    const darkLight = getDarkLight(state.mode, systemMode);
 
+  useLayoutEffect(() => {
+    const darkLight = DarkLight.Light;
     dispatch({
       type: StoreActionUI.SetTheme,
-      value: { darkLight, theme: themes[branding || 'determined'][darkLight] },
+      value: { darkLight, theme },
     });
-  }, [branding, systemMode, state.mode]);
-
-  const antdTheme = ANTD_THEMES[state.darkLight];
+  }, [systemMode, state.mode]);
 
   return (
-    <ConfigProvider theme={antdTheme}>
-      <StateContext.Provider value={state}>
-        <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-      </StateContext.Provider>
-    </ConfigProvider>
+    <StateContext.Provider value={state}>
+      <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+    </StateContext.Provider>
+  )
+}
+
+export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType, theme: Theme }> = ({
+  children,
+  theme
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Set global CSS variables shared across themes.
+  Object.keys(globalCssVars).forEach((key) => {
+    const value = (globalCssVars as Record<RecordKey, string>)[key];
+    ref.current?.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+  });
+
+  // Set each theme property as top level CSS variable.
+  Object.keys(theme).forEach((key) => {
+    const value = (theme as Record<RecordKey, string>)[key];
+    ref.current?.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
+  });
+
+  const configTheme = {
+    algorithm: AntdTheme.defaultAlgorithm,
+    components: {
+      Button: {
+        colorBgContainer: 'transparent',
+      },
+      Progress: {
+        marginXS: 0,
+      },
+      Tooltip: {
+        colorBgDefault: 'var(--theme-float)',
+        colorTextLightSolid: 'var(--theme-float-on)',
+      },
+      Checkbox: {
+        colorBgContainer: 'transparent',
+      },
+      DatePicker: {
+        colorBgContainer: 'transparent',
+      },
+      Input: {
+        colorBgContainer: 'transparent',
+      },
+      InputNumber: {
+        colorBgContainer: 'transparent',
+      },
+      Modal: {
+        colorBgElevated: 'var(--theme-stage)',
+      },
+      Pagination: {
+        colorBgContainer: 'transparent',
+      },
+      Radio: {
+        colorBgContainer: 'transparent',
+      },
+      Select: {
+        colorBgContainer: 'transparent',
+      },
+      Tree: {
+        colorBgContainer: 'transparent',
+      },
+    },
+    token: {
+      borderRadius: 2,
+      colorLink: '#57a3fa',
+      colorLinkHover: '#8dc0fb',
+      colorPrimary: '#1890ff',
+      fontFamily: 'var(--theme-font-family)',
+    },
+  }
+
+  return (
+    <div ref={ref}>
+      <ConfigProvider theme={configTheme}>
+        {children}
+      </ConfigProvider >
+    </div >
   );
 };
 
