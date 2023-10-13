@@ -2922,26 +2922,6 @@ workflows:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
-          name: test-e2e-gke-parallel-tfonly
-          context: gcp-ci
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["parallel-tfonly"]
-              mark: ["parallel and tensorflow2"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
-      - test-e2e-gke:
           name: test-e2e-gke-single-cpu
           context: gcp-ci
           filters:
@@ -3134,25 +3114,6 @@ workflows:
               mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
-      - test-e2e-gke:
-          name: test-e2e-gke-parallel-tfonly
-          context: gcp-ci
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["parallel-tfonly"]
-              mark: ["parallel and tensorflow2"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
