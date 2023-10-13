@@ -20,6 +20,21 @@ from determined.common.experimental import (
 )
 
 
+class OrderBy(enum.Enum):
+    """
+    Specifies whether a sorted list of objects should be in ascending or
+    descending order.
+    """
+
+    ASCENDING = bindings.v1OrderBy.ASC.value
+    ASC = bindings.v1OrderBy.ASC.value
+    DESCENDING = bindings.v1OrderBy.DESC.value
+    DESC = bindings.v1OrderBy.DESC.value
+
+    def _to_bindings(self) -> bindings.v1OrderBy:
+        return bindings.v1OrderBy(self.value)
+
+
 class Determined:
     """
     Determined gives access to Determined API objects.
@@ -202,7 +217,7 @@ class Determined:
     def list_experiments(
         self,
         sort_by: Optional[experiment.ExperimentSortBy] = None,
-        order_by: Optional[experiment.ExperimentOrderBy] = None,
+        order_by: Optional[OrderBy] = None,
         experiment_ids: Optional[List[int]] = None,
         labels: Optional[List[str]] = None,
         users: Optional[List[str]] = None,
@@ -216,7 +231,7 @@ class Determined:
             sort_by: Which field to sort by. See
                 :class:`~determined.experimental.ExperimentSortBy`.
             order_by: Whether to sort in ascending or descending order. See
-                :class:`~determined.experimental.ExperimentOrderBy`.
+                :class:`~determined.experimental.OrderBy`.
             name: If this parameter is set, experiments will be filtered to only include those
                 with names matching this parameter.
             experiment_ids: Only return experiments with these IDs.
@@ -526,18 +541,3 @@ class Determined:
             stacklevel=2,
         )
         return trial._stream_validation_metrics(self._session, trial_ids)
-
-
-class OrderBy(enum.Enum):
-    """
-    Specifies whether a sorted list of objects should be in ascending or
-    descending order.
-    """
-
-    ASCENDING = bindings.v1OrderBy.ASC.value
-    ASC = bindings.v1OrderBy.ASC.value
-    DESCENDING = bindings.v1OrderBy.DESC.value
-    DESC = bindings.v1OrderBy.DESC.value
-
-    def _to_bindings(self) -> bindings.v1OrderBy:
-        return bindings.v1OrderBy(self.value)
