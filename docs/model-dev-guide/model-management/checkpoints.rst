@@ -92,14 +92,14 @@ The following code illustrates methods to select specific checkpoints from a tri
    most_recent_checkpoint = trial.list_checkpoints(
        sort_by=checkpoint.CheckpointSortBy.END_TIME,
        order_by=checkpoint.CheckpointOrderBy.DESC,
-       limit=1
+       max_results=1
    )[0]
 
    # Sort checkpoints by "accuracy" metric, if your training code reports it.
    most_accurate_checkpoint = trial.list_checkpoints(
        sort_by="accuracy",
        order_by=checkpoint.CheckpointOrderBy.DESC,
-       limit=1
+       max_results=1
    )[0]
 
    specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
