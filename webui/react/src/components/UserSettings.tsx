@@ -8,7 +8,7 @@ import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/ki
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI, { Mode } from 'components/kit/Theme';
+import useUI, { Mode, themeLightDetermined, UIProvider } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import { Loadable } from 'components/kit/utils/loadable';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';

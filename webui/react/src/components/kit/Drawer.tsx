@@ -5,6 +5,7 @@ import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 
 import css from './Drawer.module.scss';
+import { UIProvider, themeLightDetermined } from './Theme';
 
 type DrawerPlacement = 'left' | 'right';
 
@@ -35,15 +36,17 @@ const DrawerComponent: React.FC<DrawerProps> = ({
       rootClassName={css.mobileWidth}
       width="700px"
       onClose={onClose}>
-      <div className={css.header}>
-        <div className={css.headerTitle}>{title}</div>
-        <Button
-          icon={<Icon name="close" size="small" title="Close drawer" />}
-          type="text"
-          onClick={onClose}
-        />
-      </div>
-      <div className={css.body}>{children}</div>
+      <UIProvider theme={themeLightDetermined}>
+        <div className={css.header}>
+          <div className={css.headerTitle}>{title}</div>
+          <Button
+            icon={<Icon name="close" size="small" title="Close drawer" />}
+            type="text"
+            onClick={onClose}
+          />
+        </div>
+        <div className={css.body}>{children}</div>
+      </UIProvider>
     </Drawer>
   );
 };

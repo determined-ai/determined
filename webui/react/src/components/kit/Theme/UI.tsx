@@ -11,7 +11,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-
+import userSettings from 'stores/userSettings';
 import { BrandingType, RecordKey } from 'components/kit/internal/types';
 
 import { themes } from './themes';
@@ -57,7 +57,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) {}
+  constructor(private dispatch: Dispatch<ActionUI>) { }
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });
@@ -244,7 +244,10 @@ export const ThemeHandler: React.FC<{
   darkTheme: Theme;
 }> = ({ children, lightTheme, darkTheme }) => {
   const [state, dispatch] = useReducer(reducer, initUI);
+  // const systemMode = getSystemMode();
+  // const userTheme = userSettings.get
   const theme = state.mode === DarkLight.Dark ? darkTheme : lightTheme;
+
   // Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
     const darkLight = DarkLight.Light;
