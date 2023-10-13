@@ -19,7 +19,7 @@ const setup = (pool: ResourcePool) => {
     //<UIProvider>
     <Suspense>
       <RenderAllocationBarResourcePool resourcePool={pool} />
-    </Suspense>
+    </Suspense>,
     //</UIProvider>,
   );
   return { view };

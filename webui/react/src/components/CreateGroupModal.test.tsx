@@ -69,7 +69,7 @@ const Container: React.FC<Props> = ({ group }) => {
 const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
     //>
-    <Container group={group} />
+    <Container group={group} />,
     //</UIProvider>,
   );
 

@@ -79,7 +79,7 @@ const setup = (props: src.Props) => {
     //<UIProvider>
     // <src.default {...props} />
     //   {/* increase variation in DOM */ }
-    < span > {Math.random()}</span >
+    <span> {Math.random()}</span>,
     //</UIProvider>,
   );
 };
@@ -100,38 +100,38 @@ const mockOnFetch =
       streamingRounds?: number;
     } = {},
   ) =>
-    (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
-      const options = {
-        existingLogs: mockOptions.existingLogs,
-        follow: false,
-        limit: config.limit,
-        logsReference: mockOptions.logsReference,
-        orderBy: 'ORDER_BY_UNSPECIFIED',
-        signal: mockOptions.canceler?.signal,
-        skipStreaming: mockOptions.skipStreaming,
-        streamingRounds: mockOptions.streamingRounds,
-        timestampAfter: '',
-        timestampBefore: '',
-      };
-
-      if (type === src.FetchType.Initial) {
-        options.orderBy =
-          config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      } else if (type === src.FetchType.Newer) {
-        options.orderBy = 'ORDER_BY_ASC';
-        if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-      } else if (type === src.FetchType.Older) {
-        options.orderBy = 'ORDER_BY_DESC';
-        if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-      } else if (type === src.FetchType.Stream) {
-        options.follow = true;
-        options.limit = 0;
-        options.orderBy = 'ORDER_BY_ASC';
-        options.timestampAfter = new Date(NOW).toISOString();
-      }
-
-      return { options, url: 'byTime' };
+  (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
+    const options = {
+      existingLogs: mockOptions.existingLogs,
+      follow: false,
+      limit: config.limit,
+      logsReference: mockOptions.logsReference,
+      orderBy: 'ORDER_BY_UNSPECIFIED',
+      signal: mockOptions.canceler?.signal,
+      skipStreaming: mockOptions.skipStreaming,
+      streamingRounds: mockOptions.streamingRounds,
+      timestampAfter: '',
+      timestampBefore: '',
     };
+
+    if (type === src.FetchType.Initial) {
+      options.orderBy =
+        config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+    } else if (type === src.FetchType.Newer) {
+      options.orderBy = 'ORDER_BY_ASC';
+      if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
+    } else if (type === src.FetchType.Older) {
+      options.orderBy = 'ORDER_BY_DESC';
+      if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
+    } else if (type === src.FetchType.Stream) {
+      options.follow = true;
+      options.limit = 0;
+      options.orderBy = 'ORDER_BY_ASC';
+      options.timestampAfter = new Date(NOW).toISOString();
+    }
+
+    return { options, url: 'byTime' };
+  };
 
 const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   const timestamp = new Date(timeString).getTime().toString();

@@ -44,7 +44,7 @@ const setup = async () => {
   };
   const view = render(
     //>
-    <Container group={group} />
+    <Container group={group} />,
     //</UIProvider>,
   );
 

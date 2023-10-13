@@ -57,7 +57,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) { }
+  constructor(private dispatch: Dispatch<ActionUI>) {}
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });

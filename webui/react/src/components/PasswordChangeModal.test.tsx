@@ -83,7 +83,7 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     //<UIProvider>
-    <Container />
+    <Container />,
     // </UIProvider>,
   );
 

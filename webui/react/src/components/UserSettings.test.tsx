@@ -79,7 +79,7 @@ const setup = () =>
     // <UIProvider>
     <ConfirmationProvider>
       <Container />
-    </ConfirmationProvider>
+    </ConfirmationProvider>,
     // </UIProvider>,
   );
 

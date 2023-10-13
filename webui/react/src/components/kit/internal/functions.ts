@@ -351,7 +351,9 @@ const capitalizeWord = (str: string): string => {
 
 export const getCssVar = (name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
-  return window.getComputedStyle(document.getElementsByClassName("ui-provider")[0])?.getPropertyValue(varName);
+  return window
+    .getComputedStyle(document.getElementsByClassName('ui-provider')[0])
+    ?.getPropertyValue(varName);
 };
 
 export const glasbeyColor = (sequence: number): string => {

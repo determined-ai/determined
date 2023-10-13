@@ -24,7 +24,7 @@ const setup = ({
     //<UIProvider>
     <Badge tooltip={tooltip} type={type} {...props}>
       {children}
-    </Badge>
+    </Badge>,
     //</UIProvider>,
   );
 };

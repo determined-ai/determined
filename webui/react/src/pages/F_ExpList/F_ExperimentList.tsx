@@ -376,7 +376,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-            experimentColumns.indexOf(b.column as ExperimentColumn)
+              experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 

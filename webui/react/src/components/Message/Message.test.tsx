@@ -8,7 +8,7 @@ const setup = (props: Props) => {
   const handleOnChange = vi.fn();
   const view = render(
     //<UIProvider>
-    <Message {...props} />
+    <Message {...props} />,
     //</UIProvider>,
   );
   return { handleOnChange, view };

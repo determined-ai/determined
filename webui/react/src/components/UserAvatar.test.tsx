@@ -26,7 +26,7 @@ const setup = (testUser: User) => {
 
   const view = render(
     // <UIProvider>
-    <Component user={testUser} />
+    <Component user={testUser} />,
     // </UIProvider>,
   );
 

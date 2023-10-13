@@ -17,7 +17,7 @@ const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Prop
     //<UIProvider>
     <BadgeTag tooltip={tooltip} {...props}>
       {children}
-    </BadgeTag>
+    </BadgeTag>,
     // </UIProvider>,
   );
   return { view };

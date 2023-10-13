@@ -69,7 +69,7 @@ const setup = () =>
     //>
     <DndProvider backend={HTML5Backend}>
       <Container />
-    </DndProvider>
+    </DndProvider>,
     //</UIProvider>,
   );
 
