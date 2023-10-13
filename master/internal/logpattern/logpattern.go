@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 
+	lru "github.com/hashicorp/golang-lru/v2"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/webhooks"
@@ -14,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
-	lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/uptrace/bun"
 )

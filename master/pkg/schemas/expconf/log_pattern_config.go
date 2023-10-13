@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
-	log "github.com/sirupsen/logrus"
 )
 
 // LogPatternPoliciesConfigV0 is a list of log pattern actions.
