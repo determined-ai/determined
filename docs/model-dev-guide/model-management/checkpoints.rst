@@ -25,13 +25,13 @@ The Checkpoint Export API is a subset of the features found in the
  Querying Checkpoints
 **********************
 
-The :class:`~determined.experimental.client.ExperimentReference` class is a reference to an
-experiment. The reference contains the
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` method. Without
-arguments, the method will check the experiment configuration searcher field for the ``metric`` and
-``smaller_is_better`` values. These values are used to sort the experiment's checkpoints by
-validation performance. The searcher settings in the following snippet from an experiment
-configuration file will result in checkpoints being sorted by the loss metric in ascending order.
+Use the :class:`~determined.experimental.client.Experiment` class to reference an experiment. The
+:meth:`~determined.experimental.client.Experiment.list_checkpoints` method, when called without
+arguments, returns checkpoints sorted based on the ``metric`` and ``smaller_is_better`` values from
+the experiment configuration's searcher field.
+
+For example, in the following experiment configuration file snippet, Determined will sort
+checkpoints by the loss metric and in ascending order.
 
 .. code:: yaml
 
@@ -39,69 +39,68 @@ configuration file will result in checkpoints being sorted by the loss metric in
      metric: "loss"
      smaller_is_better: true
 
-The following snippet of Python code can be run after the specified experiment has generated a
-checkpoint. It returns an instance of :class:`~determined.experimental.client.Checkpoint`
-representing the checkpoint that has the best validation metric.
+After generating a checkpoint for the specified experiment, you can run the Python code below. This
+code retrieves a list of sorted :class:`~determined.experimental.client.Checkpoint` instances
+associated with the experiment and selects the checkpoint with the best validation metric.
 
 .. code:: python
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
 
-Checkpoints can be sorted by any metric using the ``sort_by`` keyword argument, which defines which
-metric to use, and ``smaller_is_better``, which defines whether to sort the checkpoints in ascending
-or descending order with respect to the specified metric.
+To sort checkpoints by any metric, use the ``sort_by`` argument to specify the metric and
+``order_by`` to define the sorting order (ascending or descending).
 
 .. code:: python
 
-   from determined.experimental import client
+   from determined.experimental import checkpoint, client
 
-   checkpoint = (
-       client.get_experiment(id).top_checkpoint(sort_by="accuracy", smaller_is_better=False)
+   checkpoints = (
+       client.get_experiment(id).list_checkpoints(
+           sort_by="accuracy",
+           order_by=checkpoint.CheckpointOrderBy.DESC
+       )
    )
 
-You may also query multiple checkpoints at the same time using the
-:meth:`~determined.experimental.client.ExperimentReference.top_n_checkpoints` method. Only the
-single best checkpoint from each trial is considered; out of those, the checkpoints with the best
-validation metric values are returned in sorted order, with the best one first. For example, the
-following snippet returns the top five checkpoints from distinct trials of a specified experiment.
+To sort checkpoints using preset checkpoint parameters, use the
+:class:`~determined.experimental.checkpoint.CheckpointSortBy` class. The example below fetches all
+checkpoints for an experiment, sorting them by trial ID in descending order.
 
 .. code:: python
 
-   from determined.experimental import client
+   from determined.experimental import checkpoint, client
 
-   checkpoints = client.get_experiment(id).top_n_checkpoints(5)
+   checkpoints = client.get_experiment(id).list_checkpoints(
+       sort_by=checkpoint.CheckpointSortBy.TRIAL_ID,
+       order_by=checkpoint.CheckpointOrderBy.DESC
+   )
 
-This method also accepts ``sort_by`` and ``smaller_is_better`` arguments.
+:class:`~determined.experimental.client.Trial` is used for fine-grained control over checkpoint
+selection within a trial. It contains a
+:meth:`~determined.experimental.client.Trial.list_checkpoints` method, which mirrors
+:meth:`~determined.experimental.client.Experiment.list_checkpoints` for an experiment.
 
-:class:`~determined.experimental.client.TrialReference` is used for fine-grained control over
-checkpoint selection within a trial. It contains a
-:meth:`~determined.experimental.client.TrialReference.top_checkpoint` method, which mirrors
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` for an experiment. It
-also contains :meth:`~determined.experimental.client.TrialReference.select_checkpoint`, which offers
-three ways to query checkpoints:
-
-#. ``best``: Returns the best checkpoint based on validation metrics as discussed above. When using
-   ``best``, ``smaller_is_better`` and ``sort_by`` are also accepted.
-#. ``latest``: Returns the most recent checkpoint for the trial.
-#. ``uuid``: Returns the checkpoint with the specified UUID.
-
-The following snippet showcases how to use the different modes for selecting checkpoints.
+The following code illustrates methods to select specific checkpoints from a trial:
 
 .. code:: python
 
-   from determined.experimental import client
+   from determined.experimental import checkpoint, client
 
    trial = client.get_trial(id)
 
-   best_checkpoint = trial.top_checkpoint()
+   most_recent_checkpoint = trial.list_checkpoints(
+       sort_by=checkpoint.CheckpointSortBy.END_TIME,
+       order_by=checkpoint.CheckpointOrderBy.DESC,
+       max_results=1
+   )[0]
 
-   most_accurate_checkpoint = trial.select_checkpoint(
-       best=True, sort_by="accuracy", smaller_is_better=False
-   )
-
-   most_recent_checkpoint = trial.select_checkpoint(latest=True)
+   # Sort checkpoints by "accuracy" metric, if your training code reports it.
+   most_accurate_checkpoint = trial.list_checkpoints(
+       sort_by="accuracy",
+       order_by=checkpoint.CheckpointOrderBy.DESC,
+       max_results=1
+   )[0]
 
    specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
@@ -122,7 +121,7 @@ parameter, which changes the checkpoint download location.
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint_path = checkpoint.download()
 
    specific_path = checkpoint.download(path="specific-checkpoint-path")
@@ -144,7 +143,7 @@ the ``model`` attribute of the ``Trial`` object, as shown in the following snipp
    from determined.experimental import client
    from determined import pytorch
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    path = checkpoint.download()
    trial = pytorch.load_trial_from_checkpoint_path(path)
    model = trial.model
@@ -169,7 +168,7 @@ predictions as shown in the following snippet.
    from determined.experimental import client
    from determined import keras
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    path = checkpoint.download()
    model = keras.load_model_from_checkpoint_path(path)
 
@@ -192,7 +191,7 @@ useful for storing post-training metrics, labels, information related to deploym
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint.add_metadata({"environment": "production"})
 
    # Metadata will be stored in Determined and accessible on the checkpoint object.
@@ -206,7 +205,7 @@ exists the entire tree beneath it will be overwritten.
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint.add_metadata({"metrics": {"loss": 0.12}})
    checkpoint.add_metadata({"metrics": {"acc": 0.92}})
 
@@ -220,7 +219,7 @@ deleted.
 
    from determined.experimental import client
 
-   checkpoint = client.get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).list_checkpoints()[0]
    checkpoint.remove_metadata(["metrics"])
 
 ***************************************
@@ -287,8 +286,8 @@ checkpoint.
               |                                      | }
 
 The ``det trial download`` command downloads checkpoints for a specified trial. Similar to the
-:class:`~determined.experimental.client.TrialReference` API, the ``det trial download`` command
-accepts ``--best``, ``--latest``, and ``--uuid`` options.
+:class:`~determined.experimental.client.Trial` API, the ``det trial download`` command accepts
+``--best``, ``--latest``, and ``--uuid`` options.
 
 .. code::
 
@@ -328,7 +327,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
    det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
 Finally, the ``det experiment download`` command provides a similar experience to using the
-:class:`Python SDK <determined.experimental.client.ExperimentReference>`.
+:class:`Python SDK <determined.experimental.client.Experiment>`.
 
 .. code:: bash
 

@@ -25,6 +25,7 @@ def trial_logs(
     min_level: Optional[bindings.v1LogLevel] = None,
     timestamp_before: Optional[str] = None,
     timestamp_after: Optional[str] = None,
+    search_text: Optional[str] = None,
 ) -> Iterable[bindings.v1TrialLogsResponse]:
     if sum((head is not None, tail is not None, follow)) > 1:
         raise ValueError("at most one of head, tail, or follow may be set")
@@ -38,7 +39,7 @@ def trial_logs(
         limit=head or tail,
         orderBy=tail is not None and bindings.v1OrderBy.DESC or None,
         rankIds=rank_ids,
-        searchText=None,
+        searchText=search_text,
         sources=sources,
         stdtypes=stdtypes,
         timestampBefore=timestamp_before,

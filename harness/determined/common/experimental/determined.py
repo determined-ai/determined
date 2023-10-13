@@ -74,33 +74,6 @@ class Determined:
         new_det._token = None
         return new_det
 
-    def _from_bindings(self, raw: bindings.v1User) -> user.User:
-        assert raw.id is not None
-        if raw.agentUserGroup is not None:
-            return user.User(
-                user_id=raw.id,
-                username=raw.username,
-                admin=raw.admin,
-                remote=raw.remote,
-                session=self._session,
-                active=raw.active,
-                display_name=raw.displayName,
-                agent_uid=raw.agentUserGroup.agentUid,
-                agent_gid=raw.agentUserGroup.agentGid,
-                agent_user=raw.agentUserGroup.agentUser,
-                agent_group=raw.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=raw.id,
-                username=raw.username,
-                admin=raw.admin,
-                remote=raw.remote,
-                session=self._session,
-                active=raw.active,
-                display_name=raw.displayName,
-            )
-
     def create_user(
         self, username: str, admin: bool, password: Optional[str], remote: bool = False
     ) -> user.User:
@@ -111,20 +84,20 @@ class Determined:
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
         assert resp.user is not None
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_user_by_id(self, user_id: int) -> user.User:
         resp = bindings.get_GetUser(session=self._session, userId=user_id)
         assert user_id is not None
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_user_by_name(self, user_name: str) -> user.User:
         resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def whoami(self) -> user.User:
         resp = bindings.get_GetMe(self._session)
-        return self._from_bindings(resp.user)
+        return user.User._from_bindings(resp.user, self._session)
 
     def get_session_username(self) -> str:
         auth = self._session._auth
@@ -144,14 +117,22 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> Sequence[user.User]:
-        users_bindings = bindings.get_GetUsers(session=self._session).users
-        users: List[user.User] = []
-        if users_bindings is None:
-            return users
-        for user_b in users_bindings:
-            user_obj = self._from_bindings(user_b)
-            users.append(user_obj)
+    def list_users(self) -> List[user.User]:
+        def get_with_offset(offset: int) -> bindings.v1GetUsersResponse:
+            return bindings.get_GetUsers(
+                session=self._session,
+                offset=offset,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+
+        users = []
+        for r in resps:
+            if not r.users:
+                continue
+            for u in r.users:
+                users.append(user.User._from_bindings(u, self._session))
+
         return users
 
     def create_experiment(
@@ -159,10 +140,10 @@ class Determined:
         config: Union[str, pathlib.Path, Dict],
         model_dir: Union[str, pathlib.Path],
         includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
-    ) -> experiment.ExperimentReference:
+    ) -> experiment.Experiment:
         """
         Create an experiment with config parameters and model directory. The function
-        returns :class:`~determined.experimental.ExperimentReference` of the experiment.
+        returns an :class:`~determined.experimental.Experiment`.
 
         Arguments:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
@@ -208,27 +189,74 @@ class Determined:
             for w in resp.warnings:
                 logging.warning(api.WARNING_MESSAGE_MAP[w])
 
-        exp_id = resp.experiment.id
-        exp = experiment.ExperimentReference(exp_id, self._session)
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
-        return exp
+    def get_experiment(self, experiment_id: int) -> experiment.Experiment:
+        """
+        Get an experiment (:class:`~determined.experimental.Experiment`) by experiment ID.
+        """
+        resp = bindings.get_GetExperiment(session=self._session, experimentId=experiment_id)
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
-    def get_experiment(self, experiment_id: int) -> experiment.ExperimentReference:
+    def list_experiments(
+        self,
+        sort_by: Optional[experiment.ExperimentSortBy] = None,
+        order_by: Optional[experiment.ExperimentOrderBy] = None,
+        experiment_ids: Optional[List[int]] = None,
+        labels: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+        states: Optional[List[experiment.ExperimentState]] = None,
+        name: Optional[str] = None,
+        project_id: Optional[int] = None,
+    ) -> List[experiment.Experiment]:
+        """Get a list of experiments (:class:`~determined.experimental.Experiment`).
+
+        Arguments:
+            sort_by: Which field to sort by. See
+                :class:`~determined.experimental.ExperimentSortBy`.
+            order_by: Whether to sort in ascending or descending order. See
+                :class:`~determined.experimental.ExperimentOrderBy`.
+            name: If this parameter is set, experiments will be filtered to only include those
+                with names matching this parameter.
+            experiment_ids: Only return experiments with these IDs.
+            labels: Only return experiments with a label in this list.
+            users: Only return experiments belonging to these users. Defaults to all users.
+            states: Only return experiments that are in these states.
+            project_id: Only return experiments associated with this project ID.
+
+        Returns:
+            A list of experiments.
         """
-        Get the :class:`~determined.experimental.ExperimentReference` representing the
-        experiment with the provided experiment ID.
-        """
-        return experiment.ExperimentReference(
-            experiment_id,
-            self._session,
+
+        def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
+            return bindings.get_GetExperiments(
+                session=self._session,
+                sortBy=sort_by and sort_by._to_bindings() or None,
+                orderBy=order_by and order_by._to_bindings() or None,
+                archived=None,
+                description=None,
+                labels=labels,
+                experimentIdFilter_incl=experiment_ids,
+                offset=offset,
+                limit=None,
+                name=name,
+                states=[state._to_bindings() for state in states] if states else None,
+                users=users,
+                projectId=project_id,
+            )
+
+        bindings_exps: Iterable[bindings.v1Experiment] = itertools.chain.from_iterable(
+            r.experiments for r in api.read_paginated(get_with_offset)
         )
+        return [experiment.Experiment._from_bindings(b, self._session) for b in bindings_exps]
 
-    def get_trial(self, trial_id: int) -> trial.TrialReference:
+    def get_trial(self, trial_id: int) -> trial.Trial:
         """
-        Get the :class:`~determined.experimental.TrialReference` representing the
+        Get the :class:`~determined.experimental.Trial` representing the
         trial with the provided trial ID.
         """
-        return trial.TrialReference(trial_id, self._session)
+        resp = bindings.get_GetTrial(session=self._session, trialId=trial_id)
+        return trial.Trial._from_bindings(resp.trial, self._session)
 
     def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """
@@ -331,6 +359,34 @@ class Determined:
         workspace_names: Optional[List[str]] = None,
         workspace_ids: Optional[List[int]] = None,
     ) -> List[model.Model]:
+        warnings.warn(
+            "Determined.get_models() has been deprecated and will be removed in a future version."
+            "Please call Determined.list_models() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return list(
+            self.list_models(
+                sort_by=sort_by,
+                order_by=order_by,
+                name=name,
+                description=description,
+                model_id=model_id,
+                workspace_names=workspace_names,
+                workspace_ids=workspace_ids,
+            )
+        )
+
+    def list_models(
+        self,
+        sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
+        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        model_id: Optional[int] = None,
+        workspace_names: Optional[List[str]] = None,
+        workspace_ids: Optional[List[int]] = None,
+    ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
 
@@ -342,8 +398,13 @@ class Determined:
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
-            model_id: If this paramter is set, models will be filtered to
+            model_id: If this parameter is set, models will be filtered to
                 only include the model with this unique numeric id.
+            workspace_names: Only return models with names in this list.
+            workspace_ids: Only return models with workspace IDs in this list.
+
+        Returns:
+            A list of models.
         """
 
         # TODO: more parameters?
@@ -362,15 +423,18 @@ class Determined:
                 offset=offset,
                 orderBy=order_by._to_bindings(),
                 sortBy=sort_by._to_bindings(),
+                limit=None,
                 userIds=None,
                 users=None,
                 workspaceNames=workspace_names,
                 workspaceIds=workspace_ids,
             )
 
-        resps = api.read_paginated(get_with_offset)
+        bindings_models: Iterable[bindings.v1Model] = itertools.chain.from_iterable(
+            r.models for r in api.read_paginated(get_with_offset)
+        )
 
-        return [model.Model._from_bindings(m, self._session) for r in resps for m in r.models]
+        return [model.Model._from_bindings(m, self._session) for m in bindings_models]
 
     def get_model_labels(self) -> List[str]:
         """

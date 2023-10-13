@@ -173,7 +173,7 @@ def test_end_to_end_adaptive() -> None:
     assert best is not None
     assert best > 0.93
 
-    # Check that ExperimentReference returns a sorted order of top checkpoints
+    # Check that the Experiment returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
     d = Determined(conf.make_master_url())
@@ -212,6 +212,7 @@ def test_end_to_end_adaptive() -> None:
     db_check = d.get_checkpoint(checkpoint.uuid)
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
     # Beginning with 0.18 the TrialController contributes a few items to the dict.
+    assert checkpoint.metadata
     assert checkpoint.metadata.get("testing") == "metadata"
     assert checkpoint.metadata.keys() == {
         "determined_version",

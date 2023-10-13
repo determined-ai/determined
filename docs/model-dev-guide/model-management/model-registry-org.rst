@@ -219,7 +219,7 @@ The following snippet registers a new version of a model.
 
    d = Determined()
 
-   checkpoint = d.get_experiment(exp_id).top_checkpoint()
+   checkpoint = d.get_experiment(exp_id).list_checkpoints()[0]
 
    model = d.get_model("model_name")
 
