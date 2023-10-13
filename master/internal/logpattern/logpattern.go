@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
 	lru "github.com/hashicorp/golang-lru/v2"
 
@@ -25,6 +26,68 @@ var (
 	regexCache     *lru.Cache[string, *regexp.Regexp]
 	regexCacheSize = 128
 )
+
+func webhookTypeFromPolicy(p expconf.SendWebhookPolicy) webhooks.WebhookType {
+	switch p.WebhookType() {
+	case "default":
+		return webhooks.WebhookTypeDefault
+	case "slack":
+		return webhooks.WebhookTypeSlack
+	default:
+		return webhooks.WebhookTypeDefault
+	}
+}
+
+func Monitor(ctx context.Context,
+	taskID model.TaskID, logs []*model.TaskLog, policies expconf.LogPatternPoliciesConfig,
+) error {
+	if len(policies) == 0 {
+		return nil
+	}
+
+	// TODO when we add rm specific log grabbing we will need to also monitor them.
+	for _, l := range logs {
+		if l.AgentID == nil {
+			return fmt.Errorf("agentID must be non nil to monitor logs")
+		}
+
+		for _, lpp := range policies {
+			regex := fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
+			compiledRegex, err := getCompiledRegex(regex, l.Log)
+			if err != nil {
+				return err
+			}
+
+			if compiledRegex.MatchString(l.Log) {
+				switch policy := lpp.Policy().GetUnionMember().(type) {
+				case expconf.DontRetryPolicyV0:
+					if err := addDontRetry(
+						ctx, model.TaskID(l.TaskID), *l.AgentID, lpp.Pattern(), l.Log,
+					); err != nil {
+						return fmt.Errorf("adding don't retry: %w", err)
+					}
+				case expconf.OnFailureExcludeNodePolicy:
+					if err := addRetryOnDifferentNode(
+						ctx, model.TaskID(l.TaskID), *l.AgentID, lpp.Pattern(), l.Log,
+					); err != nil {
+						return fmt.Errorf("adding retry on different node: %w", err)
+					}
+				case expconf.SendWebhookPolicy:
+					if err := addWebhookAlert(
+						ctx, model.TaskID(l.TaskID), *l.AgentID, lpp.Pattern(), l.Log,
+						policy.WebhookURL(), webhookTypeFromPolicy(policy),
+					); err != nil {
+						return fmt.Errorf("adding webhook alert: %w", err)
+					}
+				default:
+					return fmt.Errorf("unrecognized log pattern policy type")
+				}
+			}
+		}
+	}
+
+	return nil
+}
 
 // There are two reasons for this using a cache
 //  1. Avoid the possibility this feature causes a major slowdown to Scheduler
@@ -96,8 +159,7 @@ type retryOnDifferentNode struct {
 	TaskEnded     bool         `bun:"task_ended"`
 }
 
-// AddRetryOnDifferentNode adds retry different node to database and block list cache.
-func AddRetryOnDifferentNode(
+func addRetryOnDifferentNode(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
 	mu.Lock()
@@ -155,10 +217,7 @@ type sendWebhook struct {
 	WebhookURL    string               `bun:"webhook_url"`
 }
 
-// AddWebhookAlert reports trigger of a webhook policy and sends the webhook asynchronously.
-// It also logs in task logs about the webhook getting triggered.
-// TODO on sending webhook part.
-func AddWebhookAlert(ctx context.Context,
+func addWebhookAlert(ctx context.Context,
 	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt webhooks.WebhookType,
 ) error {
 	// The reason we persist this is to avoid sending dupes.
@@ -219,9 +278,7 @@ type dontRetry struct {
 	TriggeringLog string       `bun:"triggering_log"`
 }
 
-// AddDontRetry reports a triggering of a don't retry policy.
-// Safe to call multiple times per policy.
-func AddDontRetry(
+func addDontRetry(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
 	m := &dontRetry{
@@ -267,8 +324,7 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	return out, nil
 }
 
-// GetCompiledRegex returns compiled regex from cache, compiling it if it doesn't exist.
-func GetCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
+func getCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
 	compiledRegex, ok := regexCache.Get(regex)
 	if !ok {
 		var err error
@@ -282,6 +338,7 @@ func GetCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
 }
 
 // SetDisallowedNodesCacheTest is used only in unit tests. export_test.go does not work as expected.
+// t *testing.T should convince you to not use this.
 func SetDisallowedNodesCacheTest(t *testing.T, c map[model.TaskID]*set.Set[string]) {
 	mu.Lock()
 	defer mu.Unlock()

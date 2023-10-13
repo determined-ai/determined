@@ -25,9 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -384,21 +382,7 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
-func webhookTypeFromPolicy(p expconf.SendWebhookPolicy) webhooks.WebhookType {
-	switch p.WebhookType() {
-	case "default":
-		return webhooks.WebhookTypeDefault
-	case "slack":
-		return webhooks.WebhookTypeSlack
-	default:
-		return webhooks.WebhookTypeDefault
-	}
-}
-
-func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.TaskLog) error {
-	// TODO(ft) do all logs stream through here? K8S I think we are planning to add log through
-	// k8s api too.
-
+func (a *apiServer) monitor(ctx context.Context, taskID model.TaskID, logs []*model.TaskLog) error {
 	isExp, exp, err := expFromTaskID(ctx, model.TaskID(taskID))
 	if err != nil {
 		return err
@@ -407,51 +391,14 @@ func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.Ta
 		return nil
 	}
 
+	// TODO we could only load log policies config if this is a performance issue.
 	activeConfig, err := a.m.db.ActiveExperimentConfig(exp.ID)
 	if err != nil {
 		return err
 	}
 
-	for _, l := range logs {
-		if l.AgentID == nil {
-			return fmt.Errorf("agentID must be non nil") // TODO can we get away with this?
-			// It feels kinda annoying to let our database have a possible null that theoretically
-			// shouldn't happen.
-		}
-
-		for _, lpp := range activeConfig.LogPatternPolicies() {
-			regex := fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
-			compiledRegex, err := logpattern.GetCompiledRegex(regex, l.Log)
-			if err != nil {
-				return err
-			}
-
-			if compiledRegex.MatchString(l.Log) {
-				switch lpp.Policy().GetUnionMember().(type) {
-				case expconf.DontRetryPolicyV0:
-					if err := logpattern.AddDontRetry(
-						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
-					); err != nil {
-						return fmt.Errorf("adding don't retry: %w", err)
-					}
-				case expconf.OnFailureExcludeNodePolicy:
-					if err := logpattern.AddRetryOnDifferentNode(
-						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
-					); err != nil {
-						return fmt.Errorf("adding retry on different node: %w", err)
-					}
-				case expconf.SendWebhookPolicy:
-					if err := logpattern.AddWebhookAlert(
-						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
-						policy.WebhookURL(), webhookTypeFromPolicy(policy),
-					); err != nil {
-						return fmt.Errorf("adding webhook alert: %w", err)
-					}
-				default:
-					return fmt.Errorf("unrecognized log pattern policy type")
-				}
-			}
-		}
+	if err := logpattern.Monitor(ctx, taskID, logs, activeConfig.LogPatternPolicies()); err != nil {
+		return err
 	}
 
 	return nil
@@ -487,12 +434,8 @@ func (a *apiServer) PostTaskLogs(
 		logs[i] = model.TaskLogFromProto(req.Logs[i])
 	}
 
-	if err := a.Monitor(ctx, taskID, logs); err != nil {
+	if err := a.monitor(ctx, model.TaskID(taskID), logs); err != nil {
 		log.Errorf("moniter logs against log pattern policies: %s", err)
-	}
-
-	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
-		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
 	}
 
 	return &apiv1.PostTaskLogsResponse{}, nil

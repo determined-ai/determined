@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/determined-ai/determined/master/internal/logpattern"
-
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 
 	"github.com/docker/docker/api/types/mount"
 	petName "github.com/dustinkirkland/golang-petname"

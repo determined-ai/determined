@@ -51,12 +51,12 @@ func TestRetryOnDifferentNode(t *testing.T) {
 
 	require.Len(t, *DisallowedNodes(task.TaskID), 0)
 
-	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "loga"))
-	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n1", "regexa", "logb"))
-	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "logc"))
+	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "loga"))
+	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n1", "regexa", "logb"))
+	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "logc"))
 
-	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "dontappear"))
-	require.NoError(t, AddRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "dontappear"))
+	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "dontappear"))
+	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexb", "dontappear"))
 
 	// Check DB state is as expected.
 	var actual []*retryOnDifferentNode
@@ -140,10 +140,10 @@ func TestShouldRetry(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp, 0)
 
-	require.NoError(t, AddDontRetry(ctx, task.TaskID, "n0", "regexa", "loga"))
-	require.NoError(t, AddDontRetry(ctx, task.TaskID, "n0", "regexb", "logb"))
-	require.NoError(t, AddDontRetry(ctx, task.TaskID, "n0", "regexa", "dontappear"))
-	require.NoError(t, AddDontRetry(ctx, task.TaskID, "n1", "regexb", "dontappear"))
+	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "loga"))
+	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexb", "logb"))
+	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "dontappear"))
+	require.NoError(t, addDontRetry(ctx, task.TaskID, "n1", "regexb", "dontappear"))
 
 	resp, err = ShouldRetry(ctx, task.TaskID)
 	require.NoError(t, err)
@@ -170,22 +170,22 @@ func TestSendWebhook(t *testing.T) {
 	exp := db.RequireMockExperiment(t, pgDB, user)
 	_, task := db.RequireMockTrial(t, pgDB, exp)
 
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n0", "regexa", "loga", "determined.ai", webhooks.WebhookTypeSlack))
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n0", "regexb", "logb", "determined.ai", webhooks.WebhookTypeSlack))
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n0", "regexa", "logc", "determined.ai/a", webhooks.WebhookTypeSlack))
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n0", "regexa", "logd", "determined.ai", webhooks.WebhookTypeDefault))
 
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n1", "regexa", "dontappear", "determined.ai", webhooks.WebhookTypeSlack))
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n1", "regexb", "dontappear", "determined.ai", webhooks.WebhookTypeSlack))
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n1", "regexa", "dontappear", "determined.ai/a", webhooks.WebhookTypeSlack))
-	require.NoError(t, AddWebhookAlert(
+	require.NoError(t, addWebhookAlert(
 		ctx, task.TaskID, "n1", "regexa", "dontappear", "determined.ai", webhooks.WebhookTypeDefault))
 
 	var actual []*sendWebhook

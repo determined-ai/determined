@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/proto/pkg/agentv1"
 
 	"github.com/google/uuid"
 )
@@ -77,11 +76,6 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	return nil
 }
 
-// ReportHWFailure adds webhook event for an alert to the queue.
-func ReportTaskAlert(ctx context.Context, alert agentv1.RunAlert) error {
-	return nil
-}
-
 // ReportExperimentStateChanged adds webhook events to the queue.
 // TODO(DET-8577): Remove unnecessary active config usage (remove the activeConfig parameter).
 func ReportExperimentStateChanged(
@@ -130,7 +124,7 @@ func ReportLogPatternAction(ctx context.Context,
 	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt WebhookType,
 ) error {
 	defer func() {
-		if rec := recover(); rec != nil { // TODO do we need this? I just copied from above.
+		if rec := recover(); rec != nil {
 			log.Errorf("uncaught error in webhook log pattern report: %v", rec)
 		}
 	}()
@@ -217,7 +211,7 @@ func generateLogPatternSlackPayload(
 		msg += fmt.Sprintf("View full logs at %s", path)
 	}
 
-	messageBody := SlackMessageBody{
+	message, err := json.Marshal(SlackMessageBody{
 		Blocks: []SlackBlock{
 			{
 				Type: "section",
@@ -227,11 +221,11 @@ func generateLogPatternSlackPayload(
 				},
 			},
 		},
-	}
-	message, err := json.Marshal(messageBody)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("creating slack payload: %w", err)
 	}
+
 	return message, nil
 }
 
@@ -282,8 +276,7 @@ func generateSlackPayload(
 	var wID int
 	var w *model.Workspace
 	config := conf.GetMasterConfig()
-	wName := activeConfig.Workspace() // TODO this is just wrong? On moves this is incorrect.
-	// (we also have e.ProjectId)
+	wName := activeConfig.Workspace() // TODO(!!!) this is incorrect on moves.
 	pName := activeConfig.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
 	baseURLIsSet := webUIBaseURL != ""

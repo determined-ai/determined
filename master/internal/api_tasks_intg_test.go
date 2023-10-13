@@ -155,18 +155,17 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 
 	require.Equal(t, []string{"a1"}, logpattern.DisallowedNodes(task.TaskID).ToSlice())
 
-	// TODO don't love our regex  here is different.
 	retryInfo, err := logpattern.ShouldRetry(ctx, task.TaskID)
 	require.NoError(t, err)
 	require.Equal(t,
-		[]logpattern.RetryInfo{{Regex: `(.*)sub(.*)`, TriggeringLog: "stringsubstring"}},
+		[]logpattern.RetryInfo{{Regex: `sub`, TriggeringLog: "stringsubstring"}},
 		retryInfo)
 
 	// This is kinda unfortunate but we are breaking the abstraction here.
 	c, err := db.Bun().NewSelect().
 		Table("log_policy_send_webhook").
 		Where("task_id = ?", task.TaskID).
-		Where("regex = ?", "(.*)patternc(.*)").
+		Where("regex = ?", "patternc").
 		Where("node_name = ?", "a1").
 		Where("webhook_type = ?", "DEFAULT").
 		Where("webhook_url = ?", "determined.ai").

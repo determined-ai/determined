@@ -856,7 +856,6 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
 		return "", fmt.Errorf("decoding task logs: %w", err)
 	}
-
 	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return "", errors.Wrap(err, "receiving task logs")
 	}

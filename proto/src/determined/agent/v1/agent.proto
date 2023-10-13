@@ -53,34 +53,3 @@ message Slot {
   // will be allowed to finish but no new ones will be scheduled.
   bool draining = 5;
 }
-
-// An scheduler action.
-// DISCUSS: we can furhter expand to other categories.
-enum Action {
-  // An unspecified action. No op.
-  ACTION_UNSPECIFIED = 0;
-  // Run on another device.
-  ACTION_RETRY_DIFFERENT_DEVICE = 1;
-  // Run on different device type.
-  // Scheduler will not be able to accomodate in the same RP for now.
-  ACTION_RETRY_DIFFERENT_DEVICE_TYPE = 2;
-}
-
-// RunAlert describes a task exception.
-// TODO: move to task?
-message RunAlert {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "node_id", "devices", "task_id", "action" ] }
-  };
-  // The job that the alert was detected on. REMOVEME?
-  string job_id = 1;
-  // Agent or node identifier.
-  string node_id = 2;
-  // The task that the alert was detected on.
-  string task_id = 3;
-  // The suspected devices that failed, if known.
-  repeated determined.device.v1.Device devices = 4;
-  // The requested scheduling action.
-  // DISCUSS: could be a list of actions based on available actions.
-  Action action = 5;
-}
