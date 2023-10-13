@@ -230,7 +230,6 @@ func (ps *PublisherSet) entrypoint(
 	//   - disappearances
 	//   - fallin
 	//   - fallout
-	log.Infof("StartupMsg: %v", startupMsg)
 	msgs, err := ss.Startup(ctx, user, startupMsg)
 	if err != nil {
 		return errors.Wrapf(err, "gathering startup messages")
@@ -569,7 +568,6 @@ func startup[T stream.Msg, S any](
 	}
 
 	// configure initial filter
-	log.Infof("add spec info: %v", spec)
 	state.FilterMaker.AddSpec(*spec)
 
 	// Sync subscription with publishers.  Do this before initial scan so that we don't

@@ -170,7 +170,9 @@ func MetricCollectStartupMsgs(
 	}
 
 	// step 4: emit deletions and updates to the client
-	out = append(out, newDeletedMsg(MetricsDeleteKey, missing))
+	if len(missing) > 0 {
+		out = append(out, newDeletedMsg(MetricsDeleteKey, missing))
+	}
 	for _, msg := range metricMsgs {
 		out = append(out, msg.UpsertMsg())
 	}

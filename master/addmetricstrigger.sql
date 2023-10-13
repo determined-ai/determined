@@ -6,7 +6,8 @@ CREATE SEQUENCE IF NOT EXISTS stream_metric_seq START 1;
 -- thsi should fire before so that it can modify new directly
 CREATE OR REPLACE FUNCTION stream_metric_seq_modify() RETURNS TRIGGER AS $$ 
 BEGIN  
-    NEW.seq = nextval('stream_metrics_seq');
+    NEW.seq = nextval('stream_metric_seq');
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -72,6 +73,13 @@ BEGIN
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
         PERFORM stream_metric_notify(to_jsonb(OLD), work, to_jsonb(NEW), work);
+    ELSEIF (TG_OP = 'DELETE') THEN
+        eid = experiment_id FROM trials WHERE trials.id = OLD.trial_id;
+        proj = project_id from experiments where experiments.id = eid;
+        work = workspace_id from projects where projects.id = proj;
+        PERFORM stream_metric_notify(to_jsonb(OLD), work,  NULL, NULL);
+        -- DELETE trigger BEFORE, and must return a non-NULL value.
+        return OLD;
     END IF;
     return NULL;
 END;
@@ -95,6 +103,23 @@ DROP TRIGGER IF EXISTS stream_metric_generic_metrics_trigger_iu ON generic_metri
 CREATE TRIGGER stream_metric_generic_metrics_trigger_iu
 AFTER INSERT OR UPDATE
 ON generic_metrics
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
+
+-- TODO(corban): replaces these triggers with one on the metrics table if we move to postgres >=11 
+-- DELETE should fire BEFORE to guarantee the experiment still exists to grab the workspace_id.
+DROP TRIGGER IF EXISTS stream_metric_raw_steps_trigger_d ON raw_steps;
+CREATE TRIGGER stream_metric_raw_steps_trigger_d
+BEFORE DELETE ON raw_steps
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
+
+DROP TRIGGER IF EXISTS stream_metric_raw_validations_trigger_d ON raw_validations;
+CREATE TRIGGER stream_metric_raw_validations_trigger_d
+BEFORE DELETE ON raw_validations
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
+
+DROP TRIGGER IF EXISTS stream_metric_generic_metrics_trigger_d ON generic_metrics;
+CREATE TRIGGER stream_metric_generic_metrics_trigger_d
+BEFORE DELETE ON generic_metrics
 FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
 
 -- Trigger for detecting metric permission scope changes derived from projects.workspace_id.
