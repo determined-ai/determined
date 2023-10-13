@@ -257,13 +257,16 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	return out, nil
 }
 
-// GetCompiledRegex gets compiled regex from cache.
-func GetCompiledRegex(regex string) (*regexp.Regexp, bool) {
-	return regexCache.Get(regex)
-}
-
-// AddCompiledRegex stores compiled regex to cache instead of compiling it every time to avoid performance
-// issues at scale.
-func AddCompiledRegex(regex string, compiledRegex *regexp.Regexp) {
-	regexCache.Add(regex, compiledRegex)
+// GetCompiledRegex returns compiled regex from cache.
+func GetCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
+	compiledRegex, ok := regexCache.Get(regex)
+	if !ok {
+		var err error
+		compiledRegex, err = regexp.Compile(regex)
+		if err != nil {
+			return nil, fmt.Errorf("matching %s with %s: %w", regex, log, err)
+		}
+		regexCache.Add(regex, compiledRegex)
+	}
+	return compiledRegex, nil
 }

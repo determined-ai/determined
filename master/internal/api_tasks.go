@@ -3,13 +3,13 @@ package internal
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -400,15 +400,9 @@ func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.Ta
 
 		for _, lpp := range activeConfig.LogPatternPolicies() {
 			regex := fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
-			var compiledRegex *regexp.Regexp
-			compiledRegex, ok := logpattern.GetCompiledRegex(regex)
-			if !ok {
-				var err error
-				compiledRegex, err = regexp.Compile(regex)
-				if err != nil {
-					return fmt.Errorf("matching %s with %s: %w", regex, l.Log, err)
-				}
-				logpattern.AddCompiledRegex(regex, compiledRegex)
+			compiledRegex, err := logpattern.GetCompiledRegex(regex, l.Log)
+			if err != nil {
+				return err
 			}
 
 			if compiledRegex.MatchString(l.Log) {
@@ -472,7 +466,7 @@ func (a *apiServer) PostTaskLogs(
 	}
 
 	if err := a.Monitor(ctx, taskID, logs); err != nil {
-		return nil, err
+		log.Errorf("moniter logs against log pattern policies: %s", err)
 	}
 
 	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
