@@ -333,6 +333,20 @@ func (ps *PublisherSet) Websocket(
 	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket}, prepareWebsocketMessage)
 }
 
+func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
+	jbytes, err := json.Marshal(obj)
+	if err != nil {
+		log.Errorf("error marshaling message for streaming: %v", err.Error())
+		return nil
+	}
+	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
+	if err != nil {
+		log.Errorf("error preparing message for streaming: %v", err.Error())
+		return nil
+	}
+	return msg
+}
+
 func (ps *PublisherSet) bootStreamers() {
 	ps.bootLock.Lock()
 	defer ps.bootLock.Unlock()
@@ -617,18 +631,4 @@ func (ss *SubscriptionSet) SubscriptionMod(ctx context.Context, msg Subscription
 func (ss *SubscriptionSet) UnsubscribeAll() {
 	ss.Trials.Subscription.Configure(nil)
 	// ss.Experiments.Subscription.Configure(nil)
-}
-
-func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
-	jbytes, err := json.Marshal(obj)
-	if err != nil {
-		log.Errorf("error marshaling message for streaming: %v", err.Error())
-		return nil
-	}
-	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
-	if err != nil {
-		log.Errorf("error preparing message for streaming: %v", err.Error())
-		return nil
-	}
-	return msg
 }
