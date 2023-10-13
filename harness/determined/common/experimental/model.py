@@ -7,7 +7,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
 from determined.common.api import bindings
-from determined.common.experimental import checkpoint, determined, metrics
+from determined.common.experimental import checkpoint, metrics
+from determined.common.experimental.util import OrderBy
 
 
 class ModelVersion:
@@ -251,7 +252,7 @@ class Model:
 
         return ModelVersion._from_bindings(r.modelVersion, self._session)
 
-    def get_versions(self, order_by: determined.OrderBy = determined.OrderBy.DESC) -> List[ModelVersion]:
+    def get_versions(self, order_by: OrderBy = OrderBy.DESC) -> List[ModelVersion]:
         warnings.warn(
             "Model.get_versions() has been deprecated and will be removed in a future version."
             "Please call Model.list_versions() instead.",
@@ -260,7 +261,7 @@ class Model:
         )
         return list(self.list_versions(order_by=order_by))
 
-    def list_versions(self, order_by: determined.OrderBy = determined.OrderBy.DESC) -> List[ModelVersion]:
+    def list_versions(self, order_by: OrderBy = OrderBy.DESC) -> List[ModelVersion]:
         """
         Get a list of ModelVersions with checkpoints of this model.
 
@@ -268,7 +269,7 @@ class Model:
         order by default.
 
         Arguments:
-            order_by (enum): A member of the :class:`determined.OrderBy` enum.
+            order_by (enum): A member of the :class:`OrderBy` enum.
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetModelVersionsResponse:
