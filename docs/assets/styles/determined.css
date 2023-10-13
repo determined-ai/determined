@@ -611,7 +611,7 @@ h6 {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-start;
   
 }
@@ -639,6 +639,11 @@ h6 {
   font-weight: bold;
   text-align: left;
   margin-bottom: 10px;
+}
+
+.homepage .toctree-l1 > a {
+
+  margin-bottom: 0px;
 }
 
 .bd-article .toctree-l2 > a {

@@ -16,9 +16,11 @@ almost any deep learning model using Determined.
    :target_country: us
    :web_section_id: R12299
 
+Deploy 
+------
+<some description or tagline>
 
 .. container:: homepage
-
 
    .. toctree::
       :maxdepth: 1
@@ -26,12 +28,36 @@ almost any deep learning model using Determined.
       Get Started <get-started/_index>
       Set Up <setup-cluster/_index>
       Manage <manage/_index>
-      Tutorials <tutorials/_index>
-      Model Hub Library <model-hub-library/_index>
-      Model Dev Guide <model-dev-guide/_index>
-      Reference <reference/_index>
+
+Explore
+-------
+
+<some description or tagline>
+
+.. container:: homepage
+
+   .. toctree::
+      :maxdepth: 1
+
       Tools <tools/_index>
       Integrations <integrations/_index>
-      attributions
+      Model Hub Library <model-hub-library/_index>
+      Reference <reference/_index>
 
 
+Learn
+-------
+<some description or tagline>
+
+.. container:: homepage
+
+   .. toctree::
+      :maxdepth: 1
+
+      Tutorials <tutorials/_index>
+      Model Dev Guide <model-dev-guide/_index>
+
+.. toctree:: 
+   :hidden: 
+
+   attributions
