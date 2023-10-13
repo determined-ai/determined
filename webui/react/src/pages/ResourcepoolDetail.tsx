@@ -3,7 +3,7 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
-import Empty from 'components/kit/Empty';
+import Message from 'components/kit/Message';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { ShirtSize } from 'components/kit/Theme';
@@ -229,7 +229,7 @@ const ResourcepoolDetailInner: React.FC = () => {
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>
-              <Empty description="Resource Pool is unavailable for Round Robin schedulers." />
+              <Message description="Resource Pool is unavailable for Round Robin schedulers." />
             </Section>
           ) : (
             <Pivot

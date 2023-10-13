@@ -8,9 +8,9 @@ import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 
-import Message, { MessageType } from 'components/kit/internal/Message';
 import Section from 'components/kit/internal/Section';
 import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
@@ -219,16 +219,7 @@ const CodeEditor: React.FC<Props> = ({
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (loadableFile.isFailed) {
-    fileContent = (
-      <Message
-        style={{
-          justifyContent: 'center',
-          padding: '120px',
-        }}
-        title={loadableFile.error?.message ?? 'Unknown Error'}
-        type={MessageType.Alert}
-      />
-    );
+    fileContent = <Message icon="error" title={loadableFile.error?.message ?? 'Unknown Error'} />;
   } else if (activeFile) {
     fileContent =
       editorMode === 'codemirror' ? (

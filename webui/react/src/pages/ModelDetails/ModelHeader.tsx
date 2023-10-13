@@ -1,4 +1,4 @@
-import { Alert, Space, Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
@@ -6,6 +6,7 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
+import Message from 'components/kit/Message';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
@@ -146,12 +147,7 @@ const ModelHeader: React.FC<Props> = ({
   return (
     <header className={css.base}>
       {model.archived && (
-        <Alert
-          message="This model has been archived and is now read-only."
-          showIcon
-          style={{ marginTop: 8 }}
-          type="warning"
-        />
+        <Message icon="warning" title="This model has been archived and is now read-only." />
       )}
       <div className={css.headerContent}>
         <div className={css.mainRow}>

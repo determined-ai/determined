@@ -2,13 +2,12 @@ import { useObservable } from 'micro-observables';
 import React, { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
+import Message from 'components/kit/Message';
 import useUI from 'components/kit/Theme';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import { RouteConfig } from 'types';
 import { filterOutLoginLocation } from 'utils/routes';
-
-import Message from './Message';
 
 interface Props {
   routes: RouteConfig[];
@@ -84,9 +83,9 @@ const ErrorHandler = () => {
   // const error = useRouteError();
   return (
     <Message
-      message="Encountered an error, please refresh."
+      description="Encountered an error, please refresh."
+      icon="warning"
       title="Unexpected Error"
-      type="warning"
     />
   );
 };

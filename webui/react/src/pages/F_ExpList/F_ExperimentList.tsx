@@ -13,7 +13,7 @@ import {
   IOFilterFormSet,
 } from 'components/FilterForm/components/type';
 import { Column, Columns } from 'components/kit/Columns';
-import Empty from 'components/kit/Empty';
+import Message from 'components/kit/Message';
 import Pagination from 'components/kit/Pagination';
 import { getCssVar } from 'components/kit/Theme';
 import { notification } from 'components/kit/Toast';
@@ -768,7 +768,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           numFilters === 0 ? (
             <NoExperiments />
           ) : (
-            <Empty description="No results matching your filters" icon="search" />
+            <Message description="No results matching your filters" icon="search" />
           )
         ) : error ? (
           <Error />

@@ -1,9 +1,8 @@
-import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
-import Message from 'components/Message';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -275,9 +274,9 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
     return (
       <div className={css.waiting}>
-        <Alert
+        <Message
           description="Please wait until the experiments are further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

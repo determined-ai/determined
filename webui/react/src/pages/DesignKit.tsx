@@ -17,7 +17,6 @@ import { Column, Columns } from 'components/kit/Columns';
 import DatePicker from 'components/kit/DatePicker';
 import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Empty from 'components/kit/Empty';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import InlineForm from 'components/kit/InlineForm';
@@ -30,6 +29,7 @@ import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/in
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import Message from 'components/kit/Message';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Notes, { Props as NotesProps } from 'components/kit/Notes';
@@ -90,7 +90,6 @@ const ComponentTitles = {
   DatePicker: 'DatePicker',
   Drawer: 'Drawer',
   Dropdown: 'Dropdown',
-  Empty: 'Empty',
   Form: 'Form',
   Icons: 'Icons',
   InlineForm: 'InlineForm',
@@ -100,6 +99,7 @@ const ComponentTitles = {
   InputShortcut: 'InputShortcut',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Message: 'Message',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
   Notes: 'Notes',
@@ -2418,30 +2418,6 @@ const ColumnsSection: React.FC = () => {
   );
 };
 
-const EmptySection: React.FC = () => {
-  return (
-    <ComponentSection id="Empty" title="Empty">
-      <AntDCard>
-        <p>
-          An <code>{'<Empty>'}</code> component indicates that no content is available for a page.
-          It may display an icon and a description explaining why this state is displayed.
-        </p>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <Empty
-          description={
-            <>
-              Empty component description, with a <Link to="">link to more info</Link>
-            </>
-          }
-          icon="warning-large"
-          title="Empty title"
-        />
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
 const IconsSection: React.FC = () => {
   return (
     <ComponentSection id="Icons" title="Icons">
@@ -3061,6 +3037,32 @@ const SpinnerSection = () => {
   );
 };
 
+const MessageSection: React.FC = () => {
+  return (
+    <ComponentSection id="Message" title="Message">
+      <AntDCard>
+        <Paragraph>
+          A <code>{'<Message>'}</code> displays persistent information related to the application
+          state. Requires at least one of description or title. Optionally displays an action button
+          and/or an icon.
+        </Paragraph>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Message
+          action={<Button>Optional action button</Button>}
+          description={
+            <>
+              Message description, with a <Link to="">link to more info</Link>
+            </>
+          }
+          icon="info"
+          title="Message title"
+        />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Avatar: <AvatarSection />,
@@ -3076,7 +3078,6 @@ const Components = {
   DatePicker: <DatePickerSection />,
   Drawer: <DrawerSection />,
   Dropdown: <DropdownSection />,
-  Empty: <EmptySection />,
   Form: <FormSection />,
   Icons: <IconsSection />,
   InlineForm: <InlineFormSection />,
@@ -3086,6 +3087,7 @@ const Components = {
   InputShortcut: <InputShortcutSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Message: <MessageSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
   Notes: <NotesSection />,
