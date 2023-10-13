@@ -116,6 +116,7 @@ class ModelVersion:
         self.notes = model_version.notes or ""
         self.model_version = model_version.version
         self.model_id = model_version.model.id
+        self.name = model_version.name
 
     def reload(self) -> None:
         resp = bindings.get_GetModelVersion(
