@@ -384,6 +384,17 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func webhookTypeFromPolicy(p expconf.SendWebhookPolicy) webhooks.WebhookType {
+	switch p.WebhookType() {
+	case "default":
+		return webhooks.WebhookTypeDefault
+	case "slack":
+		return webhooks.WebhookTypeSlack
+	default:
+		return webhooks.WebhookTypeDefault
+	}
+}
+
 func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.TaskLog) error {
 	// TODO(ft) do all logs stream through here? K8S I think we are planning to add log through
 	// k8s api too.
@@ -421,19 +432,20 @@ func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.Ta
 					if err := logpattern.AddDontRetry(
 						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 					); err != nil {
-						return fmt.Errorf("add don't retry: %w", err) // Failing adding logs seems super bad.
+						return fmt.Errorf("adding don't retry: %w", err)
 					}
-				case expconf.OnFailureExcludeNodePolicyV0:
+				case expconf.OnFailureExcludeNodePolicy:
 					if err := logpattern.AddRetryOnDifferentNode(
 						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 					); err != nil {
-						return fmt.Errorf("add retry on different node: %w", err) // Failing adding logs seems super bad.
+						return fmt.Errorf("adding retry on different node: %w", err)
 					}
-				case expconf.SendWebhookPolicyV0:
+				case expconf.SendWebhookPolicy:
 					if err := logpattern.AddWebhookAlert(
-						ctx, model.TaskID(l.TaskID), "webhookName", *l.AgentID, regex, l.Log,
+						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
+						policy.WebhookURL(), webhookTypeFromPolicy(policy),
 					); err != nil {
-						return fmt.Errorf("add webhook alert: %w", err) // Failing adding logs seems super bad.
+						return fmt.Errorf("adding webhook alert: %w", err)
 					}
 				default:
 					return fmt.Errorf("unrecognized log pattern policy type")

@@ -4,6 +4,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -18,9 +19,12 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -96,6 +100,79 @@ func TestPostTaskLogs(t *testing.T) {
 		require.Equal(t, e.Source, a.Source)
 		require.Equal(t, e.Stdtype, a.Stdtype)
 	}
+}
+
+func TestPostTaskLogsLogPattern(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	// Add config.
+	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
+	require.NoError(t, err)
+	activeConfig.RawLogPatternPolicies = expconf.LogPatternPoliciesConfig{
+		expconf.LogPatternPolicy{RawPattern: "sub", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: `\d{5}$`, RawPolicy: &expconf.LogPolicy{
+			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "patternc", RawPolicy: &expconf.LogPolicy{
+			RawSendWebhook: &expconf.SendWebhookPolicy{
+				RawWebhookType: "default",
+				RawWebhookURL:  "determined.ai",
+			},
+		}},
+	}
+
+	v, err := json.Marshal(activeConfig)
+	require.NoError(t, err)
+	var m map[string]any
+	require.NoError(t, json.Unmarshal(v, &m))
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Where("id = ?", trial.ExperimentID).
+		Set("config = ?", m).
+		Exec(ctx)
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "stringsubstring",
+			},
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "12345",
+			},
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "patternc",
+			},
+		},
+	})
+
+	require.Equal(t, []string{"a1"}, logpattern.DisallowedNodes(task.TaskID).ToSlice())
+
+	// TODO don't love our regex  here is different.
+	retryInfo, err := logpattern.ShouldRetry(ctx, task.TaskID)
+	require.NoError(t, err)
+	require.Equal(t,
+		[]logpattern.RetryInfo{{Regex: `(.*)sub(.*)`, TriggeringLog: "stringsubstring"}},
+		retryInfo)
+
+	// This is kinda unfortunate but we are breaking the abstraction here.
+	c, err := db.Bun().NewSelect().
+		Table("log_policy_send_webhook").
+		Where("task_id = ?", task.TaskID).
+		Where("regex = ?", "(.*)patternc(.*)").
+		Where("node_name = ?", "a1").
+		Where("webhook_type = ?", "DEFAULT").
+		Where("webhook_url = ?", "determined.ai").
+		Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
 }
 
 func TestTaskAuthZ(t *testing.T) {

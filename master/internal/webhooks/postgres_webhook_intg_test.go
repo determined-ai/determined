@@ -5,10 +5,12 @@ package webhooks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -80,47 +82,95 @@ func TestReportLogPatternAction(t *testing.T) {
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 
-	user := db.RequireMockUser(t, pgDB)
-	exp := db.RequireMockExperiment(t, pgDB, user)
-	_, task := db.RequireMockTrial(t, pgDB, exp)
+	originalConfig := config.GetMasterConfig().Webhooks
+	defer func() {
+		config.GetMasterConfig().Webhooks = originalConfig
+	}()
 
-	expected := EventPayload{
-		Type: TriggerTypeLogPatternPolicy,
-		Condition: Condition{
-			LogPatternPolicyRegex: "regexa",
-		},
-		Data: EventData{
-			LogPatternPolicy: &LogPatternPolicyPayload{
-				TaskID:        task.TaskID,
-				NodeName:      "nodeA",
-				TriggeringLog: "trigA",
-			},
-		},
+	for _, webhookType := range []WebhookType{WebhookTypeDefault, WebhookTypeSlack} {
+		for _, baseURLIsSet := range []bool{true, false} {
+			if baseURLIsSet {
+				config.GetMasterConfig().Webhooks.BaseURL = "http://determined.ai"
+			} else {
+				config.GetMasterConfig().Webhooks.BaseURL = ""
+			}
+
+			t.Run(fmt.Sprintf(
+				"webhookType=%v baseURLIsSet=%v", webhookType, baseURLIsSet), func(t *testing.T) {
+				user := db.RequireMockUser(t, pgDB)
+				exp := db.RequireMockExperiment(t, pgDB, user)
+				trial, task := db.RequireMockTrial(t, pgDB, exp)
+
+				expected := EventPayload{
+					Type: TriggerTypeLogPatternPolicy,
+					Condition: Condition{
+						LogPatternPolicyRegex: "regexa",
+					},
+					Data: EventData{
+						LogPatternPolicy: &LogPatternPolicyPayload{
+							TaskID:        task.TaskID,
+							NodeName:      "nodeA",
+							TriggeringLog: "trigA",
+						},
+					},
+				}
+
+				uuidURL := uuid.New().String()
+				require.NoError(t, ReportLogPatternAction(
+					ctx,
+					task.TaskID,
+					expected.Data.LogPatternPolicy.NodeName,
+					expected.Condition.LogPatternPolicyRegex,
+					expected.Data.LogPatternPolicy.TriggeringLog,
+					uuidURL,
+					webhookType))
+
+				var actualEvent Event
+				require.NoError(t, db.Bun().NewSelect().Model(&actualEvent).
+					Where("url = ?", uuidURL).
+					Scan(ctx, &actualEvent))
+
+				if webhookType == WebhookTypeDefault {
+					var actual EventPayload
+					require.NoError(t, json.Unmarshal(actualEvent.Payload, &actual))
+
+					actual.ID = expected.ID
+					actual.Timestamp = expected.Timestamp
+					require.Equal(t, expected, actual)
+					return
+				}
+
+				var actual SlackMessageBody
+				require.NoError(t, json.Unmarshal(actualEvent.Payload, &actual))
+
+				msg := fmt.Sprintf(
+					"Experiment ID `%d`, Trial ID `%d`, running on node `nodeA`, reported a log\n",
+					trial.ExperimentID, trial.ID) +
+					"```trigA```\n" +
+					"This log matched the regex\n" +
+					"```regexa```\n"
+
+				path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
+				if baseURLIsSet {
+					msg += fmt.Sprintf("<http://determined.ai%s | View full logs here>", path)
+				} else {
+					msg += fmt.Sprintf("View full logs at %s", path)
+				}
+
+				require.Equal(t, SlackMessageBody{
+					Blocks: []SlackBlock{
+						{
+							Type: "section",
+							Text: SlackField{
+								Type: "mrkdwn",
+								Text: msg,
+							},
+						},
+					},
+				}, actual)
+			})
+		}
 	}
-
-	uuidURL := uuid.New().String()
-	require.NoError(t, ReportLogPatternAction(
-		ctx,
-		task.TaskID,
-		expected.Data.LogPatternPolicy.NodeName,
-		expected.Condition.LogPatternPolicyRegex,
-		expected.Data.LogPatternPolicy.TriggeringLog,
-		uuidURL,
-		WebhookTypeDefault))
-
-	var actualEvent Event
-	require.NoError(t, db.Bun().NewSelect().Model(&actualEvent).
-		Where("url = ?", uuidURL).
-		Scan(ctx, &actualEvent))
-
-	var actual EventPayload
-	require.NoError(t, json.Unmarshal(actualEvent.Payload, &actual))
-
-	actual.ID = expected.ID
-	actual.Timestamp = expected.Timestamp
-	require.Equal(t, expected, actual)
-
-	// TODO would be great to add a WebhookTypeSlack test (or two one for url set / unset)
 }
 
 func TestReportExperimentStateChanged(t *testing.T) {

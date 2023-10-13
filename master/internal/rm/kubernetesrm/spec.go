@@ -253,7 +253,6 @@ const (
 func addNodeSelectorRequirement(
 	pod *k8sV1.Pod, req k8sV1.NodeSelectorRequirement, onLabel bool,
 ) {
-	// TODO make sure nick didn't bork this in a rebase.
 	if pod.Spec.Affinity == nil {
 		pod.Spec.Affinity = &k8sV1.Affinity{}
 	}
@@ -272,9 +271,9 @@ func addNodeSelectorRequirement(
 			k8sV1.NodeSelectorTerm{})
 	}
 
-	reqs := nodeSelector.NodeSelectorTerms[0].MatchExpressions
+	reqs := nodeSelector.NodeSelectorTerms[0].MatchFields
 	if onLabel {
-		reqs = nodeSelector.NodeSelectorTerms[0].MatchFields
+		reqs = nodeSelector.NodeSelectorTerms[0].MatchExpressions
 	}
 
 	// Make function idempotent.

@@ -203,63 +203,31 @@ func generateLogPatternSlackPayload(
 		return nil, err
 	}
 
-	blocks := []SlackBlock{
-		{
-			Type: "section",
-			Text: SlackField{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf(
-					"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log",
-					trial.ExperimentID, trial.ID, nodeName,
-				),
-			},
-		},
-		{
-			Type: "section",
-			Text: SlackField{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("```%s```", triggeringLog),
-			},
-		},
-		{
-			Type: "section",
-			Text: SlackField{
-				Type: "mrkdwn",
-				Text: "This log matched the regex",
-			},
-		},
-		{
-			Type: "section",
-			Text: SlackField{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("```%s```", regex),
-			},
-		},
-	}
+	msg := fmt.Sprintf(
+		"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log\n",
+		trial.ExperimentID, trial.ID, nodeName) +
+		fmt.Sprintf("```%s```\n", triggeringLog) +
+		"This log matched the regex\n" +
+		fmt.Sprintf("```%s```\n", regex)
 
 	path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
 	if baseURL := conf.GetMasterConfig().Webhooks.BaseURL; baseURL != "" {
-		blocks = append(blocks, SlackBlock{
-			Type: "section",
-			Text: SlackField{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("<%s%s | View full logs here>", baseURL, path),
-			},
-		})
+		msg += fmt.Sprintf("<%s%s | View full logs here>", baseURL, path)
 	} else {
-		blocks = append(blocks, SlackBlock{
-			Type: "section",
-			Text: SlackField{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("View full logs at %s", path),
-			},
-		})
+		msg += fmt.Sprintf("View full logs at %s", path)
 	}
 
 	messageBody := SlackMessageBody{
-		Blocks: blocks,
+		Blocks: []SlackBlock{
+			{
+				Type: "section",
+				Text: SlackField{
+					Type: "mrkdwn",
+					Text: msg,
+				},
+			},
+		},
 	}
-
 	message, err := json.Marshal(messageBody)
 	if err != nil {
 		return nil, fmt.Errorf("creating slack payload: %w", err)

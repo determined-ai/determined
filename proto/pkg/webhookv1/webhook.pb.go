@@ -84,6 +84,8 @@ const (
 	// For metrics emitted during training.
 	TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED TriggerType = 2
 	// For experiment config's log_pattern_policy.
+	// This is unused in the API currently since log_pattern_policy webhooks are
+	// defined in expconf and not the webhook APIs.
 	TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY TriggerType = 3
 )
 

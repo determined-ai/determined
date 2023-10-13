@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -266,7 +267,7 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	return out, nil
 }
 
-// GetCompiledRegex returns compiled regex from cache.
+// GetCompiledRegex returns compiled regex from cache, compiling it if it doesn't exist.
 func GetCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
 	compiledRegex, ok := regexCache.Get(regex)
 	if !ok {
@@ -278,4 +279,11 @@ func GetCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
 		regexCache.Add(regex, compiledRegex)
 	}
 	return compiledRegex, nil
+}
+
+// SetDisallowedNodesCacheTest is used only in unit tests. export_test.go does not work as expected.
+func SetDisallowedNodesCacheTest(t *testing.T, c map[model.TaskID]*set.Set[string]) {
+	mu.Lock()
+	defer mu.Unlock()
+	blockListCache = c
 }
