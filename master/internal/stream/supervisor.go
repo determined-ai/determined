@@ -73,6 +73,11 @@ func (ssup *Supervisor) Run(ctx context.Context) error {
 func (ssup *Supervisor) Websocket(socket *websocket.Conn, c echo.Context) error {
 	var ssupCtx context.Context
 	var ps *PublisherSet
+	defer func() {
+		if err := socket.Close(); err != nil {
+			log.Debugf("error while cleaning up socket: %s", err)
+		}
+	}()
 	func() {
 		ssup.lock.Lock()
 		defer ssup.lock.Unlock()
