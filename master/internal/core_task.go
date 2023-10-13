@@ -10,7 +10,7 @@ import (
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	summary, err := m.rm.GetAllocationSummaries(m.system, sproto.GetAllocationSummaries{})
+	summary, err := m.rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	if err != nil {
 		return nil, err
 	}

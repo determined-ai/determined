@@ -39,7 +39,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 
 	rm := New(system, nil, echo.New(), conf, nil, nil)
 
-	taskSummary, err := rm.GetAllocationSummaries(system, sproto.GetAllocationSummaries{})
+	taskSummary, err := rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]sproto.AllocationSummary))
 	assert.NilError(t, rm.Ref().StopAndAwaitTermination())
@@ -70,10 +70,11 @@ func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
 
 	rm := New(system, nil, echo.New(), conf, nil, nil)
 
-	resp, err := rm.ValidateCommandResources(system, sproto.ValidateCommandResourcesRequest{
+	resp, err := rm.ValidateCommandResources(sproto.ValidateCommandResourcesRequest{
 		ResourcePool: defaultResourcePoolName,
 		Slots:        1,
 	})
 	assert.Assert(t, err == nil, err)
 	assert.Assert(t, resp.Fulfillable)
+	assert.NilError(t, rm.Ref().StopAndAwaitTermination())
 }

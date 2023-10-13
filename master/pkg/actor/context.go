@@ -88,11 +88,6 @@ func (c *Context) ActorOfFromFactory(id interface{}, factory func() Actor) (*Ref
 	return c.recipient.createChildFromFactory(c.recipient.address.Child(id), factory)
 }
 
-// Sender returns the reference to the actor that sent the message.
-func (c *Context) Sender() *Ref {
-	return c.sender
-}
-
 // Self returns the reference to the context's recipient.
 func (c *Context) Self() *Ref {
 	return c.recipient
@@ -100,16 +95,12 @@ func (c *Context) Self() *Ref {
 
 // Children returns a list of references to the context's recipient's children.
 func (c *Context) Children() []*Ref {
-	children := make([]*Ref, 0, len(c.recipient.children))
-	for _, child := range c.recipient.children {
-		children = append(children, child)
-	}
-	return children
+	return c.recipient.Children()
 }
 
 // Child returns the child with the given local ID.
 func (c *Context) Child(id interface{}) *Ref {
-	return c.recipient.children[c.recipient.address.Child(id)]
+	return c.recipient.Child(id)
 }
 
 // ExpectingResponse returns true if the sender is expecting a response and false otherwise.

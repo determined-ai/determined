@@ -477,7 +477,7 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 		}
 	}
 
-	sub, err := a.rm.Allocate(a.system, a.req)
+	sub, err := a.rm.Allocate(a.req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to request allocation")
 	}
@@ -514,7 +514,7 @@ func (a *allocation) finalize(
 	severity logrus.Level,
 	exitErr error,
 ) {
-	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+	defer a.rm.Release(sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	for _, cl := range a.closers {
 		defer cl()
 	}
@@ -734,7 +734,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
 		a.syslog.Infof("releasing resources %s", msg.ResourcesID)
-		a.rm.Release(a.system, sproto.ResourcesReleased{
+		a.rm.Release(sproto.ResourcesReleased{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  &msg.ResourcesID,
 		})
