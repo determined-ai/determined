@@ -162,7 +162,7 @@ class ModelSortBy(enum.Enum):
         return bindings.v1GetModelsRequestSortBy(self.value)
 
 
-class ModelOrderBy(enum.Enum):
+class TODOModelOrderBy(enum.Enum):
     """
     Specifies whether a sorted list of models should be in ascending or
     descending order.

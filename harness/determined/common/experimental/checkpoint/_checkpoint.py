@@ -49,7 +49,7 @@ class CheckpointState(enum.Enum):
     PARTIALLY_DELETED = bindings.checkpointv1State.PARTIALLY_DELETED.value
 
 
-class CheckpointOrderBy(enum.Enum):
+class TODOCheckpointOrderBy(enum.Enum):
     """Specifies order of a sorted list of checkpoints."""
 
     ASC = bindings.v1OrderBy.ASC.value

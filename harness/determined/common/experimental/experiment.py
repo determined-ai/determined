@@ -56,7 +56,7 @@ class ExperimentSortBy(enum.Enum):
         return bindings.v1GetExperimentsRequestSortBy(self.value)
 
 
-class ExperimentOrderBy(enum.Enum):
+class TODOExperimentOrderBy(enum.Enum):
     """Specifies whether a sorted list of experiments should be in ascending or
     descending order.
     """

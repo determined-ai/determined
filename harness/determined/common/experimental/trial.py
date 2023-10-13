@@ -545,7 +545,7 @@ class TrialSortBy(enum.Enum):
         return _tsb(self.value)
 
 
-class TrialOrderBy(enum.Enum):
+class TODOTrialOrderBy(enum.Enum):
     """
     Specifies whether a sorted list of trials should be in ascending or
     descending order.
