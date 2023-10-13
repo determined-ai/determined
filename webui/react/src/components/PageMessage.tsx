@@ -1,11 +1,10 @@
 import { useObservable } from 'micro-observables';
 import React from 'react';
 
+import Message from 'components/kit/Message';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
-
-import Message from './kit/Message';
 
 interface Props {
   children: React.ReactNode;
