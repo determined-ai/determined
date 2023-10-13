@@ -9462,7 +9462,7 @@ export interface V1Task {
     endTime?: Date;
 }
 /**
- *
+ * 
  * @export
  * @interface V1TaskLog
  */
@@ -13761,7 +13761,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             if (sortByAttr !== undefined) {
                 localVarQueryParameter['sortByAttr'] = sortByAttr
             }
-
+            
             if (sortByMetric !== undefined) {
                 localVarQueryParameter['sortByMetric'] = sortByMetric
             }
@@ -14272,7 +14272,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             if (sortByAttr !== undefined) {
                 localVarQueryParameter['sortByAttr'] = sortByAttr
             }
-
+            
             if (sortByMetric !== undefined) {
                 localVarQueryParameter['sortByMetric'] = sortByMetric
             }
@@ -17010,7 +17010,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -17026,7 +17026,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -17034,14 +17034,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-
+            
             localVarHeaderParameter['Content-Type'] = 'application/json';
-
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-
+            
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
@@ -17114,7 +17114,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -17122,21 +17122,21 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-
+            
             localVarHeaderParameter['Content-Type'] = 'application/json';
-
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-
+            
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         *
+         * 
          * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
          * @param {V1ContinueExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -17152,7 +17152,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18443,7 +18443,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18451,21 +18451,21 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-
+            
             localVarHeaderParameter['Content-Type'] = 'application/json';
-
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-
+            
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         *
+         * 
          * @summary Patch multiple users' activation status.
          * @param {V1PatchUsersRequest} body
          * @param {*} [options] Override http request option.
@@ -18481,7 +18481,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18569,7 +18569,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -18577,21 +18577,21 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-
+            
             localVarHeaderParameter['Content-Type'] = 'application/json';
-
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-
+            
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
             };
         },
         /**
-         *
+         * 
          * @summary Persist the given task logs.
          * @param {V1PostTaskLogsRequest} body
          * @param {*} [options] Override http request option.
@@ -18607,7 +18607,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -19636,7 +19636,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -19676,7 +19676,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
          * @param {V1ContinueExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -20322,7 +20322,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -20362,7 +20362,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Persist the given task logs.
          * @param {V1PostTaskLogsRequest} body
          * @param {*} [options] Override http request option.
@@ -20847,7 +20847,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).assignMultipleGroups(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Bind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1BindRPToWorkspaceRequest} body
@@ -20879,7 +20879,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).continueExperiment(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Create an experiment.
          * @param {V1CreateExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -21227,7 +21227,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).patchUsers(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -21259,7 +21259,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).postTaskLogs(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body
          * @param {*} [options] Override http request option.
@@ -21568,7 +21568,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     *
+     * 
      * @summary Assign multiple users to multiple groups.
      * @param {V1AssignMultipleGroupsRequest} body
      * @param {*} [options] Override http request option.
@@ -21578,7 +21578,7 @@ export class InternalApi extends BaseAPI {
     public assignMultipleGroups(body: V1AssignMultipleGroupsRequest, options?: any) {
         return InternalApiFp(this.configuration).assignMultipleGroups(body, options)(this.fetch, this.basePath)
     }
-
+    
     /**
      * 
      * @summary Bind resource pool to workspace
@@ -21606,7 +21606,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     *
+     * 
      * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
      * @param {V1ContinueExperimentRequest} body
      * @param {*} [options] Override http request option.
@@ -21616,7 +21616,7 @@ export class InternalApi extends BaseAPI {
     public continueExperiment(body: V1ContinueExperimentRequest, options?: any) {
         return InternalApiFp(this.configuration).continueExperiment(body, options)(this.fetch, this.basePath)
     }
-
+    
     /**
      * 
      * @summary Create an experiment.
@@ -22016,7 +22016,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     *
+     * 
      * @summary Patch multiple users' activation status.
      * @param {V1PatchUsersRequest} body
      * @param {*} [options] Override http request option.
@@ -22026,7 +22026,7 @@ export class InternalApi extends BaseAPI {
     public patchUsers(body: V1PatchUsersRequest, options?: any) {
         return InternalApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
     }
-
+    
     /**
      * 
      * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
@@ -22054,7 +22054,7 @@ export class InternalApi extends BaseAPI {
     }
     
     /**
-     *
+     * 
      * @summary Persist the given task logs.
      * @param {V1PostTaskLogsRequest} body
      * @param {*} [options] Override http request option.
@@ -22064,7 +22064,7 @@ export class InternalApi extends BaseAPI {
     public postTaskLogs(body: V1PostTaskLogsRequest, options?: any) {
         return InternalApiFp(this.configuration).postTaskLogs(body, options)(this.fetch, this.basePath)
     }
-
+    
     /**
      * 
      * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
@@ -26951,7 +26951,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         *
+         * 
          * @summary Get the model definition of a task.
          * @param {string} taskId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -26968,7 +26968,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
+            
             // authentication BearerToken required
             if (configuration && configuration.apiKey) {
                 const localVarApiKeyValue = typeof configuration.apiKey === 'function'
@@ -26976,11 +26976,11 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
-
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-
+            
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
                 options: localVarRequestOptions,
@@ -27205,7 +27205,7 @@ export const TasksApiFp = function (configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the model definition of a task.
          * @param {string} taskId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -27332,7 +27332,7 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
             return TasksApiFp(configuration).getTaskContextDirectory(taskId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get all tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -27408,7 +27408,7 @@ export class TasksApi extends BaseAPI {
     }
     
     /**
-     *
+     * 
      * @summary Get the model definition of a task.
      * @param {string} taskId The id of the experiment.
      * @param {*} [options] Override http request option.
@@ -27418,7 +27418,7 @@ export class TasksApi extends BaseAPI {
     public getTaskContextDirectory(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTaskContextDirectory(taskId, options)(this.fetch, this.basePath)
     }
-
+    
     /**
      * 
      * @summary Get all tasks.
@@ -29631,15 +29631,15 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             if (active !== undefined) {
                 localVarQueryParameter['active'] = active
             }
-
+            
             if (admin !== undefined) {
                 localVarQueryParameter['admin'] = admin
             }
-
+            
             if (roleIdAssignedDirectlyToUser) {
                 localVarQueryParameter['roleIdAssignedDirectlyToUser'] = roleIdAssignedDirectlyToUser
             }
-
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
