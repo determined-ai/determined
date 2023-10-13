@@ -8,16 +8,20 @@ from determined.common.api import bindings
 
 @dataclasses.dataclass
 class TrialMetrics:
-    """
-    Specifies a metric that the trial reported.
+    """Specifies collection of metrics that the trial reported.
 
     Attributes:
-        trial_id
-        trial_run_id
-        steps_completed
-        end_time
-        metrics
-        batch_metrics
+        trial_id: The ID of the trial that reported the metric.
+        trial_run_id: The ID of the trial run that reported the metric.
+        steps_completed: The number of steps that the trial had completed when the metric was
+            reported. Most generally, the value passed to a call to report_metrics as
+            "steps_completed."
+        end_time: The time when the metric was reported.
+        metrics: A dict of metrics that the trial reported.
+        group: The group that the metric was reported under. Usually either "validation" or
+            "training", but this can be any value passed to master when reporting metrics during
+            training (usually via a context's `report_metrics`).
+        batch_metrics: <do not use>
     """
 
     trial_id: int
