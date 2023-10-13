@@ -6,13 +6,13 @@ from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.utils import WebhookServer
+from tests.cluster import utils
 
 
 @pytest.mark.e2e_cpu
 def test_slack_webhook() -> None:
     port = 5005
-    server = WebhookServer(port, allow_dupes=True)
+    server = utils.WebhookServer(port, allow_dupes=True)
     sess = api_utils.determined_test_session(admin=True)
 
     webhook_trigger = bindings.v1Trigger(

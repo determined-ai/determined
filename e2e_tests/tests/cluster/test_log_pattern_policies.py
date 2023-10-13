@@ -8,7 +8,7 @@ from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.utils import WebhookServer
+from tests.cluster import utils
 
 
 @pytest.mark.e2e_cpu
@@ -113,7 +113,7 @@ def test_log_pattern_retry_different_node(should_match: bool) -> None:
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
-    server = WebhookServer(port)
+    server = utils.WebhookServer(port)
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
