@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api, util
 from determined.common.api import bindings, logs
-from determined.common.experimental import checkpoint, metrics
+from determined.common.experimental import checkpoint, determined, metrics
 
 
 class LogLevel(enum.Enum):
@@ -196,7 +196,7 @@ class Trial:
     def list_checkpoints(
         self,
         sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
-        order_by: Optional[checkpoint.CheckpointOrderBy] = None,
+        order_by: Optional[determined.OrderBy] = None,
         max_results: Optional[int] = None,
     ) -> List[checkpoint.Checkpoint]:
         """Returns an iterator of sorted :class:`~determined.experimental.Checkpoint` instances.
@@ -278,9 +278,9 @@ class Trial:
         order_by = None
         if sort_by:
             order_by = (
-                checkpoint.CheckpointOrderBy.ASC
+                determined.OrderBy.ASC
                 if smaller_is_better
-                else checkpoint.CheckpointOrderBy.DESC
+                else determined.OrderBy.DESC
             )
 
         checkpoints = self.list_checkpoints(
@@ -353,13 +353,13 @@ class Trial:
         order_by = None
         if latest:
             sort_by = checkpoint.CheckpointSortBy.BATCH_NUMBER  # type: ignore
-            order_by = checkpoint.CheckpointOrderBy.DESC
+            order_by = determined.OrderBy.DESC
 
         if sort_by:
             order_by = (
-                checkpoint.CheckpointOrderBy.ASC
+                determined.OrderBy.ASC
                 if smaller_is_better
-                else checkpoint.CheckpointOrderBy.DESC
+                else determined.OrderBy.DESC
             )
 
         checkpoints = self.list_checkpoints(sort_by=sort_by, order_by=order_by, max_results=1)
@@ -371,7 +371,7 @@ class Trial:
     def get_checkpoints(
         self,
         sort_by: Optional[Union[str, checkpoint.CheckpointSortBy]] = None,
-        order_by: Optional[checkpoint.CheckpointOrderBy] = None,
+        order_by: Optional[determined.OrderBy] = None,
     ) -> List[checkpoint.Checkpoint]:
         """
         Return a list of :class:`~determined.experimental.Checkpoint` instances for the current
@@ -382,7 +382,7 @@ class Trial:
         Arguments:
             sort_by (string, :class:`~determined.experimental.CheckpointSortBy`): Which field to
                 sort by. Strings are assumed to be validation metric names.
-            order_by (:class:`~determined.experimental.CheckpointOrderBy`): Whether to sort in
+            order_by (:class:`~determined.experimental.OrderBy`): Whether to sort in
                 ascending or descending order.
         """
 
@@ -433,14 +433,14 @@ class Trial:
             sort_by = searcher_metric
             smaller_is_better = config.get("searcher", {}).get("smaller_is_better", True)
             order_by = (
-                checkpoint.CheckpointOrderBy.ASC
+                determined.OrderBy.ASC
                 if smaller_is_better
-                else checkpoint.CheckpointOrderBy.DESC
+                else determined.OrderBy.DESC
             )
 
         assert sort_by is not None and order_by is not None, "sort_by and order_by not defined."
 
-        reverse = order_by == checkpoint.CheckpointOrderBy.DESC
+        reverse = order_by == determined.OrderBy.DESC
 
         def key(ckpt: checkpoint.Checkpoint) -> Any:
             training = ckpt.training

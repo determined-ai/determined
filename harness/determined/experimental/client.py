@@ -58,7 +58,7 @@ from determined.common.experimental.checkpoint import (  # noqa: F401
     CheckpointState,
     DownloadMode,
 )
-from determined.common.experimental.determined import Determined
+from determined.common.experimental.determined import Determined, OrderBy
 from determined.common.experimental.experiment import Experiment, ExperimentState  # noqa: F401
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy

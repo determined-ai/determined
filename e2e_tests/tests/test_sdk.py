@@ -111,14 +111,14 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
 
     # Validate end (report) time sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.END_TIME, order_by=_client.CheckpointOrderBy.DESC
+        sort_by=_client.CheckpointSortBy.END_TIME, order_by=_client.OrderBy.DESC
     )
     end_times = [checkpoint.report_time for checkpoint in checkpoints]
     assert all(x >= y for x, y in zip(end_times, end_times[1:]))  # type: ignore
 
     # Validate state sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.STATE, order_by=_client.CheckpointOrderBy.ASC
+        sort_by=_client.CheckpointSortBy.STATE, order_by=_client.OrderBy.ASC
     )
     states = []
     for checkpoint in checkpoints:
@@ -128,14 +128,14 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
 
     # Validate UUID sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.UUID, order_by=_client.CheckpointOrderBy.ASC
+        sort_by=_client.CheckpointSortBy.UUID, order_by=_client.OrderBy.ASC
     )
     uuids = [checkpoint.uuid for checkpoint in checkpoints]
     assert all(x <= y for x, y in zip(uuids, uuids[1:]))
 
     # Validate batch number sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.BATCH_NUMBER, order_by=_client.CheckpointOrderBy.DESC
+        sort_by=_client.CheckpointSortBy.BATCH_NUMBER, order_by=_client.OrderBy.DESC
     )
     batch_numbers = []
     for checkpoint in checkpoints:
@@ -145,7 +145,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
 
     # Validate metric sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by="validation_error", order_by=_client.CheckpointOrderBy.ASC
+        sort_by="validation_error", order_by=_client.OrderBy.ASC
     )
     validation_metrics = [
         checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]  # type: ignore
