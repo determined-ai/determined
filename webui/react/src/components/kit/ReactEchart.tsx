@@ -61,6 +61,9 @@ const ReactECharts: React.FC<Props> = ({ option, group, eventFunctions }: Props)
         for (const eventFunc of eventFunctions ?? []) {
           chart.on(eventFunc.eventName, eventFunc.query ?? '', eventFunc.handler);
         }
+        chart.getZr().on('dblclick', () => {
+          chart.dispatchAction({ end: 100, start: 0, type: 'dataZoom' });
+        });
 
         return chart;
       }

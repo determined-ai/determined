@@ -275,7 +275,6 @@ export const LineChart: React.FC<LineChartProps> = ({
         feature: {
           dataView: { readOnly: true },
           dataZoom: { yAxisIndex: false },
-          restore: {},
           saveAsImage: { excludeComponents: ['toolbox', 'dataZoom', 'legend'], name: 'line-chart' },
         },
       },
