@@ -375,7 +375,8 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 			}},
 			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
 				RawSendWebhook: &expconf.SendWebhookPolicy{
-					RawWebhookName: "different",
+					RawWebhookURL:  "determined.ai",
+					RawWebhookType: "default",
 				},
 			}},
 		},
@@ -390,7 +391,10 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 				RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
 			}},
 			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
-				RawSendWebhook: &expconf.SendWebhookPolicy{},
+				RawSendWebhook: &expconf.SendWebhookPolicy{
+					RawWebhookURL:  "determined.ai",
+					RawWebhookType: "slack",
+				},
 			}},
 		},
 	}
@@ -406,14 +410,18 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 		}},
 		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
 			RawSendWebhook: &expconf.SendWebhookPolicy{
-				RawWebhookName: "different",
+				RawWebhookURL:  "determined.ai",
+				RawWebhookType: "default",
 			},
 		}},
 		expconf.LogPatternPolicy{RawPattern: "b", RawPolicy: &expconf.LogPolicy{
 			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
 		}},
 		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
-			RawSendWebhook: &expconf.SendWebhookPolicy{},
+			RawSendWebhook: &expconf.SendWebhookPolicy{
+				RawWebhookURL:  "determined.ai",
+				RawWebhookType: "slack",
+			},
 		}},
 	}
 

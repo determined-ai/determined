@@ -6,14 +6,21 @@
     "type": "object",
     "required": [
         "type",
-        "webhook_name"
+        "webhook_type",
+        "webhook_url"
     ],
     "eventuallyRequired": [],
     "properties": {
         "type": {
             "const": "send_webhook"
         },
-        "webhook_name": {
+        "webhook_type": {
+            "enum": [
+                "default",
+                "slack"
+            ]
+        },
+        "webhook_url": {
             "type": [
                 "string"
             ]

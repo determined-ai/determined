@@ -33,14 +33,7 @@
     ],
     "properties": {
         "type": true,
-        "webhook_name": true,
-        "restarts": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": 1,
-            "minimum": 1
-        }
+        "webhook_type": true,
+        "webhook_url": true
     }
 }

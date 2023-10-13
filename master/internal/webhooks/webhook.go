@@ -124,6 +124,9 @@ const (
 
 	// TriggerTypeMetricThresholdExceeded represents a threshold for a training metric value.
 	TriggerTypeMetricThresholdExceeded TriggerType = "METRIC_THRESHOLD_EXCEEDED"
+
+	// TriggerTypeLogPatternPolicy represents a trigger for a log pattern policy.
+	TriggerTypeLogPatternPolicy TriggerType = "LOG_PATTERN_POLICY"
 )
 
 const (
@@ -154,6 +157,8 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 		return TriggerTypeMetricThresholdExceeded
 	case webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE:
 		return TriggerTypeStateChange
+	case webhookv1.TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY:
+		return TriggerTypeLogPatternPolicy
 	// TODO
 	default:
 		// TODO(???): prob don't panic
@@ -180,6 +185,8 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE
 	case TriggerTypeMetricThresholdExceeded:
 		return webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED
+	case TriggerTypeLogPatternPolicy:
+		return webhookv1.TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY
 	// TODO
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
@@ -255,13 +262,15 @@ type EventPayload struct {
 
 // Condition represents a trigger condition.
 type Condition struct {
-	State model.State `json:"state,omitempty"`
+	State                 model.State `json:"state,omitempty"`
+	LogPatternPolicyRegex string      `json:"log_pattern_policy_regex,omitempty"`
 }
 
 // EventData represents the event_data for a webhook event.
 type EventData struct {
-	TestData   *string            `json:"data,omitempty"`
-	Experiment *ExperimentPayload `json:"experiment,omitempty"`
+	TestData         *string                  `json:"data,omitempty"`
+	Experiment       *ExperimentPayload       `json:"experiment,omitempty"`
+	LogPatternPolicy *LogPatternPolicyPayload `json:"log_pattern_policy,omitempty"`
 }
 
 // ExperimentPayload is the webhook request representation of an experiment.
@@ -274,4 +283,11 @@ type ExperimentPayload struct {
 	SlotsPerTrial int          `json:"slots_per_trial"`
 	WorkspaceName string       `json:"workspace"`
 	ProjectName   string       `json:"project"`
+}
+
+// LogPatternPolicyPayload is the webhook request representation of a trigger of a log policy.
+type LogPatternPolicyPayload struct {
+	TaskID        model.TaskID `json:"task_id"`
+	NodeName      string       `json:"node_name"`
+	TriggeringLog string       `json:"triggering_log"`
 }

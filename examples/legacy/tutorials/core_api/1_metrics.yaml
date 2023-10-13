@@ -8,4 +8,16 @@ searcher:
    metric: x
    max_length: 1
 
+
+
 max_restarts: 5
+
+log_pattern_policies:
+  - pattern: "dsamk;dsa;kdsmakkd;sa"
+    policy:
+      type: send_webhook
+      webhook_type: default
+      webhook_url: 127.0.0.1
+  - pattern: "dsamk;dsa;kdsmakkd;sa"
+    policy:
+      type: on_failure_exclude_node

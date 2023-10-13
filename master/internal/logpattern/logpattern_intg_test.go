@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -169,17 +170,23 @@ func TestSendWebhook(t *testing.T) {
 	exp := db.RequireMockExperiment(t, pgDB, user)
 	_, task := db.RequireMockTrial(t, pgDB, exp)
 
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook0", "n0", "regexa", "loga"))
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook0", "n0", "regexb", "logb"))
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook1", "n0", "regexa", "logc"))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n0", "regexa", "loga", "determined.ai", webhooks.WebhookTypeSlack))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n0", "regexb", "logb", "determined.ai", webhooks.WebhookTypeSlack))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n0", "regexa", "logc", "determined.ai/a", webhooks.WebhookTypeSlack))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n0", "regexa", "logd", "determined.ai", webhooks.WebhookTypeDefault))
 
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook0", "n1", "regexa", "dontappear"))
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook0", "n1", "regexb", "dontappear"))
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook1", "n1", "regexa", "dontappear"))
-
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook0", "n0", "regexa", "dontappear"))
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook0", "n0", "regexb", "dontappear"))
-	require.NoError(t, AddWebhookAlert(ctx, task.TaskID, "hook1", "n0", "regexa", "dontappear"))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n1", "regexa", "dontappear", "determined.ai", webhooks.WebhookTypeSlack))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n1", "regexb", "dontappear", "determined.ai", webhooks.WebhookTypeSlack))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n1", "regexa", "dontappear", "determined.ai/a", webhooks.WebhookTypeSlack))
+	require.NoError(t, AddWebhookAlert(
+		ctx, task.TaskID, "n1", "regexa", "dontappear", "determined.ai", webhooks.WebhookTypeDefault))
 
 	var actual []*sendWebhook
 	require.NoError(t, db.Bun().NewSelect().Model(&actual).
@@ -189,22 +196,32 @@ func TestSendWebhook(t *testing.T) {
 
 	require.ElementsMatch(t, []*sendWebhook{
 		{
-			WebhookName:   "hook0",
 			NodeName:      "n0",
 			Regex:         "regexa",
 			TriggeringLog: "loga",
+			WebhookURL:    "determined.ai",
+			WebhookType:   webhooks.WebhookTypeSlack,
 		},
 		{
-			WebhookName:   "hook0",
 			NodeName:      "n0",
 			Regex:         "regexb",
 			TriggeringLog: "logb",
+			WebhookURL:    "determined.ai",
+			WebhookType:   webhooks.WebhookTypeSlack,
 		},
 		{
-			WebhookName:   "hook1",
 			NodeName:      "n0",
 			Regex:         "regexa",
 			TriggeringLog: "logc",
+			WebhookURL:    "determined.ai/a",
+			WebhookType:   webhooks.WebhookTypeSlack,
+		},
+		{
+			NodeName:      "n0",
+			Regex:         "regexa",
+			TriggeringLog: "logd",
+			WebhookURL:    "determined.ai",
+			WebhookType:   webhooks.WebhookTypeDefault,
 		},
 	}, actual)
 }

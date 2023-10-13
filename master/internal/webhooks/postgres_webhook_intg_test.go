@@ -4,6 +4,7 @@ package webhooks
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/google/uuid"
 )
 
 func TestWebhooks(t *testing.T) {
@@ -69,6 +71,56 @@ func TestWebhooks(t *testing.T) {
 	})
 
 	t.Cleanup(func() { cleanUp(ctx, t) })
+}
+
+func TestReportLogPatternAction(t *testing.T) {
+	ctx := context.Background()
+
+	pgDB := db.MustResolveTestPostgres(t)
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+	clearWebhooksTables(ctx, t)
+
+	user := db.RequireMockUser(t, pgDB)
+	exp := db.RequireMockExperiment(t, pgDB, user)
+	_, task := db.RequireMockTrial(t, pgDB, exp)
+
+	expected := EventPayload{
+		Type: TriggerTypeLogPatternPolicy,
+		Condition: Condition{
+			LogPatternPolicyRegex: "regexa",
+		},
+		Data: EventData{
+			LogPatternPolicy: &LogPatternPolicyPayload{
+				TaskID:        task.TaskID,
+				NodeName:      "nodeA",
+				TriggeringLog: "trigA",
+			},
+		},
+	}
+
+	uuidURL := uuid.New().String()
+	require.NoError(t, ReportLogPatternAction(
+		ctx,
+		task.TaskID,
+		expected.Data.LogPatternPolicy.NodeName,
+		expected.Condition.LogPatternPolicyRegex,
+		expected.Data.LogPatternPolicy.TriggeringLog,
+		uuidURL,
+		WebhookTypeDefault))
+
+	var actualEvent Event
+	require.NoError(t, db.Bun().NewSelect().Model(&actualEvent).
+		Where("url = ?", uuidURL).
+		Scan(ctx, &actualEvent))
+
+	var actual EventPayload
+	require.NoError(t, json.Unmarshal(actualEvent.Payload, &actual))
+
+	actual.ID = expected.ID
+	actual.Timestamp = expected.Timestamp
+	require.Equal(t, expected, actual)
+
+	// TODO would be great to add a WebhookTypeSlack test (or two one for url set / unset)
 }
 
 func TestReportExperimentStateChanged(t *testing.T) {
@@ -337,5 +389,7 @@ func clearWebhooksTables(ctx context.Context, t *testing.T) {
 
 // CountEvents returns the total number of events from the DB.
 func CountEvents(ctx context.Context) (int, error) {
+	// TODO this is brittle and will be a flake when we land logpattern tests
+	// which will add an event. This also could be testing more.
 	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
 }

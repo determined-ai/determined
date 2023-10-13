@@ -8,17 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (o OnFailureExcludeNodePolicyV0) Restarts() int {
-	if o.RawRestarts == nil {
-		panic("You must call WithDefaults on OnFailureExcludeNodePolicyV0 before .Restarts")
-	}
-	return *o.RawRestarts
-}
-
-func (o *OnFailureExcludeNodePolicyV0) SetRestarts(val int) {
-	o.RawRestarts = &val
-}
-
 func (o OnFailureExcludeNodePolicyV0) ParsedSchema() interface{} {
 	return schemas.ParsedOnFailureExcludeNodePolicyV0()
 }

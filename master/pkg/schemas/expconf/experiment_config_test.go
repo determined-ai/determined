@@ -95,7 +95,7 @@ func TestLogPatterns(t *testing.T) {
 	inp := `[
 {"pattern": "a", "policy": {"type": "on_failure_dont_retry"}},
 {"pattern": "b", "policy": {"type": "on_failure_exclude_node"}},
-{"pattern": "c", "policy": {"type": "send_webhook"}}
+{"pattern": "c", "policy": {"type": "send_webhook", "webhook_type": "slack", "webhook_url": "determined.ai"}}
 ]`
 	expected := LogPatternPoliciesConfig{
 		LogPatternPolicy{RawPattern: "a", RawPolicy: &LogPolicy{
@@ -105,7 +105,10 @@ func TestLogPatterns(t *testing.T) {
 			RawOnFailureExcludeNode: &OnFailureExcludeNodePolicy{},
 		}},
 		LogPatternPolicy{RawPattern: "c", RawPolicy: &LogPolicy{
-			RawSendWebhook: &SendWebhookPolicy{},
+			RawSendWebhook: &SendWebhookPolicy{
+				RawWebhookType: "slack",
+				RawWebhookURL:  "determined.ai",
+			},
 		}},
 	}
 

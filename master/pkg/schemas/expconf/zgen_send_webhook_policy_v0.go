@@ -8,12 +8,20 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SendWebhookPolicyV0) WebhookName() string {
-	return s.RawWebhookName
+func (s SendWebhookPolicyV0) WebhookType() string {
+	return s.RawWebhookType
 }
 
-func (s *SendWebhookPolicyV0) SetWebhookName(val string) {
-	s.RawWebhookName = val
+func (s *SendWebhookPolicyV0) SetWebhookType(val string) {
+	s.RawWebhookType = val
+}
+
+func (s SendWebhookPolicyV0) WebhookURL() string {
+	return s.RawWebhookURL
+}
+
+func (s *SendWebhookPolicyV0) SetWebhookURL(val string) {
+	s.RawWebhookURL = val
 }
 
 func (s SendWebhookPolicyV0) ParsedSchema() interface{} {
