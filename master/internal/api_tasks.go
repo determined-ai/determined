@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -27,9 +26,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -376,7 +375,6 @@ func (a *apiServer) TaskLogs(
 }
 
 func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.TaskLog) error {
-	// TODO(ft) do all logs have same taskID? Or should we just assume that they don't need to.
 	// TODO(ft) do all logs stream through here? K8S I think we are planning to add log through
 	// k8s api too.
 
@@ -384,7 +382,7 @@ func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.Ta
 	if err != nil {
 		return err
 	}
-	if isExp == false {
+	if !isExp {
 		return nil
 	}
 
@@ -402,31 +400,39 @@ func (a *apiServer) Monitor(ctx context.Context, taskID string, logs []*model.Ta
 
 		for _, lpp := range activeConfig.LogPatternPolicies() {
 			regex := fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
-			r, _ := regexp.Compile(regex)
+			var compiledRegex *regexp.Regexp
+			compiledRegex, ok := logpattern.GetCompiledRegex(regex)
+			if !ok {
+				var err error
+				compiledRegex, err = regexp.Compile(regex)
+				if err != nil {
+					return fmt.Errorf("matching %s with %s: %w", regex, l.Log, err)
+				}
+				logpattern.AddCompiledRegex(regex, compiledRegex)
+			}
 
-			if r.MatchString(l.Log) {
-				policy := lpp.Policy().GetUnionMember()
-				switch reflect.TypeOf(policy).String() {
-				case "expconf.DontRetryPolicyV0":
+			if compiledRegex.MatchString(l.Log) {
+				switch lpp.Policy().GetUnionMember().(type) {
+				case expconf.DontRetryPolicyV0:
 					if err := logpattern.AddDontRetry(
 						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 					); err != nil {
-						log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+						return fmt.Errorf("add don't retry: %w", err) // Failing adding logs seems super bad.
 					}
-				case "expconf.OnFailureExcludeNodePolicyV0":
+				case expconf.OnFailureExcludeNodePolicyV0:
 					if err := logpattern.AddRetryOnDifferentNode(
 						ctx, model.TaskID(l.TaskID), *l.AgentID, regex, l.Log,
 					); err != nil {
-						log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+						return fmt.Errorf("add retry on different node: %w", err) // Failing adding logs seems super bad.
 					}
-				case "expconf.SendWebhookPolicyV0":
+				case expconf.SendWebhookPolicyV0:
 					if err := logpattern.AddWebhookAlert(
 						ctx, model.TaskID(l.TaskID), "webhookName", *l.AgentID, regex, l.Log,
 					); err != nil {
-						log.Errorf("error disallowing node") // Failing adding logs seems super bad.
+						return fmt.Errorf("add webhook alert: %w", err) // Failing adding logs seems super bad.
 					}
 				default:
-					log.Errorf("error unrecognized policy")
+					return fmt.Errorf("unrecognized log pattern policy type")
 				}
 			}
 		}
