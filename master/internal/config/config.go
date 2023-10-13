@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"sync"
 
@@ -353,10 +354,53 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 	return &cert, err
 }
 
+// ProxiedServerConfig is the configuration for a internal proxied server.
+type ProxiedServerConfig struct {
+	// Prefix is the path prefix to match for this proxy.
+	PathPrefix string `json:"path_prefix"`
+	// Destination is the URL to proxy to.
+	Destination string `json:"destination"`
+}
+
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
 	AuditLoggingEnabled bool                   `json:"audit_logging_enabled"`
 	ExternalSessions    model.ExternalSessions `json:"external_sessions"`
+	ProxiedServers      []ProxiedServerConfig  `json:"proxied_servers"`
+}
+
+// Validate implements the check.Validatable interface.
+func (p *ProxiedServerConfig) Validate() []error {
+	var errs []error
+	if p.PathPrefix == "" {
+		errs = append(errs, errors.New("path_prefix must be set"))
+	}
+	if p.Destination == "" {
+		errs = append(errs, errors.New("destination must be set"))
+	}
+	target, err := url.Parse(p.Destination)
+	if err != nil {
+		errs = append(errs, errors.Wrap(err, "failed to parse proxied destination"))
+	}
+	// ensure scheme and port is set
+	if target.Scheme == "" {
+		target.Scheme = "http"
+	}
+	if target.Port() == "" {
+		errs = append(errs, errors.New("proxy path must include a port"))
+	}
+	return errs
+}
+
+// Validate implements the check.Validatable interface.
+func (i *InternalConfig) Validate() []error {
+	var errs []error
+	// We allow setting multiple proxied servers but leave it up to the developer
+	// to ensure that they don't conflict with eachother or other det routes.
+	for _, p := range i.ProxiedServers {
+		errs = append(errs, p.Validate()...)
+	}
+	return errs
 }
 
 // ObservabilityConfig is the configuration for observability metrics.
