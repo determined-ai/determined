@@ -14240,10 +14240,12 @@ class v1TriggerType(DetEnum):
     - TRIGGER_TYPE_UNSPECIFIED: Default value
     - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state
     - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+    - TRIGGER_TYPE_HARDWARE_FAILURE: For detected potential hardware failures.
     """
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
+    HARDWARE_FAILURE = "TRIGGER_TYPE_HARDWARE_FAILURE"
 
 class v1UnarchiveExperimentsRequest(Printable):
     """Unarchive multiple experiments."""

@@ -172,6 +172,7 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/go-test/deep v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jinzhu/copier v0.3.5
 	github.com/uptrace/bun v1.1.14
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14
