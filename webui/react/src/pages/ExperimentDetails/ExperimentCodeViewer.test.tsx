@@ -129,9 +129,9 @@ const Container: React.FC<Pick<Props, 'experiment'>> = (props) => {
 const setup = (props: Pick<Props, 'experiment'> = { experiment: experimentMock }) => {
   render(
     <BrowserRouter>
-      <UIProvider>
-        <Container {...props} />
-      </UIProvider>
+      {/* // <UIProvider> */}
+      <Container {...props} />
+      {/* //</UIProvider> */}
     </BrowserRouter>,
   );
 };

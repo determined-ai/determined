@@ -413,5 +413,5 @@ export type DarkLight = ValueOf<typeof DarkLight>;
 
 export const getCssVar = (name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
-  return window.getComputedStyle(document.body)?.getPropertyValue(varName);
+  return window.getComputedStyle(document.getElementsByClassName("ui-provider")[0])?.getPropertyValue(varName);
 };

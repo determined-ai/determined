@@ -43,9 +43,9 @@ const setup = async () => {
     numMembers: 0,
   };
   const view = render(
-    <UIProvider>
-      <Container group={group} />
-    </UIProvider>,
+    //>
+    <Container group={group} />
+    //</UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

@@ -76,11 +76,11 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <UIProvider>
-      <ConfirmationProvider>
-        <Container />
-      </ConfirmationProvider>
-    </UIProvider>,
+    // <UIProvider>
+    <ConfirmationProvider>
+      <Container />
+    </ConfirmationProvider>
+    // </UIProvider>,
   );
 
 describe('UserSettings', () => {

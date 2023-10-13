@@ -7,9 +7,9 @@ import Message, { MessageType, Props } from './Message';
 const setup = (props: Props) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <UIProvider>
-      <Message {...props} />
-    </UIProvider>,
+    //>
+    <Message {...props} />
+    //</UIProvider>,
   );
   return { handleOnChange, view };
 };

@@ -85,9 +85,9 @@ const setup = async () => {
 
   render(
     <BrowserRouter>
-      <UIProvider>
-        <ModalTrigger />
-      </UIProvider>
+      {/* //<UIProvider> */}
+      <ModalTrigger />
+      {/* //</UIProvider> */}
     </BrowserRouter>,
   );
 

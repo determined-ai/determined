@@ -211,7 +211,7 @@ const App: React.FC = () => {
           <AppView />
         </ThemeHandler>
       </DndProvider>
-    </HelmetProvider >
+    </HelmetProvider>
   );
 };
 

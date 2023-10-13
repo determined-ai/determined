@@ -66,11 +66,11 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <UIProvider>
-      <DndProvider backend={HTML5Backend}>
-        <Container />
-      </DndProvider>
-    </UIProvider>,
+    //>
+    <DndProvider backend={HTML5Backend}>
+      <Container />
+    </DndProvider>
+    //</UIProvider>,
   );
 
 describe('UserManagement', () => {

@@ -37,8 +37,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -47,8 +47,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -123,9 +123,9 @@ const setup = (
   result: HookReturn;
 } => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
-    <UIProvider>
-      <Container>{children}</Container>
-    </UIProvider>
+    //<UIProvider>
+    <Container>{children}</Container>
+    // </UIProvider>
   );
   const hookResult = renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
     wrapper: RouterWrapper,

@@ -68,9 +68,9 @@ const Container: React.FC<Props> = ({ group }) => {
 
 const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
-    <UIProvider>
-      <Container group={group} />
-    </UIProvider>,
+    //>
+    <Container group={group} />
+    //</UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

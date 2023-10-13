@@ -82,9 +82,9 @@ const Container: React.FC = () => {
 
 const setup = async () => {
   const view = render(
-    <UIProvider>
-      <Container />
-    </UIProvider>,
+    //<UIProvider>
+    <Container />
+    // </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

@@ -10,9 +10,9 @@ vi.mock('components/kit/Tooltip');
 const setup = (metric: Metric) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <UIProvider>
-      <MetricBadgeTag metric={metric} />,
-    </UIProvider>,
+    //<UIProvider>
+    <MetricBadgeTag metric={metric} />,
+    //</UIProvider>,
   );
   return { handleOnChange, view };
 };

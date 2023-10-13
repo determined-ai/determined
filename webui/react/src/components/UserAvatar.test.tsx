@@ -25,9 +25,9 @@ const setup = (testUser: User) => {
   const user = userEvent.setup();
 
   const view = render(
-    <UIProvider>
-      <Component user={testUser} />
-    </UIProvider>,
+    // <UIProvider>
+    <Component user={testUser} />
+    // </UIProvider>,
   );
 
   return { user, view };

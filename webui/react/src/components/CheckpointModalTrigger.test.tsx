@@ -40,11 +40,11 @@ const ModalTrigger: React.FC = () => {
 const setup = async () => {
   render(
     <BrowserRouter>
-      <UIProvider>
-        <ConfirmationProvider>
-          <ModalTrigger />
-        </ConfirmationProvider>
-      </UIProvider>
+      {/* <UIProvider> */}
+      <ConfirmationProvider>
+        <ModalTrigger />
+      </ConfirmationProvider>
+      {/* //</UIProvider> */}
     </BrowserRouter>,
   );
 

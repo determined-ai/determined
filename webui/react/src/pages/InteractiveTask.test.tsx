@@ -36,13 +36,13 @@ const InteractiveTaskPageContainer: React.FC = () => {
 const InteractiveTaskContainer: React.FC = () => {
   return (
     <BrowserRouter>
-      <UIProvider>
-        <HelmetProvider>
-          <ConfirmationProvider>
-            <InteractiveTaskPageContainer />
-          </ConfirmationProvider>
-        </HelmetProvider>
-      </UIProvider>
+      {/* //<UIProvider> */}
+      <HelmetProvider>
+        <ConfirmationProvider>
+          <InteractiveTaskPageContainer />
+        </ConfirmationProvider>
+      </HelmetProvider>
+      {/* // </UIProvider> */}
     </BrowserRouter>
   );
 };

@@ -13,9 +13,9 @@ vi.mock('services/api', () => ({
 
 const setup = () => {
   const view = render(
-    <UIProvider>
-      <ClusterOverallStats />
-    </UIProvider>,
+    //<UIProvider>
+    <ClusterOverallStats />
+    //</UIProvider>,
   );
   return { view };
 };

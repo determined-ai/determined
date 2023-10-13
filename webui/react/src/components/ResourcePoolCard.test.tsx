@@ -16,11 +16,11 @@ vi.mock('services/api', () => ({
 
 const setup = (pool: ResourcePool) => {
   const view = render(
-    <UIProvider>
-      <Suspense>
-        <RenderAllocationBarResourcePool resourcePool={pool} />
-      </Suspense>
-    </UIProvider>,
+    //<UIProvider>
+    <Suspense>
+      <RenderAllocationBarResourcePool resourcePool={pool} />
+    </Suspense>
+    //</UIProvider>,
   );
   return { view };
 };

@@ -301,9 +301,9 @@ export const UIProvider: React.FC<{
   };
 
   return (
-    <div ref={ref} >
+    <div className="ui-provider" ref={ref}>
       <ConfigProvider theme={configTheme}>{children}</ConfigProvider>
-    </div >
+    </div>
   );
 };
 

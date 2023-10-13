@@ -21,11 +21,11 @@ const setup = ({
   ...props
 }: BadgeProps = {}) => {
   return render(
-    <UIProvider>
-      <Badge tooltip={tooltip} type={type} {...props}>
-        {children}
-      </Badge>
-    </UIProvider>,
+    //<UIProvider>
+    <Badge tooltip={tooltip} type={type} {...props}>
+      {children}
+    </Badge>
+    //</UIProvider>,
   );
 };
 
@@ -39,10 +39,10 @@ describe('Badge', () => {
     const TestComponent = () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
-        <UIProvider>
-          <button role="button" onClick={() => setValue(SlotState.Running)} />
-          <Badge state={value} type={BadgeType.State} />
-        </UIProvider>
+        //<UIProvider>
+        // <button role="button" onClick={() => setValue(SlotState.Running)} />
+        <Badge state={value} type={BadgeType.State} />
+        // </UIProvider>
       );
     };
     const view = render(<TestComponent />);

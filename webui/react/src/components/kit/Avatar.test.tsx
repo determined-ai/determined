@@ -11,9 +11,9 @@ const user = userEvent.setup();
 
 const setup = ({ displayName, hideTooltip = false, ...props }: Props) => {
   render(
-    <UIProvider>
-      <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
-    </UIProvider>,
+    // <UIProvider>
+    <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
+    // </UIProvider>,
   );
 };
 

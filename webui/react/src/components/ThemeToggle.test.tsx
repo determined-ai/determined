@@ -8,11 +8,11 @@ import { Mode, UIProvider } from 'components/kit/Theme';
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 
 const ThemeToggleContainer: React.FC = () => (
-  <UIProvider>
-    <BrowserRouter>
-      <ThemeToggle />
-    </BrowserRouter>
-  </UIProvider>
+  // <UIProvider>
+  <BrowserRouter>
+    <ThemeToggle />
+  </BrowserRouter>
+  // </UIProvider>
 );
 
 const user = userEvent.setup();

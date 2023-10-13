@@ -10,7 +10,7 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import {} from 'stores/cluster';
+import { } from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
@@ -53,13 +53,13 @@ vi.mock('./ExperimentVisualization', () => ({
 
 const setup = () => {
   const view = render(
-    <UIProvider>
-      <HelmetProvider>
-        <BrowserRouter>
-          <ExperimentDetails />
-        </BrowserRouter>
-      </HelmetProvider>
-    </UIProvider>,
+    //<UIProvider>
+    <HelmetProvider>
+      <BrowserRouter>
+        <ExperimentDetails />
+      </BrowserRouter>
+    </HelmetProvider>
+    //</UIProvider>,
   );
   return { view };
 };

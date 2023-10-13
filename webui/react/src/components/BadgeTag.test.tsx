@@ -14,11 +14,11 @@ vi.mock('components/kit/Tooltip');
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
-    <UIProvider>
-      <BadgeTag tooltip={tooltip} {...props}>
-        {children}
-      </BadgeTag>
-    </UIProvider>,
+    //<UIProvider>
+    <BadgeTag tooltip={tooltip} {...props}>
+      {children}
+    </BadgeTag>
+    // </UIProvider>,
   );
   return { view };
 };
