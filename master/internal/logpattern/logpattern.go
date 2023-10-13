@@ -3,6 +3,7 @@ package logpattern
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sync"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
+	lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/uptrace/bun"
 )
@@ -18,6 +20,8 @@ import (
 var (
 	blockListCache = make(map[model.TaskID]*set.Set[string])
 	mu             sync.RWMutex
+	regexCache     *lru.Cache[string, *regexp.Regexp]
+	regexCacheSize = 128
 )
 
 // There are two reasons for this using a cache
@@ -27,7 +31,7 @@ var (
 //
 // I think there is going to be a decent chance this cache approach will somehow leak tasks
 // in the future but I think even if we never removed items from the cache
-// we would still probaly be okay.
+// we would still probably be okay.
 // Initialize the blocked node list.
 func Initialize(ctx context.Context) error {
 	mu.Lock()
@@ -46,6 +50,12 @@ func Initialize(ctx context.Context) error {
 			blockListCache[b.TaskID] = ptrs.Ptr(set.New[string]())
 		}
 		blockListCache[b.TaskID].Insert(b.NodeName)
+	}
+
+	var err error
+	regexCache, err = lru.New[string, *regexp.Regexp](regexCacheSize)
+	if err != nil {
+		return fmt.Errorf("creating LRU cache for compiled regex: %w", err)
 	}
 
 	return nil
@@ -245,4 +255,18 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	}
 
 	return out, nil
+}
+
+// GetCompiledRegex returns compiled regex from cache.
+func GetCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
+	compiledRegex, ok := regexCache.Get(regex)
+	if !ok {
+		var err error
+		compiledRegex, err = regexp.Compile(regex)
+		if err != nil {
+			return nil, fmt.Errorf("matching %s with %s: %w", regex, log, err)
+		}
+		regexCache.Add(regex, compiledRegex)
+	}
+	return compiledRegex, nil
 }
