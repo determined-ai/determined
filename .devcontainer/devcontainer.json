@@ -9,7 +9,7 @@
 		"ghcr.io/devcontainers/features/python:1": {},
 		"ghcr.io/devcontainers/features/node:1": {
 			"nodeGypDependencies": true,
-			"version": "18.16.0"
+			"version": "20.1.0"
 		}
 	},
 
