@@ -182,8 +182,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 
 	m.dbState.DisabledAgents = []string{"Node 2"}
 
-	ctx := &actor.Context{}
-	resp, err := m.GetAgents(ctx, &apiv1.GetAgentsRequest{})
+	resp, err := m.GetAgents(&apiv1.GetAgentsRequest{})
 	require.NoError(t, err)
 	assert.Equal(t, len(resp.Agents), len(nodes))
 
@@ -514,7 +513,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 				poolConfig:      dpPools,
 			}
 
-			res, _ := m.GetResourcePools(tt.args.ctx, &apiv1.GetResourcePoolsRequest{})
+			res, _ := m.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 
 			assert.Equal(t, len(tt.want.pools), len(res.ResourcePools))
 			for i, pool := range res.ResourcePools {
@@ -813,7 +812,6 @@ func Test_dispatcherResourceManager_getTaskContainerDefaults(t *testing.T) {
 				poolConfig: tt.fields.poolConfig,
 			}
 			got, err := m.TaskContainerDefaults(
-				&actor.Context{},
 				tt.args.msg.resourcePool,
 				tt.args.msg.fallbackDefault,
 			)
