@@ -2,7 +2,7 @@
 ALTER TABLE metrics ADD COLUMN IF NOT EXISTS seq bigint;
 CREATE SEQUENCE IF NOT EXISTS stream_metric_seq START 1;
 
--- trigger fucntion to update teh sequence number on metric row modfication
+-- trigger function to update the sequence number on metric row modfication
 -- thsi should fire before so that it can modify new directly
 CREATE OR REPLACE FUNCTION stream_metric_seq_modify() RETURNS TRIGGER AS $$ 
 BEGIN  
@@ -10,11 +10,25 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS stream_metric_trigger_seq ON metrics;
-CREATE TRIGGER stream_metric_trigger_seq 
+-- TODO(corban): replaces these triggers with one on the metrics table if we move to postgres >=11 
+DROP TRIGGER IF EXISTS stream_metric_raw_steps_trigger_seq ON raw_steps;
+CREATE TRIGGER stream_metric_raw_steps_trigger_seq 
 BEFORE INSERT OR UPDATE
-ON metrics
+ON raw_steps
 FOR EACH ROW EXECUTE PROCEDURE stream_metric_seq_modify();
+
+DROP TRIGGER IF EXISTS stream_metric_raw_validations_trigger_seq ON raw_validations;
+CREATE TRIGGER stream_metric_raw_validations_trigger_seq 
+BEFORE INSERT OR UPDATE
+ON raw_validations
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_seq_modify();
+
+DROP TRIGGER IF EXISTS stream_metric_generic_metrics_trigger_seq ON generic_metrics;
+CREATE TRIGGER stream_metric_generic_metrics_trigger_seq 
+BEFORE INSERT OR UPDATE
+ON generic_metrics
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_seq_modify();
+
 
 -- helper function to create metric jsonb object for streaming 
 CREATE OR REPLACE FUNCTION stream_metric_notify(
@@ -42,13 +56,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger function to NOTIFY the master of changes, for INSERT
-CREATE OR RPELACE FUNCTION stream_metric_change() RETURNS TRIGGER AS $$ 
+CREATE OR REPLACE FUNCTION stream_metric_change() RETURNS TRIGGER AS $$ 
 DECLARE
     eid  integer;
-    oldproj integer;
-    oldwork integer;
-    newproj integer;
-    newwork integer;
+    proj integer;
+    work integer;
 BEGIN
     IF (TG_OP = 'INSERT') THEN 
         eid = experiment_id FROM trials WHERE trials.id = NEW.trial_id;
@@ -65,17 +77,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- TODO(corban): replaces these triggers with one on the metrics table if we move to postgres >=11 
 -- INSERT AND UPDATE should fire AFTER to gurantee to emit the final row value.
-DROP TRIGGER IF EXISTS stream_metric_trigger_iu ON metrics;
-CREATE TRIGGER stream_metric_trigger_iu
+DROP TRIGGER IF EXISTS stream_metric_raw_steps_trigger_iu ON raw_steps;
+CREATE TRIGGER stream_metric_raw_steps_trigger_iu
 AFTER INSERT OR UPDATE
-ON metrics
+ON raw_steps
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
+
+DROP TRIGGER IF EXISTS stream_metric_raw_validations_trigger_iu ON raw_validations;
+CREATE TRIGGER stream_metric_raw_validations_trigger_iu
+AFTER INSERT OR UPDATE
+ON raw_validations
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
+
+DROP TRIGGER IF EXISTS stream_metric_generic_metrics_trigger_iu ON generic_metrics;
+CREATE TRIGGER stream_metric_generic_metrics_trigger_iu
+AFTER INSERT OR UPDATE
+ON generic_metrics
 FOR EACH ROW EXECUTE PROCEDURE stream_metric_change();
 
 -- Trigger for detecting metric permission scope changes derived from projects.workspace_id.
-CREATE OR REPLACE FUNCTION stream_metric_workspace_change_notify() RETURN TRIGGER $$
+CREATE OR REPLACE FUNCTION stream_metric_workspace_change_notify() RETURNS TRIGGER AS $$
 DECLARE
-    metric RECORD:
+    metric RECORD;
     jmetric jsonb;
 BEGIN 
     FOR metric IN 
@@ -103,8 +128,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 --
-DROP TRIGGER IF EXISTS stream_metric_workspace_Change_trigger ON projects;
-CREATE TRIGGER stream_metric_workspace_Change_trigger
+DROP TRIGGER IF EXISTS stream_metric_workspace_change_trigger ON projects;
+CREATE TRIGGER stream_metric_workspace_change_trigger
 AFTER UPDATE OF workspace_id ON projects
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_workspace_change_notify();
 
@@ -118,7 +143,7 @@ DECLARE
     oldwork integer;
     newwork integer;
 BEGIN
-    FOR metrics IN
+    FOR metric IN
         SELECT
             m.*
         FROM
@@ -148,4 +173,3 @@ DROP TRIGGER IF EXISTS stream_metric_project_change_trigger ON experiments;
 CREATE TRIGGER stream_metric_project_change_trigger
 AFTER UPDATE OF project_id ON experiments
 FOR EACH ROW EXECUTE PROCEDURE stream_trial_project_change_notify();
-

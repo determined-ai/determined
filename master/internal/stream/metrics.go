@@ -53,7 +53,7 @@ func (mm *MetricMsg) SeqNum() int64 {
 // UpsertMsg creates a Metric upserted prepared message.
 func (mm *MetricMsg) UpsertMsg() *websocket.PreparedMessage {
 	wrapper := struct {
-		Metric *MetricMsg `json:"Metric"`
+		Metric *MetricMsg `json:"metric"`
 	}{mm}
 	return prepareMessageWithCache(wrapper, &mm.upsertCache)
 }
@@ -132,7 +132,8 @@ func MetricCollectStartupMsgs(
 		Column("metrics.id").
 		Join("JOIN trials t ON metrics.trial_id = t.id").
 		Join("JOIN experiments e ON t.experiment_id = e.id").
-		Join("JOIN projects p ON e.project_id = p.id")
+		Join("JOIN projects p ON e.project_id = p.id").
+		OrderExpr("metrics.id ASC")
 	q = permFilter(q)
 
 	// Ignore mmf.Since, because we want appearances, which might not be have seq > spec.Since.
