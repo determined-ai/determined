@@ -6,6 +6,7 @@ import pathlib
 import shutil
 import sys
 import tarfile
+import warnings
 from typing import Any, Dict, Iterable, List, Optional
 
 from determined import errors
@@ -49,8 +50,19 @@ class CheckpointState(enum.Enum):
     PARTIALLY_DELETED = bindings.checkpointv1State.PARTIALLY_DELETED.value
 
 
-class TODOCheckpointOrderBy(enum.Enum):
-    """Specifies order of a sorted list of checkpoints."""
+class CheckpointOrderBy(enum.Enum):
+    """Specifies order of a sorted list of checkpoints.
+
+    This class is deprecated in favor of ``OrderBy`` and will be removed in a future
+    release.
+    """
+
+    warnings.warn(
+        "'CheckpointOrderBy' is deprecated and will be removed in a future "
+        "release. Please use 'OrderBy' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
 
     ASC = bindings.v1OrderBy.ASC.value
     DESC = bindings.v1OrderBy.DESC.value

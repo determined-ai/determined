@@ -56,10 +56,20 @@ class ExperimentSortBy(enum.Enum):
         return bindings.v1GetExperimentsRequestSortBy(self.value)
 
 
-class TODOExperimentOrderBy(enum.Enum):
+class ExperimentOrderBy(enum.Enum):
     """Specifies whether a sorted list of experiments should be in ascending or
     descending order.
+
+    This class is deprecated in favor of ``OrderBy`` and will be removed in a future
+    release.
     """
+
+    warnings.warn(
+        "'ExperimentOrderBy' is deprecated and will be removed in a future "
+        "release. Please use 'OrderBy' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
 
     ASCENDING = bindings.v1OrderBy.ASC.value
     DESCENDING = bindings.v1OrderBy.DESC.value

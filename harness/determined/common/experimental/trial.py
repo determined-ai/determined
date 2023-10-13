@@ -545,11 +545,21 @@ class TrialSortBy(enum.Enum):
         return _tsb(self.value)
 
 
-class TODOTrialOrderBy(enum.Enum):
+class TrialOrderBy(enum.Enum):
     """
     Specifies whether a sorted list of trials should be in ascending or
     descending order.
+
+    This class is deprecated in favor of ``OrderBy`` and will be removed in a future
+    release.
     """
+
+    warnings.warn(
+        "'TrialOrderBy' is deprecated and will be removed in a future "
+        "release. Please use 'OrderBy' instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
 
     ASCENDING = bindings.v1OrderBy.ASC.value
     ASC = bindings.v1OrderBy.ASC.value
