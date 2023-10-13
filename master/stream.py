@@ -1,56 +1,54 @@
+from string import Template
+
 import lomond
 from lomond import events
-from string import Template
 
 from determined.experimental import client
 
 url = "localhost:8080"
 
-payload_template = Template('''
+payload_template = Template(
+    """
 {
     "subscribe": {
         "trials": {
-            "trial_ids": $trial_ids,
-            "since": 1000
+            "trial_ids": [$trial_ids],
+            "experiment_ids": [$experiment_ids],
+            "since": 0
         },
         "metrics": {
-            "metric_ids": $metric_ids,
-            "since": 1000
+            "metric_ids": [$metric_ids],
+            "trial_ids": [$trial_ids],
+            "experiment_ids": [$experiment_ids],
+            "since": 0
         }
     },
     "known": {
-        "trials": "1,99-110,1000-8000",
-        "metrics": "1,99-110,1000-8000"
+        "trials": "$trial_ids",
+        "metrics": "$metric_ids"
     }
 }
-''')
-
-# payload_template = Template('''
-# {
-#     "subscribe": {
-#         "trials": {
-#             "trial_ids": $trial_ids,
-#             "since": 1000
-#         }
-#     },
-#     "known": {
-#         "trials": "1,99-110,1000-8000"
-#     }
-# }
-# ''')
+"""
+)
 
 # steal determined token
 client.login(url)
 print(f"Logged in as: {client._determined._session._auth.session.username}")
 token = client._determined._session._auth.session.token
 
-trials = input("Submit array of trial_id values to subscribe to (default: [1]): ")
+trials = input("Submit array of trial_id values to subscribe to (default: 1,2,3): ")
 if trials == "":
-    trials = "[1]"
+    trials = "1,2,3"
 
-metrics = input("Submit array of metric id values to subscribe to (default: [1]): ")
+metrics = input("Submit array of metric id values to subscribe to (default: 1,2,3): ")
 if metrics == "":
-    metrics = "[1]"
+    metrics = "1,2,3"
+
+experiments = input(
+    "Submit array of experiment id values to subscribe to (default: 1,2,3): "
+)
+if experiments == "":
+    experiments = "1,2,3"
 
 
 def stream_loop():
@@ -67,14 +65,9 @@ def stream_loop():
                 print(event.text.strip())
             elif isinstance(event, events.Ready):
                 print("ready")
-                payload = payload_template.substitute(trial_ids=trials, metric_ids=metrics)
-                # payload = 
-                #     '{"subscribe": {"trials": {"trial_ids": '
-                #     + str(trials)
-                #     + ', "since": 1000}, "metrics": {"metric_ids": '
-                #     + str(metrics)
-                #     + ', "since": 1000}}, "known": {"trials": "1,99-110,1000-8000", "metrics": "1"}}'
-                # )
+                payload = payload_template.substitute(
+                    trial_ids=trials, metric_ids=metrics, experiment_ids=experiments
+                )
                 ws.send_binary(payload.encode())
             elif isinstance(
                 event, (events.ConnectFail, events.Rejected, events.ProtocolError)
@@ -84,10 +77,10 @@ def stream_loop():
             elif isinstance(event, (events.Closing, events.Disconnected)):
                 print("Connection closed...attempting reconnect")
                 num_retries += 1
-                #if num_retries < max_retries:
-                    #stream_loop()
-                #else:
-                 #   print("exceeded max retries")
+                if num_retries < max_retries:
+                    stream_loop()
+                else:
+                    print("exceeded max retries")
     except KeyboardInterrupt:
         print("")
     except Exception as e:

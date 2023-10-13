@@ -5,7 +5,7 @@ CREATE SEQUENCE IF NOT EXISTS stream_metric_seq START 1;
 -- trigger function to update the sequence number on metric row modfication
 -- thsi should fire before so that it can modify new directly
 CREATE OR REPLACE FUNCTION stream_metric_seq_modify() RETURNS TRIGGER AS $$ 
-BEGIN  
+BEGIN
     NEW.seq = nextval('stream_metric_seq');
     RETURN NEW;
 END;
@@ -33,7 +33,7 @@ FOR EACH ROW EXECUTE PROCEDURE stream_metric_seq_modify();
 
 -- helper function to create metric jsonb object for streaming 
 CREATE OR REPLACE FUNCTION stream_metric_notify(
-    before jsonb, beforework integer, after jsonb, afterwork integer
+    before jsonb, beforework integer, beforeeid integer,after jsonb, afterwork integer, aftereid integer
 ) RETURNS integer AS $$
 DECLARE
     output jsonb = NULL;
@@ -41,10 +41,12 @@ DECLARE
 BEGIN
     IF before IS NOT NULL THEN
         temp = before || jsonb_object_agg('workspace_id', beforework);
+        temp = before || jsonb_object_agg('experiment_id', beforeeid);
         output = jsonb_object_agg('before', temp);
     END IF;
     IF after IS NOT NULL THEN 
         temp = after || jsonb_object_agg('workspace_id', afterwork);
+        temp = after || jsonb_object_agg('experiment_id', aftereid);
         IF output IS NULL THEN
             output = jsonb_object_agg('after', temp);
         ELSE 
@@ -67,17 +69,17 @@ BEGIN
         eid = experiment_id FROM trials WHERE trials.id = NEW.trial_id;
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_metric_notify(NULL, NULL, to_jsonb(NEW), work);
+        PERFORM stream_metric_notify(NULL, NULL, NULL, to_jsonb(NEW), work, eid);
     ELSEIF (TG_OP = 'UPDATE') THEN
         eid = experiment_id FROM trials WHERE trials.id = NEW.trial_id;
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_metric_notify(to_jsonb(OLD), work, to_jsonb(NEW), work);
+        PERFORM stream_metric_notify(to_jsonb(OLD), work, eid, to_jsonb(NEW), work, eid);
     ELSEIF (TG_OP = 'DELETE') THEN
         eid = experiment_id FROM trials WHERE trials.id = OLD.trial_id;
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_metric_notify(to_jsonb(OLD), work,  NULL, NULL);
+        PERFORM stream_metric_notify(to_jsonb(OLD), work, eid, NULL, NULL, NULL);
         -- DELETE trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
@@ -131,7 +133,8 @@ BEGIN
     FOR metric IN 
     SELECT
         m.*,
-        workspace_id
+        p.workspace_id,
+        t.experiment_id
         FROM
             projects p
             INNER JOIN
@@ -146,7 +149,7 @@ BEGIN
         metric.seq = nextval('stream_metric_seq');
         UPDATE metrics SET seq = metric.seq where id = metric.id;
         jmetric = to_jsonb(metric);
-        PERFORM stream_metric_notify(jmetric, OLD.workspace_id, jmetric, NEW.workspace_id);
+        PERFORM stream_metric_notify(jmetric, OLD.workspace_id, OLD.experiment_id, jmetric, NEW.workspace_id, NEW.experiment_id);
     END LOOP;
     -- return value for AFTER triggers is ignored
     return NULL;
@@ -156,7 +159,7 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS stream_metric_workspace_change_trigger ON projects;
 CREATE TRIGGER stream_metric_workspace_change_trigger
 AFTER UPDATE OF workspace_id ON projects
-FOR EACH ROW EXECUTE PROCEDURE stream_trial_workspace_change_notify();
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_workspace_change_notify();
 
 -- Trigger for decting metric permission scope changes derived from experiments.project_id.
 CREATE OR REPLACE FUNCTION stream_metric_project_change_notify() RETURNS TRIGGER AS $$
@@ -187,7 +190,7 @@ BEGIN
         metric.seq = nextval('stream_metric_seq');
         UPDATE metrics SET seq = metric.seq where id = metric.id;
         jmetric = to_jsonb(metric);
-        PERFORM stream_metric_notify(jmetric, oldwork, jmetric, newwork);
+        PERFORM stream_metric_notify(jmetric, oldwork, eid, jmetric, newwork, eid);
     END LOOP;
     -- return value for AFTER triggers is ignored
     return NULL;
@@ -197,4 +200,4 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS stream_metric_project_change_trigger ON experiments;
 CREATE TRIGGER stream_metric_project_change_trigger
 AFTER UPDATE OF project_id ON experiments
-FOR EACH ROW EXECUTE PROCEDURE stream_trial_project_change_notify();
+FOR EACH ROW EXECUTE PROCEDURE stream_metric_project_change_notify();

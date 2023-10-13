@@ -41,6 +41,9 @@ type MetricMsg struct {
 	// permission scope
 	WorkspaceID int `json:"-"`
 
+	// subscription level
+	ExperimentID int `json:"-"`
+
 	upsertCache *websocket.PreparedMessage
 	deleteCache *websocket.PreparedMessage
 }
@@ -67,8 +70,10 @@ func (mm *MetricMsg) DeleteMsg() *websocket.PreparedMessage {
 // MetricSubscriptionSpec is what a user submits to define a Metric subscription.
 // determined:streamable
 type MetricSubscriptionSpec struct {
-	MetricIds []int `json:"metric_ids"`
-	Since     int64 `json:"since"`
+	MetricIds     []int `json:"metric_ids"`
+	TrialIds      []int `json:"trial_ids"`
+	ExperimentIds []int `json:"experiment_ids"`
+	Since         int64 `json:"since"`
 }
 
 func getMetricMsgsWithWorkspaceID(metricMsgs []*MetricMsg) *bun.SelectQuery {
@@ -84,6 +89,7 @@ func getMetricMsgsWithWorkspaceID(metricMsgs []*MetricMsg) *bun.SelectQuery {
 		Column("archived").
 		Column("seq").
 		Column("projects.workspace_id").
+		Column("trials.experiment_id").
 		Join("JOIN trials ON metric_msg.trial_id = trials.id").
 		Join("JOIN experiments ON trials.experiment_id = experiments.id").
 		Join("JOIN projects ON experiments.project_id = projects.id")
@@ -140,6 +146,12 @@ func MetricCollectStartupMsgs(
 	ws := stream.WhereSince{Since: 0}
 	if len(spec.MetricIds) > 0 {
 		ws.Include("metrics.id in (?)", bun.In(spec.MetricIds))
+	}
+	if len(spec.TrialIds) > 0 {
+		ws.Include("trial_id in (?)", bun.In(spec.TrialIds))
+	}
+	if len(spec.ExperimentIds) > 0 {
+		ws.Include("experiment_id in (?)", bun.In(spec.ExperimentIds))
 	}
 	q = ws.Apply(q)
 
@@ -212,18 +224,30 @@ func MetricCollectSubscriptionModMsgs(ctx context.Context, addSpec MetricSubscri
 
 // MetricFilterMaker tracks the metric id's that are to be filtered for.
 type MetricFilterMaker struct {
-	MetricIds map[int]bool
+	MetricIds     map[int]bool
+	TrialIds      map[int]bool
+	ExperimentIds map[int]bool
 }
 
 // NewMetricFilterMaker creates a new FilterMaker.
 func NewMetricFilterMaker() FilterMaker[*MetricMsg, MetricSubscriptionSpec] {
-	return &MetricFilterMaker{make(map[int]bool)}
+	return &MetricFilterMaker{
+		make(map[int]bool),
+		make(map[int]bool),
+		make(map[int]bool),
+	}
 }
 
 // AddSpec adds MetricIds specified in MetricSubscriptionSpec.
 func (ms *MetricFilterMaker) AddSpec(spec MetricSubscriptionSpec) {
 	for _, id := range spec.MetricIds {
 		ms.MetricIds[id] = true
+	}
+	for _, id := range spec.TrialIds {
+		ms.TrialIds[id] = true
+	}
+	for _, id := range spec.ExperimentIds {
+		ms.ExperimentIds[id] = true
 	}
 }
 
@@ -232,25 +256,45 @@ func (ms *MetricFilterMaker) DropSpec(spec MetricSubscriptionSpec) {
 	for _, id := range spec.MetricIds {
 		delete(ms.MetricIds, id)
 	}
+	for _, id := range spec.TrialIds {
+		delete(ms.TrialIds, id)
+	}
+	for _, id := range spec.ExperimentIds {
+		delete(ms.ExperimentIds, id)
+	}
 }
 
 // MakeFilter returns a function that determines if a MetricMsg based on
 // the MetricFilterMaker's spec.
 func (ms *MetricFilterMaker) MakeFilter() func(*MetricMsg) bool {
 	// Should this filter even run?
-	if len(ms.MetricIds) == 0 {
+	if len(ms.MetricIds) == 0 && len(ms.TrialIds) == 0 && len(ms.ExperimentIds) == 0 {
 		return nil
 	}
 
 	// Make a copy of the map, because the filter must run safely off-thread.
 	metricIds := make(map[int]bool)
+	trialIds := make(map[int]bool)
+	experimentIds := make(map[int]bool)
 	for id := range ms.MetricIds {
 		metricIds[id] = true
+	}
+	for id := range ms.TrialIds {
+		trialIds[id] = true
+	}
+	for id := range ms.ExperimentIds {
+		experimentIds[id] = true
 	}
 
 	// return a closure around our copied map
 	return func(msg *MetricMsg) bool {
 		if _, ok := metricIds[msg.ID]; ok {
+			return true
+		}
+		if _, ok := trialIds[msg.ID]; ok {
+			return true
+		}
+		if _, ok := experimentIds[msg.ExperimentID]; ok {
 			return true
 		}
 		return false
