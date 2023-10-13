@@ -63,7 +63,7 @@ from determined.common.experimental.experiment import Experiment, ExperimentStat
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
 from determined.common.experimental.model import Model, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
-from determined.common.experimental.trial import Trial, TrialOrderBy, TrialSortBy  # noqa: F401
+from determined.common.experimental.trial import Trial, TrialSortBy  # noqa: F401
 from determined.common.experimental.user import User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 

@@ -45,7 +45,7 @@ def test_trial_sort_by() -> None:
 
 def test_trial_order_by() -> None:
     do_enum_test(
-        client.TrialOrderBy,
+        client.OrderBy,
         bindings.v1OrderBy,
         # We don't give the user the UNSPECIFIED option.
         ignore=[bindings.v1OrderBy.UNSPECIFIED],
