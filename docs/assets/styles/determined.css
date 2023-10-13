@@ -684,3 +684,8 @@ h6 {
 .child-articles > div {
   margin: 1em;
 }
+
+.homepage .toctree-l1 {
+  min-height: 0px;
+
+}

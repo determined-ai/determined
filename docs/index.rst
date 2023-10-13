@@ -17,35 +17,21 @@ almost any deep learning model using Determined.
    :web_section_id: R12299
 
 
-.. card-carousel:: 1
-
-    .. card:: Get Started
-      :width: 50%
-      :link: get-started/_index.html
-
-        content
-
-    .. card:: Set Up
-      :width: 50%
-      :link: setup-cluster/_index.html
-
-        Longer
-
-        content
+.. container:: homepage
 
 
-.. toctree::
-   :maxdepth: 1
+   .. toctree::
+      :maxdepth: 1
 
-   Get Started <get-started/_index>
-   Set Up <setup-cluster/_index>
-   Manage <manage/_index>
-   Tutorials <tutorials/_index>
-   Model Hub Library <model-hub-library/_index>
-   Model Dev Guide <model-dev-guide/_index>
-   Reference <reference/_index>
-   Tools <tools/_index>
-   Integrations <integrations/_index>
-   attributions
+      Get Started <get-started/_index>
+      Set Up <setup-cluster/_index>
+      Manage <manage/_index>
+      Tutorials <tutorials/_index>
+      Model Hub Library <model-hub-library/_index>
+      Model Dev Guide <model-dev-guide/_index>
+      Reference <reference/_index>
+      Tools <tools/_index>
+      Integrations <integrations/_index>
+      attributions
 
 

@@ -5,9 +5,11 @@
 .. meta::
    :description: Learn how to get started with Determined.
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
+.. container:: child-articles
 
-   ./*
-   ./*/_index
+   .. toctree::
+      :maxdepth: 2
+      :glob:
+
+      ./*
+      ./*/_index
