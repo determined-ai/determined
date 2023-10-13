@@ -368,7 +368,7 @@ class Determined:
     def get_models(
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
-        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        order_by: OrderBy = OrderBy.ASCENDING,
         name: Optional[str] = None,
         description: Optional[str] = None,
         model_id: Optional[int] = None,
@@ -396,7 +396,7 @@ class Determined:
     def list_models(
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
-        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        order_by: OrderBy = OrderBy.ASCENDING,
         name: Optional[str] = None,
         description: Optional[str] = None,
         model_id: Optional[int] = None,
@@ -409,7 +409,7 @@ class Determined:
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
             order_by: Whether to sort in ascending or descending order. See
-                :class:`~determined.experimental.ModelOrderBy`.
+                :class:`~determined.experimental.OrderBy`.
             name: If this parameter is set, models will be filtered to only
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to

@@ -66,7 +66,7 @@ def test_model_sort_by() -> None:
 
 def test_model_order_by() -> None:
     do_enum_test(
-        client.ModelOrderBy,
+        client.OrderBy,
         bindings.v1OrderBy,
         # We don't give the user the UNSPECIFIED option.
         ignore=[bindings.v1OrderBy.UNSPECIFIED],
