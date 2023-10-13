@@ -127,6 +127,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``TrialMetrics``
-===================
+================
 
 .. autoclass:: determined.experimental.client.TrialMetrics

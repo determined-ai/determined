@@ -9,7 +9,12 @@
 .. meta::
    :description: Learn how to use the flexible Core API to train any deep learning model. This user guide walks you through plugging in your existing training code to get up and running.
 
-This guide will help you get up and running with the Core API.
+Learn how to adapt model training code to use the Core API.
+
+.. note::
+
+   You can also visit the :ref:`api-core-ug-basic` that shows you how to get started with the Core
+   API by performing a simple exercise--incrementing an integer.
 
 +------------------------------------------------------------------+
 | Visit the API reference                                          |

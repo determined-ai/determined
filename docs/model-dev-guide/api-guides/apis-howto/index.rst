@@ -20,7 +20,8 @@ With the Core API, you can plug in your existing training code. You'll then use 
 configuration <experiment-configuration>` to tell Determined how to train the model - e.g.,
 multi-GPU, hyperparameter search, etc.
 
--  :ref:`Core API User Guide <core-getting-started>`
+-  :ref:`api-core-ug-basic`: Increment an Integer
+-  :ref:`core-getting-started`: Train a Model
 
 .. _high-level-apis:
 
@@ -111,6 +112,7 @@ Known limitations:
    :hidden:
 
    api-core-ug
+   api-core-ug-basic
    api-pytorch-ug
    api-keras-ug
    deepspeed/index

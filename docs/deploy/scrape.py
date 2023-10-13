@@ -100,7 +100,6 @@ def xml2str(node):
 
 
 def extract_file(root, xmlpath):
-
     # Workaround an incompatibility between sphinx's XML generation and ElementTree's XML parsing.
     #
     # The issue is references contain xml tags with colons in them:
