@@ -453,6 +453,7 @@ const UserManagement: React.FC = () => {
                   placeholder="All Roles"
                   searchable={false}
                   value={settings.roleFilter}
+                  width={110}
                   onChange={handleRoleFilterApply}
                 />
                 <Select
@@ -461,7 +462,7 @@ const UserManagement: React.FC = () => {
                   placeholder="All Users"
                   searchable={false}
                   value={settings.statusFilter}
-                  width={100}
+                  width={160}
                   onChange={handleStatusFilterApply}
                 />
               </Columns>
