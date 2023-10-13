@@ -116,10 +116,20 @@ func ReportExperimentStateChanged(
 	return nil
 }
 
-// ReportLogPatternHook is somewhat different than other webhook types since we don't persist
+// ReportLogPatternAction is somewhat different than other webhook types since we don't persist
 // a webhook but instead have the hook url stored in experiment config. This code is a little
 // awkward now but I mostly attribute this to the existing code which feels hedged
 // between wanting to support different webhook triggers and only supporting one.
+// TODO there is a couple of potential security concerns here
+//
+//  1. webhooks can be specified for anyone and not admin.
+//     I think this would be the first expconf that would be "admin" limited.
+//     This might cause a huge pain for forking especially since this will likely
+//     be put in TCD and all forked experiments would have this by default
+//     and then also be admin limited.
+//
+//  2. The webhook url could be sensative. Should we censor it? We do this for checkpoint storage
+//     currently but I'm not sure if this works on forking.
 func ReportLogPatternAction(ctx context.Context,
 	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt WebhookType,
 ) error {

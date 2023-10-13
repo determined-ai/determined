@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
@@ -38,6 +37,7 @@ func webhookTypeFromPolicy(p expconf.SendWebhookPolicy) webhooks.WebhookType {
 	}
 }
 
+// Monitor checks for logs against any log_pattern_policies and takes action according to the policy.
 func Monitor(ctx context.Context,
 	taskID model.TaskID, logs []*model.TaskLog, policies expconf.LogPatternPoliciesConfig,
 ) error {
@@ -52,8 +52,14 @@ func Monitor(ctx context.Context,
 		}
 
 		for _, lpp := range policies {
+			// TODO we have this problem where a regex will always match itself.
+			// Should we match the regex against itself and regex it in expconf?
+			// This does this since the first line of logs is printing expconf
+			// which has the regex pattern. Maybe we can censor or omit the pattern?
+			// I'm not sure. Maybe this isn't an issue since
+			// regexes matching themself can be avoided by users.
 			regex := fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
-			compiledRegex, err := getCompiledRegex(regex, l.Log)
+			compiledRegex, err := getCompiledRegex(regex)
 			if err != nil {
 				return err
 			}
@@ -89,6 +95,7 @@ func Monitor(ctx context.Context,
 	return nil
 }
 
+// Initialize the blocked node list.
 // There are two reasons for this using a cache
 //  1. Avoid the possibility this feature causes a major slowdown to Scheduler
 //     that won't be obvious till it run at scale.
@@ -97,7 +104,6 @@ func Monitor(ctx context.Context,
 // I think there is going to be a decent chance this cache approach will somehow leak tasks
 // in the future but I think even if we never removed items from the cache
 // we would still probably be okay.
-// Initialize the blocked node list.
 func Initialize(ctx context.Context) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -126,7 +132,7 @@ func Initialize(ctx context.Context) error {
 	return nil
 }
 
-// DisallowedNodes returns a list of nodes that should be blacklisted for the given allocation
+// DisallowedNodes returns a list of nodes that should be blocklisted for the given allocation.
 func DisallowedNodes(taskID model.TaskID) *set.Set[string] {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -184,19 +190,9 @@ func addRetryOnDifferentNode(
 		return nil
 	}
 
-	// TODO make master log function in tasklogger
-	tasklogger.Insert(&model.TaskLog{
-		TaskID:    string(taskID),
-		Timestamp: ptrs.Ptr(time.Now().UTC()),
-		Level:     ptrs.Ptr(model.LogLevelError),
-		Source:    ptrs.Ptr("master"),
-		StdType:   ptrs.Ptr("stdout"),
-		Log: fmt.Sprintf("(log '%q' matched regex %s) therefore will not schedule on %s\n",
-			triggeringLog, regex, nodeName),
-	})
-
-	// TODO actually maybe here we should do the cap check on the taskID.
-	// Like getAgents and decide this should be killed?
+	tasklogger.Insert(tasklogger.CreateLogFromMaster(taskID, model.LogLevelError,
+		fmt.Sprintf("(log '%q' matched regex %s) therefore will not schedule on %s\n",
+			triggeringLog, regex, nodeName)))
 
 	if _, ok := blockListCache[taskID]; !ok {
 		blockListCache[taskID] = ptrs.Ptr(set.New[string]())
@@ -242,16 +238,9 @@ func addWebhookAlert(ctx context.Context,
 		return nil
 	}
 
-	// TODO make master log function in tasklogger
-	tasklogger.Insert(&model.TaskLog{
-		TaskID:    string(taskID),
-		Timestamp: ptrs.Ptr(time.Now().UTC()),
-		Level:     ptrs.Ptr(model.LogLevelError),
-		Source:    ptrs.Ptr("master"),
-		StdType:   ptrs.Ptr("stdout"),
-		Log: fmt.Sprintf("(log '%q' matched regex %s) therefore sent webhook\n",
-			triggeringLog, regex),
-	})
+	tasklogger.Insert(tasklogger.CreateLogFromMaster(taskID, model.LogLevelError,
+		fmt.Sprintf("(log '%q' matched regex %s) therefore sent webhook\n",
+			triggeringLog, regex)))
 
 	if err := webhooks.ReportLogPatternAction(
 		ctx, taskID, nodeName, regex, triggeringLog, url, wt,
@@ -293,11 +282,7 @@ func addDontRetry(
 		return fmt.Errorf("adding don't retry policy %+v: %w", m, err)
 	}
 
-	// TODO should we send a log to task logs here?
-	// I kinda like it being the last message of the log.
-	// The others make most of sense to me (well webhook does)
-	// Maybe we should put retry on different node to end also? Nah prob is fine
-
+	// We don't send a log to the trial. The trial will do it if it failed.
 	return nil
 }
 
@@ -324,16 +309,17 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 	return out, nil
 }
 
-func getCompiledRegex(regex string, log string) (*regexp.Regexp, error) {
+func getCompiledRegex(regex string) (*regexp.Regexp, error) {
 	compiledRegex, ok := regexCache.Get(regex)
 	if !ok {
 		var err error
 		compiledRegex, err = regexp.Compile(regex)
 		if err != nil {
-			return nil, fmt.Errorf("matching %s with %s: %w", regex, log, err)
+			return nil, fmt.Errorf("compiling regex '%s': %w", regex, err)
 		}
 		regexCache.Add(regex, compiledRegex)
 	}
+
 	return compiledRegex, nil
 }
 

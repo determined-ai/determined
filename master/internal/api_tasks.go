@@ -383,7 +383,7 @@ func (a *apiServer) TaskLogs(
 }
 
 func (a *apiServer) monitor(ctx context.Context, taskID model.TaskID, logs []*model.TaskLog) error {
-	isExp, exp, err := expFromTaskID(ctx, model.TaskID(taskID))
+	isExp, exp, err := expFromTaskID(ctx, taskID)
 	if err != nil {
 		return err
 	}

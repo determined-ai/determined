@@ -1,9 +1,11 @@
 package tasklogger
 
 import (
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 var (
@@ -36,6 +38,22 @@ func New(backend Writer) *Logger {
 
 	go l.run()
 	return &l
+}
+
+// CreateLogFromMaster creates a tasklog of the format that we expect when it comes from master.
+func CreateLogFromMaster(taskID model.TaskID, level, log string) *model.TaskLog {
+	if !strings.HasSuffix(log, "\n") {
+		log += "\n"
+	}
+
+	return &model.TaskLog{
+		TaskID:    string(taskID),
+		Timestamp: ptrs.Ptr(time.Now().UTC()),
+		Level:     &level,
+		Source:    ptrs.Ptr("master"),
+		StdType:   ptrs.Ptr("stdout"),
+		Log:       log,
+	}
 }
 
 // Insert a log into the buffer to be flush within some interval.

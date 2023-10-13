@@ -14240,10 +14240,14 @@ class v1TriggerType(DetEnum):
     - TRIGGER_TYPE_UNSPECIFIED: Default value
     - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state
     - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+    - TRIGGER_TYPE_LOG_PATTERN_POLICY: For experiment config's log_pattern_policy.
+    This is unused in the API currently since log_pattern_policy webhooks are
+    defined in expconf and not the webhook APIs.
     """
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
+    LOG_PATTERN_POLICY = "TRIGGER_TYPE_LOG_PATTERN_POLICY"
 
 class v1UnarchiveExperimentsRequest(Printable):
     """Unarchive multiple experiments."""

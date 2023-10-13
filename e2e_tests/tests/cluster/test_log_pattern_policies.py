@@ -14,10 +14,6 @@ from tests.cluster.utils import WebhookServer
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_pattern_policy_dont_retry(should_match: bool) -> None:
-    # TODO we have this problem where a regex will always match itself.
-    # Like can we add a validation here? IDK what the best academic way to solve this is.
-    # This does this since the first line logs expconf which has the pattern.
-    # Maybe we can censor pattern? I'm not sure. Maybe this isn't an issue.
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
         regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
@@ -87,6 +83,7 @@ def test_log_pattern_retry_different_node(should_match: bool) -> None:
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
 
     if should_match:
+        # TODO(DET-9897) this job should fail instead and not be stuck in queued.
         # We can run another job to completion since our original should be stuck in queued.
         second_exp_id = exp.create_experiment(
             conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
@@ -118,7 +115,6 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = WebhookServer(port)
 
-    # bleh. Make a new interface.
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
         regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"

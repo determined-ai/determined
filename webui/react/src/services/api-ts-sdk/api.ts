@@ -10378,7 +10378,7 @@ export interface V1Trigger {
     webhookId?: number;
 }
 /**
- * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+ * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.  - TRIGGER_TYPE_LOG_PATTERN_POLICY: For experiment config's log_pattern_policy. This is unused in the API currently since log_pattern_policy webhooks are defined in expconf and not the webhook APIs.
  * @export
  * @enum {string}
  */
@@ -10386,6 +10386,7 @@ export const V1TriggerType = {
     UNSPECIFIED: 'TRIGGER_TYPE_UNSPECIFIED',
     EXPERIMENTSTATECHANGE: 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE',
     METRICTHRESHOLDEXCEEDED: 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED',
+    LOGPATTERNPOLICY: 'TRIGGER_TYPE_LOG_PATTERN_POLICY',
 } as const
 export type V1TriggerType = ValueOf<typeof V1TriggerType>
 /**

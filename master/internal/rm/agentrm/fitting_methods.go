@@ -7,7 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
-// Hard Constraints
+// Hard Constraints.
 func agentPermittedSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 	return !logpattern.DisallowedNodes(req.TaskID).Contains(agent.Handler.Address().Local())
 }

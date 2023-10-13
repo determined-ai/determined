@@ -132,6 +132,7 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 		Where("id = ?", trial.ExperimentID).
 		Set("config = ?", m).
 		Exec(ctx)
+	require.NoError(t, err)
 
 	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
 		Logs: []*taskv1.TaskLog{
@@ -152,6 +153,7 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 			},
 		},
 	})
+	require.NoError(t, err)
 
 	require.Equal(t, []string{"a1"}, logpattern.DisallowedNodes(task.TaskID).ToSlice())
 
