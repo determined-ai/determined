@@ -1,8 +1,8 @@
 .. _install-using-homebrew:
 
-###########################################
- Install Determined Using Homebrew (macOS)
-###########################################
+################
+ MacOS Homebrew
+################
 
 This user guide provides step-by-step instructions for installing Determined using Homebrew.
 

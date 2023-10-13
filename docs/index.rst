@@ -17,10 +17,10 @@ almost any deep learning model using Determined.
    :web_section_id: R12299
 
 ********
- Deploy
+ Set Up
 ********
 
-<some description or tagline>
+Learn about Determined's features and how to configure + deploy your cluster.
 
 .. container:: homepage
 
@@ -35,7 +35,8 @@ almost any deep learning model using Determined.
  Explore
 *********
 
-<some description or tagline>
+Learn about Determined's CLI and WebUI, as well as how to use Determined's APIs or compatible
+integrations.
 
 .. container:: homepage
 
@@ -48,10 +49,10 @@ almost any deep learning model using Determined.
       Reference <reference/_index>
 
 *******
- Learn
+ Build
 *******
 
-<some description or tagline>
+Learn how to use Determined to build and train models.
 
 .. container:: homepage
 

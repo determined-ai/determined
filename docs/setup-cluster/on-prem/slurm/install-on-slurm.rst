@@ -7,7 +7,7 @@
 This document describes how to deploy Determined on an HPC cluster managed by the Slurm or PBS
 workload managers.
 
-.. include:: ../../_shared/tip-keep-install-instructions.txt
+.. include:: ../../../_shared/tip-keep-install-instructions.txt
 
 The Determined master and launcher installation packages are configured for installation on a single
 login or administrator Slurm/PBS cluster node.

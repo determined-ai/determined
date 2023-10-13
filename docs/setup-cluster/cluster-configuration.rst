@@ -1,8 +1,8 @@
 .. _cluster-configuration:
 
-#########################
- Configuring the Cluster
-#########################
+#########
+ Cluster
+#########
 
 This guide contains basic cluster configuration information and links to reference information.
 

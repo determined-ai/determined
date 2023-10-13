@@ -1,8 +1,8 @@
 .. _sysadmin-deploy-on-hpc:
 
-#####################
- Deploy on Slurm/PBS
-#####################
+##########
+ Slurm/PBS
+##########
 
 +--------------------------------------------+
 | Supported Versions                         |
@@ -33,9 +33,9 @@ access all of the advanced capabilities of the HPC workload manager.
 To install Determined on the HPC cluster, ensure that the :ref:`slurm-requirements` are met, then
 follow the steps in the :ref:`install-on-slurm` document.
 
-***********
- Reference
-***********
+
+Reference
+
 
 -  :ref:`Determined Installation Requirements <system-requirements>`
 -  `Slurm <https://slurm.schedmd.com/documentation.html>`__

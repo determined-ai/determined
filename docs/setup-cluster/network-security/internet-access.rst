@@ -2,9 +2,9 @@
 
 .. _internet-access:
 
-############################
- Setting Up Internet Access
-############################
+#################
+ Internet Access
+#################
 
 -  The Determined Docker images are hosted on Docker Hub. Determined agents need access to Docker
    Hub for such tasks as building new images for user workloads.

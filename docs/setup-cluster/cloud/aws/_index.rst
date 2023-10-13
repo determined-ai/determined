@@ -1,8 +1,8 @@
 .. _topic_guide_aws:
 
-###############
- Deploy on AWS
-###############
+#####
+ AWS
+#####
 
 This section describes how Determined runs on Amazon Web Services (AWS). For installation, see
 :ref:`install-aws`.

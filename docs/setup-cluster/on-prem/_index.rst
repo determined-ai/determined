@@ -1,8 +1,8 @@
 .. _deploy-on-prem-overview:
 
-################
- Deploy on Prem
-################
+#########
+ On Prem
+#########
 
 On-premise deployments are useful if you already have access to the machines that you would like to
 install Determined on, whether that means a single laptop for local development or a fleet of
@@ -16,7 +16,7 @@ Debian packages and running them as `systemd <https://freedesktop.org/wiki/Softw
 services.
 
 To install Determined on-premise, first :ref:`install Docker <install-docker>`. Then install
-Determined by your :ref:`preferred method <deploy-on-prem-options-index>`.
+Determined by your preferred method.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
 

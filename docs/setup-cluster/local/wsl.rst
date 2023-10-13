@@ -1,8 +1,8 @@
 .. _install-using-wsl:
 
-################################################################
- Install Determined Using Windows Subsystem for Linux (Windows)
-################################################################
+#######################################
+ Windows Subsystem for Linux (Windows)
+#######################################
 
 This user guide provides step-by-step instructions for installing Determined on the Windows
 Subsystem for Linux (WSL). You have two options for installation: using the Debian or RPM packages

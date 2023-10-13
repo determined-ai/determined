@@ -1,8 +1,8 @@
 .. _topic_guide_gcp:
 
-###############
- Deploy on GCP
-###############
+#####
+ GCP
+#####
 
 This document describes how Determined runs on Google Cloud Platform (GCP). For installation, see
 :ref:`install-gcp`.
