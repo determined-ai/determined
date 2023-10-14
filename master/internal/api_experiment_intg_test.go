@@ -254,38 +254,38 @@ func TestParseAndMergeContinueConfig(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
 
-	_, err := api.parseAndMergeContinueConfig(exp.ID, ``)
+	_, _, err := api.parseAndMergeContinueConfig(exp.ID, ``)
 	require.NoError(t, err)
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
+	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
 	require.NoError(t, err)
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
 project: test
 `)
 	require.ErrorContains(t, err, "'project' in override config cannot be specified")
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
 workspace: test
 `)
 	require.ErrorContains(t, err, "'workspace' in override config cannot be specified")
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
 searcher:
     max_length:
         batches: 10
 `)
 	require.ErrorContains(t, err, "you might also need to specify searcher.name=single")
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
 searcher:
-    max_length:
-        batches: 10
-    name: single
+  max_length:
+    batches: 10
+  name: single
 `)
 	require.NoError(t, err)
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `
+	_, _, err = api.parseAndMergeContinueConfig(exp.ID, `
 searcher:
   name: random
   metric: accuracy
@@ -296,16 +296,45 @@ searcher:
 	require.ErrorContains(t, err,
 		"override config must have single searcher type got 'random' instead")
 
-	// Update to non single searcher.
-	_, err = db.Bun().NewUpdate().Table("experiments").
-		Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"random"`).
-		Where("id = ?", exp.ID).
-		Exec(ctx)
+	conf := `
+entrypoint: test
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-integration-checkpoints
+searcher:
+  metric: validation_error
+  smaller_is_better: true
+  name: random
+  max_trials: 3
+  max_length:
+    batches: 10
+resources:
+  resource_pool: kubernetes`
+	createReq := &apiv1.CreateExperimentRequest{
+		ModelDefinition: []*utilv1.File{{Content: []byte{1}}},
+		Config:          conf,
+		ParentId:        0,
+		Activate:        false,
+		ProjectId:       1,
+	}
+
+	// No checkpoint specified anywhere.
+	resp, err := api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+	_, _, err = api.parseAndMergeContinueConfig(int(resp.Experiment.Id), `{}`)
 	require.NoError(t, err)
 
-	_, err = api.parseAndMergeContinueConfig(exp.ID, `{}`)
+	_, _, err = api.parseAndMergeContinueConfig(int(resp.Experiment.Id), `
+searcher:
+  name: random
+  metric: accuracy
+  max_trials: 5
+  max_length:
+    batches: 1000
+`)
 	require.ErrorContains(t, err,
-		"cannot continue a 'random' searcher experiment, must be a single searcher experiment")
+		"override config is provided and experiment is not single searcher, got 'random' instead")
 }
 
 // nolint: exhaustivestruct

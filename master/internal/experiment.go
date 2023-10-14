@@ -109,7 +109,7 @@ type (
 		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
-		continueFromTrialID *int
+		continueTrials      bool
 
 		taskSpec      *tasks.TaskSpec
 		generatedKeys ssh.PrivateAndPublicKeys
@@ -723,6 +723,29 @@ func (e *experiment) restoreTrials() {
 	}
 }
 
+func (e *experiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
+	var continueFromTrialID *int
+	if e.continueTrials {
+		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			e.updateState(model.StateWithReason{
+				State: model.StoppingErrorState,
+				InformationalReason: fmt.Sprintf(
+					"hp search unable to get trial for the Request ID %v with error %v", reqID, err),
+			})
+			e.syslog.Error(err)
+			return nil, true
+		}
+		if trial.State != model.CompletedState {
+			continueFromTrialID = &trial.ID
+		} else {
+			e.trialClosed(reqID, nil)
+			return nil, true
+		}
+	}
+	return continueFromTrialID, false
+}
+
 func (e *experiment) processOperations(
 	ops []searcher.Operation, err error,
 ) {
@@ -750,6 +773,12 @@ func (e *experiment) processOperations(
 				e.syslog.Errorf("trial %s already exists", op.RequestID)
 				continue
 			}
+
+			continueFromTrialID, closed := e.handleContinueExperiment(op.RequestID)
+			if closed {
+				continue
+			}
+
 			checkpoint, err := e.checkpointForCreate(op)
 			if err != nil {
 				e.updateState(model.StateWithReason{
@@ -769,7 +798,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, e.continueFromTrialID, e.TrialClosed,
+				nil, continueFromTrialID, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")

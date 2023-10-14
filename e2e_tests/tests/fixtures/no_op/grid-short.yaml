@@ -1,0 +1,28 @@
+name: grid_graceful_trial_termination
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-integration-checkpoints
+hyperparameters:
+  global_batch_size: 32
+  metrics_progression: decreasing
+  metrics_sigma: 0
+  learning_rate:
+    count: 3
+    maxval: 1
+    minval: 0.0001
+    type: double
+  n_filters1:
+    count: 2
+    maxval: 64
+    minval: 8
+    type: int
+searcher:
+  name: grid
+  metric: validation_error
+  max_length:
+    batches: 10
+reproducibility:
+  experiment_seed: 999
+max_restarts: 0
+entrypoint: model_def:NoOpTrial
