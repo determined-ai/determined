@@ -45,6 +45,7 @@ def all_operations(
 
     latest_version = model_obj.get_version()
     assert latest_version is not None
+    assert latest_version.checkpoint is not None
     assert latest_version.checkpoint.uuid == checkpoint.uuid
 
     # Get checkpoint (ensure you can access this through model).
