@@ -297,11 +297,13 @@ const DownloadButton = ({
 
   return (
     <>
-      <Button
-        icon={<Icon name="download" showTooltip size="small" title="Download Chart" />}
-        type="text"
-        onClick={handleDownloadClick}
-      />
+      <div className={css.download}>
+        <Button
+          icon={<Icon name="download" showTooltip size="small" title="Download Chart" />}
+          type="text"
+          onClick={handleDownloadClick}
+        />
+      </div>
       {/* this is an invisible link used to programatically download the image file */}
       <a
         aria-disabled
