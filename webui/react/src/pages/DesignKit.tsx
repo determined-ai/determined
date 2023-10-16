@@ -895,19 +895,28 @@ const SectionComponentSection: React.FC = () => {
       <AntDCard title="Usage">
         <p>Without title</p>
         <Section>
-          <p>foo text</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
+            exercitationem, labore, suscipit atque ullam...
+          </p>
           <Button>foo button</Button>
         </Section>
         <br />
         <p>With title</p>
         <Section title="Title of the section">
-          <p>foo text</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
+            exercitationem, labore, suscipit atque ullam...
+          </p>
           <Button>foo button</Button>
         </Section>
         <br />
         <p>With divider</p>
         <Section divider title="Title of the section">
-          <p>foo text</p>
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
+            exercitationem, labore, suscipit atque ullam...
+          </p>
           <Button>foo button</Button>
         </Section>
       </AntDCard>
