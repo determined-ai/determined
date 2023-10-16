@@ -9,9 +9,9 @@ import React, { useMemo } from 'react';
 import Tooltip from 'components/kit/Tooltip';
 
 import ActiveIcon from './Icon/Active';
+import css from './Icon/Icon.module.scss';
 import QueuedIcon from './Icon/Queue';
 import { SpinBowtie, SpinHalf, SpinShadow } from './Icon/Spin';
-import css from './Icon.module.scss';
 import AddIcon from './icons/add.svg';
 import ArchiveIcon from './icons/archive.svg';
 import ArrowDownIcon from './icons/arrow-down.svg';
