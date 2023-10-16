@@ -13,6 +13,7 @@ import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   experimentNameRenderer,
   relativeTimeRenderer,
@@ -202,6 +203,7 @@ const Dashboard: React.FC = () => {
           </Card.Group>
         </Section>
       ) : null}
+      <SkeletonTable columns={2} rows={1} />
       {/* show Submissions header even when empty: */}
       <Section title="Your Recent Submissions">
         {submissionsLoading ? (
