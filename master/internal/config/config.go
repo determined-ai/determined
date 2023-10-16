@@ -147,6 +147,7 @@ type Config struct {
 	Cache                 CacheConfig                       `json:"cache"`
 	Webhooks              WebhooksConfig                    `json:"webhooks"`
 	FeatureSwitches       []string                          `json:"feature_switches"`
+	ReservedPorts         []int                             `json:"reserved_ports"`
 	ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.

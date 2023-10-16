@@ -1573,3 +1573,27 @@ requests and responses.
 =================
 
 The path to the IdP's certificate, used to validate assertions.
+
+********************
+ ``reserved_ports``
+********************
+
+Determined makes use of certain ports for inter-process communication, however this may cause
+conflicts with other software. If such conflicts arise, list here any ports that Determined should
+not use. Here is an example:
+
+.. code:: yaml
+
+   reserved_ports:
+     - 12350
+     - 12351
+
+For reference, Determined allocates ports in the following ranges:
+
+-  12350 and up.
+-  12360 and up.
+-  12365 and up.
+-  29400 and up.
+
+The number of ports active in each range will vary with time, depending on activity in the
+Determined master.

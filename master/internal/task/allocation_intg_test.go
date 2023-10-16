@@ -178,7 +178,7 @@ func setup(t *testing.T) (
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
-	portregistry.InitPortRegistry()
+	portregistry.InitPortRegistry(nil)
 
 	// mock resource manager.
 	var rm mocks.ResourceManager
