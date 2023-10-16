@@ -174,10 +174,28 @@ def create_deepspeed_env_file() -> None:
             # since values may contain spaces and quotes.  shlex.quote was removed from the
             # deepspeed launcher in 0.6.2 so we add it here for this version onwards.
             if deepspeed_version >= version.parse("0.6.2"):
-                f.write(f"{k}={shlex.quote(v)}\n")
+                line = f"{k}={shlex.quote(v)}"
             else:
-                f.write(f"{k}={v}\n")
+                line = f"{k}={v}"
 
+            # By default, IFS is set to a space, a tab, and a newline character.
+            # Therefore, the IFS environment variable will be written as:
+            #
+            # IFS='
+            # '
+            #
+            # The single quote on its own line will cause the
+            # "key, val = var.split('=', maxsplit=1)" in
+            # "deepspeed/launcher/runner.py" to fail with the error:
+            #
+            # ValueError: not enough values to unpack (expected 2, got 1)
+            #
+            # Therefore, avoid writing any environment variables containing a
+            # newline character.
+            if "\n" not in line:
+                f.write(f"{line}\n")
+            else:
+                logging.debug(f"Excluding environment variable {k} because it could not be formatted correctly.")
 
 def create_run_command(master_address: str, hostfile_path: Optional[str]) -> List[str]:
     # Construct the deepspeed command.
