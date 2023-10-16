@@ -1,0 +1,558 @@
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): docs.determined.ai:443
+DEBUG:urllib3.connectionpool:https://docs.determined.ai:443 "GET /latest/_static/version-switcher/versions.json HTTP/1.1" 200 755
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): docs.determined.ai:443
+DEBUG:urllib3.connectionpool:https://docs.determined.ai:443 "GET /latest/_static/version-switcher/versions.json HTTP/1.1" 200 755
+DEBUG:_extensions.sort_by_weight:Metadata for attributions: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'get-started/basic'), (None, 'get-started/examples'), (None, 'get-started/architecture/_index')]" glob="True" hidden="False" includefiles="['get-started/basic', 'get-started/examples', 'get-started/architecture/_index']" includehidden="False" maxdepth="2" numbered="0" parent="get-started/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/basic, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/examples, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/_index: {'weight': '500'}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'get-started/architecture/benefits'), (None, 'get-started/architecture/concepts'), (None, 'get-started/architecture/introduction'), (None, 'get-started/architecture/system-architecture')]" glob="True" hidden="False" includefiles="['get-started/architecture/benefits', 'get-started/architecture/concepts', 'get-started/architecture/introduction', 'get-started/architecture/system-architecture']" includehidden="False" maxdepth="2" numbered="0" parent="get-started/architecture/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/benefits, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/concepts, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/introduction, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/system-architecture, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/benefits: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/concepts: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/system-architecture: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/basic: {'weight': '700'}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Get Started', 'get-started/_index'), ('Set Up', 'setup-cluster/_index'), ('Manage', 'manage/_index')]" glob="False" hidden="False" includefiles="['get-started/_index', 'setup-cluster/_index', 'manage/_index']" includehidden="False" maxdepth="1" numbered="0" parent="index" rawentries="['Get Started', 'Set Up', 'Manage']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/_index, Metadata: {'weight': 0}
+DEBUG:_extensions.sort_by_weight:     - Doc: setup-cluster/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Tools', 'tools/_index'), ('Integrations', 'integrations/_index'), ('Model Hub Library', 'model-hub-library/_index'), ('Reference', 'reference/_index')]" glob="False" hidden="False" includefiles="['tools/_index', 'integrations/_index', 'model-hub-library/_index', 'reference/_index']" includehidden="False" maxdepth="1" numbered="0" parent="index" rawentries="['Tools', 'Integrations', 'Model Hub Library', 'Reference']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: tools/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Tutorials', 'tutorials/_index'), ('Model Dev Guide', 'model-dev-guide/_index')]" glob="False" hidden="False" includefiles="['tutorials/_index', 'model-dev-guide/_index']" includehidden="False" maxdepth="1" numbered="0" parent="index" rawentries="['Tutorials', 'Model Dev Guide']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: tutorials/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'attributions')]" glob="False" hidden="True" includefiles="['attributions']" includehidden="False" maxdepth="-1" numbered="0" parent="index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: attributions, Metadata: {'weight': 0}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/data-transformers/_index'), (None, 'integrations/ide/_index'), (None, 'integrations/notification/_index'), (None, 'integrations/prometheus/_index')]" glob="True" hidden="False" includefiles="['integrations/data-transformers/_index', 'integrations/ide/_index', 'integrations/notification/_index', 'integrations/prometheus/_index']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/data-transformers/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/ide/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/notification/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/prometheus/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/data-transformers/pachyderm')]" glob="True" hidden="False" includefiles="['integrations/data-transformers/pachyderm']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/data-transformers/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/data-transformers/pachyderm, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/pachyderm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/ide/pycharm'), (None, 'integrations/ide/vscode')]" glob="True" hidden="False" includefiles="['integrations/ide/pycharm', 'integrations/ide/vscode']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/ide/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/ide/pycharm, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/ide/vscode, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/pycharm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/vscode: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/notification/slack'), (None, 'integrations/notification/zapier')]" glob="True" hidden="False" includefiles="['integrations/notification/slack', 'integrations/notification/zapier']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/notification/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/notification/slack, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/notification/zapier, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/slack: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/zapier: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/prometheus/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'manage/elasticsearch-logging-backend'), (None, 'manage/historical-cluster-usage-data'), (None, 'manage/troubleshooting'), (None, 'manage/upgrade'), (None, 'manage/users'), (None, 'manage/workspaces'), (None, 'manage/workspaces-rpools'), (None, 'manage/security/_index')]" glob="True" hidden="False" includefiles="['manage/elasticsearch-logging-backend', 'manage/historical-cluster-usage-data', 'manage/troubleshooting', 'manage/upgrade', 'manage/users', 'manage/workspaces', 'manage/workspaces-rpools', 'manage/security/_index']" includehidden="False" maxdepth="2" numbered="0" parent="manage/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/elasticsearch-logging-backend, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/historical-cluster-usage-data, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/troubleshooting, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/upgrade, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/users, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/workspaces, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/workspaces-rpools, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/elasticsearch-logging-backend: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/historical-cluster-usage-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'manage/security/oauth'), (None, 'manage/security/oidc'), (None, 'manage/security/rbac'), (None, 'manage/security/saml'), (None, 'manage/security/scim'), (None, 'manage/security/tls')]" glob="True" hidden="False" includefiles="['manage/security/oauth', 'manage/security/oidc', 'manage/security/rbac', 'manage/security/saml', 'manage/security/scim', 'manage/security/tls']" includehidden="False" maxdepth="2" numbered="0" parent="manage/security/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/oauth, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/oidc, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/rbac, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/saml, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/scim, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/tls, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oauth: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oidc: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/rbac: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/saml: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/scim: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/tls: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/troubleshooting: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/upgrade: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/users: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Binding Resource Pools to Workspaces', 'manage/workspaces-rpools')]" glob="False" hidden="True" includefiles="['manage/workspaces-rpools']" includehidden="False" maxdepth="1" numbered="0" parent="manage/workspaces" rawentries="['Binding Resource Pools to Workspaces']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/workspaces-rpools, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces-rpools: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/debug-models'), (None, 'model-dev-guide/load-model-data'), (None, 'model-dev-guide/submit-experiment'), (None, 'model-dev-guide/api-guides/_index'), (None, 'model-dev-guide/best-practices/_index'), (None, 'model-dev-guide/dtrain/_index'), (None, 'model-dev-guide/hyperparameter/_index'), (None, 'model-dev-guide/model-management/_index'), (None, 'model-dev-guide/prepare-container/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/debug-models', 'model-dev-guide/load-model-data', 'model-dev-guide/submit-experiment', 'model-dev-guide/api-guides/_index', 'model-dev-guide/best-practices/_index', 'model-dev-guide/dtrain/_index', 'model-dev-guide/hyperparameter/_index', 'model-dev-guide/model-management/_index', 'model-dev-guide/prepare-container/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/debug-models, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/load-model-data, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/submit-experiment, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/best-practices/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/model-management/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/prepare-container/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/api-guides/batch-process-api-ug'), (None, 'model-dev-guide/api-guides/apis-howto/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/api-guides/batch-process-api-ug', 'model-dev-guide/api-guides/apis-howto/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/api-guides/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/batch-process-api-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/api-guides/apis-howto/api-core-ug'), (None, 'model-dev-guide/api-guides/apis-howto/api-keras-ug'), (None, 'model-dev-guide/api-guides/apis-howto/api-pytorch-ug'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/api-guides/apis-howto/api-core-ug', 'model-dev-guide/api-guides/apis-howto/api-keras-ug', 'model-dev-guide/api-guides/apis-howto/api-pytorch-ug', 'model-dev-guide/api-guides/apis-howto/deepspeed/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/api-guides/apis-howto/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/api-core-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/api-keras-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/api-pytorch-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-core-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-keras-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-pytorch-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/api-guides/apis-howto/deepspeed/advanced'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/autotuning'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed')]" glob="True" hidden="False" includefiles="['model-dev-guide/api-guides/apis-howto/deepspeed/advanced', 'model-dev-guide/api-guides/apis-howto/deepspeed/autotuning', 'model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed', 'model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/api-guides/apis-howto/deepspeed/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/advanced, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/autotuning, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/advanced: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/autotuning: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/batch-process-api-ug: {'orphan': '', 'weight': '3333'}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/best-practices/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/debug-models: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/dtrain/config-templates'), (None, 'model-dev-guide/dtrain/dtrain-implement'), (None, 'model-dev-guide/dtrain/dtrain-introduction'), (None, 'model-dev-guide/dtrain/optimize-training'), (None, 'model-dev-guide/dtrain/reproducibility')]" glob="True" hidden="False" includefiles="['model-dev-guide/dtrain/config-templates', 'model-dev-guide/dtrain/dtrain-implement', 'model-dev-guide/dtrain/dtrain-introduction', 'model-dev-guide/dtrain/optimize-training', 'model-dev-guide/dtrain/reproducibility']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/dtrain/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/config-templates, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/dtrain-implement, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/dtrain-introduction, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/optimize-training, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/reproducibility, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/config-templates: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-implement: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/optimize-training: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/reproducibility: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/hyperparameter/configure-hp-ranges'), (None, 'model-dev-guide/hyperparameter/handle-trial-errors'), (None, 'model-dev-guide/hyperparameter/hp-constraints-det'), (None, 'model-dev-guide/hyperparameter/instrument-model-code'), (None, 'model-dev-guide/hyperparameter/search-methods/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/hyperparameter/configure-hp-ranges', 'model-dev-guide/hyperparameter/handle-trial-errors', 'model-dev-guide/hyperparameter/hp-constraints-det', 'model-dev-guide/hyperparameter/instrument-model-code', 'model-dev-guide/hyperparameter/search-methods/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/hyperparameter/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/configure-hp-ranges, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/handle-trial-errors, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/hp-constraints-det, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/instrument-model-code, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/configure-hp-ranges: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/handle-trial-errors: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/hp-constraints-det: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/instrument-model-code: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-custom'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-grid'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-random'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-single')]" glob="True" hidden="False" includefiles="['model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha', 'model-dev-guide/hyperparameter/search-methods/hp-custom', 'model-dev-guide/hyperparameter/search-methods/hp-grid', 'model-dev-guide/hyperparameter/search-methods/hp-random', 'model-dev-guide/hyperparameter/search-methods/hp-single']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/hyperparameter/search-methods/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-custom, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-grid, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-random, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-single, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-custom: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-grid: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-random: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-single: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/load-model-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/model-management/checkpoints'), (None, 'model-dev-guide/model-management/model-registry-org')]" glob="True" hidden="False" includefiles="['model-dev-guide/model-management/checkpoints', 'model-dev-guide/model-management/model-registry-org']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/model-management/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/model-management/checkpoints, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/model-management/model-registry-org, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/checkpoints: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/model-registry-org: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/prepare-container/custom-env'), (None, 'model-dev-guide/prepare-container/set-environment-images')]" glob="True" hidden="False" includefiles="['model-dev-guide/prepare-container/custom-env', 'model-dev-guide/prepare-container/set-environment-images']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/prepare-container/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/prepare-container/custom-env, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/prepare-container/set-environment-images, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/custom-env: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/set-environment-images: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/submit-experiment: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-hub-library/mmdetection/_index'), (None, 'model-hub-library/transformers/_index')]" glob="True" hidden="False" includefiles="['model-hub-library/mmdetection/_index', 'model-hub-library/transformers/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-hub-library/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/mmdetection/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/transformers/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/mmdetection/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-hub-library/transformers/examples'), (None, 'model-hub-library/transformers/tutorial')]" glob="True" hidden="False" includefiles="['model-hub-library/transformers/examples', 'model-hub-library/transformers/tutorial']" includehidden="False" maxdepth="2" numbered="0" parent="model-hub-library/transformers/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/transformers/examples, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/transformers/tutorial, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/tutorial: {}
+DEBUG:_extensions.sort_by_weight:Metadata for reference/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'reference/cli-reference'), (None, 'reference/custom-searcher-reference'), (None, 'reference/job-config-reference'), (None, 'reference/python-sdk'), (None, 'reference/rest-api'), (None, 'reference/deploy/_index'), (None, 'reference/model-hub/_index'), (None, 'reference/training/_index')]" glob="True" hidden="False" includefiles="['reference/cli-reference', 'reference/custom-searcher-reference', 'reference/job-config-reference', 'reference/python-sdk', 'reference/rest-api', 'reference/deploy/_index', 'reference/model-hub/_index', 'reference/training/_index']" includehidden="False" maxdepth="2" numbered="0" parent="reference/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/cli-reference, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/custom-searcher-reference, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/job-config-reference, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/python-sdk, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/rest-api, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/deploy/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/model-hub/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/training/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for attributions: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'get-started/basic'), (None, 'get-started/examples'), (None, 'get-started/architecture/_index')]" glob="True" hidden="False" includefiles="['get-started/basic', 'get-started/examples', 'get-started/architecture/_index']" includehidden="False" maxdepth="2" numbered="0" parent="get-started/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/basic, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/examples, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/_index: {'weight': '500'}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'get-started/architecture/benefits'), (None, 'get-started/architecture/concepts'), (None, 'get-started/architecture/introduction'), (None, 'get-started/architecture/system-architecture')]" glob="True" hidden="False" includefiles="['get-started/architecture/benefits', 'get-started/architecture/concepts', 'get-started/architecture/introduction', 'get-started/architecture/system-architecture']" includehidden="False" maxdepth="2" numbered="0" parent="get-started/architecture/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/benefits, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/concepts, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/introduction, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/architecture/system-architecture, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/benefits: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/concepts: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/system-architecture: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/basic: {'weight': '700'}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Get Started', 'get-started/_index'), ('Set Up', 'setup-cluster/_index'), ('Manage', 'manage/_index')]" glob="False" hidden="False" includefiles="['get-started/_index', 'setup-cluster/_index', 'manage/_index']" includehidden="False" maxdepth="1" numbered="0" parent="index" rawentries="['Get Started', 'Set Up', 'Manage']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: get-started/_index, Metadata: {'weight': 0}
+DEBUG:_extensions.sort_by_weight:     - Doc: setup-cluster/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Tools', 'tools/_index'), ('Integrations', 'integrations/_index'), ('Model Hub Library', 'model-hub-library/_index'), ('Reference', 'reference/_index')]" glob="False" hidden="False" includefiles="['tools/_index', 'integrations/_index', 'model-hub-library/_index', 'reference/_index']" includehidden="False" maxdepth="1" numbered="0" parent="index" rawentries="['Tools', 'Integrations', 'Model Hub Library', 'Reference']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: tools/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Tutorials', 'tutorials/_index'), ('Model Dev Guide', 'model-dev-guide/_index')]" glob="False" hidden="False" includefiles="['tutorials/_index', 'model-dev-guide/_index']" includehidden="False" maxdepth="1" numbered="0" parent="index" rawentries="['Tutorials', 'Model Dev Guide']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: tutorials/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'attributions')]" glob="False" hidden="True" includefiles="['attributions']" includehidden="False" maxdepth="-1" numbered="0" parent="index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: attributions, Metadata: {'weight': 0}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/data-transformers/_index'), (None, 'integrations/ide/_index'), (None, 'integrations/notification/_index'), (None, 'integrations/prometheus/_index')]" glob="True" hidden="False" includefiles="['integrations/data-transformers/_index', 'integrations/ide/_index', 'integrations/notification/_index', 'integrations/prometheus/_index']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/data-transformers/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/ide/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/notification/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/prometheus/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/data-transformers/pachyderm')]" glob="True" hidden="False" includefiles="['integrations/data-transformers/pachyderm']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/data-transformers/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/data-transformers/pachyderm, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/pachyderm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/ide/pycharm'), (None, 'integrations/ide/vscode')]" glob="True" hidden="False" includefiles="['integrations/ide/pycharm', 'integrations/ide/vscode']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/ide/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/ide/pycharm, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/ide/vscode, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/pycharm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/vscode: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'integrations/notification/slack'), (None, 'integrations/notification/zapier')]" glob="True" hidden="False" includefiles="['integrations/notification/slack', 'integrations/notification/zapier']" includehidden="False" maxdepth="2" numbered="0" parent="integrations/notification/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/notification/slack, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: integrations/notification/zapier, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/slack: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/zapier: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/prometheus/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'manage/elasticsearch-logging-backend'), (None, 'manage/historical-cluster-usage-data'), (None, 'manage/troubleshooting'), (None, 'manage/upgrade'), (None, 'manage/users'), (None, 'manage/workspaces'), (None, 'manage/workspaces-rpools'), (None, 'manage/security/_index')]" glob="True" hidden="False" includefiles="['manage/elasticsearch-logging-backend', 'manage/historical-cluster-usage-data', 'manage/troubleshooting', 'manage/upgrade', 'manage/users', 'manage/workspaces', 'manage/workspaces-rpools', 'manage/security/_index']" includehidden="False" maxdepth="2" numbered="0" parent="manage/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/elasticsearch-logging-backend, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/historical-cluster-usage-data, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/troubleshooting, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/upgrade, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/users, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/workspaces, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/workspaces-rpools, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/elasticsearch-logging-backend: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/historical-cluster-usage-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'manage/security/oauth'), (None, 'manage/security/oidc'), (None, 'manage/security/rbac'), (None, 'manage/security/saml'), (None, 'manage/security/scim'), (None, 'manage/security/tls')]" glob="True" hidden="False" includefiles="['manage/security/oauth', 'manage/security/oidc', 'manage/security/rbac', 'manage/security/saml', 'manage/security/scim', 'manage/security/tls']" includehidden="False" maxdepth="2" numbered="0" parent="manage/security/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/oauth, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/oidc, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/rbac, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/saml, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/scim, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/security/tls, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oauth: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oidc: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/rbac: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/saml: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/scim: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/tls: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/troubleshooting: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/upgrade: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/users: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[('Binding Resource Pools to Workspaces', 'manage/workspaces-rpools')]" glob="False" hidden="True" includefiles="['manage/workspaces-rpools']" includehidden="False" maxdepth="1" numbered="0" parent="manage/workspaces" rawentries="['Binding Resource Pools to Workspaces']" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: manage/workspaces-rpools, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces-rpools: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/debug-models'), (None, 'model-dev-guide/load-model-data'), (None, 'model-dev-guide/submit-experiment'), (None, 'model-dev-guide/api-guides/_index'), (None, 'model-dev-guide/best-practices/_index'), (None, 'model-dev-guide/dtrain/_index'), (None, 'model-dev-guide/hyperparameter/_index'), (None, 'model-dev-guide/model-management/_index'), (None, 'model-dev-guide/prepare-container/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/debug-models', 'model-dev-guide/load-model-data', 'model-dev-guide/submit-experiment', 'model-dev-guide/api-guides/_index', 'model-dev-guide/best-practices/_index', 'model-dev-guide/dtrain/_index', 'model-dev-guide/hyperparameter/_index', 'model-dev-guide/model-management/_index', 'model-dev-guide/prepare-container/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/debug-models, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/load-model-data, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/submit-experiment, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/best-practices/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/model-management/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/prepare-container/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/api-guides/batch-process-api-ug'), (None, 'model-dev-guide/api-guides/apis-howto/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/api-guides/batch-process-api-ug', 'model-dev-guide/api-guides/apis-howto/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/api-guides/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/batch-process-api-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/api-guides/apis-howto/api-core-ug'), (None, 'model-dev-guide/api-guides/apis-howto/api-keras-ug'), (None, 'model-dev-guide/api-guides/apis-howto/api-pytorch-ug'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/api-guides/apis-howto/api-core-ug', 'model-dev-guide/api-guides/apis-howto/api-keras-ug', 'model-dev-guide/api-guides/apis-howto/api-pytorch-ug', 'model-dev-guide/api-guides/apis-howto/deepspeed/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/api-guides/apis-howto/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/api-core-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/api-keras-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/api-pytorch-ug, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-core-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-keras-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-pytorch-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/api-guides/apis-howto/deepspeed/advanced'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/autotuning'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed'), (None, 'model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed')]" glob="True" hidden="False" includefiles="['model-dev-guide/api-guides/apis-howto/deepspeed/advanced', 'model-dev-guide/api-guides/apis-howto/deepspeed/autotuning', 'model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed', 'model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/api-guides/apis-howto/deepspeed/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/advanced, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/autotuning, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/advanced: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/autotuning: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/batch-process-api-ug: {'orphan': '', 'weight': '3333'}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/best-practices/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/debug-models: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/dtrain/config-templates'), (None, 'model-dev-guide/dtrain/dtrain-implement'), (None, 'model-dev-guide/dtrain/dtrain-introduction'), (None, 'model-dev-guide/dtrain/optimize-training'), (None, 'model-dev-guide/dtrain/reproducibility')]" glob="True" hidden="False" includefiles="['model-dev-guide/dtrain/config-templates', 'model-dev-guide/dtrain/dtrain-implement', 'model-dev-guide/dtrain/dtrain-introduction', 'model-dev-guide/dtrain/optimize-training', 'model-dev-guide/dtrain/reproducibility']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/dtrain/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/config-templates, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/dtrain-implement, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/dtrain-introduction, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/optimize-training, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/dtrain/reproducibility, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/config-templates: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-implement: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/optimize-training: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/reproducibility: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/hyperparameter/configure-hp-ranges'), (None, 'model-dev-guide/hyperparameter/handle-trial-errors'), (None, 'model-dev-guide/hyperparameter/hp-constraints-det'), (None, 'model-dev-guide/hyperparameter/instrument-model-code'), (None, 'model-dev-guide/hyperparameter/search-methods/_index')]" glob="True" hidden="False" includefiles="['model-dev-guide/hyperparameter/configure-hp-ranges', 'model-dev-guide/hyperparameter/handle-trial-errors', 'model-dev-guide/hyperparameter/hp-constraints-det', 'model-dev-guide/hyperparameter/instrument-model-code', 'model-dev-guide/hyperparameter/search-methods/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/hyperparameter/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/configure-hp-ranges, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/handle-trial-errors, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/hp-constraints-det, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/instrument-model-code, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/configure-hp-ranges: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/handle-trial-errors: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/hp-constraints-det: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/instrument-model-code: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-custom'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-grid'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-random'), (None, 'model-dev-guide/hyperparameter/search-methods/hp-single')]" glob="True" hidden="False" includefiles="['model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha', 'model-dev-guide/hyperparameter/search-methods/hp-custom', 'model-dev-guide/hyperparameter/search-methods/hp-grid', 'model-dev-guide/hyperparameter/search-methods/hp-random', 'model-dev-guide/hyperparameter/search-methods/hp-single']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/hyperparameter/search-methods/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-custom, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-grid, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-random, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/hyperparameter/search-methods/hp-single, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-custom: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-grid: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-random: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-single: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/load-model-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/model-management/checkpoints'), (None, 'model-dev-guide/model-management/model-registry-org')]" glob="True" hidden="False" includefiles="['model-dev-guide/model-management/checkpoints', 'model-dev-guide/model-management/model-registry-org']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/model-management/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/model-management/checkpoints, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/model-management/model-registry-org, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/checkpoints: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/model-registry-org: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-dev-guide/prepare-container/custom-env'), (None, 'model-dev-guide/prepare-container/set-environment-images')]" glob="True" hidden="False" includefiles="['model-dev-guide/prepare-container/custom-env', 'model-dev-guide/prepare-container/set-environment-images']" includehidden="False" maxdepth="2" numbered="0" parent="model-dev-guide/prepare-container/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/prepare-container/custom-env, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-dev-guide/prepare-container/set-environment-images, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/custom-env: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/set-environment-images: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/submit-experiment: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-hub-library/mmdetection/_index'), (None, 'model-hub-library/transformers/_index')]" glob="True" hidden="False" includefiles="['model-hub-library/mmdetection/_index', 'model-hub-library/transformers/_index']" includehidden="False" maxdepth="2" numbered="0" parent="model-hub-library/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/mmdetection/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/transformers/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/mmdetection/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'model-hub-library/transformers/examples'), (None, 'model-hub-library/transformers/tutorial')]" glob="True" hidden="False" includefiles="['model-hub-library/transformers/examples', 'model-hub-library/transformers/tutorial']" includehidden="False" maxdepth="2" numbered="0" parent="model-hub-library/transformers/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/transformers/examples, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: model-hub-library/transformers/tutorial, Metadata: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/tutorial: {}
+DEBUG:_extensions.sort_by_weight:Metadata for reference/_index: {}
+DEBUG:_extensions.sort_by_weight:Node: <toctree caption="None" entries="[(None, 'reference/cli-reference'), (None, 'reference/custom-searcher-reference'), (None, 'reference/job-config-reference'), (None, 'reference/python-sdk'), (None, 'reference/rest-api'), (None, 'reference/deploy/_index'), (None, 'reference/model-hub/_index'), (None, 'reference/training/_index')]" glob="True" hidden="False" includefiles="['reference/cli-reference', 'reference/custom-searcher-reference', 'reference/job-config-reference', 'reference/python-sdk', 'reference/rest-api', 'reference/deploy/_index', 'reference/model-hub/_index', 'reference/training/_index']" includehidden="False" maxdepth="2" numbered="0" parent="reference/_index" rawentries="[]" titlesonly="False"/>
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/cli-reference, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/custom-searcher-reference, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/job-config-reference, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/python-sdk, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/rest-api, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/deploy/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/model-hub/_index, Metadata: {}
+DEBUG:_extensions.sort_by_weight:     - Doc: reference/training/_index, Metadata: {}
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): docs.determined.ai:443
+DEBUG:urllib3.connectionpool:https://docs.determined.ai:443 "GET /latest/_static/version-switcher/versions.json HTTP/1.1" 200 755
+DEBUG:_extensions.sort_by_weight:Metadata for attributions: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/_index: {'weight': '500'}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/benefits: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/concepts: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/system-architecture: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/basic: {'weight': '700'}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/pachyderm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/pycharm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/vscode: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/slack: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/zapier: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/prometheus/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/elasticsearch-logging-backend: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/historical-cluster-usage-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oauth: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oidc: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/rbac: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/saml: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/scim: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/tls: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/troubleshooting: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/upgrade: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/users: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces-rpools: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-core-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-keras-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-pytorch-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/advanced: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/autotuning: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/batch-process-api-ug: {'orphan': '', 'weight': '3333'}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/best-practices/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/debug-models: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/config-templates: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-implement: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/optimize-training: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/reproducibility: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/configure-hp-ranges: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/handle-trial-errors: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/hp-constraints-det: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/instrument-model-code: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-custom: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-grid: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-random: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-single: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/load-model-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/checkpoints: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/model-registry-org: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/custom-env: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/set-environment-images: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/submit-experiment: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/mmdetection/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/tutorial: {}
+DEBUG:_extensions.sort_by_weight:Metadata for reference/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for attributions: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/_index: {'weight': '500'}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/benefits: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/concepts: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/architecture/system-architecture: {}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/basic: {'weight': '700'}
+DEBUG:_extensions.sort_by_weight:Metadata for get-started/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/data-transformers/pachyderm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/pycharm: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/ide/vscode: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/slack: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/notification/zapier: {}
+DEBUG:_extensions.sort_by_weight:Metadata for integrations/prometheus/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/_index: {'orphan': ''}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/elasticsearch-logging-backend: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/historical-cluster-usage-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oauth: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/oidc: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/rbac: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/saml: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/scim: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/security/tls: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/troubleshooting: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/upgrade: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/users: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces: {}
+DEBUG:_extensions.sort_by_weight:Metadata for manage/workspaces-rpools: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-core-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-keras-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/api-pytorch-ug: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/advanced: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/autotuning: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/apis-howto/deepspeed/pytorch2deepspeed: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/api-guides/batch-process-api-ug: {'orphan': '', 'weight': '3333'}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/best-practices/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/debug-models: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/config-templates: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-implement: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/dtrain-introduction: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/optimize-training: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/dtrain/reproducibility: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/configure-hp-ranges: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/handle-trial-errors: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/hp-constraints-det: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/instrument-model-code: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-adaptive-asha: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-custom: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-grid: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-random: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/hyperparameter/search-methods/hp-single: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/load-model-data: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/checkpoints: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/model-management/model-registry-org: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/custom-env: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/prepare-container/set-environment-images: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-dev-guide/submit-experiment: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/mmdetection/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/_index: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/examples: {}
+DEBUG:_extensions.sort_by_weight:Metadata for model-hub-library/transformers/tutorial: {}
+DEBUG:_extensions.sort_by_weight:Metadata for reference/_index: {}

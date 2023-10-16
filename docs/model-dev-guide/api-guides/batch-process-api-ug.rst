@@ -1,4 +1,5 @@
 :orphan:
+:weight: 3333
 
 .. _torch-batch-processing-ug:
 
