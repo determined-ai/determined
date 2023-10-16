@@ -158,7 +158,7 @@ describe('CodeViewer', () => {
 
     await user.click(treeNodes[1]);
 
-    const button = await screen.findByLabelText('download');
+    const button = await screen.findByRole('button', { name: 'Download File' });
 
     await user.click(button);
 

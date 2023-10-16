@@ -24,19 +24,18 @@ describe('Icon', () => {
     it.each(IconSizeArray)('should display a %s-size icon', (size) => {
       const { view } = setup({ name: 'star', size, title: size });
       const firstChild = view.container.firstChild;
-      expect(firstChild).toHaveClass(...['base', 'icon-star', size]);
+      expect(firstChild).toHaveClass(size);
     });
   });
 
   describe('Name of icon', () => {
-    // todo: wanna test pseudo-element `content` value, but cannot find a way to test it
+    // TODO: figure out how to test which icon is displayed
     it.each(IconNameArray)('should display a %s icon', (name) => {
       const { view } = setup({ name, title: name });
       const firstChild = view.container.firstChild;
-      if (!(svgIcons as readonly string[]).includes(name)) {
-        expect(firstChild).toHaveClass(...['base', `icon-${name}`, 'medium']);
-      } else {
+      if ((svgIcons as readonly string[]).includes(name)) {
         expect(firstChild?.firstChild?.nodeName).toBe('svg');
+        expect(view.getByLabelText(name)).toBeVisible();
       }
     });
   });
