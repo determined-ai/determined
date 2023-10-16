@@ -8,8 +8,10 @@ import React, { useMemo } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 
+import ActiveIcon from './Icon/Active';
+import QueuedIcon from './Icon/Queue';
+import { SpinBowtie, SpinHalf, SpinShadow } from './Icon/Spin';
 import css from './Icon.module.scss';
-import ActiveIcon from './icons/Active';
 import AddIcon from './icons/add.svg';
 import ArchiveIcon from './icons/archive.svg';
 import ArrowDownIcon from './icons/arrow-down.svg';
@@ -66,7 +68,6 @@ import PinIcon from './icons/pin.svg';
 import PlayIcon from './icons/play.svg';
 import PopoutIcon from './icons/popout.svg';
 import PowerIcon from './icons/power.svg';
-import QueuedIcon from './icons/Queue';
 import QueueIcon from './icons/queue.svg';
 import ResetIcon from './icons/reset.svg';
 import RowExtraLargeIcon from './icons/row-extra-large.svg';
@@ -81,7 +82,6 @@ import SearcherGridIcon from './icons/searcher-grid.svg';
 import SearcherRandomIcon from './icons/searcher-random.svg';
 import SettingsIcon from './icons/settings.svg';
 import ShellIcon from './icons/shell.svg';
-import { SpinBowtie, SpinHalf, SpinShadow } from './icons/Spin';
 import SpinnerIcon from './icons/spinner.svg';
 import StarIcon from './icons/star.svg';
 import StopIcon from './icons/stop.svg';
@@ -311,6 +311,9 @@ type CommonProps = {
   color?: 'cancel' | 'error' | 'success';
   size?: IconSize;
   showTooltip?: boolean;
+  name: IconName;
+  backgroundColor?: React.CSSProperties['backgroundColor']; // currently only supported by Queued
+  opacity?: React.CSSProperties['opacity']; // currently only supported by Queued
 };
 export type Props = CommonProps &
   XOR<
@@ -319,14 +322,6 @@ export type Props = CommonProps &
     },
     {
       decorative: true;
-    }
-  > &
-  XOR<
-    { name: IconName },
-    {
-      name: 'queued';
-      backgroundColor?: React.CSSProperties['backgroundColor'];
-      opacity?: React.CSSProperties['opacity'];
     }
   >;
 const Icon: React.FC<Props> = ({
