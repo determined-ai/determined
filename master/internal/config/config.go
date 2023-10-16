@@ -367,6 +367,7 @@ type InternalConfig struct {
 	AuditLoggingEnabled bool                   `json:"audit_logging_enabled"`
 	ExternalSessions    model.ExternalSessions `json:"external_sessions"`
 	ProxiedServers      []ProxiedServerConfig  `json:"proxied_servers"`
+	BugLogEveryQuery    bool                   `json:"bun_log_every_query"`
 }
 
 // Validate implements the check.Validatable interface.
