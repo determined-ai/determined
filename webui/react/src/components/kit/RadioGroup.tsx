@@ -45,6 +45,7 @@ const RadioGroup: React.FC<Props> = ({
   options,
   value,
   radioType = 'button',
+  ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const originalWidth = useRef<number>();
@@ -116,7 +117,8 @@ const RadioGroup: React.FC<Props> = ({
       defaultValue={defaultValue}
       ref={baseRef}
       value={value}
-      onChange={handleChange}>
+      onChange={handleChange}
+      {...props}>
       {options.map((option) => (
         <ConditionalWrapper
           condition={!showLabels || iconOnly}
