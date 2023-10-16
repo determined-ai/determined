@@ -3,9 +3,10 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
+import useTheme from 'hooks/useTheme';
 
 import css from './Drawer.module.scss';
-import { UIProvider, themeLightDetermined } from './Theme';
+import { UIProvider } from './Theme';
 
 type DrawerPlacement = 'left' | 'right';
 
@@ -26,6 +27,8 @@ const DrawerComponent: React.FC<DrawerProps> = ({
   title,
   onClose,
 }) => {
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <Drawer
       bodyStyle={{ padding: 0 }}
@@ -36,7 +39,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({
       rootClassName={css.mobileWidth}
       width="700px"
       onClose={onClose}>
-      <UIProvider theme={themeLightDetermined}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <div className={css.header}>
           <div className={css.headerTitle}>{title}</div>
           <Button

@@ -1,4 +1,4 @@
-import { ConfigProvider, theme as AntdTheme } from 'antd';
+import { theme as AntdTheme, ConfigProvider } from 'antd';
 import { ThemeConfig } from 'antd/es/config-provider/context';
 import React, {
   Dispatch,
@@ -11,11 +11,11 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import userSettings from 'stores/userSettings';
-import { BrandingType, RecordKey } from 'components/kit/internal/types';
 
-import { themes } from './themes';
-import { DarkLight, getCssVar, globalCssVars, Mode, Theme } from './themeUtils';
+import { RecordKey } from 'components/kit/internal/types';
+import { themeLightDetermined } from 'components/kit/Theme';
+
+import { DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
 
 interface StateUI {
   chromeCollapsed: boolean;
@@ -57,7 +57,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) { }
+  constructor(private dispatch: Dispatch<ActionUI>) {}
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });
@@ -88,8 +88,6 @@ class UIActions {
   };
 }
 
-const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
-const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Dark]: {
     algorithm: AntdTheme.darkAlgorithm,
@@ -158,22 +156,6 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   },
 };
 
-const getDarkLight = (mode: Mode, systemMode: Mode): DarkLight => {
-  const resolvedMode =
-    mode === Mode.System ? (systemMode === Mode.System ? Mode.Light : systemMode) : mode;
-  return resolvedMode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
-};
-
-const getSystemMode = (): Mode => {
-  const isDark = matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
-  if (isDark) return Mode.Dark;
-
-  const isLight = matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).matches;
-  if (isLight) return Mode.Light;
-
-  return Mode.System;
-};
-
 const camelCaseToKebab = (text: string): string => {
   return text
     .trim()
@@ -238,15 +220,13 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   return { actions: uiActions, ui: context };
 };
 
-export const ThemeHandler: React.FC<{
+export const ThemeProvider: React.FC<{
   children?: React.ReactNode;
-  lightTheme: Theme;
-  darkTheme: Theme;
-}> = ({ children, lightTheme, darkTheme }) => {
+}> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initUI);
   // const systemMode = getSystemMode();
   // const userTheme = userSettings.get
-  const theme = state.mode === DarkLight.Dark ? darkTheme : lightTheme;
+  const theme = themeLightDetermined;
 
   // Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
@@ -267,7 +247,8 @@ export const ThemeHandler: React.FC<{
 export const UIProvider: React.FC<{
   children?: React.ReactNode;
   theme: Theme;
-}> = ({ children, theme }) => {
+  darkMode: boolean;
+}> = ({ children, theme, darkMode = false }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   // Set global CSS variables shared across themes.
@@ -283,7 +264,7 @@ export const UIProvider: React.FC<{
   });
 
   const configTheme = {
-    algorithm: AntdTheme.defaultAlgorithm,
+    algorithm: darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm,
     components: {
       Button: {
         colorBgContainer: 'transparent',

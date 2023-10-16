@@ -5,10 +5,17 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
-import { themeLightDetermined, themeDarkDetermined, ThemeHandler } from 'components/kit/Theme';
+
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
+import {
+  themeDarkDetermined,
+  themeDarkHpe,
+  themeLightDetermined,
+  themeLightHpe,
+  ThemeProvider,
+} from 'components/kit/Theme';
 import useUI, { UIProvider } from 'components/kit/Theme';
 import { notification } from 'components/kit/Toast';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
@@ -42,6 +49,7 @@ import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
 import '@hpe.com/glide-data-grid/dist/index.css';
+import useTheme from 'hooks/useTheme';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -52,7 +60,6 @@ const AppView: React.FC = () => {
   const loadableUser = useObservable(userStore.currentUser);
   const loadableInfo = useObservable(determinedStore.loadableInfo);
   const isServerReachable = useObservable(determinedStore.isServerReachable);
-  const info = useObservable(determinedStore.info);
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
   const {
@@ -155,11 +162,11 @@ const AppView: React.FC = () => {
   }>();
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Number(workspaceId ?? '')));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
-
+  const { theme, isDarkMode } = useTheme();
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <UIProvider theme={themeLightDetermined}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>
@@ -207,9 +214,9 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <DndProvider backend={HTML5Backend}>
-        <ThemeHandler lightTheme={themeLightDetermined} darkTheme={themeDarkDetermined}>
+        <ThemeProvider>
           <AppView />
-        </ThemeHandler>
+        </ThemeProvider>
       </DndProvider>
     </HelmetProvider>
   );

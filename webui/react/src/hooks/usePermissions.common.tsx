@@ -1,9 +1,11 @@
 import { render, RenderResult } from '@testing-library/react';
 import React from 'react';
-import { themeLightDetermined } from 'components/kit/Theme';
+
 import { UIProvider } from 'components/kit/Theme';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
+
+import useTheme from './useTheme';
 
 export const workspace = {
   id: 10,
@@ -61,8 +63,9 @@ const PermissionRenderer: React.FC<Props> = () => {
 };
 
 export const setup = async (): Promise<RenderResult> => {
+  const { theme, isDarkMode } = useTheme();
   return await render(
-    <UIProvider theme={themeLightDetermined}>
+    <UIProvider darkMode={isDarkMode} theme={theme}>
       <PermissionRenderer workspaceId={1} />
     </UIProvider>,
   );
