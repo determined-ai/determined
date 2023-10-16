@@ -3,8 +3,8 @@ import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { ReactNode, useEffect, useMemo } from 'react';
 
+import Section from 'components/kit/Section';
 import OverviewStats from 'components/OverviewStats';
-import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';

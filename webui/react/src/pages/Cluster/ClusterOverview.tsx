@@ -3,9 +3,9 @@ import Icon from 'determined-ui/Icon';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
+import Section from 'components/kit/Section';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
-import Section from 'components/Section';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { ClusterOverallBar } from 'pages/Cluster/ClusterOverallBar';

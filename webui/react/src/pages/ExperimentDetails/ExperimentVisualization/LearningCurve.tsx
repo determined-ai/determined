@@ -6,7 +6,7 @@ import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Section from 'components/Section';
+import Section from 'components/kit/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';

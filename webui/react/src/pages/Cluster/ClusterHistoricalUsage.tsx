@@ -4,7 +4,7 @@ import Button from 'determined-ui/Button';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Section from 'components/Section';
+import Section from 'components/kit/Section';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';

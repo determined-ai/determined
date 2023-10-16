@@ -61,9 +61,8 @@
   height: 100%;
 }
 .base.divider .body {
-  border-bottom-width: var(--theme-stroke-width);
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  border-top-width: var(--theme-stroke-width);
+  padding-top: 8px;
 }
 .base.bodyBorder {
   .body {

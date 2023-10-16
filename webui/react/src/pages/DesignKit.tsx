@@ -46,6 +46,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
+import Section from 'components/kit/Section';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -104,6 +105,7 @@ const ComponentTitles = {
   Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  Section: 'Section',
   Select: 'Select',
   Spinner: 'Spinner',
   Tags: 'Tags',
@@ -879,6 +881,35 @@ const ClipboardButtonSection: React.FC = () => {
         <ClipboardButton disabled getContent={getContent} />
         <strong>Custom Copied Message Clipboard Button</strong>
         <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const SectionComponentSection: React.FC = () => {
+  return (
+    <ComponentSection id="Section" title="Section">
+      <AntDCard>
+        <p>A Section component serves the purpose to encapsulate content.</p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>Without title</p>
+        <Section>
+          <p>foo text</p>
+          <Button>foo button</Button>
+        </Section>
+        <br />
+        <p>With title</p>
+        <Section title="Title of the section">
+          <p>foo text</p>
+          <Button>foo button</Button>
+        </Section>
+        <br />
+        <p>With divider</p>
+        <Section divider title="Title of the section">
+          <p>foo text</p>
+          <Button>foo button</Button>
+        </Section>
       </AntDCard>
     </ComponentSection>
   );
@@ -3122,6 +3153,7 @@ const Components = {
   Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  Section: <SectionComponentSection />,
   Select: <SelectSection />,
   Spinner: <SpinnerSection />,
   Tags: <TagsSection />,

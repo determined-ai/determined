@@ -4,7 +4,7 @@ import { ShirtSize } from 'determined-ui/Theme';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useMemo } from 'react';
 
-import Section from 'components/Section';
+import Section from 'components/kit/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import clusterStore from 'stores/cluster';
 import { ResourceType } from 'types';

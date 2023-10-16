@@ -6,9 +6,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Section from 'components/kit/Section';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import usePolling from 'hooks/usePolling';

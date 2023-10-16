@@ -4,8 +4,8 @@ import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
+import Section from 'components/kit/Section';
 import ResourcePoolCard from 'components/ResourcePoolCard';
-import Section from 'components/Section';
 import usePermissions from 'hooks/usePermissions';
 import { patchWorkspace } from 'services/api';
 import clusterStore from 'stores/cluster';

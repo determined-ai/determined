@@ -2,7 +2,7 @@ import { LineChart } from 'determined-ui/LineChart';
 import { string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect, useMemo } from 'react';
 
-import Section from 'components/Section';
+import Section from 'components/kit/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';

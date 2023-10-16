@@ -3,9 +3,9 @@ import { useModal } from 'determined-ui/Modal';
 import React, { useCallback, useMemo } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
+import Section from 'components/kit/Section';
 import ModelCreateModal from 'components/ModelCreateModal';
 import OverviewStats from 'components/OverviewStats';
-import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { ModalCloseReason } from 'hooks/useModal/useModal';

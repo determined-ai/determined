@@ -11,7 +11,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
 import CreateGroupModalComponent from 'components/CreateGroupModal';
 import DeleteGroupModalComponent from 'components/DeleteGroupModal';
-import Section from 'components/Section';
+import Section from 'components/kit/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';

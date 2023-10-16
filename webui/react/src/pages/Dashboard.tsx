@@ -8,10 +8,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
+import Section from 'components/kit/Section';
 import Link from 'components/Link';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
-import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import {
   experimentNameRenderer,

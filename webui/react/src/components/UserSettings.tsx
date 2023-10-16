@@ -16,8 +16,8 @@ import useConfirm from 'determined-ui/useConfirm';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
+import Section from 'components/kit/Section';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
-import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
   shortcutSettingsConfig,

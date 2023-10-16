@@ -8,10 +8,10 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
+import Section from 'components/kit/Section';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
-import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
