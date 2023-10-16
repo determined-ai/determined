@@ -1,6 +1,6 @@
 .. _basic:
 
-:weight: 700
+:weight: 0
 
 ===================
  Quick Installation

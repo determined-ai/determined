@@ -37,16 +37,6 @@ html_js_files = [
     ("scripts/docsearch.sbt.js", {"defer": "defer"}),
 ]
 
-
-def env_get_outdated(app, env, added, changed, removed):
-    return ["index"]
-
-
-def setup(app):
-    app.connect("env-get-outdated", env_get_outdated)
-    app.set_html_assets_policy("always")
-
-
 exclude_patterns = [
     "_build",
     "Thumbs.db",
@@ -101,6 +91,8 @@ html_use_index = True
 html_domain_indices = True
 
 extensions = [
+    "_extensions.sort_by_weight",
+    "_extensions.custom_navigation",
     "sphinx_ext_downloads",
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
@@ -112,17 +104,14 @@ extensions = [
     "sphinx_reredirects",
     "sphinx_tabs.tabs",
     "myst_parser",
-    "sphinx_design",
-    "_extensions.sort_by_weight",
-
+    "sphinx_design"
 ]
 
 myst_extensions = [
     "colon_fence",
 ]
 
-# Our custom sphinx extension uses this value to decide where to look for
-# downloadable files.
+# Our custom sphinx extension uses this value to decide where to look for downloadable files.
 dai_downloads_root = os.path.join("site", "downloads")
 
 # sphinx.ext.autodoc configurations.
@@ -148,3 +137,10 @@ sitemap_url_scheme = "latest/{link}"
 
 with open(".redirects/redirects.json") as f:
     redirects = json.load(f)
+
+def env_get_outdated(app, env, added, changed, removed):
+    return ["index"]
+
+def setup(app):
+    app.connect("env-get-outdated", env_get_outdated)
+    app.set_html_assets_policy("always")
