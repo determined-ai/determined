@@ -1,11 +1,15 @@
 .. _elasticsearch-logging-backend:
 
 ##############################
- Elasticsearch-backed logging
+ Elasticsearch-Backed Logging
 ##############################
 
-This guide covers the limitations of the default logging backend, as a guideline on when to migrate
-to Elasticsearch, and some tips for how to tune Elasticsearch to work best with Determined.
+Use this guide as a reference when considering a shift from the default logging backend to
+`Elasticsearch <https://www.elastic.co/what-is/elasticsearch>`__ for optimized log storage and
+analysis.
+
+We'll discuss the limitations of the default logging backend and provide tips and guidelines for
+migrating to Elasticsearch including how to tune Elasticsearch to work best with Determined.
 
 `Elasticsearch <https://www.elastic.co/what-is/elasticsearch>`__ is a search engine commonly used
 for storing application logs for search and analytics. Determined supports using Elasticsearch as

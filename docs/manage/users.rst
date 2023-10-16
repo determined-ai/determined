@@ -67,7 +67,7 @@ using:
    det user logout
 
 **************************
- Temporary authentication
+ Temporary Authentication
 **************************
 
 In some cases, it may be useful to execute a single command as a specific user without starting a

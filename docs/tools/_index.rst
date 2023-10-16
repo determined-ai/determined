@@ -10,13 +10,13 @@
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-            <a class="tile" href="cli-ug.html">
+            <a class="tile" href="cli/cli-ug.html">
                  <h2 class="tile-title">CLI User Guide</h2>
                  <p class="tile-description">Instructions for installing and using the Determined CLI.</p>
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="commands-and-shells.html">
+             <a class="tile" href="cli/commands-and-shells.html">
                  <h2 class="tile-title">Commands and Shells</h2>
                  <p class="tile-description">How to use a Determined cluster to run free-form programs.</p>
              </a>

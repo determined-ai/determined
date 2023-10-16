@@ -1,3 +1,5 @@
+.. _notifications:
+
 ###############
  Notifications
 ###############

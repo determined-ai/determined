@@ -1,4 +1,4 @@
-:orphan:
+.. _vscode:
 
 ####################
  Visual Studio Code

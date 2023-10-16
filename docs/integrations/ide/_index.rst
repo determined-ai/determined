@@ -1,4 +1,4 @@
-:orphan:
+.. _ides-index:
 
 ######
  IDEs

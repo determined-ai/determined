@@ -4,10 +4,10 @@
  Historical Cluster Usage Data
 ###############################
 
-Our goal is to give users insights on how their Determined cluster is used. Historical cluster usage
-is measured in the number of compute hours allocated by Determined. Note that this is not based on
-resource utilization, so if a user gets 1 GPU allocated but only utilizes 20% of the GPU, we would
-still report one GPU hour.
+Determined aims to provide users with insights on how their Determined cluster is used. Historical
+cluster usage is measured in the number of compute hours allocated by Determined. Note that this is
+not based on resource utilization, so if a user gets 1 GPU allocated but only utilizes 20% of the
+GPU, we would still report one GPU hour.
 
 .. warning::
 

@@ -1,3 +1,5 @@
+.. _prometheus-grafana:
+
 ######################
  Prometheus & Grafana
 ######################
@@ -12,12 +14,11 @@
 | Determined 0.17.6+ |
 +--------------------+
 
-This document describes the setup and configuration to enable a Grafana dashboard to monitor
-Determined hardware and system metrics on a cloud cluster, such as AWS or Kubernetes. Determined
-provides a Prometheus endpoint that contains mappings between internal task, GPU, and container
-definitions, which are used by Prometheus to collect relevant metrics on a cluster running
-Determined. The endpoint is not enabled by default but can be enabled in the master configuration
-file.
+Discover how to enable a Grafana dashboard to monitor Determined hardware and system metrics on a
+cloud cluster, such as AWS or Kubernetes. Determined provides a Prometheus endpoint that contains
+mappings between internal task, GPU, and container definitions, which are used by Prometheus to
+collect relevant metrics on a cluster running Determined. The endpoint is not enabled by default but
+can be enabled in the master configuration file.
 
 ***********
  Reference

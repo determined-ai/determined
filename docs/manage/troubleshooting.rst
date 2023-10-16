@@ -12,10 +12,11 @@
 
    docker: Error response from daemon: OCI runtime create failed: container_linux.go:345: starting container process caused "process_linux.go:424: container init caused \"process_linux.go:407: running prestart hook 1 caused \\\"error running hook: exit status 1, stdout: , stderr: exec command: [/usr/bin/nvidia-container-cli --load-kmods configure --ldconfig=@/sbin/ldconfig --device=all --compute --utility --require=cuda>=10.0 brand=tesla,driver>=384,driver<385 brand=tesla,driver>=410,driver<411 --pid=35777 /var/lib/docker/devicemapper/mnt/7b5b6d59cd4fe9307b7523f1cc9ce3bc37438cc793ff4a5a18a0c0824ec03982/rootfs]\\\\nnvidia-container-cli: requirement error: unsatisfied condition: brand = tesla\\\\n\\\"\"": unknown.
 
-If you see the above error message, the GPU hardware and/or NVIDIA drivers installed on the agent
-are not compatible with CUDA 10, but you are trying to run a Docker image that depends on CUDA 10.
-Please run the commands below; if the first succeeds and the second fails, you should be able to use
-Determined as long as you use Docker images based on CUDA 9.
+This error message indicates that the GPU hardware and/or NVIDIA drivers installed on the agent are
+not compatible with CUDA 10, and you are trying to run a Docker image that depends on CUDA 10.
+
+To resolve this issue, run the following commands. If the first succeeds and the second fails, you
+should be able to use Determined as long as you use Docker images based on CUDA 9.
 
 .. code::
 
