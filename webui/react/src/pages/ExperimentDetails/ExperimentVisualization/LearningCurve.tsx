@@ -149,7 +149,7 @@ const LearningCurve: React.FC<Props> = ({
 
   const handlePointClick = useCallback(
     (e: MouseEvent, point: UPlotPoint) => {
-      const trialId = point ? trialIds[point.seriesIdx] : undefined;
+      const trialId = trialIds[point.seriesIdx];
       if (trialId) handleTrialClick(e, trialId);
     },
     [handleTrialClick, trialIds],
