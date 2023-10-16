@@ -431,7 +431,7 @@ func TestRestore(t *testing.T) {
 
 func requireDeps(t *testing.T) *db.PgDB {
 	tasklogger.SetDefaultLogger(tasklogger.New(&nullWriter{}))
-	portregistry.InitPortRegistry()
+	portregistry.InitPortRegistry(nil)
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	return db.MustSetupTestPostgres(t)
 }

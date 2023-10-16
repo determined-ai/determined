@@ -957,7 +957,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	userService := user.GetService()
 
 	proxy.InitProxy(processProxyAuthentication)
-	portregistry.InitPortRegistry()
+	portregistry.InitPortRegistry(config.GetMasterConfig().ReservedPorts)
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	// Initialize the HTTP server and listen for incoming requests.

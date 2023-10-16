@@ -4,8 +4,6 @@ import (
 	"sync"
 
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
-
-	"github.com/determined-ai/determined/master/internal/config"
 )
 
 var (
@@ -14,14 +12,14 @@ var (
 )
 
 // InitPortRegistry initializes the global port registry tree.
-func InitPortRegistry() {
+func InitPortRegistry(reservedPorts []int) {
 	// initialize tree with node -1 because tree cannot be empty.
 	portRegistryTree = rbt.NewWithIntComparator()
-	registerAnyReservedPorts()
+	registerAnyReservedPorts(reservedPorts)
 }
 
-func registerAnyReservedPorts() {
-	for _, port := range config.GetMasterConfig().ReservedPorts {
+func registerAnyReservedPorts(reservedPorts []int) {
+	for _, port := range reservedPorts {
 		portRegistryTree.Put(port, struct{}{}) // we only care about key.
 	}
 }

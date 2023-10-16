@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/determined-ai/determined/master/internal/config"
 )
 
 var (
@@ -16,7 +14,7 @@ var (
 )
 
 func TestPortportRegistry(t *testing.T) {
-	InitPortRegistry()
+	InitPortRegistry(nil)
 	port, err := GetPort(dtrainSSHPortBase)
 	require.NoError(t, err)
 	require.Equal(t, 12350, port)
@@ -101,8 +99,7 @@ func TestPortportRegistry(t *testing.T) {
 }
 
 func TestReservedPorts(t *testing.T) {
-	config.GetMasterConfig().ReservedPorts = []int{dtrainSSHPortBase}
-	InitPortRegistry()
+	InitPortRegistry([]int{dtrainSSHPortBase})
 	port, err := GetPort(dtrainSSHPortBase)
 	require.NoError(t, err)
 	require.Equal(t, dtrainSSHPortBase+1, port, "default port reserved; expect next highest")
