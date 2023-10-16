@@ -124,12 +124,6 @@ func Initialize(ctx context.Context) error {
 		blockListCache[b.TaskID].Insert(b.NodeName)
 	}
 
-	var err error
-	regexCache, err = lru.New[string, *regexp.Regexp](regexCacheSize)
-	if err != nil {
-		return fmt.Errorf("creating LRU cache for compiled regex: %w", err)
-	}
-
 	return nil
 }
 
@@ -311,9 +305,16 @@ func ShouldRetry(ctx context.Context, taskID model.TaskID) ([]RetryInfo, error) 
 }
 
 func getCompiledRegex(regex string) (*regexp.Regexp, error) {
+	var err error
+	if regexCache == nil {
+		regexCache, err = lru.New[string, *regexp.Regexp](regexCacheSize)
+		if err != nil {
+			return nil, fmt.Errorf("creating LRU cache for compiled regex: %w", err)
+		}
+	}
+
 	compiledRegex, ok := regexCache.Get(regex)
 	if !ok {
-		var err error
 		compiledRegex, err = regexp.Compile(regex)
 		if err != nil {
 			return nil, fmt.Errorf("compiling regex '%s': %w", regex, err)

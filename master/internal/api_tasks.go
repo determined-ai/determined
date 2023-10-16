@@ -434,6 +434,10 @@ func (a *apiServer) PostTaskLogs(
 		logs[i] = model.TaskLogFromProto(req.Logs[i])
 	}
 
+	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
+		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
+	}
+
 	if err := a.monitor(ctx, model.TaskID(taskID), logs); err != nil {
 		log.Errorf("moniter logs against log pattern policies: %s", err)
 	}
