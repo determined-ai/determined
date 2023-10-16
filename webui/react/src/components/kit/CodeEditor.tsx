@@ -9,7 +9,6 @@ import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import Message, { MessageType } from 'components/kit/internal/Message';
 import Section from 'components/kit/internal/Section';
 import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Message from 'components/kit/Message';

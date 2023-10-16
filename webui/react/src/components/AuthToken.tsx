@@ -1,9 +1,8 @@
-import { Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
-import Message from 'components/kit/Message';
 import Icon from 'components/kit/Icon';
+import Message from 'components/kit/Message';
 import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'utils/dom';
@@ -28,9 +27,8 @@ const AuthToken: React.FC = () => {
   }, [token]);
 
   return (
-    <Result
-      className={css.base}
-      extra={[
+    <Message
+      action={
         <Button
           icon={<Icon decorative name="clipboard" />}
           key="copy"
