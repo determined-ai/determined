@@ -1,6 +1,6 @@
-###############
- Through Slack
-###############
+#######
+ Slack
+#######
 
 This section will walk through the steps needed to set up Slack to receive updates from Determined
 in a specific Slack channel using Slack Webhook Integrations.
