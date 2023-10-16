@@ -6,8 +6,8 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HpSelect from 'components/HpSelect';
+import RadioGroup from 'components/kit/RadioGroup';
 import MetricSelect from 'components/MetricSelect';
-import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import { Metric, Scale, ValueOf } from 'types';

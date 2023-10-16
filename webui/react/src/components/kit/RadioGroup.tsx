@@ -1,4 +1,4 @@
-import { Radio } from 'antd';
+import { Radio, RadioGroupProps } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
 import Icon, { IconName, IconSize } from 'determined-ui/Icon';
 import Tooltip from 'determined-ui/Tooltip';
@@ -10,12 +10,14 @@ import useResize from 'hooks/useResize';
 
 import css from './RadioGroup.module.scss';
 
-interface Props {
+interface Props extends Omit<RadioGroupProps, 'onChange' | 'options'> {
   className?: string;
+  defaultValue?: string;
   iconOnly?: boolean;
   onChange?: (id: string) => void;
   options: RadioGroupOption[];
   value?: string;
+  radioType?: 'button' | 'radio';
 }
 
 export interface RadioGroupOption {
@@ -37,10 +39,12 @@ const HEIGHT_LIMIT = 50;
 
 const RadioGroup: React.FC<Props> = ({
   className,
+  defaultValue,
   iconOnly = false,
   onChange,
   options,
   value,
+  radioType = 'button',
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const originalWidth = useRef<number>();
@@ -107,7 +111,12 @@ const RadioGroup: React.FC<Props> = ({
   }, [hasIconsAndLabels, resize]);
 
   return (
-    <Radio.Group className={classes.join(' ')} ref={baseRef} value={value} onChange={handleChange}>
+    <Radio.Group
+      className={classes.join(' ')}
+      defaultValue={defaultValue}
+      ref={baseRef}
+      value={value}
+      onChange={handleChange}>
       {options.map((option) => (
         <ConditionalWrapper
           condition={!showLabels || iconOnly}
@@ -117,12 +126,21 @@ const RadioGroup: React.FC<Props> = ({
               {children}
             </Tooltip>
           )}>
-          <Radio.Button className={css.option} value={option.id}>
-            {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
-            {option.label && showLabels && !iconOnly && (
-              <span className={css.label}>{option.label}</span>
-            )}
-          </Radio.Button>
+          {radioType === 'radio' ? (
+            <Radio className={css.option} value={option.id}>
+              {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
+              {option.label && showLabels && !iconOnly && (
+                <span className={css.label}>{option.label}</span>
+              )}
+            </Radio>
+          ) : (
+            <Radio.Button className={css.option} value={option.id}>
+              {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
+              {option.label && showLabels && !iconOnly && (
+                <span className={css.label}>{option.label}</span>
+              )}
+            </Radio.Button>
+          )}
         </ConditionalWrapper>
       ))}
     </Radio.Group>

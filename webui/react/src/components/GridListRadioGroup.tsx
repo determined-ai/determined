@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 
 import { ValueOf } from 'types';
 
-import RadioGroup from './RadioGroup';
+import RadioGroup from './kit/RadioGroup';
 
 export const GridListView = {
   Grid: 'grid',

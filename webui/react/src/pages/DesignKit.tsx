@@ -46,6 +46,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
+import RadioGroup from 'components/kit/RadioGroup';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -104,6 +105,7 @@ const ComponentTitles = {
   Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  RadioGroup: 'RadioGroup',
   Select: 'Select',
   Spinner: 'Spinner',
   Tags: 'Tags',
@@ -879,6 +881,73 @@ const ClipboardButtonSection: React.FC = () => {
         <ClipboardButton disabled getContent={getContent} />
         <strong>Custom Copied Message Clipboard Button</strong>
         <ClipboardButton copiedMessage="Yay it's copied!" getContent={getContent} />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const RadioGroupSection: React.FC = () => {
+  const [currentValue, setCurrentValue] = useState('');
+  const [currentDefaultValue, setCurrentDefaultValue] = useState<string | undefined>(undefined);
+
+  const onChange = useCallback((newValue: string) => setCurrentValue(newValue), []);
+  const onChangeDefaultValue = useCallback(
+    (newValue: string) => setCurrentDefaultValue(newValue),
+    [],
+  );
+
+  const options = [
+    {
+      id: '1',
+      label: 'option 1',
+    },
+    {
+      id: '2',
+      label: 'option 2',
+    },
+    {
+      id: '3',
+      label: 'option 3',
+    },
+    {
+      id: '4',
+      label: 'option 4',
+    },
+  ];
+
+  return (
+    <ComponentSection id="RadioGroup" title="RadioGroup">
+      <AntDCard>
+        <p>
+          The (<code>{'<RadioGroup>'}</code>) serves as a collection of options to choose from.
+        </p>
+        <p>It can be represented as radio buttons or simple buttons.</p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <p>Without a default value</p>
+        <br />
+        <p>Button style</p>
+        <RadioGroup options={options} value={currentValue} onChange={onChange} />
+        <p>Radio style</p>
+        <RadioGroup options={options} radioType="radio" value={currentValue} onChange={onChange} />
+        <br />
+        <p>With a default value</p>
+        <br />
+        <p>Button style</p>
+        <RadioGroup
+          defaultValue="1"
+          options={options}
+          value={currentDefaultValue}
+          onChange={onChangeDefaultValue}
+        />
+        <p>Radio style</p>
+        <RadioGroup
+          defaultValue="1"
+          options={options}
+          radioType="radio"
+          value={currentDefaultValue}
+          onChange={onChangeDefaultValue}
+        />
       </AntDCard>
     </ComponentSection>
   );
@@ -3122,6 +3191,7 @@ const Components = {
   Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  RadioGroup: <RadioGroupSection />,
   Select: <SelectSection />,
   Spinner: <SpinnerSection />,
   Tags: <TagsSection />,
