@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
 import { ECElementEvent, EChartsOption } from 'echarts';
 import { CallbackDataParams, TopLevelFormatterParams } from 'echarts/types/dist/shared';
-import _ from 'lodash';
 import React, { ReactNode, useMemo } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 
@@ -19,14 +18,8 @@ import Message from 'components/kit/Message';
 import ReactECharts, { EchartsEventFunction } from 'components/kit/ReactEchart';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
-import { alphaNumericSorter } from 'utils/sort';
 
 import css from './LineChart.module.scss';
-
-type SeriesDataType = {
-  x: number[];
-  y: { data: (number | '-')[]; name?: string; key?: number; color?: string }[];
-};
 
 export const TRAINING_SERIES_COLOR = '#009BDE';
 export const VALIDATION_SERIES_COLOR = '#F77B21';
@@ -92,30 +85,6 @@ export const LineChart: React.FC<LineChartProps> = ({
   const series = useMemo(() => {
     return Loadable.ensureLoadable(propSeries).getOrElse([]);
   }, [propSeries]);
-
-  const seriesData: SeriesDataType = useMemo(() => {
-    const allXValues: number[] = Array.from(
-      new Set(
-        series.flatMap((s) => {
-          const data = s.data[xAxis];
-          return data === undefined ? [] : data.map((d) => d[0]);
-        }),
-      ),
-    ).sort((a, b) => alphaNumericSorter(a, b));
-    const data: SeriesDataType = { x: allXValues, y: [] };
-    for (let i = 0; i < series.length; i++) {
-      data.y.push({ color: series[i].color, data: [], key: series[i].key, name: series[i].name });
-      const map = new Map();
-      for (const [key, value] of series[i].data[xAxis] ?? []) {
-        map.set(key, value);
-      }
-      for (const xVal of allXValues) {
-        data.y[i].data.push(map.has(xVal) ? map.get(xVal) : '-');
-      }
-    }
-    return data;
-  }, [series, xAxis]);
-
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
   const EventFunctions: EchartsEventFunction[] = useMemo(() => {
@@ -123,13 +92,11 @@ export const LineChart: React.FC<LineChartProps> = ({
       {
         eventName: 'click',
         handler: (params) => {
-          if (xAxis !== XAxisDomain.Time) {
-            onClickPoint?.(Number(params.name), [Number(params.name), Number(params.value)]);
-          }
+          onClickPoint?.(Number(params.seriesId), params.data);
         },
       },
     ];
-  }, [onClickPoint, xAxis]);
+  }, [onClickPoint]);
 
   const echartOption: EChartsOption = useMemo(() => {
     let currentYAxis = 0;
@@ -141,18 +108,16 @@ export const LineChart: React.FC<LineChartProps> = ({
         value: number;
       };
       const data = params as CallbackDataParams[];
-
       const seriesList: SeriesType[] = data
-        .filter((d: CallbackDataParams) => d.seriesName && typeof d.value === 'number')
+        .filter((d: CallbackDataParams) => d.seriesName)
         .map((d: CallbackDataParams): SeriesType => {
           return {
             marker: d.marker,
             seriesName: d.seriesName ?? '',
-            value: typeof d.value === 'number' ? d.value : 0,
+            value: (d.value as number[])[1],
           };
         })
         .sort((a: SeriesType, b: SeriesType) => b.value - a.value);
-
       const closestPoint = [...seriesList]
         .sort((a: SeriesType, b: SeriesType) =>
           Math.abs(a.value - currentYAxis) > Math.abs(b.value - currentYAxis) ? 1 : -1,
@@ -169,7 +134,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               <div>
                 ${d.marker}
                 <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
-                ${yValueFormatter?.(d.value) ?? d.value.toFixed(4)}
+                ${yValueFormatter ? yValueFormatter(d.value) : d.value.toFixed(4)}
               </div>`;
             })
             .join('')}
@@ -178,87 +143,7 @@ export const LineChart: React.FC<LineChartProps> = ({
       return tooltip;
     };
 
-    const generateOption = (): EChartsOption => {
-      if (xAxis === XAxisDomain.Time) {
-        const option: EChartsOption = {
-          series: series.map((serie) => ({
-            connectNulls: true,
-            data: (() => {
-              const set = new Set();
-              const arr: [x: Date, y: number][] = [];
-              for (const d of serie.data[xAxis] ?? []) {
-                const [xValue, yValue] = d;
-                if (set.has(xValue)) {
-                  continue;
-                }
-                set.add(xValue);
-                arr.push([adjustLocalTimeToUTC(xValue), yValue]);
-              }
-              return arr;
-            })(),
-            emphasis: { focus: 'series' },
-            id: serie.key,
-            itemStyle: { color: serie.color },
-            name: serie.name ?? yLabel,
-            type: 'line',
-          })),
-          xAxis: {
-            max: xValueRange ? adjustLocalTimeToUTC(xValueRange[1]) : undefined,
-            min: xValueRange ? adjustLocalTimeToUTC(xValueRange[0]) : undefined,
-            name: xLabel,
-            type: 'time',
-          },
-        };
-        return option;
-      } else {
-        const option: EChartsOption = {
-          series: seriesData.y.map((serie) => ({
-            connectNulls: true,
-            data: serie.data,
-            emphasis: { focus: 'series' },
-            id: serie.key,
-            itemStyle: { color: serie.color },
-            name: serie.name ?? yLabel,
-            symbol: (value, params) => {
-              if (checkpointsDict === undefined) return 'circle';
-              return Number(params.name) in checkpointsDict ? 'diamond' : 'circle';
-            },
-            symbolSize: (value, params) => {
-              const DEFAULT_SIZE = 4;
-              if (checkpointsDict === undefined) return DEFAULT_SIZE;
-              return Number(params.name) in checkpointsDict ? 10 : DEFAULT_SIZE;
-            },
-            type: 'line',
-          })),
-          tooltip: {
-            axisPointer: {
-              label: {
-                formatter: (params) => {
-                  const value = params.value;
-                  if (params.axisDimension === 'y' && typeof value === 'number') {
-                    currentYAxis = value;
-                    return value.toFixed(4).toString();
-                  }
-                  return value.toString();
-                },
-              },
-            },
-            formatter: formatterFunc,
-          },
-          xAxis: {
-            boundaryGap: false,
-            data: seriesData.x,
-            max: xValueRange?.[1],
-            min: xValueRange?.[0],
-            name: xLabel,
-            type: 'category',
-          },
-        };
-        return option;
-      }
-    };
-
-    const baseOption: EChartsOption = {
+    const option: EChartsOption = {
       dataZoom: [
         { realtime: true, show: true, type: 'slider' },
         { realtime: true, show: true, type: 'inside', zoomLock: true },
@@ -271,6 +156,41 @@ export const LineChart: React.FC<LineChartProps> = ({
             type: 'scroll',
           }
         : undefined,
+      series: series.map((serie) => ({
+        connectNulls: true,
+        data: (() => {
+          if (xAxis === XAxisDomain.Time) {
+            const set = new Set();
+            const arr: [x: Date, y: number][] = [];
+            for (const d of serie.data[xAxis] ?? []) {
+              const xValue = d[0];
+              const yValue = d[1];
+              if (set.has(xValue)) {
+                continue;
+              }
+              set.add(xValue);
+              arr.push([adjustLocalTimeToUTC(xValue), yValue]);
+            }
+            return arr;
+          } else {
+            return serie.data[xAxis];
+          }
+        })(),
+        emphasis: { focus: 'series' },
+        id: serie.key,
+        itemStyle: { color: serie.color },
+        name: serie.name ?? yLabel,
+        symbol: (value) => {
+          if (checkpointsDict === undefined) return 'circle';
+          return value?.[0] in checkpointsDict ? 'diamond' : 'circle';
+        },
+        symbolSize: (value) => {
+          const DEFAULT_SIZE = 4;
+          if (checkpointsDict === undefined) return DEFAULT_SIZE;
+          return value?.[0] in checkpointsDict ? 10 : DEFAULT_SIZE;
+        },
+        type: 'line',
+      })),
       toolbox: {
         feature: {
           dataView: { readOnly: true },
@@ -278,7 +198,42 @@ export const LineChart: React.FC<LineChartProps> = ({
           saveAsImage: { excludeComponents: ['toolbox', 'dataZoom', 'legend'], name: 'line-chart' },
         },
       },
-      tooltip: { axisPointer: { type: 'cross' }, confine, trigger: 'axis' },
+      tooltip: {
+        axisPointer: {
+          label: {
+            formatter:
+              xAxis === XAxisDomain.Time
+                ? undefined
+                : (params) => {
+                    const value = params.value;
+                    if (params.axisDimension === 'y' && typeof value === 'number') {
+                      currentYAxis = value;
+                      return value.toFixed(4).toString();
+                    }
+                    return value.toString();
+                  },
+          },
+          type: 'cross',
+        },
+        confine,
+        formatter: formatterFunc,
+        trigger: 'axis',
+      },
+      xAxis: {
+        ...(xAxis === XAxisDomain.Time
+          ? {
+              max: xValueRange ? adjustLocalTimeToUTC(xValueRange[1]) : undefined,
+              min: xValueRange ? adjustLocalTimeToUTC(xValueRange[0]) : undefined,
+              type: 'time',
+            }
+          : {
+              max: xValueRange?.[1],
+              min: xValueRange?.[0],
+              type: 'value',
+            }),
+        boundaryGap: [0, 0],
+        name: xLabel,
+      },
       yAxis: {
         ...(scale === Scale.Log // write like this due to type issue
           ? { type: 'log' }
@@ -288,15 +243,12 @@ export const LineChart: React.FC<LineChartProps> = ({
       },
     };
 
-    const option: EChartsOption = _.merge(baseOption, generateOption());
     return option;
   }, [
     checkpointsDict,
     confine,
     scale,
     series,
-    seriesData.x,
-    seriesData.y,
     showLegend,
     xAxis,
     xLabel,
@@ -350,6 +302,7 @@ export interface GroupProps {
 const VirtualChartRenderer: React.FC<
   GridChildComponentProps<{
     chartsProps: ChartsProps;
+    xValueRange?: Partial<Record<XAxisDomain, [min: number, max: number]>>;
     columnCount: number;
     group?: string;
     scale: Scale;
@@ -357,7 +310,7 @@ const VirtualChartRenderer: React.FC<
     handleError: ErrorHandler;
   }>
 > = ({ columnIndex, rowIndex, style, data }) => {
-  const { chartsProps, columnCount, scale, xAxis, handleError, group } = data;
+  const { chartsProps, columnCount, scale, xAxis, handleError, group, xValueRange } = data;
 
   const cellIndex = rowIndex * columnCount + columnIndex;
 
@@ -373,6 +326,7 @@ const VirtualChartRenderer: React.FC<
           handleError={handleError}
           scale={scale}
           xAxis={xAxis}
+          xValueRange={xValueRange?.[xAxis]}
         />
       </div>
     </div>
@@ -408,19 +362,47 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
 
     // X-Axis control
     const xAxisOptions = useMemo(() => {
-      const xOpts = new Set<string>();
+      const xOpts = new Set<XAxisDomain>();
       chartsProps.forEach((chart) => {
         const series = Loadable.ensureLoadable(chart.series).getOrElse([]);
         series.forEach((serie) => {
           Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
             if (dataPoints.length > 0) {
-              xOpts.add(xAxisOption);
+              xOpts.add(xAxisOption as XAxisDomain);
             }
           });
         });
       });
       return Array.from(xOpts).sort();
     }, [chartsProps]);
+
+    const minMaxRange: Partial<Record<XAxisDomain, [min: number, max: number]>> = useMemo(() => {
+      const dic: Partial<Record<XAxisDomain, [min: number, max: number]>> = {};
+
+      chartsProps.map((p) => {
+        const series = Loadable.ensureLoadable(p.series).getOrElse([]);
+        series.map((serie) => {
+          for (const xDomain of xAxisOptions) {
+            let xMin = serie.data[xDomain]?.at(0)?.[0];
+            let xMax = serie.data[xDomain]?.at(-1)?.[0];
+            if (xMin === undefined || xMax === undefined) {
+              continue;
+            }
+            for (const [x] of serie.data[xDomain] ?? []) {
+              xMin = Math.min(x, xMin);
+              xMax = Math.max(x, xMax);
+            }
+
+            dic[xDomain] = [
+              Math.min(dic[xDomain]?.[0] ?? xMin, xMin),
+              Math.max(dic[xDomain]?.[1] ?? xMax, xMax),
+            ];
+          }
+        });
+      });
+
+      return dic;
+    }, [chartsProps, xAxisOptions]);
 
     if (chartsProps.length === 0 && !isLoading)
       return <Message icon="warning" title="No data available." />;
@@ -448,6 +430,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                     handleError,
                     scale,
                     xAxis,
+                    xValueRange: minMaxRange,
                   }}
                   rowCount={Math.ceil(chartsProps.length / columnCount)}
                   rowHeight={465}
