@@ -97,20 +97,22 @@ const TrialChart: React.FC<Props> = ({
     const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
       return xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null));
     });
-    const val: [x: number, y: number][] = [];
+    const series: Serie[] = [];
+    let ii = 0;
     for (const yValues of yValuesArray) {
+      const val: [x: number, y: number][] = [];
       for (let i = 0; i < yValues.length; i++) {
         const yValue = yValues[i];
         if (yValue != null) {
           val.push([xValues[i], yValue]);
         }
       }
-    }
-    const series: Serie[] = [
-      {
+      series.push({
         data: { Batches: val },
-      },
-    ];
+        name: `${metrics[ii].group}.${metrics[ii].name}`,
+      });
+      ii++;
+    }
     return series;
   }, [metrics, trialSummary]);
 
