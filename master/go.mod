@@ -175,12 +175,11 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/uptrace/bun v1.1.14
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14
-	github.com/uptrace/bun/extra/bundebug v1.1.14
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
 require (
-	github.com/fatih/color v1.15.0 // indirect
+	github.com/fatih/color v1.15.0
 	github.com/kr/pretty v0.3.0 // indirect
 	golang.org/x/sync v0.1.0
 )

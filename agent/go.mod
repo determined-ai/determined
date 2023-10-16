@@ -123,7 +123,6 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/uptrace/bun v1.1.14 // indirect
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14 // indirect
-	github.com/uptrace/bun/extra/bundebug v1.1.14 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
