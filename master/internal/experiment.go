@@ -108,7 +108,6 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		syslog              *logrus.Entry
-		system              *actor.System
 		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
@@ -218,7 +217,6 @@ func newExperiment(
 			"experiment-id": expModel.ID,
 		},
 		),
-		system:              system,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
 
@@ -272,7 +270,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.self = ctx.Self()
 		ctx.AddLabels(e.logCtx)
 		priorityChange := func(priority int) error {
-			return e.SetPriority(ctx, &priority, false)
+			return e.SetPriority(&priority, false)
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Add(e.JobID, priorityChange); err != nil {
 			return err
@@ -282,14 +280,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
 			JobID:    e.JobID,
 		})
-		if err := e.setWeight(ctx, e.activeConfig.Resources().Weight()); err != nil {
+		if err := e.setWeight(e.activeConfig.Resources().Weight()); err != nil {
 			e.updateState(model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
 			})
 			return err
 		}
-		if err := e.setPriority(ctx, e.activeConfig.Resources().Priority(), true); err != nil {
+		if err := e.setPriority(e.activeConfig.Resources().Priority(), true); err != nil {
 			e.updateState(model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
@@ -417,7 +415,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.JobID = e.JobID
 		e.rm.SetGroupMaxSlots(msg)
 	case sproto.SetGroupWeight:
-		err := e.setWeight(ctx, msg.Weight)
+		err := e.setWeight(msg.Weight)
 		if err != nil {
 			e.syslog.WithError(err).Info("setting experiment job weight")
 		}
@@ -425,7 +423,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case sproto.SetGroupPriority:
-		err := e.setPriority(ctx, &msg.Priority, true)
+		err := e.setPriority(&msg.Priority, true)
 		if err != nil {
 			e.syslog.WithError(err).Info("setting experiment job priority")
 		}
@@ -442,7 +440,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case sproto.SetResourcePool:
-		if err := e.setRP(ctx, msg); err != nil {
+		if err := e.setRP(msg); err != nil {
 			ctx.Respond(err)
 		}
 
@@ -787,7 +785,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, e.continueFromTrialID, e.system, e.self, e.TrialClosed,
+				nil, e.continueFromTrialID, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
@@ -992,14 +990,14 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) SetPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
+func (e *experiment) SetPriority(priority *int, forward bool) (err error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return e.setPriority(ctx, priority, forward)
+	return e.setPriority(priority, forward)
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
+func (e *experiment) setPriority(priority *int, forward bool) (err error) {
 	if priority == nil {
 		return nil
 	}
@@ -1044,7 +1042,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	return nil
 }
 
-func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
+func (e *experiment) setWeight(weight float64) error {
 	resources := e.activeConfig.Resources()
 	oldWeight := resources.Weight()
 	resources.SetWeight(weight)
@@ -1070,7 +1068,7 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	return nil
 }
 
-func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error {
+func (e *experiment) setRP(msg sproto.SetResourcePool) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
