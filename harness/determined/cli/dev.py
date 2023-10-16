@@ -17,7 +17,9 @@ from termcolor import colored
 import determined.cli.render
 from determined import cli
 from determined.cli import errors
-from determined.common.api import authentication, bindings, request
+from determined.common.api import authentication, bindings
+from determined.common.api import errors as api_errors
+from determined.common.api import request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -299,6 +301,7 @@ def call_bindings(args: Namespace) -> None:
     try:
         kwargs = parse_args_to_kwargs(args.args, params)
         output = fn(sess, **kwargs)
+        print_response(output)
     except TypeError as e:
         raise errors.CliError(
             "Usage: "
@@ -308,8 +311,11 @@ def call_bindings(args: Namespace) -> None:
             )
             + f"\n\n{str(e)}",
         )
-
-    print_response(output)
+    except (api_errors.BadRequestException, api_errors.BadResponseException) as e:
+        raise errors.CliError(
+            "Received an API error:" + f"\n\n{str(e)}",
+            e,
+        )
 
 
 args_description = [
@@ -337,7 +343,7 @@ args_description = [
                 "print the active user's auth token",
                 [
                     Cmd(
-                        "list",
+                        "list ls",
                         list_bindings,
                         "list available api bindings to call",
                         [
