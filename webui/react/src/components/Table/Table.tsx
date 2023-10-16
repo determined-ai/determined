@@ -216,10 +216,7 @@ export const experimentNameRenderer = (
       {value === undefined ? '' : value}&nbsp;&nbsp;
       {record.unmanaged && (
         <Tooltip content="Workload not managed by Determined">
-          <Badge
-            badgeColor={{ backgroundColor: hex2hsl('#132231'), color: hex2hsl('#FFFFFF') }}
-            text="Unmanaged"
-          />
+          <Badge backgroundColor={hex2hsl('#132231')} text="Unmanaged" />
         </Tooltip>
       )}
     </Link>

@@ -11,7 +11,7 @@ interface StateBadgeProps {
 export const StateBadge: React.FC<StateBadgeProps> = ({ state }: StateBadgeProps) => {
   return (
     <Badge
-      badgeColor={badgeColorFromState(state)}
+      backgroundColor={badgeColorFromState(state)}
       dashed={state === 'POTENTIAL'}
       text={stateToLabel(state).toUpperCase()}
     />

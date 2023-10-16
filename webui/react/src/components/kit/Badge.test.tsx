@@ -33,7 +33,7 @@ describe('Badge', () => {
       return (
         <UIProvider>
           <button role="button" onClick={() => setValue(SlotState.Running)} />
-          <Badge badgeColor={badgeColorFromState(value)} text={stateToLabel(value)} />
+          <Badge backgroundColor={badgeColorFromState(value)} text={stateToLabel(value)} />
         </UIProvider>
       );
     };

@@ -154,33 +154,11 @@ const BadgeSection: React.FC = () => {
         </Space>
         <strong>Status Badge Variation</strong>
         <Space>
-          <Badge
-            badgeColor={{ backgroundColor: hex2hsl('#FAFAFA'), color: hex2hsl('#303030') }}
-            dashed={true}
-            text="POTENTIAL"
-          />
-          <Badge
-            badgeColor={{ backgroundColor: hex2hsl('#6666CC'), color: hex2hsl('#FFFFFF') }}
-            text="PULLING IMAGE"
-          />
-          <Badge
-            badgeColor={{ backgroundColor: hex2hsl('#009DE0'), color: hex2hsl('#FFFFFF') }}
-            text="RUNNING"
-          />
-          <Badge
-            badgeColor={{ backgroundColor: hex2hsl('#267326'), color: hex2hsl('#FFFFFF') }}
-            text="COMPLETED"
-          />
-          <Badge
-            badgeColor={{ backgroundColor: hex2hsl('#CC0000'), color: hex2hsl('#FFFFFF') }}
-            text="DELETING"
-          />
-        </Space>
-        <strong>Badge With Tooltip</strong>
-        <Space>
-          <Tooltip content="tooltip">
-            <Badge dashed text="Hover for Tooltip" />
-          </Tooltip>
+          <Badge backgroundColor={hex2hsl('#FAFAFA')} dashed={true} text="POTENTIAL" />
+          <Badge backgroundColor={hex2hsl('#6666CC')} text="PULLING IMAGE" />
+          <Badge backgroundColor={hex2hsl('#009DE0')} text="RUNNING" />
+          <Badge backgroundColor={hex2hsl('#267326')} text="COMPLETED" />
+          <Badge backgroundColor={hex2hsl('#CC0000')} text="DELETING" />
         </Space>
       </AntDCard>
     </ComponentSection>
@@ -2302,6 +2280,12 @@ const TooltipsSection: React.FC = () => {
         <Space>
           <Tooltip content={text} placement="bottom" showArrow={false}>
             <Button>Tooltip without arrow</Button>
+          </Tooltip>
+        </Space>
+        <p>Tooltip on badge</p>
+        <Space>
+          <Tooltip content={text}>
+            <Badge text="Badge" />
           </Tooltip>
         </Space>
         <p>Placement</p>

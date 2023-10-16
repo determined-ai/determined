@@ -5,23 +5,18 @@ import { hsl2str, HslColor, str2hsl } from 'utils/color';
 
 import css from './Badge.module.scss';
 
-export interface BadgeColor {
-  backgroundColor: HslColor;
-  color: HslColor;
-}
-
 export interface BadgeProps {
   text: string;
-  badgeColor?: BadgeColor;
+  backgroundColor?: HslColor;
   dashed?: boolean;
 }
 
+const fontColorLight = '#FFFFFF';
+const fontColorDark = '#000810';
+
 const Badge: React.FC<BadgeProps> = ({
   text,
-  badgeColor = {
-    backgroundColor: str2hsl(getCssVar('var(--theme-surface)')),
-    color: str2hsl(getCssVar('var(--theme-surface-on)')),
-  },
+  backgroundColor = str2hsl(getCssVar('var(--theme-surface)')),
   dashed = false,
   ...props
 }: BadgeProps) => {
@@ -30,10 +25,10 @@ const Badge: React.FC<BadgeProps> = ({
   const { classes, style } = useMemo(() => {
     const classes = [css.base];
 
-    const { backgroundColor, color } = badgeColor;
     const style: CSSProperties = {
       backgroundColor: hsl2str(backgroundColor),
-      color: hsl2str(color),
+      border: backgroundColor.l < 15 ? '1px solid #646464' : '',
+      color: backgroundColor.l > 70 ? fontColorDark : fontColorLight,
     };
     if (dashed) classes.push(css.dashed);
     const isDark = ui.darkLight === DarkLight.Dark;
@@ -43,7 +38,7 @@ const Badge: React.FC<BadgeProps> = ({
     });
 
     return { classes, style };
-  }, [dashed, badgeColor, ui.darkLight]);
+  }, [dashed, backgroundColor, ui.darkLight]);
 
   return (
     // Need this wrapper for tooltip to apply
