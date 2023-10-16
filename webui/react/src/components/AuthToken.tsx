@@ -1,7 +1,7 @@
-import { CopyOutlined } from '@ant-design/icons';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Message from 'components/kit/Message';
 import { makeToast } from 'components/kit/Toast';
 import { globalStorage } from 'globalStorage';
@@ -29,7 +29,11 @@ const AuthToken: React.FC = () => {
   return (
     <Message
       action={
-        <Button icon={<CopyOutlined />} key="copy" type="primary" onClick={handleCopyToClipboard}>
+        <Button
+          icon={<Icon decorative name="clipboard" />}
+          key="copy"
+          type="primary"
+          onClick={handleCopyToClipboard}>
           Copy token to clipboard
         </Button>
       }

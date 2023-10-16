@@ -1,4 +1,3 @@
-import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -58,7 +57,6 @@ import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import { BrandingType } from 'stores/determinedInfo';
 import {
   Background,
   Brand,
@@ -281,27 +279,20 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>With icon</strong>
-        With SVG Icon
+        With Icon
         <Space>
           <Button icon={<Icon name="panel" title="compare" />} />
           <Button icon={<Icon name="panel" title="compare" />}>SVG icon</Button>
-          <Button icon={<PoweroffOutlined />} />
-          <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+          <Button icon={<Icon name="power" title="power" />} />
+          <Button icon={<Icon name="power" title="power" />}>SVG icon</Button>
         </Space>
-        With font icon
-        <Space>
-          <Button icon={<Icon name="play" size="large" title="Play" />} />
-          <Button icon={<Icon name="play" size="large" title="Play" />}>Large font icon</Button>
-          <Button icon={<Icon name="play" size="tiny" title="Play" />} />
-          <Button icon={<Icon name="play" size="tiny" title="Play" />}>Tiny font icon</Button>
-        </Space>
-        As Dropdown trigger with icon
+        As Dropdown trigger with Icon
         <Space>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />} />
+            <Button icon={<Icon name="power" title="power" />} />
           </Dropdown>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+            <Button icon={<Icon name="power" title="power" />}>SVG icon</Button>
           </Dropdown>
           <Dropdown menu={menu}>
             <Button icon={<Icon name="play" size="large" title="Play" />} />
@@ -312,13 +303,13 @@ const ButtonsSection: React.FC = () => {
         </Space>
         With icon and text displayed in a column
         <Space>
-          <Button column icon={<PoweroffOutlined />} size="small">
+          <Button column icon={<Icon name="power" title="power" />} size="small">
             Column Small
           </Button>
-          <Button column icon={<PoweroffOutlined />} size="middle">
+          <Button column icon={<Icon name="power" title="power" />} size="middle">
             Column Middle
           </Button>
-          <Button column icon={<PoweroffOutlined />} size="large">
+          <Button column icon={<Icon name="power" title="power" />} size="large">
             Column Large
           </Button>
         </Space>
@@ -2439,10 +2430,19 @@ const IconsSection: React.FC = () => {
             <Icon key={size} name="star" showTooltip size={size} title={size} />
           ))}
         </Space>
-        <p>All icons</p>
+        <p>Icon colors</p>
         <Space wrap>
+          <Icon color="cancel" name="star" showTooltip title="cancel" />
+          <Icon color="error" name="star" showTooltip title="error" />
+          <Icon color="success" name="star" showTooltip title="success" />
+        </Space>
+        <p>All icons</p>
+        <Space split={<span style={{ opacity: 0.3 }}>|</span>} wrap>
           {IconNameArray.map((name) => (
-            <Icon key={name} name={name} showTooltip title={name} />
+            <Space align="center" direction="vertical" key={name} size={0}>
+              <Icon name={name} showTooltip title={name} />
+              <p>{name}</p>
+            </Space>
           ))}
         </Space>
       </AntDCard>
@@ -3132,7 +3132,7 @@ const DesignKit: React.FC = () => {
       <div className={css.base}>
         <nav className={css.default}>
           <Link reloadDocument to={'/'}>
-            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+            <Logo orientation="horizontal" />
           </Link>
           <ThemeToggle />
           <ul className={css.sections}>
@@ -3145,7 +3145,7 @@ const DesignKit: React.FC = () => {
         </nav>
         <nav className={css.mobile}>
           <Link reloadDocument to={'/'}>
-            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+            <Logo orientation="horizontal" />
           </Link>
           <div className={css.controls}>
             <ThemeToggle iconOnly />

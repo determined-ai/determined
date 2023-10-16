@@ -1,4 +1,3 @@
-import { CheckOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -196,12 +195,13 @@ const NoteCards: React.FC<Props> = ({
             {notes.map((note, idx) => {
               return (
                 <Option key={idx} value={idx}>
-                  <CheckOutlined
+                  <span
                     style={{
                       marginRight: 8,
                       visibility: idx === currentPage ? 'visible' : 'hidden',
-                    }}
-                  />
+                    }}>
+                    <Icon decorative name="checkmark" size="small" />
+                  </span>
                   <span>{note.name}</span>
                 </Option>
               );
@@ -213,9 +213,10 @@ const NoteCards: React.FC<Props> = ({
             disabled={disabled}
             extra={
               <Dropdown menu={DROPDOWN_MENU} onClick={() => handleDropdown(currentPage)}>
-                <div style={{ cursor: 'pointer' }}>
-                  <Icon name="overflow-horizontal" title="Action menu" />
-                </div>
+                <Button
+                  icon={<Icon name="overflow-horizontal" title="Action menu" />}
+                  type="text"
+                />
               </Dropdown>
             }
             note={notes?.[currentPage]}

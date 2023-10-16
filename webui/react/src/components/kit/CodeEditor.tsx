@@ -1,4 +1,3 @@
-import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { python } from '@codemirror/lang-python';
 import { StreamLanguage } from '@codemirror/language';
@@ -8,12 +7,13 @@ import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
 import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Section from 'components/kit/internal/Section';
 import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
@@ -255,7 +255,7 @@ const CodeEditor: React.FC<Props> = ({
           <div className={css.fileInfo}>
             <div className={css.buttonContainer}>
               <>
-                {activeFile.icon ?? <FileOutlined />}
+                {activeFile.icon ?? <Icon decorative name="document" />}
                 <span className={css.filePath}>
                   <>{activeFile.title}</>
                 </span>
@@ -266,20 +266,17 @@ const CodeEditor: React.FC<Props> = ({
               </>
             </div>
             <div className={css.buttonsContainer}>
-              {
-                /**
-                 * TODO: Add notebook integration
-                 * <Button className={css.noBorderButton}>Open in Notebook</Button>
-                 */
-                <Tooltip content="Download File">
-                  <DownloadOutlined
-                    className={
-                      readonly && file !== NotLoaded ? css.noBorderButton : css.hideElement
-                    }
-                    onClick={handleDownloadClick}
-                  />
-                </Tooltip>
-              }
+              {/*
+               * TODO: Add notebook integration
+               * <Button type="text">Open in Notebook</Button>
+               */}
+              {readonly && file !== NotLoaded && (
+                <Button
+                  icon={<Icon name="download" showTooltip size="small" title="Download File" />}
+                  type="text"
+                  onClick={handleDownloadClick}
+                />
+              )}
             </div>
           </div>
         </div>

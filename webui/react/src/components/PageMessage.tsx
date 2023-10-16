@@ -2,9 +2,9 @@ import { useObservable } from 'micro-observables';
 import React from 'react';
 
 import Message from 'components/kit/Message';
-import Logo, { Orientation } from 'components/Logo';
+import Logo from 'components/Logo';
 import Page from 'components/Page';
-import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 
 interface Props {
   children: React.ReactNode;
@@ -17,12 +17,7 @@ const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
     <Page breadcrumb={[]} docTitle={title} noScroll>
       <Message
         description={children}
-        icon={
-          <Logo
-            branding={info.branding || BrandingType.Determined}
-            orientation={Orientation.Vertical}
-          />
-        }
+        icon={<Logo branding={info.branding} orientation="vertical" />}
         title={title}
       />
     </Page>

@@ -1,14 +1,13 @@
-import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Markdown from 'components/kit/internal/Markdown';
 import { ErrorHandler, ErrorType, Note } from 'components/kit/internal/types';
 import Spinner from 'components/kit/Spinner';
-import Tooltip from 'components/kit/Tooltip';
 
 import css from './NoteCard.module.scss';
 
@@ -150,9 +149,11 @@ const NoteCard: React.FC<Props> = ({
         ) : (
           disabled || (
             <Space size="middle">
-              <Tooltip content="Edit">
-                <EditOutlined onClick={editNotes} />
-              </Tooltip>
+              <Button
+                icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
+                type="text"
+                onClick={editNotes}
+              />
               {extra}
             </Space>
           )

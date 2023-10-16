@@ -51,7 +51,7 @@ export const makeToast = ({
   link,
 }: ToastArgs): void => {
   const args = {
-    closeIcon: closeable ? <Icon decorative name="close-small" /> : null,
+    closeIcon: closeable ? <Icon decorative name="close" /> : null,
     description: description ? (
       link ? (
         <div>

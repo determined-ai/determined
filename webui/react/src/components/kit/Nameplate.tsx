@@ -15,10 +15,7 @@ const Nameplate: React.FC<Props> = ({ alias, compact, icon, name }) => {
 
   return (
     <div className={classnames.join(' ')}>
-      <div>
-        {/* icon needs wrapper to maintain width */}
-        {icon}
-      </div>
+      {icon}
       <div className={css.text}>
         {alias && <div className={css.alias}>{alias}</div>}
         <div className={css.name}>{name}</div>
