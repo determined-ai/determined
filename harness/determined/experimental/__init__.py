@@ -4,14 +4,17 @@ with warnings.catch_warnings(record=True):
     from determined.common.experimental import (
         Checkpoint,
         Determined,
+        Experiment,
         ExperimentReference,
         Model,
         ModelOrderBy,
         ModelSortBy,
         ModelVersion,
+        Project,
         Session,
-        TrialReference,
+        Trial,
         TrialOrderBy,
+        TrialReference,
         TrialSortBy,
     )
     from determined.common.experimental import (

@@ -667,9 +667,20 @@ def download_model_def(args: Namespace) -> None:
 
 @authentication.required
 def download(args: Namespace) -> None:
-    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
-    checkpoints = exp.top_n_checkpoints(
-        args.top_n, sort_by=args.sort_by, smaller_is_better=args.smaller_is_better
+    sess = cli.setup_session(args)
+    exp = client.Experiment(args.experiment_id, sess)
+
+    ckpt_order_by = None
+
+    if args.smaller_is_better is True:
+        ckpt_order_by = client.CheckpointOrderBy.ASC
+    if args.smaller_is_better is False:
+        ckpt_order_by = client.CheckpointOrderBy.DESC
+
+    checkpoints = exp.list_checkpoints(
+        sort_by=args.sort_by,
+        order_by=ckpt_order_by,
+        max_results=args.top_n,
     )
 
     top_level = pathlib.Path(args.output_dir)
@@ -691,7 +702,8 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
+    sess = cli.setup_session(args)
+    exp = client.Experiment(args.experiment_id, sess)
     state = exp.wait(interval=args.polling_interval)
     if state != client.ExperimentState.COMPLETED:
         sys.exit(1)

@@ -1,10 +1,10 @@
-import { PushpinOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import { Columns } from 'components/kit/Columns';
+import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 import Avatar from 'components/UserAvatar';
@@ -53,7 +53,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
                   level={5}>
                   {workspace.name}
                 </Typography.Title>
-                {workspace.pinned && <PushpinOutlined className={css.pinned} />}
+                {workspace.pinned && <Icon name="pin" title="Pinned" />}
               </div>
               <p className={css.projects}>
                 {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}

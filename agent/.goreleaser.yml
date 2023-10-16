@@ -68,7 +68,7 @@ nfpms:
         dst: "/etc/determined/agent.yaml"
         type: config|noreplace
         file_info:
-            mode: 0600
+            mode: 0644
       - src: "packaging/determined-agent.service"
         dst: "/lib/systemd/system/determined-agent.service"
 

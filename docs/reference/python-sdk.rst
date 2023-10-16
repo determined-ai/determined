@@ -33,9 +33,8 @@ The next step is to call create_experiment():
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an ``ExperimentReference`` object, which has methods for controlling the
-lifetime of the experiment running on the cluster. In this example, we will just wait for the
-experiment to complete.
+The returned object is an ``Experiment`` object, which offers methods to manage the experiment's
+lifecycle. In the following example, we simply await the experiment's completion.
 
 .. code:: python
 
@@ -46,7 +45,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. code:: python
 
-   best_checkpoint = exp.top_checkpoint()
+   best_checkpoint = exp.list_checkpoints()[0]
    print(f"best checkpoint was {best_checkpoint.uuid}")
 
 .. _python-sdk-reference:
@@ -59,7 +58,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 ==========
 
 .. automodule:: determined.experimental.client
-   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, stream_trials_metrics, stream_trials_training_metrics, stream_trials_validation_metrics
+   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, stream_trials_metrics
    :member-order: bysource
 
 ``Checkpoint``
@@ -76,10 +75,10 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members:
    :member-order: bysource
 
-``ExperimentReference``
-=======================
+``Experiment``
+==============
 
-.. autoclass:: determined.experimental.client.ExperimentReference
+.. autoclass:: determined.experimental.client.Experiment
    :members:
    :member-order: bysource
 
@@ -118,23 +117,15 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members:
    :member-order: bysource
 
-``TrialReference``
-==================
+``Trial``
+=========
 
-.. autoclass:: determined.experimental.client.TrialReference
+.. autoclass:: determined.experimental.client.Trial
    :members:
+   :exclude-members: stream_training_metrics, stream_validation_metrics
    :member-order: bysource
 
-``TrainingMetrics``
-===================
+``TrialMetrics``
+================
 
-.. autoclass:: determined.experimental.client.TrainingMetrics
-   :members:
-   :member-order: bysource
-
-``ValidationMetrics``
-=====================
-
-.. autoclass:: determined.experimental.client.ValidationMetrics
-   :members:
-   :member-order: bysource
+.. autoclass:: determined.experimental.client.TrialMetrics

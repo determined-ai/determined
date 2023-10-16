@@ -499,7 +499,7 @@ func (c *command) SetPriority(ctx *actor.Context, priority int, forward bool) er
 
 func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {
 	if forward {
-		switch err := c.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
+		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
 			Priority: priority,
 			JobID:    c.jobID,
 		}).(type) {
@@ -517,7 +517,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 }
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {
-	switch err := c.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
+	switch err := c.rm.SetGroupWeight(sproto.SetGroupWeight{
 		Weight: weight,
 		JobID:  c.jobID,
 	}).(type) {

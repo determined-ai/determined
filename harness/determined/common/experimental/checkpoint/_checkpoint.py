@@ -42,12 +42,35 @@ class ModelFramework(enum.Enum):
 
 
 class CheckpointState(enum.Enum):
-    UNSPECIFIED = bindings.checkpointv1State.UNSPECIFIED.value
     ACTIVE = bindings.checkpointv1State.ACTIVE.value
     COMPLETED = bindings.checkpointv1State.COMPLETED.value
     ERROR = bindings.checkpointv1State.ERROR.value
     DELETED = bindings.checkpointv1State.DELETED.value
     PARTIALLY_DELETED = bindings.checkpointv1State.PARTIALLY_DELETED.value
+
+
+class CheckpointOrderBy(enum.Enum):
+    """Specifies order of a sorted list of checkpoints."""
+
+    ASC = bindings.v1OrderBy.ASC.value
+    DESC = bindings.v1OrderBy.DESC.value
+
+    def _to_bindings(self) -> bindings.v1OrderBy:
+        return bindings.v1OrderBy(self.value)
+
+
+class CheckpointSortBy(enum.Enum):
+    """Specifies checkpoint parameters that can be used for sorting checkpoints."""
+
+    UUID = bindings.checkpointv1SortBy.UUID.value
+    TRIAL_ID = bindings.checkpointv1SortBy.TRIAL_ID.value
+    BATCH_NUMBER = bindings.checkpointv1SortBy.BATCH_NUMBER.value
+    END_TIME = bindings.checkpointv1SortBy.END_TIME.value
+    STATE = bindings.checkpointv1SortBy.STATE.value
+    SEARCHER_METRIC = bindings.checkpointv1SortBy.SEARCHER_METRIC.value
+
+    def _to_bindings(self) -> bindings.checkpointv1SortBy:
+        return bindings.checkpointv1SortBy(self.value)
 
 
 @dataclasses.dataclass
@@ -78,39 +101,50 @@ class CheckpointTrainingMetadata:
 
 class Checkpoint:
     """
+    A class representing a Checkpoint instance of a trained model.
+
     A Checkpoint object is usually obtained from
-    ``determined.experimental.client.get_checkpoint()``.
+    ``determined.experimental.client.get_checkpoint()``. This class provides helper functionality
+    for downloading checkpoints to local storage and loading checkpoints into memory.
 
-    A ``Checkpoint`` represents a trained model.
-
-    This class provides helper functionality for downloading checkpoints to
-    local storage and loading checkpoints into memory.
-
-    The :class:`~determined.experimental.TrialReference` class contains methods
+    The :class:`~determined.experimental.Trial` class contains methods
     that return instances of this class.
+
+    Attributes:
+        session: HTTP request session.
+        uuid: UUID of checkpoint in storage.
+        task_id: (Mutable, Optional[str]) ID of associated task.
+        allocation_id: (Mutable, Optional[str]) ID of associated allocation.
+        report_time: (Mutable, Optional[str]) Timestamp checkpoint reported.
+        resources: (Mutable, Optional[Dict]) Dictionary of file paths to file sizes in bytes of
+            all files in the checkpoint.
+        metadata: (Mutable, Optional[Dict]) User-defined metadata associated with the checkpoint.
+        state: (Mutable, Optional[CheckpointState]) State of the checkpoint.
+        training: (Mutable, Optional[CheckpointTrainingMetadata]) Training-related metadata for
+            the checkpoint.
+
+        Note:
+            All attributes are cached by default.
+
+            Some attributes are mutable and may be changed by methods that update these values,
+            either automatically (eg. `add_metadata()`) or explicitly with `reload()`.
     """
 
     def __init__(
         self,
         session: api.Session,
-        task_id: Optional[str],
-        allocation_id: Optional[str],
         uuid: str,
-        report_time: Optional[str],
-        resources: Dict[str, Any],
-        metadata: Dict[str, Any],
-        state: CheckpointState,
-        training: Optional[CheckpointTrainingMetadata] = None,
     ):
         self._session = session
-        self.task_id = task_id
-        self.allocation_id = allocation_id
         self.uuid = uuid
-        self.report_time = report_time
-        self.resources = resources
-        self.metadata = metadata
-        self.state = state
-        self.training = training
+
+        self.task_id: Optional[str] = None
+        self.allocation_id: Optional[str] = None
+        self.report_time: Optional[str] = None
+        self.resources: Optional[Dict[str, Any]] = None
+        self.metadata: Optional[Dict[str, Any]] = None
+        self.state: Optional[CheckpointState] = None
+        self.training: Optional[CheckpointTrainingMetadata] = None
 
     def _find_shared_fs_path(self, checkpoint_storage: Dict[str, Any]) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
@@ -156,10 +190,11 @@ class Checkpoint:
             mode (DownloadMode, optional): Governs how a checkpoint is downloaded. Defaults to
                 ``AUTO``.
         """
-        if (
-            self.state != CheckpointState.COMPLETED
-            and self.state != CheckpointState.PARTIALLY_DELETED
-        ):
+        if self.state not in [CheckpointState.COMPLETED, CheckpointState.PARTIALLY_DELETED]:
+            if self.state is None:
+                raise ValueError(
+                    "Checkpoint state is unknown. Please call Checkpoint.reload to refresh."
+                )
             raise errors.CheckpointStateException(
                 "Only COMPLETED or PARTIALLY_DELETED checkpoints can be downloaded. "
                 f"Checkpoint state: {self.state.value}"
@@ -292,6 +327,20 @@ class Checkpoint:
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
+    def _push_metadata(self) -> None:
+        assert self.metadata
+        # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
+        req = bindings.v1PostCheckpointMetadataRequest(
+            checkpoint=bindings.v1Checkpoint(
+                uuid=self.uuid,
+                metadata=self.metadata,
+                resources={},
+                training=bindings.v1CheckpointTrainingMetadata(),
+                state=bindings.checkpointv1State.UNSPECIFIED,
+            ),
+        )
+        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
+
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
         Adds user-defined metadata to the checkpoint. The ``metadata`` argument must be a
@@ -304,7 +353,7 @@ class Checkpoint:
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
-        updated_metadata = dict(self.metadata, **metadata)
+        updated_metadata = dict(self.metadata, **metadata) if self.metadata else metadata
 
         req = _metadata_update_request(self.uuid, updated_metadata)
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
@@ -322,7 +371,7 @@ class Checkpoint:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
 
-        updated_metadata = dict(self.metadata)
+        updated_metadata = dict(self.metadata) if self.metadata else {}
         for key in keys:
             if key in updated_metadata:
                 del updated_metadata[key]
@@ -394,19 +443,35 @@ class Checkpoint:
         else:
             return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
+    def _hydrate(self, ckpt: bindings.v1Checkpoint) -> None:
+        self.task_id = ckpt.taskId
+        self.allocation_id = ckpt.allocationId
+        self.report_time = ckpt.reportTime
+        self.resources = ckpt.resources
+        self.metadata = ckpt.metadata
+        self.state = CheckpointState(ckpt.state.value)
+        self.training = CheckpointTrainingMetadata._from_bindings(ckpt.training)
+
+    def reload(self) -> None:
+        """
+        Explicit refresh of cached properties.
+        """
+        resp = bindings.get_GetCheckpoint(
+            session=self._session, checkpointUuid=self.uuid
+        ).checkpoint
+        self._hydrate(resp)
+
     @classmethod
-    def _from_bindings(cls, ckpt: bindings.v1Checkpoint, session: api.Session) -> "Checkpoint":
-        return cls(
+    def _from_bindings(
+        cls, ckpt_bindings: bindings.v1Checkpoint, session: api.Session
+    ) -> "Checkpoint":
+        ckpt = cls(
             session=session,
-            task_id=ckpt.taskId,
-            allocation_id=ckpt.allocationId,
-            uuid=ckpt.uuid,
-            report_time=ckpt.reportTime,
-            resources=ckpt.resources,
-            metadata=ckpt.metadata,
-            state=CheckpointState(ckpt.state.value),
-            training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
+            uuid=ckpt_bindings.uuid,
         )
+
+        ckpt._hydrate(ckpt_bindings)
+        return ckpt
 
 
 def _metadata_update_request(

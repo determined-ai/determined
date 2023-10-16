@@ -71,14 +71,19 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     # Adding checkpoint metadata.
     ckpt.add_metadata({"newkey": "newvalue"})
     # Cache should be updated.
+    assert ckpt.metadata
     assert ckpt.metadata["newkey"] == "newvalue"
     # Database should be updated.
-    assert client.get_checkpoint(ckpt.uuid).metadata["newkey"] == "newvalue"
+    ckpt = client.get_checkpoint(ckpt.uuid)
+    assert ckpt.metadata
+    assert ckpt.metadata["newkey"] == "newvalue"
 
     # Removing checkpoint metadata
     ckpt.remove_metadata(["newkey"])
     assert "newkey" not in ckpt.metadata
-    assert "newkey" not in client.get_checkpoint(ckpt.uuid).metadata
+    ckpt = client.get_checkpoint(ckpt.uuid)
+    assert ckpt.metadata
+    assert "newkey" not in ckpt.metadata
 
 
 @pytest.mark.e2e_cpu
@@ -115,7 +120,10 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     checkpoints = trial.get_checkpoints(
         sort_by=_client.CheckpointSortBy.STATE, order_by=_client.CheckpointOrderBy.ASC
     )
-    states = [checkpoint.state.value for checkpoint in checkpoints]
+    states = []
+    for checkpoint in checkpoints:
+        assert checkpoint.state
+        states.append(checkpoint.state.value)
     assert all(x <= y for x, y in zip(states, states[1:]))
 
     # Validate UUID sorting.
@@ -129,7 +137,10 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     checkpoints = trial.get_checkpoints(
         sort_by=_client.CheckpointSortBy.BATCH_NUMBER, order_by=_client.CheckpointOrderBy.DESC
     )
-    batch_numbers = [checkpoint.metadata["steps_completed"] for checkpoint in checkpoints]
+    batch_numbers = []
+    for checkpoint in checkpoints:
+        assert checkpoint.metadata
+        batch_numbers.append(checkpoint.metadata["steps_completed"])
     assert all(x >= y for x, y in zip(batch_numbers, batch_numbers[1:]))
 
     # Validate metric sorting.
@@ -193,6 +204,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         time.sleep(0.1)
     assert len(partially_deleted_checkpoints) == 1
     assert partially_deleted_checkpoints[0].uuid == partially_deleted_checkpoint.uuid
+    assert partially_deleted_checkpoints[0].resources
     assert "workload_sequencer.pkl" not in partially_deleted_checkpoints[0].resources
 
     # Ensure we can download the partially deleted checkpoint.
@@ -225,7 +237,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         time.sleep(0.1)
 
 
-def _make_live_experiment(client: _client.Determined) -> _client.ExperimentReference:
+def _make_live_experiment(client: _client.Determined) -> _client.Experiment:
     # Create an experiment that takes a long time to run
     with open(conf.fixtures_path("no_op/single-very-many-long-steps.yaml")) as f:
         config = yaml.safe_load(f)
@@ -258,7 +270,7 @@ def test_experiment_manipulation(client: _client.Determined) -> None:
     exp.cancel()
     assert exp.wait() == _client.ExperimentState.CANCELED
 
-    assert isinstance(exp.get_config(), dict)
+    assert isinstance(exp.config, dict)
 
     # Delete this experiment, but continue the test while it's deleting.
     exp.delete()
@@ -312,6 +324,7 @@ def test_models(client: _client.Determined) -> None:
 
         # avoid false-positives due to caching on the model object itself
         model = client.get_model(model_name)
+        assert model.labels
         assert set(model.labels) == set(labels)
         assert model.metadata == {"a": 1, "b": 2, "c": 3}, model.metadata
         assert model.description == "modeldescr", model.description
@@ -320,6 +333,7 @@ def test_models(client: _client.Determined) -> None:
         model.remove_metadata(["a", "b"])
 
         # break the cache again, testing get_model_by_id.
+        assert model.model_id is not None, "model_id was populated by create_model"
         model = client.get_model_by_id(model.model_id)
         assert model.labels == []
         assert model.metadata == {"c": 3}, model.metadata

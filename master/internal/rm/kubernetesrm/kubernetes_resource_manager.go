@@ -78,9 +78,8 @@ func New(
 	return ResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
 
-// GetResourcePoolRef gets an actor ref to a resource pool by name.
-func (k ResourceManager) GetResourcePoolRef(
-	ctx actor.Messenger,
+// getResourcePoolRef gets an actor ref to a resource pool by name.
+func (k ResourceManager) getResourcePoolRef(
 	name string,
 ) (*actor.Ref, error) {
 	rp := k.Ref().Child(name)
@@ -92,7 +91,6 @@ func (k ResourceManager) GetResourcePoolRef(
 
 // ResolveResourcePool resolves the resource pool completely.
 func (k ResourceManager) ResolveResourcePool(
-	actorCtx actor.Messenger,
 	name string,
 	workspaceID int,
 	slots int,
@@ -106,7 +104,7 @@ func (k ResourceManager) ResolveResourcePool(
 	if name == "" && slots == 0 {
 		if defaultAuxPool == "" {
 			req := sproto.GetDefaultAuxResourcePoolRequest{}
-			resp, err := k.GetDefaultAuxResourcePool(actorCtx, req)
+			resp, err := k.GetDefaultAuxResourcePool(req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to aux pool: %w", err)
 			}
@@ -118,7 +116,7 @@ func (k ResourceManager) ResolveResourcePool(
 	if name == "" && slots >= 0 {
 		if defaultComputePool == "" {
 			req := sproto.GetDefaultComputeResourcePoolRequest{}
-			resp, err := k.GetDefaultComputeResourcePool(actorCtx, req)
+			resp, err := k.GetDefaultComputeResourcePool(req)
 			if err != nil {
 				return "", fmt.Errorf("defaulting to compute pool: %w", err)
 			}
@@ -127,7 +125,7 @@ func (k ResourceManager) ResolveResourcePool(
 		name = defaultComputePool
 	}
 
-	resp, err := k.GetResourcePools(actorCtx, &apiv1.GetResourcePoolsRequest{})
+	resp, err := k.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	if err != nil {
 		return "", err
 	}
@@ -150,7 +148,7 @@ func (k ResourceManager) ResolveResourcePool(
 			name, workspaceID)
 	}
 
-	if err := k.ValidateResourcePool(actorCtx, name); err != nil {
+	if err := k.ValidateResourcePool(name); err != nil {
 		return "", fmt.Errorf("validating pool: %w", err)
 	}
 	return name, nil
@@ -159,7 +157,6 @@ func (k ResourceManager) ResolveResourcePool(
 // ValidateResources ensures enough resources are available in the resource pool.
 // This is a no-op for k8s.
 func (k ResourceManager) ValidateResources(
-	ctx actor.Messenger,
 	name string,
 	slots int,
 	command bool,
@@ -168,19 +165,18 @@ func (k ResourceManager) ValidateResources(
 }
 
 // ValidateResourcePool validates that the named resource pool exists.
-func (k ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
-	_, err := k.GetResourcePoolRef(ctx, name)
+func (k ResourceManager) ValidateResourcePool(name string) error {
+	_, err := k.getResourcePoolRef(name)
 	return err
 }
 
 // ValidateResourcePoolAvailability checks the available resources for a given pool.
 // This is a no-op for k8s.
 func (k ResourceManager) ValidateResourcePoolAvailability(
-	ctx actor.Messenger,
 	name string,
 	slots int,
 ) ([]command.LaunchWarning, error) {
-	if _, err := k.GetResourcePoolRef(ctx, name); err != nil {
+	if _, err := k.getResourcePoolRef(name); err != nil {
 		return nil, fmt.Errorf("%s is an invalid resource pool", name)
 	}
 
@@ -190,7 +186,6 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
 func (k ResourceManager) NotifyContainerRunning(
-	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {
 	// Kubernetes Resource Manager does not implement a handler for the
@@ -201,8 +196,17 @@ func (k ResourceManager) NotifyContainerRunning(
 }
 
 // IsReattachableOnlyAfterStarted always returns false for the k8s resource manager.
-func (k ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) bool {
+func (k ResourceManager) IsReattachableOnlyAfterStarted() bool {
 	return false
+}
+
+// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
+func (k ResourceManager) TaskContainerDefaults(
+	pool string,
+	fallbackConfig model.TaskContainerDefaultsConfig,
+) (result model.TaskContainerDefaultsConfig, err error) {
+	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
+	return result, k.Ask(req, &result)
 }
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
@@ -229,7 +233,7 @@ func newKubernetesResourceManager(
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 	db *db.PgDB,
-) actor.Actor {
+) *kubernetesResourceManager {
 	return &kubernetesResourceManager{
 		config:                config,
 		poolsConfig:           poolsConfig,
@@ -472,12 +476,8 @@ func (k *kubernetesResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if k.pools[resourcePool] == nil {
-		sender := "unknown"
-		if ctx.Sender() != nil {
-			sender = ctx.Sender().Address().String()
-		}
-		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
-			resourcePool, ctx.Message(), sender)
+		err := errors.Errorf("cannot find resource pool %s for message %T",
+			resourcePool, ctx.Message())
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
@@ -496,16 +496,6 @@ func (k *kubernetesResourceManager) forwardToPool(
 type taskContainerDefaults struct {
 	fallbackDefault model.TaskContainerDefaultsConfig
 	resourcePool    string
-}
-
-// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
-func (k ResourceManager) TaskContainerDefaults(
-	ctx actor.Messenger,
-	pool string,
-	fallbackConfig model.TaskContainerDefaultsConfig,
-) (result model.TaskContainerDefaultsConfig, err error) {
-	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
-	return result, k.Ask(ctx, req, &result)
 }
 
 func (k *kubernetesResourceManager) aggregateTaskSummaries(
@@ -680,23 +670,20 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 
 // EnableAgent allows scheduling on a node that has been disabled.
 func (k ResourceManager) EnableAgent(
-	ctx actor.Messenger,
 	req *apiv1.EnableAgentRequest,
 ) (resp *apiv1.EnableAgentResponse, err error) {
-	return resp, k.Ask(ctx, req, &resp)
+	return resp, k.Ask(req, &resp)
 }
 
 // DisableAgent prevents scheduling on a node and has the option to kill running jobs.
 func (k ResourceManager) DisableAgent(
-	ctx actor.Messenger,
 	req *apiv1.DisableAgentRequest,
 ) (resp *apiv1.DisableAgentResponse, err error) {
-	return resp, k.Ask(ctx, req, &resp)
+	return resp, k.Ask(req, &resp)
 }
 
 // EnableSlot implements 'det slot enable...' functionality.
 func (k ResourceManager) EnableSlot(
-	m actor.Messenger,
 	req *apiv1.EnableSlotRequest,
 ) (resp *apiv1.EnableSlotResponse, err error) {
 	return nil, rmerrors.ErrNotSupported
@@ -704,7 +691,6 @@ func (k ResourceManager) EnableSlot(
 
 // DisableSlot implements 'det slot disable...' functionality.
 func (k ResourceManager) DisableSlot(
-	m actor.Messenger,
 	req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	return nil, rmerrors.ErrNotSupported

@@ -149,7 +149,7 @@ func newExperiment(
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
+		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -157,12 +157,11 @@ func newExperiment(
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		err := m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false)
+		err := m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), false)
 		if err != nil {
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
 		}
 		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
-			m.system,
 			poolName,
 			resources.SlotsPerTrial(),
 		)
@@ -279,7 +278,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
+		e.rm.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
 			JobID:    e.JobID,
 		})
@@ -311,7 +310,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			}
 
 			if j.QPos.GreaterThan(decimal.Zero) {
-				e.rm.RecoverJobPosition(ctx, sproto.RecoverJobPosition{
+				e.rm.RecoverJobPosition(sproto.RecoverJobPosition{
 					JobID:        e.JobID,
 					JobPosition:  j.QPos,
 					ResourcePool: e.activeConfig.Resources().ResourcePool(),
@@ -416,7 +415,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources.SetMaxSlots(msg.MaxSlots)
 		e.activeConfig.SetResources(resources)
 		msg.JobID = e.JobID
-		e.rm.SetGroupMaxSlots(ctx, msg)
+		e.rm.SetGroupMaxSlots(msg)
 	case sproto.SetGroupWeight:
 		err := e.setWeight(ctx, msg.Weight)
 		if err != nil {
@@ -1030,7 +1029,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	}
 
 	if forward {
-		switch err := e.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
+		switch err := e.rm.SetGroupPriority(sproto.SetGroupPriority{
 			Priority: *priority,
 			JobID:    e.JobID,
 		}).(type) {
@@ -1056,7 +1055,7 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		return fmt.Errorf("setting experiment %d weight: %w", e.ID, err)
 	}
 
-	switch err := e.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
+	switch err := e.rm.SetGroupWeight(sproto.SetGroupWeight{
 		Weight: weight,
 		JobID:  e.JobID,
 	}).(type) {
@@ -1080,7 +1079,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		e.system, msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+		msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:

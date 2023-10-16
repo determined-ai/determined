@@ -1,14 +1,14 @@
-import { Alert, type TabsProps } from 'antd';
+import { type TabsProps } from 'antd';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import Message from 'components/kit/Message';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import { paths } from 'routes/utils';
@@ -335,7 +335,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     `;
     return (
       <div className={css.alert}>
-        <Alert
+        <Message
           description={
             <>
               Learn about&nbsp;
@@ -348,25 +348,25 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               .
             </>
           }
-          message={alertMessage}
-          type="warning"
+          icon="warning"
+          title={alertMessage}
         />
       </div>
     );
   } else if (experiment.state === RunState.Error) {
-    return <Message title="No data to plot." type={MessageType.Empty} />;
+    return <Message icon="warning" title="No data to plot." />;
   } else if (pageError !== undefined) {
-    return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
+    return <Message icon="warning" title={PAGE_ERROR_MESSAGES[pageError]} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
     return <Spinner spinning tip="Fetching metrics..." />;
   } else if (hasLoaded && !hasData) {
     return isExperimentTerminal || experiment.state === RunState.Paused ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
+      <Message icon="warning" title="No data to plot." />
     ) : (
       <div className={css.alert}>
-        <Alert
+        <Message
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

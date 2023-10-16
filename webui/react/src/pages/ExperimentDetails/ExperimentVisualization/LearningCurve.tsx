@@ -1,12 +1,11 @@
-import { Alert } from 'antd';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
@@ -312,12 +311,12 @@ const LearningCurve: React.FC<Props> = ({
     return <Message title={pageError.message} />;
   } else if ((hasLoaded && !hasTrials) || !selectedMetric) {
     return isExperimentTerminal ? (
-      <Message title="No learning curve data to show." type={MessageType.Empty} />
+      <Message icon="warning" title="No learning curve data to show." />
     ) : (
       <div className={css.waiting}>
-        <Alert
+        <Message
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

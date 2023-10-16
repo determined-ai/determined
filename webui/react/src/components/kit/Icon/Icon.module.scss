@@ -1,0 +1,53 @@
+.base {
+  align-items: center;
+  aspect-ratio: 1 / 1;
+  display: inline-flex !important;
+  fill: currentColor;
+  flex-shrink: 0;
+  user-select: none;
+}
+.tiny {
+  width: var(--icon-tiny);
+}
+.small {
+  width: var(--icon-small);
+}
+.medium {
+  width: var(--icon-medium);
+}
+.large {
+  width: var(--icon-large);
+}
+.big {
+  width: var(--icon-big);
+}
+.great {
+  width: var(--icon-great);
+}
+.huge {
+  width: var(--icon-huge);
+}
+.enormous {
+  width: var(--icon-enormous);
+}
+.giant {
+  width: var(--icon-giant);
+}
+.jumbo {
+  width: var(--icon-jumbo);
+}
+.mega {
+  width: var(--icon-mega);
+}
+.cancel {
+  color: var(--theme-ix-cancel);
+}
+.error {
+  color: var(--theme-status-error);
+}
+.success {
+  color: var(--theme-status-success);
+}
+.filter {
+  margin-top: 1px;
+}

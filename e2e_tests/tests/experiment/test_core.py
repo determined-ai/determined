@@ -173,7 +173,7 @@ def test_end_to_end_adaptive() -> None:
     assert best is not None
     assert best > 0.93
 
-    # Check that ExperimentReference returns a sorted order of top checkpoints
+    # Check that the Experiment returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
     d = Determined(conf.make_master_url())
@@ -212,6 +212,7 @@ def test_end_to_end_adaptive() -> None:
     db_check = d.get_checkpoint(checkpoint.uuid)
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
     # Beginning with 0.18 the TrialController contributes a few items to the dict.
+    assert checkpoint.metadata
     assert checkpoint.metadata.get("testing") == "metadata"
     assert checkpoint.metadata.keys() == {
         "determined_version",
@@ -302,35 +303,6 @@ def test_perform_initial_validation() -> None:
     config = conf.set_perform_initial_validation(config, True)
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("no_op"), 1)
     exp.assert_performed_initial_validation(exp_id)
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.parametrize(
-    "stage,ntrials,expect_workloads,expect_checkpoints",
-    [
-        ("0_start", 1, False, False),
-        ("1_metrics", 1, True, False),
-        ("2_checkpoints", 1, True, True),
-        ("3_hpsearch", 10, True, True),
-    ],
-)
-def test_core_api_tutorials(
-    stage: str, ntrials: int, expect_workloads: bool, expect_checkpoints: bool
-) -> None:
-    exp.run_basic_test(
-        conf.tutorials_path(f"core_api/{stage}.yaml"),
-        conf.tutorials_path("core_api"),
-        ntrials,
-        expect_workloads=expect_workloads,
-        expect_checkpoints=expect_checkpoints,
-    )
-
-
-@pytest.mark.parallel
-def test_core_api_distributed_tutorial() -> None:
-    exp.run_basic_test(
-        conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
-    )
 
 
 @pytest.mark.e2e_cpu_2a

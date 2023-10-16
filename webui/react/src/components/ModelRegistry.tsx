@@ -13,9 +13,9 @@ import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
+import Message from 'components/kit/Message';
 import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
@@ -692,7 +692,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         </Space>
       </div>
       {models.length === 0 && !isLoading && filterCount === 0 ? (
-        <Empty
+        <Message
           description={
             <>
               Track important checkpoints and versions from your experiments.{' '}

@@ -103,16 +103,15 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		resources.Slots = 0
 	}
 	poolName, err := a.m.rm.ResolveResourcePool(
-		a.m.system, resources.ResourcePool, int(cmdSpec.Metadata.WorkspaceID), resources.Slots)
+		resources.ResourcePool, int(cmdSpec.Metadata.WorkspaceID), resources.Slots)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = a.m.rm.ValidateResources(a.m.system, poolName, resources.Slots, true); err != nil {
+	if err = a.m.rm.ValidateResources(poolName, resources.Slots, true); err != nil {
 		return nil, nil, fmt.Errorf("validating resources: %v", err)
 	}
 
 	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
-		a.m.system,
 		poolName,
 		resources.Slots,
 	)
@@ -126,7 +125,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	// Get the base TaskSpec.
 	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
-		a.m.system,
 		poolName,
 		a.m.config.TaskContainerDefaults,
 	)

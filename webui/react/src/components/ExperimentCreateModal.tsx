@@ -1,4 +1,3 @@
-import { Alert } from 'antd';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useState } from 'react';
@@ -6,6 +5,7 @@ import React, { useCallback, useEffect, useId, useState } from 'react';
 import Button from 'components/kit/Button';
 import Form, { hasErrors } from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import Message from 'components/kit/Message';
 import { Modal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
 import { Loaded } from 'components/kit/utils/loadable';
@@ -366,9 +366,9 @@ const ExperimentCreateModalComponent = ({
       title={titleLabel}
       onClose={handleModalClose}>
       <>
-        {modalState.error && <Alert message={modalState.error} type="error" />}
+        {modalState.error && <Message icon="error" title={modalState.error} />}
         {modalState.configError && modalState.isAdvancedMode && (
-          <Alert message={modalState.configError} type="error" />
+          <Message icon="error" title={modalState.configError} />
         )}
         {modalState.isAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>

@@ -30,12 +30,14 @@ import os
 import queue
 import re
 import signal
+import socket
 import ssl
 import subprocess
 import sys
 import threading
 import time
 import traceback
+import urllib.error
 import urllib.request
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, cast
 
@@ -263,25 +265,38 @@ class Shipper(threading.Thread):
         # limited to expire in 7 days, and then set `Authorization: Bearer $token` here instead.
         self.headers = {"Grpc-Metadata-x-allocation-token": f"Bearer {token}"}
 
-        baseurl = master_url.rstrip("/")
-        self.url = f"{baseurl}/api/v1/task/logs"
+        self.master_url = master_url
+        self.cert_name = cert_name
+        self.noverify = cert_file.lower() == "noverify"
+        self.cert_content = None
+        if cert_file and not self.noverify:
+            try:
+                with open(cert_file, "r") as f:
+                    self.cert_content = f.read()
+            except Exception:
+                logging.error("failed to read DET_MASTER_CERT_FILE ({cert_file})", with_exc=True)
+
+        self.base_url = master_url.rstrip("/")
+        self.logs_url = f"{self.base_url}/api/v1/task/logs"
 
         self.context = None
         if master_url.startswith("https://"):
             # Create an SSLContext that trusts our DET_MASTER_CERT_FILE, and checks the hostname
             # against the DET_MASTER_CERT_NAME (which may differ from the hostname in the url).
             self.context = ssl.create_default_context()
-            if cert_file.lower() == "noverify":
+            if self.noverify:
                 # Don't check the master's certificate.
                 # Presently the master never sets this value for DET_MASTER_CERT_FILE, but we keep
                 # this check to be consistent with the CLI behavior.
+                self.context.check_hostname = False
                 self.context.verify_mode = ssl.CERT_NONE
-            elif cert_file:
-                # Explicitly trust the cert in cert_file.
-                self.context.load_verify_locations(cafile=cert_file)
-            if cert_name:
-                # Override hostname verification
-                self.context = override_verify_name(self.context, cert_name)
+            else:
+                if cert_file:
+                    # Explicitly trust the cert in cert_file.
+                    self.context.load_verify_locations(cadata=self.cert_content)
+                if cert_name:
+                    # Override hostname verification
+                    self.context = override_verify_name(self.context, cert_name)
 
     def run(self) -> None:
         try:
@@ -330,9 +345,25 @@ class Shipper(threading.Thread):
         for delay in backoffs:
             time.sleep(delay)
             try:
-                req = urllib.request.Request(self.url, data, self.headers, method="POST")
-                with urllib.request.urlopen(req, context=self.context) as resp:
-                    respbody = resp.read()
+                req = urllib.request.Request(self.logs_url, data, self.headers, method="POST")
+                try:
+                    with urllib.request.urlopen(req, context=self.context) as resp:
+                        respbody = resp.read()
+                except urllib.error.URLError as e:
+                    # urllib stacktraces are awful, so see if we can interpret what happened.
+                    # Note that we've already connected successfully to the master so failures here
+                    # are likely related to master crashing or the network breaking or something to
+                    # that effect.
+                    if isinstance(e, urllib.error.HTTPError):
+                        raise RuntimeError(
+                            f"POST logs returned status code: {e.code} and reason: {e.reason}, "
+                            "is the master healthy?"
+                        ) from None
+                    elif isinstance(e.reason, ConnectionRefusedError):
+                        raise RuntimeError(
+                            "The connection to {self.master_url} was refused, is master down?"
+                        )
+                    raise
 
                 if resp.getcode() != 200:
                     raise RuntimeError(
@@ -345,7 +376,6 @@ class Shipper(threading.Thread):
 
             except Exception:
                 logging.error("failed to ship logs to master", exc_info=True)
-                pass
 
         raise RuntimeError("failed to connect to master for too long, giving up")
 
@@ -376,6 +406,82 @@ class Shipper(threading.Thread):
         # Try to ship for about 30 seconds.
         backoffs = [0, 1, 5, 10, 15]
         self.ship(data, backoffs)
+
+    def assert_master_is_reachable(self):
+        """
+        Before we start actually shipping logs, try to confirm that we can reach the master at all.
+
+        If we can't, log an overly-detailed explanation to help sysadmins debug their cluster.
+
+        Unfortunately, if we can't reach the master, they'll have to use the /ship_logs escape hatch
+        to see this message, or be on slurm where we pull slurm's stderr into task logs
+        automatically.
+        """
+        backoffs = [0, 1, 5, 10, 15]
+        for delay in backoffs:
+            time.sleep(delay)
+            if self.try_reaching_master():
+                return
+        raise RuntimeError("failed to ever reach master")
+
+    def try_reaching_master(self) -> bool:
+        endpoint = "/api/v1/me"
+        url = f"{self.base_url}{endpoint}"
+        req = urllib.request.Request(url, headers=self.headers)
+        try:
+            with urllib.request.urlopen(req, context=self.context) as resp:
+                _ = resp.read()
+            return True
+        except Exception as e:
+            # urllib stacktraces are awful, so in cases where we can tell what happened, avoid
+            # printing it at all.
+            exc_info = True
+            detail = (
+                "This may be due to an address resolution problem, a certificate problem, a "
+                "firewall problem, a proxy problem, or some other networking error."
+            )
+            if isinstance(e, urllib.error.HTTPError):
+                detail = f"GET {url} returned status code: {e.code} and reason: {e.reason}."
+                exc_info = False
+            elif isinstance(e, urllib.error.URLError):
+                if isinstance(e.reason, socket.gaierror):
+                    detail = f"Name lookup for {self.master_url} failed: {e.reason}"
+                    exc_info = False
+                elif isinstance(e.reason, ConnectionRefusedError):
+                    detail = f"The connection to {self.master_url} was refused."
+                    exc_info = False
+                elif isinstance(e.reason, ssl.SSLCertVerificationError):
+                    detail = f"There was a tls verification error: {e.reason.verify_message}."
+                    exc_info = False
+
+            if self.master_url.lower().startswith("https"):
+                proxy_name_lower = "https_proxy"
+                proxy_name_upper = "HTTPS_PROXY"
+            else:
+                proxy_name_lower = "http_proxy"
+                proxy_name_upper = "HTTP_PROXY"
+
+            proxy_value_lower = os.environ.get(proxy_name_lower)
+            proxy_value_upper = os.environ.get(proxy_name_upper)
+
+            no_proxy_value_lower = os.environ.get("no_proxy")
+            no_proxy_value_upper = os.environ.get("NO_PROXY")
+
+            logging.error(
+                f"Unable to reach the master at DET_MASTER={self.master_url}.  {detail}\n"
+                "Debug information:\n"
+                f"    master_url: {self.master_url}\n"
+                f"    endpoint: {url}\n"
+                f"    tls_verify_name: {self.cert_name or None}\n"
+                f"    tls_noverify: {self.noverify}\n"
+                f"    tls_cert: {self.cert_content}\n"
+                f"    {proxy_name_lower}: {proxy_value_lower}\n"
+                f"    {proxy_name_upper}: {proxy_value_upper}\n"
+                f"    no_proxy: {no_proxy_value_lower}\n"
+                f"    NO_PROXY: {no_proxy_value_upper}\n",
+                exc_info=exc_info,
+            )
+            return False
 
 
 class Waiter(threading.Thread):
@@ -428,6 +534,8 @@ def main(
     # time.
     shipper = Shipper(master_url, token, cert_name, cert_file, logq, doneq, daemon=True)
     shipper_timed_out = False
+
+    shipper.assert_master_is_reachable()
 
     # Start the process or ship a special log message to the master why we couldn't.
     try:

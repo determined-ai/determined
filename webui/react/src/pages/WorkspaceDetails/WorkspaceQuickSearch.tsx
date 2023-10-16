@@ -1,14 +1,13 @@
-import { ProjectOutlined } from '@ant-design/icons';
 import { Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects } from 'services/api';
 import workspaceStore from 'stores/workspaces';
@@ -101,7 +100,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           key: `project-${project.id}`,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
-              <ProjectOutlined style={{ fontSize: '16px' }} />
+              <Icon decorative name="project" size="small" />
               <Link onClick={() => onClickProject(project)}>{project.name}</Link>
               <span>({project.numExperiments})</span>
             </div>
@@ -159,7 +158,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           ) : (
             <>
               {treeData.length === 0 ? (
-                <Message title="No matching workspace or projects" type={MessageType.Empty} />
+                <Message icon="warning" title="No matching workspace or projects" />
               ) : (
                 <Tree defaultExpandAll selectable={false} treeData={treeData} />
               )}

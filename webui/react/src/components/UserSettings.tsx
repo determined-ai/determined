@@ -2,6 +2,7 @@ import { Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Drawer from 'components/kit/Drawer';
+import Icon from 'components/kit/Icon';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/kit/InputShortcut';
@@ -40,7 +41,6 @@ import { useObservable } from 'utils/observable';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
-import Icon from './kit/Icon';
 import Paragraph from './kit/Typography/Paragraph';
 import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';

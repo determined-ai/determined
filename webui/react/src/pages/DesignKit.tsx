@@ -1,4 +1,3 @@
-import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -17,7 +16,6 @@ import { Column, Columns } from 'components/kit/Columns';
 import DatePicker from 'components/kit/DatePicker';
 import Drawer from 'components/kit/Drawer';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Empty from 'components/kit/Empty';
 import Form from 'components/kit/Form';
 import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
 import InlineForm from 'components/kit/InlineForm';
@@ -30,6 +28,7 @@ import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/in
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import Message from 'components/kit/Message';
 import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Notes, { Props as NotesProps } from 'components/kit/Notes';
@@ -58,7 +57,6 @@ import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import { BrandingType } from 'stores/determinedInfo';
 import {
   Background,
   Brand,
@@ -90,7 +88,6 @@ const ComponentTitles = {
   DatePicker: 'DatePicker',
   Drawer: 'Drawer',
   Dropdown: 'Dropdown',
-  Empty: 'Empty',
   Form: 'Form',
   Icons: 'Icons',
   InlineForm: 'InlineForm',
@@ -100,6 +97,7 @@ const ComponentTitles = {
   InputShortcut: 'InputShortcut',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Message: 'Message',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
   Notes: 'Notes',
@@ -281,27 +279,20 @@ const ButtonsSection: React.FC = () => {
         </Space>
         <hr />
         <strong>With icon</strong>
-        With SVG Icon
+        With Icon
         <Space>
           <Button icon={<Icon name="panel" title="compare" />} />
           <Button icon={<Icon name="panel" title="compare" />}>SVG icon</Button>
-          <Button icon={<PoweroffOutlined />} />
-          <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+          <Button icon={<Icon name="power" title="power" />} />
+          <Button icon={<Icon name="power" title="power" />}>SVG icon</Button>
         </Space>
-        With font icon
-        <Space>
-          <Button icon={<Icon name="play" size="large" title="Play" />} />
-          <Button icon={<Icon name="play" size="large" title="Play" />}>Large font icon</Button>
-          <Button icon={<Icon name="play" size="tiny" title="Play" />} />
-          <Button icon={<Icon name="play" size="tiny" title="Play" />}>Tiny font icon</Button>
-        </Space>
-        As Dropdown trigger with icon
+        As Dropdown trigger with Icon
         <Space>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />} />
+            <Button icon={<Icon name="power" title="power" />} />
           </Dropdown>
           <Dropdown menu={menu}>
-            <Button icon={<PoweroffOutlined />}>SVG icon</Button>
+            <Button icon={<Icon name="power" title="power" />}>SVG icon</Button>
           </Dropdown>
           <Dropdown menu={menu}>
             <Button icon={<Icon name="play" size="large" title="Play" />} />
@@ -312,13 +303,13 @@ const ButtonsSection: React.FC = () => {
         </Space>
         With icon and text displayed in a column
         <Space>
-          <Button column icon={<PoweroffOutlined />} size="small">
+          <Button column icon={<Icon name="power" title="power" />} size="small">
             Column Small
           </Button>
-          <Button column icon={<PoweroffOutlined />} size="middle">
+          <Button column icon={<Icon name="power" title="power" />} size="middle">
             Column Middle
           </Button>
-          <Button column icon={<PoweroffOutlined />} size="large">
+          <Button column icon={<Icon name="power" title="power" />} size="large">
             Column Large
           </Button>
         </Space>
@@ -2418,30 +2409,6 @@ const ColumnsSection: React.FC = () => {
   );
 };
 
-const EmptySection: React.FC = () => {
-  return (
-    <ComponentSection id="Empty" title="Empty">
-      <AntDCard>
-        <p>
-          An <code>{'<Empty>'}</code> component indicates that no content is available for a page.
-          It may display an icon and a description explaining why this state is displayed.
-        </p>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <Empty
-          description={
-            <>
-              Empty component description, with a <Link to="">link to more info</Link>
-            </>
-          }
-          icon="warning-large"
-          title="Empty title"
-        />
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
 const IconsSection: React.FC = () => {
   return (
     <ComponentSection id="Icons" title="Icons">
@@ -2463,10 +2430,19 @@ const IconsSection: React.FC = () => {
             <Icon key={size} name="star" showTooltip size={size} title={size} />
           ))}
         </Space>
-        <p>All icons</p>
+        <p>Icon colors</p>
         <Space wrap>
+          <Icon color="cancel" name="star" showTooltip title="cancel" />
+          <Icon color="error" name="star" showTooltip title="error" />
+          <Icon color="success" name="star" showTooltip title="success" />
+        </Space>
+        <p>All icons</p>
+        <Space split={<span style={{ opacity: 0.3 }}>|</span>} wrap>
           {IconNameArray.map((name) => (
-            <Icon key={name} name={name} showTooltip title={name} />
+            <Space align="center" direction="vertical" key={name} size={0}>
+              <Icon name={name} showTooltip title={name} />
+              <p>{name}</p>
+            </Space>
           ))}
         </Space>
       </AntDCard>
@@ -3061,6 +3037,32 @@ const SpinnerSection = () => {
   );
 };
 
+const MessageSection: React.FC = () => {
+  return (
+    <ComponentSection id="Message" title="Message">
+      <AntDCard>
+        <Paragraph>
+          A <code>{'<Message>'}</code> displays persistent information related to the application
+          state. Requires at least one of description or title. Optionally displays an action button
+          and/or an icon.
+        </Paragraph>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <Message
+          action={<Button>Optional action button</Button>}
+          description={
+            <>
+              Message description, with a <Link to="">link to more info</Link>
+            </>
+          }
+          icon="info"
+          title="Message title"
+        />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Accordion: <AccordionSection />,
   Avatar: <AvatarSection />,
@@ -3076,7 +3078,6 @@ const Components = {
   DatePicker: <DatePickerSection />,
   Drawer: <DrawerSection />,
   Dropdown: <DropdownSection />,
-  Empty: <EmptySection />,
   Form: <FormSection />,
   Icons: <IconsSection />,
   InlineForm: <InlineFormSection />,
@@ -3086,6 +3087,7 @@ const Components = {
   InputShortcut: <InputShortcutSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Message: <MessageSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
   Notes: <NotesSection />,
@@ -3130,7 +3132,7 @@ const DesignKit: React.FC = () => {
       <div className={css.base}>
         <nav className={css.default}>
           <Link reloadDocument to={'/'}>
-            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+            <Logo orientation="horizontal" />
           </Link>
           <ThemeToggle />
           <ul className={css.sections}>
@@ -3143,7 +3145,7 @@ const DesignKit: React.FC = () => {
         </nav>
         <nav className={css.mobile}>
           <Link reloadDocument to={'/'}>
-            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+            <Logo orientation="horizontal" />
           </Link>
           <div className={css.controls}>
             <ThemeToggle iconOnly />

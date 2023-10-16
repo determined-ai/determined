@@ -4,15 +4,15 @@ import warnings
 from determined.common.api import Session
 from determined.common.experimental.checkpoint import Checkpoint
 from determined.common.experimental.determined import Determined
-from determined.common.experimental.experiment import ExperimentReference
-from determined.common.experimental.trial import TrialReference, TrialSortBy, TrialOrderBy
+from determined.common.experimental.experiment import Experiment, ExperimentReference
+from determined.common.experimental.trial import Trial, TrialReference, TrialSortBy, TrialOrderBy
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy, ModelVersion
 from determined.common.experimental.metrics import (
     TrialMetrics,
     TrainingMetrics,
     ValidationMetrics,
 )
-
+from determined.common.experimental.project import Project
 
 warnings.warn(
     "The 'determined.common.experimental' module is deprecated and will be removed "
