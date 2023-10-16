@@ -1,5 +1,9 @@
 .. _architecture-index:
 
+.. meta::
+   :description: Learn how to quickly get started with Determined.
+   :weight: 5
+
 ######################
  How Determined Works
 ######################

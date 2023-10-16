@@ -1,6 +1,6 @@
-##################
- Network Security
-##################
+########################
+ Network Security Config
+########################
 
 .. container:: child-articles
 

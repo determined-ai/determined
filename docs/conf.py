@@ -14,6 +14,7 @@ import time
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+sys.path.append(os.path.abspath('./_extensions'))
 
 project = "Determined"
 html_title = "Determined AI Documentation"
@@ -111,7 +112,8 @@ extensions = [
     "sphinx_reredirects",
     "sphinx_tabs.tabs",
     "myst_parser",
-    "sphinx_design"
+    "sphinx_design",
+    "_extensions.sort_by_weight",
 
 ]
 

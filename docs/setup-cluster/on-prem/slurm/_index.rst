@@ -1,8 +1,8 @@
 .. _sysadmin-deploy-on-hpc:
 
-###########
- Slurm/PBS
-###########
+##############
+ Via Slurm/PBS
+##############
 
 +--------------------------------------------+
 | Supported Versions                         |

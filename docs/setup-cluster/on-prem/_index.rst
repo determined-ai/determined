@@ -1,8 +1,11 @@
 .. _deploy-on-prem-overview:
 
-#########
- On Prem
-#########
+###################
+ On Prem Deployment
+###################
+
+.. meta::
+   :weight: 1
 
 On-premise deployments are useful if you already have access to the machines that you would like to
 install Determined on, whether that means a single laptop for local development or a fleet of

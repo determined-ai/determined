@@ -1,8 +1,8 @@
 .. _determined-on-kubernetes:
 
-############
- Kubernetes
-############
+######################
+ Kubernetes Deployment
+######################
 
 This document describes how the Determined runs on `Kubernetes <https://kubernetes.io/>`__. For
 instructions on installing Determined on Kubernetes, see the :ref:`installation guide

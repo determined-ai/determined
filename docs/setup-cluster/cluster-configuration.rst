@@ -1,8 +1,11 @@
 .. _cluster-configuration:
 
-#########
- Cluster
-#########
+################
+ Cluster Config
+################
+
+.. meta::
+   :weight: 2
 
 This guide contains basic cluster configuration information and links to reference information.
 

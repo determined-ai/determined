@@ -1,7 +1,7 @@
 .. _install-using-deploy:
 
 #########################################
- Install Determined Using ``det deploy``
+ Via ``det deploy``
 #########################################
 
 This user guide provides instructions for using the ``det deploy`` command-line tool to deploy

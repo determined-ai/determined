@@ -1,5 +1,9 @@
 .. _example-solutions:
 
+.. meta::
+   :description: Learn how to quickly get started with Determined.
+   :weight: 1
+
 ##########
  Examples
 ##########

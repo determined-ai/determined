@@ -1,6 +1,9 @@
-#######
- Cloud
-#######
+#################
+ Cloud Deployment
+#################
+
+.. meta::
+   :weight: 4
 
 .. container:: child-articles
 

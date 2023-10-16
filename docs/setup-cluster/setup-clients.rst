@@ -2,9 +2,12 @@
 
 .. _setup-clients:
 
-#########
- Clients
-#########
+##############
+ Client Config
+##############
+
+.. meta::
+   :weight: 1
 
 You can set up clients for interacting with the Determined Master through the Determined CLI. Follow
 these instructions to set up clients.

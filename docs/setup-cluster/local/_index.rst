@@ -1,6 +1,6 @@
-#######
- Local
-#######
+#################
+ Local Deployment
+#################
 
 .. container:: child-articles
 

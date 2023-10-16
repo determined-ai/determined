@@ -1,8 +1,8 @@
 .. _install-using-docker:
 
-#################################
- Install Determined Using Docker
-#################################
+############
+ Via Docker
+############
 
 This user guide provides step-by-step instructions for installing Determined using Docker.
 

@@ -1,8 +1,8 @@
 .. _install-using-linux-packages:
 
-#########################################
- Install Determined Using Linux Packages
-#########################################
+###################
+ Via Linux Packages
+###################
 
 This user guide provides step-by-step instructions for installing Determined using Linux packages.
 
