@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -25,7 +24,6 @@ type AllocationService interface {
 		db db.DB,
 		rm rm.ResourceManager,
 		specifier tasks.TaskSpecifier,
-		system *actor.System,
 		onExit func(*AllocationExited),
 	) error
 	AwaitTermination(id model.AllocationID)

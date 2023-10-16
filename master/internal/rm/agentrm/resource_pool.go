@@ -188,6 +188,7 @@ func (rp *resourcePool) restoreResources(
 		}
 
 		cr := containerResources{
+			system:      ctx.Self().System(),
 			req:         req,
 			agent:       agentState,
 			devices:     cs.Devices,
@@ -265,6 +266,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		case allocateFreeDevicesResponse:
 			devices := resp.devices
 			resources = append(resources, &containerResources{
+				system:      ctx.Self().System(),
 				req:         req,
 				agent:       fit.Agent,
 				containerID: containerID,

@@ -555,6 +555,7 @@ func (k *kubernetesResourcePool) createResources(
 	var resources []*k8sPodResources
 	for pod := 0; pod < numPods; pod++ {
 		resources = append(resources, &k8sPodResources{
+			system:          ctx.Self().System(),
 			req:             req,
 			podsActor:       k.podsActor,
 			containerID:     cproto.NewID(),
@@ -584,6 +585,7 @@ func (k *kubernetesResourcePool) restoreResources(
 	var resources []*k8sPodResources
 	for _, restoreResponse := range restoreResponses {
 		resources = append(resources, &k8sPodResources{
+			system:          ctx.Self().System(),
 			req:             req,
 			podsActor:       k.podsActor,
 			containerID:     cproto.ID(restoreResponse.containerID),
@@ -669,6 +671,8 @@ func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 }
 
 type k8sPodResources struct {
+	system *actor.System
+
 	req             *sproto.AllocateRequest
 	podsActor       *actor.Ref
 	group           *tasklist.Group
@@ -698,7 +702,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p k8sPodResources) Start(
-	ctx *actor.System, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	p.setPosition(&spec)
 	spec.ContainerID = string(p.containerID)
@@ -715,7 +719,7 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
-	return ctx.Ask(p.podsActor, StartTaskPod{
+	return p.system.Ask(p.podsActor, StartTaskPod{
 		AllocationID: p.req.AllocationID,
 		Spec:         spec,
 		Slots:        p.slots,
@@ -738,8 +742,8 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p k8sPodResources) Kill(ctx *actor.System, _ logger.Context) {
-	ctx.Tell(p.podsActor, KillTaskPod{
+func (p k8sPodResources) Kill(_ logger.Context) {
+	p.system.Tell(p.podsActor, KillTaskPod{
 		PodID: p.containerID,
 	})
 }

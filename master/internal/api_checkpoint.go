@@ -369,7 +369,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 
 		go func() {
 			err = runCheckpointGCTask(
-				a.m.system, a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
+				a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
 				exps[i].Config, checkpointUUIDs, req.CheckpointGlobs, false, agentUserGroup, curUser,
 				nil,
 			)

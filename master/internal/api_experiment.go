@@ -474,7 +474,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 			if len(checkpoints) > 0 {
 				err = runCheckpointGCTask(
-					a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+					a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
 					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
 					true, agentUserGroup, userModel, nil,
 				)
@@ -1289,7 +1289,7 @@ func (a *apiServer) PatchExperiment(
 			taskID := model.NewTaskID()
 			go func() {
 				err = runCheckpointGCTask(
-					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
+					a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
 					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
 					agentUserGroup, user, nil,
 				)

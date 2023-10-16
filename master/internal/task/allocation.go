@@ -25,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -102,7 +101,6 @@ type allocation struct {
 	rm rm.ResourceManager
 
 	syslog *logrus.Entry
-	system *actor.System
 	wg     waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
@@ -149,7 +147,7 @@ type allocation struct {
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func newAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-	specifier tasks.TaskSpecifier, system *actor.System,
+	specifier tasks.TaskSpecifier,
 ) (*allocation, error) {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
@@ -163,7 +161,6 @@ func newAllocation(
 		db: db,
 		rm: rm,
 
-		system: system,
 		wg:     waitgroupx.WithContext(context.Background()),
 		syslog: logrus.WithFields(logCtx.Fields()),
 
@@ -559,7 +556,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		for _, r := range a.resources {
 			if r.Exited == nil {
 				a.syslog.Infof("allocation exited with unterminated resources: %v", r.Summary())
-				r.Kill(a.system, a.logCtx)
+				r.Kill(a.logCtx)
 			}
 		}
 	})
@@ -645,7 +642,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		}
 
 		for cID, r := range a.resources {
-			if err := r.Start(a.system, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
+			if err := r.Start(a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
 				IsMultiAgent: len(a.resources) > 1,
@@ -923,7 +920,7 @@ func (a *allocation) kill(reason string) {
 	})
 
 	for _, r := range a.resources.active() {
-		r.Kill(a.system, a.logCtx)
+		r.Kill(a.logCtx)
 	}
 
 	if len(a.resources.exited()) == 0 {

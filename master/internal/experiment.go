@@ -495,7 +495,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 			go func() {
 				err := runCheckpointGCTask(
-					ctx.Self().System(), e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
+					e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
 					e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
 					false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 				)

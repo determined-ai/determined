@@ -20,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -400,7 +399,6 @@ func TestStartError(t *testing.T) {
 		pgDB,
 		&rm,
 		mockTaskSpecifier{},
-		actor.NewSystem(uuid.NewString()),
 		func(ae *AllocationExited) {},
 	)
 	require.ErrorContains(t, err, expectedErr.Error())
@@ -472,7 +470,6 @@ func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 		pgDB,
 		&rm,
 		mockTaskSpecifier{},
-		actor.NewSystem(uuid.NewString()),
 		func(ae *AllocationExited) { exitFuture.Store(ae) },
 	)
 	require.NoError(t, err)
@@ -528,7 +525,7 @@ func requireAssignedMany(
 	for i := 0; i < numResources; i++ {
 		rID := sproto.ResourcesID(cproto.NewID())
 		var r mocks.Resources
-		r.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		r.On("Start", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Times(1)
 		r.On("Summary").Return(sproto.ResourcesSummary{
 			AllocationID:  id,
@@ -536,7 +533,7 @@ func requireAssignedMany(
 			ResourcesType: sproto.ResourcesTypeDockerContainer,
 			AgentDevices:  map[aproto.ID][]device.Device{stubAgentName: nil},
 		})
-		r.On("Kill", mock.Anything, mock.Anything).Return().Run(func(_ mock.Arguments) {
+		r.On("Kill", mock.Anything).Return().Run(func(_ mock.Arguments) {
 			q.Put(&sproto.ResourcesStateChanged{
 				ResourcesID:    rID,
 				ResourcesState: sproto.Terminated,
