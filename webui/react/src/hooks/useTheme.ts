@@ -52,16 +52,15 @@ const useTheme = (): { theme: Theme; isDarkMode: boolean } => {
     ui: { mode },
   } = useUI();
 
-  const branding = info.branding;
+  const branding = info.branding || 'determined';
   const systemMode = getSystemMode();
   const darkLight = getDarkLight(mode, systemMode);
   const [theme, setTheme] = useState<Theme>(getTheme(darkLight, branding));
-
   useLayoutEffect(() => {
     setTheme(getTheme(darkLight, branding));
-  }, [mode, darkLight]);
+  }, [branding, mode, darkLight]);
 
-  const isDarkMode = mode === DarkLight.Dark;
+  const isDarkMode = darkLight === DarkLight.Dark;
 
   return { isDarkMode, theme };
 };
