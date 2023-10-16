@@ -2,12 +2,13 @@ import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
-import { UIProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { stateToLabel } from 'constants/states';
 import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeProps, BadgeType } from './Badge';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
@@ -21,11 +22,12 @@ const setup = ({
   ...props
 }: BadgeProps = {}) => {
   return render(
-    //<UIProvider>
-    <Badge tooltip={tooltip} type={type} {...props}>
-      {children}
-    </Badge>,
-    //</UIProvider>,
+    <ThemeProvider>
+      <UIProvider theme={theme} darkMode={isDarkMode}>
+        <Badge tooltip={tooltip} type={type} {...props}>
+          {children}
+        </Badge>
+      </UIProvider></ThemeProvider>,
   );
 };
 
@@ -35,24 +37,27 @@ describe('Badge', () => {
     expect(view.getByText(CONTENT)).toBeInTheDocument();
   });
 
-  it('should display dynamic content from state prop', async () => {
+  it('should display dynamic content from state prop', () => {
     const TestComponent = () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
-        //<UIProvider>
-        // <button role="button" onClick={() => setValue(SlotState.Running)} />
-        <Badge state={value} type={BadgeType.State} />
-        // </UIProvider>
+        <ThemeProvider>
+          <UIProvider theme={theme} darkMode={isDarkMode}>
+            <button role="button" onClick={() => setValue(SlotState.Running)} />
+            <Badge state={value} type={BadgeType.State} />
+          </UIProvider>
+        </ThemeProvider>
       );
     };
+
     const view = render(<TestComponent />);
-    const slotFree = await view.getByText(stateToLabel(SlotState.Free));
+    const slotFree = view.getByText(stateToLabel(SlotState.Free));
 
     expect(slotFree).toHaveClass('state neutral');
 
-    await user.click(view.getByRole('button'));
+    user.click(view.getByRole('button'));
 
-    await waitFor(() => {
+    waitFor(() => {
       expect(view.getByText(stateToLabel(SlotState.Running))).toBeInTheDocument();
     });
   });

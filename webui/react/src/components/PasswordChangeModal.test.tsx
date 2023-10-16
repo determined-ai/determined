@@ -1,15 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect } from 'react';
-
+import { UIProvider, ThemeProvider } from 'components/kit/Theme';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { UIProvider } from 'components/kit/Theme';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
+import { theme, isDarkMode } from 'utils/tests/getTheme';
 
 vi.useFakeTimers();
 
@@ -82,9 +82,11 @@ const Container: React.FC = () => {
 
 const setup = async () => {
   const view = render(
-    //<UIProvider>
-    <Container />,
-    // </UIProvider>,
+    <ThemeProvider>
+      <UIProvider theme={theme} darkMode={isDarkMode}>
+        <Container />
+      </UIProvider>
+    </ThemeProvider>
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
@@ -113,4 +115,4 @@ describe('Password Change Modal', () => {
       userId: USER_ID,
     });
   });
-} /* { timeout: 10000 } */);
+} /* {timeout: 10000 } */);

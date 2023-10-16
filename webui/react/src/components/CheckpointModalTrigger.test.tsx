@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-
+import { theme, isDarkMode } from 'utils/tests/getTheme';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import { UIProvider } from 'components/kit/Theme';
+import { UIProvider, ThemeProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
@@ -38,13 +38,16 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
+
   render(
     <BrowserRouter>
-      {/* <UIProvider> */}
-      <ConfirmationProvider>
-        <ModalTrigger />
-      </ConfirmationProvider>
-      {/* //</UIProvider> */}
+      <ThemeProvider>
+        <UIProvider theme={theme} darkMode={isDarkMode}>
+          <ConfirmationProvider>
+            <ModalTrigger />
+          </ConfirmationProvider>
+        </UIProvider>
+      </ThemeProvider>
     </BrowserRouter>,
   );
 

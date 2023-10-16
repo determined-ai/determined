@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 
-import { UIProvider } from 'components/kit/Theme';
+import { UIProvider, ThemeProvider } from 'components/kit/Theme';
 import {
   getExperimentDetails,
   getExpTrials,
@@ -10,8 +10,8 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import {} from 'stores/cluster';
-
+import { } from 'stores/cluster';
+import { theme, isDarkMode } from 'utils/tests/getTheme';
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
 
@@ -53,13 +53,15 @@ vi.mock('./ExperimentVisualization', () => ({
 
 const setup = () => {
   const view = render(
-    //<UIProvider>
-    <HelmetProvider>
-      <BrowserRouter>
-        <ExperimentDetails />
-      </BrowserRouter>
-    </HelmetProvider>,
-    //</UIProvider>,
+    <ThemeProvider>
+      <UIProvider theme={theme} darkMode={isDarkMode}>
+        <HelmetProvider>
+          <BrowserRouter>
+            <ExperimentDetails />
+          </BrowserRouter>
+        </HelmetProvider>
+      </UIProvider>
+    </ThemeProvider>
   );
   return { view };
 };

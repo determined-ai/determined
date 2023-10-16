@@ -2,10 +2,10 @@ import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { UIProvider } from 'components/kit/Theme';
+import { UIProvider, ThemeProvider } from 'components/kit/Theme';
 import { User } from 'types';
-
 import UserAvatar, { Props } from './UserAvatar';
+import { theme, isDarkMode } from 'utils/tests/getTheme';
 
 const testUsers: User[] = [
   {
@@ -23,11 +23,12 @@ const Component = ({ user }: Partial<Props> = {}) => {
 
 const setup = (testUser: User) => {
   const user = userEvent.setup();
-
   const view = render(
-    // <UIProvider>
-    <Component user={testUser} />,
-    // </UIProvider>,
+    <ThemeProvider>
+      <UIProvider theme={theme} darkMode={isDarkMode}>
+        <Component user={testUser} />
+      </UIProvider>
+    </ThemeProvider>
   );
 
   return { user, view };
