@@ -33,7 +33,7 @@ FOR EACH ROW EXECUTE PROCEDURE stream_metric_seq_modify();
 
 -- helper function to create metric jsonb object for streaming 
 CREATE OR REPLACE FUNCTION stream_metric_notify(
-    before jsonb, beforework integer, beforeeid integer,after jsonb, afterwork integer, aftereid integer
+    before jsonb, beforework integer, after jsonb, afterwork integer, eid integer
 ) RETURNS integer AS $$
 DECLARE
     output jsonb = NULL;
@@ -41,12 +41,12 @@ DECLARE
 BEGIN
     IF before IS NOT NULL THEN
         temp = before || jsonb_object_agg('workspace_id', beforework);
-        temp = before || jsonb_object_agg('experiment_id', beforeeid);
+        temp = before || jsonb_object_agg('experiment_id', eid);
         output = jsonb_object_agg('before', temp);
     END IF;
     IF after IS NOT NULL THEN 
         temp = after || jsonb_object_agg('workspace_id', afterwork);
-        temp = after || jsonb_object_agg('experiment_id', aftereid);
+        temp = after || jsonb_object_agg('experiment_id', eid);
         IF output IS NULL THEN
             output = jsonb_object_agg('after', temp);
         ELSE 
@@ -69,17 +69,17 @@ BEGIN
         eid = experiment_id FROM trials WHERE trials.id = NEW.trial_id;
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_metric_notify(NULL, NULL, NULL, to_jsonb(NEW), work, eid);
+        PERFORM stream_metric_notify(NULL, NULL, to_jsonb(NEW), work, eid);
     ELSEIF (TG_OP = 'UPDATE') THEN
         eid = experiment_id FROM trials WHERE trials.id = NEW.trial_id;
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_metric_notify(to_jsonb(OLD), work, eid, to_jsonb(NEW), work, eid);
+        PERFORM stream_metric_notify(to_jsonb(OLD), work, to_jsonb(NEW), work, eid);
     ELSEIF (TG_OP = 'DELETE') THEN
         eid = experiment_id FROM trials WHERE trials.id = OLD.trial_id;
         proj = project_id from experiments where experiments.id = eid;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_metric_notify(to_jsonb(OLD), work, eid, NULL, NULL, NULL);
+        PERFORM stream_metric_notify(to_jsonb(OLD), work, NULL, NULL, eid);
         -- DELETE trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
@@ -149,7 +149,7 @@ BEGIN
         metric.seq = nextval('stream_metric_seq');
         UPDATE metrics SET seq = metric.seq where id = metric.id;
         jmetric = to_jsonb(metric);
-        PERFORM stream_metric_notify(jmetric, OLD.workspace_id, OLD.experiment_id, jmetric, NEW.workspace_id, NEW.experiment_id);
+        PERFORM stream_metric_notify(jmetric, OLD.workspace_id, jmetric, NEW.workspace_id, metric.experiment_id);
     END LOOP;
     -- return value for AFTER triggers is ignored
     return NULL;
@@ -190,7 +190,7 @@ BEGIN
         metric.seq = nextval('stream_metric_seq');
         UPDATE metrics SET seq = metric.seq where id = metric.id;
         jmetric = to_jsonb(metric);
-        PERFORM stream_metric_notify(jmetric, oldwork, eid, jmetric, newwork, eid);
+        PERFORM stream_metric_notify(jmetric, oldwork, jmetric, newwork, eid);
     END LOOP;
     -- return value for AFTER triggers is ignored
     return NULL;
