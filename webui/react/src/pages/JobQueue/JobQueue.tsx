@@ -1,5 +1,5 @@
 import Icon from 'determined-ui/Icon';
-import { DetError } from 'determined-ui/internal/types';
+import { DetError } from 'determined-ui/utils/error';
 import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

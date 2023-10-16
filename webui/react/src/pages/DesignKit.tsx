@@ -21,7 +21,7 @@ import InputNumber from 'determined-ui/InputNumber';
 import InputSearch from 'determined-ui/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'determined-ui/InputShortcut';
 import { TypographySize } from 'determined-ui/internal/fonts';
-import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'determined-ui/internal/types';
+import { MetricType, Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
 import { LineChart } from 'determined-ui/LineChart';
 import { useChartGrid } from 'determined-ui/LineChart/useChartGrid';
 import LogViewer from 'determined-ui/LogViewer/LogViewer';
@@ -42,6 +42,7 @@ import Paragraph from 'determined-ui/Typography/Paragraph';
 import useConfirm, { voidPromiseFn } from 'determined-ui/useConfirm';
 import { useTags } from 'determined-ui/useTags';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { ValueOf } from 'determined-ui/utils/types';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 

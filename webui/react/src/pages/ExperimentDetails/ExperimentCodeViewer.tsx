@@ -1,7 +1,7 @@
 import Icon from 'determined-ui/Icon';
-import { TreeNode } from 'determined-ui/internal/types';
 import Spinner from 'determined-ui/Spinner';
 import { Failed, Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { TreeNode } from 'determined-ui/utils/types';
 import yaml from 'js-yaml';
 import React, { useEffect, useMemo, useState } from 'react';
 

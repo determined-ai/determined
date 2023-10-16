@@ -2,10 +2,10 @@ import { GridCell } from '@hpe.com/glide-data-grid';
 import Button from 'determined-ui/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
-import { copyToClipboard } from 'determined-ui/internal/functions';
 import { useModal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
 import useConfirm from 'determined-ui/useConfirm';
+import { copyToClipboard } from 'determined-ui/utils/functions';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
