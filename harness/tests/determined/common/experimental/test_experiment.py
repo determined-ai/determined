@@ -125,6 +125,30 @@ def test_list_trials_respects_max_results(
 
 
 @responses.activate
+def test_list_trials_iterates_through_all_trials(
+    make_expref: Callable[[int], experiment.Experiment]
+) -> None:
+    expref = make_expref(1)
+    page_size = 2
+
+    tr_resp = api_responses.sample_get_experiment_trials()
+
+    assert len(tr_resp.trials) >= 2, "Test expects sample trial response to contain >= 2 Trials."
+    for trial in tr_resp.trials:
+        trial.experimentId = expref.id
+
+    responses.add_callback(
+        responses.GET,
+        f"{_MASTER}/api/v1/experiments/{expref.id}/trials",
+        callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
+    )
+
+    trials = expref.list_trials()
+
+    assert len(list(trials)) == len(tr_resp.trials)
+
+
+@responses.activate
 def test_list_trials_requests_pages_lazily(
     make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
