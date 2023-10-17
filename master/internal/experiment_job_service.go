@@ -17,6 +17,9 @@ import (
 
 // ToV1Jobs() takes an experiment and returns a job.
 func (e *experiment) ToV1Job() *jobv1.Job {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
 	if err != nil && err != sql.ErrNoRows {
 		// FIXME: DET-9563 workspace and/or project is deleted.
@@ -47,6 +50,9 @@ func (e *experiment) ToV1Job() *jobv1.Job {
 
 // SetJobPriority sets an experiment's job priority.
 func (e *experiment) SetJobPriority(priority int) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	if priority < 1 || priority > 99 {
 		return errors.New("priority must be between 1 and 99")
 	}
@@ -59,6 +65,9 @@ func (e *experiment) SetJobPriority(priority int) error {
 
 // SetWeight sets the experiment's group weight.
 func (e *experiment) SetWeight(weight float64) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	err := e.setWeight(weight)
 	if err != nil {
 		e.syslog.WithError(err).Info("setting experiment job weight")

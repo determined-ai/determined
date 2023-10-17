@@ -16,6 +16,9 @@ import (
 
 // ToV1Job() takes a command and returns a job.
 func (c *command) ToV1Job() *jobv1.Job {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	j := jobv1.Job{
 		JobId:          c.jobID.String(),
 		EntityId:       string(c.taskID),
@@ -39,6 +42,9 @@ func (c *command) ToV1Job() *jobv1.Job {
 
 // SetJobPriority sets a command's job priority.
 func (c *command) SetJobPriority(priority int) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if priority < 1 || priority > 99 {
 		return errors.New("priority must be between 1 and 99")
 	}
@@ -51,6 +57,9 @@ func (c *command) SetJobPriority(priority int) error {
 
 // SetWeight sets the command's group weight.
 func (c *command) SetWeight(weight float64) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	switch err := c.rm.SetGroupWeight(sproto.SetGroupWeight{
 		Weight: weight,
 		JobID:  c.jobID,
