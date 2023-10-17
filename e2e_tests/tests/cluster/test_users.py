@@ -1144,9 +1144,6 @@ def test_user_edit_no_fields(clean_auth: None, login_admin: None) -> None:
     # login admin again.
     api_utils.configure_token_store(ADMIN_CREDENTIALS)
 
-    new_display_name = get_random_string()
-    new_username = get_random_string()
-
     assert current_user is not None and current_user.id
     command = [
         "user",
