@@ -27,6 +27,7 @@ import { TypographySize } from 'components/kit/internal/fonts';
 import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
+import KitLink from 'components/kit/Link';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Message from 'components/kit/Message';
 import { Modal, useModal } from 'components/kit/Modal';
@@ -46,7 +47,6 @@ import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
 import { useTags } from 'components/kit/useTags';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Label from 'components/Label';
-import KitLink from 'components/Link';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
@@ -95,6 +95,7 @@ const ComponentTitles = {
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
   InputShortcut: 'InputShortcut',
+  Link: 'Link',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Message: 'Message',
@@ -132,6 +133,42 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
       <h3 id={id}>{title}</h3>
       {children}
     </article>
+  );
+};
+
+const LinkSection: React.FC = () => {
+  return (
+    <ComponentSection id="Link" title="Link">
+      <AntDCard>
+        <p>
+          <code>{'<Link>'}</code> lets the user navigate to another page by clicking or tapping on
+          it.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Default Usage</strong>
+        <KitLink href="#Link">Link</KitLink>
+        <strong>Links of different sizes</strong>
+        <Space>
+          <KitLink href="#Link" size="tiny">
+            Tiny
+          </KitLink>
+          <KitLink href="#Link" size="small">
+            Small
+          </KitLink>
+          <KitLink href="#Link" size="medium">
+            Medium
+          </KitLink>
+          <KitLink href="#Link" size="large">
+            Large
+          </KitLink>
+        </Space>
+        <strong>Disabled Link</strong>
+        <KitLink disabled href="#Link">
+          Disabled Link
+        </KitLink>
+      </AntDCard>
+    </ComponentSection>
   );
 };
 
@@ -3085,6 +3122,7 @@ const Components = {
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,
   InputShortcut: <InputShortcutSection />,
+  Link: <LinkSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
   Message: <MessageSection />,

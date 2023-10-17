@@ -407,10 +407,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     if (experiment.forkedFrom && experiment.config.searcher.sourceTrialId) {
       rows.push({
         content: (
-          <Link
-            className={css.link}
-            path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
-            Trial {experiment.config.searcher.sourceTrialId}
+          <Link path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
+            <div className={css.link}>Trial {experiment.config.searcher.sourceTrialId}</div>
           </Link>
         ),
         label: 'Continued from',
@@ -419,8 +417,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     if (experiment.forkedFrom && !experiment.config.searcher.sourceTrialId) {
       rows.push({
         content: (
-          <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
-            Experiment {experiment.forkedFrom}
+          <Link path={paths.experimentDetails(experiment.forkedFrom)}>
+            <div className={css.link}>Experiment {experiment.forkedFrom}</div>
           </Link>
         ),
         label: 'Forked from',
@@ -436,8 +434,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     if (experiment.jobSummary && !terminalRunStates.has(experiment.state)) {
       rows.push({
         content: (
-          <Link className={css.link} path={paths.jobs()}>
-            {jobInfoLinkText}
+          <Link path={paths.jobs()}>
+            <div className={css.link}>{jobInfoLinkText}</div>
           </Link>
         ),
         label: 'Job info',

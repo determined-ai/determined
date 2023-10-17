@@ -1,36 +1,22 @@
-import React, { CSSProperties, MouseEvent, useCallback } from 'react';
+import React, { MouseEvent, useCallback } from 'react';
 
-import Button from 'components/kit/Button';
+import KitLink from 'components/kit/Link';
 import { handlePath, linkPath } from 'routes/utils';
 import { AnyMouseEventHandler, windowOpenFeatures } from 'utils/routes';
 
-import css from './Link.module.scss';
-
 export interface Props {
   children?: React.ReactNode;
-  className?: string;
   disabled?: boolean;
   // is this external to the assets hosted by React?
   external?: boolean;
-  inherit?: boolean;
-  isButton?: boolean;
-  label?: string;
   onClick?: AnyMouseEventHandler;
   path?: string;
   popout?: boolean | 'tab' | 'window';
   size?: 'tiny' | 'small' | 'medium' | 'large';
-  style?: CSSProperties;
 }
 
 const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) => {
-  const classes = [css.base];
   const rel = windowOpenFeatures.join(' ');
-
-  if (props.className) classes.push(props.className);
-  if (props.disabled) classes.push(css.disabled);
-  if (props.inherit) classes.push(css.inherit);
-  if (props.isButton) classes.push('ant-btn');
-  if (props.size) classes.push(css[props.size]);
 
   const href = props.path ? linkPath(props.path, external) : undefined;
   const handleClick = useCallback(
@@ -40,26 +26,15 @@ const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) =
     [onClick, popout, props.path, external],
   );
 
-  if (props.disabled) {
-    return props.isButton ? (
-      <Button disabled>{props.children}</Button>
-    ) : (
-      <span className={classes.join(' ')} style={props.style}>
-        {props.children}
-      </span>
-    );
-  }
-
   return (
-    <a
-      aria-label={props.label}
-      className={classes.join(' ')}
+    <KitLink
+      disabled={props.disabled}
       href={href}
       rel={rel}
-      style={props.style}
+      size={props.size}
       onClick={handleClick}>
       {props.children}
-    </a>
+    </KitLink>
   );
 };
 
