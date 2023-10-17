@@ -99,12 +99,12 @@ const NavigationTabbar: React.FC = () => {
     (workspaces) =>
       workspaces.map(
         (workspace) =>
-        ({
-          icon: <Avatar square text={workspace.name} textColor="black" />,
-          label: workspace.name,
-          onClick: (e: AnyMouseEvent) =>
-            handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-        } as ActionItem),
+          ({
+            icon: <Avatar square text={workspace.name} textColor="black" />,
+            label: workspace.name,
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+          } as ActionItem),
       ),
   );
 

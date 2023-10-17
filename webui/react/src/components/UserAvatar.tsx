@@ -12,7 +12,14 @@ export interface Props extends Omit<AvatarProps, 'darkLight' | 'text'> {
 const UserAvatar: React.FC<Props> = ({ user, deactivated, ...rest }) => {
   const displayName = getDisplayName(user);
 
-  return <Avatar {...rest} inactive={deactivated} statusText={deactivated ? '(deactivated)' : undefined} text={displayName} />;
+  return (
+    <Avatar
+      {...rest}
+      inactive={deactivated}
+      statusText={deactivated ? '(deactivated)' : undefined}
+      text={displayName}
+    />
+  );
 };
 
 export default UserAvatar;
