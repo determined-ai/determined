@@ -1105,7 +1105,7 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
         new_display_name,
         "--username",
         new_username,
-        "--activate",
+        "--active",
         "--remote",
         "--admin",
     ]

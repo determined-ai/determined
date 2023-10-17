@@ -256,8 +256,8 @@ args_description = [
                 false_help="set as non-remote user"
             ),
             BoolOptArg(
-                "--activate",
-                "--deactivate",
+                "--active",
+                "--no-active",
                 dest="activate",
                 true_help="set user as active",
                 false_help="deactivate user"
