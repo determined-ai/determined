@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -44,7 +43,7 @@ var nonRetryableErrors = []*regexp.Regexp{
 
 type trialExitCallback func(model.RequestID, *model.ExitedReason)
 
-// A trial is a task actor which is responsible for handling:
+// A trial is a struct which is responsible for handling:
 //   - messages from the resource manager,
 //   - messages from the experiment,
 //   - messages from the trial container(s), and
@@ -70,8 +69,6 @@ type trial struct {
 	db     db.DB
 	rm     rm.ResourceManager
 	syslog *logrus.Entry
-	system *actor.System
-	parent *actor.Ref
 
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
@@ -118,8 +115,6 @@ func newTrial(
 	restored bool,
 	id *int,
 	continueFromTrialID *int,
-	system *actor.System,
-	parent *actor.Ref,
 	exitCallback trialExitCallback,
 ) (t *trial, err error) {
 	t = &trial{
@@ -131,12 +126,10 @@ func newTrial(
 		experimentID:      experimentID,
 		state:             initialState,
 		searcher:          searcher,
-		parent:            parent,
 
 		db:     pgDB,
 		rm:     rm,
 		syslog: logrus.WithField("component", "trial"),
-		system: system,
 
 		config:              config,
 		taskSpec:            taskSpec,
@@ -318,7 +311,7 @@ func (t *trial) create() error {
 	return nil
 }
 
-// recover recovers the trial minimal (hopefully to stay) state for a trial actor.
+// recover recovers the trial minimal (hopefully to stay) state for a trial.
 // Separately, the experiment stores and recovers our searcher state.
 func (t *trial) recover() error {
 	runID, restarts, err := t.db.TrialRunIDAndRestarts(t.id)
