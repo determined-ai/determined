@@ -4,10 +4,15 @@ package webhooks
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/google/uuid"
+
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -71,6 +76,104 @@ func TestWebhooks(t *testing.T) {
 	t.Cleanup(func() { cleanUp(ctx, t) })
 }
 
+func TestReportLogPatternAction(t *testing.T) {
+	ctx := context.Background()
+
+	pgDB := db.MustResolveTestPostgres(t)
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+	clearWebhooksTables(ctx, t)
+
+	originalConfig := config.GetMasterConfig().Webhooks
+	defer func() {
+		config.GetMasterConfig().Webhooks = originalConfig
+	}()
+
+	for _, webhookType := range []WebhookType{WebhookTypeDefault, WebhookTypeSlack} {
+		for _, baseURLIsSet := range []bool{true, false} {
+			if baseURLIsSet {
+				config.GetMasterConfig().Webhooks.BaseURL = "http://determined.ai"
+			} else {
+				config.GetMasterConfig().Webhooks.BaseURL = ""
+			}
+
+			t.Run(fmt.Sprintf(
+				"webhookType=%v baseURLIsSet=%v", webhookType, baseURLIsSet), func(t *testing.T) {
+				user := db.RequireMockUser(t, pgDB)
+				exp := db.RequireMockExperiment(t, pgDB, user)
+				trial, task := db.RequireMockTrial(t, pgDB, exp)
+
+				expected := EventPayload{
+					Type: TriggerTypeLogPatternPolicy,
+					Condition: Condition{
+						LogPatternPolicyRegex: "regexa",
+					},
+					Data: EventData{
+						LogPatternPolicy: &LogPatternPolicyPayload{
+							TaskID:        task.TaskID,
+							NodeName:      "nodeA",
+							TriggeringLog: "trigA",
+						},
+					},
+				}
+
+				uuidURL := uuid.New().String()
+				require.NoError(t, ReportLogPatternAction(
+					ctx,
+					task.TaskID,
+					expected.Data.LogPatternPolicy.NodeName,
+					expected.Condition.LogPatternPolicyRegex,
+					expected.Data.LogPatternPolicy.TriggeringLog,
+					uuidURL,
+					webhookType))
+
+				var actualEvent Event
+				require.NoError(t, db.Bun().NewSelect().Model(&actualEvent).
+					Where("url = ?", uuidURL).
+					Scan(ctx, &actualEvent))
+
+				if webhookType == WebhookTypeDefault {
+					var actual EventPayload
+					require.NoError(t, json.Unmarshal(actualEvent.Payload, &actual))
+
+					actual.ID = expected.ID
+					actual.Timestamp = expected.Timestamp
+					require.Equal(t, expected, actual)
+					return
+				}
+
+				var actual SlackMessageBody
+				require.NoError(t, json.Unmarshal(actualEvent.Payload, &actual))
+
+				msg := fmt.Sprintf(
+					"Experiment ID `%d`, Trial ID `%d`, running on node `nodeA`, reported a log\n",
+					trial.ExperimentID, trial.ID) +
+					"```trigA```\n" +
+					"This log matched the regex\n" +
+					"```regexa```\n"
+
+				path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
+				if baseURLIsSet {
+					msg += fmt.Sprintf("<http://determined.ai%s | View full logs here>", path)
+				} else {
+					msg += fmt.Sprintf("View full logs at %s", path)
+				}
+
+				require.Equal(t, SlackMessageBody{
+					Blocks: []SlackBlock{
+						{
+							Type: "section",
+							Text: SlackField{
+								Type: "mrkdwn",
+								Text: msg,
+							},
+						},
+					},
+				}, actual)
+			})
+		}
+	}
+}
+
 func TestReportExperimentStateChanged(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -85,21 +188,16 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	config = schemas.WithDefaults(config)
 
 	t.Run("no triggers for event type", func(t *testing.T) {
-		startCount, serr := CountEvents(ctx)
-		require.NoError(t, serr)
-		require.NoError(t, AddWebhook(ctx, mockWebhook()))
+		w := mockWebhook()
+		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
 			State: model.CanceledState,
 		}, config))
 
-		endCount, cerr := CountEvents(ctx)
-		require.NoError(t, cerr)
-		require.Equal(t, startCount, endCount)
+		require.Equal(t, 0, countEventsForURL(ctx, t, w.URL))
 	})
 
 	t.Run("no match triggers for event type", func(t *testing.T) {
-		startCount, cerr := CountEvents(ctx)
-		require.NoError(t, cerr)
 		w := mockWebhook()
 		w.Triggers = append(w.Triggers, &Trigger{
 			TriggerType: TriggerTypeStateChange,
@@ -110,16 +208,12 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CanceledState,
 		}, config))
 
-		endCount, ecerr := CountEvents(ctx)
-		require.NoError(t, ecerr)
-		require.Equal(t, startCount, endCount)
+		require.Equal(t, 0, countEventsForURL(ctx, t, w.URL))
 	})
 
 	clearWebhooksTables(ctx, t)
 
 	t.Run("one trigger for event type", func(t *testing.T) {
-		startCount, scerr := CountEvents(ctx)
-		require.NoError(t, scerr)
 		w := mockWebhook()
 		w.Triggers = append(w.Triggers, &Trigger{
 			TriggerType: TriggerTypeStateChange,
@@ -130,16 +224,12 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CompletedState,
 		}, config))
 
-		endCount, ecterr := CountEvents(ctx)
-		require.NoError(t, ecterr)
-		require.Equal(t, startCount+1, endCount)
+		require.Equal(t, 1, countEventsForURL(ctx, t, w.URL))
 	})
 
 	clearWebhooksTables(ctx, t)
 
 	t.Run("many triggers for event type", func(t *testing.T) {
-		startCount, err := CountEvents(ctx)
-		require.NoError(t, err)
 		w := mockWebhook()
 		n := 10
 		for i := 0; i < n; i++ {
@@ -153,9 +243,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CompletedState,
 		}, config))
 
-		endCount, err := CountEvents(ctx)
-		require.NoError(t, err)
-		require.Equal(t, startCount+n, endCount)
+		require.Equal(t, n, countEventsForURL(ctx, t, w.URL))
 	})
 }
 
@@ -258,7 +346,7 @@ func getWebhookByID(ws Webhooks, id WebhookID) Webhook {
 
 func mockWebhook() *Webhook {
 	return &Webhook{
-		URL:         "http://localhost:8080",
+		URL:         uuid.New().String(),
 		WebhookType: WebhookTypeDefault,
 	}
 }
@@ -335,7 +423,11 @@ func clearWebhooksTables(ctx context.Context, t *testing.T) {
 	require.NoError(t, err)
 }
 
-// CountEvents returns the total number of events from the DB.
-func CountEvents(ctx context.Context) (int, error) {
-	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
+func countEventsForURL(ctx context.Context, t *testing.T, url string) int {
+	c, err := db.Bun().NewSelect().Model((*Event)(nil)).
+		Where("url = ?", url).
+		Count(ctx)
+	require.NoError(t, err)
+
+	return c
 }

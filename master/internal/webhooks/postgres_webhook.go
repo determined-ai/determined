@@ -109,11 +109,134 @@ func ReportExperimentStateChanged(
 		es = append(es, Event{Payload: p, URL: t.Webhook.URL})
 	}
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
-		return err
+		return fmt.Errorf("report experiment state changed inserting event trigger: %w", err)
 	}
 
 	singletonShipper.Wake()
 	return nil
+}
+
+// ReportLogPatternAction is somewhat different than other webhook types since we don't persist
+// a webhook but instead have the hook url stored in experiment config. This code is a little
+// awkward now but I mostly attribute this to the existing code which feels hedged
+// between wanting to support different webhook triggers and only supporting one.
+// TODO there is a couple of potential security concerns here
+//
+//  1. webhooks can be specified for anyone and not admin.
+//     I think this would be the first expconf that would be "admin" limited.
+//     This might cause a huge pain for forking especially since this will likely
+//     be put in TCD and all forked experiments would have this by default
+//     and then also be admin limited.
+//
+//  2. The webhook url could be sensative. Should we censor it? We do this for checkpoint storage
+//     currently but I'm not sure if this works on forking.
+func ReportLogPatternAction(ctx context.Context,
+	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt WebhookType,
+) error {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Errorf("uncaught error in webhook log pattern report: %v", rec)
+		}
+	}()
+
+	p, err := generateLogPatternPayload(ctx, taskID, nodeName, regex, triggeringLog, wt)
+	if err != nil {
+		return fmt.Errorf("generating log pattern payload: %w", err)
+	}
+
+	if _, err := db.Bun().NewInsert().Model(&Event{Payload: p, URL: url}).Exec(ctx); err != nil {
+		return fmt.Errorf("report log pattern action inserting event trigger: %w", err)
+	}
+
+	singletonShipper.Wake()
+	return nil
+}
+
+func generateLogPatternPayload(
+	ctx context.Context,
+	taskID model.TaskID,
+	nodeName,
+	regex,
+	triggeringLog string,
+	wt WebhookType,
+) ([]byte, error) {
+	switch wt {
+	case WebhookTypeDefault:
+		p, err := json.Marshal(EventPayload{
+			ID:        uuid.New(),
+			Type:      TriggerTypeLogPatternPolicy,
+			Timestamp: time.Now().Unix(),
+			Condition: Condition{
+				LogPatternPolicyRegex: regex,
+			},
+			Data: EventData{
+				LogPatternPolicy: &LogPatternPolicyPayload{
+					TaskID:        taskID,
+					NodeName:      nodeName,
+					TriggeringLog: triggeringLog,
+				},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("marshaling json for log pattern payload: %w", err)
+		}
+
+		return p, nil
+
+	case WebhookTypeSlack:
+		p, err := generateLogPatternSlackPayload(ctx, taskID, nodeName, regex, triggeringLog)
+		if err != nil {
+			return nil, err
+		}
+		return p, nil
+
+	default:
+		return nil, fmt.Errorf("unknown webhook type %+v while generating log pattern payload", wt)
+	}
+}
+
+func generateLogPatternSlackPayload(
+	ctx context.Context,
+	taskID model.TaskID,
+	nodeName,
+	regex,
+	triggeringLog string,
+) ([]byte, error) {
+	trial, err := db.TrialByTaskID(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := fmt.Sprintf(
+		"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log\n",
+		trial.ExperimentID, trial.ID, nodeName) +
+		fmt.Sprintf("```%s```\n", triggeringLog) +
+		"This log matched the regex\n" +
+		fmt.Sprintf("```%s```\n", regex)
+
+	path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
+	if baseURL := conf.GetMasterConfig().Webhooks.BaseURL; baseURL != "" {
+		msg += fmt.Sprintf("<%s%s | View full logs here>", baseURL, path)
+	} else {
+		msg += fmt.Sprintf("View full logs at %s", path)
+	}
+
+	message, err := json.Marshal(SlackMessageBody{
+		Blocks: []SlackBlock{
+			{
+				Type: "section",
+				Text: SlackField{
+					Type: "mrkdwn",
+					Text: msg,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating slack payload: %w", err)
+	}
+
+	return message, nil
 }
 
 func generateEventPayload(
@@ -163,7 +286,7 @@ func generateSlackPayload(
 	var wID int
 	var w *model.Workspace
 	config := conf.GetMasterConfig()
-	wName := activeConfig.Workspace()
+	wName := activeConfig.Workspace() // TODO(!!!) this is incorrect on moves.
 	pName := activeConfig.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
 	baseURLIsSet := webUIBaseURL != ""

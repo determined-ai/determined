@@ -364,6 +364,70 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 	}
 }
 
+func TestLogPatternPoliciesMerging(t *testing.T) {
+	defaults := &TaskContainerDefaultsConfig{
+		LogPatternPolicies: expconf.LogPatternPoliciesConfig{
+			expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+				RawSendWebhook: &expconf.SendWebhookPolicy{
+					RawWebhookURL:  "determined.ai",
+					RawWebhookType: "default",
+				},
+			}},
+		},
+	}
+
+	conf := expconf.ExperimentConfig{
+		RawLogPatternPolicies: expconf.LogPatternPoliciesConfig{
+			expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "b", RawPolicy: &expconf.LogPolicy{
+				RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+			}},
+			expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+				RawSendWebhook: &expconf.SendWebhookPolicy{
+					RawWebhookURL:  "determined.ai",
+					RawWebhookType: "slack",
+				},
+			}},
+		},
+	}
+
+	defaults.MergeIntoExpConfig(&conf)
+
+	expected := expconf.LogPatternPoliciesConfig{
+		expconf.LogPatternPolicy{RawPattern: "a", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureDontRetry: &expconf.DontRetryPolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+			RawSendWebhook: &expconf.SendWebhookPolicy{
+				RawWebhookURL:  "determined.ai",
+				RawWebhookType: "default",
+			},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "b", RawPolicy: &expconf.LogPolicy{
+			RawOnFailureExcludeNode: &expconf.OnFailureExcludeNodePolicy{},
+		}},
+		expconf.LogPatternPolicy{RawPattern: "c", RawPolicy: &expconf.LogPolicy{
+			RawSendWebhook: &expconf.SendWebhookPolicy{
+				RawWebhookURL:  "determined.ai",
+				RawWebhookType: "slack",
+			},
+		}},
+	}
+
+	require.Equal(t, expected, conf.RawLogPatternPolicies)
+}
+
 func TestPodSpecsDefaultMerging(t *testing.T) {
 	defaults := &TaskContainerDefaultsConfig{
 		CPUPodSpec: &k8sV1.Pod{

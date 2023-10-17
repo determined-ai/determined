@@ -1,8 +1,10 @@
 import json
 import subprocess
+import threading
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+from typing import Any, Dict, Tuple, Type
 
 import pytest
 import requests
@@ -12,6 +14,49 @@ from determined.common import api
 from determined.common.api import authentication, certs
 from tests import config as conf
 from tests.command import print_command_logs
+
+
+class _HTTPServerWithRequest(HTTPServer):
+    def __init__(
+        self,
+        server_address: Tuple[str, int],
+        RequestHandlerClass: Type[SimpleHTTPRequestHandler],
+        allow_dupes: bool,
+    ):
+        super().__init__(server_address, RequestHandlerClass)
+        self.url_to_request_body: Dict[str, str] = {}
+        self.url_to_request_body_lock = threading.Lock()
+        self.allow_dupes = allow_dupes
+
+
+class WebhookServer:
+    def __init__(self, port: int, allow_dupes: bool = False):
+        class WebhookRequestHandler(SimpleHTTPRequestHandler):
+            def do_POST(self) -> None:
+                assert isinstance(self.server, _HTTPServerWithRequest)
+                with self.server.url_to_request_body_lock:
+                    if self.path in self.server.url_to_request_body and not self.server.allow_dupes:
+                        print(self.server.url_to_request_body, self.path)
+                        pytest.fail(f"got two webhooks sent to path {self.path}")
+
+                    content_length = int(self.headers.get("content-length"))
+                    request_body = self.rfile.read(content_length)
+                    self.server.url_to_request_body[self.path] = request_body.decode("utf-8")
+
+                    self.send_response(200, "Success")
+                    self.end_headers()
+                    self.wfile.write("".encode("utf-8"))
+
+        self.server = _HTTPServerWithRequest(("", port), WebhookRequestHandler, allow_dupes)
+
+        self.server_thread = threading.Thread(target=self.server.serve_forever)
+        self.server_thread.start()
+
+    def close_and_return_responses(self) -> Dict[str, str]:
+        self.server.shutdown()
+        self.server.server_close()
+        self.server_thread.join()
+        return self.server.url_to_request_body
 
 
 def cluster_slots() -> Dict[str, Any]:
