@@ -3,7 +3,6 @@
     "setup-cluster/basic": "../get-started/basic.html",
     "architecture/system-architecture": "../get-started/architecture/system-architecture.html",
     "architecture/introduction": "../get-started/architecture/introduction.html",
-    "setup-cluster/deploy-cluster/slurm/singularity": "../../slurm/singularity.html",
     "setup-cluster/deploy-cluster/slurm/install-on-slurm": "../../slurm/install-on-slurm.html",
     "setup-cluster/deploy-cluster/slurm/hpc-with-agent": "../../slurm/hpc-with-agent.html",
     "setup-cluster/deploy-cluster/slurm/hpc-launching-architecture": "../../slurm/hpc-launching-architecture.html",
