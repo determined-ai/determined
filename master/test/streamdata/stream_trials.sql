@@ -1,5 +1,5 @@
 -- XXX: remove migration code after it makes it to an actual migration
-
+-- TODO: update the migration before merging
 ALTER TABLE trials ADD COLUMN IF NOT EXISTS seq bigint;
 
 -- the sequence
@@ -159,14 +159,14 @@ CREATE TRIGGER stream_trial_project_change_trigger
 -- XXX: remove above code after migrations land
 
 -- Trials to insert for test
-INSERT INTO jobs (job_id, job_type, owner_id) VALUES ('test_job', 'EXPERIMENT', 1);
+INSERT INTO jobs (job_id, job_type, owner_id) VALUES ('test_job1', 'EXPERIMENT', 1);
 
 INSERT INTO experiments (state, config, model_definition, start_time, owner_id, notes, job_id)
-VALUES ('ERROR', '{}', '', '2023-07-25 16:44:21.610081+00', 1, '', 'test_job');
+VALUES ('ERROR', '{}', '', '2023-07-25 16:44:21.610081+00', 1, '', 'test_job1');
 
-INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.1', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job');
-INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.2', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job');
-INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.3', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job');
+INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.1', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job1');
+INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.2', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job1');
+INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.3', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job1');
 
 INSERT INTO trials (id, experiment_id, state, start_time, hparams, seq) VALUES (1, 1, 'ERROR', '2023-07-25 16:44:21.610081+00', '{}', 1);
 INSERT INTO trials (id, experiment_id, state, start_time, hparams, seq) VALUES (2, 1, 'ERROR', '2023-07-25 16:44:22.610081+00', '{}', 2);
