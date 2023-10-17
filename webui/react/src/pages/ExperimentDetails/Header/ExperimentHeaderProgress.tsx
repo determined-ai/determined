@@ -12,6 +12,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
   const progressPercent = (experiment.progress ?? 0) * 100;
   return experiment.progress === undefined ? null : (
     <Progress
+      inline
       parts={[
         {
           color: getStateColorCssVar(experiment.state),
