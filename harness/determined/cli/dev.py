@@ -307,7 +307,6 @@ def call_bindings(args: Namespace) -> None:
                 params,
             )
             + f"\n\n{str(e)}",
-            e,
         )
 
     print_response(output)

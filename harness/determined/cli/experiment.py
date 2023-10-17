@@ -105,7 +105,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
         remote_url = repo.git.config(f"remote.{remote_name}.url", get=True)
         print(f"Using remote URL '{remote_url}' from upstream branch '{upstream_branch}'")
     except Exception as e:
-        raise CliError("Failed to find the upstream branch: ", e)
+        raise CliError(f"Failed to find the upstream branch: {e}")
 
     return (remote_url, commit_hash, committer, commit_date)
 
