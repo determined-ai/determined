@@ -6,7 +6,6 @@ import {
   getCssVar,
   getTimeTickValues,
   glasbeyColor,
-  groupToStr,
 } from 'components/kit/internal/functions';
 import ParallelCoordinatesComponent from 'components/kit/internal/ParallelCoordinates';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
@@ -34,7 +33,7 @@ export const VALIDATION_SERIES_COLOR = '#F77B21';
  * @param {number} [height=350] - Height in pixels.
  * @param {Scale} [scale=Scale.Linear] - Linear or Log Scale for the y-axis.
  * @param {Serie[]} series - Array of valid series to plot onto the chart.
- * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each group's color, name, and type.
+ * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each series's color and name.
  * @param {string} [title] - Title for the chart.
  * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart (example: batches, time).
  * @param {string} [xLabel] - Directly set label below the x-axis.
@@ -42,7 +41,6 @@ export const VALIDATION_SERIES_COLOR = '#F77B21';
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
 interface ChartProps {
-  experimentId?: number;
   focusedSeries?: number;
   height?: number;
   onPointClick?: (event: MouseEvent, point: UPlotPoint) => void;
@@ -65,7 +63,6 @@ interface LineChartProps extends Omit<ChartProps, 'series'> {
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
-  experimentId,
   focusedSeries,
   handleError,
   height = 350,
@@ -94,12 +91,6 @@ export const LineChart: React.FC<LineChartProps> = ({
     () => series.map((s, i) => s.color ?? glasbeyColor(i)),
     [series],
   );
-
-  const seriesNames: string[] = useMemo(() => {
-    return series.map((s) => {
-      return groupToStr({ group: s.groupType ?? 'unknown', name: s.name ?? 'unknown' });
-    });
-  }, [series]);
 
   const chartData: AlignedData = useMemo(() => {
     const xSet = new Set<number>();
@@ -202,7 +193,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         ...series.map((serie, idx) => {
           return {
             alpha: focusedSeries === undefined || focusedSeries === idx ? 1 : 0.4,
-            label: seriesNames[idx],
+            label: serie.name,
             points: { show: (serie.data[xAxis] || []).length <= 1 },
             scale: 'y',
             spanGaps: true,
@@ -226,7 +217,6 @@ export const LineChart: React.FC<LineChartProps> = ({
     xRange,
     scale,
     series,
-    seriesNames,
     hasPopulatedSeries,
     propPlugins,
     focusedSeries,
@@ -238,7 +228,6 @@ export const LineChart: React.FC<LineChartProps> = ({
       <UPlotChart
         allowDownload={hasPopulatedSeries}
         data={chartData}
-        experimentId={experimentId}
         handleError={handleError}
         isLoading={isLoading}
         options={chartOptions}
@@ -252,7 +241,7 @@ export const LineChart: React.FC<LineChartProps> = ({
                 <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
                   &mdash;
                 </span>
-                {seriesNames[idx]}
+                {series[idx].name}
               </li>
             ))
           ) : (

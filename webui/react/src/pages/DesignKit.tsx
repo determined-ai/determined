@@ -606,8 +606,7 @@ const ChartsSection: React.FC = () => {
       [XAxisDomain.Batches]: line1BatchesDataStreamed,
       [XAxisDomain.Time]: [],
     },
-    groupType: GroupType.Training,
-    name: 'Line',
+    name: 'training.Line',
   };
 
   const stampToNum = (tstamp: string): number => new Date(tstamp).getTime() / 1000;
@@ -623,8 +622,7 @@ const ChartsSection: React.FC = () => {
         [stampToNum('2023-01-05T04:02:06Z'), 12],
       ],
     },
-    groupType: GroupType.Validation,
-    name: 'Line',
+    name: 'validation.Line',
   };
 
   const line3: Serie = {
@@ -637,8 +635,7 @@ const ChartsSection: React.FC = () => {
         [stampToNum('2023-01-05T04:00:00Z'), 4],
       ],
     },
-    groupType: GroupType.Validation,
-    name: 'Alt-Line',
+    name: 'validation.Alt-Line',
   };
 
   const zeroline: Serie = {
@@ -647,8 +644,7 @@ const ChartsSection: React.FC = () => {
       [XAxisDomain.Batches]: [[0, 1]],
       [XAxisDomain.Time]: [],
     },
-    groupType: GroupType.Training,
-    name: 'Line',
+    name: 'training.Line',
   };
 
   const checkpointsDict: CheckpointsDict = {

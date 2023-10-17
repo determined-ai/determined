@@ -356,14 +356,12 @@ export type WorkspaceState = ValueOf<typeof WorkspaceState>;
  * Represents a single Series to display on the chart.
  * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
  * @param {Partial<Record<XAxisDomain, [x: number, y: number][]>>} data - An array of ordered [x, y] points for each axis.
- * @param {GroupType} [groupType] - Indicator of a Serie from Training, Validation, or other group.
  * @param {string} [name] - Name to display in legend and toolip instead of Series number.
  */
 
 export interface Serie {
   color?: string;
   data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
-  groupType?: string;
   key?: number;
   name?: string;
 }
