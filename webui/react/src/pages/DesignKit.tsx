@@ -642,7 +642,7 @@ const ChartsSection: React.FC = () => {
     color: '#009BDE',
     data: {
       [XAxisDomain.Batches]: [[0, 1]],
-      [XAxisDomain.Time]: [],
+      [XAxisDomain.Time]: [[1697567035, 1]],
     },
     name: 'training.Line',
   };
@@ -710,16 +710,35 @@ const ChartsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Series with set x axis range">
         <p>
-          The components accepts an <code>xRange</code> prop to set a minimum and maximum x value.
+          The component accepts an <code>xRange</code> prop to set a minimum and maximum x value for
+          each XAxisDomain.
         </p>
         <LineChart
           handleError={handleError}
           height={250}
           series={[zeroline]}
-          title="Chart with range [-1, 10]"
+          title="Chart with set range [-1, 10]"
           xRange={{
             [XAxisDomain.Batches]: [-1, 10],
             [XAxisDomain.Time]: undefined,
+            [XAxisDomain.Epochs]: undefined,
+          }}
+        />
+      </AntDCard>
+      <AntDCard title="Series with single time point">
+        <p>
+          The component accepts an <code>xRange</code> for the time axis, and can show a legend.
+        </p>
+        <LineChart
+          handleError={handleError}
+          height={250}
+          series={[zeroline]}
+          showLegend
+          title="Weekly chart with single time point"
+          xAxis={XAxisDomain.Time}
+          xRange={{
+            [XAxisDomain.Batches]: undefined,
+            [XAxisDomain.Time]: [1697135035, 1697739835],
             [XAxisDomain.Epochs]: undefined,
           }}
         />

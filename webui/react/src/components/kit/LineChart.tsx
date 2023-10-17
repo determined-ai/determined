@@ -110,16 +110,17 @@ export const LineChart: React.FC<LineChartProps> = ({
     return [xValues, ...yValuesArray];
   }, [series, xAxis]);
 
-  const xTickValues: uPlot.Axis.Values | undefined = useMemo(
-    () =>
-      xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
-        ? getTimeTickValues
-        : undefined,
-    [chartData, xAxis],
-  );
+  const xTickValues: uPlot.Axis.Values | undefined = useMemo(() => {
+    if (xAxis === XAxisDomain.Time) {
+      const timeDelta = xRange?.[XAxisDomain.Time]
+        ? (xRange[XAxisDomain.Time]?.[1] || 0) - (xRange[XAxisDomain.Time]?.[0] || 0)
+        : chartData[0][chartData[0].length - 1] - chartData[0][0];
+      if (timeDelta < 43200) {
+        // 12 hours
+        return getTimeTickValues;
+      }
+    }
+  }, [chartData, xAxis, xRange]);
 
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
