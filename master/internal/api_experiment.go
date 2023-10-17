@@ -1513,7 +1513,7 @@ func (a *apiServer) ContinueExperiment(
 	dbExp.ID = int(req.Id)
 	dbExp.JobID = origExperiment.JobID // Revive job.
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1662,7 +1662,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
