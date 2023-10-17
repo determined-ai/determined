@@ -4,11 +4,12 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
+
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
 
@@ -37,8 +38,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-        children: JSX.Element;
-      }
+          children: JSX.Element;
+        }
       | undefined,
   ) => void;
 };
@@ -47,8 +48,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-        children: JSX.Element;
-      }
+          children: JSX.Element;
+        }
       | undefined,
   ) => void;
 };
@@ -125,11 +126,11 @@ const setup = (
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => {
     return (
       <ThemeProvider>
-        <UIProvider theme={theme} darkMode={isDarkMode}>
+        <UIProvider darkMode={isDarkMode} theme={theme}>
           <Container>{children}</Container>
         </UIProvider>
       </ThemeProvider>
-    )
+    );
   };
   const hookResult = renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
     wrapper: RouterWrapper,

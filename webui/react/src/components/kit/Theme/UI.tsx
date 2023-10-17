@@ -1,16 +1,5 @@
 import { theme as AntdTheme, ConfigProvider } from 'antd';
-import { ThemeConfig } from 'antd/es/config-provider/context';
-import React, {
-  Dispatch,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from 'react';
+import React, { Dispatch, useContext, useLayoutEffect, useMemo, useReducer, useRef } from 'react';
 
 import { RecordKey } from 'components/kit/internal/types';
 import { themeLightDetermined } from 'components/kit/Theme';
@@ -57,7 +46,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) { }
+  constructor(private dispatch: Dispatch<ActionUI>) {}
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });
@@ -87,74 +76,6 @@ class UIActions {
     this.dispatch({ type: StoreActionUI.ShowUISpinner });
   };
 }
-
-const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
-  [DarkLight.Dark]: {
-    algorithm: AntdTheme.darkAlgorithm,
-    components: {
-      Button: {
-        colorBgContainer: 'transparent',
-      },
-      Checkbox: {
-        colorBgContainer: 'transparent',
-      },
-      DatePicker: {
-        colorBgContainer: 'transparent',
-      },
-      Input: {
-        colorBgContainer: 'transparent',
-      },
-      InputNumber: {
-        colorBgContainer: 'transparent',
-      },
-      Modal: {
-        colorBgElevated: 'var(--theme-stage)',
-      },
-      Pagination: {
-        colorBgContainer: 'transparent',
-      },
-      Progress: {
-        marginXS: 0,
-      },
-      Radio: {
-        colorBgContainer: 'transparent',
-      },
-      Select: {
-        colorBgContainer: 'transparent',
-      },
-      Tree: {
-        colorBgContainer: 'transparent',
-      },
-    },
-    token: {
-      borderRadius: 2,
-      colorLink: '#57a3fa',
-      colorLinkHover: '#8dc0fb',
-      colorPrimary: '#1890ff',
-      fontFamily: 'var(--theme-font-family)',
-    },
-  },
-  [DarkLight.Light]: {
-    algorithm: AntdTheme.defaultAlgorithm,
-    components: {
-      Button: {
-        colorBgContainer: 'transparent',
-      },
-      Progress: {
-        marginXS: 0,
-      },
-      Tooltip: {
-        colorBgDefault: 'var(--theme-float)',
-        colorTextLightSolid: 'var(--theme-float-on)',
-      },
-    },
-    token: {
-      borderRadius: 2,
-      colorPrimary: '#1890ff',
-      fontFamily: 'var(--theme-font-family)',
-    },
-  },
-};
 
 const camelCaseToKebab = (text: string): string => {
   return text
@@ -235,7 +156,7 @@ export const ThemeProvider: React.FC<{
       type: StoreActionUI.SetTheme,
       value: { darkLight, theme },
     });
-  }, [state.mode]);
+  }, [state.mode, theme]);
 
   return (
     <StateContext.Provider value={state}>

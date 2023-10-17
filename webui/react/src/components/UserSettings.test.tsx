@@ -2,14 +2,15 @@ import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect } from 'react';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import { ConfirmationProvider } from './kit/useConfirm';
 import UserSettings from './UserSettings';
@@ -77,11 +78,12 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <ConfirmationProvider>
           <Container />
         </ConfirmationProvider>
-      </UIProvider></ThemeProvider>
+      </UIProvider>
+    </ThemeProvider>,
   );
 
 describe('UserSettings', () => {

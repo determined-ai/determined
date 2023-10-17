@@ -2,21 +2,22 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
-import { UIProvider, ThemeProvider, Mode } from 'components/kit/Theme';
+
+import { Mode, ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 
 const ThemeToggleContainer: React.FC = () => {
   return (
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <BrowserRouter>
           <ThemeToggle />
         </BrowserRouter>
       </UIProvider>
     </ThemeProvider>
-  )
+  );
 };
 
 const user = userEvent.setup();

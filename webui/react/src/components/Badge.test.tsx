@@ -6,9 +6,9 @@ import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { stateToLabel } from 'constants/states';
 import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import Badge, { BadgeProps, BadgeType } from './Badge';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
@@ -23,11 +23,12 @@ const setup = ({
 }: BadgeProps = {}) => {
   return render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <Badge tooltip={tooltip} type={type} {...props}>
           {children}
         </Badge>
-      </UIProvider></ThemeProvider>,
+      </UIProvider>
+    </ThemeProvider>,
   );
 };
 
@@ -42,7 +43,7 @@ describe('Badge', () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
         <ThemeProvider>
-          <UIProvider theme={theme} darkMode={isDarkMode}>
+          <UIProvider darkMode={isDarkMode} theme={theme}>
             <button role="button" onClick={() => setValue(SlotState.Running)} />
             <Badge state={value} type={BadgeType.State} />
           </UIProvider>

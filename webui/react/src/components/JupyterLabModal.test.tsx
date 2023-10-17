@@ -6,11 +6,11 @@ import { BrowserRouter } from 'react-router-dom';
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
@@ -86,11 +86,10 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <ThemeProvider>
-        <UIProvider theme={theme} darkMode={isDarkMode}>
+        <UIProvider darkMode={isDarkMode} theme={theme}>
           <ModalTrigger />
         </UIProvider>
       </ThemeProvider>
-
     </BrowserRouter>,
   );
 

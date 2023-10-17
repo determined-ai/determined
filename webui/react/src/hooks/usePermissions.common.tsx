@@ -4,8 +4,7 @@ import React from 'react';
 import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
-
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 export const workspace = {
   id: 10,
@@ -67,6 +66,7 @@ export const setup = async (): Promise<RenderResult> => {
     <ThemeProvider>
       <UIProvider darkMode={isDarkMode} theme={theme}>
         <PermissionRenderer workspaceId={1} />
-      </UIProvider></ThemeProvider>
+      </UIProvider>
+    </ThemeProvider>,
   );
 };

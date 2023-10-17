@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import * as src from 'components/kit/LogViewer/LogViewer';
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { flakyIt } from 'quarantineTests';
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
@@ -10,7 +10,7 @@ import { mapV1LogsResponse } from 'services/decoder';
 import { LogLevelFromApi } from 'types';
 import handleError from 'utils/error';
 import { generateAlphaNumeric } from 'utils/string';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 interface TestLog {
   id: number | string;
@@ -78,12 +78,12 @@ const generateLogs = (
 const setup = (props: src.Props) => {
   return render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <src.default {...props} />
         {/* increase variation in DOM */}
         <span> {Math.random()}</span>
       </UIProvider>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
 };
 
@@ -103,38 +103,38 @@ const mockOnFetch =
       streamingRounds?: number;
     } = {},
   ) =>
-    (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
-      const options = {
-        existingLogs: mockOptions.existingLogs,
-        follow: false,
-        limit: config.limit,
-        logsReference: mockOptions.logsReference,
-        orderBy: 'ORDER_BY_UNSPECIFIED',
-        signal: mockOptions.canceler?.signal,
-        skipStreaming: mockOptions.skipStreaming,
-        streamingRounds: mockOptions.streamingRounds,
-        timestampAfter: '',
-        timestampBefore: '',
-      };
-
-      if (type === src.FetchType.Initial) {
-        options.orderBy =
-          config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      } else if (type === src.FetchType.Newer) {
-        options.orderBy = 'ORDER_BY_ASC';
-        if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-      } else if (type === src.FetchType.Older) {
-        options.orderBy = 'ORDER_BY_DESC';
-        if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-      } else if (type === src.FetchType.Stream) {
-        options.follow = true;
-        options.limit = 0;
-        options.orderBy = 'ORDER_BY_ASC';
-        options.timestampAfter = new Date(NOW).toISOString();
-      }
-
-      return { options, url: 'byTime' };
+  (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
+    const options = {
+      existingLogs: mockOptions.existingLogs,
+      follow: false,
+      limit: config.limit,
+      logsReference: mockOptions.logsReference,
+      orderBy: 'ORDER_BY_UNSPECIFIED',
+      signal: mockOptions.canceler?.signal,
+      skipStreaming: mockOptions.skipStreaming,
+      streamingRounds: mockOptions.streamingRounds,
+      timestampAfter: '',
+      timestampBefore: '',
     };
+
+    if (type === src.FetchType.Initial) {
+      options.orderBy =
+        config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+    } else if (type === src.FetchType.Newer) {
+      options.orderBy = 'ORDER_BY_ASC';
+      if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
+    } else if (type === src.FetchType.Older) {
+      options.orderBy = 'ORDER_BY_DESC';
+      if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
+    } else if (type === src.FetchType.Stream) {
+      options.follow = true;
+      options.limit = 0;
+      options.orderBy = 'ORDER_BY_ASC';
+      options.timestampAfter = new Date(NOW).toISOString();
+    }
+
+    return { options, url: 'byTime' };
+  };
 
 const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   const timestamp = new Date(timeString).getTime().toString();

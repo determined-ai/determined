@@ -1,6 +1,6 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useReducer, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -9,15 +9,7 @@ import { useParams } from 'react-router-dom';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
-import {
-  DarkLight,
-  themeDarkDetermined,
-  themeDarkHpe,
-  themeLightDetermined,
-  themeLightHpe,
-  ThemeProvider,
-} from 'components/kit/Theme';
-import useUI, { UIProvider } from 'components/kit/Theme';
+import useUI, { DarkLight, ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { notification } from 'components/kit/Toast';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import { Loadable } from 'components/kit/utils/loadable';

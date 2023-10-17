@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import Avatar, { Props } from './Avatar';
-import { children } from 'cheerio/lib/api/traversing';
 
 vi.mock('components/kit/Tooltip');
 const user = userEvent.setup();
@@ -12,10 +12,10 @@ const user = userEvent.setup();
 const setup = ({ displayName, hideTooltip = false, ...props }: Props) => {
   render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
       </UIProvider>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
 };
 

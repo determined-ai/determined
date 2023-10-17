@@ -72,7 +72,7 @@ const Badge: React.FC<BadgeProps> = ({
   }, [state, type, ui.darkLight]);
 
   const badge = (
-    <span className={classes.join(' ')} style={style} ref={elementRef}>
+    <span className={classes.join(' ')} ref={elementRef} style={style}>
       {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
     </span>
   );

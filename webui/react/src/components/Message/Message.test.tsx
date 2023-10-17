@@ -1,17 +1,18 @@
 import { render, screen } from '@testing-library/react';
 
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
+
 import Message, { MessageType, Props } from './Message';
 
 const setup = (props: Props) => {
   const handleOnChange = vi.fn();
   const view = render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <Message {...props} />
       </UIProvider>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
   return { handleOnChange, view };
 };

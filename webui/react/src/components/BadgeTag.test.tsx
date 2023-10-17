@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { generateAlphaNumeric } from 'utils/string';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
+
 import BadgeTag, { Props } from './BadgeTag';
 
 const LABEL = generateAlphaNumeric();
@@ -13,15 +14,14 @@ const CONTENT_TOOLTIP = generateAlphaNumeric();
 vi.mock('components/kit/Tooltip');
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
-
   const view = render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <BadgeTag tooltip={tooltip} {...props}>
           {children}
         </BadgeTag>
       </UIProvider>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
   return { view };
 };

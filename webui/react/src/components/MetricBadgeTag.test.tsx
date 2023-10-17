@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { Metric } from 'types';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
+
 import MetricBadgeTag from './MetricBadgeTag';
 
 vi.mock('components/kit/Tooltip');
@@ -11,10 +12,10 @@ const setup = (metric: Metric) => {
   const handleOnChange = vi.fn();
   const view = render(
     <ThemeProvider>
-      <UIProvider theme={theme} darkMode={isDarkMode}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <MetricBadgeTag metric={metric} />
       </UIProvider>
-    </ThemeProvider>
+    </ThemeProvider>,
   );
   return { handleOnChange, view };
 };
