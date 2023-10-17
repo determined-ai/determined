@@ -48,7 +48,7 @@ import functools
 import logging
 import pathlib
 import warnings
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, TypeVar, Union
 
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental._util import OrderBy
@@ -74,8 +74,10 @@ from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 _determined = None  # type: Optional[Determined]
 
+C = TypeVar("C", bound=Callable[..., Any])
 
-def _require_singleton(fn: Callable) -> Callable:
+
+def _require_singleton(fn: C) -> C:
     @functools.wraps(fn)
     def _fn(*args: Any, **kwargs: Any) -> Any:
         global _determined
@@ -83,7 +85,8 @@ def _require_singleton(fn: Callable) -> Callable:
             _determined = Determined()
         return fn(*args, **kwargs)
 
-    return _fn
+    # Force type checker to accept that the signature of _fn is the same as the signature of fn.
+    return _fn  # type: ignore
 
 
 def login(
