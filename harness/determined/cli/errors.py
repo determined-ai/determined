@@ -1,6 +1,3 @@
-from typing import Optional
-
-
 class FeatureFlagDisabled(Exception):
     """
     Exception indicating that there is a currently disabled feature flag
@@ -17,9 +14,7 @@ class CliError(Exception):
 
     name: str
 
-    def __init__(
-        self, message: str, e_stack: Optional[Exception] = None, exit_code: int = 1
-    ) -> None:
+    def __init__(self, message: str, exit_code: int = 1) -> None:
         """
         Args:
         - e_stack: The exception that triggered this error.
@@ -28,5 +23,4 @@ class CliError(Exception):
         super().__init__(message)
         self.name = "Error"
         self.exit_code = exit_code
-        self.e_stack = e_stack
         self.message = message
