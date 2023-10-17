@@ -144,9 +144,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     assert all(x >= y for x, y in zip(batch_numbers, batch_numbers[1:]))
 
     # Validate metric sorting.
-    checkpoints = trial.get_checkpoints(
-        sort_by="validation_error", order_by=_client.OrderBy.ASC
-    )
+    checkpoints = trial.get_checkpoints(sort_by="validation_error", order_by=_client.OrderBy.ASC)
     validation_metrics = [
         checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]  # type: ignore
         for checkpoint in checkpoints
