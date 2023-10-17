@@ -1580,6 +1580,10 @@ const AvatarSection: React.FC = () => {
         <Avatar square text="Test User" textColor="black" />
         No Color
         <Avatar noColor text="Test User" />
+        Inactive
+        <Avatar inactive text="Test User" />
+        Status text
+        <Avatar statusText="(Disabled)" text="Test User" />
       </AntDCard>
       <AntDCard title="Group">
         <AvatarGroup items={['Test User', 'Sample Person', 'Example Individual']} />

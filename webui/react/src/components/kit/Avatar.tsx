@@ -26,6 +26,8 @@ export interface Props {
   size?: Size;
   square?: boolean;
   textColor?: 'black' | 'white';
+  inactive?: boolean;
+  statusText?: string;
 }
 
 export const getInitials = (name = ''): string => {
@@ -56,6 +58,8 @@ const Avatar: React.FC<Props> = ({
   size = Size.Small,
   square,
   textColor = 'white',
+  statusText,
+  inactive,
 }) => {
   const { ui } = useUI();
 
@@ -65,6 +69,7 @@ const Avatar: React.FC<Props> = ({
   };
   const classes = [css.base, css[size]];
   if (square) classes.push(css.square);
+  if (inactive) classes.push(css.inactive);
 
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>
@@ -75,7 +80,7 @@ const Avatar: React.FC<Props> = ({
   return hideTooltip ? (
     avatar
   ) : (
-    <Tooltip content={text} placement="right">
+    <Tooltip content={statusText ? [text, statusText].join(' ') : text} placement="right">
       {avatar}
     </Tooltip>
   );

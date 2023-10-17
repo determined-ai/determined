@@ -33,6 +33,9 @@
     height: 78px;
     width: 78px;
   }
+  &.inactive {
+    opacity: 0.64;
+  }
 }
 .group {
   align-items: center;
