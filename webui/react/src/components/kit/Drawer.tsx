@@ -3,8 +3,7 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import useTheme from 'hooks/useTheme';
-
+import useUI from './Theme';
 import css from './Drawer.module.scss';
 import { UIProvider } from './Theme';
 
@@ -27,7 +26,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({
   title,
   onClose,
 }) => {
-  const { theme, isDarkMode } = useTheme();
+  const { ui: { mode, theme } } = useUI();
 
   return (
     <Drawer
@@ -39,7 +38,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({
       rootClassName={css.mobileWidth}
       width="700px"
       onClose={onClose}>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
+      <UIProvider darkMode={mode === mode} theme={theme}>
         <div className={css.header}>
           <div className={css.headerTitle}>{title}</div>
           <Button

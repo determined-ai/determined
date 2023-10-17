@@ -45,24 +45,3 @@ export const config: SettingsConfig<Settings> = {
 
 const getTheme = (darkLight: DarkLight, branding?: BrandingType) =>
   themes[branding || 'determined'][darkLight];
-
-const useTheme = (): { theme: Theme; isDarkMode: boolean } => {
-  const info = useObservable(determinedStore.info);
-  const {
-    ui: { mode },
-  } = useUI();
-
-  const branding = info.branding || 'determined';
-  const systemMode = getSystemMode();
-  const darkLight = getDarkLight(mode, systemMode);
-  const [theme, setTheme] = useState<Theme>(getTheme(darkLight, branding));
-  useLayoutEffect(() => {
-    setTheme(getTheme(darkLight, branding));
-  }, [branding, mode, darkLight]);
-
-  const isDarkMode = darkLight === DarkLight.Dark;
-
-  return { isDarkMode, theme };
-};
-
-export default useTheme;

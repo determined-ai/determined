@@ -10,6 +10,7 @@ import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
 import {
+  DarkLight,
   themeDarkDetermined,
   themeDarkHpe,
   themeLightDetermined,
@@ -49,7 +50,6 @@ import css from './App.module.scss';
 
 import 'antd/dist/reset.css';
 import '@hpe.com/glide-data-grid/dist/index.css';
-import useTheme from 'hooks/useTheme';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -68,7 +68,7 @@ const AppView: React.FC = () => {
     updateSettings,
   } = useSettings<themeSettings>(themeConfig);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
-  const { ui, actions: uiActions } = useUI();
+  const { ui: { mode, theme }, actions: uiActions } = useUI();
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -147,13 +147,13 @@ const AppView: React.FC = () => {
 
     if (isSettingsReady) {
       // We have read from the settings, going forward any mode difference requires an update.
-      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
+      if (settings.mode !== mode) updateSettings({ mode: mode });
     } else {
       // Initially set the mode from settings.
       uiActions.setMode(settings.mode);
       setIsSettingsReady(true);
     }
-  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
+  }, [isSettingsReady, settings, uiActions, mode, isSettingsLoading, updateSettings]);
 
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
@@ -162,11 +162,10 @@ const AppView: React.FC = () => {
   }>();
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Number(workspaceId ?? '')));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
-  const { theme, isDarkMode } = useTheme();
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <UIProvider darkMode={isDarkMode} theme={theme}>
+      <UIProvider darkMode={mode === DarkLight.Dark} theme={theme}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>
