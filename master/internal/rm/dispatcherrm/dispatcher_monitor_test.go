@@ -489,8 +489,9 @@ func Test_obtainJobStateFromWlmQueueDetailsWhenJobInRunningStateWithReasonProlog
 			if !ok {
 				continue
 			}
-			numTimesWriteExperimentLogCalled.Add(1)
+			t.Logf("received event.Message: %v", event.Message)
 			writeExperimentLogMessageReceived.Store(event.Message)
+			numTimesWriteExperimentLogCalled.Add(1)
 		}
 	}()
 
