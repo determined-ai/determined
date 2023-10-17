@@ -48,10 +48,12 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   const handleFilter = useCallback((search: string, option?: SearchProp): boolean => {
     if (!option) return false;
     const label = option.label;
+    const regex = new RegExp(search, 'i');
+
     return (
-      label.props.name?.includes(search) ||
-      label.props.user?.username?.includes(search) ||
-      label.props.user?.displayName?.includes(search) ||
+      (label.props.name && regex.test(label.props.name)) ||
+      (label.props.user?.username && regex.test(label.props.user?.username)) ||
+      (label.props.user?.displayName && regex.test(label.props.user?.displayName)) ||
       false
     );
   }, []);
