@@ -11,7 +11,6 @@ import useResize from 'hooks/useResize';
 import css from './RadioGroup.module.scss';
 
 interface Props extends Omit<RadioGroupProps, 'onChange' | 'options'> {
-  className?: string;
   defaultValue?: string;
   iconOnly?: boolean;
   onChange?: (id: string) => void;
@@ -38,7 +37,6 @@ const PARENT_WIDTH_BUFFER = 16;
 const HEIGHT_LIMIT = 50;
 
 const RadioGroup: React.FC<Props> = ({
-  className,
   defaultValue,
   iconOnly = false,
   onChange,
@@ -60,7 +58,6 @@ const RadioGroup: React.FC<Props> = ({
   }, [options]);
 
   if (iconOnly) classes.push(css.iconOnly);
-  if (className) classes.push(className);
 
   const handleChange = useCallback(
     (e: RadioChangeEvent) => {
