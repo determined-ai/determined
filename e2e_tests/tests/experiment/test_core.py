@@ -439,3 +439,32 @@ def test_core_api_arbitrary_workload_order() -> None:
     assert len(validations) == 11
     checkpoints = exp.workloads_with_checkpoint(trial.workloads)
     assert len(checkpoints) == 11
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize(
+    "stage,ntrials,expect_workloads,expect_checkpoints",
+    [
+        ("0_start", 1, False, False),
+        ("1_metrics", 1, True, False),
+        ("2_checkpoints", 1, True, True),
+        ("3_hpsearch", 10, True, True),
+    ],
+)
+def test_core_api_tutorials(
+    stage: str, ntrials: int, expect_workloads: bool, expect_checkpoints: bool
+) -> None:
+    exp.run_basic_test(
+        conf.tutorials_path(f"core_api/{stage}.yaml"),
+        conf.tutorials_path("core_api"),
+        ntrials,
+        expect_workloads=expect_workloads,
+        expect_checkpoints=expect_checkpoints,
+    )
+
+
+@pytest.mark.parallel
+def test_core_api_distributed_tutorial() -> None:
+    exp.run_basic_test(
+        conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
+    )
