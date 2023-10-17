@@ -106,7 +106,7 @@ func setup(t *testing.T, startupMsg StartupMsg) (
 
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
 	ps := NewPublisherSet()
-	ps.PgAddress = pgDB.Url
+	ps.DBAddress = pgDB.Url
 
 	testReadWriter := startupReadWriter{
 		StartupMessage: &startupMsg,
