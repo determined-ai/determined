@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import React from 'react';
 
+import Avatar, { Size } from 'components/kit/Avatar';
 import Card from 'components/kit/Card';
 import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
@@ -10,7 +11,6 @@ import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 
-import DynamicIcon from './DynamicIcon';
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
 
@@ -58,7 +58,7 @@ const ProjectCard: React.FC<Props> = ({
             {showWorkspace && project.workspaceId !== 1 && (
               <Tooltip content={project.workspaceName}>
                 <div className={css.workspaceIcon}>
-                  <DynamicIcon name={project.workspaceName} size={20} />
+                  <Avatar size={Size.Small} square text={project.workspaceName} textColor="black" />
                 </div>
               </Tooltip>
             )}

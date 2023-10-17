@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import DynamicIcon from 'components/DynamicIcon';
+import Avatar from 'components/kit/Avatar';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Icon, { IconName, IconSize } from 'components/kit/Icon';
@@ -319,7 +319,7 @@ const NavigationSideBar: React.FC = () => {
                           workspace={workspace}>
                           <li>
                             <NavigationItem
-                              icon={<DynamicIcon name={workspace.name} size={24} />}
+                              icon={<Avatar square text={workspace.name} textColor="black" />}
                               label={workspace.name}
                               labelRender={
                                 <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>

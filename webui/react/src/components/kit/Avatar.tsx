@@ -10,19 +10,22 @@ import css from './Avatar.module.scss';
 
 export const Size = {
   ExtraLarge: 'extra-large',
+  ExtraSmall: 'extra-small',
   Large: 'large',
   Medium: 'medium',
+  Small: 'small',
 } as const;
 
 export type Size = ValueOf<typeof Size>;
 
 export interface Props {
-  displayName: string;
+  text: string;
   hideTooltip?: boolean;
-  /** do not color the bg based on displayName */
+  /** do not color the bg based on text */
   noColor?: boolean;
   size?: Size;
   square?: boolean;
+  textColor?: 'black' | 'white'
 }
 
 export const getInitials = (name = ''): string => {
@@ -47,31 +50,32 @@ export const getColor = (name = '', darkLight: DarkLight): string => {
 };
 
 const Avatar: React.FC<Props> = ({
-  displayName,
+  text,
   hideTooltip,
   noColor,
-  size = Size.Medium,
+  size = Size.Small,
   square,
+  textColor = 'white',
 }) => {
   const { ui } = useUI();
 
   const style = {
-    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, ui.darkLight),
-    borderRadius: square ? '10%' : '100%',
-    color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
+    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(text, ui.darkLight),
+    color: noColor ? 'var(--theme-stage-on-strong)' : textColor,
   };
   const classes = [css.base, css[size]];
+  if (square) classes.push(css.square);
 
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>
-      {getInitials(displayName)}
+      {getInitials(text)}
     </div>
   );
 
   return hideTooltip ? (
     avatar
   ) : (
-    <Tooltip content={displayName} placement="right">
+    <Tooltip content={text} placement="right">
       {avatar}
     </Tooltip>
   );

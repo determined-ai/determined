@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
-import DynamicIcon from 'components/DynamicIcon';
+import Avatar from 'components/kit/Avatar';
 import Icon, { IconName } from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
@@ -99,12 +99,12 @@ const NavigationTabbar: React.FC = () => {
     (workspaces) =>
       workspaces.map(
         (workspace) =>
-          ({
-            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
-            label: workspace.name,
-            onClick: (e: AnyMouseEvent) =>
-              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-          } as ActionItem),
+        ({
+          icon: <Avatar square text={workspace.name} textColor="black" />,
+          label: workspace.name,
+          onClick: (e: AnyMouseEvent) =>
+            handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+        } as ActionItem),
       ),
   );
 

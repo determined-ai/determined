@@ -6,7 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
-import Avatar from 'components/kit/Avatar';
+import Avatar, { Size as AvatarSize } from 'components/kit/Avatar';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -1565,8 +1565,21 @@ const AvatarSection: React.FC = () => {
           abbreviated with an option to hover for an unabbreviated view.
         </p>
       </AntDCard>
-      <AntDCard title="Usage">
-        <Avatar displayName="Test User" />
+      <AntDCard title="Variations">
+        ExtraSmall
+        <Avatar size={AvatarSize.ExtraSmall} text="Test User" />
+        Small (Default Size)
+        <Avatar size={AvatarSize.Small} text="Test User" />
+        Medium
+        <Avatar size={AvatarSize.Medium} text="Test User" />
+        Large
+        <Avatar size={AvatarSize.Large} text="Test User" />
+        ExtraLarge
+        <Avatar size={AvatarSize.ExtraLarge} text="Test User" />
+        Square, Text Color Black
+        <Avatar square text="Test User" textColor="black" />
+        No Color
+        <Avatar noColor text="Test User" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1589,14 +1602,14 @@ const NameplateSection: React.FC = () => {
         <li>With name and alias</li>
         <Nameplate
           alias={testUser.displayName}
-          icon={<Avatar displayName={testUser.displayName} />}
+          icon={<Avatar text={testUser.displayName} />}
           name={testUser.username}
         />
         <li>Compact format</li>
         <Nameplate
           alias={testUser.displayName}
           compact
-          icon={<Avatar displayName={testUser.displayName} />}
+          icon={<Avatar text={testUser.displayName} />}
           name={testUser.username}
         />
         <li>No alias</li>

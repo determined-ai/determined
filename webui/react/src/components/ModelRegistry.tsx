@@ -9,8 +9,8 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
-import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
+import Avatar from 'components/kit/Avatar';
 import Button from 'components/kit/Button';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -338,7 +338,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       if (!workspace) {
         return (
           <Link disabled>
-            <DynamicIcon name="-" size={24} />
+            <Avatar square text="-" textColor="black" />
           </Link>
         );
       }
@@ -352,7 +352,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
                   ? paths.projectDetails(workspaceId)
                   : paths.workspaceDetails(workspaceId)
               }>
-              <DynamicIcon name={workspace?.name} size={24} />
+              <Avatar square text={workspace?.name} textColor="black" />
             </Link>
           </div>
         </Tooltip>

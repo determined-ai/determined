@@ -2,20 +2,34 @@
   align-items: center;
   border-radius: 100%;
   display: flex;
-  font-size: 10px;
-  font-weight: bold;
-  height: 24px;
   justify-content: center;
   line-height: 1;
-  width: 24px;
-}
-.base.large {
-  font-size: 24px;
-  height: 64px;
-  width: 64px;
-}
-.base.extra-large {
-  font-size: 96px;
-  height: 192px;
-  width: 192px;
+  &.square {
+    border-radius: var(--theme-border-radius-weak);
+  }
+  &.extra-small {
+    font-size: 8px;
+    width: 20px;
+    height: 20px;
+  }
+  &.small {
+    font-size: 10px;
+    width: 24px;
+    height: 24px;
+  }
+  &.medium {
+    font-size: 12px;
+    width: 40px;
+    height: 40px;
+  }
+  &.large {
+    font-size: 16px;
+    height: 64px;
+    width: 64px;
+  }
+  &.extra-large {
+    font-size: 20px;
+    height: 78px;
+    width: 78px;
+  }
 }

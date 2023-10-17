@@ -1,7 +1,7 @@
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
+import Avatar, { Size } from 'components/kit/Avatar';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { Loadable } from 'components/kit/utils/loadable';
@@ -39,7 +39,7 @@ const ResourcePoolBindings = ({ pool }: Props): JSX.Element => {
         key: 'workspace',
         render: (_, record) => (
           <div className={css.tableRow}>
-            <DynamicIcon name={record.name} size={40} style={{ borderRadius: '100%' }} />
+            <Avatar size={Size.Medium} square text={record.name} textColor="black" />
             <div>
               <div>
                 <Link path={paths.workspaceDetails(record.id)}>{record.name}</Link>

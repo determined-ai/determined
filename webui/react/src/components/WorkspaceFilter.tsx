@@ -1,6 +1,6 @@
 import React from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
+import Avatar from 'components/kit/Avatar';
 import { Workspace } from 'types';
 
 import css from './WorkspaceFilter.module.scss';
@@ -12,7 +12,7 @@ interface Props {
 const WorkspaceFilter: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <div className={css.item}>
-      <DynamicIcon name={workspace.name} size={24} />
+      <Avatar square text={workspace.name} textColor="black" />
       <span className={css.name}>{workspace.name}</span>
     </div>
   );

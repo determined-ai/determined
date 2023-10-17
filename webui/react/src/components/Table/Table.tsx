@@ -3,9 +3,9 @@ import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Avatar from 'components/kit/Avatar';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
 import { StateOfUnion } from 'components/kit/Theme';
@@ -192,7 +192,7 @@ export const taskWorkspaceRenderer = (
               ? paths.projectDetails(workspaceId)
               : paths.workspaceDetails(workspaceId)
           }>
-          <DynamicIcon name={workspace?.name} size={24} />
+          <Avatar square text={workspace?.name ?? ''} textColor="black" />
         </Link>
       </div>
     </Tooltip>
