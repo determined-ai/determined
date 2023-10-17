@@ -171,7 +171,7 @@ type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair
 	sql       *sqlx.DB
 	queries   *StaticQueryMap
-	url       string
+	Url       string
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -180,7 +180,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
-			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, url: url}
+			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, Url: url}
 			initTheOneBun(db)
 			return db, nil
 		}
