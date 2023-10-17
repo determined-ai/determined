@@ -115,7 +115,7 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	// go-pg/migrations uses go-pg/pg connection API, which is not compatible
 	// with pgx, so we use a one-off go-pg/pg connection.
-	pgOpts, err := makeGoPgOpts(db.url)
+	pgOpts, err := makeGoPgOpts(db.Url)
 	if err != nil {
 		return err
 	}
