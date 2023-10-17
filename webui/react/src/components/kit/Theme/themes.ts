@@ -91,11 +91,6 @@ export const getStateColorCssVar = (
   const strongWeak = options.strongWeak ? `-${options.strongWeak}` : '';
   return `var(--theme-status-${name}${on}${strongWeak})`;
 };
-
-export const getStateColor = (state: StateOfUnion | undefined): string => {
-  return getCssVar(getStateColorCssVar(state));
-};
-
 export const themes = {
   [BrandingType.Determined]: {
     [DarkLight.Dark]: themeDarkDetermined,

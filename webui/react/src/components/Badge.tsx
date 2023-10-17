@@ -1,4 +1,4 @@
-import React, { CSSProperties, useMemo } from 'react';
+import React, { CSSProperties, useMemo, useRef } from 'react';
 
 import useUI, {
   DarkLight,
@@ -36,14 +36,14 @@ const Badge: React.FC<BadgeProps> = ({
   ...props
 }: BadgeProps) => {
   const { ui } = useUI();
-
+  const elementRef = useRef(null);
   const { classes, style } = useMemo(() => {
     const isDark = ui.darkLight === DarkLight.Dark;
     const classes = [css.base];
     const style: CSSProperties = {};
 
     if (type === BadgeType.State) {
-      const backgroundColor = str2hsl(getCssVar(getStateColorCssVar(state)));
+      const backgroundColor = str2hsl(getCssVar(elementRef, getStateColorCssVar(state)));
       style.backgroundColor = hsl2str({
         ...backgroundColor,
         l: isDark ? 35 : 45,
@@ -72,7 +72,7 @@ const Badge: React.FC<BadgeProps> = ({
   }, [state, type, ui.darkLight]);
 
   const badge = (
-    <span className={classes.join(' ')} style={style}>
+    <span className={classes.join(' ')} style={style} ref={elementRef}>
       {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
     </span>
   );

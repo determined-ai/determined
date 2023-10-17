@@ -1,6 +1,7 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
 import { isColor, rgba2str, rgbaMix, str2rgba } from 'components/kit/internal/color';
 import { ValueOf } from 'components/kit/internal/types';
+import { RefObject } from 'react';
 
 const STRONG_WEAK_DELTA = 45;
 
@@ -411,9 +412,19 @@ export const DarkLight = {
 
 export type DarkLight = ValueOf<typeof DarkLight>;
 
-export const getCssVar = (name: string): string => {
+const findParentByClass = (element: HTMLElement, className: string): Element => {
+  if (element.classList.contains(className)) {
+    return element;
+  }
+  if (element.parentElement) {
+    return findParentByClass(element.parentElement, className);
+  }
+  return element
+}
+export const getCssVar = (ref: RefObject<HTMLElement>, name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
+  const element = ref.current || document.documentElement
   return window
-    .getComputedStyle(document.getElementsByClassName('ui-provider')[0])
+    .getComputedStyle(findParentByClass(element, 'ui-provider'))
     ?.getPropertyValue(varName);
 };

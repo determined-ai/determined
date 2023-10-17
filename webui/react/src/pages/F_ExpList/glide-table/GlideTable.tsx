@@ -168,7 +168,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const gridRef = useRef<DataEditorRef>(null);
   const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
-
+  const elementRef = useRef(null)
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
     if (gridRef.current !== null) {
@@ -255,14 +255,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
       // avoid showing 'empty rows' below data
       if (!data[row]) {
-        return { borderColor: getCssVar(Surface.Surface) };
+        return { borderColor: getCssVar(elementRef, Surface.Surface) };
       }
 
       const hoverStyle: { accentLight?: string; bgCell?: string } = {};
       if (row === hoveredRow) {
-        hoverStyle.bgCell = getCssVar(Surface.SurfaceStrong);
+        hoverStyle.bgCell = getCssVar(elementRef, Surface.SurfaceStrong);
         if (selection.rows.toArray().includes(hoveredRow)) {
-          hoverStyle.accentLight = getCssVar(Float.FloatStrong);
+          hoverStyle.accentLight = getCssVar(elementRef, Float.FloatStrong);
         }
       }
 
@@ -305,13 +305,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  onSelectionChange?.('remove-all', [0, data.length]);
-                  setMenuIsOpen(false);
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                onSelectionChange?.('remove-all', [0, data.length]);
+                setMenuIsOpen(false);
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -372,38 +372,38 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
-              ...sortMenuItemsForColumn(column, sorts, onSortChange),
-              { type: 'divider' as const },
-              {
-                icon: <Icon decorative name="filter" />,
-                key: 'filter',
-                label: 'Filter by this column',
-                onClick: () => {
-                  setTimeout(() => {
-                    filterMenuItemsForColumn();
-                  }, 5);
-                },
-              },
-            ]),
-        heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
-          ? {
-              icon: <Icon decorative name="heatmap" />,
-              key: 'heatmap',
-              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+            ...sortMenuItemsForColumn(column, sorts, onSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Filter by this column',
               onClick: () => {
-                toggleHeatmap(column.column);
+                setTimeout(() => {
+                  filterMenuItemsForColumn();
+                }, 5);
               },
-            }
+            },
+          ]),
+        heatmapOn &&
+          (column.column === 'searcherMetricsVal' ||
+            (column.type === V1ColumnType.NUMBER &&
+              (column.location === V1LocationType.VALIDATIONS ||
+                column.location === V1LocationType.TRAINING)))
+          ? {
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+            onClick: () => {
+              toggleHeatmap(column.column);
+            },
+          }
           : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length || isMobile
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
-          ? {
+            ? {
               key: 'pin',
               label: 'Pin column',
               onClick: () => {
@@ -416,7 +416,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 setMenuIsOpen(false);
               },
             }
-          : {
+            : {
               disabled: pinnedColumnsCount <= 1,
               key: 'unpin',
               label: 'Unpin column',
@@ -741,7 +741,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         closeTooltip();
       }}>
       {tooltip}
-      <div className={css.base}>
+      <div className={css.base} ref={elementRef}>
         <DataEditor
           className={comparisonViewOpen ? css.compareTable : undefined}
           columns={columns}
