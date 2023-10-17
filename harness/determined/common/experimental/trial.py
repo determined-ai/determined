@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 from determined.common import api, util
 from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint, metrics
+# TODO (MLG-1087): move OrderBy to experimental.client namespace
 from determined.common.experimental._util import OrderBy
 
 
@@ -545,7 +546,7 @@ class TrialOrderBy(enum.Enum):
 
     warnings.warn(
         "'TrialOrderBy' is deprecated and will be removed in a future "
-        "release. Please use 'OrderBy' instead.",
+        "release. Please use 'experimental.OrderBy' instead.",
         FutureWarning,
         stacklevel=2,
     )

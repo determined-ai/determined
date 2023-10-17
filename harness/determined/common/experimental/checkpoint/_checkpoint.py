@@ -59,7 +59,7 @@ class CheckpointOrderBy(enum.Enum):
 
     warnings.warn(
         "'CheckpointOrderBy' is deprecated and will be removed in a future "
-        "release. Please use 'OrderBy' instead.",
+        "release. Please use 'experimental.OrderBy' instead.",
         FutureWarning,
         stacklevel=2,
     )
