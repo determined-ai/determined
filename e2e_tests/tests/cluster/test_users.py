@@ -1122,3 +1122,40 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
     assert modded_user.active
     assert modded_user.remote
     assert modded_user.admin
+
+@pytest.mark.e2e_cpu
+def test_user_edit_no_fields(clean_auth: None, login_admin: None) -> None:
+    u_patch = api_utils.create_test_user(False)
+    original_name = u_patch.username
+
+    master_url = conf.make_master_url()
+    certs.cli_cert = certs.default_load(master_url)
+    authentication.cli_auth = authentication.Authentication(
+        master_url, requested_user=original_name, password=""
+    )
+    sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
+
+    current_user = _fetch_user_by_username(sess, original_name)
+
+    # Log out.
+    log_out_user()
+
+    # login admin again.
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
+
+    new_display_name = get_random_string()
+    new_username = get_random_string()
+
+    assert current_user is not None and current_user.id
+    command = [
+        "user",
+        "edit",
+        original_name,
+    ]
+
+    # No edited field should result in error
+    child = det_spawn(command)
+    assert "No field provided" in str(child.read())
+    child.wait()
+    child.close()
+    assert child.status != 0
