@@ -458,8 +458,8 @@ class Trial:
         DEPRECATED: Use iter_metrics instead
         """
         warnings.warn(
-            "Experiment.get_trials() has been deprecated and will be removed in a future version."
-            "Please call Experiment.list_trials() instead.",
+            "Experiment.stream_metrics() has been deprecated and will be removed in a"
+            " future version. Please call Experiment.iter_trials() instead.",
             FutureWarning,
             stacklevel=2,
         )
