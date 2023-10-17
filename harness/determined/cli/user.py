@@ -184,7 +184,7 @@ def edit(parsed_args: Namespace) -> None:
         user_obj.edit_user(patch_user)
         print("Changes made to the following fields: " + ", ".join(changes))
     else:
-        print("No changes made")
+        raise errors.CliError("No field provided. Use 'det user edit -h' for usage.")
 
 
 AGENT_USER_GROUP_ARGS = [
