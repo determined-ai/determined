@@ -13,7 +13,6 @@ import {
 
 import {
   DarkLight,
-  getCssVar,
   themeDarkDetermined,
   themeDarkHpe,
   themeLightDetermined,
