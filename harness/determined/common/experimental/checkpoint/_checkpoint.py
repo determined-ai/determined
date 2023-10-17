@@ -55,14 +55,9 @@ class CheckpointOrderBy(enum.Enum):
 
     This class is deprecated in favor of ``OrderBy`` and will be removed in a future
     release.
-    """
 
-    warnings.warn(
-        "'CheckpointOrderBy' is deprecated and will be removed in a future "
-        "release. Please use 'experimental.OrderBy' instead.",
-        FutureWarning,
-        stacklevel=2,
-    )
+    TODO (MLG-1089): Add deprecation warnings for this class.
+    """
 
     ASC = bindings.v1OrderBy.ASC.value
     DESC = bindings.v1OrderBy.DESC.value

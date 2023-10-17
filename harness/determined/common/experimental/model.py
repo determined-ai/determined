@@ -171,14 +171,9 @@ class ModelOrderBy(enum.Enum):
 
     This class is deprecated in favor of ``OrderBy`` and will be removed in a future
     release.
-    """
 
-    warnings.warn(
-        "'ModelOrderBy' is deprecated and will be removed in a future "
-        "release. Please use 'experimental.OrderBy' instead.",
-        FutureWarning,
-        stacklevel=2,
-    )
+    TODO (MLG-1089): Add deprecation warnings for this class.
+    """
 
     ASCENDING = bindings.v1OrderBy.ASC.value
     ASC = bindings.v1OrderBy.ASC.value
