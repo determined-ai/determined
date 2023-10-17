@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from determined.common import api, util
 from determined.common.api import bindings
 from determined.common.experimental import checkpoint, metrics
-from determined.common.experimental.util import OrderBy
+from determined.common.experimental._util import OrderBy
 
 
 class ModelVersion:

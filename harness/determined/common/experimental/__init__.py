@@ -13,7 +13,7 @@ from determined.common.experimental.metrics import (
     ValidationMetrics,
 )
 from determined.common.experimental.project import Project
-from determined.common.experimental.util import OrderBy
+from determined.common.experimental._util import OrderBy
 
 
 warnings.warn(

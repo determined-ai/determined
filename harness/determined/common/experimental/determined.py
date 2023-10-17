@@ -17,7 +17,7 @@ from determined.common.experimental import (
     user,
     workspace,
 )
-from determined.common.experimental.util import OrderBy
+from determined.common.experimental._util import OrderBy
 
 
 class Determined:

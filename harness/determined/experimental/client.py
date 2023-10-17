@@ -51,6 +51,7 @@ import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common.api import Session  # noqa: F401
+from determined.common.experimental._util import OrderBy
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
     CheckpointOrderBy,
@@ -65,7 +66,6 @@ from determined.common.experimental.model import Model, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import Trial, TrialSortBy  # noqa: F401
 from determined.common.experimental.user import User
-from determined.common.experimental.util import OrderBy
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 _determined = None  # type: Optional[Determined]
