@@ -292,15 +292,12 @@ const GroupManagement: React.FC = () => {
 
   return (
     <>
-      <Section
-        options={
-          <Space>
-            <Button disabled={!canModifyGroups} onClick={CreateGroupModal.open}>
-              New Group
-            </Button>
-          </Space>
-        }
-        title="Groups">
+      <Section title="Groups">
+        <Space>
+          <Button disabled={!canModifyGroups} onClick={CreateGroupModal.open}>
+            New Group
+          </Button>
+        </Space>
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
       <CreateGroupModal.Component onClose={fetchGroups} />

@@ -1,17 +1,4 @@
-.base {
-  height: 100%;
-
-  .container {
-    min-height: 200px;
-  }
-  .chart {
-    height: 400px;
-  }
-}
 .filterBar {
   border-radius: var(--theme-border-radius) var(--theme-border-radius) 0 0;
   border-width: var(--theme-stroke-width) var(--theme-stroke-width) 0 var(--theme-stroke-width);
-}
-.waiting {
-  height: 300px;
 }

@@ -12,3 +12,7 @@
     word-break: break-all;
   }
 }
+.filterBar {
+  border-radius: var(--theme-border-radius) var(--theme-border-radius) 0 0;
+  border-width: var(--theme-stroke-width) var(--theme-stroke-width) 0 var(--theme-stroke-width);
+}

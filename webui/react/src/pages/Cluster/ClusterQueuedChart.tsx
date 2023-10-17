@@ -35,18 +35,14 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
   if (!queuedStats) return <div />;
   return (
     <>
-      <Section
-        bodyBorder
-        options={
-          <Radio.Group
-            className={css.filter}
-            value={viewDays}
-            onChange={(e) => setViewDays(e.target.value)}>
-            <Radio.Button value={7}>7 days</Radio.Button>
-            <Radio.Button value={30}>30 days</Radio.Button>
-          </Radio.Group>
-        }
-        title="Avg Queue Time">
+      <Section title="Avg Queue Time">
+        <Radio.Group
+          className={css.filter}
+          value={viewDays}
+          onChange={(e) => setViewDays(e.target.value)}>
+          <Radio.Button value={7}>7 days</Radio.Button>
+          <Radio.Button value={30}>30 days</Radio.Button>
+        </Radio.Group>
         <ClusterHistoricalUsageChart
           chartKey={viewDays}
           dateRange={dateRange}

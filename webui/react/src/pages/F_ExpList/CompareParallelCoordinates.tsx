@@ -284,7 +284,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   }
 
   return (
-    <Section bodyBorder bodyScroll filters={visualizationFilters}>
+    <Section>
+      <div className={css.filterBar}>{visualizationFilters}</div>
       <div className={css.container}>
         <div className={css.chart}>
           {selectedExperiments.length > 0 && (

@@ -382,53 +382,56 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
-        <div className={css.container}>
-          <div className={css.chart}>
-            <ParallelCoordinates
-              config={config}
-              data={chartData?.data ?? {}}
-              dimensions={dimensions}
-              disableInteraction={!!focusedTrial}
-            />
-          </div>
-          {!focusedTrial && !!selectedMetric && (
-            <div>
-              <TableBatch
-                actions={[
-                  { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-                  { label: Action.CompareTrials, value: Action.CompareTrials },
-                ]}
-                selectedRowCount={selectedRowKeys.length}
-                onAction={(action) => submitBatchAction(action as Action)}
-                onClear={clearSelected}
-              />
-              <HpTrialTable
-                colorScale={colorScale}
-                experimentId={experiment.id}
-                filteredTrialIdMap={filteredTrialIdMap}
-                handleTableRowSelect={handleTableRowSelect}
-                hyperparameters={hyperparameters}
-                metric={selectedMetric}
-                selectedRowKeys={selectedRowKeys}
-                selection={true}
-                trialHps={trialHps}
+      <Section>
+        <Spinner spinning={!hasLoaded}>
+          <div className={css.filterBar}>{filters}</div>
+          <div className={css.container}>
+            <div className={css.chart}>
+              <ParallelCoordinates
+                config={config}
+                data={chartData?.data ?? {}}
+                dimensions={dimensions}
+                disableInteraction={!!focusedTrial}
               />
             </div>
-          )}
-          <div className={css.tooltip} ref={tooltipRef}>
-            <div className={css.box}>
-              <div className={css.row}>
-                <div>Trial Id:</div>
-                <div ref={trialIdRef} />
+            {!focusedTrial && !!selectedMetric && (
+              <div>
+                <TableBatch
+                  actions={[
+                    { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                    { label: Action.CompareTrials, value: Action.CompareTrials },
+                  ]}
+                  selectedRowCount={selectedRowKeys.length}
+                  onAction={(action) => submitBatchAction(action as Action)}
+                  onClear={clearSelected}
+                />
+                <HpTrialTable
+                  colorScale={colorScale}
+                  experimentId={experiment.id}
+                  filteredTrialIdMap={filteredTrialIdMap}
+                  handleTableRowSelect={handleTableRowSelect}
+                  hyperparameters={hyperparameters}
+                  metric={selectedMetric}
+                  selectedRowKeys={selectedRowKeys}
+                  selection={true}
+                  trialHps={trialHps}
+                />
               </div>
-              <div className={css.row}>
-                <div>Metric:</div>
-                <div ref={metricValueRef} />
+            )}
+            <div className={css.tooltip} ref={tooltipRef}>
+              <div className={css.box}>
+                <div className={css.row}>
+                  <div>Trial Id:</div>
+                  <div ref={trialIdRef} />
+                </div>
+                <div className={css.row}>
+                  <div>Metric:</div>
+                  <div ref={metricValueRef} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Spinner>
       </Section>
       {showCompareTrials && (
         <TrialsComparisonModal

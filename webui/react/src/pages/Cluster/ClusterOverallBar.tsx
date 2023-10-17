@@ -37,7 +37,7 @@ export const ClusterOverallBar: React.FC = () => {
   }, [agents]);
 
   return (
-    <Section hideTitle title="Overall Allocation">
+    <Section>
       <Spinner
         conditionalRender
         spinning={Loadable.isNotLoaded(agents) || Loadable.isNotLoaded(overview)}>

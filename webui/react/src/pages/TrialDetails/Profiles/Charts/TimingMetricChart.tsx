@@ -17,7 +17,7 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const yLabel = getUnitForMetricName('seconds');
 
   return (
-    <Section bodyBorder bodyNoPadding title="Timing Metrics">
+    <Section title="Timing Metrics">
       <LineChart
         experimentId={trial.id}
         handleError={handleError}

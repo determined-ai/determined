@@ -520,31 +520,6 @@ const LogViewer: React.FC<Props> = ({
     return (): void => target?.removeEventListener('copy', handleCopy);
   }, [logsRef]);
 
-  const logViewerOptions = (
-    <div className={css.options}>
-      <Space>
-        <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
-        <Button
-          aria-label="Toggle Fullscreen Mode"
-          icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
-          onClick={handleFullScreen}
-        />
-        {handleCloseLogs && (
-          <a onClick={handleCloseLogs}>
-            <Icon name="close" title="Close Logs" />
-          </a>
-        )}
-        {onDownload && (
-          <Button
-            aria-label="Download Logs"
-            icon={<Icon name="download" showTooltip title="Download Logs" />}
-            onClick={handleDownload}
-          />
-        )}
-      </Space>
-    </div>
-  );
-
   const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(
     ({ data, index, style }) => (
       <LogViewerEntry
@@ -563,13 +538,32 @@ const LogViewer: React.FC<Props> = ({
   );
 
   return (
-    <Section
-      bodyNoPadding
-      bodyScroll
-      divider
-      maxHeight
-      options={logViewerOptions}
-      title={props.title}>
+    <Section divider title={props.title}>
+      <div className={css.options}>
+        <Space>
+          <ClipboardButton
+            copiedMessage={clipboardCopiedMessage}
+            getContent={getClipboardContent}
+          />
+          <Button
+            aria-label="Toggle Fullscreen Mode"
+            icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
+            onClick={handleFullScreen}
+          />
+          {handleCloseLogs && (
+            <a onClick={handleCloseLogs}>
+              <Icon name="close" title="Close Logs" />
+            </a>
+          )}
+          {onDownload && (
+            <Button
+              aria-label="Download Logs"
+              icon={<Icon name="download" showTooltip title="Download Logs" />}
+              onClick={handleDownload}
+            />
+          )}
+        </Space>
+      </div>
       <Spinner center spinning={isFetching} tip={logs.length === 0 ? 'No logs to show.' : ''}>
         <div className={css.base} ref={baseRef}>
           <div className={css.container}>

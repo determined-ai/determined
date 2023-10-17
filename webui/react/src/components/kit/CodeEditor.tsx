@@ -213,8 +213,6 @@ const CodeEditor: React.FC<Props> = ({
     viewMode === 'editor' ? css.editorMode : '',
   ];
 
-  const sectionClasses = [loadableFile.isFailed ? css.pageError : css.editor];
-
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
@@ -281,11 +279,7 @@ const CodeEditor: React.FC<Props> = ({
           </div>
         </div>
       )}
-      <Section
-        bodyNoPadding
-        bodyScroll={height === '100%'}
-        className={sectionClasses.join(' ')}
-        maxHeight>
+      <Section>
         {/* directly checking tag because loadable.isLoaded only takes loadables */}
         <Spinner spinning={file === NotLoaded}>{fileContent}</Spinner>
       </Section>

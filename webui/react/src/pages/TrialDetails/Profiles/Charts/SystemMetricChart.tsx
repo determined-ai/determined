@@ -15,6 +15,7 @@ import {
 import { XAxisDomain } from 'types';
 import handleError from 'utils/error';
 
+import css from './SystemMetricChart.module.scss';
 import SystemMetricFilter from './SystemMetricChartFilters';
 
 export interface Settings {
@@ -83,19 +84,16 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
   }, [settings.agentId, settings.name, systemSeries, updateSettings]);
 
   return (
-    <Section
-      bodyBorder
-      bodyNoPadding
-      filters={
-        settings && (
+    <Section title="System Metrics">
+      {settings && (
+        <div className={css.filterBar}>
           <SystemMetricFilter
             settings={settings}
             systemSeries={systemSeries}
             updateSettings={updateSettings}
           />
-        )
-      }
-      title="System Metrics">
+        </div>
+      )}
       <LineChart
         experimentId={trial.id}
         handleError={handleError}

@@ -253,32 +253,30 @@ const ScatterPlots: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section
-        bodyBorder
-        bodyNoPadding
-        bodyScroll
-        filters={filters}
-        loading={!hasLoaded || !chartData}>
-        <div className={css.container}>
-          {chartProps ? (
-            <Grid
-              border={true}
-              minItemWidth={resize.width > 320 ? 350 : 270}
-              mode={GridMode.AutoFill}>
-              {selectedHParams.map((hParam) => (
-                <div key={hParam} onClick={() => handleChartClick(hParam)}>
-                  <UPlotScatter
-                    data={chartProps[hParam].data}
-                    options={chartProps[hParam].options}
-                    tooltipLabels={chartProps[hParam].tooltipLabels}
-                  />
-                </div>
-              ))}
-            </Grid>
-          ) : (
-            <Message icon="warning" title="No data to plot." />
-          )}
-        </div>
+      <Section>
+        <Spinner spinning={!hasLoaded || !chartData}>
+          <div className={css.filterBar}>{filters}</div>
+          <div className={css.container}>
+            {chartProps ? (
+              <Grid
+                border={true}
+                minItemWidth={resize.width > 320 ? 350 : 270}
+                mode={GridMode.AutoFill}>
+                {selectedHParams.map((hParam) => (
+                  <div key={hParam} onClick={() => handleChartClick(hParam)}>
+                    <UPlotScatter
+                      data={chartProps[hParam].data}
+                      options={chartProps[hParam].options}
+                      tooltipLabels={chartProps[hParam].tooltipLabels}
+                    />
+                  </div>
+                ))}
+              </Grid>
+            ) : (
+              <Message icon="warning" title="No data to plot." />
+            )}
+          </div>
+        </Spinner>
       </Section>
       <GalleryModal
         height={galleryHeight}

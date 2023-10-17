@@ -324,42 +324,45 @@ const LearningCurve: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
-        <div className={css.container}>
-          <div className={css.chart}>
-            <LineChart
-              focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
-              handleError={handleError}
-              scale={selectedScale}
-              series={chartData}
-              xLabel="Batches Processed"
-              yLabel={metricToStr(selectedMetric)}
-              onPointClick={handlePointClick}
-              onPointFocus={handlePointFocus}
+      <Section>
+        <Spinner spinning={!hasLoaded}>
+          <div className={css.filterBar}>{filters}</div>
+          <div className={css.container}>
+            <div className={css.chart}>
+              <LineChart
+                focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
+                handleError={handleError}
+                scale={selectedScale}
+                series={chartData}
+                xLabel="Batches Processed"
+                yLabel={metricToStr(selectedMetric)}
+                onPointClick={handlePointClick}
+                onPointFocus={handlePointFocus}
+              />
+            </div>
+            <TableBatch
+              actions={[
+                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                { label: Action.CompareTrials, value: Action.CompareTrials },
+              ]}
+              selectedRowCount={selectedRowKeys.length}
+              onAction={(action) => submitBatchAction(action as Action)}
+              onClear={clearSelected}
+            />
+            <HpTrialTable
+              experimentId={experiment.id}
+              handleTableRowSelect={handleTableRowSelect}
+              highlightedTrialId={highlightedTrialId}
+              hyperparameters={hyperparameters}
+              metric={selectedMetric}
+              selectedRowKeys={selectedRowKeys}
+              selection={true}
+              trialHps={trialHps}
+              onMouseEnter={handleTableMouseEnter}
+              onMouseLeave={handleTableMouseLeave}
             />
           </div>
-          <TableBatch
-            actions={[
-              { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-              { label: Action.CompareTrials, value: Action.CompareTrials },
-            ]}
-            selectedRowCount={selectedRowKeys.length}
-            onAction={(action) => submitBatchAction(action as Action)}
-            onClear={clearSelected}
-          />
-          <HpTrialTable
-            experimentId={experiment.id}
-            handleTableRowSelect={handleTableRowSelect}
-            highlightedTrialId={highlightedTrialId}
-            hyperparameters={hyperparameters}
-            metric={selectedMetric}
-            selectedRowKeys={selectedRowKeys}
-            selection={true}
-            trialHps={trialHps}
-            onMouseEnter={handleTableMouseEnter}
-            onMouseLeave={handleTableMouseLeave}
-          />
-        </div>
+        </Spinner>
       </Section>
       {showCompareTrials && (
         <TrialsComparisonModal

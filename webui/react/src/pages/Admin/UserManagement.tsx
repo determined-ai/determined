@@ -432,25 +432,21 @@ const UserManagement: React.FC = () => {
 
   return (
     <>
-      <Section
-        className={css.usersTable}
-        options={
-          <Space>
-            {selectedUserIds.length > 0 && (
-              <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                <Button>Actions</Button>
-              </Dropdown>
-            )}
-            <Button
-              aria-label={CREATE_USER_LABEL}
-              disabled={!info.userManagementEnabled || !canModifyUsers}
-              onClick={CreateUserModal.open}>
-              {CREATE_USER}
-            </Button>
-            {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
-          </Space>
-        }
-        title={USER_TITLE}>
+      <Section title={USER_TITLE}>
+        <Space>
+          {selectedUserIds.length > 0 && (
+            <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
+              <Button>Actions</Button>
+            </Dropdown>
+          )}
+          <Button
+            aria-label={CREATE_USER_LABEL}
+            disabled={!info.userManagementEnabled || !canModifyUsers}
+            onClick={CreateUserModal.open}>
+            {CREATE_USER}
+          </Button>
+          {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
+        </Space>
         {table}
       </Section>
       <CreateUserModal.Component onClose={fetchUsers} />

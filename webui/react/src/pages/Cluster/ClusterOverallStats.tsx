@@ -56,7 +56,7 @@ export const ClusterOverallStats: React.FC = () => {
   useEffect(() => experimentStore.startPolling({ args: [ACTIVE_EXPERIMENTS_PARAMS] }), []);
 
   return (
-    <Section hideTitle title="Overview Stats">
+    <Section>
       <Card.Group size="small">
         <OverviewStats title="Connected Agents">
           {Loadable.match(agents, {

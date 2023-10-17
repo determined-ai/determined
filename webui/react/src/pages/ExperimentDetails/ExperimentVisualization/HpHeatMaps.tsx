@@ -351,43 +351,46 @@ const HpHeatMaps: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
-        <div className={css.container}>
-          {chartProps ? (
-            <>
-              <div className={css.legend}>
-                <ColorLegend
-                  colorScale={colorScale}
-                  title={<MetricBadgeTag metric={selectedMetric} />}
-                />
-              </div>
-              <div className={css.charts}>
-                <Grid
-                  border={true}
-                  minItemWidth={resize.width > 320 ? 350 : 270}
-                  mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
-                  {selectedHParams.map((hParam1) =>
-                    selectedHParams.map((hParam2) => {
-                      const key = generateHpKey(hParam1, hParam2);
-                      return (
-                        <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
-                          <UPlotScatter
-                            colorScaleDistribution={selectedScale}
-                            data={chartProps[key].data}
-                            options={chartProps[key].options}
-                            tooltipLabels={chartProps[key].tooltipLabels}
-                          />
-                        </div>
-                      );
-                    }),
-                  )}
-                </Grid>
-              </div>
-            </>
-          ) : (
-            <Message icon="warning" title="No data to plot." />
-          )}
-        </div>
+      <Section>
+        <Spinner spinning={!hasLoaded}>
+          <div className={css.filterBar}>{filters}</div>
+          <div className={css.container}>
+            {chartProps ? (
+              <>
+                <div className={css.legend}>
+                  <ColorLegend
+                    colorScale={colorScale}
+                    title={<MetricBadgeTag metric={selectedMetric} />}
+                  />
+                </div>
+                <div className={css.charts}>
+                  <Grid
+                    border={true}
+                    minItemWidth={resize.width > 320 ? 350 : 270}
+                    mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
+                    {selectedHParams.map((hParam1) =>
+                      selectedHParams.map((hParam2) => {
+                        const key = generateHpKey(hParam1, hParam2);
+                        return (
+                          <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                            <UPlotScatter
+                              colorScaleDistribution={selectedScale}
+                              data={chartProps[key].data}
+                              options={chartProps[key].options}
+                              tooltipLabels={chartProps[key].tooltipLabels}
+                            />
+                          </div>
+                        );
+                      }),
+                    )}
+                  </Grid>
+                </div>
+              </>
+            ) : (
+              <Message icon="warning" title="No data to plot." />
+            )}
+          </div>
+        </Spinner>
       </Section>
       <GalleryModal
         height={galleryHeight}

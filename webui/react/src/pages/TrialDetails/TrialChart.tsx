@@ -137,21 +137,18 @@ const TrialChart: React.FC<Props> = ({
     };
   }, [metrics, scale, trialId]);
 
-  const options = (
-    <ResponsiveFilters>
-      <MetricSelect
-        defaultMetrics={defaultMetricNames}
-        metrics={metricNames}
-        multiple
-        value={metrics}
-        onChange={onMetricChange}
-      />
-      <ScaleSelect value={scale} onChange={setScale} />
-    </ResponsiveFilters>
-  );
-
   return (
-    <Section bodyBorder options={options} title="Metrics">
+    <Section title="Metrics">
+      <ResponsiveFilters>
+        <MetricSelect
+          defaultMetrics={defaultMetricNames}
+          metrics={metricNames}
+          multiple
+          value={metrics}
+          onChange={onMetricChange}
+        />
+        <ScaleSelect value={scale} onChange={setScale} />
+      </ResponsiveFilters>
       <div className={css.base}>
         <UPlotChart
           data={chartData}

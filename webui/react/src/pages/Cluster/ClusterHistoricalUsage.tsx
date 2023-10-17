@@ -5,6 +5,11 @@ import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/kit/Section';
+<<<<<<< HEAD
+=======
+import Spinner from 'components/kit/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
+>>>>>>> 32d3c8575 (feat: remove additional props and updated code)
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
@@ -127,72 +132,68 @@ const ClusterHistoricalUsage: React.FC = () => {
           <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
           <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
         </Space>
-        <Section
-          bodyBorder
-          loading={Loadable.isNotLoaded(chartSeries)}
-          title="Compute Hours Allocated">
-          {Loadable.match(chartSeries, {
-            Failed: () => null, // TODO inform user if chart fails to load
-            Loaded: (series) => (
-              <ClusterHistoricalUsageChart
-                groupBy={series.groupedBy}
-                hoursByLabel={series.hoursTotal}
-                time={series.time}
-              />
-            ),
-            NotLoaded: () => null,
-          })}
+        <Section title="Compute Hours Allocated">
+          <Spinner spinning={Loadable.isNotLoaded(chartSeries)}>
+            {Loadable.match(chartSeries, {
+              Failed: () => null, // TODO inform user if chart fails to load
+              Loaded: (series) => (
+                <ClusterHistoricalUsageChart
+                  groupBy={series.groupedBy}
+                  hoursByLabel={series.hoursTotal}
+                  time={series.time}
+                />
+              ),
+              NotLoaded: () => null,
+            })}
+          </Spinner>
         </Section>
-        <Section
-          bodyBorder
-          loading={Loadable.isNotLoaded(Loadable.all([loadableUsers, chartSeries]))}
-          title="Compute Hours by User">
-          {Loadable.match(chartSeries, {
-            Failed: () => null, // TODO inform user if chart fails to load
-            Loaded: (series) => (
-              <ClusterHistoricalUsageChart
-                groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByUsername}
-                hoursTotal={series?.hoursTotal?.total}
-                time={series.time}
-              />
-            ),
-            NotLoaded: () => null,
-          })}
+        <Section title="Compute Hours by User">
+          <Spinner spinning={Loadable.isNotLoaded(Loadable.all([loadableUsers, chartSeries]))}>
+            {Loadable.match(chartSeries, {
+              Failed: () => null, // TODO inform user if chart fails to load
+              Loaded: (series) => (
+                <ClusterHistoricalUsageChart
+                  groupBy={series.groupedBy}
+                  hoursByLabel={series.hoursByUsername}
+                  hoursTotal={series?.hoursTotal?.total}
+                  time={series.time}
+                />
+              ),
+              NotLoaded: () => null,
+            })}
+          </Spinner>
         </Section>
-        <Section
-          bodyBorder
-          loading={Loadable.isNotLoaded(chartSeries)}
-          title="Compute Hours by Label">
-          {Loadable.match(chartSeries, {
-            Failed: () => null, // TODO inform user if chart fails to load
-            Loaded: (series) => (
-              <ClusterHistoricalUsageChart
-                groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByExperimentLabel}
-                hoursTotal={series?.hoursTotal?.total}
-                time={series.time}
-              />
-            ),
-            NotLoaded: () => null,
-          })}
+        <Section title="Compute Hours by Label">
+          <Spinner spinning={Loadable.isNotLoaded(chartSeries)}>
+            {Loadable.match(chartSeries, {
+              Failed: () => null, // TODO inform user if chart fails to load
+              Loaded: (series) => (
+                <ClusterHistoricalUsageChart
+                  groupBy={series.groupedBy}
+                  hoursByLabel={series.hoursByExperimentLabel}
+                  hoursTotal={series?.hoursTotal?.total}
+                  time={series.time}
+                />
+              ),
+              NotLoaded: () => null,
+            })}
+          </Spinner>
         </Section>
-        <Section
-          bodyBorder
-          loading={Loadable.isNotLoaded(chartSeries)}
-          title="Compute Hours by Resource Pool">
-          {Loadable.match(chartSeries, {
-            Failed: () => null, // TODO inform user if chart fails to load
-            Loaded: (series) => (
-              <ClusterHistoricalUsageChart
-                groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByResourcePool}
-                hoursTotal={series?.hoursTotal?.total}
-                time={series.time}
-              />
-            ),
-            NotLoaded: () => null,
-          })}
+        <Section title="Compute Hours by Resource Pool">
+          <Spinner spinning={Loadable.isNotLoaded(chartSeries)}>
+            {Loadable.match(chartSeries, {
+              Failed: () => null, // TODO inform user if chart fails to load
+              Loaded: (series) => (
+                <ClusterHistoricalUsageChart
+                  groupBy={series.groupedBy}
+                  hoursByLabel={series.hoursByResourcePool}
+                  hoursTotal={series?.hoursTotal?.total}
+                  time={series.time}
+                />
+              ),
+              NotLoaded: () => null,
+            })}
+          </Spinner>
         </Section>
         {isCsvModalVisible && (
           <ClusterHistoricalUsageCsvModal

@@ -377,7 +377,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   return (
     <div className={css.base} id="jobs">
-      <Section hideTitle={!!selectedRp} title={tableTitle}>
+      <Section title={tableTitle}>
         {settings ? (
           <InteractiveTable<Job, Settings>
             columns={columns}

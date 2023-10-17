@@ -209,18 +209,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     [columns, updateSettings],
   );
 
-  const options = (
-    <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
-      <Select label="Show" value={settings.filter} onSelect={handleHasCheckpointOrValidationSelect}>
-        {Object.values(TrialWorkloadFilter).map((key) => (
-          <Option key={key} value={key}>
-            {key}
-          </Option>
-        ))}
-      </Select>
-    </ResponsiveFilters>
-  );
-
   useEffect(() => {
     return () => {
       stopPolling();
@@ -228,7 +216,19 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [stopPolling]);
 
   return (
-    <Section options={options} title="Workloads">
+    <Section title="Workloads">
+      <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
+        <Select
+          label="Show"
+          value={settings.filter}
+          onSelect={handleHasCheckpointOrValidationSelect}>
+          {Object.values(TrialWorkloadFilter).map((key) => (
+            <Option key={key} value={key}>
+              {key}
+            </Option>
+          ))}
+        </Select>
+      </ResponsiveFilters>
       <ResponsiveTable<Step>
         columns={columns}
         dataSource={workloadSteps}

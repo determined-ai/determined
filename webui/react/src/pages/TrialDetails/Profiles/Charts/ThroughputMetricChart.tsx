@@ -24,7 +24,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const yLabel = getUnitForMetricName('samples_per_second');
 
   return (
-    <Section bodyBorder bodyNoPadding title="Throughput">
+    <Section title="Throughput">
       <LineChart
         experimentId={trial.id}
         handleError={handleError}

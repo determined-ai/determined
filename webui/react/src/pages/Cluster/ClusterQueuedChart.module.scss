@@ -1,4 +1,8 @@
 .filter {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+
   :global(.ant-radio-button-wrapper) {
     background-color: transparent !important;
     border: none !important;
