@@ -83,8 +83,7 @@ const summarizedMetricToSeries = (
       color:
         metric.group === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
-      metricType: metric.group,
-      name: metric.name,
+      name: `${metric.group}.${metric.name}`,
     };
     trialData[metricToKey(metric)] = series;
   });

@@ -2,11 +2,7 @@ import React, { ReactNode, useMemo } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
-import {
-  getCssVar,
-  getTimeTickValues,
-  glasbeyColor,
-} from 'components/kit/internal/functions';
+import { getCssVar, getTimeTickValues, glasbeyColor } from 'components/kit/internal/functions';
 import ParallelCoordinatesComponent from 'components/kit/internal/ParallelCoordinates';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
 import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
