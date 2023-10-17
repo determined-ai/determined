@@ -1,7 +1,11 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { RefObject } from 'react';
+
 import { isColor, rgba2str, rgbaMix, str2rgba } from 'components/kit/internal/color';
 import { ValueOf } from 'components/kit/internal/types';
-import { RefObject } from 'react';
+
+const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 
 const STRONG_WEAK_DELTA = 45;
 
@@ -427,4 +431,20 @@ export const getCssVar = (ref: RefObject<HTMLElement>, name: string): string => 
   return window
     .getComputedStyle(findParentByClass(element, 'ui-provider'))
     ?.getPropertyValue(varName);
+};
+
+export const getDarkLight = (mode: Mode, systemMode: Mode): DarkLight => {
+  const resolvedMode =
+    mode === Mode.System ? (systemMode === Mode.System ? Mode.Light : systemMode) : mode;
+  return resolvedMode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
+};
+
+export const getSystemMode = (): Mode => {
+  const isDark = matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
+  if (isDark) return Mode.Dark;
+
+  const isLight = matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).matches;
+  if (isLight) return Mode.Light;
+
+  return Mode.System;
 };

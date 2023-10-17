@@ -1,11 +1,12 @@
 import { theme as AntdTheme, ConfigProvider } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { Dispatch, useContext, useLayoutEffect, useMemo, useReducer, useRef } from 'react';
 
 import { RecordKey } from 'components/kit/internal/types';
-import { themeLightDetermined } from 'components/kit/Theme';
+import { themes } from 'components/kit/Theme';
+import determinedInfo from 'stores/determinedInfo';
 
-import { DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
-
+import { DarkLight, getDarkLight, getSystemMode, globalCssVars, Mode, Theme } from './themeUtils';
 interface StateUI {
   chromeCollapsed: boolean;
   darkLight: DarkLight;
@@ -144,19 +145,20 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
 export const ThemeProvider: React.FC<{
   children?: React.ReactNode;
 }> = ({ children }) => {
+  const info = useObservable(determinedInfo.info);
   const [state, dispatch] = useReducer(reducer, initUI);
-  // const systemMode = getSystemMode();
-  // const userTheme = userSettings.get
-  const theme = themeLightDetermined;
+  const systemMode = getSystemMode();
+  const darkLight = getDarkLight(state.mode, systemMode);
+  const branding = info?.branding || 'determined';
 
-  // Update darkLight and theme when branding, system mode, or mode changes.
+  //Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
-    const darkLight = DarkLight.Light;
+    const theme = themes[branding][darkLight];
     dispatch({
       type: StoreActionUI.SetTheme,
       value: { darkLight, theme },
     });
-  }, [state.mode, theme]);
+  }, [darkLight, branding]);
 
   return (
     <StateContext.Provider value={state}>
