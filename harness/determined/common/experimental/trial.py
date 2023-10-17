@@ -7,8 +7,9 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 from determined.common import api, util
 from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint, metrics
+
 # TODO (MLG-1087): move OrderBy to experimental.client namespace
-from determined.common.experimental._util import OrderBy
+from determined.common.experimental._util import OrderBy  # noqa: I2041
 
 
 class LogLevel(enum.Enum):
@@ -542,9 +543,16 @@ class TrialOrderBy(enum.Enum):
 
     This class is deprecated in favor of ``OrderBy`` and will be removed in a future
     release.
-
-    TODO (MLG-1089): Add deprecation warnings for this class.
     """
+
+    def __getattribute__(cls, name: str) -> Any:
+        warnings.warn(
+            "'TrialOrderBy' is deprecated and will be removed in a future "
+            "release. Please use 'experimental.OrderBy' instead.",
+            FutureWarning,
+            stacklevel=1,
+        )
+        return super().__getattribute__(name)
 
     ASCENDING = bindings.v1OrderBy.ASC.value
     ASC = bindings.v1OrderBy.ASC.value

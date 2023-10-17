@@ -55,9 +55,16 @@ class CheckpointOrderBy(enum.Enum):
 
     This class is deprecated in favor of ``OrderBy`` and will be removed in a future
     release.
-
-    TODO (MLG-1089): Add deprecation warnings for this class.
     """
+
+    def __getattribute__(cls, name: str) -> Any:
+        warnings.warn(
+            "'CheckpointOrderBy' is deprecated and will be removed in a future "
+            "release. Please use 'experimental.OrderBy' instead.",
+            FutureWarning,
+            stacklevel=1,
+        )
+        return super().__getattribute__(name)
 
     ASC = bindings.v1OrderBy.ASC.value
     DESC = bindings.v1OrderBy.DESC.value

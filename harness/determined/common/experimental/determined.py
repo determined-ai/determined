@@ -17,8 +17,9 @@ from determined.common.experimental import (
     user,
     workspace,
 )
+
 # TODO (MLG-1087): move OrderBy to experimental.client namespace
-from determined.common.experimental._util import OrderBy
+from determined.common.experimental._util import OrderBy  # noqa: I2041
 
 
 class Determined:
