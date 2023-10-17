@@ -174,7 +174,7 @@ class ModelOrderBy(enum.Enum):
     release.
     """
 
-    def __getattribute__(cls, name: str) -> Any:
+    def __getattribute__(self, name: str) -> Any:
         warnings.warn(
             "'ModelOrderBy' is deprecated and will be removed in a future "
             "release. Please use 'experimental.OrderBy' instead.",
