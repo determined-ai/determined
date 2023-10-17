@@ -4,23 +4,24 @@
   display: flex;
   justify-content: center;
   line-height: 1;
+
   &.square {
     border-radius: var(--theme-border-radius-weak);
   }
   &.extra-small {
     font-size: 8px;
-    width: 20px;
     height: 20px;
+    width: 20px;
   }
   &.small {
     font-size: 10px;
-    width: 24px;
     height: 24px;
+    width: 24px;
   }
   &.medium {
     font-size: 12px;
-    width: 40px;
     height: 40px;
+    width: 40px;
   }
   &.large {
     font-size: 16px;
@@ -32,4 +33,10 @@
     height: 78px;
     width: 78px;
   }
+}
+.group {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-start;
 }

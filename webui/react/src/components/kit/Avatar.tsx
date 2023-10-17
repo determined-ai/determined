@@ -25,7 +25,7 @@ export interface Props {
   noColor?: boolean;
   size?: Size;
   square?: boolean;
-  textColor?: 'black' | 'white'
+  textColor?: 'black' | 'white';
 }
 
 export const getInitials = (name = ''): string => {
@@ -78,6 +78,19 @@ const Avatar: React.FC<Props> = ({
     <Tooltip content={text} placement="right">
       {avatar}
     </Tooltip>
+  );
+};
+
+export interface GroupProps extends Omit<Props, 'text'> {
+  items: string[];
+}
+export const AvatarGroup: React.FC<GroupProps> = ({ items, ...rest }) => {
+  return (
+    <div className={css.group}>
+      {items.map((item, idx) => (
+        <Avatar key={idx} text={item} {...rest} />
+      ))}
+    </div>
   );
 };
 

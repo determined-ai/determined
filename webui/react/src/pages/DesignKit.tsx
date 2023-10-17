@@ -6,7 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
 import Accordion from 'components/kit/Accordion';
-import Avatar, { Size as AvatarSize } from 'components/kit/Avatar';
+import Avatar, { AvatarGroup, Size as AvatarSize } from 'components/kit/Avatar';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -1580,6 +1580,9 @@ const AvatarSection: React.FC = () => {
         <Avatar square text="Test User" textColor="black" />
         No Color
         <Avatar noColor text="Test User" />
+      </AntDCard>
+      <AntDCard title="Group">
+        <AvatarGroup items={['Test User', 'Sample Person', 'Example Individual']} />
       </AntDCard>
     </ComponentSection>
   );
