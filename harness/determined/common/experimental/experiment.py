@@ -229,17 +229,29 @@ class Experiment:
             FutureWarning,
             stacklevel=2,
         )
-        return list(self.list_trials(sort_by, order_by))
+        return self.list_trials(sort_by, order_by)
 
     def list_trials(
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: OrderBy = OrderBy.ASCENDING,
+    ) -> List[trial.Trial]:
+        """Fetch all trials of an experiment.
+
+        Arguments:
+            sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
+            order_by: Whether to sort in ascending or descending order. See
+                :class:`~determined.experimental.TrialOrderBy`.
+        """
+        return list(self.iter_trials(sort_by, order_by))
+
+    def iter_trials(
+        self,
+        sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
+        order_by: OrderBy = OrderBy.ASCENDING,
         limit: Optional[int] = None,
     ) -> Iterator[trial.Trial]:
-        """
-        Get an iterator of :class:`~determined.experimental.Trial` instances
-        representing trials for an experiment.
+        """Generate an iterator of trials of an experiment.
 
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
@@ -250,8 +262,8 @@ class Experiment:
                 latency at the expense of more HTTP requests to the server. Defaults to no maximum.
 
         Returns:
-            This method returns an Iterable type that lazily instantiates response objects. To
-            get all models at once, call list(list_trials()).
+            This method returns an Iterable of :class:`~determined.experimental.Trial` instances
+            that lazily fetches response objects.
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:

@@ -101,7 +101,7 @@ def test_wait_raises_exception_when_experiment_is_paused(
 
 
 @responses.activate
-def test_list_trials_iterates_through_all_trials(
+def test_iter_trials_iterates_through_all_trials(
     make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
@@ -119,13 +119,13 @@ def test_list_trials_iterates_through_all_trials(
         callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
     )
 
-    trials = expref.list_trials(limit=page_size)
+    trials = expref.iter_trials(limit=page_size)
 
     assert len(list(trials)) == len(tr_resp.trials)
 
 
 @responses.activate
-def test_list_trials_requests_pages_lazily(
+def test_iter_trials_requests_pages_lazily(
     make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
@@ -143,7 +143,7 @@ def test_list_trials_requests_pages_lazily(
         callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
     )
 
-    trials = expref.list_trials(limit=page_size)
+    trials = expref.iter_trials(limit=page_size)
 
     # Iterate through each item in generator and ensure API is called to fetch new pages.
     for i, _ in enumerate(trials):

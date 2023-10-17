@@ -453,11 +453,24 @@ class Trial:
         return "Trial(id={})".format(self.id)
 
     def stream_metrics(self, group: str) -> Iterable[metrics.TrialMetrics]:
-        """Get a stream of metrics for this trial.
+        """Streams metrics for this trial.
+
+        DEPRECATED: Use iter_metrics instead
+        """
+        warnings.warn(
+            "Experiment.get_trials() has been deprecated and will be removed in a future version."
+            "Please call Experiment.list_trials() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.iter_metrics(group)
+
+    def iter_metrics(self, group: str) -> Iterable[metrics.TrialMetrics]:
+        """Generate an iterator of metrics for this trial.
 
         Arguments:
-            group: The metric group to stream.  Common values are "validation" and "training", but
-                group can be any value passed to master when reporting metrics during training
+            group: The metric group to iterate over.  Common values are "validation" and "training",
+                but group can be any value passed to master when reporting metrics during training
                 (usually via a context's `report_metrics`).
 
         Returns:
@@ -480,11 +493,11 @@ class Trial:
     def stream_training_metrics(self) -> Iterable[metrics.TrainingMetrics]:
         """Streams training metrics for this trial.
 
-        DEPRECATED: Use stream_metrics instead with `group` set to "training"
+        DEPRECATED: Use iter_metrics instead with `group` set to "training"
         """
         warnings.warn(
             "Trial.stream_training_metrics is deprecated."
-            "Use Trial.stream_metrics instead with `group` set to 'training'",
+            "Use Trial.iter_metrics instead with `group` set to 'training'",
             FutureWarning,
             stacklevel=2,
         )
@@ -494,11 +507,11 @@ class Trial:
     def stream_validation_metrics(self) -> Iterable[metrics.ValidationMetrics]:
         """Streams validation metrics for this trial.
 
-        DEPRECATED: Use stream_metrics instead with `group` set to "validation"
+        DEPRECATED: Use iter_metrics instead with `group` set to "validation"
         """
         warnings.warn(
             "Trial.stream_validation_metrics is deprecated."
-            "Use Trial.stream_metrics instead with `group` set to 'validation'",
+            "Use Trial.iter_metrics instead with `group` set to 'validation'",
             FutureWarning,
             stacklevel=2,
         )
@@ -574,7 +587,6 @@ def _stream_trials_metrics(
 def _stream_training_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[metrics.TrainingMetrics]:
-    """@deprecated"""
     for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
             yield metrics.TrainingMetrics._from_bindings(m)
@@ -583,7 +595,6 @@ def _stream_training_metrics(
 def _stream_validation_metrics(
     session: api.Session, trial_ids: List[int]
 ) -> Iterable[metrics.ValidationMetrics]:
-    """@deprecated"""
     for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
         for m in i.metrics:
             yield metrics.ValidationMetrics._from_bindings(m)
