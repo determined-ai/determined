@@ -10,17 +10,17 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
-def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
+def test_launch_layer_mnist(collect_trial_profiles: Callable[[int], None]) -> None:
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.horovod --autohorovod --trial model_def:CIFARTrial"
+        config, "python3 -m determined.launch.horovod --autohorovod --trial model_def:MNistTrial"
     )
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_pytorch"), 1
+        config, conf.tutorials_path("mnist_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     collect_trial_profiles(trials[0].trial.id)
@@ -35,14 +35,14 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
 def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_entrypoint(
-        config, "python3 -m nonexistent_launch_module model_def:CIFARTrial"
+        config, "python3 -m nonexistent_launch_module model_def:MNistTrial"
     )
     config["max_restarts"] = 0
 
     experiment_id = exp.run_failure_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_pytorch")
+        config, conf.tutorials_path("mnist_pytorch")
     )
     trials = exp.experiment_trials(experiment_id)
     Determined(conf.make_master_url()).get_trial(trials[0].trial.id)

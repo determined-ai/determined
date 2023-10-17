@@ -37,12 +37,12 @@ def test_hpc_job_pending_reason() -> None:
     # The output is PBS or SLURM launcher specific
     test_slurm.skip_if_not_hpc_scheduler()
 
-    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.horovod --autohorovod --trial model_def:CIFARTrial"
+        config, "python3 -m determined.launch.horovod --autohorovod --trial model_def:MNistTrial"
     )
     config["max_restarts"] = 0
 
@@ -55,9 +55,7 @@ def test_hpc_job_pending_reason() -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
-        running_exp_id = exp.create_experiment(
-            tf.name, conf.cv_examples_path("cifar10_pytorch"), None
-        )
+        running_exp_id = exp.create_experiment(tf.name, conf.tutorials_path("mnist_pytorch"), None)
     print(f"Created experiment {running_exp_id}")
     exp.wait_for_experiment_state(running_exp_id, experimentv1State.RUNNING)
 
@@ -65,9 +63,7 @@ def test_hpc_job_pending_reason() -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
-        pending_exp_id = exp.create_experiment(
-            tf.name, conf.cv_examples_path("cifar10_pytorch"), None
-        )
+        pending_exp_id = exp.create_experiment(tf.name, conf.tutorials_path("mnist_pytorch"), None)
     print(f"Created experiment {pending_exp_id}")
 
     exp.wait_for_experiment_state(pending_exp_id, experimentv1State.QUEUED)
