@@ -419,11 +419,11 @@ const findParentByClass = (element: HTMLElement, className: string): Element => 
   if (element.parentElement) {
     return findParentByClass(element.parentElement, className);
   }
-  return element
-}
+  return element;
+};
 export const getCssVar = (ref: RefObject<HTMLElement>, name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
-  const element = ref.current || document.documentElement
+  const element = ref.current || document.documentElement;
   return window
     .getComputedStyle(findParentByClass(element, 'ui-provider'))
     ?.getPropertyValue(varName);

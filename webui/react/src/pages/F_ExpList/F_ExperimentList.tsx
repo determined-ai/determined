@@ -192,7 +192,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const colorMap = useGlasbey(settings.selectedExperiments);
   const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
-    containerHeight - 2 * parseInt(getCssVar(contentRef, '--theme-stroke-width')) - (isPagedView ? 40 : 0);
+    containerHeight -
+    2 * parseInt(getCssVar(contentRef, '--theme-stroke-width')) -
+    (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const selectedExperimentIds: Set<number> = useMemo(() => {
@@ -376,7 +378,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-            experimentColumns.indexOf(b.column as ExperimentColumn)
+              experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
