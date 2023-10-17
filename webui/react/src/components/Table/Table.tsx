@@ -10,8 +10,12 @@ import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Icon from 'components/kit/Icon';
+import Progress from 'components/kit/Progress';
+import Spinner from 'components/kit/Spinner';
+import { getStateColorCssVar, StateOfUnion } from 'components/kit/Theme';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
-import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import UserAvatar from 'components/UserAvatar';
@@ -33,6 +37,7 @@ import {
   Workspace,
 } from 'types';
 import { getDuration } from 'utils/datetime';
+import { floatToPercent } from 'utils/string';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 
@@ -222,8 +227,17 @@ export const experimentNameRenderer = (
 );
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
+  const color = getStateColorCssVar(record.state);
   return typeof record.progress !== 'undefined' ? (
-    <ProgressBar percent={record.progress * 100} state={record.state} />
+    <Progress
+      parts={[
+        {
+          color,
+          label: floatToPercent(record.progress / 100, 0),
+          percent: record.progress,
+        },
+      ]}
+    />
   ) : null;
 };
 

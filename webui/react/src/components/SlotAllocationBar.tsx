@@ -3,8 +3,10 @@ import Tooltip from 'determined-ui/Tooltip';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
-import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Progress from 'components/kit/Progress';
+import { getStateColorCssVar, ShirtSize } from 'components/kit/Theme';
+import Tooltip from 'components/kit/Tooltip';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
@@ -262,7 +264,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           )
         }>
         <div className={css.bar}>
-          <Bar {...barProps} inline parts={barParts} />
+          <Progress {...barProps} parts={barParts} />
         </div>
       </ConditionalWrapper>
       {footer && (
