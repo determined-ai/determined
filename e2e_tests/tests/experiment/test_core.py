@@ -4,12 +4,14 @@ import tempfile
 
 import pytest
 
-from determined.common import yaml
+from determined.common import api, yaml
 from determined.common.api import bindings
 from determined.experimental import Determined
 from tests import api_utils
+from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
+from tests.api_utils import determined_test_session
 from tests.cluster.test_checkpoints import wait_for_gc_to_finish
 
 
@@ -468,3 +470,29 @@ def test_core_api_distributed_tutorial() -> None:
     exp.run_basic_test(
         conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
     )
+
+
+@pytest.mark.e2e_cpu
+def test_core_api_pytorch_profiler_tensorboard() -> None:
+    # Ensure tensorboard will load for an experiment which runs pytorch profiler,
+    # and doesn't report metrics or checkpoints.
+    # If the profiler trace file is not synced, the tensorboard will not load.
+    exp_id = exp.run_basic_test(
+        conf.fixtures_path("core_api/pytorch_profiler_sync.yaml"),
+        conf.fixtures_path("core_api"),
+        1,
+        expect_workloads=False,
+        expect_checkpoints=False,
+    )
+
+    command = [
+        "tensorboard",
+        "start",
+        str(exp_id),
+        "--no-browser",
+    ]
+
+    with cmd.interactive_command(*command) as tensorboard:
+        assert tensorboard.task_id is not None
+        err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
+        assert err is None, err
