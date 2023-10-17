@@ -4,14 +4,13 @@ import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { themeDarkDetermined, themeLightDetermined } from 'components/kit/Theme';
 import 'uplot/dist/uPlot.min.css';
 import css from 'App.module.scss';
-import { UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import { Loaded } from 'components/kit/utils/loadable';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
-import DesignKit from 'pages/DesignKit';
+import DesignKit, { DesignKitContainer } from 'pages/DesignKit';
 
 import 'antd/dist/reset.css';
 
@@ -25,15 +24,19 @@ const fakeSettingsContext = {
 const router = createBrowserRouter([
   {
     element: (
-      <HelmetProvider>
-        <UserSettings.Provider value={fakeSettingsContext}>
-          <ConfirmationProvider>
-            <div className={css.base}>
-              <DesignKit />
-            </div>
-          </ConfirmationProvider>
-        </UserSettings.Provider>
-      </HelmetProvider>
+      <ThemeProvider>
+        <DesignKitContainer>
+          <HelmetProvider>
+            <UserSettings.Provider value={fakeSettingsContext}>
+              <ConfirmationProvider>
+                <div className={css.base}>
+                  <DesignKit />
+                </div>
+              </ConfirmationProvider>
+            </UserSettings.Provider>
+          </HelmetProvider>
+        </DesignKitContainer>
+      </ThemeProvider>
     ),
     path: '*',
   },

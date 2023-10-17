@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode, useMemo, useRef } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
@@ -80,7 +80,7 @@ export const LineChart: React.FC<LineChartProps> = ({
 }: LineChartProps) => {
   const series = Loadable.ensureLoadable(propSeries).getOrElse([]);
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
-
+  const elementRef = useRef(null);
   const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis]?.length),
     [series, xAxis],
@@ -148,7 +148,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     return {
       axes: [
         {
-          font: `12px ${getCssVar('--theme-font-family')}`,
+          font: `12px ${getCssVar(elementRef, '--theme-font-family')}`,
           grid: { show: false },
           incrs:
             xAxis === XAxisDomain.Time
@@ -167,7 +167,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           values: xTickValues,
         },
         {
-          font: `12px ${getCssVar('--theme-font-family')}`,
+          font: `12px ${getCssVar(elementRef, '--theme-font-family')}`,
           grid: { stroke: '#E3E3E3', width: 1 },
           label: yLabel,
           labelGap: 8,
@@ -226,7 +226,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   ]);
 
   return (
-    <div className="diamond-cursor">
+    <div className="diamond-cursor" ref={elementRef}>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
         allowDownload={hasPopulatedSeries}

@@ -37,7 +37,7 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
+import useUI, { DarkLight, UIProvider } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -3100,7 +3100,14 @@ const Components = {
   Tooltips: <TooltipsSection />,
   Typography: <TypographySection />,
 };
-
+export const DesignKitContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { ui } = useUI();
+  return (
+    <UIProvider darkMode={ui.mode === DarkLight.Dark} theme={ui.theme}>
+      {children}
+    </UIProvider>
+  );
+};
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
   const location = useLocation();

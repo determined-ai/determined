@@ -1,6 +1,7 @@
 import ansiConverter from 'ansi-to-html';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { RefObject } from 'react';
 dayjs.extend(utc);
 
 import { Metric, NullOrUndefined } from 'components/kit/internal/types';
@@ -349,10 +350,21 @@ const capitalizeWord = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-export const getCssVar = (name: string): string => {
+const findParentByClass = (element: HTMLElement, className: string): Element => {
+  if (element.classList.contains(className)) {
+    return element;
+  }
+  if (element.parentElement) {
+    return findParentByClass(element.parentElement, className);
+  }
+  return element;
+};
+
+export const getCssVar = (ref: RefObject<HTMLElement>, name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
+  const element = ref.current || document.documentElement;
   return window
-    .getComputedStyle(document.getElementsByClassName('ui-provider')[0])
+    .getComputedStyle(findParentByClass(element, 'ui-provider'))
     ?.getPropertyValue(varName);
 };
 
