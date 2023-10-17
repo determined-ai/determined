@@ -220,7 +220,7 @@ class Experiment:
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
         order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
-        max_results: Optional[int] = None,
+        limit: Optional[int] = None,
     ) -> Iterator[trial.Trial]:
         """
         Get an iterator of :class:`~determined.experimental.Trial` instances
@@ -230,7 +230,9 @@ class Experiment:
             sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
             order_by: Whether to sort in ascending or descending order. See
                 :class:`~determined.experimental.TrialOrderBy`.
-            max_results: (Optional) Maximum number of results to return. Defaults to no maximum.
+            limit: Optional field that sets maximum page size of the response from the server.
+                When there are many trials to return, a lower page size can result in shorter
+                latency at the expense of more HTTP requests to the server. Defaults to no maximum.
 
         Returns:
             This method returns an Iterable type that lazily instantiates response objects. To
@@ -243,14 +245,11 @@ class Experiment:
                 experimentId=self._id,
                 offset=offset,
                 orderBy=bindings.v1OrderBy(order_by.value),
-                limit=max_results,
+                limit=limit,
                 sortBy=bindings.v1GetExperimentTrialsRequestSortBy(sort_by.value),
             )
 
-        resps = api.read_paginated(
-            get_with_offset=get_with_offset,
-            pages=api.PageOpts.single if max_results else api.PageOpts.all,
-        )
+        resps = api.read_paginated(get_with_offset)
 
         for r in resps:
             for t in r.trials:
