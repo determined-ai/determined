@@ -1123,6 +1123,7 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
     assert modded_user.remote
     assert modded_user.admin
 
+
 @pytest.mark.e2e_cpu
 def test_user_edit_no_fields(clean_auth: None, login_admin: None) -> None:
     u_patch = api_utils.create_test_user(False)
