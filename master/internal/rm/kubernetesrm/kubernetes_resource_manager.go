@@ -215,8 +215,8 @@ type kubernetesResourceManager struct {
 	poolsConfig           []config.ResourcePoolConfig
 	taskContainerDefaults *model.TaskContainerDefaultsConfig
 
-	podsActor *actor.Ref
-	pools     map[string]*actor.Ref
+	podsService *pods
+	pools       map[string]*actor.Ref
 
 	echoRef         *echo.Echo
 	masterTLSConfig model.TLSClientConfig
@@ -261,7 +261,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 		}
 
-		k.podsActor = Initialize(
+		k.podsService = newPodsService(
 			ctx.Self().System(),
 			k.echoRef,
 			ctx.Self(),
@@ -293,7 +293,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 			poolConfig := poolConfig
 			k.pools[poolConfig.PoolName] = ctx.MustActorOf(
-				poolConfig.PoolName, newResourcePool(maxSlotsPerPod, &poolConfig, k.podsActor, k.db),
+				poolConfig.PoolName, newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db),
 			)
 		}
 
@@ -442,14 +442,13 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToAllPools(ctx, msg)
 
 	case *apiv1.GetAgentsRequest:
-		resp := ctx.Ask(k.podsActor, msg)
-		ctx.Respond(resp.Get())
+		ctx.Respond(k.podsService.GetAgents(msg))
 
 	case *apiv1.EnableAgentRequest:
-		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+		ctx.RespondCheckError(k.podsService.EnableAgent(msg))
 
 	case *apiv1.DisableAgentRequest:
-		ctx.Respond(ctx.Ask(k.podsActor, msg).Get())
+		ctx.RespondCheckError(k.podsService.DisableAgent(msg))
 
 	case sproto.GetExternalJobs:
 		ctx.Respond(rmerrors.ErrNotSupported)

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -32,7 +31,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -139,8 +137,8 @@ type refreshPodStates struct {
 	allocationID model.AllocationID
 }
 
-// Initialize creates a new global pods actor.
-func Initialize(
+// newPodsService creates a new pod service for launching, querying and interacting with k8s pods.
+func newPodsService(
 	s *actor.System,
 	e *echo.Echo,
 	c *actor.Ref,
@@ -157,7 +155,7 @@ func Initialize(
 	credsDir string,
 	masterIP string,
 	masterPort int32,
-) *actor.Ref {
+) *pods {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
 		loggingTLSConfig = loggingConfig.ElasticLoggingConfig.Security.TLS
@@ -193,9 +191,21 @@ func Initialize(
 		syslog:                       logrus.WithField("pod-name", namespace),
 	}
 
-	podsActor, ok := s.ActorOf(actor.Addr("pods"), p)
-	check.Panic(check.True(ok, "pods address already taken"))
-	s.Ask(podsActor, actor.Ping{}).Get()
+	if err := p.startClientSet(); err != nil {
+		panic(err)
+	}
+	if err := p.getMasterIPAndPort(); err != nil {
+		panic(err)
+	}
+	if err := p.getSystemResourceRequests(); err != nil {
+		panic(err)
+	}
+
+	p.startResourceRequestQueue()
+
+	if err := p.deleteDoomedKubernetesResources(); err != nil {
+		panic(err)
+	}
 
 	err := p.startPodInformer(s)
 	if err != nil {
@@ -222,84 +232,67 @@ func Initialize(
 		panic(err)
 	}
 
-	return podsActor
+	return p
 }
 
-func (p *pods) Receive(ctx *actor.Context) error {
+func (p *pods) StartTaskPod(msg StartTaskPod) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	return p.receiveStartTaskPod(msg)
+}
 
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		if err := p.startClientSet(ctx); err != nil {
-			return err
-		}
-		if err := p.getMasterIPAndPort(ctx); err != nil {
-			return err
-		}
-		if err := p.getSystemResourceRequests(ctx); err != nil {
-			return err
-		}
-		p.startResourceRequestQueue(ctx)
-		if err := p.deleteDoomedKubernetesResources(ctx); err != nil {
-			return err
-		}
-	case actor.PostStop:
+func (p *pods) ChangePriority(msg ChangePriority) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.receivePriorityChange(msg)
+}
 
-	case StartTaskPod:
-		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
-			return err
-		}
+func (p *pods) ChangePosition(msg ChangePosition) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.receivePositionChange(msg)
+}
 
-	case ChangePriority:
-		p.receivePriorityChange(ctx, msg)
+func (p *pods) KillPod(msg KillTaskPod) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.receiveKillPod(msg)
+}
 
-	case ChangePosition:
-		p.receivePositionChange(ctx, msg)
+func (p *pods) SummarizeResources(msg SummarizeResources) (*PodsInfo, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.receiveResourceSummarize(msg)
+}
 
-	case KillTaskPod:
-		p.receiveKillPod(ctx, msg)
+func (p *pods) ReattachAllocationPods(msg reattachAllocationPods) ([]reattachPodResponse, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.reattachAllocationPods(msg)
+}
 
-	case SummarizeResources:
-		p.receiveResourceSummarize(ctx, msg)
+func (p *pods) RefreshPodStates(system *actor.System, msg refreshPodStates) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.refreshPodStates(system, msg.allocationID)
+}
 
-	case reattachAllocationPods:
-		if err := p.reattachAllocationPods(ctx, msg); err != nil {
-			return err
-		}
+func (p *pods) GetAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.handleGetAgentsRequest()
+}
 
-	case refreshPodStates:
-		if err := p.refreshPodStates(ctx, msg.allocationID); err != nil {
-			ctx.Respond(err)
-		}
+func (p *pods) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.enableNode(msg.AgentId)
+}
 
-	case echo.Context:
-		p.handleAPIRequest(ctx, msg)
-
-	case *apiv1.GetAgentsRequest:
-		p.handleGetAgentsRequest(ctx)
-
-	case *apiv1.EnableAgentRequest:
-		resp, err := p.enableNode(ctx, msg.AgentId)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		ctx.Respond(resp)
-
-	case *apiv1.DisableAgentRequest:
-		resp, err := p.disableNode(ctx, msg.AgentId, msg.Drain)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		ctx.Respond(resp)
-
-	default:
-		ctx.Log().Errorf("unexpected message %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
+func (p *pods) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.disableNode(msg.AgentId, msg.Drain)
 }
 
 func readClientConfig(credsDir string) (*rest.Config, error) {
@@ -343,7 +336,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 	}, nil
 }
 
-func (p *pods) startClientSet(ctx *actor.Context) error {
+func (p *pods) startClientSet() error {
 	config, err := readClientConfig(p.credsDir)
 	if err != nil {
 		return errors.Wrap(err, "error building kubernetes config")
@@ -359,11 +352,11 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
 	}
 
-	ctx.Log().Infof("kubernetes clientSet initialized")
+	p.syslog.Infof("kubernetes clientSet initialized")
 	return nil
 }
 
-func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
+func (p *pods) getMasterIPAndPort() error {
 	if p.masterIP != "" && p.masterPort != 0 {
 		// Master ip and port were manually configured (probably for development purposes).
 		return nil
@@ -376,11 +369,11 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 
 	p.masterIP = masterService.Spec.ClusterIP
 	p.masterPort = masterService.Spec.Ports[0].Port
-	ctx.Log().Infof("master URL set to %s:%d", p.masterIP, p.masterPort)
+	p.syslog.Infof("master URL set to %s:%d", p.masterIP, p.masterPort)
 	return nil
 }
 
-func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
+func (p *pods) getSystemResourceRequests() error {
 	systemPods, err := p.podInterfaces[p.namespace].List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedSystemLabel})
 	if err != nil {
@@ -396,19 +389,19 @@ func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocationPods) error {
+func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPodResponse, error) {
 	listOptions := metaV1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
 	}
 
 	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing pods checking if they can be restored")
+		return nil, errors.Wrap(err, "error listing pods checking if they can be restored")
 	}
 
 	configMaps, err := p.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing config maps checking if they can be restored")
+		return nil, errors.Wrap(err, "error listing config maps checking if they can be restored")
 	}
 	existingConfigMaps := make(set.Set[string])
 	for _, cm := range configMaps.Items {
@@ -434,9 +427,8 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 				switch env.Name {
 				case "DET_CONTAINER_ID":
 					if !existingConfigMaps.Contains(pod.Name) {
-						p.deleteKubernetesResources(ctx, pods, configMaps)
-						ctx.Respond(fmt.Errorf("pod missing config map %s", pod.Name))
-						return nil
+						p.deleteKubernetesResources(pods, configMaps)
+						return nil, fmt.Errorf("pod missing config map %s", pod.Name)
 					}
 
 					p := pod
@@ -462,36 +454,32 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	}
 
 	if len(k8sPods) != msg.numPods {
-		p.deleteKubernetesResources(ctx, pods, configMaps)
-		ctx.Respond(fmt.Errorf("not enough pods found for allocation expected %d got %d instead",
-			msg.numPods, len(k8sPods)))
-		return nil
+		p.deleteKubernetesResources(pods, configMaps)
+		return nil, fmt.Errorf("not enough pods found for allocation expected %d got %d instead",
+			msg.numPods, len(k8sPods))
 	}
 
-	if err := p.dontReattachQueuedPreAgentDisabledPods(ctx, pods, configMaps); err != nil {
-		ctx.Respond(err)
-		return nil
+	if err := p.dontReattachQueuedPreAgentDisabledPods(pods, configMaps); err != nil {
+		return nil, err
 	}
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
-		resp, err := p.reattachPod(ctx, msg.allocationID, resourcePool, containerID,
+		resp, err := p.reattachPod(msg.allocationID, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
-			p.deleteKubernetesResources(ctx, pods, configMaps)
-			ctx.Respond(errors.Wrapf(err,
-				"error restoring pod with containerID %s", containerID))
-			return nil
+			p.deleteKubernetesResources(pods, configMaps)
+			return nil, errors.Wrapf(err,
+				"error restoring pod with containerID %s", containerID)
 		}
 		restoreResponses = append(restoreResponses, resp)
 	}
 
-	ctx.Respond(restoreResponses)
-	return nil
+	return restoreResponses, nil
 }
 
 func (p *pods) dontReattachQueuedPreAgentDisabledPods(
-	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
+	pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
 ) error {
 	// This is needed to label pods created before Determined supported k8s agent enable disable.
 	// We will not reattach pods that are queued and don't have the affinity that respects
@@ -505,7 +493,7 @@ func (p *pods) dontReattachQueuedPreAgentDisabledPods(
 			addNodeDisabledAffinityToPodSpec(&pod, clusterIDNodeLabel())
 
 			if !reflect.DeepEqual(pod.Spec, before.Spec) {
-				p.deleteKubernetesResources(ctx, pods, configMaps)
+				p.deleteKubernetesResources(pods, configMaps)
 				return fmt.Errorf(
 					"unable to restore pod %s since it was queued and does not have the needed "+
 						"Determined's affinity to prevent scheduling on disabled nodes. "+
@@ -520,7 +508,6 @@ func (p *pods) dontReattachQueuedPreAgentDisabledPods(
 }
 
 func (p *pods) reattachPod(
-	ctx *actor.Context,
 	allocationID model.AllocationID,
 	resourcePool string,
 	containerID string,
@@ -598,7 +585,7 @@ func (p *pods) reattachPod(
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
 
-func (p *pods) refreshPodStates(ctx *actor.Context, allocationID model.AllocationID) error {
+func (p *pods) refreshPodStates(system *actor.System, allocationID model.AllocationID) error {
 	if allocationID == "" {
 		return fmt.Errorf("invalid call: allocationID missing")
 	}
@@ -615,13 +602,13 @@ func (p *pods) refreshPodStates(ctx *actor.Context, allocationID model.Allocatio
 			continue
 		}
 		pod := pod
-		p.podStatusCallback(ctx.Self().System(), watch.Event{Object: &pod})
+		p.podStatusCallback(system, watch.Event{Object: &pod})
 	}
 	return nil
 }
 
 func (p *pods) deleteKubernetesResources(
-	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
+	pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
 ) {
 	for _, pod := range pods.Items {
 		p.resourceRequestQueue.deleteKubernetesResources(pod.Namespace, pod.Name, "")
@@ -632,7 +619,7 @@ func (p *pods) deleteKubernetesResources(
 	}
 }
 
-func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
+func (p *pods) deleteDoomedKubernetesResources() error {
 	var openAllocations []model.Allocation
 	if err := db.Bun().NewSelect().Model(&openAllocations).
 		Where("end_time IS NULL").
@@ -668,14 +655,14 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		})()
 
 		if resourcePool == "" {
-			ctx.Log().Debugf("deleting pod '%s' without environment variable '%s'",
+			p.syslog.Debugf("deleting pod '%s' without environment variable '%s'",
 				pod.Name, resourcePoolEnvVar)
 			toKillPods.Items = append(toKillPods.Items, pod)
 			continue
 		}
 
 		if !openAllocationIDs.Contains(model.AllocationID(pod.Labels[determinedLabel])) {
-			ctx.Log().Warnf("deleting pod '%s', did not find open allocation '%s'",
+			p.syslog.Warnf("deleting pod '%s', did not find open allocation '%s'",
 				pod.Name, pod.Labels[determinedLabel])
 			toKillPods.Items = append(toKillPods.Items, pod)
 			continue
@@ -697,12 +684,12 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		ctx.Log().Debugf("Deleting config map '%s' did not find a matching pod that will be restored",
+		p.syslog.Debugf("Deleting config map '%s' did not find a matching pod that will be restored",
 			cm.Name)
 		toKillConfigMaps.Items = append(toKillConfigMaps.Items, cm)
 	}
 
-	p.deleteKubernetesResources(ctx, toKillPods, toKillConfigMaps)
+	p.deleteKubernetesResources(toKillPods, toKillConfigMaps)
 	return nil
 }
 
@@ -786,7 +773,7 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 	return nil
 }
 
-func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
+func (p *pods) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
 	p.resourceRequestQueue = startRequestQueue(p.podInterfaces, p.configMapInterfaces, failures)
 	p.wg.Go(func(ctx context.Context) {
@@ -829,7 +816,7 @@ func (p *pods) handleResourceRequestFailure(msg resourcesRequestFailure) {
 	}
 }
 
-func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
+func (p *pods) receiveStartTaskPod(msg StartTaskPod) error {
 	newPodHandler := newPod(
 		msg,
 		msg.Spec.ClusterID,
@@ -938,7 +925,7 @@ const (
 )
 
 func (p *pods) enableNode(
-	ctx *actor.Context, nodeName string,
+	nodeName string,
 ) (*apiv1.EnableAgentResponse, error) {
 	patch := []byte(fmt.Sprintf(`{
 		"metadata": {
@@ -962,7 +949,7 @@ func (p *pods) enableNode(
 	}
 	p.syslog.Infof("node %s enabled by an user", nodeName)
 
-	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
+	n, ok := p.summarizeClusterByNodes()[nodeName]
 	if !ok {
 		return nil, fmt.Errorf("node %s enabled without error, error getting node summary", nodeName)
 	}
@@ -981,7 +968,7 @@ func (p *pods) enableNode(
 }
 
 func (p *pods) disableNode(
-	ctx *actor.Context, nodeName string, shouldDrain bool,
+	nodeName string, shouldDrain bool,
 ) (*apiv1.DisableAgentResponse, error) {
 	labelValue := noExecuteNodeLabelValue
 	if shouldDrain {
@@ -1011,13 +998,13 @@ func (p *pods) disableNode(
 	p.syslog.Infof("node %s disabled by an user", nodeName)
 
 	if !shouldDrain { // See note in spec.go about how we could remove killing all pods here.
-		if err := p.releaseAllocationsOnDisabledNode(ctx, nodeName); err != nil {
+		if err := p.releaseAllocationsOnDisabledNode(nodeName); err != nil {
 			return nil, fmt.Errorf(
 				"node disabled without error, error killing existing pod on node: %w", err)
 		}
 	}
 
-	n, ok := p.summarizeClusterByNodes(ctx)[nodeName]
+	n, ok := p.summarizeClusterByNodes()[nodeName]
 	if !ok {
 		return nil, fmt.Errorf("node %s disabled without error, error getting node summary", nodeName)
 	}
@@ -1035,7 +1022,7 @@ func (p *pods) disableNode(
 	}, nil
 }
 
-func (p *pods) releaseAllocationsOnDisabledNode(ctx *actor.Context, nodeName string) error {
+func (p *pods) releaseAllocationsOnDisabledNode(nodeName string) error {
 	listOptions := metaV1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s", determinedLabel),
 		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
@@ -1110,11 +1097,10 @@ func (p *pods) eventStatusCallback(s *actor.System, event watch.Event) {
 	ref.podEventUpdate(newEvent)
 }
 
-func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
-	summary, err := p.summarize(ctx)
+func (p *pods) receiveResourceSummarize(msg SummarizeResources) (*PodsInfo, error) {
+	summary, err := p.summarize()
 	if err != nil {
-		ctx.Respond(err)
-		return
+		return nil, err
 	}
 
 	slots := 0
@@ -1125,7 +1111,7 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 			slots += numSlots(pool.Slots)
 		}
 	}
-	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
+	return &PodsInfo{NumAgents: len(summary), SlotsAvailable: slots}, nil
 }
 
 func (p *pods) preemptionCallback(s *actor.System, event watch.Event) {
@@ -1144,16 +1130,16 @@ func (p *pods) preemptionCallback(s *actor.System, event watch.Event) {
 	ref.PreemptTaskPod()
 }
 
-func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *pod {
+func (p *pods) verifyPodAndGetRef(podID string) *pod {
 	podName, ok := p.containerIDToPodName[podID]
 	if !ok {
-		ctx.Log().WithField("pod-id", podID).Debug(
+		p.syslog.WithField("pod-id", podID).Debug(
 			"received change priority command for unregistered container id")
 		return nil
 	}
 	ref, ok := p.podNameToPodHandler[podName]
 	if !ok {
-		ctx.Log().WithField("pod-id", podID).Debug(
+		p.syslog.WithField("pod-id", podID).Debug(
 			"received change priority command for unregistered container id")
 		return nil
 	}
@@ -1161,34 +1147,34 @@ func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *pod {
 	return ref
 }
 
-func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
-	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
+func (p *pods) receivePriorityChange(msg ChangePriority) {
+	ref := p.verifyPodAndGetRef(msg.PodID.String())
 	if ref != nil {
 		ref.ChangePriority()
 	}
 }
 
-func (p *pods) receivePositionChange(ctx *actor.Context, msg ChangePosition) {
-	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
+func (p *pods) receivePositionChange(msg ChangePosition) {
+	ref := p.verifyPodAndGetRef(msg.PodID.String())
 	if ref != nil {
 		ref.ChangePosition()
 	}
 }
 
-func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {
+func (p *pods) receiveKillPod(msg KillTaskPod) {
 	name, ok := p.containerIDToPodName[string(msg.PodID)]
 	if !ok {
 		// For multi-pod tasks, when the chief pod exits, the scheduler
 		// will request to terminate pods all other pods that have
 		// notified the scheduler that they have exited.
-		ctx.Log().WithField("pod-id", msg.PodID).Info(
+		p.syslog.WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}
 
 	ref, ok := p.podNameToPodHandler[name]
 	if !ok {
-		ctx.Log().WithField("pod-id", msg.PodID).Info(
+		p.syslog.WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}
@@ -1228,23 +1214,8 @@ func (p *pods) cleanUpPodHandler(podHandler *pod) error {
 	return nil
 }
 
-func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		summaries := p.summarizeClusterByNodes(ctx)
-		_, nodesToPools := p.getNodeResourcePoolMapping(summaries)
-		for nodeName, summary := range summaries {
-			summary.ResourcePool = nodesToPools[summary.ID]
-			summaries[nodeName] = summary
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summaries))
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
-
-func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
-	nodeSummaries := p.summarizeClusterByNodes(ctx)
+func (p *pods) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
+	nodeSummaries := p.summarizeClusterByNodes()
 	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
 
 	response := &apiv1.GetAgentsResponse{}
@@ -1252,19 +1223,19 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 		summary.ResourcePool = nodesToPools[summary.ID]
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
-	ctx.Respond(response)
+	return response
 }
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
 // the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and
 // tolerations to derive that info. This may be cached, so don't use this for decisions
 // that require up-to-date information.
-func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
+func (p *pods) summarize() (map[string]model.AgentSummary, error) {
 	p.summarizeCacheLock.Lock()
 	defer p.summarizeCacheLock.Unlock()
 
 	if time.Since(p.summarizeCacheTime) > 5*time.Second {
-		summary, err := p.computeSummary(ctx)
+		summary, err := p.computeSummary()
 		p.summarizeCacheTime = time.Now()
 		p.summarizeCache = summarizeResult{
 			summary: summary,
@@ -1330,8 +1301,8 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 	return poolsToNodes, nodesToPools
 }
 
-func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary, error) {
-	nodeSummaries := p.summarizeClusterByNodes(ctx)
+func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
+	nodeSummaries := p.summarizeClusterByNodes()
 
 	// Build the many-to-many relationship between nodes and resource pools
 	poolsToNodes, _ := p.getNodeResourcePoolMapping(nodeSummaries)
@@ -1383,7 +1354,7 @@ func (p *pods) computeSummary(ctx *actor.Context) (map[string]model.AgentSummary
 	return summaries, nil
 }
 
-func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.AgentSummary {
+func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 	var results []podNodeInfo
 	for _, p := range p.podNameToPodHandler {
 		results = append(results, p.getPodNodeInfo())
@@ -1433,7 +1404,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 		for _, podInfo := range podByNode[node.Name] {
 			for i := 0; i < podInfo.numSlots; i++ {
 				if curSlot >= int(numSlots) {
-					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
+					p.syslog.Warnf("too many pods mapping to node %s", node.Name)
 					continue
 				}
 
@@ -1451,7 +1422,7 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 		for _, taskName := range nodeToTasks[node.Name] {
 			for i := int64(0); i < taskSlots[taskName]; i++ {
 				if curSlot >= int(numSlots) {
-					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
+					p.syslog.Warnf("too many pods mapping to node %s", node.Name)
 					continue
 				}
 
