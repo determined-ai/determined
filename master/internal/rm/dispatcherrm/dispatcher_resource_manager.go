@@ -2098,7 +2098,7 @@ func (r DispatcherResources) Summary() sproto.ResourcesSummary {
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (r DispatcherResources) Start(
-	ctx *actor.System, _ logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	_ logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	spec.ResourcesID = string(r.id)
 	spec.AllocationID = string(r.req.AllocationID)
@@ -2134,7 +2134,7 @@ func (r DispatcherResources) Start(
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (r DispatcherResources) Kill(ctx *actor.System, _ logger.Context) {
+func (r DispatcherResources) Kill(_ logger.Context) {
 	r.rm.KillDispatcherResources(KillDispatcherResources{
 		ResourcesID:  r.id,
 		AllocationID: r.req.AllocationID,
