@@ -15,7 +15,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
       parts={[
         {
           color: getStateColorCssVar(experiment.state),
-          percent: progressPercent,
+          percent: progressPercent / 100,
         },
       ]}
       tooltip={progressPercent.toFixed(0) + '%'}

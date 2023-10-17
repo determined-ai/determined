@@ -68,6 +68,12 @@ const poolAttributes = [
   { key: 'schedulerType', label: 'Scheduler Type' },
 ];
 
+const sizeMap = {
+  [ShirtSize.Small]: 4,
+  [ShirtSize.Medium]: 12,
+  [ShirtSize.Large]: 24,
+};
+
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   const { ui } = useUI();
@@ -228,11 +234,11 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
           queued: poolStats?.stats.queuedCount ?? pool?.stats?.queuedCount,
           scheduled: poolStats?.stats.scheduledCount ?? pool?.stats?.scheduledCount,
         }}
+        height={sizeMap[size]}
         hideHeader
         poolName={pool.name}
         poolType={pool.type}
         resourceStates={getSlotContainerStates(agents || [], pool.slotType, pool.name)}
-        size={size}
         slotsPotential={maxPoolSlotCapacity(pool)}
         title={isDeviceType(pool.slotType) ? pool.slotType : undefined}
         totalSlots={pool.slotsAvailable}
@@ -243,11 +249,11 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
             auxContainerCapacity: pool.auxContainerCapacity,
             auxContainersRunning: pool.auxContainersRunning,
           }}
+          height={sizeMap[size]}
           hideHeader
           isAux={true}
           poolType={pool.type}
           resourceStates={getSlotContainerStates(agents || [], pool.slotType, pool.name)}
-          size={size}
           title={isDeviceType(pool.slotType) ? pool.slotType : undefined}
           totalSlots={maxPoolSlotCapacity(pool)}
         />

@@ -233,7 +233,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
       parts={[
         {
           color,
-          label: floatToPercent(record.progress / 100, 0),
+          label: floatToPercent(record.progress, 0),
           percent: record.progress,
         },
       ]}
