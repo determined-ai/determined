@@ -18,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -74,7 +73,7 @@ func TestAllocation(t *testing.T) {
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
 				rsrv := &mocks.Resources{}
-				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil).Times(1)
 				rsrv.On("Summary").Return(sproto.ResourcesSummary{
 					AllocationID:  a.req.AllocationID,
@@ -82,7 +81,7 @@ func TestAllocation(t *testing.T) {
 					ResourcesType: sproto.ResourcesTypeDockerContainer,
 					AgentDevices:  map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 				})
-				rsrv.On("Kill", mock.Anything, mock.Anything).Return()
+				rsrv.On("Kill", mock.Anything).Return()
 				return rsrv
 			}
 
@@ -177,7 +176,6 @@ func setup(t *testing.T) (
 	*mocks.ResourceManager, *db.PgDB, *allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
-	system := actor.NewSystem("system")
 	portregistry.InitPortRegistry(nil)
 
 	// mock resource manager.
@@ -206,7 +204,6 @@ func setup(t *testing.T) (
 		pgDB,
 		&rm,
 		mockTaskSpecifier{},
-		system,
 	)
 	require.NoError(t, err)
 	require.True(t, rm.AssertExpectations(t))

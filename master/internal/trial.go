@@ -411,7 +411,7 @@ func (t *trial) maybeAllocateTask() error {
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
 		err = task.DefaultService.StartAllocation(
-			t.logCtx, ar, t.db, t.rm, specifier, t.system,
+			t.logCtx, ar, t.db, t.rm, specifier,
 			t.AllocationExitedCallback,
 		)
 		if err != nil {
@@ -455,7 +455,7 @@ func (t *trial) maybeAllocateTask() error {
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 	err = task.DefaultService.StartAllocation(
-		t.logCtx, ar, t.db, t.rm, specifier, t.system,
+		t.logCtx, ar, t.db, t.rm, specifier,
 		t.AllocationExitedCallback,
 	)
 	if err != nil {

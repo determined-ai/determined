@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/allgather"
 	"github.com/determined-ai/determined/master/internal/task/preemptible"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -50,13 +49,12 @@ func (as *allocationService) StartAllocation(
 	db db.DB,
 	rm rm.ResourceManager,
 	specifier tasks.TaskSpecifier,
-	system *actor.System,
 	onExit func(*AllocationExited),
 ) error {
 	as.mu.Lock()
 	defer as.mu.Unlock()
 
-	ref, err := newAllocation(logCtx, req, db, rm, specifier, system)
+	ref, err := newAllocation(logCtx, req, db, rm, specifier)
 	if err != nil {
 		return err
 	}

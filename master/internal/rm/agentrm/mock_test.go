@@ -76,7 +76,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 		rank := 0
 		for _, allocation := range msg.Resources {
 			if err := allocation.Start(
-				ctx.Self().System(),
 				nil,
 				tasks.TaskSpec{},
 				sproto.ResourcesRuntimeInfo{

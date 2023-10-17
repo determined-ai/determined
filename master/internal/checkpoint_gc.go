@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
@@ -26,7 +25,6 @@ import (
 const fullDeleteGlob = "**/*"
 
 func runCheckpointGCTask(
-	system *actor.System,
 	rm rm.ResourceManager,
 	db *db.PgDB,
 	taskID model.TaskID,
@@ -121,7 +119,7 @@ func runCheckpointGCTask(
 			SingleAgent: true,
 		},
 		ResourcePool: rp,
-	}, db, rm, gcSpec, system, onExit)
+	}, db, rm, gcSpec, onExit)
 	if err != nil {
 		return err
 	}

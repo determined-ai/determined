@@ -301,7 +301,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			IdleTimeout: idleWatcherConfig,
 			Restore:     c.restored,
 			ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
-		}, c.db, c.rm, c.GenericCommandSpec, ctx.Self().System(), func(ae *task.AllocationExited) {
+		}, c.db, c.rm, c.GenericCommandSpec, func(ae *task.AllocationExited) {
 			ctx.Tell(ctx.Self(), ae)
 		})
 		if err != nil {
