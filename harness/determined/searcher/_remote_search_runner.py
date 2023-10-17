@@ -66,7 +66,8 @@ class RemoteSearchRunner(searcher.SearchRunner):
             logger.info(f"Created experiment {exp.id}")
 
         # make sure client is initialized
-        client._require_singleton(lambda: None)()
+        # TODO: remove typing suppression when mypy #14473 is resolved
+        client._require_singleton(lambda: None)()  # type: ignore
         assert client._determined is not None
         session = client._determined._session
         self.run_experiment(experiment_id, session, operations)
