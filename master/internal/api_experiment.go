@@ -1921,15 +1921,15 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
 
-	var metricGroup string
+	var metricGroup model.MetricGroup
 	//nolint:staticcheck // SA1019: backward compatibility
 	switch req.MetricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricGroup = metricIDTraining
+		metricGroup = model.TrainingMetricGroup //nolint:goconst
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricGroup = metricIDValidation
+		metricGroup = model.ValidationMetricGroup //nolint:goconst
 	default:
-		metricGroup = req.Group
+		metricGroup = model.MetricGroup(req.Group)
 	}
 	if metricGroup == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric group")
@@ -1970,10 +1970,10 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		var endTime time.Time
 		var err error
 		switch metricGroup {
-		case metricIDTraining:
+		case model.TrainingMetricGroup:
 			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
-		case metricIDValidation:
+		case model.ValidationMetricGroup:
 			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
 				minBatches, maxBatches, metricName, startTime)
 		default:
@@ -2054,7 +2054,7 @@ func (a *apiServer) topTrials(
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup string,
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup model.MetricGroup,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
@@ -2138,15 +2138,15 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
 
-	var metricGroup string
+	var metricGroup model.MetricGroup
 	//nolint:staticcheck // SA1019: backward compatibility
 	switch req.MetricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricGroup = metricIDTraining
+		metricGroup = model.TrainingMetricGroup
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricGroup = metricIDValidation
+		metricGroup = model.ValidationMetricGroup
 	default:
-		metricGroup = req.Group
+		metricGroup = model.MetricGroup(req.Group)
 	}
 	if metricGroup == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric group")

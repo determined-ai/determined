@@ -175,7 +175,7 @@ func MetricBatches(
 	var rows []*batchesWrapper
 	JSONKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
 
-	err = BunSelectMetricsQuery(metricGroup.ToString(), false).
+	err = BunSelectMetricsQuery(metricGroup, false).
 		TableExpr("trials t").
 		Join("INNER JOIN metrics m ON t.id=m.trial_id").
 		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
@@ -280,7 +280,7 @@ ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 // GenericTrialsSnapshot returns metrics across each trial in an experiment at a
 // specific point of progress, for metric groups other than training and validation.
 func (db *PgDB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-	metricName string, startTime time.Time, metricGroup string,
+	metricName string, startTime time.Time, metricGroup model.MetricGroup,
 ) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error) {
 	var rows []snapshotWrapper
 	err = db.queryRows(`

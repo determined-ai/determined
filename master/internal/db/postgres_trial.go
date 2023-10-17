@@ -221,7 +221,7 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 			return fmt.Errorf("rollback computing %s summary metrics: %w", metricGroup, err)
 		}
 		if len(summary) > 0 {
-			key := model.TrialSummaryMetricsJSONPath(metricGroup.ToString())
+			key := model.TrialSummaryMetricsJSONPath(metricGroup)
 			updatedSummaryMetrics[key] = summary
 		}
 	}
@@ -358,7 +358,7 @@ func (db *PgDB) _addTrialMetricsTx(
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
 	default: // no rollbacks happened.
-		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mGroup.ToString())
+		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mGroup)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
 		}

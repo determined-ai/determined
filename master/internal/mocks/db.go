@@ -678,16 +678,16 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 }
 
 // GenericTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime, metricGroup
-func (_m *DB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup string) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
+func (_m *DB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup model.MetricGroup) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
 	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 
 	var r0 []*apiv1.TrialsSnapshotResponse_Trial
 	var r1 time.Time
 	var r2 error
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, string) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
+	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, model.MetricGroup) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
 		return rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 	}
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, string) []*apiv1.TrialsSnapshotResponse_Trial); ok {
+	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, model.MetricGroup) []*apiv1.TrialsSnapshotResponse_Trial); ok {
 		r0 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 	} else {
 		if ret.Get(0) != nil {
@@ -695,13 +695,13 @@ func (_m *DB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time, string) time.Time); ok {
+	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time, model.MetricGroup) time.Time); ok {
 		r1 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 	} else {
 		r1 = ret.Get(1).(time.Time)
 	}
 
-	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time, string) error); ok {
+	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time, model.MetricGroup) error); ok {
 		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 	} else {
 		r2 = ret.Error(2)

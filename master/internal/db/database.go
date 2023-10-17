@@ -89,7 +89,7 @@ type DB interface {
 		metricName string, startTime time.Time) (
 		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
 	GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-		metricName string, startTime time.Time, metricGroup string) (
+		metricName string, startTime time.Time, metricGroup model.MetricGroup) (
 		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
 	ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 		metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,

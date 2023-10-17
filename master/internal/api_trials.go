@@ -767,7 +767,7 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		metricMeasurements, err := trials.MetricsTimeSeries(
 			trialID, startTime, aMetricNames, startBatches, endBatches,
 			xAxisLabelMetrics,
-			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricGroup.ToString())
+			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricGroup)
 		if err != nil {
 			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
 				aMetricGroup))

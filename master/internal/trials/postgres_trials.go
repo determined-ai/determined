@@ -30,7 +30,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricNames []string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
-	timeSeriesFilter *commonv1.PolymorphicFilter, metricGroup string) (
+	timeSeriesFilter *commonv1.PolymorphicFilter, metricGroup model.MetricGroup) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
@@ -76,7 +76,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			cast = "boolean"
 		}
 		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?",
-			model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup.ToString()),
+			model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup),
 			metricName, bun.Safe(cast), bun.Ident(strings.ReplaceAll(metricName, ".", "·")))
 	}
 
