@@ -68,7 +68,10 @@ const AppView: React.FC = () => {
     updateSettings,
   } = useSettings<themeSettings>(themeConfig);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
-  const { ui: { mode, theme }, actions: uiActions } = useUI();
+  const {
+    ui: { mode, theme },
+    actions: uiActions,
+  } = useUI();
 
   useEffect(() => {
     if (isServerReachable) checkAuth();

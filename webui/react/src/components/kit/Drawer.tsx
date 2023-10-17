@@ -26,7 +26,9 @@ const DrawerComponent: React.FC<DrawerProps> = ({
   title,
   onClose,
 }) => {
-  const { ui: { mode, theme } } = useUI();
+  const {
+    ui: { mode, theme },
+  } = useUI();
 
   return (
     <Drawer
