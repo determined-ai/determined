@@ -30,7 +30,7 @@ const (
 	cliRedirectPath         = "http://localhost:49176"
 	deprecatedCliRelayState = "cli=true"
 	cliRelayState           = "cli"
-	envVarName              = "DETERMINED_OIDC_CLIENT_SECRET"
+	envVarName              = "DET_OIDC_CLIENT_SECRET"
 )
 
 // Service handles OIDC interactions.
