@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
+import Message from 'determined-ui/Message';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
-import Message from 'components/kit/Message';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { glasbeyColor } from 'utils/color';
 

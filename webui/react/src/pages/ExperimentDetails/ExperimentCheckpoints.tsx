@@ -1,5 +1,5 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import { useModal } from 'determined-ui/kit/Modal';
+import { useModal } from 'determined-ui/Modal';
 import useConfirm from 'determined-ui/useConfirm';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 

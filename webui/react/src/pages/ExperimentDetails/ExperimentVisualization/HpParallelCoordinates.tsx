@@ -1,6 +1,6 @@
-import Spinner from 'determined-ui/kit/Spinner';
-import useUI from 'determined-ui/kit/Theme';
 import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

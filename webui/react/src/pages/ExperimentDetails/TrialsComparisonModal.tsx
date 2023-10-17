@@ -3,7 +3,6 @@ import Message from 'determined-ui/Message';
 import Select, { Option, SelectValue } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
-import { XOR } from 'determined-ui/utils/types';
 import usePrevious from 'determined-ui/utils/usePrevious';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
