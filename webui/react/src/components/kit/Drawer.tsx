@@ -3,9 +3,10 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import useUI from './Theme';
+
 import css from './Drawer.module.scss';
-import { UIProvider } from './Theme';
+import { DarkLight } from './internal/types';
+import useUI, { UIProvider } from './Theme';
 
 type DrawerPlacement = 'left' | 'right';
 
@@ -40,7 +41,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({
       rootClassName={css.mobileWidth}
       width="700px"
       onClose={onClose}>
-      <UIProvider darkMode={mode === mode} theme={theme}>
+      <UIProvider darkMode={mode === DarkLight.Dark} theme={theme}>
         <div className={css.header}>
           <div className={css.headerTitle}>{title}</div>
           <Button
