@@ -33,7 +33,8 @@ const (
 //
 // There is one PublisherSet for the whole process.  It has one Publisher per streamable type.
 type PublisherSet struct {
-	Trials *stream.Publisher[*TrialMsg]
+	PgAddress string
+	Trials    *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
@@ -71,7 +72,7 @@ type CollectSubscriptionModMsgsFunc[S any] func(ctx context.Context, addSpec S) 
 	[]interface{}, error,
 )
 
-func newDBListener(channel string) (*pq.Listener, error) {
+func newDBListener(address, channel string) (*pq.Listener, error) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Errorf("reportProblem: %v\n", err.Error())
@@ -79,7 +80,7 @@ func newDBListener(channel string) (*pq.Listener, error) {
 	}
 	listener := pq.NewListener(
 		// XXX: update this to use master config rather than hardcoded for a local db
-		"postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		address,
 		minReconn,
 		maxReconn,
 		reportProblem,
@@ -94,7 +95,8 @@ func newDBListener(channel string) (*pq.Listener, error) {
 // NewPublisherSet constructor for PublisherSet.
 func NewPublisherSet() *PublisherSet {
 	return &PublisherSet{
-		Trials: stream.NewPublisher[*TrialMsg](),
+		PgAddress: "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		Trials:    stream.NewPublisher[*TrialMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
 	}
@@ -148,10 +150,11 @@ type FilterMaker[T stream.Msg, S any] interface {
 
 func start[T stream.Msg](
 	ctx context.Context,
+	pgAddress,
 	channel string,
 	publisher *stream.Publisher[T],
 ) error {
-	return publishLoop(ctx, channel, publisher)
+	return publishLoop(ctx, pgAddress, channel, publisher)
 }
 
 // Start starts each Publisher in the PublisherSet.
@@ -160,7 +163,7 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 
 	eg.Go(
 		func(c context.Context) error {
-			return start(ctx, trialChan, ps.Trials)
+			return start(ctx, ps.PgAddress, trialChan, ps.Trials)
 		},
 	)
 	// eg.Go(start(ctx, "stream_experiment_chan", ps.Experiments))
@@ -402,10 +405,11 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 // publishLoop monitors for new events and broadcasts them to Publishers.
 func publishLoop[T stream.Msg](
 	ctx context.Context,
+	pgAddress,
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	err := doPublishLoop(ctx, channelName, publisher)
+	err := doPublishLoop(ctx, pgAddress, channelName, publisher)
 	if err != nil {
 		log.Errorf("publishLoop failed: %s", err)
 		publisher.CloseAllStreamers()
@@ -416,10 +420,11 @@ func publishLoop[T stream.Msg](
 
 func doPublishLoop[T stream.Msg](
 	ctx context.Context,
+	pgAddress,
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	listener, err := newDBListener(channelName)
+	listener, err := newDBListener(pgAddress, channelName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
