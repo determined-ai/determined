@@ -1566,6 +1566,7 @@ const AvatarSection: React.FC = () => {
         </p>
       </AntDCard>
       <AntDCard title="Variations">
+        <strong>Sizes</strong>
         ExtraSmall
         <Avatar size={AvatarSize.ExtraSmall} text="Test User" />
         Small (Default Size)
@@ -1576,14 +1577,20 @@ const AvatarSection: React.FC = () => {
         <Avatar size={AvatarSize.Large} text="Test User" />
         ExtraLarge
         <Avatar size={AvatarSize.ExtraLarge} text="Test User" />
-        Square, Text Color Black
+        <strong>Shape and color</strong>
+        Square
+        <Avatar square text="Test User" />
+        Text Color Black
         <Avatar square text="Test User" textColor="black" />
         No Color
         <Avatar noColor text="Test User" />
         Inactive
         <Avatar inactive text="Test User" />
-        Status text
+        <strong>Tooltip</strong>
+        Status text (adds text to Tooltip)
         <Avatar statusText="(Disabled)" text="Test User" />
+        Hide tooltip
+        <Avatar hideTooltip text="Test User" />
       </AntDCard>
       <AntDCard title="Group">
         <AvatarGroup items={['Test User', 'Sample Person', 'Example Individual']} />
