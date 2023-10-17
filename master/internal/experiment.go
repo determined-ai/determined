@@ -15,12 +15,11 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -41,7 +40,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 const (
@@ -294,7 +292,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		jobservice.Default.RegisterJob(e.JobID, e.self)
+		job.Default.RegisterJob(e.JobID, e)
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -430,13 +428,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case sproto.GetJob:
-		j, err := e.toV1Job()
-		if err != nil && err != sql.ErrNoRows {
-			// FIXME: DET-9563 workspace and/or project is deleted.
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(j)
-		}
+		ctx.Respond(e.ToV1Job())
 
 	case sproto.SetResourcePool:
 		if err := e.setRP(msg); err != nil {
@@ -453,7 +445,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Error(err)
 			}
 		}
-		jobservice.Default.UnregisterJob(e.JobID)
+		job.Default.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if state == "" {
 			state = model.ErrorState
@@ -1106,31 +1098,4 @@ func (e *experiment) setRP(msg sproto.SetResourcePool) error {
 	_ = g.Wait() // Errors handled in g.Go.
 
 	return nil
-}
-
-func (e *experiment) toV1Job() (*jobv1.Job, error) {
-	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-
-	j := jobv1.Job{
-		JobId:          e.JobID.String(),
-		EntityId:       fmt.Sprint(e.ID),
-		Type:           jobv1.Type_TYPE_EXPERIMENT,
-		SubmissionTime: timestamppb.New(e.StartTime),
-		Username:       e.Username,
-		UserId:         int32(*e.OwnerID),
-		Progress:       float32(e.searcher.Progress()),
-		Name:           e.activeConfig.Name().String(),
-		WorkspaceId:    int32(workspace.ID),
-	}
-
-	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
-	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.activeConfig))
-	j.Weight = config.ReadWeight(j.ResourcePool, &e.activeConfig)
-
-	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
-
-	return &j, nil
 }

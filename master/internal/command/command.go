@@ -9,11 +9,10 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -29,7 +28,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -222,6 +220,7 @@ type command struct {
 	contextDirectory []byte // Don't rely on this being set outsides of PreStart non restore case.
 
 	logCtx logger.Context
+	syslog *logrus.Entry
 }
 
 // Receive implements the actor.Actor interface.
@@ -232,7 +231,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		priorityChange := func(priority int) error {
-			return c.SetPriority(ctx, priority, false)
+			return c.SetPriority(priority, false)
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Add(c.jobID, priorityChange); err != nil {
 			return err
@@ -267,7 +266,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		priority := c.Config.Resources.Priority
 		if priority != nil {
-			if err := c.setPriority(ctx, *priority, true); err != nil {
+			if err := c.setPriority(*priority, true); err != nil {
 				return errors.Wrapf(err, "setting priority of task %v", c.taskID)
 			}
 		}
@@ -308,13 +307,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		jobservice.Default.RegisterJob(c.jobID, ctx.Self())
+		job.Default.RegisterJob(c.jobID, c)
 
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
 		}
 	case sproto.GetJob:
-		ctx.Respond(c.toV1Job())
+		ctx.Respond(c.ToV1Job())
 
 	case actor.PostStop:
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
@@ -325,7 +324,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		jobservice.Default.UnregisterJob(c.jobID)
+		job.Default.UnregisterJob(c.jobID)
 		if err := user.DeleteSessionByToken(
 			context.TODO(),
 			c.GenericCommandSpec.Base.UserSessionToken,
@@ -367,7 +366,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
-		err := c.setPriority(ctx, int(msg.Priority), true)
+		err := c.setPriority(int(msg.Priority), true)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
@@ -391,7 +390,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
-		err := c.setPriority(ctx, int(msg.Priority), true)
+		err := c.setPriority(int(msg.Priority), true)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
@@ -415,7 +414,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
-		err := c.setPriority(ctx, int(msg.Priority), true)
+		err := c.setPriority(int(msg.Priority), true)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
@@ -439,7 +438,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
-		err := c.setPriority(ctx, int(msg.Priority), true)
+		err := c.setPriority(int(msg.Priority), true)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
@@ -464,7 +463,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case sproto.SetGroupWeight:
-		err := c.setWeight(ctx, msg.Weight)
+		err := c.SetWeight(msg.Weight)
 		if err != nil {
 			ctx.Log().WithError(err).Info("setting command job weight")
 		}
@@ -473,7 +472,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case sproto.SetGroupPriority:
-		err := c.setPriority(ctx, msg.Priority, true)
+		err := c.setPriority(msg.Priority, true)
 		if err != nil {
 			ctx.Log().WithError(err).Info("setting command job priority")
 		}
@@ -490,14 +489,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *command) SetPriority(ctx *actor.Context, priority int, forward bool) error {
+func (c *command) SetPriority(priority int, forward bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	return c.setPriority(ctx, priority, forward)
+	return c.setPriority(priority, forward)
 }
 
-func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {
+func (c *command) setPriority(priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
 			Priority: priority,
@@ -505,7 +504,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 		}).(type) {
 		case nil:
 		case rmerrors.ErrUnsupported:
-			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
+			c.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return fmt.Errorf("setting group priority for command: %w", err)
 		}
@@ -513,22 +512,6 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 
 	c.Config.Resources.Priority = &priority
 
-	return nil
-}
-
-func (c *command) setWeight(ctx *actor.Context, weight float64) error {
-	switch err := c.rm.SetGroupWeight(sproto.SetGroupWeight{
-		Weight: weight,
-		JobID:  c.jobID,
-	}).(type) {
-	case nil:
-	case rmerrors.ErrUnsupported:
-		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
-	default:
-		return fmt.Errorf("setting group weight for command: %w", err)
-	}
-
-	c.Config.Resources.Weight = weight
 	return nil
 }
 
@@ -649,28 +632,6 @@ func toProto(as []cproto.Address) []*structpb.Struct {
 		res = append(res, protoutils.ToStruct(a))
 	}
 	return res
-}
-
-func (c *command) toV1Job() *jobv1.Job {
-	j := jobv1.Job{
-		JobId:          c.jobID.String(),
-		EntityId:       string(c.taskID),
-		Type:           c.jobType.Proto(),
-		SubmissionTime: timestamppb.New(c.registeredTime),
-		Username:       c.Base.Owner.Username,
-		UserId:         int32(c.Base.Owner.ID),
-		Weight:         c.Config.Resources.Weight,
-		Name:           c.Config.Description,
-		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
-	}
-
-	j.IsPreemptible = false
-	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
-	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
-
-	j.ResourcePool = c.Config.Resources.ResourcePool
-
-	return &j
 }
 
 func (c *command) persistAndEvictContextDirectoryFromMemory() error {
