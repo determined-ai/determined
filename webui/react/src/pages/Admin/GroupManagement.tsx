@@ -25,6 +25,7 @@ import roleStore from 'stores/roles';
 import { DetailedUser, User } from 'types';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './GroupManagement.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS } from './GroupManagement.settings';
@@ -224,7 +225,9 @@ const GroupManagement: React.FC = () => {
       return (
         <Table
           columns={userColumn}
-          dataSource={g?.users}
+          dataSource={g?.users?.sort((a, b) =>
+            alphaNumericSorter(a.displayName || a.username, b.displayName || b.username),
+          )}
           loading={!g}
           pagination={false}
           rowKey="id"

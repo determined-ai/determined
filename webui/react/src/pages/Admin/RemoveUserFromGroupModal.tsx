@@ -54,10 +54,10 @@ const RemoveUserFromGroupModalComponent = ({
         handler: handleOk,
         text: 'Remote User',
       }}
-      title="Confirm Delete User from Group">
+      title="Confirm Removing User from Group">
       <div>
-        Are you sure you want to remove `{user?.username ?? 'this user'}` from `
-        {groupResult.group.name ?? 'this group'}`?
+        Are you sure you want to remove {user?.username ?? 'this user'} from
+        {groupResult.group.name ?? 'this group'}?
       </div>
     </Modal>
   );
