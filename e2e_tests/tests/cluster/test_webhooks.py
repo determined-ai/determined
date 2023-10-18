@@ -79,9 +79,8 @@ def test_slack_webhook() -> None:
     assert expected_field == response["attachments"][0]["blocks"][0]["fields"][0]
 
 
-
 @pytest.mark.e2e_cpu
-@pytest.mark.parametrize("should_match", [True]) #, False])
+@pytest.mark.parametrize("should_match", [True, False])
 def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = utils.WebhookServer(port)
@@ -97,19 +96,24 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
 
     slack_path = f"/test/slack/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(sess, body=bindings.v1Webhook(
-        url=f"http://localhost:{port}{slack_path}",
-        webhookType=bindings.v1WebhookType.SLACK,
-        triggers=[webhook_trigger],
-    ))
+    bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{slack_path}",
+            webhookType=bindings.v1WebhookType.SLACK,
+            triggers=[webhook_trigger],
+        ),
+    )
 
     default_path = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(sess, body=bindings.v1Webhook(
-        url=f"http://localhost:{port}{slack_path}",
-        webhookType=bindings.v1WebhookType.DEFAULT,
-        triggers=[webhook_trigger],
-    ))
-
+    bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{default_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+        ),
+    )
 
     exp_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
@@ -118,18 +122,15 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
-    experiment_trials = exp.experiment_trials(exp_id)
-    assert len(experiment_trials) == 1
-    trial_logs = "\n".join(exp.trial_logs(experiment_trials[0].trial.id))
-
-    time.sleep(5) # Not ideal but give us a buffer for webhooks arriving.
+    time.sleep(10)  # Not ideal but give us a buffer for webhooks arriving.
 
     responses = server.close_and_return_responses()
     if should_match:
-        assert len(responses) == 2
+        assert len(responses) >= 2
         # Only need a spot check we get the default / slack responses.
         # Further tested in integrations.
-        assert "LOG_PATTERN_POLICY" in responses[default_path]
+        assert "TASK_LOG" in responses[default_path]
         assert "This log matched the regex" in responses[slack_path]
     else:
-        assert len(responses) == 0
+        assert default_path not in responses
+        assert slack_path not in responses

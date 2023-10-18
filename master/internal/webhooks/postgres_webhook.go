@@ -110,7 +110,6 @@ func (l *regexTriggerCache) Initialize(ctx context.Context) error {
 }
 
 func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog) error {
-	// fmt.Println("SCAN LOGS")
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
@@ -119,11 +118,8 @@ func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog)
 			return fmt.Errorf("AgentID must be non nil to trigger webhooks in logs")
 		}
 
-		// fmt.Println("LOG", log.Log)
 		for _, cacheItem := range l.items {
-			// fmt.Println("RE", r)
 			if cacheItem.re.MatchString(log.Log) {
-				fmt.Println("MATCHED", cacheItem.triggerIDToTrigger)
 				for _, t := range cacheItem.triggerIDToTrigger {
 					if err := addTaskLogEvent(
 						ctx, model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
@@ -151,6 +147,13 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 		if len(w.Triggers) != 0 {
 			_, err = tx.NewInsert().Model(&w.Triggers).Exec(ctx)
 			if err != nil {
+				return err
+			}
+
+			for _, t := range w.Triggers {
+				t.Webhook = w
+			}
+			if err := Default().addTriggers(w.Triggers); err != nil {
 				return err
 			}
 		}
@@ -187,10 +190,29 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 
 // DeleteWebhook deletes a Webhook and its Triggers from the DB.
 func DeleteWebhook(ctx context.Context, id WebhookID) error {
-	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
+	var ts []*Trigger
+	_, err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
+		Where("webhook_id = ?", id).
+		Exec(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("getting webhook triggers to delete: %w", err)
 	}
+
+	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		if err := Default().removeTriggers(ts); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("deleting webhooks: %w", err)
+	}
+
 	return nil
 }
 
@@ -237,9 +259,6 @@ func ReportExperimentStateChanged(
 func addTaskLogEvent(ctx context.Context,
 	taskID model.TaskID, nodeName, triggeringLog string, trigger *Trigger,
 ) error {
-	// TODO dedupe behaviour (TODO)
-	fmt.Println("ADDING TASK LOGS EVENT")
-
 	defer func() {
 		if rec := recover(); rec != nil {
 			log.Errorf("uncaught error in adding task logs event: %v", rec)
@@ -258,14 +277,39 @@ func addTaskLogEvent(ctx context.Context,
 		return fmt.Errorf("generating task logs event: %w", err)
 	}
 
-	if _, err := db.Bun().NewInsert().Model(&Event{
-		Payload: p,
-		URL:     trigger.Webhook.URL,
-	}).Exec(ctx); err != nil {
-		return fmt.Errorf("inserting task logs event trigger: %w", err)
+	needToWake := false
+	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		res, err := db.Bun().NewInsert().Model(&webhookTaskLogTrigger{
+			TaskID:    taskID,
+			TriggerID: trigger.ID,
+		}).On("CONFLICT (task_id, trigger_id) DO NOTHING").Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("inserting task logs event trigger: %w", err)
+		}
+		if rowsAffected, err := res.RowsAffected(); err != nil {
+			return fmt.Errorf("getting rows affected for webhook task logs triggers: %w", err)
+		} else if rowsAffected == 0 {
+			return nil
+		}
+
+		if _, err := db.Bun().NewInsert().Model(&Event{
+			Payload: p,
+			URL:     trigger.Webhook.URL,
+		}).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting task logs event trigger: %w", err)
+		}
+
+		needToWake = true
+		return nil
+	}); err != nil {
+		return fmt.Errorf("adding webhook task log trigger event: %w", err)
 	}
 
-	singletonShipper.Wake()
+	fmt.Println("NEED TO WAKE", taskID)
+	if needToWake {
+		singletonShipper.Wake()
+	}
+
 	return nil
 }
 
@@ -330,7 +374,7 @@ func generateLogPatternSlackPayload(
 		if err != nil {
 			return nil, err
 		}
-		msg := fmt.Sprintf(
+		msg = fmt.Sprintf(
 			"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log\n",
 			trial.ExperimentID, trial.ID, nodeName) +
 			fmt.Sprintf("```%s```\n", triggeringLog) +
@@ -351,6 +395,7 @@ func generateLogPatternSlackPayload(
 			fmt.Sprintf("```%s```\n", regex)
 	}
 
+	fmt.Println(msg)
 	message, err := json.Marshal(SlackMessageBody{
 		Blocks: []SlackBlock{
 			{

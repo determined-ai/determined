@@ -94,6 +94,14 @@ type Trigger struct {
 	Webhook *Webhook `bun:"rel:belongs-to,join:webhook_id=id"`
 }
 
+// Used for deduping webhook events.
+type webhookTaskLogTrigger struct {
+	bun.BaseModel `bun:"table:webhook_task_log_triggers"`
+
+	TaskID    model.TaskID `bun:"task_id"`
+	TriggerID TriggerID    `bun:"trigger_id"`
+}
+
 // TriggerFromProto returns a Trigger from a proto definition.
 func TriggerFromProto(t *webhookv1.Trigger) *Trigger {
 	return &Trigger{
