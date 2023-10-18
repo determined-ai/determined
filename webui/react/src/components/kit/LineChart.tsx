@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode, useMemo, useState } from 'react';
 import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
@@ -78,6 +78,8 @@ export const LineChart: React.FC<LineChartProps> = ({
   const series = Loadable.ensureLoadable(propSeries).getOrElse([]);
   const isLoading = Loadable.isLoadable(propSeries) && Loadable.isNotLoaded(propSeries);
 
+  const [hiddenSeries, setHiddenSeries] = useState<Record<number, boolean>>({});
+
   const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis]?.length),
     [series, xAxis],
@@ -94,6 +96,9 @@ export const LineChart: React.FC<LineChartProps> = ({
 
     series.forEach((serie, serieIndex) => {
       yValues[serieIndex] = {};
+      if (hiddenSeries[serieIndex]) {
+        return;
+      }
       (serie.data[xAxis] || []).forEach((pt) => {
         const xVal = pt[0];
         xSet.add(xVal);
@@ -108,7 +113,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     });
 
     return [xValues, ...yValuesArray];
-  }, [series, xAxis]);
+  }, [series, xAxis, hiddenSeries]);
 
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(() => {
     if (xAxis === XAxisDomain.Time) {
@@ -234,7 +239,10 @@ export const LineChart: React.FC<LineChartProps> = ({
         <div className={css.legendContainer}>
           {hasPopulatedSeries ? (
             series.map((s, idx) => (
-              <li className={css.legendItem} key={idx}>
+              <li
+                className={[css.legendItem, hiddenSeries[idx] ? css.hideSeries : ''].join(' ')}
+                key={idx}
+                onClick={() => setHiddenSeries({ ...hiddenSeries, [idx]: !hiddenSeries[idx] })}>
                 <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
                   &mdash;
                 </span>
