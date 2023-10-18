@@ -10,6 +10,7 @@ import (
 
 var defaultManager *webhookManager
 
+// SetDefault sets the default webhook manager singleton.
 func SetDefault(w *webhookManager) {
 	defaultManager = w
 }

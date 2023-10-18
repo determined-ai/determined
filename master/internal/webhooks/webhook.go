@@ -133,7 +133,7 @@ const (
 	// TriggerTypeMetricThresholdExceeded represents a threshold for a training metric value.
 	TriggerTypeMetricThresholdExceeded TriggerType = "METRIC_THRESHOLD_EXCEEDED"
 
-	// TriggerTypeTaskLogs represents a trigger for a task logs.
+	// TriggerTypeTaskLog represents a trigger for a task logs.
 	TriggerTypeTaskLog TriggerType = "TASK_LOG"
 )
 
@@ -276,9 +276,9 @@ type Condition struct {
 
 // EventData represents the event_data for a webhook event.
 type EventData struct {
-	TestData         *string                  `json:"data,omitempty"`
-	Experiment       *ExperimentPayload       `json:"experiment,omitempty"`
-	LogPatternPolicy *LogPatternPolicyPayload `json:"log_pattern_policy,omitempty"`
+	TestData   *string            `json:"data,omitempty"`
+	Experiment *ExperimentPayload `json:"experiment,omitempty"`
+	TaskLog    *TaskLogPayload    `json:"task_log,omitempty"`
 }
 
 // ExperimentPayload is the webhook request representation of an experiment.
@@ -293,8 +293,8 @@ type ExperimentPayload struct {
 	ProjectName   string       `json:"project"`
 }
 
-// LogPatternPolicyPayload is the webhook request representation of a trigger of a log policy.
-type LogPatternPolicyPayload struct {
+// TaskLogPayload is the webhook request representation of a trigger of a task log.
+type TaskLogPayload struct {
 	TaskID        model.TaskID `json:"task_id"`
 	NodeName      string       `json:"node_name"`
 	TriggeringLog string       `json:"triggering_log"`

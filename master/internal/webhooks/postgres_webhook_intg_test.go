@@ -145,7 +145,7 @@ func TestWebhookScanLogs(t *testing.T) {
 	require.NoError(t, manager.addWebhook(ctx, w1))
 	require.NoError(t, manager.addWebhook(ctx, w2))
 
-	for _, shouldBounce := range []bool{false, true} {
+	for _, shouldBounce := range []bool{false, true} { //nolint: dupl
 		_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
 		require.NoError(t, err)
 
@@ -173,7 +173,7 @@ func TestWebhookScanLogs(t *testing.T) {
 
 	require.NoError(t, manager.deleteWebhook(ctx, w1.ID))
 
-	for _, shouldBounce := range []bool{false, true} {
+	for _, shouldBounce := range []bool{false, true} { //nolint: dupl
 		_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
 		require.NoError(t, err)
 
@@ -247,7 +247,7 @@ func TestGenerateTaskLogPayload(t *testing.T) {
 								Regex: "regexa",
 							},
 							Data: EventData{
-								LogPatternPolicy: &LogPatternPolicyPayload{
+								TaskLog: &TaskLogPayload{
 									TaskID:        task.TaskID,
 									NodeName:      "nodeA",
 									TriggeringLog: "trigA",

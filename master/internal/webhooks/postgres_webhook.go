@@ -26,16 +26,13 @@ type cacheItem struct {
 	triggerIDToTrigger map[TriggerID]*Trigger
 }
 
-// We are going to report a lot of logs so cache the regexes and what triggers they do.
-type regexTriggerCache struct{}
-
 type webhookManager struct {
 	mu    sync.RWMutex
 	items map[string]cacheItem
 }
 
 // New creates a new webhook manager.
-func New(ctx context.Context) (*webhookManager, error) {
+func New(ctx context.Context) (*webhookManager, error) { //nolint: revive
 	var triggers []*Trigger
 	if err := db.Bun().NewSelect().Model(&triggers).Relation("Webhook").
 		Where("trigger_type = ?", TriggerTypeTaskLog).
@@ -324,7 +321,7 @@ func generateTaskLogPayload(
 				Regex: regex,
 			},
 			Data: EventData{
-				LogPatternPolicy: &LogPatternPolicyPayload{
+				TaskLog: &TaskLogPayload{
 					TaskID:        taskID,
 					NodeName:      nodeName,
 					TriggeringLog: triggeringLog,
