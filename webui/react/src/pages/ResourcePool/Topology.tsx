@@ -37,15 +37,13 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
 const Topology: React.FC<PropsWithChildren<Props>> = ({ nodes }) => {
   return (
     <>
-      {!!nodes.length && (
-        <Section title="Topology">
-          <div className={`${css.mainContainer} ${css.nodesContainer}`}>
-            {nodes.map(({ id, resources }) => {
-              return <NodeElement key={id} name={id} slots={resources} />;
-            })}
-          </div>
-        </Section>
-      )}
+      <Section title="Topology">
+        <div className={`${css.mainContainer} ${css.nodesContainer}`}>
+          {nodes.map(({ id, resources }) => {
+            return <NodeElement key={id} name={id} slots={resources} />;
+          })}
+        </div>
+      </Section>
     </>
   );
 };

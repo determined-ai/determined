@@ -226,7 +226,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        <Topology nodes={agents} />
+        {!!agents.length && <Topology nodes={agents} />}
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>
