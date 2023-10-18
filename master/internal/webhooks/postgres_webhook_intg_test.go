@@ -308,22 +308,6 @@ func TestGenerateTaskLogPayload(t *testing.T) {
 	}
 }
 
-/*
-func TestReportLogPatternAction(t *testing.T) {
-	ctx := context.Background()
-
-	pgDB := db.MustResolveTestPostgres(t)
-	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
-	clearWebhooksTables(ctx, t)
-
-	originalConfig := config.GetMasterConfig().Webhooks
-	defer func() {
-		config.GetMasterConfig().Webhooks = originalConfig
-	}()
-
-}
-*/
-
 func TestReportExperimentStateChanged(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

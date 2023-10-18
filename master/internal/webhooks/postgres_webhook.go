@@ -94,8 +94,10 @@ func (l *webhookManager) removeTriggers(triggers []*Trigger) error {
 
 		regex, ok := t.Condition[regexConditionKey].(string)
 		if !ok {
-			return fmt.Errorf(
-				"expected webhook trigger to have regex in condition instead got %v", t.Condition)
+			log.Error(
+				"expected webhook trigger to have regex in condition instead got %v deleting anyway",
+				t.Condition)
+			return nil
 		}
 
 		delete(l.items[regex].triggerIDToTrigger, t.ID)
@@ -104,6 +106,10 @@ func (l *webhookManager) removeTriggers(triggers []*Trigger) error {
 }
 
 func (l *webhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) error {
+	if len(logs) == 0 {
+		return nil
+	}
+
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
@@ -115,8 +121,8 @@ func (l *webhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) er
 		for _, cacheItem := range l.items {
 			if cacheItem.re.MatchString(log.Log) {
 				for _, t := range cacheItem.triggerIDToTrigger {
-					if err := addTaskLogEvent(
-						ctx, model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
+					if err := addTaskLogEvent(ctx,
+						model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
 						return err
 					}
 				}
@@ -165,7 +171,7 @@ func (l *webhookManager) deleteWebhook(ctx context.Context, id WebhookID) error 
 	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("deletng webhook id %s: %w", id, err)
 		}
 
 		if err := l.removeTriggers(ts); err != nil {
