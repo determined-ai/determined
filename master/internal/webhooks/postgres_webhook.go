@@ -32,7 +32,9 @@ type regexTriggerCache struct {
 	items map[string]cacheItem // Maps string regex to compiled regex + all triggers.
 }
 
-var cache = &regexTriggerCache{}
+var cache = &regexTriggerCache{
+	items: make(map[string]cacheItem),
+}
 
 func Default() *regexTriggerCache {
 	return cache
@@ -54,8 +56,7 @@ func (l *regexTriggerCache) addTriggers(triggers []*Trigger) error {
 		}
 
 		if _, ok := l.items[regex]; !ok {
-			// TODO should we do this the (.*)...
-			compiled, err := regexp.Compile(fmt.Sprintf("(.*)%s(.*)", regex))
+			compiled, err := regexp.Compile(regex)
 			if err != nil {
 				return fmt.Errorf("compiling regex %s: %w", regex, err)
 			}
@@ -109,6 +110,7 @@ func (l *regexTriggerCache) Initialize(ctx context.Context) error {
 }
 
 func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog) error {
+	// fmt.Println("SCAN LOGS")
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
@@ -117,8 +119,11 @@ func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog)
 			return fmt.Errorf("AgentID must be non nil to trigger webhooks in logs")
 		}
 
+		// fmt.Println("LOG", log.Log)
 		for _, cacheItem := range l.items {
+			// fmt.Println("RE", r)
 			if cacheItem.re.MatchString(log.Log) {
+				fmt.Println("MATCHED", cacheItem.triggerIDToTrigger)
 				for _, t := range cacheItem.triggerIDToTrigger {
 					if err := addTaskLogEvent(
 						ctx, model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
@@ -233,6 +238,7 @@ func addTaskLogEvent(ctx context.Context,
 	taskID model.TaskID, nodeName, triggeringLog string, trigger *Trigger,
 ) error {
 	// TODO dedupe behaviour (TODO)
+	fmt.Println("ADDING TASK LOGS EVENT")
 
 	defer func() {
 		if rec := recover(); rec != nil {

@@ -14272,10 +14272,12 @@ class v1TriggerType(DetEnum):
     - TRIGGER_TYPE_UNSPECIFIED: Default value
     - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state
     - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+    - TRIGGER_TYPE_TASK_LOG: For task logs.
     """
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
+    TASK_LOG = "TRIGGER_TYPE_TASK_LOG"
 
 class v1UnarchiveExperimentsRequest(Printable):
     """Unarchive multiple experiments."""

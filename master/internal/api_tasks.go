@@ -416,6 +416,7 @@ func (a *apiServer) PostTaskLogs(
 		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
 	}
 
+	fmt.Println("webhooks scan logs")
 	if err := webhooks.Default().ScanLogs(ctx, logs); err != nil {
 		log.Errorf("scanning logs for webhook triggers: %w", err)
 	}
