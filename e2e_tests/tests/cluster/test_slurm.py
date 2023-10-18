@@ -176,16 +176,18 @@ def test_docker_login() -> None:
     )
 
 
-# A devcluster needs to be run with the master host entered incorrectly.
+# A devcluster needs to be run with the master host entered incorrectly
+# (with an unreachable master_host name).
 @pytest.mark.e2e_slurm_misconfigured
 def test_master_host() -> None:
     # Creates an experiment normally, should error if the back communication channel is broken
     exp.run_failure_test(
         conf.fixtures_path("no_op/single-one-short-step.yaml"),
         conf.fixtures_path("no_op"),
-        "Failed to download model definition from master.  This may be due to an address\n"
-        + "resolution problem, a certificate problem, a firewall problem, or some other\n"
-        + "networking error.",
+        "Unable to reach the master at DET_MASTER=http://junkmaster:8080.  "
+        + "This may be due to an address "
+        + "resolution problem, a certificate problem, a firewall problem, "
+        + "a proxy problem, or some other networking error.",
     )
 
 
