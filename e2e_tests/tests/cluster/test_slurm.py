@@ -194,13 +194,13 @@ def test_master_host() -> None:
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
-def test_cifar10_pytorch_distributed() -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
+def test_mnist_pytorch_distributed() -> None:
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config["searcher"]["max_length"] = {"epochs": 1}
     config["records_per_epoch"] = 5000
     config["max_restarts"] = 0
 
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("cifar10_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
 
 
 # Test to ensure that determined is able to handle preemption gracefully when using dispatcher RM.
@@ -226,8 +226,10 @@ def test_slurm_preemption() -> None:
     # Launch the cifar10_pytorch_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
     # partition
     cancelable_exp_id = exp.create_experiment(
-        conf.cv_examples_path("cifar10_pytorch/cifar10_pytorch_cancelable.yaml"),
-        conf.cv_examples_path("cifar10_pytorch"),
+        conf.cv_examples_path(
+            "../legacy/computer_vision/cifar10_pytorch/cifar10_pytorch_cancelable.yaml"
+        ),
+        conf.cv_examples_path("../legacy/computer_vision/cifar10_pytorch"),
         None,
     )
     # Wait for the first cancellable experiment to enter RUNNING state.
@@ -237,8 +239,10 @@ def test_slurm_preemption() -> None:
     # Launch the cifar10_pytorch_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
     # partition
     high_priority_exp_id = exp.create_experiment(
-        conf.cv_examples_path("cifar10_pytorch/cifar10_pytorch_high_priority.yaml"),
-        conf.cv_examples_path("cifar10_pytorch"),
+        conf.cv_examples_path(
+            "../legacy/computer_vision/cifar10_pytorch/cifar10_pytorch_high_priority.yaml"
+        ),
+        conf.cv_examples_path("../legacy/computer_vision/cifar10_pytorch"),
         None,
     )
     # In this scenario, cifar10_pytorch_high_priority experiment will cause the
