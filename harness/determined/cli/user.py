@@ -181,7 +181,9 @@ def edit(parsed_args: Namespace) -> None:
         changes.append("Admin")
 
     if len(changes) > 0:
-        user_obj.edit_user(patch_user)
+        bindings.patch_PatchUser(
+            client._get_singleton_session(), body=patch_user, userId=user_obj.user_id
+        )
         print("Changes made to the following fields: " + ", ".join(changes))
     else:
         raise errors.CliError("No field provided. Use 'det user edit -h' for usage.")
