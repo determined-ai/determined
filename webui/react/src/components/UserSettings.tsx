@@ -2,13 +2,14 @@ import { Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Drawer from 'components/kit/Drawer';
+import Icon from 'components/kit/Icon';
 import InlineForm from 'components/kit/InlineForm';
 import Input from 'components/kit/Input';
 import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/kit/InputShortcut';
 import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI, { Mode, themeLightDetermined, UIProvider } from 'components/kit/Theme';
+import useUI, { Mode } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import { Loadable } from 'components/kit/utils/loadable';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
@@ -40,7 +41,6 @@ import { useObservable } from 'utils/observable';
 
 import Accordion from './kit/Accordion';
 import Button from './kit/Button';
-import Icon from './kit/Icon';
 import Paragraph from './kit/Typography/Paragraph';
 import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';

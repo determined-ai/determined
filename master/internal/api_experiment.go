@@ -474,7 +474,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 			if len(checkpoints) > 0 {
 				err = runCheckpointGCTask(
-					a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+					a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
 					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
 					true, agentUserGroup, userModel, nil,
 				)
@@ -485,7 +485,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 
 			// delete jobs per experiment
-			resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
+			resp, err := a.m.rm.DeleteJob(sproto.DeleteJob{
 				JobID: exp.JobID,
 			})
 			if err != nil {
@@ -1289,7 +1289,7 @@ func (a *apiServer) PatchExperiment(
 			taskID := model.NewTaskID()
 			go func() {
 				err = runCheckpointGCTask(
-					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
+					a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
 					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
 					agentUserGroup, user, nil,
 				)
@@ -1312,7 +1312,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
 	experimentID := int(req.Id)
-	useSearcherSortBy := req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
+	useSearcherSortBy := req.GetSortByAttr() == checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC
 	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
 		exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
 	if err != nil {
@@ -1368,22 +1368,28 @@ func (a *apiServer) GetExperimentCheckpoints(
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 			aj, ai = ai, aj
 		}
-
-		switch req.SortBy {
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			return protoless.CheckpointStepsCompletedLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
-			return ai.Uuid < aj.Uuid
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
-			return protoless.CheckpointTrialIDLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
-			return protoless.CheckpointReportTimeLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
-			return ai.State.Number() < aj.State.Number()
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
-			return protoless.CheckpointSearcherMetricLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
-			fallthrough
+		switch req.GetSortBy().(type) {
+		case *apiv1.GetExperimentCheckpointsRequest_SortByAttr:
+			switch req.GetSortByAttr() {
+			case checkpointv1.SortBy_SORT_BY_BATCH_NUMBER:
+				return protoless.CheckpointStepsCompletedLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_UUID:
+				return ai.Uuid < aj.Uuid
+			case checkpointv1.SortBy_SORT_BY_TRIAL_ID:
+				return protoless.CheckpointTrialIDLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_END_TIME:
+				return protoless.CheckpointReportTimeLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_STATE:
+				return ai.State.Number() < aj.State.Number()
+			case checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC:
+				return protoless.CheckpointSearcherMetricLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_UNSPECIFIED:
+				fallthrough
+			default:
+				return protoless.CheckpointTrialIDLess(ai, aj)
+			}
+		case *apiv1.GetExperimentCheckpointsRequest_SortByMetric:
+			return protoless.CheckpointMetricNameLess(ai, aj, req.GetSortByMetric())
 		default:
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
@@ -1507,7 +1513,7 @@ func (a *apiServer) ContinueExperiment(
 	dbExp.ID = int(req.Id)
 	dbExp.JobID = origExperiment.JobID // Revive job.
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1656,7 +1662,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}

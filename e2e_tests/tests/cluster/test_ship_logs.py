@@ -34,8 +34,9 @@ class ShipLogServer:
     shuts down much faster.
     """
 
-    def __init__(self, ctx: Optional[ssl.SSLContext] = None) -> None:
+    def __init__(self, ctx: Optional[ssl.SSLContext] = None, reject_logs: bool = False) -> None:
         self.ctx = ctx
+        self.reject_logs = reject_logs
         self.quit = False
         self.logs: List[str] = []
 
@@ -91,6 +92,14 @@ class ShipLogServer:
                 # EOF
                 return
             hdrs += buf
+        # Detect the initial GET /api/v1/me probe.
+        if hdrs.startswith(b"GET"):
+            s.sendall(b"HTTP/1.1 200 OK\r\n\r\n")
+            return
+        # Are we supposed to misbehave?
+        if self.reject_logs:
+            s.sendall(b"HTTP/1.1 500 No! I don't wanna!\r\n\r\n")
+            return
         # Receive body until we have valid json.
         hdrs, body = hdrs.split(b"\r\n\r\n", maxsplit=1)
         while True:
@@ -181,6 +190,29 @@ class TestShipLogs:
         assert "".join(srv.logs) == "1\n2\n3\n\n", srv.logs
 
     @pytest.mark.e2e_cpu
+    def test_line_endings_are_kept(self) -> None:
+        # If re.DOTALL is not used in the regex patterns, then pattern matching can unintentionally
+        # strip the newlines out of the end of the line.
+        cmd = mkcmd(
+            r"""
+            print("match neither\n", end="")
+            print("[rank=0] match just rank\n", end="")
+            print("[rank=0] INFO: match rank and level\n", end="")
+            print("INFO: match just level\n", end="")
+            """
+        )
+        with ShipLogServer() as srv:
+            exit_code = self.run_ship_logs(srv.master_url(), cmd)
+        assert exit_code == 0, exit_code
+        expect_logs = [
+            "match neither\n",
+            "match just rank\n",
+            "match rank and level\n",
+            "match just level\n",
+        ]
+        assert srv.logs == expect_logs, srv.logs
+
+    @pytest.mark.e2e_cpu
     def test_stdout_stderr_ordering(self) -> None:
         # Stdout and stderr are collected on different threads, and therefore _can't_ be perfectly
         # synced.  But they should be "approximately" synced; i.e. each 1-second batch should
@@ -267,15 +299,10 @@ class TestShipLogs:
     @pytest.mark.e2e_cpu
     def test_exit_wait_time_is_honored(self) -> None:
         cmd = mkcmd("print('hello world')")
-        # We need a misbehaving server to guarantee the shipper times out.
-        # This misbehaving server will listen without ever accepting.
-        with socket.socket() as listener:
-            listener.bind(("127.0.0.1", 0))
-            listener.listen(10)
-            _, port = listener.getsockname()
-            master_url = f"http://127.0.0.1:{port}"
+        # We configure the server to reject logs in order to guarantee the shipper times out.
+        with ShipLogServer(reject_logs=True) as srv:
             start = time.time()
-            exit_code = self.run_ship_logs(master_url, cmd, log_wait_time=0.1)
+            exit_code = self.run_ship_logs(srv.master_url(), cmd, log_wait_time=0.1)
             end = time.time()
             assert exit_code == 0, exit_code
             assert end - start < 1, end - start
@@ -342,7 +369,8 @@ class TestShipLogs:
         assert p.wait() == 0, "\n" + errmsgs
 
     @pytest.mark.e2e_cpu
-    def test_custom_certs(self) -> None:
+    @pytest.mark.parametrize("noverify", (True, False))
+    def test_custom_certs(self, noverify: bool) -> None:
         # Use the untrusted key and cert from the harness unit tests.
         untrusted = os.path.join(here, "../../../harness/tests/common/untrusted-root")
         keyfile = os.path.join(untrusted, "127.0.0.1-key.pem")
@@ -360,7 +388,7 @@ class TestShipLogs:
             exit_code = self.run_ship_logs(
                 master_url,
                 cmd,
-                cert_file=certfile,
+                cert_file="noverify" if noverify else certfile,
                 cert_name="127.0.0.1",
             )
             assert exit_code == 0, exit_code

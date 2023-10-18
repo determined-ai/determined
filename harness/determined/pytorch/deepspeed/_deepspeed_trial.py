@@ -33,7 +33,7 @@ ds_loader.RepeatingLoader.__len__ = get_length
 
 
 class DeepSpeedTrialController(det.TrialController):
-    def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, trial_inst: det.LegacyTrial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         assert isinstance(
@@ -736,7 +736,7 @@ class DeepSpeedTrialController(det.TrialController):
         torch.cuda.synchronize(self.context.device)
 
 
-class DeepSpeedTrial(det.Trial):
+class DeepSpeedTrial(det.LegacyTrial):
     """
     DeepSpeed trials are created by subclassing this abstract class.
 

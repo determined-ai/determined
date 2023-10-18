@@ -55,11 +55,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			Preemptible:       !t.NonPreemptible,
 			ResourcePool:      t.ResourcePool,
 		}
-		if t.Group == nil {
-			task.Group = ctx.Self()
-		} else {
-			task.Group = ctx.Self().System().Get(actor.Addr(t.Group.ID))
-		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
 		} else {
@@ -81,7 +76,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 		rank := 0
 		for _, allocation := range msg.Resources {
 			if err := allocation.Start(
-				ctx.Self().System(),
 				nil,
 				tasks.TaskSpec{},
 				sproto.ResourcesRuntimeInfo{

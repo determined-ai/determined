@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonProps } from 'antd';
 import React, { useMemo } from 'react';
 
-import Message, { Props as MessageProps, MessageType } from 'components/Message';
+import Message, { Props as MessageProps } from 'components/kit/Message';
 import { ValueOf } from 'types';
 import { isObject, validateEnum } from 'utils/data';
 
@@ -45,9 +45,8 @@ const isLoadingStateConditions = (props: unknown): props is LoadingStateConditio
 const renderMessage = (props: LoadingMessageProps, state: LoadingState) => {
   if (React.isValidElement(props)) return <>{props}</>;
   const defaultProps: MessageProps = {
+    icon: 'warning',
     title: state === LoadingState.Error ? 'Unable to load data' : 'No data to display',
-    type: state === LoadingState.Error ? MessageType.Alert : MessageType.Empty,
-    ...(props as Partial<MessageProps>),
   };
   return <Message {...defaultProps} />;
 };

@@ -1,0 +1,43 @@
+.base {
+  height: 100%;
+  margin: auto;
+  position: relative;
+  width: 100%;
+
+  .spinner,
+  .innerSpinner {
+    animation: pulse 1.75s infinite ease-in-out;
+    background-color: rgba(143 143 143 / 20%);
+    border-radius: 50%;
+    height: 100%;
+    left: 0;
+    opacity: 0.85;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+  .innerSpinner {
+    animation: pulseSpinner 1.75s infinite ease-in-out;
+    background-color: rgba(143 143 143 / 40%);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.75);
+  }
+}
+
+@keyframes pulseSpinner {
+  0%,
+  100% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(0.6);
+  }
+}

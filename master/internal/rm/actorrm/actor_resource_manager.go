@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/determined-ai/determined/master/internal/rm/rmevents"
-
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/command"
@@ -16,27 +15,24 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// ResourceManager shims a RM actor to the ResourceManager interface.
+// ResourceManager shims a deprecated RM actor to the ResourceManager interface.
 type ResourceManager struct {
 	ref *actor.Ref
 }
 
-// Wrap wraps an RM actor as an explicit interface.
+// Wrap wraps an RM actor as an explicit interface. This is deprecated. New resource managers
+// should satisfy the ResourceManager interface directly.
 func Wrap(ref *actor.Ref) *ResourceManager {
 	return &ResourceManager{ref: ref}
 }
 
-// GetResourcePoolRef is a default implementation to satisfy the interface, mostly for tests.
-func (r *ResourceManager) GetResourcePoolRef(
-	ctx actor.Messenger,
-	name string,
-) (*actor.Ref, error) {
-	return r.ref, nil
+// Ref gets the underlying RM actor, for internal actor use only.
+func (r *ResourceManager) Ref() *actor.Ref {
+	return r.ref
 }
 
 // ResolveResourcePool is a default implementation to satisfy the interface, mostly for tests.
 func (r *ResourceManager) ResolveResourcePool(
-	ctx actor.Messenger,
 	name string,
 	workspaceID,
 	slots int,
@@ -46,7 +42,6 @@ func (r *ResourceManager) ResolveResourcePool(
 
 // ValidateResources is a default implementation to satisfy the interface, mostly for tests.
 func (r *ResourceManager) ValidateResources(
-	ctx actor.Messenger,
 	name string,
 	slots int,
 	command bool,
@@ -56,7 +51,6 @@ func (r *ResourceManager) ValidateResources(
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
 func (r *ResourceManager) ValidateResourcePoolAvailability(
-	ctx actor.Messenger,
 	name string,
 	slots int) (
 	[]command.LaunchWarning,
@@ -66,56 +60,46 @@ func (r *ResourceManager) ValidateResourcePoolAvailability(
 }
 
 // ValidateResourcePool is a default implementation to satisfy the interface, mostly for tests.
-func (r *ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
+func (r *ResourceManager) ValidateResourcePool(name string) error {
 	return nil
-}
-
-// Ref gets the underlying RM actor, for backwards compatibility. This is deprecated.
-func (r *ResourceManager) Ref() *actor.Ref {
-	return r.ref
 }
 
 // GetAllocationSummary requests a summary of the given allocation.
 func (r *ResourceManager) GetAllocationSummary(
-	ctx actor.Messenger,
 	msg sproto.GetAllocationSummary,
 ) (resp *sproto.AllocationSummary, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetAllocationSummaries requests a summary of all current allocations.
 func (r *ResourceManager) GetAllocationSummaries(
-	ctx actor.Messenger,
 	msg sproto.GetAllocationSummaries,
 ) (resp map[model.AllocationID]sproto.AllocationSummary, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // SetAllocationName sets a name for a given allocation.
 func (r *ResourceManager) SetAllocationName(
-	ctx actor.Messenger,
 	msg sproto.SetAllocationName,
 ) {
-	r.Tell(ctx, msg)
+	r.Tell(msg)
 }
 
 // ValidateCommandResources validates a request for command resources.
 func (r *ResourceManager) ValidateCommandResources(
-	ctx actor.Messenger,
 	msg sproto.ValidateCommandResourcesRequest,
 ) (resp sproto.ValidateCommandResourcesResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // Allocate allocates some resources.
 func (r *ResourceManager) Allocate(
-	ctx actor.Messenger,
 	msg sproto.AllocateRequest,
 ) (*sproto.ResourcesSubscription, error) {
 	sub := rmevents.Subscribe(msg.AllocationID)
-	err := r.Ask(ctx, msg, nil)
+	err := r.Ask(msg, nil)
 	if err != nil {
-		r.Release(ctx, sproto.ResourcesReleased{AllocationID: msg.AllocationID})
+		r.Release(sproto.ResourcesReleased{AllocationID: msg.AllocationID})
 		sub.Close()
 		return nil, err
 	}
@@ -123,112 +107,96 @@ func (r *ResourceManager) Allocate(
 }
 
 // Release releases some resources.
-func (r *ResourceManager) Release(ctx actor.Messenger, msg sproto.ResourcesReleased) {
-	r.Tell(ctx, msg)
+func (r *ResourceManager) Release(msg sproto.ResourcesReleased) {
+	r.Tell(msg)
 }
 
 // GetResourcePools requests information about the available resource pools.
 func (r *ResourceManager) GetResourcePools(
-	ctx actor.Messenger,
 	msg *apiv1.GetResourcePoolsRequest,
 ) (resp *apiv1.GetResourcePoolsResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetDefaultComputeResourcePool requests the default compute resource pool.
 func (r *ResourceManager) GetDefaultComputeResourcePool(
-	ctx actor.Messenger,
 	msg sproto.GetDefaultComputeResourcePoolRequest,
 ) (resp sproto.GetDefaultComputeResourcePoolResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetDefaultAuxResourcePool requests the default aux resource pool.
 func (r *ResourceManager) GetDefaultAuxResourcePool(
-	ctx actor.Messenger,
 	msg sproto.GetDefaultAuxResourcePoolRequest,
 ) (resp sproto.GetDefaultAuxResourcePoolResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetJobQ gets the state of the job queue.
 func (r *ResourceManager) GetJobQ(
-	ctx actor.Messenger,
 	msg sproto.GetJobQ,
 ) (resp map[model.JobID]*sproto.RMJobInfo, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetJobQueueStatsRequest requests other stats for a job queue.
 func (r *ResourceManager) GetJobQueueStatsRequest(
-	ctx actor.Messenger,
 	msg *apiv1.GetJobQueueStatsRequest,
 ) (resp *apiv1.GetJobQueueStatsResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // MoveJob moves a job ahead of or behind a peer.
-func (r *ResourceManager) MoveJob(ctx actor.Messenger, msg sproto.MoveJob) error {
-	return r.Ask(ctx, msg, nil)
+func (r *ResourceManager) MoveJob(msg sproto.MoveJob) error {
+	return r.Ask(msg, nil)
 }
 
 // RecoverJobPosition recovers the position of a job relative to the rest of its priority lane.
 func (r *ResourceManager) RecoverJobPosition(
-	ctx actor.Messenger,
 	msg sproto.RecoverJobPosition,
 ) {
-	r.Tell(ctx, msg)
+	r.Tell(msg)
 }
 
 // SetGroupWeight sets the weight for a group.
-func (r *ResourceManager) SetGroupWeight(
-	ctx actor.Messenger,
-	msg sproto.SetGroupWeight,
-) error {
-	return r.Ask(ctx, msg, nil)
+func (r *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
+	return r.Ask(msg, nil)
 }
 
 // SetGroupPriority sets the group priority.
-func (r *ResourceManager) SetGroupPriority(
-	ctx actor.Messenger,
-	msg sproto.SetGroupPriority,
-) error {
-	return r.Ask(ctx, msg, nil)
+func (r *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
+	return r.Ask(msg, nil)
 }
 
 // SetGroupMaxSlots sets the max allocatable slots for a group.
-func (r *ResourceManager) SetGroupMaxSlots(ctx actor.Messenger, msg sproto.SetGroupMaxSlots) {
-	r.Tell(ctx, msg)
+func (r *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
+	r.Tell(msg)
 }
 
 // DeleteJob requests we clean up our state related to a given job.
 func (r *ResourceManager) DeleteJob(
-	ctx actor.Messenger,
 	msg sproto.DeleteJob,
 ) (resp sproto.DeleteJobResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetExternalJobs returns the details for External jobs.
 func (r *ResourceManager) GetExternalJobs(
-	ctx actor.Messenger,
 	msg sproto.GetExternalJobs,
 ) (resp []*jobv1.Job, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // ExternalPreemptionPending requests we notify some allocation that it was preempted externally.
 func (r *ResourceManager) ExternalPreemptionPending(
-	ctx actor.Messenger,
 	msg sproto.PendingPreemption,
 ) error {
-	return r.Ask(ctx, msg, nil)
+	return r.Ask(msg, nil)
 }
 
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
 func (r *ResourceManager) NotifyContainerRunning(
-	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {
 	// Actor Resource Manager does not implement a handler for the
@@ -239,22 +207,22 @@ func (r *ResourceManager) NotifyContainerRunning(
 }
 
 // IsReattachableOnlyAfterStarted is a default implementation (true).
-func (r *ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) bool {
+func (r *ResourceManager) IsReattachableOnlyAfterStarted() bool {
 	return true
 }
 
 // Tell tells the underlying actor-based RM the req.
-func (r *ResourceManager) Tell(ctx actor.Messenger, req interface{}) {
-	ctx.Tell(r.ref, req)
+func (r *ResourceManager) Tell(req interface{}) {
+	r.ref.System().Tell(r.ref, req)
 }
 
 // Ask asks the underlying actor-based RM the req, setting the response into v.
-func (r *ResourceManager) Ask(ctx actor.Messenger, req interface{}, v interface{}) error {
+func (r *ResourceManager) Ask(req interface{}, v interface{}) error {
 	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
 		return fmt.Errorf("ask to %s has valid but unsettable resp %T", r.ref.Address(), v)
 	}
 	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
-	switch resp := ctx.Ask(r.ref, req); {
+	switch resp := r.ref.System().Ask(r.ref, req); {
 	case resp.Source() == nil:
 		return fmt.Errorf("actor %s could not be found", r.ref.Address())
 	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
@@ -280,12 +248,12 @@ func (r *ResourceManager) Ask(ctx actor.Messenger, req interface{}, v interface{
 // AskAt asks an actor and sets the response in v. It returns an error if the actor doesn't
 // respond, respond with an error, or v isn't settable.
 // TODO(Brad): Consolidate occurrences of this code.
-func AskAt(sys *actor.System, addr actor.Address, req interface{}, v interface{}) error {
+func (r *ResourceManager) AskAt(addr actor.Address, req interface{}, v interface{}) error {
 	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
 		return fmt.Errorf("ask at %s has valid but unsettable resp %T", addr, v)
 	}
 	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
-	switch resp := sys.AskAt(addr, req); {
+	switch resp := r.ref.System().AskAt(addr, req); {
 	case resp.Source() == nil:
 		return fmt.Errorf("actor %s could not be found", addr)
 	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
@@ -305,7 +273,6 @@ func AskAt(sys *actor.System, addr actor.Address, req interface{}, v interface{}
 
 // TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
 func (r ResourceManager) TaskContainerDefaults(
-	ctx actor.Messenger,
 	pool string,
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (model.TaskContainerDefaultsConfig, error) {
@@ -322,64 +289,56 @@ func slotAddr(agentID, slotID string) actor.Address {
 
 // GetAgents gets the state of connected agents or reads similar information from the underlying RM.
 func (r *ResourceManager) GetAgents(
-	ctx actor.Messenger,
 	msg *apiv1.GetAgentsRequest,
 ) (resp *apiv1.GetAgentsResponse, err error) {
-	return resp, r.Ask(ctx, msg, &resp)
+	return resp, r.Ask(msg, &resp)
 }
 
 // GetAgent implements rm.ResourceManager.
 func (r *ResourceManager) GetAgent(
-	_ actor.Messenger,
 	req *apiv1.GetAgentRequest,
 ) (resp *apiv1.GetAgentResponse, err error) {
-	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+	return resp, r.AskAt(agentAddr(req.AgentId), req, &resp)
 }
 
 // EnableAgent implements rm.ResourceManager.
 func (r *ResourceManager) EnableAgent(
-	_ actor.Messenger,
 	req *apiv1.EnableAgentRequest,
 ) (resp *apiv1.EnableAgentResponse, err error) {
-	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+	return resp, r.AskAt(agentAddr(req.AgentId), req, &resp)
 }
 
 // DisableAgent implements rm.ResourceManager.
 func (r *ResourceManager) DisableAgent(
-	_ actor.Messenger,
 	req *apiv1.DisableAgentRequest,
 ) (resp *apiv1.DisableAgentResponse, err error) {
-	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+	return resp, r.AskAt(agentAddr(req.AgentId), req, &resp)
 }
 
 // GetSlots implements rm.ResourceManager.
 func (r *ResourceManager) GetSlots(
-	_ actor.Messenger,
 	req *apiv1.GetSlotsRequest,
 ) (resp *apiv1.GetSlotsResponse, err error) {
-	return resp, AskAt(r.ref.System(), agentAddr(req.AgentId), req, &resp)
+	return resp, r.AskAt(agentAddr(req.AgentId), req, &resp)
 }
 
 // GetSlot implements rm.ResourceManager.
 func (r *ResourceManager) GetSlot(
-	_ actor.Messenger,
 	req *apiv1.GetSlotRequest,
 ) (resp *apiv1.GetSlotResponse, err error) {
-	return resp, AskAt(r.ref.System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, r.AskAt(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 // EnableSlot implements 'det slot enable...' functionality.
 func (r ResourceManager) EnableSlot(
-	m actor.Messenger,
 	req *apiv1.EnableSlotRequest,
 ) (resp *apiv1.EnableSlotResponse, err error) {
-	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, r.AskAt(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 // DisableSlot implements 'det slot disable...' functionality.
 func (r ResourceManager) DisableSlot(
-	m actor.Messenger,
 	req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
-	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, r.AskAt(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }

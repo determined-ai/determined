@@ -25,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -102,7 +101,6 @@ type allocation struct {
 	rm rm.ResourceManager
 
 	syslog *logrus.Entry
-	system *actor.System
 	wg     waitgroupx.Group
 
 	// The request to create the allocation, essentially our configuration.
@@ -149,7 +147,7 @@ type allocation struct {
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func newAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
-	specifier tasks.TaskSpecifier, system *actor.System,
+	specifier tasks.TaskSpecifier,
 ) (*allocation, error) {
 	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
 		"allocation-id": req.AllocationID,
@@ -163,7 +161,6 @@ func newAllocation(
 		db: db,
 		rm: rm,
 
-		system: system,
 		wg:     waitgroupx.WithContext(context.Background()),
 		syslog: logrus.WithFields(logCtx.Fields()),
 
@@ -477,7 +474,7 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 		}
 	}
 
-	sub, err := a.rm.Allocate(a.system, a.req)
+	sub, err := a.rm.Allocate(a.req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to request allocation")
 	}
@@ -503,6 +500,7 @@ func (a *allocation) Cleanup() {
 		a.exitErr = errors.New("unknown error occurred")
 	}
 	exitReason := a.exitErr.Error()
+	a.SetExitStatus(exitReason, a.exitErr, ptrs.Ptr(int32(-1)))
 
 	a.finalize(exitReason, false, logrus.ErrorLevel, a.exitErr)
 }
@@ -513,7 +511,7 @@ func (a *allocation) finalize(
 	severity logrus.Level,
 	exitErr error,
 ) {
-	defer a.rm.Release(a.system, sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+	defer a.rm.Release(sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
 	for _, cl := range a.closers {
 		defer cl()
 	}
@@ -526,7 +524,7 @@ func (a *allocation) finalize(
 	a.markResourcesReleased()
 
 	a.exited = &AllocationExited{UserRequestedStop: userRequestedStop, Err: exitErr, FinalState: a.state()}
-
+	a.SetExitStatus(exitReason, exitErr, nil)
 	log := fmt.Sprintf("%s was terminated: %s", a.req.Name, exitReason)
 	a.syslog.Log(severity, log)
 	a.sendTaskLog(&model.TaskLog{Level: ptrs.Ptr(model.TaskLogLevelFromLogrus(severity)), Log: log})
@@ -558,7 +556,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		for _, r := range a.resources {
 			if r.Exited == nil {
 				a.syslog.Infof("allocation exited with unterminated resources: %v", r.Summary())
-				r.Kill(a.system, a.logCtx)
+				r.Kill(a.logCtx)
 			}
 		}
 	})
@@ -644,7 +642,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		}
 
 		for cID, r := range a.resources {
-			if err := r.Start(a.system, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
+			if err := r.Start(a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
 				IsMultiAgent: len(a.resources) > 1,
@@ -733,7 +731,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
 		a.syslog.Infof("releasing resources %s", msg.ResourcesID)
-		a.rm.Release(a.system, sproto.ResourcesReleased{
+		a.rm.Release(sproto.ResourcesReleased{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  &msg.ResourcesID,
 		})
@@ -922,7 +920,7 @@ func (a *allocation) kill(reason string) {
 	})
 
 	for _, r := range a.resources.active() {
-		r.Kill(a.system, a.logCtx)
+		r.Kill(a.logCtx)
 	}
 
 	if len(a.resources.exited()) == 0 {
@@ -965,6 +963,29 @@ func (a *allocation) exitedWithoutErr() bool {
 		}
 	}
 	return true
+}
+
+func (a *allocation) SetExitStatus(exitReason string, exitErr error, statusCode *int32) {
+	switch err := exitErr.(type) {
+	case sproto.ResourcesFailure:
+		a.model.ExitErr = ptrs.Ptr(err.Error())
+		if err.ExitCode != nil {
+			a.model.StatusCode = ptrs.Ptr(int32(*err.ExitCode))
+		}
+	case nil:
+		a.model.ExitErr = nil
+	default:
+		a.model.ExitErr = ptrs.Ptr(err.Error())
+	}
+	a.model.ExitReason = &exitReason
+
+	if statusCode != nil {
+		a.model.StatusCode = statusCode
+	}
+
+	if err := db.AddAllocationExitStatus(context.TODO(), &a.model); err != nil {
+		a.syslog.WithError(err).Error("failed to add allocation exit status to db")
+	}
 }
 
 func (a *allocation) registerProxies(addresses []cproto.Address) {

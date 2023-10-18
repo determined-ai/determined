@@ -19,9 +19,8 @@ This document guides you through training a Keras model in Determined. You need 
 class that inherits :class:`~determined.keras.TFKerasTrial` and specify it as the entrypoint in the
 :doc:`experiment configuration </reference/training/experiment-config-reference>`.
 
-To learn about this API, you can start by reading the trial definitions from the following examples:
+To learn about this API, you can start by reading the trial definitions from the following example:
 
--  :download:`Fashion MNIST example </examples/fashion_mnist_tf_keras.tgz>`
 -  :download:`CIFAR-10 example </examples/cifar10_tf_keras.tgz>`
 
 ***********

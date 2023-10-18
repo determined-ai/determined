@@ -142,7 +142,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className={css.header}>
           {danger ? (
             <div className={css.dangerIcon}>
-              <Icon name="warning-large" size="large" title="Danger" />
+              <Icon name="warning" size="large" title="Danger" />
             </div>
           ) : (
             icon && <Icon decorative name={icon} size="large" />

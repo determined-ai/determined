@@ -1,0 +1,9 @@
+name: pytorch-profiler-sync-test
+entrypoint: python3 pytorch_profiler_sync.py
+
+searcher:
+   name: single
+   metric: x
+   max_length: 1
+
+max_restarts: 0

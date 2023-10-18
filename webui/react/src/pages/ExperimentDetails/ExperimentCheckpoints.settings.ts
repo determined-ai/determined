@@ -3,7 +3,7 @@ import { array, boolean, literal, number, string, undefined as undefinedType, un
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
-import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
+import { Checkpointv1SortBy } from 'services/api-ts-sdk';
 import { CheckpointState } from 'types';
 
 export type CheckpointColumnName =
@@ -35,7 +35,7 @@ export interface Settings extends InteractiveTableSettings {
   columns: CheckpointColumnName[];
   row?: string[];
   sortDesc: boolean;
-  sortKey: V1GetExperimentCheckpointsRequestSortBy;
+  sortKey: Checkpointv1SortBy;
   state?: CheckpointState[];
   tableLimit: number;
   tableOffset: number;
@@ -76,16 +76,16 @@ export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
       type: boolean,
     },
     sortKey: {
-      defaultValue: V1GetExperimentCheckpointsRequestSortBy.UUID,
+      defaultValue: Checkpointv1SortBy.UUID,
       storageKey: 'sortKey',
       type: union([
-        literal(V1GetExperimentCheckpointsRequestSortBy.BATCHNUMBER),
-        literal(V1GetExperimentCheckpointsRequestSortBy.ENDTIME),
-        literal(V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC),
-        literal(V1GetExperimentCheckpointsRequestSortBy.STATE),
-        literal(V1GetExperimentCheckpointsRequestSortBy.TRIALID),
-        literal(V1GetExperimentCheckpointsRequestSortBy.UNSPECIFIED),
-        literal(V1GetExperimentCheckpointsRequestSortBy.UUID),
+        literal(Checkpointv1SortBy.BATCHNUMBER),
+        literal(Checkpointv1SortBy.ENDTIME),
+        literal(Checkpointv1SortBy.SEARCHERMETRIC),
+        literal(Checkpointv1SortBy.STATE),
+        literal(Checkpointv1SortBy.TRIALID),
+        literal(Checkpointv1SortBy.UNSPECIFIED),
+        literal(Checkpointv1SortBy.UUID),
       ]),
     },
     state: {

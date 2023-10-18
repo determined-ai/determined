@@ -6,7 +6,7 @@ import appdirs
 
 import determined as det
 from determined import core, experimental, tensorboard
-from determined.common import api, storage, util
+from determined.common import api, constants, storage, util
 from determined.common.api import certs
 
 logger = logging.getLogger("determined.experimental.core_v2")
@@ -77,6 +77,8 @@ def _make_v2_context(
     # - if on-cluster: try using cluster storage, then appdirs
     # - off-cluster: appdirs.
     has_storage = checkpoint_storage is not None
+    # No bind mounts for unmanaged tasks.
+    container_path = constants.SHARED_FS_CONTAINER_PATH if not unmanaged else None
     if not has_storage:
         tensorboard_mode = core.TensorboardMode.MANUAL
 
@@ -89,8 +91,9 @@ def _make_v2_context(
                 str(info.trial.experiment_id),
                 str(info.trial.trial_id),
                 checkpoint_storage,
-                container_path=None,  # No bind mounts for unmanaged tasks.
+                container_path=container_path,
                 async_upload=True,
+                sync_on_close=(tensorboard_mode == core.TensorboardMode.AUTO),
             )
             if tensorboard_mode == core.TensorboardMode.AUTO:
                 tbd_writer = tensorboard.get_metric_writer()
@@ -119,7 +122,7 @@ def _make_v2_context(
             if has_storage:
                 storage_manager = storage.build(
                     info.trial._config["checkpoint_storage"],
-                    container_path=None,  # No bind mounts for unmanaged tasks.
+                    container_path=container_path,
                 )
             else:
                 storage_manager = _default_storage_manager()

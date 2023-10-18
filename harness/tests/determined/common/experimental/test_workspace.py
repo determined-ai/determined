@@ -2,7 +2,7 @@ import pytest
 import responses
 
 from determined.common import api
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
 from determined.common.experimental import workspace
 from tests.fixtures import api_responses
 
@@ -65,7 +65,7 @@ def test_workspace_constructor_errors_when_no_workspace_found(
     )
 
     responses.get(f"{_MASTER}/api/v1/workspaces", json=resp.to_json())
-    with pytest.raises(ValueError):
+    with pytest.raises(errors.NotFoundException):
         workspace.Workspace(session=standard_session, workspace_name="not_found")
 
 

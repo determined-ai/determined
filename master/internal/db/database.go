@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -122,6 +123,7 @@ type DB interface {
 	EndAllTaskStats() error
 	RecordTaskEndStats(stats *model.TaskStats) error
 	RecordTaskStats(stats *model.TaskStats) error
+	UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error
 }
 
 var (

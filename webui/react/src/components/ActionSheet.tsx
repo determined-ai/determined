@@ -42,11 +42,9 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
       return (
         <Link className={css.item} key={action.label} path={action.path} {...action}>
           {action.icon && typeof action.icon === 'string' ? (
-            <div className={css.icon}>
-              <Icon decorative name={action.icon} size="large" />
-            </div>
+            <Icon decorative name={action.icon} size="large" />
           ) : (
-            <div className={css.icon}>{action.icon}</div>
+            action.icon
           )}
           {!action.icon && <span className={css.spacer} />}
           <div className={css.label}>{action.label}</div>
@@ -76,9 +74,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
           </div>
           {!props.hideCancel && (
             <Link className={css.item} key="cancel" onClick={handleCancelClick}>
-              <div className={css.icon}>
-                <Icon decorative name="error" size="large" />
-              </div>
+              <Icon decorative name="error" size="large" />
               <div className={css.label}>Cancel</div>
             </Link>
           )}

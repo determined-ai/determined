@@ -8,7 +8,6 @@ import {
   glasbeyColor,
   metricToStr,
 } from 'components/kit/internal/functions';
-import Message from 'components/kit/internal/Message';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
 import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
@@ -18,6 +17,7 @@ import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/clo
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
 import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 
@@ -347,7 +347,8 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       return Array.from(xOpts).sort();
     }, [chartsProps]);
 
-    if (chartsProps.length === 0 && !isLoading) return <Message title="No data available." />;
+    if (chartsProps.length === 0 && !isLoading)
+      return <Message icon="warning" title="No data available." />;
 
     return (
       <div className={css.scrollContainer}>

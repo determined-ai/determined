@@ -418,7 +418,7 @@ func (p *pod) createPodSpec(scheduler string) error {
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
-		Command:         spec.Entrypoint,
+		Command:         spec.LogShipperWrappedEntrypoint(),
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),

@@ -1,9 +1,9 @@
-import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useObservable } from 'micro-observables';
 import { useId, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
@@ -185,14 +185,29 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                         <Form.Item initialValue="" {...restField} name={[name, 'value']}>
                           <Input placeholder="Value" size="small" />
                         </Form.Item>
-                        <MinusCircleOutlined onClick={() => remove(name)} />
+                        <Button
+                          icon={
+                            <Icon
+                              name="minus-circle"
+                              showTooltip
+                              size="small"
+                              title="Remove metadata"
+                            />
+                          }
+                          type="text"
+                          onClick={() => remove(name)}
+                        />
                       </div>
                     ))}
                     <div className={css.formError}>
                       <Form.ErrorList errors={errors} />
                     </div>
                     <Form.Item>
-                      <Button block icon={<PlusOutlined />} type="dashed" onClick={() => add()}>
+                      <Button
+                        block
+                        icon={<Icon decorative name="add" size="tiny" />}
+                        type="dashed"
+                        onClick={() => add()}>
                         Add metadata
                       </Button>
                     </Form.Item>
@@ -230,7 +245,18 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                             ]}>
                             <Input placeholder="Tag" size="small" type="text" />
                           </Form.Item>
-                          <MinusCircleOutlined onClick={() => remove(name)} />
+                          <Button
+                            icon={
+                              <Icon
+                                name="minus-circle"
+                                showTooltip
+                                size="small"
+                                title="Remove tag"
+                              />
+                            }
+                            type="text"
+                            onClick={() => remove(name)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -238,7 +264,11 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       <Form.ErrorList errors={errors} />
                     </div>
                     <Form.Item>
-                      <Button block icon={<PlusOutlined />} type="dashed" onClick={() => add()}>
+                      <Button
+                        block
+                        icon={<Icon decorative name="add" size="tiny" />}
+                        type="dashed"
+                        onClick={() => add()}>
                         Add tag
                       </Button>
                     </Form.Item>

@@ -239,10 +239,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
         })}
       </div>
       <div className={css.actions}>
-        <Button
-          icon={<Icon decorative name="add-small" size="tiny" />}
-          type="text"
-          onClick={addRow}>
+        <Button icon={<Icon decorative name="add" size="tiny" />} type="text" onClick={addRow}>
           Add sort
         </Button>
         <Button type="text" onClick={clearAll}>

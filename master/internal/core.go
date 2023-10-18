@@ -11,7 +11,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -702,13 +704,16 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 		// To be fixed by https://github.com/soheilhy/cmux/pull/69 which makes cmux an io.Closer.
 		return gRPCServer.Serve(grpcListener)
 	})
+	defer gRPCServer.Stop()
+
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
 		m.echo.HidePort = true
 		m.echo.Server.ConnContext = connsave.SaveConn
-		defer closeWithErrCheck("echo", m.echo)
 		return m.echo.StartServer(m.echo.Server)
 	})
+	defer closeWithErrCheck("echo", m.echo)
+
 	start("cmux listener", mux.Serve)
 
 	if systemdListener != nil {
@@ -954,7 +959,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	userService := user.GetService()
 
 	proxy.InitProxy(processProxyAuthentication)
-	portregistry.InitPortRegistry()
+	portregistry.InitPortRegistry(config.GetMasterConfig().ReservedPorts)
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	// Initialize the HTTP server and listen for incoming requests.
@@ -1047,6 +1052,16 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
+
+	for _, ps := range m.config.InternalConfig.ProxiedServers {
+		psGroup := m.echo.Group(ps.PathPrefix)
+		psTarget, err := url.Parse(ps.Destination)
+		if err != nil {
+			return errors.Wrap(err, "failed to parse the given proxied server path")
+		}
+		psProxy := httputil.NewSingleHostReverseProxy(psTarget)
+		psGroup.Any("*", echo.WrapHandler(http.StripPrefix(ps.PathPrefix, psProxy)))
+	}
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 

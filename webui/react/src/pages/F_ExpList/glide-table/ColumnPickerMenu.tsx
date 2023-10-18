@@ -5,9 +5,9 @@ import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Dropdown from 'components/kit/Dropdown';
-import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
+import Message from 'components/kit/Message';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
@@ -185,7 +185,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
               </Checkbox>
             ))
           ) : (
-            <Empty description="No results" />
+            <Message description="No results" icon="warning" />
           )}
         </Space>
       ) : (

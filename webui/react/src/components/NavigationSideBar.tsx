@@ -89,11 +89,9 @@ export const NavigationItem: React.FC<ItemProps> = ({
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
-          <div className={css.icon}>
-            <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
-          </div>
+          <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
         ) : (
-          <div className={css.icon}>{props.icon}</div>
+          props.icon
         )}
         <div className={css.label}>{props.labelRender ? props.labelRender : props.label}</div>
       </Link>
@@ -292,7 +290,7 @@ const NavigationSideBar: React.FC = () => {
                     </WorkspaceQuickSearch>
                     {canCreateWorkspace && (
                       <Button
-                        icon={<Icon name="add-small" size="tiny" title="Create workspace" />}
+                        icon={<Icon name="add" size="tiny" title="Create workspace" />}
                         type="text"
                         onClick={WorkspaceCreateModal.open}
                       />
@@ -337,7 +335,7 @@ const NavigationSideBar: React.FC = () => {
                     {canCreateWorkspace && (
                       <li>
                         <NavigationItem
-                          icon="add-small"
+                          icon="add"
                           iconSize="tiny"
                           label="New Workspace"
                           labelRender={

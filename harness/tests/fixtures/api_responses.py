@@ -1,7 +1,7 @@
 import copy
 import json
 import pathlib
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Tuple, TypeVar
 
 import requests
 
@@ -38,10 +38,41 @@ def sample_get_experiment(**kwargs: Any) -> bindings.v1GetExperimentResponse:
         return resp
 
 
+def sample_get_experiments() -> bindings.v1GetExperimentsResponse:
+    with open(FIXTURES_DIR / "experiments.json") as f:
+        resp = bindings.v1GetExperimentsResponse.from_json(json.load(f))
+        return resp
+
+
 def sample_get_experiment_trials() -> bindings.v1GetExperimentTrialsResponse:
     with open(FIXTURES_DIR / "experiment_trials.json") as f:
         resp = bindings.v1GetExperimentTrialsResponse.from_json(json.load(f))
         return resp
+
+
+def sample_get_experiment_checkpoints() -> bindings.v1GetExperimentCheckpointsResponse:
+    with open(FIXTURES_DIR / "checkpoints.json") as f:
+        resp = bindings.v1GetExperimentCheckpointsResponse.from_json(json.load(f))
+        return resp
+
+
+def sample_get_trial_checkpoints() -> bindings.v1GetTrialCheckpointsResponse:
+    with open(FIXTURES_DIR / "checkpoints.json") as f:
+        resp = bindings.v1GetTrialCheckpointsResponse.from_json(json.load(f))
+        return resp
+
+
+def sample_get_trial(**kwargs: Any) -> bindings.v1GetTrialResponse:
+    with open(FIXTURES_DIR / "trial.json") as f:
+        resp = bindings.v1GetTrialResponse.from_json(json.load(f))
+        for k, v in kwargs.items():
+            setattr(resp.trial, k, v)
+        return resp
+
+
+def sample_trial_logs() -> str:
+    with open(FIXTURES_DIR / "trial_logs.json") as f:
+        return f.read()
 
 
 def sample_get_model() -> bindings.v1GetModelResponse:
@@ -83,6 +114,13 @@ def sample_get_checkpoint() -> bindings.v1GetCheckpointResponse:
 def sample_get_workspace() -> bindings.v1GetWorkspaceResponse:
     with open(FIXTURES_DIR / "workspace.json") as f:
         resp = bindings.v1GetWorkspaceResponse.from_json(json.load(f))
+        return resp
+
+
+def sample_get_project() -> bindings.v1GetProjectResponse:
+    with open(FIXTURES_DIR / "project.json") as f:
+        resp = bindings.v1GetProjectResponse.from_json(json.load(f))
+        print(resp)
         return resp
 
 
@@ -178,3 +216,33 @@ def serve_by_page(
         return (200, {}, json.dumps(paged_response.to_json()))
 
     return _serve_by_page
+
+
+def iter_pages(
+    pageable_resp: bindings.Paginated, pageable_attribute: str, max_page_size: Optional[int] = None
+) -> Iterator[bindings.Paginated]:
+    """Creates an infinite generator from a pageable response.
+
+    If the pageable response is exhausted, this method will return an empty response.
+
+    Args:
+        pageable_resp: A complete response that can be paginated
+        pageable_attribute: The name of the field in the response that will be split up across
+          pages when a response is paginated
+        max_page_size: The maximum number of items to include in each page. If a request's params
+          specify a limit that is larger than this (or no limit at all), the limit will be reduced
+          to this value
+    """
+    offset = 0
+    while True:
+        page = page_of(
+            complete_resp=pageable_resp,
+            pageable_type=pageable_attribute,
+            offset=offset,
+            limit=max_page_size,
+        )
+        yield page
+
+        assert page.pagination is not None
+        assert page.pagination.endIndex is not None
+        offset = page.pagination.endIndex

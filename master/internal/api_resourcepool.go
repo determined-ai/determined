@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -49,7 +50,7 @@ func (a *apiServer) GetResourcePools(
 	if err != nil {
 		return nil, err
 	}
-	resp, err := a.m.rm.GetResourcePools(a.m.system, req)
+	resp, err := a.m.rm.GetResourcePools(req)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +73,7 @@ func (a *apiServer) GetResourcePools(
 	if err != nil {
 		return nil, err
 	}
+	sort.Slice(filteredPools, func(i, j int) bool { return filteredPools[i].Name < filteredPools[j].Name })
 	resp.ResourcePools = filteredPools
 
 	if req.Unbound {
@@ -212,14 +214,12 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 
 func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
 	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool(
-		a.m.system,
 		sproto.GetDefaultComputeResourcePoolRequest{})
 	if err != nil {
 		return err
 	}
 
 	defaultAuxPool, err := a.m.rm.GetDefaultAuxResourcePool(
-		a.m.system,
 		sproto.GetDefaultAuxResourcePoolRequest{},
 	)
 	if err != nil {
@@ -254,7 +254,7 @@ func (a *apiServer) canUserModifyWorkspaces(ctx context.Context, ids []int32) er
 }
 
 func (a *apiServer) resourcePoolsAsConfigs() ([]config.ResourcePoolConfig, error) {
-	resp, err := a.m.rm.GetResourcePools(a.m.system, &apiv1.GetResourcePoolsRequest{})
+	resp, err := a.m.rm.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	if err != nil {
 		return nil, err
 	}

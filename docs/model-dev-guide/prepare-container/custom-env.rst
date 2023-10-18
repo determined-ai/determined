@@ -75,7 +75,7 @@ This example startup hook installs the ``wget`` utility and the ``pandas`` Pytho
    apt-get update && apt-get install -y wget
    python3 -m pip install pandas
 
-This :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model that
+This :download:`GPT Neox example </examples/gpt_neox.tgz>` contains a TensorFlow Keras model that
 uses a startup hook to install an additional Python dependency.
 
 .. _container-images:

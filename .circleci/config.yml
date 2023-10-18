@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.26.1-dev0
+    default: 0.26.2-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -1222,7 +1222,6 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
-      - run: make -C model_hub examples
       - run: make -C helm build
       - attach_workspace:
           at: .
@@ -1539,7 +1538,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1553,7 +1552,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1573,17 +1572,16 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.33.0-focal
+      - image: cimg/node:20.1.0
     resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
       - skip-if-github-only
-      - run: apt-get update && apt-get -y install make
       - react-get-deps
-      - run: npx playwright install --with-deps && npx playwright install chrome
+      - run: npx playwright install --with-deps chrome firefox webkit
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
-      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} PLAYWRIGHT_BROWSERS_PATH=0 npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -1593,7 +1591,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1613,7 +1611,7 @@ jobs:
 
   test-unit-react-quarantined:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
         environment:
           CI: "true"
     steps:
@@ -1625,7 +1623,7 @@ jobs:
 
   test-unit-react-screenshot:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1663,7 +1661,7 @@ jobs:
 
   test-intg-downstream:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:20.1.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared
@@ -1870,7 +1868,6 @@ jobs:
       - run: make -C harness check
       - run: make -C model_hub check
       - run: make -C e2e_tests check
-      - run: make -C examples check
       - run: make -C tools check
       - run: make -C schemas check
 
@@ -2095,25 +2092,6 @@ jobs:
       - store_artifacts:
           path: cov-html
           destination: cov-html
-
-  test-examples:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    resource_class: medium+
-    steps:
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          extra-requirements-file: "examples/tests/requirements.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
-      - upload-test-job:
-          only_on_branch: main
-          test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
     parameters:
@@ -2681,7 +2659,6 @@ workflows:
       - test-unit-storage:
           context: storage-unit-tests
           filters: *any-upstream
-      - test-examples
       - python-coverage:
           requires:
             - test-unit-harness-cpu
@@ -2945,26 +2922,6 @@ workflows:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
-          name: test-e2e-gke-parallel-tfonly
-          context: gcp-ci
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["parallel-tfonly"]
-              mark: ["parallel and tensorflow2"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
-      - test-e2e-gke:
           name: test-e2e-gke-single-cpu
           context: gcp-ci
           filters:
@@ -3160,25 +3117,6 @@ workflows:
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
-      - test-e2e-gke:
-          name: test-e2e-gke-parallel-tfonly
-          context: gcp-ci
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["parallel-tfonly"]
-              mark: ["parallel and tensorflow2"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
       # K8s CPU tests
       - request-k8-tests-cpu:
           type: approval
@@ -3230,7 +3168,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-distributed-nightly
-          context: aws
+          context:
+            - aws
+            - hugging-face
           filters: *upstream-feature-branch
           requires:
             - request-gpu-distributed-nightly
@@ -3318,43 +3258,6 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
-      # Transformers tests
-      - request-transformers-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-transformers
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-transformers-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["transformers"]
-              mark: ["model_hub_transformers"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
-      - test-e2e-aws:
-          name: test-e2e-transformers-amp
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-transformers-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["transformers-amp"]
-              mark: ["model_hub_transformers_amp"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
       # Request AWS FS tests
       - request-aws-fs-tests:
           type: approval
@@ -3411,30 +3314,6 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-          requires:
-            - check-if-nightly-tests-should-run
-      - test-e2e-aws:
-          name: test-e2e-gpu-transformers
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["transformers"]
-              mark: ["model_hub_transformers"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-          requires:
-            - check-if-nightly-tests-should-run
-      - test-e2e-aws:
-          name: test-e2e-gpu-transformers-amp
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["transformers-amp"]
-              mark: ["model_hub_transformers_amp"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]

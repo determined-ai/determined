@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -42,12 +41,7 @@ type (
 	SetGroupMaxSlots struct {
 		MaxSlots     *int
 		ResourcePool string
-		Handler      *actor.Ref
-	}
-
-	// NotifyRMPriorityChange notifies the actor of an RM Priority Change.
-	NotifyRMPriorityChange struct {
-		Priority int
+		JobID        model.JobID
 	}
 )
 

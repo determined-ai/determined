@@ -911,74 +911,19 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	tx, err := Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		txErr := tx.Rollback()
-		if txErr != nil && txErr != sql.ErrTxDone {
-			log.WithError(txErr).Error("error rolling back transaction in DeleteExperiments")
-		}
-	}()
-	var delIDs []int32
-	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_steps").
-		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting steps for experiments %v", ids)
-	}
 
-	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_validations").
-		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting validations for experiments %v", ids)
-	}
-
-	// Even with migration away from checkpoints_v1,
-	// Keeping this to keep behavior of fully deleting checkpoints.
-	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_checkpoints").
-		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting checkpoints for experiments %v", ids)
-	}
-
-	if _, err = tx.NewDelete().Model(&delIDs).Table("checkpoints_v2").
-		Where(`task_id IN (
-	SELECT tt.task_id
-	FROM trial_id_task_id tt
-	JOIN trials t ON t.id = tt.trial_id
-	WHERE experiment_id IN (?)
-)`, bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting checkpoints (v2) for experiments %v", ids)
-	}
-
-	if err := db.DeleteSnapshotsForExperiments(ids)(ctx, &tx); err != nil {
-		return errors.Wrapf(err, "error deleting snapshots for experiments %v", ids)
-	}
-
-	if _, err = tx.NewDelete().Model(&delIDs).Table("trials").
-		Where("experiment_id IN (?)", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting trials for experiments %v", ids)
-	}
-
-	_, err = tx.NewDelete().Model(&delIDs).Table("experiments").
+	var deletedIDs []int32
+	_, err := Bun().NewDelete().Model(&deletedIDs).Table("experiments").
 		Where("id IN (?)", bun.In(ids)).
 		Returning("id").
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting experiments %v", ids)
 	}
-	if len(delIDs) != len(ids) {
+	if len(deletedIDs) != len(ids) {
 		return errors.Errorf("mis-match in delete-able experiments versus requested %v", ids)
 	}
-	return tx.Commit()
+	return nil
 }
 
 // ExperimentHasCheckpointsInRegistry checks if the experiment has any checkpoints in the registry.

@@ -48,6 +48,7 @@ class ExperimentalCoreContext:
         Args:
             model_Version (model.ModelVersion): The model version to associate with this task
         """
+        assert model_version.checkpoint
         req = bindings.v1ReportTrialSourceInfoRequest(
             trialSourceInfo=bindings.v1TrialSourceInfo(
                 checkpointUuid=model_version.checkpoint.uuid,

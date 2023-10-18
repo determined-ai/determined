@@ -3,10 +3,9 @@
 package mocks
 
 import (
-	actor "github.com/determined-ai/determined/master/pkg/actor"
-	logger "github.com/determined-ai/determined/master/pkg/logger"
-
 	mock "github.com/stretchr/testify/mock"
+
+	logger "github.com/determined-ai/determined/master/pkg/logger"
 
 	sproto "github.com/determined-ai/determined/master/internal/sproto"
 
@@ -18,18 +17,18 @@ type Resources struct {
 	mock.Mock
 }
 
-// Kill provides a mock function with given fields: _a0, _a1
-func (_m *Resources) Kill(_a0 *actor.System, _a1 logger.Context) {
-	_m.Called(_a0, _a1)
+// Kill provides a mock function with given fields: _a0
+func (_m *Resources) Kill(_a0 logger.Context) {
+	_m.Called(_a0)
 }
 
-// Start provides a mock function with given fields: _a0, _a1, _a2, _a3
-func (_m *Resources) Start(_a0 *actor.System, _a1 logger.Context, _a2 tasks.TaskSpec, _a3 sproto.ResourcesRuntimeInfo) error {
-	ret := _m.Called(_a0, _a1, _a2, _a3)
+// Start provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Resources) Start(_a0 logger.Context, _a1 tasks.TaskSpec, _a2 sproto.ResourcesRuntimeInfo) error {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*actor.System, logger.Context, tasks.TaskSpec, sproto.ResourcesRuntimeInfo) error); ok {
-		r0 = rf(_a0, _a1, _a2, _a3)
+	if rf, ok := ret.Get(0).(func(logger.Context, tasks.TaskSpec, sproto.ResourcesRuntimeInfo) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}

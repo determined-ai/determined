@@ -2,15 +2,15 @@ package agentrm
 
 import (
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/mathx"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // calculateDesiredNewAgentNum calculates the new instances based on pending tasks and
 // slots per instance.
 func calculateDesiredNewAgentNum(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	slotsPerAgent int,
 	maxZeroSlotTasksPerAgent int,
 ) int {
@@ -33,7 +33,7 @@ func calculateDesiredNewAgentNum(
 			continue
 		case it.Value().SlotsNeeded <= slotsPerAgent, it.Value().SlotsNeeded%slotsPerAgent == 0:
 			if groups != nil {
-				group := groups[it.Value().Group]
+				group := groups[it.Value().JobID]
 				groupSlotsNeeded[group] += it.Value().SlotsNeeded
 			} else {
 				slotSum += it.Value().SlotsNeeded

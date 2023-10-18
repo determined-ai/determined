@@ -44,7 +44,9 @@ def test_download_calls_GCSStorageManager_download_in_direct_download_mode(
     tmp_path: os.PathLike,
 ) -> None:
     # Patch to avoid making actual calls to GCS.
-    with mock.patch("google.cloud.storage.Client"):
+    with mock.patch("google.cloud.storage.Client"), mock.patch.object(
+        checkpoint.Checkpoint, "reload"
+    ):
         storage_conf = storage_conf_of_checkpoint(sample_checkpoint)
         storage_conf.update({"type": "gcs", "prefix": None})
         del storage_conf["access_key"]
@@ -64,7 +66,7 @@ def test_download_calls_S3StorageManager_download_in_direct_download_mode(
     # Patch boto methods to avoid making actual calls to S3.
     with mock.patch(
         "determined.common.storage.boto3_credential_manager.initialize_boto3_credential_providers"
-    ), mock.patch("boto3.resource"):
+    ), mock.patch("boto3.resource"), mock.patch.object(checkpoint.Checkpoint, "reload"):
         storage_conf = storage_conf_of_checkpoint(sample_checkpoint)
         storage_conf.update(
             {"type": "s3", "secret_key": None, "endpoint_url": None, "prefix": None}

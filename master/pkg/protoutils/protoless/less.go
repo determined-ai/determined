@@ -55,6 +55,23 @@ func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 	return ai.Training.SearcherMetric.Value < aj.Training.SearcherMetric.Value
 }
 
+// CheckpointMetricNameLess compares checkpoints by a metric name, falling back to
+// report time when equal. Order makes sure nulls are always last.
+func CheckpointMetricNameLess(ai, aj *checkpointv1.Checkpoint, metricName string) bool {
+	aiMetricValue, aiOk := ai.GetTraining().GetValidationMetrics().GetAvgMetrics().AsMap()[metricName]
+	ajMetricValue, ajOk := aj.GetTraining().GetValidationMetrics().GetAvgMetrics().AsMap()[metricName]
+	if !aiOk {
+		return true
+	}
+	if !ajOk {
+		return false
+	}
+	if aiMetricValue == ajMetricValue {
+		return CheckpointReportTimeLess(ai, aj)
+	}
+	return aiMetricValue.(float64) < ajMetricValue.(float64)
+}
+
 // CheckpointSearcherMetricNullsLast compares checkpoints by their searcher metric, return done if
 // one was null and the proper ordering.
 func CheckpointSearcherMetricNullsLast(ai, aj *checkpointv1.Checkpoint) (order bool, done bool) {

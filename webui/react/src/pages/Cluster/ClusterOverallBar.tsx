@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { ShirtSize } from 'components/kit/Theme';
 import { Loadable } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import clusterStore from 'stores/cluster';
@@ -44,7 +44,7 @@ export const ClusterOverallBar: React.FC = () => {
         {Loadable.isLoaded(agents) && Loadable.isLoaded(overview) ? ( // This is ok as the Spinner has conditionalRender active
           <>
             {overview.data.CUDA.total + overview.data.ROCM.total + overview.data.CPU.total === 0 ? (
-              <Message title="No connected agents." type={MessageType.Empty} />
+              <Message icon="warning" title="No connected agents." />
             ) : null}
             {overview.data.CUDA.total > 0 && (
               <SlotAllocationBar

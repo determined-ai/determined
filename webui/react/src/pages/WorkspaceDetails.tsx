@@ -3,10 +3,10 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Message from 'components/kit/Message';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
-import Message from 'components/Message';
 import ModelRegistry from 'components/ModelRegistry';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';

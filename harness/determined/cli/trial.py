@@ -121,6 +121,7 @@ def describe_trial(args: Namespace) -> None:
         "Experiment ID",
         "State",
         "H-Params",
+        "Summary Metrics",
         "Started",
         "Ended",
     ]
@@ -130,6 +131,7 @@ def describe_trial(args: Namespace) -> None:
             trial.experimentId,
             trial.state,
             json.dumps(trial.hparams, indent=4),
+            json.dumps(trial.summaryMetrics, indent=4),
             render.format_time(trial.startTime),
             render.format_time(trial.endTime),
         ]

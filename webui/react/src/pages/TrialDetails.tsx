@@ -2,10 +2,10 @@ import type { TabsProps } from 'antd';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Message from 'components/kit/Message';
 import Pivot from 'components/kit/Pivot';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -208,9 +208,7 @@ const TrialDetailsComp: React.FC = () => {
 
   if (trialDetails.error !== undefined && !isNotFound(trialDetails.error)) {
     const message = `Unable to fetch Trial ${trialId}`;
-    return (
-      <Message message={trialDetails.error.message} title={message} type={MessageType.Warning} />
-    );
+    return <Message description={trialDetails.error.message} icon="warning" title={message} />;
   }
 
   if (!trial || !experiment) {

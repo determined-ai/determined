@@ -34,6 +34,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         base_path: pathlib.Path,
         sync_path: pathlib.Path,
         async_upload: bool = True,
+        sync_on_close: bool = True,
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
@@ -42,6 +43,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self.upload_thread = None
         if async_upload:
             self.upload_thread = _TensorboardUploadThread(self._sync_impl)
+        self.sync_on_close = sync_on_close
 
     def list_tb_files(
         self,
@@ -112,6 +114,8 @@ class TensorboardManager(metaclass=abc.ABCMeta):
             self.upload_thread.start()
 
     def close(self) -> None:
+        if self.sync_on_close:
+            self.sync()
         if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.close()
 

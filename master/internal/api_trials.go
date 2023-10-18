@@ -492,19 +492,30 @@ func (a *apiServer) GetTrialCheckpoints(
 			aj, ai = ai, aj
 		}
 
-		switch req.SortBy {
-		case apiv1.GetTrialCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			return protoless.CheckpointStepsCompletedLess(ai, aj)
-		case apiv1.GetTrialCheckpointsRequest_SORT_BY_UUID:
-			return ai.Uuid < aj.Uuid
-		case apiv1.GetTrialCheckpointsRequest_SORT_BY_END_TIME:
-			return protoless.CheckpointReportTimeLess(ai, aj)
-		case apiv1.GetTrialCheckpointsRequest_SORT_BY_STATE:
-			return ai.State.Number() < aj.State.Number()
-		case apiv1.GetTrialCheckpointsRequest_SORT_BY_UNSPECIFIED:
-			fallthrough
+		switch req.GetSortBy().(type) {
+		case *apiv1.GetTrialCheckpointsRequest_SortByAttr:
+			switch req.GetSortByAttr() {
+			case checkpointv1.SortBy_SORT_BY_BATCH_NUMBER:
+				return protoless.CheckpointStepsCompletedLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_UUID:
+				return ai.Uuid < aj.Uuid
+			case checkpointv1.SortBy_SORT_BY_TRIAL_ID:
+				return protoless.CheckpointTrialIDLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_END_TIME:
+				return protoless.CheckpointReportTimeLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_STATE:
+				return ai.State.Number() < aj.State.Number()
+			case checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC:
+				return protoless.CheckpointSearcherMetricLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_UNSPECIFIED:
+				fallthrough
+			default:
+				return protoless.CheckpointTrialIDLess(ai, aj)
+			}
+		case *apiv1.GetTrialCheckpointsRequest_SortByMetric:
+			return protoless.CheckpointMetricNameLess(ai, aj, req.GetSortByMetric())
 		default:
-			return protoless.CheckpointStepsCompletedLess(ai, aj)
+			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
 
@@ -1152,7 +1163,6 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	}
 
 	if err := a.m.rm.ExternalPreemptionPending(
-		a.m.system,
 		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
 	); err != nil {
 		return nil, err
@@ -1170,7 +1180,6 @@ func (a *apiServer) NotifyContainerRunning(
 	}
 
 	if err := a.m.rm.NotifyContainerRunning(
-		a.m.system,
 		sproto.NotifyContainerRunning{
 			AllocationID: model.AllocationID(req.AllocationId),
 			NumPeers:     req.NumPeers,

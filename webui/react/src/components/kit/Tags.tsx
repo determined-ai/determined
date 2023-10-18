@@ -1,7 +1,7 @@
-import { PlusOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Input, { InputRef } from 'components/kit/Input';
 import { alphaNumericSorter, toHtmlId, truncate } from 'components/kit/internal/functions';
 import { ValueOf } from 'components/kit/internal/types';
@@ -103,7 +103,7 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
   ) : (
     !disabled && (
       <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
-        <PlusOutlined /> Add Tag
+        <Icon decorative name="add" size="tiny" /> Add Tag
       </Tag>
     )
   );

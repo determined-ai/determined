@@ -4,7 +4,7 @@ from typing import Optional, Type
 import determined as det
 
 
-class Trial(metaclass=abc.ABCMeta):
+class LegacyTrial(metaclass=abc.ABCMeta):
     """
     Abstract base class for trials.
 

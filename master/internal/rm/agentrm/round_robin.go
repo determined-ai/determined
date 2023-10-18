@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
-
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -38,7 +37,7 @@ func (p *roundRobinScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto
 
 func roundRobinSchedule(
 	taskList *tasklist.TaskList,
-	groups map[*actor.Ref]*tasklist.Group,
+	groups map[model.JobID]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
@@ -47,10 +46,13 @@ func roundRobinSchedule(
 	groupMapping := make(map[*tasklist.Group]*groupState)
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
-		group := groups[req.Group]
+		group := groups[req.JobID]
 		state, ok := groupMapping[group]
 		if !ok {
-			state = &groupState{Group: group}
+			state = &groupState{
+				Group:          group,
+				registeredTime: req.JobSubmissionTime,
+			}
 			states = append(states, state)
 			groupMapping[group] = state
 		}
@@ -67,7 +69,7 @@ func roundRobinSchedule(
 		if first.activeSlots != second.activeSlots {
 			return first.activeSlots < second.activeSlots
 		}
-		return first.Handler.RegisteredTime().Before(second.Handler.RegisteredTime())
+		return first.registeredTime.Before(second.registeredTime)
 	})
 
 	toAllocate := make([]*sproto.AllocateRequest, 0)

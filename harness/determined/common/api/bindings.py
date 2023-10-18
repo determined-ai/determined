@@ -260,6 +260,25 @@ class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
     TIMING = "PROFILER_METRIC_TYPE_TIMING"
     MISC = "PROFILER_METRIC_TYPE_MISC"
 
+class checkpointv1SortBy(DetEnum):
+    """Sorts options for checkpoints by the given field.
+    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
+    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+    - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
+    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
+    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
+    - SORT_BY_STATE: Returns checkpoints sorted by state.
+    - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
+    configuration setting.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    UUID = "SORT_BY_UUID"
+    TRIAL_ID = "SORT_BY_TRIAL_ID"
+    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
+
 class checkpointv1State(DetEnum):
     """The current state of the checkpoint.
     - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -1171,52 +1190,76 @@ class v1AggregateQueueStats(Printable):
 class v1Allocation(Printable):
     """Allocation tracks a specific instance of a Task."""
     endTime: "typing.Optional[str]" = None
+    exitReason: "typing.Optional[str]" = None
+    isReady: "typing.Optional[bool]" = None
     startTime: "typing.Optional[str]" = None
+    statusCode: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         allocationId: str,
-        isReady: bool,
+        slots: int,
         state: "taskv1State",
         taskId: str,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        exitReason: "typing.Union[str, None, Unset]" = _unset,
+        isReady: "typing.Union[bool, None, Unset]" = _unset,
         startTime: "typing.Union[str, None, Unset]" = _unset,
+        statusCode: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.allocationId = allocationId
-        self.isReady = isReady
+        self.slots = slots
         self.state = state
         self.taskId = taskId
         if not isinstance(endTime, Unset):
             self.endTime = endTime
+        if not isinstance(exitReason, Unset):
+            self.exitReason = exitReason
+        if not isinstance(isReady, Unset):
+            self.isReady = isReady
         if not isinstance(startTime, Unset):
             self.startTime = startTime
+        if not isinstance(statusCode, Unset):
+            self.statusCode = statusCode
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Allocation":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "allocationId": obj["allocationId"],
-            "isReady": obj["isReady"],
+            "slots": obj["slots"],
             "state": taskv1State(obj["state"]),
             "taskId": obj["taskId"],
         }
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
+        if "exitReason" in obj:
+            kwargs["exitReason"] = obj["exitReason"]
+        if "isReady" in obj:
+            kwargs["isReady"] = obj["isReady"]
         if "startTime" in obj:
             kwargs["startTime"] = obj["startTime"]
+        if "statusCode" in obj:
+            kwargs["statusCode"] = obj["statusCode"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "allocationId": self.allocationId,
-            "isReady": self.isReady,
+            "slots": self.slots,
             "state": self.state.value,
             "taskId": self.taskId,
         }
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        if not omit_unset or "exitReason" in vars(self):
+            out["exitReason"] = self.exitReason
+        if not omit_unset or "isReady" in vars(self):
+            out["isReady"] = self.isReady
         if not omit_unset or "startTime" in vars(self):
             out["startTime"] = self.startTime
+        if not omit_unset or "statusCode" in vars(self):
+            out["statusCode"] = self.statusCode
         return out
 
 class v1AllocationAllGatherRequest(Printable):
@@ -3904,49 +3947,25 @@ class v1GetAgentsResponse(Printable):
         return out
 
 class v1GetAllocationResponse(Printable):
-    exitReason: "typing.Optional[str]" = None
-    statusCode: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        allocationId: str,
-        slots: int,
-        state: "taskv1State",
-        exitReason: "typing.Union[str, None, Unset]" = _unset,
-        statusCode: "typing.Union[int, None, Unset]" = _unset,
+        allocation: "v1Allocation",
     ):
-        self.allocationId = allocationId
-        self.slots = slots
-        self.state = state
-        if not isinstance(exitReason, Unset):
-            self.exitReason = exitReason
-        if not isinstance(statusCode, Unset):
-            self.statusCode = statusCode
+        self.allocation = allocation
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAllocationResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "allocationId": obj["allocationId"],
-            "slots": obj["slots"],
-            "state": taskv1State(obj["state"]),
+            "allocation": v1Allocation.from_json(obj["allocation"]),
         }
-        if "exitReason" in obj:
-            kwargs["exitReason"] = obj["exitReason"]
-        if "statusCode" in obj:
-            kwargs["statusCode"] = obj["statusCode"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "allocationId": self.allocationId,
-            "slots": self.slots,
-            "state": self.state.value,
+            "allocation": self.allocation.to_json(omit_unset),
         }
-        if not omit_unset or "exitReason" in vars(self):
-            out["exitReason"] = self.exitReason
-        if not omit_unset or "statusCode" in vars(self):
-            out["statusCode"] = self.statusCode
         return out
 
 class v1GetBestSearcherValidationMetricResponse(Printable):
@@ -4104,25 +4123,6 @@ class v1GetCurrentTrialSearcherOperationResponse(Printable):
         if not omit_unset or "op" in vars(self):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
-
-class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
-    """Sorts checkpoints by the given field.
-    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
-    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
-    - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
-    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
-    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
-    - SORT_BY_STATE: Returns checkpoints sorted by state.
-    - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
-    configuration setting.
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    UUID = "SORT_BY_UUID"
-    TRIAL_ID = "SORT_BY_TRIAL_ID"
-    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
-    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
 
 class v1GetExperimentCheckpointsResponse(Printable):
     """Response to GetExperimentCheckpointsRequest."""
@@ -5785,20 +5785,6 @@ class v1GetTrainingMetricsResponse(Printable):
             "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
-
-class v1GetTrialCheckpointsRequestSortBy(DetEnum):
-    """Sorts checkpoints by the given field.
-    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
-    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
-    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
-    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
-    - SORT_BY_STATE: Returns checkpoints sorted by state.
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    UUID = "SORT_BY_UUID"
-    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse(Printable):
     """Response to GetTrialCheckpointsRequest."""
@@ -16376,7 +16362,8 @@ def get_GetExperimentCheckpoints(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
+    sortByAttr: "typing.Optional[checkpointv1SortBy]" = None,
+    sortByMetric: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     """Get a list of checkpoints for an experiment.
@@ -16390,7 +16377,7 @@ denote number of checkpoints to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
-    - sortBy: Sort checkpoints by the given field.
+    - sortByAttr: Sort by preset checkpoint attribute.
 
  - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
  - SORT_BY_UUID: Returns checkpoints sorted by UUID.
@@ -16400,6 +16387,7 @@ denote number of checkpoints to skip from the end before returning results.
  - SORT_BY_STATE: Returns checkpoints sorted by state.
  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
 configuration setting.
+    - sortByMetric: Sort by custom validation metric name.
     - states: Limit the checkpoints to those that match the states.
 
  - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -16413,7 +16401,8 @@ configuration setting.
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
+        "sortByAttr": sortByAttr.value if sortByAttr is not None else None,
+        "sortByMetric": sortByMetric,
         "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
@@ -18046,7 +18035,8 @@ def get_GetTrialCheckpoints(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
+    sortByAttr: "typing.Optional[checkpointv1SortBy]" = None,
+    sortByMetric: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     """Get a list of checkpoints for a trial.
@@ -18060,13 +18050,17 @@ denote number of checkpoints to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
-    - sortBy: Sort checkpoints by the given field.
+    - sortByAttr: Sort by preset checkpoint attribute.
 
  - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
  - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+ - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
  - SORT_BY_STATE: Returns checkpoints sorted by state.
+ - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
+configuration setting.
+    - sortByMetric: Sort by custom validation metric name.
     - states: Limit the checkpoints to those that match the states.
 
  - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -18080,7 +18074,8 @@ denote number of checkpoints to skip from the end before returning results.
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
+        "sortByAttr": sortByAttr.value if sortByAttr is not None else None,
+        "sortByMetric": sortByMetric,
         "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(

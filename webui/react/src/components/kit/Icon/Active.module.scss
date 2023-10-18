@@ -1,0 +1,52 @@
+@use 'sass:math';
+
+.base {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  .dots {
+    $duration: 1s;
+    $size: 3px;
+
+    &,
+    &::before,
+    &::after {
+      animation-delay: math.div(-$duration, 3);
+      animation-duration: $duration;
+      animation-iteration-count: infinite;
+      animation-name: pulse;
+      animation-timing-function: ease-in-out;
+      border-radius: 50%;
+      box-shadow: 0 -1rem var(--theme-strong);
+      content: '';
+      display: block;
+      height: $size;
+      position: relative;
+      top: 1rem;
+      width: $size;
+    }
+    &::before,
+    &::after {
+      height: 100%;
+      position: absolute;
+      top: 0;
+      width: 100%;
+    }
+    &::before {
+      animation-delay: math.div(-(2 * $duration), 3);
+      left: -0.5rem;
+    }
+    &::after {
+      animation-delay: 0s;
+      left: 0.5rem;
+    }
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}

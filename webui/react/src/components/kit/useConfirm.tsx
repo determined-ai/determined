@@ -36,7 +36,7 @@ const ConfirmModal = ({
       cancel
       cancelText={cancelText}
       danger={danger}
-      icon="warning-large"
+      icon="warning"
       size={size}
       submit={{
         handleError: onError,

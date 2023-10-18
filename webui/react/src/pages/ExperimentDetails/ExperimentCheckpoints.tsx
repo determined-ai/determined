@@ -5,6 +5,7 @@ import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { useModal } from 'components/kit/Modal';
+import useConfirm from 'components/kit/useConfirm';
 import ModelCreateModal from 'components/ModelCreateModal';
 import Section from 'components/Section';
 import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
@@ -16,14 +17,15 @@ import {
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
-import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
-import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
+import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
 import { encodeCheckpointState } from 'services/decoder';
+import { readStream } from 'services/utils';
 import {
   checkpointAction,
   CheckpointAction,
@@ -33,8 +35,10 @@ import {
   RecordKey,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
+import { ensureArray } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
+import { pluralizer } from 'utils/string';
 
 import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
@@ -47,6 +51,7 @@ interface Props {
 const batchActions = [checkpointAction.Register, checkpointAction.Delete];
 
 const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) => {
+  const confirm = useConfirm();
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
@@ -76,11 +81,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     },
     [openModalCheckpointRegister],
   );
-
-  const {
-    contextHolder: modalCheckpointDeleteContextHolder,
-    modalOpen: openModalCheckpointDelete,
-  } = useModalCheckpointDelete({});
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -122,16 +122,39 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [openModalCheckpointRegister],
   );
 
+  const handleDelete = useCallback((checkpoints: string[]) => {
+    readStream(
+      detApi.Checkpoint.deleteCheckpoints({
+        checkpointUuids: checkpoints,
+      }),
+    );
+  }, []);
+
   const handleDeleteCheckpoint = useCallback(
     (checkpoints: string[]) => {
-      openModalCheckpointDelete({ checkpoints });
+      const content = `Are you sure you want to request checkpoint deletion for ${
+        checkpoints.length
+      }
+      ${pluralizer(
+        checkpoints.length,
+        'checkpoint',
+      )}? This action may complete or fail without further notification.`;
+
+      confirm({
+        content,
+        danger: true,
+        okText: 'Request Delete',
+        onConfirm: () => handleDelete(checkpoints),
+        onError: handleError,
+        title: 'Confirm Checkpoint Deletion',
+      });
     },
-    [openModalCheckpointDelete],
+    [confirm, handleDelete],
   );
 
   const dropDownOnTrigger = useCallback(
     (checkpoints: string | string[]) => {
-      const checkpointsArr = Array.isArray(checkpoints) ? checkpoints : [checkpoints];
+      const checkpointsArr = ensureArray(checkpoints);
       return {
         [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointsArr),
         [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
@@ -193,7 +216,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
-      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.STATE) {
+      } else if (column.key === Checkpointv1SortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.isFiltered = (settings) => !!(settings as Settings).state;
         column.filters = Object.values(CheckpointState)
@@ -202,7 +225,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
-      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC) {
+      } else if (column.key === Checkpointv1SortBy.SEARCHERMETRIC) {
         column.render = HumanReadableNumberRenderer;
         column.title = `Searcher Metric (${experiment.config.searcher.metric})`;
       } else if (column.key === 'actions') {
@@ -230,7 +253,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           limit: settings.tableLimit,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetExperimentCheckpointsRequestSortBy, settings.sortKey),
+          sortBy: validateDetApiEnum(Checkpointv1SortBy, settings.sortKey),
           states: validateDetApiEnumList(Checkpointv1State, states),
         },
         { signal: canceler.signal },
@@ -350,7 +373,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
       {modalCheckpointRegisterContextHolder}
-      {modalCheckpointDeleteContextHolder}
     </>
   );
 };

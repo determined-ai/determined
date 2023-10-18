@@ -245,7 +245,16 @@ func (a *apiServer) GetAllocation(
 	ctx context.Context,
 	req *apiv1.GetAllocationRequest,
 ) (*apiv1.GetAllocationResponse, error) {
-	return nil, grpcutil.UnimplementedError
+	if req.AllocationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+	allocation, err := task.DefaultService.GetAllocation(ctx, req.AllocationId)
+	if err != nil {
+		return nil, fmt.Errorf("querying allocation %s: %w", req.AllocationId, err)
+	}
+	return &apiv1.GetAllocationResponse{
+		Allocation: allocation.Proto(),
+	}, nil
 }
 
 func (a *apiServer) PostAllocationProxyAddress(
@@ -470,7 +479,7 @@ func (a *apiServer) GetActiveTasksCount(
 func (a *apiServer) GetTasks(
 	ctx context.Context, req *apiv1.GetTasksRequest,
 ) (resp *apiv1.GetTasksResponse, err error) {
-	summary, err := a.m.rm.GetAllocationSummaries(a.m.system, sproto.GetAllocationSummaries{})
+	summary, err := a.m.rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	if err != nil {
 		return nil, err
 	}

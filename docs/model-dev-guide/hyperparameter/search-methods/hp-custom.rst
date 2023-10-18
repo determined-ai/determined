@@ -7,7 +7,7 @@
 +----------------------------------------------------------------+
 | API reference                                                  |
 +================================================================+
-| :doc:`/reference/searcher/custom-searcher-reference`           |
+| :ref:`custom-searcher-reference`                               |
 +----------------------------------------------------------------+
 
 Determined supports defining your own hyperparameter search algorithms and provides search runner
@@ -38,9 +38,8 @@ To run the custom hyperparameter tuning algorithm, you can use:
 Both search runners execute the custom hyperparameter tuning algorithm and start a multi-trial
 experiment on a Determined cluster.
 
-The following sections explain the steps to take in order to implement and use a custom
-hyperparameter search algorithm. A detailed example can be found in
-:download:`asha_search_method.tgz </examples/asha_search_method.tgz>`.
+The following sections describe the steps needed to implement and use a custom hyperparameter search
+algorithm.
 
 **********************************************
  Experiment Configuration for Custom Searcher

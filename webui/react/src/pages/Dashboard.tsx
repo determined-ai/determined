@@ -4,8 +4,8 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Card from 'components/kit/Card';
-import Empty from 'components/kit/Empty';
 import Icon from 'components/kit/Icon';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
@@ -292,7 +292,7 @@ const Dashboard: React.FC = () => {
             size="middle"
           />
         ) : (
-          <Empty
+          <Message
             description={
               <>
                 Your recent experiments and tasks will show up here.{' '}

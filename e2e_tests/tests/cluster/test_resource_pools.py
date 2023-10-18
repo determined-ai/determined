@@ -22,7 +22,8 @@ def test_default_pool_task_container_defaults() -> None:
         model_dir=conf.fixtures_path("no_op"),
     )
 
-    e1_config = e1.get_config()
+    assert e1.config
+    e1_config = e1.config
 
     assert len(e1_config["environment"]["environment_variables"]["cpu"]) > 0
 
@@ -35,7 +36,8 @@ def test_default_pool_task_container_defaults() -> None:
         config=parsed_config,
         model_dir=conf.fixtures_path("no_op"),
     )
-    e2_config = e2.get_config()
+    assert e2.config
+    e2_config = e2.config
 
     assert (
         e1_config["environment"]["environment_variables"]["cpu"]

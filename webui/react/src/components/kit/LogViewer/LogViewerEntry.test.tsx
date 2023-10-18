@@ -23,8 +23,8 @@ describe('LogViewerEntry', () => {
   it('should render with all level types except None', () => {
     Object.values(LogLevel).forEach((level) => {
       if (level === LogLevel.None) return;
-      const { container } = setup({ formattedTime, level: level, message });
-      const icon = container.querySelector(`.icon-${level}`);
+      setup({ formattedTime, level: level, message });
+      const icon = screen.getByLabelText(level);
       expect(icon).not.toBeNull();
       expect(icon).toBeInTheDocument();
     });

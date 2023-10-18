@@ -60,7 +60,7 @@ func (j *Manager) parseV1JobMsgs(
 
 // jobQSnapshot asks for a fresh consistent snapshot of the job queue from the RM.
 func (j *Manager) jobQSnapshot(resourcePool string) (sproto.AQueue, error) {
-	resp, err := j.rm.GetJobQ(j.system, sproto.GetJobQ{ResourcePool: resourcePool})
+	resp, err := j.rm.GetJobQ(sproto.GetJobQ{ResourcePool: resourcePool})
 	if err != nil {
 		j.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
@@ -106,7 +106,7 @@ func (j *Manager) GetJobs(
 	// If the GetExternalJobs call is supported, RM returns a list of external jobs or
 	// an error if there is any problem. Otherwise, RM returns rmerrors.ErrNotSupported
 	// error. In this case, continue without the External jobs.
-	externalJobs, err := j.rm.GetExternalJobs(j.system, sproto.GetExternalJobs{
+	externalJobs, err := j.rm.GetExternalJobs(sproto.GetExternalJobs{
 		ResourcePool: resourcePool,
 	})
 	if err != nil {
@@ -243,7 +243,7 @@ func (j *Manager) UpdateJobQueue(updates []*jobv1.QueueControl) error {
 				errors = append(errors, err.Error())
 			}
 		case *jobv1.QueueControl_AheadOf:
-			if err := j.rm.MoveJob(j.system, sproto.MoveJob{
+			if err := j.rm.MoveJob(sproto.MoveJob{
 				ID:     jobID,
 				Anchor: model.JobID(action.AheadOf),
 				Ahead:  true,
@@ -251,7 +251,7 @@ func (j *Manager) UpdateJobQueue(updates []*jobv1.QueueControl) error {
 				errors = append(errors, err.Error())
 			}
 		case *jobv1.QueueControl_BehindOf:
-			if err := j.rm.MoveJob(j.system, sproto.MoveJob{
+			if err := j.rm.MoveJob(sproto.MoveJob{
 				ID:     jobID,
 				Anchor: model.JobID(action.BehindOf),
 				Ahead:  false,

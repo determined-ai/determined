@@ -1,4 +1,4 @@
-.. _slurm-image-config:
+:orphan:
 
 #################################
  Provide a Container Image Cache
@@ -33,10 +33,10 @@ by default in this version of Determined are described below.
 | AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-2b7e2a1``  |
 +-------------+--------------------------------------------------------------------------+
 
-See :doc:`/model-dev-guide/prepare-container/set-environment-images` for the images Docker Hub
-location, and add each tagged image needed by your experiments to the image cache.
+See :ref:`set-environment-images` for the images Docker Hub location, and add each tagged image
+needed by your experiments to the image cache.
 
-.. _referencing-local-image-paths:
+.. _referencing-local-image-paths-duplicate:
 
 *******************************
  Referencing Local Image Paths
@@ -85,7 +85,7 @@ Note: If you specify an image using :ref:`task_container_defaults <master-task-c
 you prevent new environment container image versions from being adopted on each update of
 Determined.
 
-.. _singularity-image-cache:
+.. _singularity-image-cache-duplicate:
 
 ************************************************************
  Configuring an Apptainer/Singularity Image Cache Directory
@@ -133,7 +133,7 @@ your experiments to the image cache using the following steps:
             docker://$image
       scp temporary-image mycluster:$singularity_image_root/$image
 
-.. _manage-singularity-cache:
+.. _manage-singularity-cache-duplicate:
 
 ********************************************************************************
  Managing the Singularity Image Cache using the manage-singularity-cache script
@@ -185,7 +185,7 @@ You can view the current set of Docker image names in the cache with the ``-l`` 
    determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
    determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730
 
-.. _manage-enroot-cache:
+.. _manage-enroot-cache-duplicate:
 
 **********************************************************************
  Managing the Enroot Image Cache using the manage-enroot-cache script

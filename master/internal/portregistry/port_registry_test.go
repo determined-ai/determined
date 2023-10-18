@@ -14,7 +14,7 @@ var (
 )
 
 func TestPortportRegistry(t *testing.T) {
-	InitPortRegistry()
+	InitPortRegistry(nil)
 	port, err := GetPort(dtrainSSHPortBase)
 	require.NoError(t, err)
 	require.Equal(t, 12350, port)
@@ -96,4 +96,11 @@ func TestPortportRegistry(t *testing.T) {
 	port, err = GetPort(interTrainProcessCommPort2Base)
 	require.NoError(t, err)
 	require.Equal(t, 12365, port)
+}
+
+func TestReservedPorts(t *testing.T) {
+	InitPortRegistry([]int{dtrainSSHPortBase})
+	port, err := GetPort(dtrainSSHPortBase)
+	require.NoError(t, err)
+	require.Equal(t, dtrainSSHPortBase+1, port, "default port reserved; expect next highest")
 }

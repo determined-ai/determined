@@ -38,7 +38,7 @@
       border-radius: 0;
       display: flex;
       justify-content: space-between;
-      padding: 0.5em 1em;
+      padding: 0.25em 1em;
 
       .buttonContainer {
         align-items: center;
@@ -58,13 +58,6 @@
       }
       .buttonsContainer {
         display: flex;
-
-        .noBorderButton {
-          border: 0;
-          cursor: pointer;
-          margin-right: -4px;
-          width: 20px;
-        }
       }
     }
   }

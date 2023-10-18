@@ -1,11 +1,10 @@
-import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
-import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
@@ -247,12 +246,12 @@ const ScatterPlots: React.FC<Props> = ({
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !chartData) {
     return isExperimentTerminal ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
+      <Message icon="warning" title="No data to plot." />
     ) : (
       <div>
-        <Alert
+        <Message
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner spinning />
       </div>
@@ -284,7 +283,7 @@ const ScatterPlots: React.FC<Props> = ({
               ))}
             </Grid>
           ) : (
-            <Message title="No data to plot." type={MessageType.Empty} />
+            <Message icon="warning" title="No data to plot." />
           )}
         </div>
       </Section>

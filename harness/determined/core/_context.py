@@ -254,6 +254,7 @@ def init(
             info.trial._config["checkpoint_storage"],
             container_path=constants.SHARED_FS_CONTAINER_PATH,
             async_upload=True,
+            sync_on_close=(tensorboard_mode == core.TensorboardMode.AUTO),
         )
         if tensorboard_mode == core.TensorboardMode.AUTO:
             tbd_writer = tensorboard.get_metric_writer()

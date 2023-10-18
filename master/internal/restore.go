@@ -91,7 +91,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system,
 		activeConfig.Resources().ResourcePool(),
 		workspaceID,
 		activeConfig.Resources().SlotsPerTrial(),
@@ -100,14 +99,12 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
 	if err = m.rm.ValidateResources(
-		m.system,
 		poolName,
 		activeConfig.Resources().SlotsPerTrial(),
 		false); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		m.system,
 		poolName,
 		m.config.TaskContainerDefaults,
 	)
@@ -127,7 +124,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec, m.system)
+	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
@@ -209,7 +206,7 @@ func (e *experiment) restoreTrial(
 	t, err := newTrial(
 		e.logCtx, taskID, e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
-		nil, e.system, e.self, e.TrialClosed,
+		nil, e.TrialClosed,
 	)
 	if err != nil {
 		l.WithError(err).Error("failed restoring trial, aborting restore")

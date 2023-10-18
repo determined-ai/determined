@@ -28,7 +28,6 @@ const (
 // telemetryRPFetcher exists mainly to avoid an annoying import cycle.
 type telemetryRPFetcher interface {
 	GetResourcePools(
-		actor.Messenger,
 		*apiv1.GetResourcePoolsRequest,
 	) (*apiv1.GetResourcePoolsResponse, error)
 }
@@ -59,7 +58,7 @@ func reportMasterTickDelay() time.Duration {
 
 // reportMasterTick reports the master snapshot on a periodic tick.
 func reportMasterTick(db db.DB, rm telemetryRPFetcher, system *actor.System) {
-	resp, err := rm.GetResourcePools(system, &apiv1.GetResourcePoolsRequest{})
+	resp, err := rm.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	if err != nil {
 		// TODO(Brad): Make this routine more accepting of failures.
 		syslog.WithError(err).Error("failed to receive resource pool telemetry information")

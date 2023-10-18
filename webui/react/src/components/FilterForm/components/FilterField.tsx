@@ -1,4 +1,3 @@
-import { HolderOutlined } from '@ant-design/icons';
 import { type SelectProps as AntdSelectProps } from 'antd';
 import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
@@ -275,13 +274,13 @@ const FilterField = ({
           </>
         )}
         <Button
-          icon={<Icon name="close" title="Close Field" />}
+          icon={<Icon name="close" size="tiny" title="Close Field" />}
           type="text"
           onClick={() => formStore.removeChild(field.id)}
         />
         <Button type="text">
           <div ref={drag}>
-            <HolderOutlined />
+            <Icon name="holder" size="small" title="Move field" />
           </div>
         </Button>
       </div>

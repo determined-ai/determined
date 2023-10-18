@@ -146,6 +146,19 @@ DO UPDATE SET
 `, a)
 }
 
+// AddAllocationExitStatus adds the allocation exit status to the allocations table.
+func AddAllocationExitStatus(ctx context.Context, a *model.Allocation) error {
+	_, err := Bun().NewUpdate().
+		Model(a).
+		Column("exit_reason", "exit_error", "status_code").
+		Where("allocation_id = ?", a.AllocationID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("adding allocation exit status to db: %w", err)
+	}
+	return nil
+}
+
 // CompleteAllocation persists the end of an allocation lifetime.
 func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 	if a.StartTime == nil {

@@ -134,9 +134,6 @@ func setup(t *testing.T) (
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	rmImpl := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
 
-	expActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	expRef := system.MustActorOf(actor.Addr("experiment"), &expActor)
-
 	// mock allocation service
 	var as allocationmocks.AllocationService
 	task.DefaultService = &as
@@ -178,7 +175,7 @@ func setup(t *testing.T) (
 		},
 		ssh.PrivateAndPublicKeys{},
 		false,
-		nil, nil, system, expRef, func(ri model.RequestID, reason *model.ExitedReason) {
+		nil, nil, func(ri model.RequestID, reason *model.ExitedReason) {
 			require.Equal(t, rID, ri)
 			done <- true
 			close(done)

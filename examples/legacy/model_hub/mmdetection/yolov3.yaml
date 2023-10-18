@@ -1,0 +1,50 @@
+name: mmdet_yolov3_
+data:
+  file_client_args:
+      backend: gcs
+      bucket_name: determined-ai-mmdet-data
+      ##### Other backends #####
+      #backend: s3
+      #bucket_name: determined-ai-coco-dataset
+      #backend: disk # assumes data available at /run/determined/workdir/data in the container
+      #backend: fake
+##### You can enable profiling with below #####
+#profiling:
+#  enabled: true
+#  begin_on_batch: 200
+#  end_after_batch: 300
+hyperparameters:
+  global_batch_size: 64
+  config_file: /mmdetection/configs/yolo/yolov3_d53_mstrain-608_273e_coco.py
+  merge_config: null # You can specify a config you want to merge into the config_file above.
+  use_pretrained: false # Whether to load pretrained weights for config if available.
+  #override_mmdet_config:
+    ##### Learn more about mmdet configs: https://mmdetection.readthedocs.io/en/latest/tutorials/config.html #####
+    ##### You can specify gradient clipping with below #####
+    #optimizer_config._delete_: true
+    #optimizer_config.grad_clip.max_norm: 100
+    #optimizer_config.grad_clip.norm_type: 2
+    ##### You can specify mixed precision with below #####
+    #fp16.loss_scale: 512. # can be float or dict of named args for torch.cuda.amp.GradScaler
+
+checkpoint_storage:
+  save_trial_latest: 5
+min_validation_period:
+  batches: 1832
+searcher:
+  name: single
+  metric: bbox_mAP
+  max_length:
+    batches: 500176
+  smaller_is_better: false
+max_restarts: 5
+environment:
+  image:
+    gpu: determinedai/model-hub-mmdetection:0.26.2-dev0
+  environment_variables:
+    - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
+
+resources:
+  slots_per_trial: 8 # max number of GPUs a trial is allowed to individually use
+  shm_size: 200000000000
+entrypoint: python3 -m determined.launch.torch_distributed --trial model_hub.mmdetection:MMDetTrial

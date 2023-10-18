@@ -10,6 +10,51 @@
  Version 0.26
 **************
 
+Version 0.26.1
+==============
+
+**Release Date:** October 12, 2023
+
+**New Features**
+
+-  Experiments: Add an experiment continue feature to the CLI (``det e continue <experiment-id>``),
+   which allows for resuming or recovering training for an experiment whether it previously
+   succeeded or failed. This is limited to single-searcher experiments and using it may prevent the
+   user from replicating the continued experiment's results.
+
+**Improvements**
+
+-  Logging: Some API logs would previously only go to the standard output of the running master but
+   now will also appear in the output of ``det master logs``.
+
+-  Kubernetes: Increase the file context limit for notebooks, commands, TensorBoards, and shells
+   from approximately 1MB to roughly 95MB, the same limit as the agent resource manager.
+
+-  CLI: ``det notebook|shell|tensorboard open <id>`` will now wait for the item to be ready instead
+   of giving an error if it is not ready.
+
+-  Detached mode: Add support for S3 and GCS cloud storage for TensorBoard files.
+
+-  Kubernetes: On Kubernetes, ``max_slots_per_pod`` can now be configured at a resource pool level
+   through the master config option
+   ``resource_pools.task_container_defaults.kubernetes.max_slots_per_pod``.
+
+**Bug Fixes**
+
+-  TensorBoard: Fix an issue where TensorBoard files for an experiment were not getting deleted when
+   the experiment was deleted.
+
+-  Kubernetes: Fix an issue where custom node affinities on tasks were being ignored.
+
+   On Kubernetes, upgrading from a version before this feature to a version after this feature can
+   cause queued allocations with a custom node affinity to be killed. Users can pause queued
+   experiments to avoid this.
+
+**Known Issue**
+
+-  When using custom metric groups, the ``Learning Curve`` view in the experiment's visualization
+   tab does not render.
+
 Version 0.26.0
 ==============
 
@@ -478,8 +523,8 @@ Version 0.21.1
 
    -  :meth:`~determined.experimental.client.stream_trials_training_metrics`
    -  :meth:`~determined.experimental.client.stream_trials_validation_metrics`
-   -  :meth:`~determined.experimental.client.TrialReference.stream_training_metrics`
-   -  :meth:`~determined.experimental.client.TrialReference.stream_validation_metrics`
+   -  :meth:`~determined.experimental.client.Trial.stream_training_metrics`
+   -  :meth:`~determined.experimental.client.Trial.stream_validation_metrics`
 
 **Removed Features**
 
@@ -839,12 +884,12 @@ Version 0.19.7
    Hugging Face's Diffusers.
 
 -  Python SDK now supports reading logs from trials, via the new
-   :meth:`~determined.experimental.client.TrialReference.logs` method. Additionally, the Python SDK
-   also supports a new blocking call on an experiment to get the first trial created for an
-   experiment via the
-   :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
-   have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
-   use the Python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+   :meth:`~determined.experimental.client.Trial.logs` method. Additionally, the Python SDK also
+   supports a new blocking call on an experiment to get the first trial created for an experiment
+   via the :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method.
+   Users who have been writing automation around the ``det e create --follow-first-trial`` CLI
+   command may now use the Python SDK instead, by combining ``.await_first_trial()`` and
+   ``.logs()``.
 
 -  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
@@ -2704,8 +2749,9 @@ Version 0.13.11
    :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()` for detailed documentation
    and code snippets.
 
-   See ``determined/examples/features/custom_reducers_mnist_pytorch`` for a complete example of how
-   to use custom reducers. The example emits a per-class F1 score using the new custom reducer API.
+   See ``determined/examples/features/legacy/custom_reducers_mnist_pytorch`` for a complete example
+   of how to use custom reducers. The example emits a per-class F1 score using the new custom
+   reducer API.
 
 -  Trials: Support more than 1 backward pass per optimizer step for distributed training in
    PyTorchTrial.
@@ -3743,9 +3789,8 @@ Version 0.12.3
 -  Add support for locally testing experiments via ``det e create --local``.
 
 -  Add :class:`determined.experimental.Determined` class for accessing
-   :class:`~determined.experimental.ExperimentReference`,
-   :class:`~determined.experimental.TrialReference`, and
-   :class:`~determined.experimental.Checkpoint` objects.
+   :class:`~determined.experimental.ExperimentReference`, :class:`~determined.experimental.Trial`,
+   and :class:`~determined.experimental.Checkpoint` objects.
 
 -  TensorBoard logs now appear under the ``storage_path`` for ``shared_fs`` checkpoint
    configurations.
@@ -3933,7 +3978,7 @@ Version 0.12.2
 
 -  Add support for gradient aggregation in Keras trials for TensorFlow 2.1.
 
--  Add TrialReference and Checkpoint experimental APIs for exporting and loading checkpoints.
+-  Add Trial and Checkpoint experimental APIs for exporting and loading checkpoints.
 
 -  Improve performance when starting many tasks simultaneously.
 
