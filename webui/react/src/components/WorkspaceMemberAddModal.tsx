@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import Select, { Option, RefSelectProps } from 'determined-ui/Select';
 import Form from 'determined-ui/Form';
 import Icon from 'determined-ui/Icon';
 import { Modal } from 'determined-ui/Modal';
@@ -9,7 +9,7 @@ import React, { useCallback, useId, useState } from 'react';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
-import { User, UserOrGroup } from 'types';
+import { User, UserOrGroup, Workspace } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -19,57 +19,40 @@ interface Props {
   addableUsersAndGroups: UserOrGroup[];
   onClose?: () => void;
   rolesAssignableToScope: V1Role[];
-  workspaceId: number;
+  workspace: Workspace;
 }
 interface FormInputs {
   roleId: number;
   userOrGroupId: string;
 }
 
-interface SearchProp {
-  label: {
-    props: {
-      name?: string;
-      user?: User;
-    };
-  };
-}
-
 const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   addableUsersAndGroups,
   rolesAssignableToScope,
   onClose,
-  workspaceId,
+  workspace,
 }: Props) => {
   const idPrefix = useId();
-  const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
+  const [filteredOption, setFilteredOption] = useState<UserOrGroup[]>([]);
   const [form] = Form.useForm<FormInputs>();
+  const ref = useRef<RefSelectProps>(null);
 
-  const handleFilter = useCallback((search: string, option?: SearchProp): boolean => {
-    if (!option) return false;
-    const label = option.label;
-    const regex = new RegExp(search, 'i');
+  useEffect(() => {
+    ref.current?.focus();
+  }, [ref]);
 
-    return (
-      (label.props.name && regex.test(label.props.name)) ||
-      (label.props.user?.username && regex.test(label.props.user?.username)) ||
-      (label.props.user?.displayName && regex.test(label.props.user?.displayName)) ||
-      false
-    );
-  }, []);
-
-  const handleSelect = useCallback(
+  const handleSearch = useCallback(
     (value: string) => {
-      const userOrGroup = addableUsersAndGroups.find((u) => {
-        if (isUser(u) && value.substring(0, 2) === 'u_') {
-          const user = u;
-          return user.id === Number(value.substring(2));
-        } else if (!isUser(u) && value.substring(0, 2) === 'g_') {
-          const group = u;
-          return group.groupId === Number(value.substring(2));
-        }
-      });
-      setSelectedOption(userOrGroup);
+      const regex = new RegExp(value, 'i');
+      setFilteredOption(
+        value
+          ? _.filter(addableUsersAndGroups, (o) =>
+              isUser(o)
+                ? (o.displayName && regex.test(o.displayName)) || regex.test(o.username) || false
+                : (o.name && regex.test(o.name)) || false,
+            )
+          : [],
+      );
     },
     [addableUsersAndGroups],
   );
@@ -77,26 +60,27 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
     try {
-      if (values && selectedOption) {
-        isUser(selectedOption)
-          ? await assignRolesToUser([
-              {
-                roleIds: [values.roleId],
-                scopeWorkspaceId: workspaceId,
-                userId: Number(values.userOrGroupId.substring(2)),
-              },
-            ])
-          : await assignRolesToGroup({
-              groupId: Number(values.userOrGroupId.substring(2)),
-              roleIds: [values.roleId],
-              scopeWorkspaceId: workspaceId,
-            });
+      if (values) {
+        const userOrGroup = _.groupBy(values.userOrGroupId, (o) => o.substring(0, 2));
+        const groupPayload = _.map(userOrGroup['g_'], (o) => ({
+          groupId: Number(o.substring(2)),
+          roleIds: [values.roleId],
+          scopeWorkspaceId: workspace.id,
+        }));
+        groupPayload.length > 0 && (await assignRolesToGroup(groupPayload));
+
+        const userPayload = _.map(userOrGroup['u_'], (o) => ({
+          roleIds: [values.roleId],
+          scopeWorkspaceId: workspace.id,
+          userId: Number(o.substring(2)),
+        }));
+        userPayload.length > 0 && (await assignRolesToUser(userPayload));
+
         form.resetFields();
-        setSelectedOption(undefined);
         onClose?.();
         makeToast({
           severity: 'Confirm',
-          title: `${getName(selectedOption)} added to workspace.`,
+          title: `${values.userOrGroupId.length} users or groups added to workspace.`,
         });
       }
     } catch (e) {
@@ -118,55 +102,69 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         });
       }
     }
-  }, [form, selectedOption, workspaceId, onClose]);
+  }, [form, workspace.id, onClose]);
 
   return (
     <Modal
       cancel
       size="small"
       submit={{
+        disabled:
+          !form.getFieldValue('userOrGroupId') || form.getFieldError('userOrGroupId').length > 0,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: 'Add Member',
+        text: 'Add to Workspace',
       }}
-      title="Add Member">
-      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
+      title={`Add members to ${workspace.name}`}>
+      <Form
+        autoComplete="off"
+        form={form}
+        id={idPrefix + FORM_ID}
+        initialValues={{ roleId: rolesAssignableToScope.find((r) => r.name === 'Editor')?.roleId }}
+        layout="vertical">
         <Form.Item
-          label="User or Group"
+          label="Find and Select Users or Groups"
           name="userOrGroupId"
           rules={[{ message: 'User or group is required ', required: true }]}>
           <Select
-            filterOption={handleFilter}
-            options={addableUsersAndGroups.map((option) => ({
-              label: isUser(option) ? (
-                <UserBadge compact user={option as User} />
-              ) : (
-                <Nameplate
-                  compact
-                  icon={<Icon name="group" title="Group" />}
-                  name={getName(option)}
-                />
-              ),
-              value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
-            }))}
-            placeholder="User or Group"
-            showSearch
-            size="large"
-            onSelect={handleSelect}
-          />
-        </Form.Item>
-        <Form.Item
-          label="Role"
-          name="roleId"
-          rules={[{ message: 'Role is required ', required: true }]}>
-          <Select placeholder="Role">
-            {rolesAssignableToScope.map((role) => (
-              <Select.Option key={role.roleId} value={role.roleId}>
-                {role.name}
-              </Select.Option>
+            filterOption={false}
+            mode="multiple"
+            optionLabelProp="label"
+            placeholder="Add Users or Groups"
+            ref={ref}
+            searchable={true}
+            onBlur={() => setFilteredOption([])}
+            onSearch={handleSearch}>
+            {_.map(filteredOption, (option) => (
+              <Option
+                key={(isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option)}
+                label={isUser(option) ? option.username : option.name}
+                value={(isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option)}>
+                {isUser(option) ? (
+                  <UserBadge compact user={option as User} />
+                ) : (
+                  <Nameplate
+                    compact
+                    icon={<Icon name="group" title="Group" />}
+                    name={getName(option)}
+                  />
+                )}
+              </Option>
             ))}
           </Select>
+        </Form.Item>
+        <Form.Item
+          label="Assign Workspace Role"
+          name="roleId"
+          rules={[{ message: 'Role is required ', required: true }]}>
+          <Select
+            options={rolesAssignableToScope.map((role) => ({
+              label: role.name,
+              value: role.roleId,
+            }))}
+            placeholder="Role"
+          />
         </Form.Item>
       </Form>
     </Modal>
