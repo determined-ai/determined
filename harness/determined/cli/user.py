@@ -155,6 +155,7 @@ def whoami(parsed_args: Namespace) -> None:
     print("You are logged in as user '{}'".format(user.username))
 
 
+@authentication.required
 @login_sdk_client
 def edit(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
@@ -182,7 +183,7 @@ def edit(parsed_args: Namespace) -> None:
 
     if len(changes) > 0:
         bindings.patch_PatchUser(
-            client._get_singleton_session(), body=patch_user, userId=user_obj.user_id
+            setup_session(parsed_args), body=patch_user, userId=user_obj.user_id
         )
         print("Changes made to the following fields: " + ", ".join(changes))
     else:
