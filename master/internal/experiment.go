@@ -292,7 +292,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		job.Default.RegisterJob(e.JobID, e)
+		job.DefaultService.RegisterJob(e.JobID, e)
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -445,7 +445,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Error(err)
 			}
 		}
-		job.Default.UnregisterJob(e.JobID)
+		job.DefaultService.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if state == "" {
 			state = model.ErrorState

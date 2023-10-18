@@ -16,7 +16,7 @@ import (
 func (a *apiServer) GetJobs(
 	ctx context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	jobs, err := job.Default.GetJobs(
+	jobs, err := job.DefaultService.GetJobs(
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -47,7 +47,7 @@ func (a *apiServer) GetJobs(
 func (a *apiServer) GetJobsV2(
 	ctx context.Context, req *apiv1.GetJobsV2Request,
 ) (resp *apiv1.GetJobsV2Response, err error) {
-	jobs, err := job.Default.GetJobs(
+	jobs, err := job.DefaultService.GetJobs(
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -118,7 +118,7 @@ func (a *apiServer) UpdateJobQueue(
 	if permErr != nil {
 		return nil, permErr
 	}
-	err = job.Default.UpdateJobQueue(req.Updates)
+	err = job.DefaultService.UpdateJobQueue(req.Updates)
 	if err != nil {
 		return nil, err
 	}

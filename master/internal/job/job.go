@@ -16,9 +16,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// GenericJob is the interface for commands/experiments types that implement
+// Job is the interface for commands/experiments types that implement
 // the job service.
-type GenericJob interface {
+type Job interface {
 	ToV1Job() *jobv1.Job
 	SetJobPriority(priority int) error
 	SetWeight(weight float64) error
@@ -28,31 +28,31 @@ type GenericJob interface {
 type Service struct {
 	mu          sync.Mutex
 	rm          rm.ResourceManager
-	genericByID map[model.JobID]GenericJob
+	genericByID map[model.JobID]Job
 	syslog      *logrus.Entry
 }
 
-// Default is the global singleton job service.
-var Default *Service
+// DefaultService is the global singleton job service.
+var DefaultService *Service
 
 // SetDefaultService sets the package-level Default in
 // this package and `jobmanager`.
 func SetDefaultService(rm rm.ResourceManager) {
-	if Default != nil {
+	if DefaultService != nil {
 		logrus.Warn(
 			"detected re-initialization of Job that should never occur outside of tests",
 		)
 	}
-	Default = &Service{
+	DefaultService = &Service{
 		rm:          rm,
-		genericByID: make(map[model.JobID]GenericJob),
+		genericByID: make(map[model.JobID]Job),
 		syslog:      logrus.WithField("component", "jobs"),
 	}
 }
 
 // RegisterJob takes an experiment/command (of interface type Service)
 // and registers it with the job manager's genericByID map.
-func (s *Service) RegisterJob(jobID model.JobID, j GenericJob) {
+func (s *Service) RegisterJob(jobID model.JobID, j Job) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

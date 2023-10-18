@@ -307,7 +307,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		job.Default.RegisterJob(c.jobID, c)
+		job.DefaultService.RegisterJob(c.jobID, c)
 
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
@@ -324,7 +324,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		job.Default.UnregisterJob(c.jobID)
+		job.DefaultService.UnregisterJob(c.jobID)
 		if err := user.DeleteSessionByToken(
 			context.TODO(),
 			c.GenericCommandSpec.Base.UserSessionToken,
