@@ -1,5 +1,7 @@
 import uPlot from 'uplot';
 
+import { humanReadableBytes } from 'utils/string';
+
 // key should be lowercase to match the metric name
 const MetricNameUnit = {
   cpu_util_simple: '%',
@@ -18,6 +20,10 @@ export const getUnitForMetricName = (metricName: string): string => {
   return metricName in MetricNameUnit
     ? MetricNameUnit[metricName as keyof typeof MetricNameUnit]
     : metricName;
+};
+
+export const getByteTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
+  return rawValue.map(humanReadableBytes);
 };
 
 export const getScientificNotationTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
