@@ -92,7 +92,7 @@ def list_workspaces(args: Namespace) -> None:
         original_offset = args.offset or 0
         internal_offset = args.offset or 0
         limit = args.limit
-    except:
+    except AttributeError:
         original_offset = 0
         internal_offset = 0
         limit = 200
@@ -129,7 +129,7 @@ def list_workspace_projects(args: Namespace) -> None:
     try:
         offset = args.offset or 0  # No passed offset is interpreted as a 0 offset
         limit = args.limit
-    except:
+    except AttributeError:
         offset = 0
         limit = 200
 
