@@ -1,4 +1,4 @@
-import { Radio, RadioGroupProps } from 'antd';
+import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
 import Icon, { IconName, IconSize } from 'determined-ui/Icon';
 import Tooltip from 'determined-ui/Tooltip';
@@ -10,7 +10,7 @@ import useResize from 'hooks/useResize';
 
 import css from './RadioGroup.module.scss';
 
-interface Props extends Omit<RadioGroupProps, 'onChange' | 'options'> {
+interface Props {
   defaultValue?: string;
   iconOnly?: boolean;
   onChange?: (id: string) => void;
@@ -43,7 +43,6 @@ const RadioGroup: React.FC<Props> = ({
   options,
   value,
   radioType = 'button',
-  ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const originalWidth = useRef<number>();
@@ -114,8 +113,7 @@ const RadioGroup: React.FC<Props> = ({
       defaultValue={defaultValue}
       ref={baseRef}
       value={value}
-      onChange={handleChange}
-      {...props}>
+      onChange={handleChange}>
       {options.map((option) => (
         <ConditionalWrapper
           condition={!showLabels || iconOnly}
