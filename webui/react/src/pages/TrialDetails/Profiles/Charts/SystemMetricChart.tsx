@@ -103,11 +103,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
         xAxis={XAxisDomain.Time}
         xLabel="Time"
         yLabel={yLabel}
-        yTickValues={
-          /^bytes/i.test(yLabel)
-            ? getByteTickValues
-            : getScientificNotationTickValues
-        }
+        yTickValues={/^bytes/i.test(yLabel) ? getByteTickValues : getScientificNotationTickValues}
       />
     </Section>
   );
