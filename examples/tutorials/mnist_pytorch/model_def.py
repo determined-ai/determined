@@ -8,21 +8,22 @@ and `wrap_optimizer`. This model is single-input and single-output.
 The methods `train_batch` and `evaluate_batch` define the forward pass
 for training and evaluation respectively.
 """
-
+import logging
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 import data
 import torch
-from layers import Flatten
+import layers
 from torch import nn
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
+import determined as det
+from determined import pytorch
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-class MNistTrial(PyTorchTrial):
-    def __init__(self, context: PyTorchTrialContext) -> None:
+class MNistTrial(pytorch.PyTorchTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext, hparams: Dict) -> None:
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each
@@ -42,7 +43,7 @@ class MNistTrial(PyTorchTrial):
                 nn.ReLU(),
                 nn.MaxPool2d(2),
                 nn.Dropout2d(self.context.get_hparam("dropout1")),
-                Flatten(),
+                layers.Flatten(),
                 nn.Linear(144 * self.context.get_hparam("n_filters2"), 128),
                 nn.ReLU(),
                 nn.Dropout2d(self.context.get_hparam("dropout2")),
@@ -57,7 +58,7 @@ class MNistTrial(PyTorchTrial):
             )
         )
 
-    def build_training_data_loader(self) -> DataLoader:
+    def build_training_data_loader(self) -> pytorch.DataLoader:
         if not self.data_downloaded:
             self.download_directory = data.download_dataset(
                 download_directory=self.download_directory,
@@ -66,9 +67,9 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         train_data = data.get_dataset(self.download_directory, train=True)
-        return DataLoader(train_data, batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(train_data, batch_size=self.context.get_per_slot_batch_size())
 
-    def build_validation_data_loader(self) -> DataLoader:
+    def build_validation_data_loader(self) -> pytorch.DataLoader:
         if not self.data_downloaded:
             self.download_directory = data.download_dataset(
                 download_directory=self.download_directory,
@@ -77,7 +78,7 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -104,3 +105,33 @@ class MNistTrial(PyTorchTrial):
         accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
 
         return {"validation_loss": validation_loss, "accuracy": accuracy}
+
+
+def run(local: bool = False):
+    info = det.get_cluster_info()
+
+    max_length = None
+    latest_checkpoint = None
+    hparams = None
+
+    if local:
+        max_length = pytorch.Batch(100)
+    else:
+        latest_checkpoint = info.latest_checkpoint
+        hparams = info.trial.hparams
+
+    with pytorch.init() as train_context:
+        trial = MNistTrial(train_context, hparams=hparams)
+        trainer = pytorch.Trainer(trial, train_context)
+        trainer.fit(
+            max_length=max_length,
+            latest_checkpoint=latest_checkpoint
+        )
+
+
+if __name__ == "__main__":
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+    local = det.get_cluster_info() is None
+    run(local=local)
+
