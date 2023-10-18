@@ -90,6 +90,15 @@ class ModelVersion:
         )
 
     def get_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
+        warnings.warn(
+            "Model.get_metrics() has been deprecated and will be removed in a future version."
+            "Please call Model.iter_metrics() instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.iter_metrics(group=group)
+
+    def iter_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
         """
         Gets all metrics for a given metric group associated with this model version.
         The checkpoint can be originally associated by calling
