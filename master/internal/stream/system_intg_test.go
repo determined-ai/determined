@@ -32,6 +32,7 @@ type startupReadWriter struct {
 	Data           []interface{}
 	StartupMessage *StartupMsg
 	Msg            interface{}
+	KeepAlive      bool
 }
 
 // ReadJSON sends the StartupMessage first, then send any Msg that is set.
@@ -52,6 +53,9 @@ func (s *startupReadWriter) ReadJSON(data interface{}) error {
 			return fmt.Errorf("target message type is not a pointer to SubscriptionModMsg")
 		}
 		data = s.Msg
+	}
+	if !s.KeepAlive {
+		return fmt.Errorf("no messages left to send")
 	}
 	return nil
 }
@@ -128,6 +132,7 @@ func TestStartup(t *testing.T) {
 
 	ssupCtx := context.TODO()
 	ctx, testUser, publisherSet, tester, _, pgDB, cleanup := setup(t, startupMessage)
+	tester.KeepAlive = false
 	defer cleanup()
 
 	trials := streamdata.GenerateStreamTrials()
@@ -188,6 +193,7 @@ func TestStartup(t *testing.T) {
 	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
 	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
 	require.Equal(t, 0, len(trialMsgs), "received unexpected trial message")
+	tester.Data = []interface{}{}
 
 	// 3 is not known, and 4 does not exist
 	startupMessage = StartupMsg{
@@ -196,7 +202,7 @@ func TestStartup(t *testing.T) {
 		},
 		Subscribe: SubscriptionSpecSet{
 			Trials: &TrialSubscriptionSpec{
-				TrialIds: []int{1, 2, 4},
+				TrialIds: []int{1, 2, 3, 4},
 				Since:    0,
 			},
 		},
@@ -313,13 +319,8 @@ func TestTrialUpdate(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		fmt.Println("message Map:")
-		fmt.Println(msgMap)
 		if msg, ok := msgMap["Msg"].(map[string]interface{}); !ok || msg["state"] != "CANCELED" {
 			return fmt.Errorf("updated state should be canceled, not %s", msg["state"])
-		}
-		if msg, ok := msgMap["Msg"].(map[string]interface{}); !ok || msg["state"] != "ERROR" {
-			return fmt.Errorf("test error")
 		}
 
 		// cancel the whole error group when the test succeeds
