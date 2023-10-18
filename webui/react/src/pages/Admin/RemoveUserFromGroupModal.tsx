@@ -52,11 +52,11 @@ const RemoveUserFromGroupModalComponent = ({
       submit={{
         handleError,
         handler: handleOk,
-        text: 'Remote User',
+        text: 'Remove User',
       }}
       title="Confirm Removing User from Group">
       <div>
-        Are you sure you want to remove {user?.username ?? 'this user'} from
+        Are you sure you want to remove {user?.username ?? 'this user'} from{' '}
         {groupResult.group.name ?? 'this group'}?
       </div>
     </Modal>
