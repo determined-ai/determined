@@ -118,8 +118,12 @@ def list_workspace_projects(args: Namespace) -> None:
 
     sort_key = args.sort_by
     sort_order = args.order_by
-    offset = args.offset or 0  # No passed offset is interpreted as a 0 offset
-    limit = args.limit
+    try:
+        offset = args.offset or 0 # No passed offset is interpreted as a 0 offset
+        limit = args.limit
+    except:
+        offset = 0
+        limit = 0
 
     # TODO: Remove typechecking suppression when mypy is upgraded to 1.4.0
     all_projects.sort(
