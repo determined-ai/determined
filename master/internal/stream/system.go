@@ -330,10 +330,12 @@ func (ps *PublisherSet) Websocket(
 	reqCtx := c.Request().Context()
 	detCtx, ok := c.(*detContext.DetContext)
 	if !ok {
-		log.Errorf("unable to run PublisherSet: expected DetContext but received %t", reflect.TypeOf(c))
+		log.Errorf("unable to run PublisherSet: expected DetContext but received %t",
+			reflect.TypeOf(c))
 	}
 	user := detCtx.MustGetUser()
-	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket}, prepareWebsocketMessage)
+	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket},
+		prepareWebsocketMessage)
 }
 
 func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
@@ -556,12 +558,10 @@ func startup[T stream.Msg, S any](
 	if err != nil {
 		return nil, err
 	}
-	preparedMsgs := make([]interface{}, 0, len(msgs))
 	for _, msg := range newmsgs {
-		preparedMsgs = append(preparedMsgs, prepare(msg))
+		msgs = append(msgs, prepare(msg))
 	}
-	msgs = append(msgs, preparedMsgs...)
-	return preparedMsgs, nil
+	return msgs, nil
 }
 
 // Startup handles starting up the Subscription objects in the SubscriptionSet.
@@ -573,7 +573,8 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 
 	var msgs []interface{}
 	var err error
-	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn)
+	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials,
+		ss.Trials.Subscription.Streamer.PrepareFn)
 	return msgs, err
 }
 

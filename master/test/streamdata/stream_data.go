@@ -5,19 +5,17 @@ package streamdata
 
 import (
 	"context"
+	// embed is only used in comments.
+	_ "embed"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/uptrace/bun"
 
-	// embed is only used in comments.
-	_ "embed"
-
 	"github.com/determined-ai/determined/master/internal/db"
-
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/test/migrationutils"
 )
 
@@ -29,7 +27,7 @@ const (
 //go:embed stream_trials.sql
 var streamTrialsSQL string
 
-// StreamTrialsData holds the migration function and relevant information
+// StreamTrialsData holds the migration function and relevant information.
 type StreamTrialsData struct {
 	MustMigrate migrationutils.MustMigrateFn
 	ExpID       int
@@ -66,7 +64,11 @@ type trial struct {
 	Seq           int64          `bun:"seq"`
 }
 
-func ModTrial(ctx context.Context, trialID, experimentID int, changeStart bool, changeSeq bool, changeState string) error {
+// ModTrial is a convenience function for modifying rows of a trial.
+func ModTrial(
+	ctx context.Context, trialID, experimentID int, changeStart bool,
+	changeSeq bool, changeState string,
+) error {
 	trials, err := queryTrials(ctx)
 	if err != nil {
 		return err
@@ -122,6 +124,7 @@ func queryTrials(ctx context.Context) ([]trial, error) {
 	return trials, nil
 }
 
+// AddTrial adds everything necessary to create a new trial under the given experimentID.
 func AddTrial(ctx context.Context, experimentID int) error {
 	var trials []trial
 	err := db.Bun().NewSelect().
@@ -139,7 +142,7 @@ func AddTrial(ctx context.Context, experimentID int) error {
 			nextSeq = t.Seq
 		}
 		if t.ExperimentID == experimentID {
-			numRelevantTrials += 1
+			numRelevantTrials++
 		}
 	}
 
@@ -183,6 +186,7 @@ func AddTrial(ctx context.Context, experimentID int) error {
 	return nil
 }
 
+// AddExperiment adds everything necessary to add an experiment to the db.
 func AddExperiment(pgDB *db.PgDB) (int, error) {
 	type experiment struct {
 		bun.BaseModel        `bun:"table:experiments"`
