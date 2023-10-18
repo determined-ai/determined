@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,6 +20,117 @@ import (
 
 	"github.com/google/uuid"
 )
+
+type cacheItem struct {
+	re                 *regexp.Regexp
+	triggerIDToTrigger map[TriggerID]*Trigger
+}
+
+// We are going to report a lot of logs so cache the regexes and what triggers they do.
+type regexTriggerCache struct {
+	mu    sync.RWMutex
+	items map[string]cacheItem // Maps string regex to compiled regex + all triggers.
+}
+
+var cache = &regexTriggerCache{}
+
+func Default() *regexTriggerCache {
+	return cache
+}
+
+func (l *regexTriggerCache) addTriggers(triggers []*Trigger) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, t := range triggers {
+		if t.TriggerType != TriggerTypeTaskLog {
+			continue
+		}
+
+		regex, ok := t.Condition[regexConditionKey].(string)
+		if !ok {
+			return fmt.Errorf(
+				"expected webhook trigger to have regex in condition instead got %v", t.Condition)
+		}
+
+		if _, ok := l.items[regex]; !ok {
+			// TODO should we do this the (.*)...
+			compiled, err := regexp.Compile(fmt.Sprintf("(.*)%s(.*)", regex))
+			if err != nil {
+				return fmt.Errorf("compiling regex %s: %w", regex, err)
+			}
+
+			l.items[regex] = cacheItem{
+				re:                 compiled,
+				triggerIDToTrigger: make(map[TriggerID]*Trigger),
+			}
+		}
+
+		l.items[regex].triggerIDToTrigger[t.ID] = t
+	}
+
+	return nil
+}
+
+func (l *regexTriggerCache) removeTriggers(triggers []*Trigger) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, t := range triggers {
+		if t.TriggerType != TriggerTypeTaskLog {
+			continue
+		}
+
+		regex, ok := t.Condition[regexConditionKey].(string)
+		if !ok {
+			return fmt.Errorf(
+				"expected webhook trigger to have regex in condition instead got %v", t.Condition)
+		}
+
+		delete(l.items[regex].triggerIDToTrigger, t.ID)
+	}
+	return nil
+}
+
+func (l *regexTriggerCache) Initialize(ctx context.Context) error {
+	// Intentionally not locking here.
+	var triggers []*Trigger
+	if err := db.Bun().NewSelect().Model(&triggers).Relation("Webhook").
+		Where("trigger_type = ?", TriggerTypeTaskLog).
+		Scan(ctx); err != nil {
+		return fmt.Errorf("querying task logs triggers: %w", err)
+	}
+
+	if err := l.addTriggers(triggers); err != nil {
+		return fmt.Errorf("adding each trigger: %w", err)
+	}
+
+	return nil
+}
+
+func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog) error {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	for _, log := range logs {
+		if log.AgentID == nil {
+			return fmt.Errorf("AgentID must be non nil to trigger webhooks in logs")
+		}
+
+		for _, cacheItem := range l.items {
+			if cacheItem.re.MatchString(log.Log) {
+				for _, t := range cacheItem.triggerIDToTrigger {
+					if err := addTaskLogEvent(
+						ctx, model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
 
 // AddWebhook adds a Webhook and its Triggers to the DB.
 func AddWebhook(ctx context.Context, w *Webhook) error {
@@ -116,43 +229,41 @@ func ReportExperimentStateChanged(
 	return nil
 }
 
-// ReportLogPatternAction is somewhat different than other webhook types since we don't persist
-// a webhook but instead have the hook url stored in experiment config. This code is a little
-// awkward now but I mostly attribute this to the existing code which feels hedged
-// between wanting to support different webhook triggers and only supporting one.
-// TODO there is a couple of potential security concerns here
-//
-//  1. webhooks can be specified for anyone and not admin.
-//     I think this would be the first expconf that would be "admin" limited.
-//     This might cause a huge pain for forking especially since this will likely
-//     be put in TCD and all forked experiments would have this by default
-//     and then also be admin limited.
-//
-//  2. The webhook url could be sensative. Should we censor it? We do this for checkpoint storage
-//     currently but I'm not sure if this works on forking.
-func ReportLogPatternAction(ctx context.Context,
-	taskID model.TaskID, nodeName, regex, triggeringLog, url string, wt WebhookType,
+func addTaskLogEvent(ctx context.Context,
+	taskID model.TaskID, nodeName, triggeringLog string, trigger *Trigger,
 ) error {
+	// TODO dedupe behaviour (TODO)
+
 	defer func() {
 		if rec := recover(); rec != nil {
-			log.Errorf("uncaught error in webhook log pattern report: %v", rec)
+			log.Errorf("uncaught error in adding task logs event: %v", rec)
 		}
 	}()
 
-	p, err := generateLogPatternPayload(ctx, taskID, nodeName, regex, triggeringLog, wt)
-	if err != nil {
-		return fmt.Errorf("generating log pattern payload: %w", err)
+	regex, ok := trigger.Condition[regexConditionKey].(string)
+	if !ok {
+		return fmt.Errorf(
+			"expected webhook trigger to have regex in condition instead got %v", trigger.Condition)
 	}
 
-	if _, err := db.Bun().NewInsert().Model(&Event{Payload: p, URL: url}).Exec(ctx); err != nil {
-		return fmt.Errorf("report log pattern action inserting event trigger: %w", err)
+	p, err := generateTaskLogPayload(
+		ctx, taskID, nodeName, regex, triggeringLog, trigger.Webhook.WebhookType)
+	if err != nil {
+		return fmt.Errorf("generating task logs event: %w", err)
+	}
+
+	if _, err := db.Bun().NewInsert().Model(&Event{
+		Payload: p,
+		URL:     trigger.Webhook.URL,
+	}).Exec(ctx); err != nil {
+		return fmt.Errorf("inserting task logs event trigger: %w", err)
 	}
 
 	singletonShipper.Wake()
 	return nil
 }
 
-func generateLogPatternPayload(
+func generateTaskLogPayload(
 	ctx context.Context,
 	taskID model.TaskID,
 	nodeName,
@@ -164,10 +275,10 @@ func generateLogPatternPayload(
 	case WebhookTypeDefault:
 		p, err := json.Marshal(EventPayload{
 			ID:        uuid.New(),
-			Type:      TriggerTypeLogPatternPolicy,
+			Type:      TriggerTypeTaskLog,
 			Timestamp: time.Now().Unix(),
 			Condition: Condition{
-				LogPatternPolicyRegex: regex,
+				Regex: regex,
 			},
 			Data: EventData{
 				LogPatternPolicy: &LogPatternPolicyPayload{
@@ -202,23 +313,36 @@ func generateLogPatternSlackPayload(
 	regex,
 	triggeringLog string,
 ) ([]byte, error) {
-	trial, err := db.TrialByTaskID(ctx, taskID)
+	task, err := db.TaskByID(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := fmt.Sprintf(
-		"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log\n",
-		trial.ExperimentID, trial.ID, nodeName) +
-		fmt.Sprintf("```%s```\n", triggeringLog) +
-		"This log matched the regex\n" +
-		fmt.Sprintf("```%s```\n", regex)
+	msg := ""
+	if task.TaskType == model.TaskTypeTrial {
+		trial, err := db.TrialByTaskID(ctx, taskID)
+		if err != nil {
+			return nil, err
+		}
+		msg := fmt.Sprintf(
+			"Experiment ID `%d`, Trial ID `%d`, running on node `%s`, reported a log\n",
+			trial.ExperimentID, trial.ID, nodeName) +
+			fmt.Sprintf("```%s```\n", triggeringLog) +
+			"This log matched the regex\n" +
+			fmt.Sprintf("```%s```\n", regex)
 
-	path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
-	if baseURL := conf.GetMasterConfig().Webhooks.BaseURL; baseURL != "" {
-		msg += fmt.Sprintf("<%s%s | View full logs here>", baseURL, path)
+		path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
+		if baseURL := conf.GetMasterConfig().Webhooks.BaseURL; baseURL != "" {
+			msg += fmt.Sprintf("<%s%s | View full logs here>", baseURL, path)
+		} else {
+			msg += fmt.Sprintf("View full logs at %s", path)
+		}
 	} else {
-		msg += fmt.Sprintf("View full logs at %s", path)
+		msg = fmt.Sprintf(
+			"Task ID `%s`, task type `%s`, running on node `%s`, reported a log\n",
+			taskID, task.TaskType, nodeName) +
+			fmt.Sprintf("```%s```\n", triggeringLog) +
+			fmt.Sprintf("```%s```\n", regex)
 	}
 
 	message, err := json.Marshal(SlackMessageBody{

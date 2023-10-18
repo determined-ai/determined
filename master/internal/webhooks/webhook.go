@@ -125,8 +125,8 @@ const (
 	// TriggerTypeMetricThresholdExceeded represents a threshold for a training metric value.
 	TriggerTypeMetricThresholdExceeded TriggerType = "METRIC_THRESHOLD_EXCEEDED"
 
-	// TriggerTypeLogPatternPolicy represents a trigger for a log pattern policy.
-	TriggerTypeLogPatternPolicy TriggerType = "LOG_PATTERN_POLICY"
+	// TriggerTypeTaskLogs represents a trigger for a task logs.
+	TriggerTypeTaskLog TriggerType = "TASK_LOG"
 )
 
 const (
@@ -157,8 +157,8 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 		return TriggerTypeMetricThresholdExceeded
 	case webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE:
 		return TriggerTypeStateChange
-	case webhookv1.TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY:
-		return TriggerTypeLogPatternPolicy
+	case webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG:
+		return TriggerTypeTaskLog
 	default:
 		// TODO(???): prob don't panic
 		panic(fmt.Errorf("missing mapping for trigger %s to SQL", t))
@@ -184,8 +184,8 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE
 	case TriggerTypeMetricThresholdExceeded:
 		return webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED
-	case TriggerTypeLogPatternPolicy:
-		return webhookv1.TriggerType_TRIGGER_TYPE_LOG_PATTERN_POLICY
+	case TriggerTypeTaskLog:
+		return webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
 	}
@@ -258,10 +258,12 @@ type EventPayload struct {
 	Data      EventData   `json:"event_data"`
 }
 
+const regexConditionKey = "regex"
+
 // Condition represents a trigger condition.
 type Condition struct {
-	State                 model.State `json:"state,omitempty"`
-	LogPatternPolicyRegex string      `json:"log_pattern_policy_regex,omitempty"`
+	State model.State `json:"state,omitempty"`
+	Regex string      `json:"regex,omitempty"`
 }
 
 // EventData represents the event_data for a webhook event.

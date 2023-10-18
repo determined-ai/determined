@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -827,6 +828,27 @@ func TestLatestMetricID(t *testing.T) {
 			"b":                   "test",
 		}, *metric)
 	}
+}
+
+func TestTrialByTaskID(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+	trial, task := RequireMockTrial(t, db, exp)
+
+	expected, err := TrialByID(ctx, trial.ID)
+	require.NoError(t, err)
+
+	actual, err := TrialByTaskID(ctx, task.TaskID)
+	require.NoError(t, err)
+	require.Equal(t, expected, actual)
+
+	_, err = TrialByTaskID(ctx, model.TaskID("taskIDnotFound"))
+	require.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestProtoGetTrial(t *testing.T) {
