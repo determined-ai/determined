@@ -455,15 +455,16 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			if err := a.agentState.delete(); err != nil {
 				ctx.Log().WithError(err).Warnf("failed to delete agent state")
 			}
-
-			if a.socket != nil {
-				if err := a.socket.Close(); err != nil {
-					ctx.Log().WithError(err).Warnf("error while shutting down agent WebSocket")
-				}
-			}
 		} else {
 			ctx.Log().Info("agent disconnected but wasn't started")
 		}
+
+		if a.socket != nil {
+			if err := a.socket.Close(); err != nil {
+				ctx.Log().WithError(err).Warnf("error while shutting down agent WebSocket")
+			}
+		}
+
 		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
