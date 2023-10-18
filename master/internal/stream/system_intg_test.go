@@ -56,13 +56,9 @@ func (s *startupReadWriter) ReadJSON(data interface{}) error {
 	return nil
 }
 
-// Write
+// Write appends the data to the internal cache.
 func (s *startupReadWriter) Write(data interface{}) error {
 	s.Data = append(s.Data, data)
-	return nil
-}
-
-func (s *startupReadWriter) Close() error {
 	return nil
 }
 
