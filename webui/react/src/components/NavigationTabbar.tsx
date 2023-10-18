@@ -110,7 +110,11 @@ const NavigationTabbar: React.FC = () => {
 
   if (canCreateWorkspace) {
     workspaceActions.push({
-      icon: <Icon name="add" size="large" title="Create Workspace" />,
+      icon: (
+        <div className={css.newWorkspaceIcon}>
+          <Icon decorative name="add" size="tiny" />
+        </div>
+      ),
       label: 'New Workspace',
       onClick: WorkspaceCreateModal.open,
     });

@@ -87,16 +87,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
   const link = (
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} path={path} {...props}>
-        <Nameplate
-          icon={
-            typeof props.icon === 'string' ? (
-              <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
-            ) : (
-              props.icon
-            )
-          }
-          name={props.label}
-        />
+        <Nameplate icon={props.icon} iconSize={props.iconSize ?? 'large'} name={props.label} />
       </Link>
       <div className={css.navItemExtra}>
         {status && (
