@@ -173,13 +173,12 @@ require (
 	github.com/go-test/deep v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/jinzhu/copier v0.3.5
+	github.com/lib/pq v1.10.2
 	github.com/uptrace/bun v1.1.14
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14
 	github.com/uptrace/bun/extra/bundebug v1.1.14
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
-
-require github.com/goccy/go-json v0.10.2 // indirect
 
 require (
 	github.com/fatih/color v1.15.0 // indirect

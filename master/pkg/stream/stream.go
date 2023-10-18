@@ -5,12 +5,6 @@ import (
 	"sync"
 )
 
-// UpsertFunc is a function that overrides the default upsert
-type UpsertFunc func(interface{}) interface{}
-
-// DeleteFunc is a function that overrides the default deletion
-type DeleteFunc func(string, string) interface{}
-
 // Msg is an object with a message and a sequence number and json marshal caching.
 type Msg interface {
 	SeqNum() int64
@@ -28,27 +22,32 @@ type Event[T Msg] struct {
 	deleteCache interface{}
 }
 
+// PreparableMessage is an intermediary message that is ready to be marshaled and broadcast.
 type PreparableMessage interface{}
 
+// UpsertMsg represents an upsert in the stream.
 type UpsertMsg struct {
 	PreparableMessage
-	JsonKey string
+	JSONKey string
 	Msg     Msg
 }
 
+// MarshalJSON returns a json marshaled UpsertMsg.
 func (u *UpsertMsg) MarshalJSON() ([]byte, error) {
 	data := map[string]Msg{
-		u.JsonKey: u.Msg,
+		u.JSONKey: u.Msg,
 	}
 	return json.Marshal(data)
 }
 
+// DeleteMsg represents a deletion in the stream.
 type DeleteMsg struct {
 	PreparableMessage
 	Key     string
 	Deleted string
 }
 
+// MarshalJSON returns a json marshaled DeleteMsg.
 func (d *DeleteMsg) MarshalJSON() ([]byte, error) {
 	data := map[string]string{
 		d.Key: d.Deleted,

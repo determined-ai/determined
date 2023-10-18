@@ -24,7 +24,7 @@ type Streamable struct {
 type Field struct {
 	Name    string
 	Type    string
-	JsonTag string
+	JSONTag string
 }
 
 // RootVisitor is the Visitor for the top-level go document.
@@ -231,11 +231,11 @@ func genPython(streamables []Streamable) ([]byte, error) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "struct %v, field %v", s.Name, f.Name)
 			}
-			b.Writef("        %v: %q,\n", f.JsonTag, anno)
+			b.Writef("        %v: %q,\n", f.JSONTag, anno)
 		}
 		b.Writef("    ) -> None:\n")
 		for _, f := range s.Fields {
-			b.Writef("        self.%v = %v\n", f.JsonTag, f.JsonTag)
+			b.Writef("        self.%v = %v\n", f.JSONTag, f.JSONTag)
 		}
 	}
 	return []byte(b.String()), nil
