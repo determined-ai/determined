@@ -8,6 +8,7 @@ import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from 'pages/TrialDetails/Profiles/useFetchProfilerSeries';
 import {
+  getByteTickValues,
   getScientificNotationTickValues,
   getUnitForMetricName,
 } from 'pages/TrialDetails/Profiles/utils';
@@ -102,7 +103,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
         xAxis={XAxisDomain.Time}
         xLabel="Time"
         yLabel={yLabel}
-        yTickValues={getScientificNotationTickValues}
+        yTickValues={/^bytes/i.test(yLabel) ? getByteTickValues : getScientificNotationTickValues}
       />
     </Section>
   );
