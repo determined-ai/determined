@@ -40,6 +40,38 @@
 }
 .base.inline {
   .bar {
+    border-radius: 0;
     box-shadow: none;
+  }
+}
+.legendContainer {
+  margin-left: 35px;
+
+  .legendItem {
+    display: inline-block;
+    font-family: var(--theme-font-family);
+    font-size: 12px;
+    margin-right: 16px;
+
+    .colorButton {
+      color: transparent;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    @supports (font-variation-settings: normal) {
+      font-family: var(--theme-font-family-var);
+    }
+  }
+}
+.title {
+  display: flex;
+  font-family: var(--theme-font-family);
+  font-size: 14px;
+  justify-content: center;
+  padding: 5px;
+
+  @supports (font-variation-settings: normal) {
+    font-family: var(--theme-font-family-var);
   }
 }

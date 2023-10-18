@@ -1782,7 +1782,12 @@ const ProgressSection: React.FC = () => {
         </p>
         <strong>Single progress bar section up to 50%</strong>
         <Progress parts={[{ color: '#009BDE', percent: 0.5 }]} />
-        <strong>Inline variant (less shadow)</strong>
+        <br />
+        <p>
+          Adding the <code>inline</code> prop displays the progress bar with square corners and no
+          drop shadow.
+        </p>
+        <strong>Inline variant</strong>
         <Progress
           inline
           parts={[
@@ -1791,25 +1796,43 @@ const ProgressSection: React.FC = () => {
           ]}
         />
       </AntDCard>
-      <AntDCard title="Tooltips">
+      <AntDCard title="Exterior components">
         <p>
-          Progress bar parts can have an optional <code>label</code> value, or there can be a{' '}
-          <code>tooltip</code> prop on the <code>Progress</code> element as a whole.
+          A <code>title</code> prop is displayed centered above the progress bar:
         </p>
-        <strong>Progress bar sections with individual labels</strong>
+        <strong>Progress bar with title</strong>
         <Progress
           parts={[
-            { color: '#009BDE', label: '50%', percent: 0.5 },
-            { color: '#f00', label: '20%', percent: 0.2 },
+            { color: '#009BDE', label: 'Plan A', percent: 0.5 },
+            { color: '#f00', label: 'Plan C', percent: 0.2 },
+          ]}
+          title="Shareholder Votes"
+        />
+        <br />
+        <p>
+          Each progress bar part can have an optional <code>label</code> value to display in a
+          tooltip:
+        </p>
+        <strong>Progress bar with tooltip labels</strong>
+        <Progress
+          inline
+          parts={[
+            { color: '#f00', label: 'Plan A', percent: 0.5 },
+            { color: '#009BDE', label: 'Plan C', percent: 0.25 },
           ]}
         />
-        <strong>Progress bar with one central tooltip</strong>
+        <br />
+        <p>
+          With the <code>showLegend</code> prop, labels are displayed in a legend below the progress
+          bar instead of in tooltips:
+        </p>
+        <strong>Progress bar with legend</strong>
         <Progress
           parts={[
-            { color: '#009BDE', percent: 0.4 },
-            { color: '#f00', percent: 0.2 },
+            { color: '#009BDE', label: 'Apples', percent: 0.5 },
+            { color: 'orange', label: 'Oranges', percent: 0.2525252 },
           ]}
-          tooltip="Hello Tooltip"
+          showLegend
         />
       </AntDCard>
     </ComponentSection>

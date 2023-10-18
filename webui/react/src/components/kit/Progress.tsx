@@ -16,8 +16,8 @@ export interface Props {
   height?: number;
   inline?: boolean;
   parts: BarPart[];
+  showLegend?: boolean;
   title?: string;
-  tooltip?: string;
 }
 
 const partStyle = (part: BarPart) => {
@@ -36,31 +36,48 @@ const partStyle = (part: BarPart) => {
   return style;
 };
 
-const Progress: React.FC<Props> = ({ height = 4, inline, parts, title, tooltip }: Props) => {
+const Progress: React.FC<Props> = ({ height = 4, inline, parts, showLegend, title }: Props) => {
   const classes: string[] = [css.base];
 
   if (inline) classes.push(css.inline);
 
-  const pbar = (
-    <div className={classes.join(' ')}>
-      <div className={css.bar} style={{ height: `calc(${height}px + var(--theme-density) * 1px)` }}>
-        <div className={css.parts}>
+  return (
+    <>
+      {title && <h5 className={css.title}>{title}</h5>}
+      <div className={classes.join(' ')}>
+        <div
+          className={css.bar}
+          style={{ height: `calc(${height}px + var(--theme-density) * 1px)` }}>
+          <div className={css.parts}>
+            {parts
+              .filter((part) => part.percent !== 0 && !isNaN(part.percent))
+              .map((part, idx) => (
+                <Tooltip content={!showLegend && part.label} key={idx}>
+                  <li
+                    style={{
+                      ...partStyle(part),
+                      cursor: !showLegend && part.label ? 'pointer' : '',
+                    }}
+                  />
+                </Tooltip>
+              ))}
+          </div>
+        </div>
+      </div>
+      {showLegend && (
+        <div className={css.legendContainer}>
           {parts
             .filter((part) => part.percent !== 0 && !isNaN(part.percent))
             .map((part, idx) => (
-              <Tooltip content={part.label} key={idx}>
-                <li style={partStyle(part)} />
-              </Tooltip>
+              <li className={css.legendItem} key={idx}>
+                <span className={css.colorButton} style={partStyle(part)}>
+                  -
+                </span>
+                {part.label} ({(part.percent * 100).toFixed(1)}%)
+              </li>
             ))}
         </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      {title && <h3>{title}</h3>}
-      {tooltip ? <Tooltip content={tooltip}>{pbar}</Tooltip> : pbar}
+      )}
     </>
   );
 };

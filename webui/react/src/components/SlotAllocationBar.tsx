@@ -219,7 +219,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         </div>
       );
     }
-    return !isAux && <span>{`${freeSlots} ${freeSlots > 1 ? 'Slots' : 'Slot'} Free`}</span>;
+    return !isAux && <span>{`${freeSlots} ${freeSlots === 1 ? 'Slot' : 'Slots'} Free`}</span>;
   };
 
   const renderLegend = () => (
