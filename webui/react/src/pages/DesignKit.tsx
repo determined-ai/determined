@@ -919,6 +919,29 @@ const SectionComponentSection: React.FC = () => {
           </p>
           <Button>foo button</Button>
         </Section>
+        <br />
+        <p>Multiple sections</p>
+        <Section title="Title of the section 1">
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
+            exercitationem, labore, suscipit atque ullam...
+          </p>
+          <Button>foo button</Button>
+        </Section>
+        <Section title="Title of the section 2">
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
+            exercitationem, labore, suscipit atque ullam...
+          </p>
+          <Button>foo button</Button>
+        </Section>
+        <Section title="Title of the section 3">
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
+            exercitationem, labore, suscipit atque ullam...
+          </p>
+          <Button>foo button</Button>
+        </Section>
       </AntDCard>
     </ComponentSection>
   );

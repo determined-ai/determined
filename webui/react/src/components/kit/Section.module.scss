@@ -35,6 +35,10 @@
     min-height: 0;
     position: relative;
   }
+  & + section.base {
+    border-top: var(--theme-stroke-width) solid var(--theme-stage-border);
+    padding-top: 16px;
+  }
 }
 .base.divider .body {
   border-top-width: var(--theme-stroke-width);
