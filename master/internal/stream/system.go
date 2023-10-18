@@ -33,7 +33,7 @@ const (
 //
 // There is one PublisherSet for the whole process.  It has one Publisher per streamable type.
 type PublisherSet struct {
-	PgAddress string
+	DBAddress string
 	Trials    *stream.Publisher[*TrialMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
@@ -95,7 +95,7 @@ func newDBListener(address, channel string) (*pq.Listener, error) {
 // NewPublisherSet constructor for PublisherSet.
 func NewPublisherSet() *PublisherSet {
 	return &PublisherSet{
-		PgAddress: "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		DBAddress: "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
 		Trials:    stream.NewPublisher[*TrialMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
@@ -163,7 +163,7 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 
 	eg.Go(
 		func(c context.Context) error {
-			return start(ctx, ps.PgAddress, trialChan, ps.Trials)
+			return start(ctx, ps.DBAddress, trialChan, ps.Trials)
 		},
 	)
 	// eg.Go(start(ctx, "stream_experiment_chan", ps.Experiments))
