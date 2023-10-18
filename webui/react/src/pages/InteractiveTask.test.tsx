@@ -3,10 +3,11 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
-import { theme, isDarkMode } from 'utils/tests/getTheme';
-import { UIProvider, ThemeProvider } from 'components/kit/Theme';
+
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import authStore from 'stores/auth';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import InteractiveTask from './InteractiveTask';
 
@@ -37,7 +38,7 @@ const InteractiveTaskContainer: React.FC = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <UIProvider theme={theme} darkMode={isDarkMode}>
+        <UIProvider darkMode={isDarkMode} theme={theme}>
           <HelmetProvider>
             <ConfirmationProvider>
               <InteractiveTaskPageContainer />

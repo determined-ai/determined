@@ -7,6 +7,7 @@ import { useModal } from 'components/kit/Modal';
 import { UIProvider } from 'components/kit/Theme';
 import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import DeleteGroupModalComponent, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './DeleteGroupModal';
 
@@ -43,9 +44,9 @@ const setup = async () => {
     numMembers: 0,
   };
   const view = render(
-    //>
-    <Container group={group} />,
-    //</UIProvider>,
+    <UIProvider darkMode={isDarkMode} theme={theme}>
+      <Container group={group} />
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
