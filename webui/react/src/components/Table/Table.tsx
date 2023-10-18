@@ -248,10 +248,8 @@ export const modelVersionNumberRenderer = (
   value: string,
   record: ModelVersion,
 ): React.ReactNode => (
-  <Link
-    className={css.versionBox}
-    path={paths.modelVersionDetails(String(record.model.id), record.version)}>
-    V{record.version}
+  <Link path={paths.modelVersionDetails(String(record.model.id), record.version)}>
+    <div className={css.versionBox}>V{record.version}</div>
   </Link>
 );
 

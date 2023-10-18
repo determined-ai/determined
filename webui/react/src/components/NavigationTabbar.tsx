@@ -41,9 +41,11 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
   useEffect(() => setIsActive(location.pathname === path), [location.pathname, path]);
 
   return (
-    <Link className={classes.join(' ')} path={path} {...props}>
-      <Icon name={props.icon} size="large" title={props.label} />
-      {status && <div className={css.status}>{status}</div>}
+    <Link path={path} {...props}>
+      <div className={classes.join(' ')}>
+        <Icon name={props.icon} size="large" title={props.label} />
+        {status && <div className={css.status}>{status}</div>}
+      </div>
     </Link>
   );
 };
