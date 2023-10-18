@@ -115,7 +115,7 @@
     "model-dev-guide/prepare-container/overview": "_index.html",
     "setup-cluster/security/overview": "../../manage/security/_index.html",
     "tutorials/pytorch-porting-tutorial": "pytorch-mnist-tutorial.html",
-    "tutorials/tf-mnist-tutorial": "_index.rst",
+    "tutorials/tf-mnist-tutorial": "_index.html",
     "model-dev-guide/batch-processing/batch-process-api-ug": "../api-guides/batch-process-api-ug.html",
     "model-dev-guide/apis-howto/deepspeed/advanced": "../../api-guides/apis-howto/deepspeed/advanced.html",
     "model-dev-guide/apis-howto/deepspeed/deepspeed": "../../api-guides/apis-howto/deepspeed/deepspeed.html",
