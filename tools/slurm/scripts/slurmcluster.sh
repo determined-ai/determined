@@ -56,10 +56,13 @@ while [[ $# -gt 0 ]]; do
         # The Makefile that calls this script may pass in additional flags used for other scritps
         # which can be ignored.
         -t)
-            shift 2
+            shift 1
+            while [[ -n $1 && $1 != -* ]]; do
+                shift 1
+            done
             ;;
         -h | --help)
-            echo "Usage: $0 [-Acwdmg]"
+            echo "Usage: $0 [-Acwdmgt]"
             echo ""
             echo "Launches a compute instance with Slurm, Singularity (Apptainer), the HPC"
             echo "Launcher component, and many other dependencies pre-installed. Then, SSH tunnels"
@@ -84,6 +87,9 @@ while [[ $# -gt 0 ]]; do
             echo '  -d'
             echo "           Description: Connect to a dev launcher manually deployed to the GCP VM using"
             echo "           'loadDevlauncher.sh -g'."
+            echo '  -t'
+            echo "           Description: Specifies a duration for the GCP VM to run before automatically"
+            echo "           terminating. User can input time in d(days)|h(hours)|m(minutes)|s(seconds)"
             echo '  -m {machine_type} '
             echo "           Description: Specify a GCP machine_type value (default is n1-standard-8)"
             echo "           Example: $0 -m g2-standard-4"
