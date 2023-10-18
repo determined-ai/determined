@@ -13,11 +13,17 @@
       -  Surface more attributes to resource classes, including ``hparams`` and ``summary_metrics``
          for :class:`~determined.experimental.client.Trial`.
 
+      -  Add support for fetching and filtering multiple experiments with
+         :meth:`client.list_experiments <determined.experimental.client.list_experiments>`.
+
       -  Add support for filtering trial logs by timestamp and a query string using
          :meth:`Trial.iter_logs <determined.experimental.client.Trial.iter_logs>`.
 
-      -  All resource objects now cache attributes by default and provide a ``.reload()`` method
-         which forces a fresh fetch.
+      -  All resource objects now have a ``.reload()`` method that refreshes the resource's
+         attributes from the server. Previously, attributes were most easily refreshed by creating
+         an entirely new object.
+
+-  Python SDK: all ``GET`` API calls now retry the request (maximum of 5 times) on failure.
 
 **Deprecated Features**
 
