@@ -538,8 +538,9 @@ const LogViewer: React.FC<Props> = ({
   );
 
   return (
-    <Section divider title={props.title}>
+    <Section>
       <div className={css.options}>
+        <h3>{props.title}</h3>
         <Space>
           <ClipboardButton
             copiedMessage={clipboardCopiedMessage}
@@ -564,43 +565,45 @@ const LogViewer: React.FC<Props> = ({
           )}
         </Space>
       </div>
-      <Spinner center spinning={isFetching} tip={logs.length === 0 ? 'No logs to show.' : ''}>
-        <div className={css.base} ref={baseRef}>
-          <div className={css.container}>
-            <div className={css.logs} ref={refCallback}>
-              <VariableSizeList
-                height={pageSize.height - 250}
-                itemCount={logs.length}
-                itemData={logs}
-                itemSize={getItemHeight}
-                ref={listRef}
-                width="100%"
-                onItemsRendered={handleItemsRendered}
-                onScroll={handleScroll}>
-                {LogViewerRow}
-              </VariableSizeList>
+      <div className={css.sectionBody}>
+        <Spinner center spinning={isFetching} tip={logs.length === 0 ? 'No logs to show.' : ''}>
+          <div className={css.base} ref={baseRef}>
+            <div className={css.container}>
+              <div className={css.logs} ref={refCallback}>
+                <VariableSizeList
+                  height={pageSize.height - 250}
+                  itemCount={logs.length}
+                  itemData={logs}
+                  itemSize={getItemHeight}
+                  ref={listRef}
+                  width="100%"
+                  onItemsRendered={handleItemsRendered}
+                  onScroll={handleScroll}>
+                  {LogViewerRow}
+                </VariableSizeList>
+              </div>
+            </div>
+            <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
+              <Button
+                aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
+                icon={<Icon name="arrow-up" showTooltip title={ARIA_LABEL_SCROLL_TO_OLDEST} />}
+                onClick={handleScrollToOldest}
+              />
+              <Button
+                aria-label={ARIA_LABEL_ENABLE_TAILING}
+                icon={
+                  <Icon
+                    name="arrow-down"
+                    showTooltip
+                    title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
+                  />
+                }
+                onClick={handleEnableTailing}
+              />
             </div>
           </div>
-          <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
-            <Button
-              aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
-              icon={<Icon name="arrow-up" showTooltip title={ARIA_LABEL_SCROLL_TO_OLDEST} />}
-              onClick={handleScrollToOldest}
-            />
-            <Button
-              aria-label={ARIA_LABEL_ENABLE_TAILING}
-              icon={
-                <Icon
-                  name="arrow-down"
-                  showTooltip
-                  title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}
-                />
-              }
-              onClick={handleEnableTailing}
-            />
-          </div>
-        </div>
-      </Spinner>
+        </Spinner>
+      </div>
     </Section>
   );
 };

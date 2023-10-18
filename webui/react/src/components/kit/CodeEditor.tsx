@@ -11,7 +11,6 @@ import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Message from 'components/kit/Message';
-import Section from 'components/kit/Section';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
@@ -214,6 +213,7 @@ const CodeEditor: React.FC<Props> = ({
   ];
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
+  const sectionClasses = [loadableFile.isFailed ? css.pageError : css.editor];
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (loadableFile.isFailed) {
@@ -279,10 +279,10 @@ const CodeEditor: React.FC<Props> = ({
           </div>
         </div>
       )}
-      <Section>
+      <div className={sectionClasses.join(' ')}>
         {/* directly checking tag because loadable.isLoaded only takes loadables */}
         <Spinner spinning={file === NotLoaded}>{fileContent}</Spinner>
-      </Section>
+      </div>
     </div>
   );
 };

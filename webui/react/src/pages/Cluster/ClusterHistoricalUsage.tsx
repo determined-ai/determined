@@ -1,15 +1,11 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'determined-ui/Button';
+import Spinner from 'determined-ui/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/kit/Section';
-<<<<<<< HEAD
-=======
-import Spinner from 'components/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
->>>>>>> 32d3c8575 (feat: remove additional props and updated code)
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
