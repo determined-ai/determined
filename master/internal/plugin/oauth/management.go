@@ -44,8 +44,7 @@ func (s *Service) addClient(c echo.Context) error {
 	}
 
 	user := c.(*context.DetContext).MustGetUser()
-	err = AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user)
-	if err != nil {
+	if err = AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user); err != nil {
 		return err
 	}
 
@@ -87,8 +86,7 @@ func (s *Service) addClient(c echo.Context) error {
 
 func (s *Service) clients(c echo.Context) error {
 	user := c.(*context.DetContext).MustGetUser()
-	err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user)
-	if err != nil {
+	if err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user); err != nil {
 		return err
 	}
 
@@ -101,8 +99,7 @@ func (s *Service) clients(c echo.Context) error {
 
 func (s *Service) deleteClient(c echo.Context) error {
 	user := c.(*context.DetContext).MustGetUser()
-	err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user)
-	if err != nil {
+	if err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), user); err != nil {
 		return err
 	}
 

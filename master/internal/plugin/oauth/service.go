@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	oauth2Errors "gopkg.in/oauth2.v3/errors"
@@ -83,7 +81,7 @@ func (s *Service) userAuthorizationHandler(w http.ResponseWriter, r *http.Reques
 	}).Infof("user authorizing an OAuth application")
 
 	if err := AuthZProvider.Get().CanAdministrateOauth(c.Request().Context(), *user); err != nil {
-		return "", errors.Errorf("non-admin user %s cannot authorize OAuth applications", user.Username)
+		return "", err
 	}
 
 	// For now, automatically authorize the application for simplicity.
