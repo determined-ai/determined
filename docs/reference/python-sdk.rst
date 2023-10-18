@@ -61,6 +61,13 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, stream_trials_metrics
    :member-order: bysource
 
+``OrderBy``
+===========
+
+.. autoclass:: determined.experimental.client.OrderBy
+   :members:
+   :member-order: bysource
+
 ``Checkpoint``
 ==============
 
@@ -96,13 +103,6 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members:
    :member-order: bysource
 
-``ModelOrderBy``
-================
-
-.. autoclass:: determined.experimental.client.ModelOrderBy
-   :members:
-   :member-order: bysource
-
 ``ModelSortBy``
 ===============
 
@@ -114,6 +114,13 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 ================
 
 .. autoclass:: determined.experimental.model.ModelVersion
+   :members:
+   :member-order: bysource
+
+``Project``
+===========
+
+.. autoclass:: determined.experimental.client.Project
    :members:
    :member-order: bysource
 
@@ -129,3 +136,10 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 ================
 
 .. autoclass:: determined.experimental.client.TrialMetrics
+
+``Workspace``
+=============
+
+.. autoclass:: determined.experimental.client.Workspace
+   :members:
+   :member-order: bysource
