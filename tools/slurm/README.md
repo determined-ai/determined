@@ -8,7 +8,7 @@
    - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
    - To specify which workload manager to use, pass in `FLAGS="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
    - The default configuration yields a Slurm cluster with a single compute node and 8 CPUs (`n1-standard-8`).   You can control the machine_type, and gpus of the compute node using `FLAGS="-m {machine_type} -g {gpu_type}:{count}"`.  See below.
-   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To specify a different amount of time, pass in `FLAGS="-t {time_seconds}"` to `make slurmcluster`.
+   - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To specify a different amount of time, pass in `FLAGS="-t {0-9}[d|h|m|s]"` to `make slurmcluster`.
 4. Step 2 will ultimately launch a local devcluster. Use this as you typically would [1].
 5. Release the resources with `make unslurmcluster` when you are done.
 
@@ -80,7 +80,7 @@ with `devcluster` works from here as always.
 
 ## Automatic VM Deletion
 
-By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `FLAGS="-t {time_seconds}"`. Where `seconds` is a value between 0 to 10,281,600 seconds inclusive. The two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
+By default, each devbox invoked by `make slurmcluster` will automatically delete the VM after two hours of runtime. If you want to override this time limit, one can run `FLAGS="-t {0-9}[d|h|m|s]"` where the arguments for `-t` are any number followed by any unit of time such as days or hours. For example, one can input `-t 2d 16h` to get 2 days and 16 hours of runtime before the VM automatically terminates. The default two hour time limit ensures that devboxes are being deleted if they are not used to prevent excess costs.
 
 ## Running a Slurmcluster on a Developer Launcher
 

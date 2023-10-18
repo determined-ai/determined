@@ -16,10 +16,35 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -t)
             shift
-            if [[ -n $1 && $1 != -* ]]; then
-                VMTIME=$1
+            VMTIME=0
+            # Processes time units and converts them into seconds
+            # A while loop ensures multiple time units work
+            while [[ -n $1 && $1 != -* ]]; do
+                # Extracts the last character from the unit
+                TIME_TYPE=$(echo "$1" | sed 's/.*\(.\)$/\1/')
+                case $TIME_TYPE in
+                    d)
+                        VMTIME=$((VMTIME + ${1%d} * 86400))
+                        ;;
+                    h)
+                        VMTIME=$((VMTIME + ${1%h} * 3600))
+                        ;;
+                    m)
+                        VMTIME=$((VMTIME + ${1%m} * 60))
+                        ;;
+                    s)
+                        VMTIME=$((VMTIME + ${1%s}))
+                        ;;
+                    [0-9])
+                        VMTIME=$((VMTIME + $1))
+                        ;;
+                    *)
+                        echo "Error entered time unit '$TIME_TYPE' was not a number or a correct unit (d|h|m|s)" >&2
+                        echo "Skipping entered time..." >&2
+                        ;;
+                esac
                 shift
-            fi
+            done
             ;;
         -w)
             shift
