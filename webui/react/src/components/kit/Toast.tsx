@@ -1,6 +1,6 @@
-import { notification as antdNotification, App } from 'antd';
+import { notification as antdNotification } from 'antd';
 import { useAppProps } from 'antd/es/app/context';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import Icon, { IconName } from './Icon';
 import css from './Toast.module.scss';
@@ -8,21 +8,18 @@ import css from './Toast.module.scss';
 /**
  * Wrapper for static dialog functionality from antd. Regular static instances
  * are not responsive to the theming context, and will appear with the default
- * styling, so we use the app context from antd which hooks into the context.
+ * styling, so we use the app context  G,rfrom antd which hooks into the context.
  * This requires our code to call the `App.useApp` hook somewhere, so we do that
  * in the AppView. We fall back to the vanilla static methods so testing
  * functionality isn't broken.
  */
 
-let notification: useAppProps['notification'] = antdNotification;
-
-export const useInitApi = (): void => {
-  const api = App.useApp();
-  // minimize reassignments
-  useEffect(() => {
-    ({ notification } = api);
-  }, [api]);
-};
+antdNotification.config({
+  getContainer: () => {
+    return (document.getElementsByClassName('ui-provider')?.[0] || document.body) as HTMLElement;
+  },
+});
+const notification: useAppProps['notification'] = antdNotification;
 
 export { notification };
 
@@ -46,7 +43,7 @@ export const makeToast = ({
   title,
   severity = 'Info',
   closeable = true,
-  duration = 4.5,
+  duration = 40.5,
   description,
   link,
 }: ToastArgs): void => {
