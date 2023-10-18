@@ -673,9 +673,9 @@ def download(args: Namespace) -> None:
     ckpt_order_by = None
 
     if args.smaller_is_better is True:
-        ckpt_order_by = client.CheckpointOrderBy.ASC
+        ckpt_order_by = client.OrderBy.ASC
     if args.smaller_is_better is False:
-        ckpt_order_by = client.CheckpointOrderBy.DESC
+        ckpt_order_by = client.OrderBy.DESC
 
     checkpoints = exp.list_checkpoints(
         sort_by=args.sort_by,

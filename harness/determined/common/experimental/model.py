@@ -9,6 +9,9 @@ from determined.common import api, util
 from determined.common.api import bindings
 from determined.common.experimental import checkpoint, metrics
 
+# TODO (MLG-1087): move OrderBy to experimental.client namespace
+from determined.common.experimental._util import OrderBy  # noqa: I2041
+
 
 class ModelVersion:
     """A class representing a combination of Model and Checkpoint.
@@ -166,7 +169,19 @@ class ModelOrderBy(enum.Enum):
     """
     Specifies whether a sorted list of models should be in ascending or
     descending order.
+
+    This class is deprecated in favor of ``OrderBy`` and will be removed in a future
+    release.
     """
+
+    def __getattribute__(self, name: str) -> Any:
+        warnings.warn(
+            "'ModelOrderBy' is deprecated and will be removed in a future "
+            "release. Please use 'experimental.OrderBy' instead.",
+            FutureWarning,
+            stacklevel=1,
+        )
+        return super().__getattribute__(name)
 
     ASCENDING = bindings.v1OrderBy.ASC.value
     ASC = bindings.v1OrderBy.ASC.value
@@ -241,7 +256,7 @@ class Model:
 
         return ModelVersion._from_bindings(r.modelVersion, self._session)
 
-    def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[ModelVersion]:
+    def get_versions(self, order_by: OrderBy = OrderBy.DESC) -> List[ModelVersion]:
         warnings.warn(
             "Model.get_versions() has been deprecated and will be removed in a future version."
             "Please call Model.list_versions() instead.",
@@ -250,7 +265,7 @@ class Model:
         )
         return list(self.list_versions(order_by=order_by))
 
-    def list_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[ModelVersion]:
+    def list_versions(self, order_by: OrderBy = OrderBy.DESC) -> List[ModelVersion]:
         """
         Get a list of ModelVersions with checkpoints of this model.
 
@@ -258,7 +273,7 @@ class Model:
         order by default.
 
         Arguments:
-            order_by (enum): A member of the :class:`ModelOrderBy` enum.
+            order_by (enum): A member of the :class:`OrderBy` enum.
         """
 
         def get_with_offset(offset: int) -> bindings.v1GetModelVersionsResponse:

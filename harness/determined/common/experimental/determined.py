@@ -18,6 +18,9 @@ from determined.common.experimental import (
     workspace,
 )
 
+# TODO (MLG-1087): move OrderBy to experimental.client namespace
+from determined.common.experimental._util import OrderBy  # noqa: I2041
+
 
 class Determined:
     """
@@ -201,7 +204,7 @@ class Determined:
     def list_experiments(
         self,
         sort_by: Optional[experiment.ExperimentSortBy] = None,
-        order_by: Optional[experiment.ExperimentOrderBy] = None,
+        order_by: Optional[OrderBy] = None,
         experiment_ids: Optional[List[int]] = None,
         labels: Optional[List[str]] = None,
         users: Optional[List[str]] = None,
@@ -215,7 +218,7 @@ class Determined:
             sort_by: Which field to sort by. See
                 :class:`~determined.experimental.ExperimentSortBy`.
             order_by: Whether to sort in ascending or descending order. See
-                :class:`~determined.experimental.ExperimentOrderBy`.
+                :class:`~determined.experimental.OrderBy`.
             name: If this parameter is set, experiments will be filtered to only include those
                 with names matching this parameter.
             experiment_ids: Only return experiments with these IDs.
@@ -352,7 +355,7 @@ class Determined:
     def get_models(
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
-        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        order_by: OrderBy = OrderBy.ASCENDING,
         name: Optional[str] = None,
         description: Optional[str] = None,
         model_id: Optional[int] = None,
@@ -380,7 +383,7 @@ class Determined:
     def list_models(
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
-        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
+        order_by: OrderBy = OrderBy.ASCENDING,
         name: Optional[str] = None,
         description: Optional[str] = None,
         model_id: Optional[int] = None,
@@ -393,7 +396,7 @@ class Determined:
         Arguments:
             sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
             order_by: Whether to sort in ascending or descending order. See
-                :class:`~determined.experimental.ModelOrderBy`.
+                :class:`~determined.experimental.OrderBy`.
             name: If this parameter is set, models will be filtered to only
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to

@@ -51,6 +51,7 @@ import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common.api import Session  # noqa: F401
+from determined.common.experimental._util import OrderBy
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
     CheckpointOrderBy,
@@ -59,9 +60,13 @@ from determined.common.experimental.checkpoint import (  # noqa: F401
     DownloadMode,
 )
 from determined.common.experimental.determined import Determined
-from determined.common.experimental.experiment import Experiment, ExperimentState  # noqa: F401
+from determined.common.experimental.experiment import (  # noqa: F401
+    Experiment,
+    ExperimentOrderBy,
+    ExperimentState,
+)
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
-from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
+from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy  # noqa: F401
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import Trial, TrialOrderBy, TrialSortBy  # noqa: F401
 from determined.common.experimental.user import User
@@ -359,7 +364,7 @@ def get_model_by_id(model_id: int) -> Model:
 @_require_singleton
 def get_models(
     sort_by: ModelSortBy = ModelSortBy.NAME,
-    order_by: ModelOrderBy = ModelOrderBy.ASCENDING,
+    order_by: OrderBy = OrderBy.ASCENDING,
     name: str = "",
     description: str = "",
 ) -> List[Model]:
@@ -368,7 +373,7 @@ def get_models(
     Args:
         sort_by: Which field to sort by. See :class:`~determined.experimental.client.ModelSortBy`.
         order_by: Whether to sort in ascending or descending order. See
-            :class:`~determined.experimental.client.ModelOrderBy`.
+            :class:`~determined.experimental.client.OrderBy`.
         name: If this parameter is set, models will be filtered to only
             include models with names matching this parameter.
         description: If this parameter is set, models will be filtered to

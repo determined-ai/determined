@@ -6,6 +6,7 @@ import pathlib
 import shutil
 import sys
 import tarfile
+import warnings
 from typing import Any, Dict, Iterable, List, Optional
 
 from determined import errors
@@ -50,7 +51,20 @@ class CheckpointState(enum.Enum):
 
 
 class CheckpointOrderBy(enum.Enum):
-    """Specifies order of a sorted list of checkpoints."""
+    """Specifies order of a sorted list of checkpoints.
+
+    This class is deprecated in favor of ``OrderBy`` and will be removed in a future
+    release.
+    """
+
+    def __getattribute__(self, name: str) -> Any:
+        warnings.warn(
+            "'CheckpointOrderBy' is deprecated and will be removed in a future "
+            "release. Please use 'experimental.OrderBy' instead.",
+            FutureWarning,
+            stacklevel=1,
+        )
+        return super().__getattribute__(name)
 
     ASC = bindings.v1OrderBy.ASC.value
     DESC = bindings.v1OrderBy.DESC.value

@@ -155,7 +155,7 @@ def test_list_experiments_calls_bindings_with_params(
 
     params = {
         "sort_by": experiment.ExperimentSortBy.ID,
-        "order_by": experiment.ExperimentOrderBy.ASCENDING,
+        "order_by": determined.OrderBy.ASCENDING,
         "experiment_ids": list(range(10)),
         "labels": ["label1", "label2"],
         "users": ["user1", "user2"],

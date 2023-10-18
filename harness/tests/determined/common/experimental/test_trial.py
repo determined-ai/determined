@@ -6,7 +6,7 @@ import pytest
 import responses
 
 from determined.common import api
-from determined.common.experimental import checkpoint, trial
+from determined.common.experimental import checkpoint, determined, trial
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
@@ -106,7 +106,7 @@ def test_list_checkpoints_calls_bindings_sortByMetric_with_sort_by_str(
     mock_bindings.side_effect = [ckpt_resp]
 
     sort_by_metric = "val_metric"
-    trialref.list_checkpoints(sort_by=sort_by_metric, order_by=checkpoint.CheckpointOrderBy.ASC)
+    trialref.list_checkpoints(sort_by=sort_by_metric, order_by=determined.OrderBy.ASC)
 
     _, call_kwargs = mock_bindings.call_args_list[0]
 
@@ -123,7 +123,7 @@ def test_list_checkpoints_calls_bindings_sortByAttr_with_sort_by_attr(
     mock_bindings.side_effect = [ckpt_resp]
 
     sort_by_attr = checkpoint.CheckpointSortBy.SEARCHER_METRIC
-    trialref.list_checkpoints(sort_by=sort_by_attr, order_by=checkpoint.CheckpointOrderBy.ASC)
+    trialref.list_checkpoints(sort_by=sort_by_attr, order_by=determined.OrderBy.ASC)
 
     _, call_kwargs = mock_bindings.call_args_list[0]
 

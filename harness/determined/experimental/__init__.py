@@ -10,6 +10,7 @@ with warnings.catch_warnings(record=True):
         ModelOrderBy,
         ModelSortBy,
         ModelVersion,
+        OrderBy,
         Project,
         Session,
         Trial,

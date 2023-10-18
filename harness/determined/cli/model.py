@@ -8,7 +8,7 @@ from determined.cli import render
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.experimental import Determined, Model, ModelOrderBy, ModelSortBy, ModelVersion
+from determined.experimental import Determined, Model, ModelSortBy, ModelVersion, OrderBy
 
 
 def render_model(model: Model) -> None:
@@ -65,7 +65,7 @@ def list_models(args: Namespace) -> None:
         workspace_names = args.workspace_names.split(",")
     models = Determined(args.master, args.user).get_models(
         sort_by=ModelSortBy[args.sort_by.upper()],
-        order_by=ModelOrderBy[args.order_by.upper()],
+        order_by=OrderBy[args.order_by.upper()],
         workspace_names=workspace_names,
     )
     if args.json:

@@ -98,11 +98,11 @@ The following example returns models registered in Determined as a list of
 :class:`~determined.experimental.Model` objects. Models can be sorted by name, description, creation
 time, and last updated time. Additionally, models can be filtered by name or description via the
 Python SDK. For sorting and ordering options, see :class:`~determined.experimental.ModelSortBy` and
-:class:`~determined.experimental.ModelOrderBy` respectively.
+:class:`~determined.experimental.OrderBy` respectively.
 
 .. code:: python
 
-   from determined.experimental import Determined, ModelOrderBy
+   from determined.experimental import Determined, OrderBy
 
    d = Determined()
 

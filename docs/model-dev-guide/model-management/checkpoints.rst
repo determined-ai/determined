@@ -59,7 +59,7 @@ To sort checkpoints by any metric, use the ``sort_by`` argument to specify the m
    checkpoints = (
        client.get_experiment(id).list_checkpoints(
            sort_by="accuracy",
-           order_by=checkpoint.CheckpointOrderBy.DESC
+           order_by=client.OrderBy.DESC
        )
    )
 
@@ -73,7 +73,7 @@ checkpoints for an experiment, sorting them by trial ID in descending order.
 
    checkpoints = client.get_experiment(id).list_checkpoints(
        sort_by=checkpoint.CheckpointSortBy.TRIAL_ID,
-       order_by=checkpoint.CheckpointOrderBy.DESC
+       order_by=client.OrderBy.DESC
    )
 
 :class:`~determined.experimental.client.Trial` is used for fine-grained control over checkpoint
@@ -91,14 +91,14 @@ The following code illustrates methods to select specific checkpoints from a tri
 
    most_recent_checkpoint = trial.list_checkpoints(
        sort_by=checkpoint.CheckpointSortBy.END_TIME,
-       order_by=checkpoint.CheckpointOrderBy.DESC,
+       order_by=client.OrderBy.DESC,
        max_results=1
    )[0]
 
    # Sort checkpoints by "accuracy" metric, if your training code reports it.
    most_accurate_checkpoint = trial.list_checkpoints(
        sort_by="accuracy",
-       order_by=checkpoint.CheckpointOrderBy.DESC,
+       order_by=client.OrderBy.DESC,
        max_results=1
    )[0]
 
