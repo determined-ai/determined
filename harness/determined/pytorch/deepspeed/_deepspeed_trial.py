@@ -428,12 +428,20 @@ class DeepSpeedTrialController(det.TrialController):
                 num_train_batch_calls = 1
             self.context._loss_ids = {}
             for _ in range(num_train_batch_calls):
-                with self.prof.record_timing("train_batch", requires_sync=False, accumulate=True):
+                with contextlib.ExitStack() as exit_stack:
+                    exit_stack.enter_context(self.prof.record_timing("train_batch", requires_sync=False, accumulate=True))
+                    if self.context.profiler:
+                        exit_stack.enter_context(self.context.profiler)
+
                     tr_metrics = self.trial.train_batch(
                         self.training_iterator,
                         self.get_epoch_idx(batch_idx),
                         batch_idx,
                     )
+
+                    if self.context.profiler:
+                        self.context.profiler.step()
+
                 if self.context._mpu.should_report_metrics:
                     if isinstance(tr_metrics, torch.Tensor):
                         tr_metrics = {"loss": tr_metrics}
