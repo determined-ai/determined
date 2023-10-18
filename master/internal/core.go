@@ -886,9 +886,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
-	if err := webhooks.Default().Initialize(ctx); err != nil {
+	webhookManager, err := webhooks.New(ctx)
+	if err != nil {
 		return fmt.Errorf("initializing webhooks: %w", err)
 	}
+	webhooks.SetDefault(webhookManager)
 
 	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
 	if err != nil {

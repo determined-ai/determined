@@ -27,20 +27,33 @@ type cacheItem struct {
 }
 
 // We are going to report a lot of logs so cache the regexes and what triggers they do.
-type regexTriggerCache struct {
+type regexTriggerCache struct{}
+
+type webhookManager struct {
 	mu    sync.RWMutex
-	items map[string]cacheItem // Maps string regex to compiled regex + all triggers.
+	items map[string]cacheItem
 }
 
-var cache = &regexTriggerCache{
-	items: make(map[string]cacheItem),
+// New creates a new webhook manager.
+func New(ctx context.Context) (*webhookManager, error) {
+	var triggers []*Trigger
+	if err := db.Bun().NewSelect().Model(&triggers).Relation("Webhook").
+		Where("trigger_type = ?", TriggerTypeTaskLog).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("querying task logs triggers: %w", err)
+	}
+
+	m := &webhookManager{
+		items: make(map[string]cacheItem),
+	}
+	if err := m.addTriggers(triggers); err != nil {
+		return nil, fmt.Errorf("adding each trigger: %w", err)
+	}
+
+	return m, nil
 }
 
-func Default() *regexTriggerCache {
-	return cache
-}
-
-func (l *regexTriggerCache) addTriggers(triggers []*Trigger) error {
+func (l *webhookManager) addTriggers(triggers []*Trigger) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -73,7 +86,7 @@ func (l *regexTriggerCache) addTriggers(triggers []*Trigger) error {
 	return nil
 }
 
-func (l *regexTriggerCache) removeTriggers(triggers []*Trigger) error {
+func (l *webhookManager) removeTriggers(triggers []*Trigger) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -93,23 +106,7 @@ func (l *regexTriggerCache) removeTriggers(triggers []*Trigger) error {
 	return nil
 }
 
-func (l *regexTriggerCache) Initialize(ctx context.Context) error {
-	// Intentionally not locking here.
-	var triggers []*Trigger
-	if err := db.Bun().NewSelect().Model(&triggers).Relation("Webhook").
-		Where("trigger_type = ?", TriggerTypeTaskLog).
-		Scan(ctx); err != nil {
-		return fmt.Errorf("querying task logs triggers: %w", err)
-	}
-
-	if err := l.addTriggers(triggers); err != nil {
-		return fmt.Errorf("adding each trigger: %w", err)
-	}
-
-	return nil
-}
-
-func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog) error {
+func (l *webhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) error {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
@@ -133,8 +130,7 @@ func (l *regexTriggerCache) ScanLogs(ctx context.Context, logs []*model.TaskLog)
 	return nil
 }
 
-// AddWebhook adds a Webhook and its Triggers to the DB.
-func AddWebhook(ctx context.Context, w *Webhook) error {
+func (l *webhookManager) addWebhook(ctx context.Context, w *Webhook) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().Model(w).Exec(ctx)
 		if err != nil {
@@ -153,12 +149,39 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 			for _, t := range w.Triggers {
 				t.Webhook = w
 			}
-			if err := Default().addTriggers(w.Triggers); err != nil {
+			if err := l.addTriggers(w.Triggers); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+func (l *webhookManager) deleteWebhook(ctx context.Context, id WebhookID) error {
+	var ts []*Trigger
+	_, err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
+		Where("webhook_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("getting webhook triggers to delete: %w", err)
+	}
+
+	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		if err := l.removeTriggers(ts); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("deleting webhooks: %w", err)
+	}
+
+	return nil
 }
 
 // GetWebhook returns a single Webhooks from the DB.
@@ -186,34 +209,6 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 		return nil, err
 	}
 	return webhooks, nil
-}
-
-// DeleteWebhook deletes a Webhook and its Triggers from the DB.
-func DeleteWebhook(ctx context.Context, id WebhookID) error {
-	var ts []*Trigger
-	_, err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
-		Where("webhook_id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("getting webhook triggers to delete: %w", err)
-	}
-
-	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		if err := Default().removeTriggers(ts); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("deleting webhooks: %w", err)
-	}
-
-	return nil
 }
 
 // ReportExperimentStateChanged adds webhook events to the queue.
@@ -305,7 +300,6 @@ func addTaskLogEvent(ctx context.Context,
 		return fmt.Errorf("adding webhook task log trigger event: %w", err)
 	}
 
-	fmt.Println("NEED TO WAKE", taskID)
 	if needToWake {
 		singletonShipper.Wake()
 	}
@@ -392,10 +386,10 @@ func generateLogPatternSlackPayload(
 			"Task ID `%s`, task type `%s`, running on node `%s`, reported a log\n",
 			taskID, task.TaskType, nodeName) +
 			fmt.Sprintf("```%s```\n", triggeringLog) +
+			"This log matched the regex\n" +
 			fmt.Sprintf("```%s```\n", regex)
 	}
 
-	fmt.Println(msg)
 	message, err := json.Marshal(SlackMessageBody{
 		Blocks: []SlackBlock{
 			{

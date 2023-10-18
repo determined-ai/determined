@@ -417,7 +417,7 @@ func (a *apiServer) PostTaskLogs(
 	}
 
 	fmt.Println("webhooks scan logs")
-	if err := webhooks.Default().ScanLogs(ctx, logs); err != nil {
+	if err := webhooks.ScanLogs(ctx, logs); err != nil {
 		log.Errorf("scanning logs for webhook triggers: %w", err)
 	}
 
