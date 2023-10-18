@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
-import { GroupVariable, NullOrUndefined } from 'components/kit/internal/types';
+import { NullOrUndefined } from 'components/kit/internal/types';
 
 const GLASBEY = [
   [0, 155, 222],
@@ -550,20 +550,4 @@ export const rgba2hsl = (rgba: RgbaColor): HslColor => {
 
 export const hsl2str = (hsl: HslColor): string => {
   return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
-};
-
-const GROUP_KEY_DELIMITER = '.';
-
-export const groupToStr = (groupVar: GroupVariable, truncateLimit = 30): string => {
-  /**
-   * TODO - also see `src/components/MetricBadgeTag.tsx'
-   * Group may sometimes end up being `undefined` when an old metric setting
-   * is restored and the UI attempts to use it. Adding a safeguard for now.
-   * Better approach of hunting down all the places it can be stored as a setting
-   * and validating it upon loading and discarding it if invalid.
-   */
-  const label = !groupVar.group
-    ? groupVar.name
-    : [groupVar.group, groupVar.name].join(GROUP_KEY_DELIMITER);
-  return label.length > truncateLimit ? label.substring(0, truncateLimit) + '...' : label;
 };

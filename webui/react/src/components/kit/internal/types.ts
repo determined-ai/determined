@@ -207,13 +207,6 @@ export interface TreeNode extends DataNode {
   subtitle?: string;
 }
 
-export const GroupType = {
-  Training: 'training',
-  Validation: 'validation',
-} as const;
-
-export type GroupType = ValueOf<typeof GroupType>;
-
 export interface Note {
   contents: string;
   name: string;
@@ -373,8 +366,3 @@ export const XAxisDomain = {
 } as const;
 
 export type XAxisDomain = ValueOf<typeof XAxisDomain>;
-
-export interface GroupVariable {
-  group: string;
-  name: string;
-}
