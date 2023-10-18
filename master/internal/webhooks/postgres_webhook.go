@@ -159,10 +159,9 @@ func (l *webhookManager) addWebhook(ctx context.Context, w *Webhook) error {
 
 func (l *webhookManager) deleteWebhook(ctx context.Context, id WebhookID) error {
 	var ts []*Trigger
-	_, err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
+	if err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
 		Where("webhook_id = ?", id).
-		Exec(ctx)
-	if err != nil {
+		Scan(ctx, &ts); err != nil {
 		return fmt.Errorf("getting webhook triggers to delete: %w", err)
 	}
 

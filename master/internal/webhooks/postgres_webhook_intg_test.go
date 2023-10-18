@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -104,6 +105,99 @@ func TestWebhooks(t *testing.T) {
 	})
 
 	t.Cleanup(func() { cleanUp(ctx, t) })
+}
+
+func TestWebhookScanLogs(t *testing.T) {
+	ctx := context.Background()
+	clearWebhooksTables(ctx, t)
+
+	manager, err := New(ctx)
+	require.NoError(t, err)
+
+	r0 := uuid.New().String()
+	r1 := uuid.New().String()
+	r2 := uuid.New().String()
+
+	w0 := &Webhook{
+		WebhookType: WebhookTypeDefault,
+		URL:         uuid.New().String(),
+		Triggers: Triggers{
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r0}},
+		},
+	}
+	w1 := &Webhook{
+		WebhookType: WebhookTypeDefault,
+		URL:         uuid.New().String(),
+		Triggers: Triggers{
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r0}},
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r1}},
+		},
+	}
+	w2 := &Webhook{
+		WebhookType: WebhookTypeDefault,
+		URL:         uuid.New().String(),
+		Triggers: Triggers{
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r2}},
+		},
+	}
+
+	require.NoError(t, manager.addWebhook(ctx, w0))
+	require.NoError(t, manager.addWebhook(ctx, w1))
+	require.NoError(t, manager.addWebhook(ctx, w2))
+
+	for _, shouldBounce := range []bool{false, true} {
+		_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
+		require.NoError(t, err)
+
+		if shouldBounce {
+			manager, err = New(ctx)
+			require.NoError(t, err)
+		}
+
+		user := db.RequireMockUser(t, pgDB)
+		exp := db.RequireMockExperiment(t, pgDB, user)
+		_, task := db.RequireMockTrial(t, pgDB, exp)
+
+		logs := []*model.TaskLog{
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r0},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r0},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r1},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
+		}
+		require.NoError(t, manager.scanLogs(ctx, logs))
+
+		require.Equal(t, 1, countEventsForURL(ctx, t, w0.URL))
+		require.Equal(t, 2, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+	}
+
+	require.NoError(t, manager.deleteWebhook(ctx, w1.ID))
+
+	for _, shouldBounce := range []bool{false, true} {
+		_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
+		require.NoError(t, err)
+
+		if shouldBounce {
+			manager, err = New(ctx)
+			require.NoError(t, err)
+		}
+
+		user := db.RequireMockUser(t, pgDB)
+		exp := db.RequireMockExperiment(t, pgDB, user)
+		_, task := db.RequireMockTrial(t, pgDB, exp)
+
+		logs := []*model.TaskLog{
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r0},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r0},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r1},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
+		}
+		require.NoError(t, manager.scanLogs(ctx, logs))
+
+		require.Equal(t, 1, countEventsForURL(ctx, t, w0.URL))
+		require.Equal(t, 0, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+	}
 }
 
 func TestGenerateTaskLogPayload(t *testing.T) {
