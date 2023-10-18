@@ -169,3 +169,28 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	}
 	return err != nil, authz.SubIfUnauthorized(err, serviceNotFoundErr)
 }
+
+func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			path := c.Request().RequestURI
+			shouldRedirect := false
+
+			for _, p := range redirectPaths {
+				if strings.HasPrefix(path, p) {
+					shouldRedirect = true
+					break
+				}
+			}
+
+			err := user.GetService().ProcessAuthentication(next)(c)
+
+			// If there's an authentication error and we should redirect, then do so
+			if err != nil && shouldRedirect {
+				return redirectToLogin(c)
+			}
+
+			return err
+		}
+	}
+}

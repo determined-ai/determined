@@ -1021,7 +1021,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	m.echo.Use(authzAuditLogMiddleware())
-	m.echo.Use(userService.ProcessAuthentication)
+	m.echo.Use(processAuthWithRedirect([]string{"/lore"}))
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
