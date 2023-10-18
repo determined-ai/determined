@@ -48,7 +48,7 @@ type kubernetesResourcePool struct {
 	slotsUsedPerGroup         map[*tasklist.Group]int
 	allocationIDToRunningPods map[model.AllocationID]int
 
-	podsActor *actor.Ref
+	podsService *pods
 
 	queuePositions tasklist.JobSortState
 	reschedule     bool
@@ -59,7 +59,7 @@ type kubernetesResourcePool struct {
 func newResourcePool(
 	maxSlotsPerPod int,
 	poolConfig *config.ResourcePoolConfig,
-	podsActor *actor.Ref,
+	podsService *pods,
 	db *db.PgDB,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
@@ -73,7 +73,7 @@ func newResourcePool(
 		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
 		slotsUsedPerGroup:         map[*tasklist.Group]int{},
 		allocationIDToRunningPods: map[model.AllocationID]int{},
-		podsActor:                 podsActor,
+		podsService:               podsService,
 		queuePositions:            tasklist.InitializeJobSortState(true),
 		db:                        db,
 	}
@@ -168,15 +168,11 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 func (k *kubernetesResourcePool) summarizePods(
 	ctx *actor.Context,
 ) (*PodsInfo, error) {
-	resp := ctx.Ask(k.podsActor, SummarizeResources{PoolName: k.poolConfig.PoolName})
-	if err := resp.Error(); err != nil {
+	resp, err := k.podsService.SummarizeResources(SummarizeResources{PoolName: k.poolConfig.PoolName})
+	if err != nil {
 		return nil, err
 	}
-	pods, ok := resp.Get().(*PodsInfo)
-	if !ok {
-		return nil, actor.ErrUnexpectedMessage(ctx)
-	}
-	return pods, nil
+	return resp, nil
 }
 
 func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
@@ -313,7 +309,7 @@ func (k *kubernetesResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 			if it.Value().JobID == msg.JobID {
 				req := it.Value()
 				if id, ok := k.allocationIDToContainerID[req.AllocationID]; ok {
-					ctx.Tell(k.podsActor, ChangePriority{PodID: id})
+					k.podsService.ChangePriority(ChangePriority{PodID: id})
 					delete(k.allocationIDToContainerID, req.AllocationID)
 				}
 			}
@@ -417,7 +413,7 @@ func (k *kubernetesResourcePool) moveJob(
 		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
 	}
 
-	ctx.Tell(k.podsActor, ChangePosition{PodID: containerID})
+	k.podsService.ChangePosition(ChangePosition{PodID: containerID})
 
 	return nil
 }
@@ -542,8 +538,8 @@ func (k *kubernetesResourcePool) assignResources(
 		// This call must happen after we publish ResourcesAllocated, otherwise the allocation will
 		// receive an update for resources it does not know about, ignore it, then hang if it missed
 		// the termination.
-		resp := ctx.Ask(k.podsActor, refreshPodStates{allocationID: req.AllocationID})
-		if err := resp.Error(); err != nil {
+		err := k.podsService.RefreshPodStates(ctx.Self().System(), refreshPodStates{allocationID: req.AllocationID})
+		if err != nil {
 			ctx.Log().WithError(err).Error("failed to refresh pod states after reattach")
 		}
 	}
@@ -557,7 +553,7 @@ func (k *kubernetesResourcePool) createResources(
 		resources = append(resources, &k8sPodResources{
 			system:          ctx.Self().System(),
 			req:             req,
-			podsActor:       k.podsActor,
+			podsService:     k.podsService,
 			containerID:     cproto.NewID(),
 			slots:           slotsPerPod,
 			group:           k.groups[req.JobID],
@@ -571,23 +567,22 @@ func (k *kubernetesResourcePool) createResources(
 func (k *kubernetesResourcePool) restoreResources(
 	ctx *actor.Context, req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) ([]*k8sPodResources, error) {
-	resp := ctx.Ask(k.podsActor, reattachAllocationPods{
+	restoreResponses, err := k.podsService.ReattachAllocationPods(reattachAllocationPods{
 		allocationID: req.AllocationID,
 		numPods:      numPods,
 		slots:        slotsPerPod,
 		logContext:   req.LogContext,
 	})
-	if err := resp.Error(); err != nil {
+	if err != nil {
 		return nil, err
 	}
-	restoreResponses := resp.Get().([]reattachPodResponse)
 
 	var resources []*k8sPodResources
 	for _, restoreResponse := range restoreResponses {
 		resources = append(resources, &k8sPodResources{
 			system:          ctx.Self().System(),
 			req:             req,
-			podsActor:       k.podsActor,
+			podsService:     k.podsService,
 			containerID:     cproto.ID(restoreResponse.containerID),
 			slots:           slotsPerPod,
 			group:           k.groups[req.JobID],
@@ -674,7 +669,7 @@ type k8sPodResources struct {
 	system *actor.System
 
 	req             *sproto.AllocateRequest
-	podsActor       *actor.Ref
+	podsService     *pods
 	group           *tasklist.Group
 	containerID     cproto.ID
 	slots           int
@@ -692,7 +687,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeK8sPod,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
-			aproto.ID(p.podsActor.Address().Local()): make([]device.Device, p.slots),
+			aproto.ID("pods"): make([]device.Device, p.slots),
 		},
 
 		ContainerID: &p.containerID,
@@ -719,14 +714,14 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
-	return p.system.Ask(p.podsActor, StartTaskPod{
+	return p.podsService.StartTaskPod(StartTaskPod{
 		AllocationID: p.req.AllocationID,
 		Spec:         spec,
 		Slots:        p.slots,
 		Rank:         rri.AgentRank,
 		Namespace:    p.namespace,
 		LogContext:   logCtx,
-	}).Error()
+	})
 }
 
 func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
@@ -743,7 +738,7 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 
 // Kill notifies the pods actor that it should stop the pod.
 func (p k8sPodResources) Kill(_ logger.Context) {
-	p.system.Tell(p.podsActor, KillTaskPod{
+	p.podsService.KillPod(KillTaskPod{
 		PodID: p.containerID,
 	})
 }
