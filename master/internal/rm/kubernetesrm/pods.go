@@ -188,7 +188,7 @@ func newPodsService(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
-		syslog:                       logrus.WithField("pod-name", namespace),
+		syslog:                       logrus.WithField("namespace", namespace),
 	}
 
 	if err := p.startClientSet(); err != nil {
