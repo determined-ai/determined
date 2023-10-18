@@ -1085,12 +1085,17 @@ func (p *pods) eventStatusCallback(s *actor.System, event watch.Event) {
 		return
 	}
 
-	p.syslog.Debugf("listener got new event: %s", newEvent.Message)
+	syslog := p.syslog.WithFields(logrus.Fields{
+		"name": newEvent.InvolvedObject.Name,
+		"kind": newEvent.InvolvedObject.Kind,
+	})
+
+	syslog.Debugf("listener got new event: %s", newEvent.Message)
 	ref, ok := p.podNameToPodHandler[newEvent.InvolvedObject.Name]
 	if !ok {
 		// We log at the debug level because we are unable to filter
 		// pods based on their labels the way we do with pod status updates.
-		p.syslog.Debug("received pod event for an un-registered pod")
+		syslog.Debug("received pod event for an un-registered pod")
 		return
 	}
 
