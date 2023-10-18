@@ -88,19 +88,27 @@ def list_workspaces(args: Namespace) -> None:
     sess = cli.setup_session(args)
     orderArg = bindings.v1OrderBy[args.order_by.upper()]
     sortArg = bindings.v1GetWorkspacesRequestSortBy[args.sort_by.upper()]
-    internal_offset = args.offset or 0
+    try:
+        original_offset = args.offset or 0
+        internal_offset = args.offset or 0
+        limit = args.limit
+    except:
+        original_offset = 0
+        internal_offset = 0
+        limit = 200
+
     all_workspaces: List[bindings.v1Workspace] = []
     while True:
         workspaces = bindings.get_GetWorkspaces(
             sess,
-            limit=args.limit,
+            limit=limit,
             offset=internal_offset,
             orderBy=orderArg,
             sortBy=sortArg,
         ).workspaces
         all_workspaces += workspaces
         internal_offset += len(workspaces)
-        if args.offset or len(workspaces) < args.limit:
+        if original_offset is not None or len(workspaces) < limit:
             break
 
     if args.json:
@@ -119,11 +127,11 @@ def list_workspace_projects(args: Namespace) -> None:
     sort_key = args.sort_by
     sort_order = args.order_by
     try:
-        offset = args.offset or 0 # No passed offset is interpreted as a 0 offset
+        offset = args.offset or 0  # No passed offset is interpreted as a 0 offset
         limit = args.limit
     except:
         offset = 0
-        limit = 0
+        limit = 200
 
     # TODO: Remove typechecking suppression when mypy is upgraded to 1.4.0
     all_projects.sort(
