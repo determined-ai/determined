@@ -27,7 +27,7 @@ export interface Props {
   square?: boolean;
   textColor?: 'black' | 'white';
   inactive?: boolean;
-  statusText?: string;
+  tooltipText?: string;
 }
 
 export const getInitials = (name = ''): string => {
@@ -58,7 +58,7 @@ const Avatar: React.FC<Props> = ({
   size = Size.Small,
   square,
   textColor = 'white',
-  statusText,
+  tooltipText,
   inactive,
 }) => {
   const { ui } = useUI();
@@ -80,7 +80,7 @@ const Avatar: React.FC<Props> = ({
   return hideTooltip ? (
     avatar
   ) : (
-    <Tooltip content={statusText ? [text, statusText].join(' ') : text} placement="right">
+    <Tooltip content={tooltipText ?? text} placement="right">
       {avatar}
     </Tooltip>
   );

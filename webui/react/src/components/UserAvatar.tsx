@@ -16,8 +16,8 @@ const UserAvatar: React.FC<Props> = ({ user, deactivated, ...rest }) => {
     <Avatar
       {...rest}
       inactive={deactivated}
-      statusText={deactivated ? '(deactivated)' : undefined}
       text={displayName}
+      tooltipText={deactivated ? `${displayName} (deactivated)` : displayName}
     />
   );
 };

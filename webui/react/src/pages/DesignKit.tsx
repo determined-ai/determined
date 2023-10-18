@@ -1581,14 +1581,14 @@ const AvatarSection: React.FC = () => {
         Square
         <Avatar square text="Test User" />
         Text Color Black
-        <Avatar square text="Test User" textColor="black" />
+        <Avatar text="Test User" textColor="black" />
         No Color
         <Avatar noColor text="Test User" />
         Inactive
         <Avatar inactive text="Test User" />
         <strong>Tooltip</strong>
-        Status text (adds text to Tooltip)
-        <Avatar statusText="(Disabled)" text="Test User" />
+        Custom tooltip text
+        <Avatar text="Test User" tooltipText="Custom tooltip text" />
         Hide tooltip
         <Avatar hideTooltip text="Test User" />
       </AntDCard>
