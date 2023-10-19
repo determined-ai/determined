@@ -215,6 +215,8 @@ def describe_workspace(args: Namespace) -> None:
         print("\nAssociated Projects")
         vars(args)["order_by"] = "asc"
         vars(args)["sort_by"] = "id"
+        vars(args)["offset"] = 0
+        vars(args)["limit"] = 200
         list_workspace_projects(args)
 
 
