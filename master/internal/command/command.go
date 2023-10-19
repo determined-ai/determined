@@ -324,7 +324,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		job.DefaultService.UnregisterJob(c.jobID)
+		go job.DefaultService.UnregisterJob(c.jobID)
 		if err := user.DeleteSessionByToken(
 			context.TODO(),
 			c.GenericCommandSpec.Base.UserSessionToken,

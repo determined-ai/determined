@@ -445,7 +445,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Error(err)
 			}
 		}
-		job.DefaultService.UnregisterJob(e.JobID)
+		go job.DefaultService.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if state == "" {
 			state = model.ErrorState
