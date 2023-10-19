@@ -1,9 +1,9 @@
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import useConfirm, { ConfirmModalProps } from 'determined-ui/useConfirm';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
 import { Eventually } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'utils/error';
 import { capitalize } from 'utils/string';

@@ -1,9 +1,9 @@
+import Card from 'determined-ui/Card';
+import Icon from 'determined-ui/Icon';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import Card from 'components/kit/Card';
-import Icon from 'components/kit/Icon';
-import { Loadable } from 'components/kit/utils/loadable';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import usePermissions from 'hooks/usePermissions';

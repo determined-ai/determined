@@ -1,9 +1,9 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { isRight, match } from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
 import { Json, JsonObject } from 'types';

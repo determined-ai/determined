@@ -1,6 +1,12 @@
 import { Space } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,12 +15,6 @@ import AddUsersToGroupsModalComponent from 'components/AddUsersToGroupsModal';
 import ChangeUserStatusModalComponent from 'components/ChangeUserStatusModal';
 import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
 import CreateUserModalComponent from 'components/CreateUserModal';
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Section from 'components/Section';
 import SetUserRolesModalComponent from 'components/SetUserRolesModal';

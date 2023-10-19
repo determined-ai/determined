@@ -1,10 +1,10 @@
 import { List, Modal, Select, Typography } from 'antd';
+import Form from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Form from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import { Loadable } from 'components/kit/utils/loadable';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';

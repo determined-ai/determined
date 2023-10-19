@@ -1,7 +1,7 @@
+import Icon, { IconName } from 'determined-ui/Icon';
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import Icon, { IconName } from 'components/kit/Icon';
 import Link, { Props as LinkProps } from 'components/Link';
 
 import css from './ActionSheet.module.scss';

@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
+import { UIProvider } from 'determined-ui/Theme';
 import React from 'react';
 
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
-import { UIProvider } from 'components/kit/Theme';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';

@@ -1,12 +1,12 @@
 import { Typography } from 'antd';
+import Card from 'determined-ui/Card';
+import { Columns } from 'determined-ui/Columns';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
-import Card from 'components/kit/Card';
-import { Columns } from 'components/kit/Columns';
-import Icon from 'components/kit/Icon';
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
 import Avatar from 'components/UserAvatar';
 import { handlePath, paths } from 'routes/utils';
 import userStore from 'stores/users';

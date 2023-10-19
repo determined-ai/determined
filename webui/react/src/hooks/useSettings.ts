@@ -1,3 +1,4 @@
+import { Loadable } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 import _ from 'lodash';
@@ -5,7 +6,6 @@ import { useObservable } from 'micro-observables';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Loadable } from 'components/kit/utils/loadable';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { Primitive } from 'types';

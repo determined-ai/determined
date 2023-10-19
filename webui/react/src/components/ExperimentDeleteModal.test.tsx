@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
 import React from 'react';
 
 import ExperimentDeleteModalComponent, { BUTTON_TEXT } from 'components/ExperimentDeleteModal';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
 import { deleteExperiment as mockDeleteExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 

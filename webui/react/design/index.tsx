@@ -1,3 +1,6 @@
+import { UIProvider } from 'determined-ui/Theme';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { Loaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';
@@ -6,9 +9,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import 'uplot/dist/uPlot.min.css';
 import css from 'App.module.scss';
-import { UIProvider } from 'components/kit/Theme';
-import { ConfirmationProvider } from 'components/kit/useConfirm';
-import { Loaded } from 'components/kit/utils/loadable';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
 import DesignKit from 'pages/DesignKit';
 

@@ -1,15 +1,15 @@
 import { Modal, Space, Typography } from 'antd';
+import Button from 'determined-ui/Button';
+import ClipboardButton from 'determined-ui/ClipboardButton';
+import Dropdown, { MenuOption } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import Tags, { tagsActionHelper } from 'determined-ui/Tags';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Button from 'components/kit/Button';
-import ClipboardButton from 'components/kit/ClipboardButton';
-import Dropdown, { MenuOption } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import Tags, { tagsActionHelper } from 'components/kit/Tags';
-import { Loadable } from 'components/kit/utils/loadable';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';

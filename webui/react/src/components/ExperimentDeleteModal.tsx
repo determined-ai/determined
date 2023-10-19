@@ -1,6 +1,6 @@
+import { Modal } from 'determined-ui/Modal';
 import React from 'react';
 
-import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
 import { ExperimentBase } from 'types';

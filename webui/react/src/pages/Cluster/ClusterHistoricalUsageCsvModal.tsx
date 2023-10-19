@@ -1,9 +1,9 @@
 import { Form, Modal, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+import DatePicker from 'determined-ui/DatePicker';
+import Icon from 'determined-ui/Icon';
 import React from 'react';
 
-import DatePicker from 'components/kit/DatePicker';
-import Icon from 'components/kit/Icon';
 import { handlePath, serverAddress } from 'routes/utils';
 import { ValueOf } from 'types';
 

@@ -1,6 +1,6 @@
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useState } from 'react';
 
-import { Loadable } from 'components/kit/utils/loadable';
 import { resetUserSetting } from 'services/api';
 import userStore from 'stores/users';
 import { useObservable } from 'utils/observable';

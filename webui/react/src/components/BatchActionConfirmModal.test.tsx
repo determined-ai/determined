@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/Button';
+import { DEFAULT_CANCEL_LABEL, useModal } from 'determined-ui/Modal';
 import React from 'react';
 
-import Button from 'components/kit/Button';
-import { DEFAULT_CANCEL_LABEL, useModal } from 'components/kit/Modal';
 import { ExperimentAction as Action, ExperimentAction } from 'types';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';

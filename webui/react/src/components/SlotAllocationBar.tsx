@@ -1,10 +1,10 @@
+import { getStateColorCssVar, ShirtSize } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import { getStateColorCssVar, ShirtSize } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';

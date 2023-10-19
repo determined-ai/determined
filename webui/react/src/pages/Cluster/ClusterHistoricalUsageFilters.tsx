@@ -1,8 +1,8 @@
 import dayjs, { Dayjs } from 'dayjs';
+import DatePicker from 'determined-ui/DatePicker';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
 import React from 'react';
 
-import DatePicker from 'components/kit/DatePicker';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import {
   DEFAULT_RANGE_DAY,

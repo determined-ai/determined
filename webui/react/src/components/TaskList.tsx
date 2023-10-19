@@ -5,6 +5,11 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import { ShirtSize } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -12,10 +17,6 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import { ShirtSize } from 'components/kit/Theme';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
@@ -64,7 +65,6 @@ import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } 
 import { getDisplayName } from 'utils/user';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
-import { useModal } from './kit/Modal';
 import css from './TaskList.module.scss';
 import WorkspaceFilter from './WorkspaceFilter';
 

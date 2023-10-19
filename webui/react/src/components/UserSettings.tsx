@@ -1,17 +1,21 @@
 import { Space } from 'antd';
+import Accordion from 'determined-ui/Accordion';
+import Button from 'determined-ui/Button';
+import Drawer from 'determined-ui/Drawer';
+import Icon from 'determined-ui/Icon';
+import InlineForm from 'determined-ui/InlineForm';
+import Input from 'determined-ui/Input';
+import InputShortcut, { KeyboardShortcut, shortcutToString } from 'determined-ui/InputShortcut';
+import { useModal } from 'determined-ui/Modal';
+import Select, { Option } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import useUI, { Mode } from 'determined-ui/Theme';
+import { makeToast } from 'determined-ui/Toast';
+import Paragraph from 'determined-ui/Typography/Paragraph';
+import useConfirm from 'determined-ui/useConfirm';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
-import Drawer from 'components/kit/Drawer';
-import Icon from 'components/kit/Icon';
-import InlineForm from 'components/kit/InlineForm';
-import Input from 'components/kit/Input';
-import InputShortcut, { KeyboardShortcut, shortcutToString } from 'components/kit/InputShortcut';
-import { useModal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import useUI, { Mode } from 'components/kit/Theme';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';
@@ -39,10 +43,6 @@ import userSettings from 'stores/userSettings';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
-import Accordion from './kit/Accordion';
-import Button from './kit/Button';
-import Paragraph from './kit/Typography/Paragraph';
-import useConfirm from './kit/useConfirm';
 import css from './UserSettings.module.scss';
 import UserSettingsModalComponent from './UserSettingsModal';
 

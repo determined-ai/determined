@@ -1,16 +1,16 @@
 import { Space, Table } from 'antd';
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
+import { makeToast } from 'determined-ui/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
 import CreateGroupModalComponent from 'components/CreateGroupModal';
 import DeleteGroupModalComponent from 'components/DeleteGroupModal';
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Nameplate from 'components/kit/Nameplate';
-import { makeToast } from 'components/kit/Toast';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';

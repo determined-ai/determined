@@ -1,8 +1,8 @@
+import { ChartGrid, ChartsProps } from 'determined-ui/LineChart';
+import Spinner from 'determined-ui/Spinner';
+import { Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useMemo, useState } from 'react';
 
-import { ChartGrid, ChartsProps } from 'components/kit/LineChart';
-import Spinner from 'components/kit/Spinner';
-import { Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';

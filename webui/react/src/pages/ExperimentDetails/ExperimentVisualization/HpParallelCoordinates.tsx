@@ -1,9 +1,9 @@
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';

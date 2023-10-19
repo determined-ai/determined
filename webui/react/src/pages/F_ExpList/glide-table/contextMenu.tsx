@@ -1,9 +1,9 @@
 import { GridCell } from '@hpe.com/glide-data-grid';
 import { MenuProps } from 'antd';
+import { DropdownEvent } from 'determined-ui/Dropdown';
 import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
-import { DropdownEvent } from 'components/kit/Dropdown';
 import { ExperimentAction, ExperimentItem, ProjectExperiment } from 'types';
 
 // eslint-disable-next-line

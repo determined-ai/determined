@@ -1634,7 +1634,7 @@ jobs:
       - run:
           command: |
             MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_PATHS="webui/react/src/components/kit webui/react/src/pages/DesignKit.tsx webui/react/design"
+            DIFF_PATHS="webui/react/src/package-lock.json webui/react/src/package.json webui/react/src/pages/DesignKit.tsx webui/react/design"
             if git diff --quiet $MERGE_BASE -- $DIFF_PATHS; then
               echo "DesignKit not changed, halting job now."
               circleci-agent step halt

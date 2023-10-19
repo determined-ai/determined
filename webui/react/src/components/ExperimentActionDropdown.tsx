@@ -1,15 +1,16 @@
 import { GridCell } from '@hpe.com/glide-data-grid';
+import Button from 'determined-ui/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import { makeToast } from 'determined-ui/Toast';
+import useConfirm from 'determined-ui/useConfirm';
+import { copyToClipboard } from 'determined-ui/utils/functions';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
-import Button from 'components/kit/Button';
-import Dropdown, { DropdownEvent, MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { copyToClipboard } from 'components/kit/internal/functions';
-import { useModal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
@@ -28,8 +29,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
-
-import useConfirm from './kit/useConfirm';
 
 interface Props {
   children?: React.ReactNode;
