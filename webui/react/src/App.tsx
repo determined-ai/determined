@@ -60,10 +60,7 @@ const AppView: React.FC = () => {
     updateSettings,
   } = useSettings<themeSettings>(themeConfig);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
-  const {
-    ui: { mode, theme },
-    actions: uiActions,
-  } = useUI();
+  const { ui, actions: uiActions } = useUI();
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -142,13 +139,13 @@ const AppView: React.FC = () => {
 
     if (isSettingsReady) {
       // We have read from the settings, going forward any mode difference requires an update.
-      if (settings.mode !== mode) updateSettings({ mode: mode });
+      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
     } else {
       // Initially set the mode from settings.
       uiActions.setMode(settings.mode);
       setIsSettingsReady(true);
     }
-  }, [isSettingsReady, settings, uiActions, mode, isSettingsLoading, updateSettings]);
+  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
 
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
@@ -160,7 +157,7 @@ const AppView: React.FC = () => {
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <UIProvider darkMode={mode === DarkLight.Dark} theme={theme}>
+      <UIProvider darkMode={ui.mode === DarkLight.Dark} theme={ui.theme}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>
