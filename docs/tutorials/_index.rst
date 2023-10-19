@@ -1,3 +1,5 @@
+:weight: 800
+
 .. _tutorials-index:
 
 ###########

@@ -2,6 +2,8 @@
  Get Started
 #############
 
+:weight: 100
+
 .. meta::
    :description: Learn how to get started with Determined.
 

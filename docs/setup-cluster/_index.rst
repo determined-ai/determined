@@ -1,8 +1,11 @@
+:weight: 200
+
 .. _installation-guide:
 
 ###############################
  Install and Set Up Determined
 ###############################
+
 
 .. meta::
    :description: Discover how to install and set up your Determined cluster locally, on AWS, on GCP, on Kubernetes, on Slurm or on premises.

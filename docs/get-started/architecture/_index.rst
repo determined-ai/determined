@@ -1,6 +1,6 @@
 .. _architecture-index:
 
-:weight: 500
+:weight: 200
 
 .. meta::
    :description: Learn how to quickly get started with Determined.

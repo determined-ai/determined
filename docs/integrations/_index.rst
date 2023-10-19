@@ -1,4 +1,4 @@
-:orphan:
+:weight: 500
 
 ##############
  Integrations
