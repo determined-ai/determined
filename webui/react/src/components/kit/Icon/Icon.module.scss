@@ -56,3 +56,17 @@
 .filter {
   margin-top: 1px;
 }
+.spin {
+  animation-name: spinning;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+@keyframes spinning {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

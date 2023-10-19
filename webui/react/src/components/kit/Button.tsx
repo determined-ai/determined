@@ -1,6 +1,7 @@
 import { Button as AntdButton } from 'antd';
 import React, { forwardRef, MouseEvent, ReactNode } from 'react';
 
+import Icon from 'components/kit/Icon';
 import { ConditionalWrapper } from 'components/kit/internal/ConditionalWrapper';
 import Tooltip from 'components/kit/Tooltip';
 
@@ -39,6 +40,7 @@ const Button: React.FC<ButtonProps> = forwardRef(
       hideChildren = false,
       children,
       icon,
+      loading,
       ...props
     }: ButtonProps & CloneElementProps,
     ref,
@@ -47,6 +49,11 @@ const Button: React.FC<ButtonProps> = forwardRef(
     if (className) classes.push(className); // preserve className value set via cloneElement.
     if (props.selected) classes.push(css.selected);
     if (props.column) classes.push(css.column);
+
+    if (loading) {
+      icon = <Icon decorative name="spinner" spin />;
+      children = 'Loading';
+    }
 
     return (
       <ConditionalWrapper
@@ -58,14 +65,10 @@ const Button: React.FC<ButtonProps> = forwardRef(
           size={size}
           tabIndex={props.disabled ? -1 : 0}
           {...props}>
-          {props.loading ? (
-            !hideChildren && children // use antd spinner and styling
-          ) : (
-            <div className={css.content}>
-              {icon && <div className={css.icon}>{icon}</div>}
-              {!hideChildren && children && <div className={css.children}>{children}</div>}
-            </div>
-          )}
+          <div className={css.content}>
+            {icon && <div className={css.icon}>{icon}</div>}
+            {!hideChildren && children && <div className={css.children}>{children}</div>}
+          </div>
         </AntdButton>
       </ConditionalWrapper>
     );

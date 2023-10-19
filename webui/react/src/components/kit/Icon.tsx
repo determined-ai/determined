@@ -312,6 +312,7 @@ type CommonProps = {
   size?: IconSize;
   showTooltip?: boolean;
   name: IconName;
+  spin?: boolean;
   backgroundColor?: React.CSSProperties['backgroundColor']; // currently only supported by Queued
   opacity?: React.CSSProperties['opacity']; // currently only supported by Queued
 };
@@ -333,6 +334,7 @@ const Icon: React.FC<Props> = ({
   showTooltip = false,
   backgroundColor,
   opacity,
+  spin,
 }: Props) => {
   const classes = [css.base];
 
@@ -345,6 +347,7 @@ const Icon: React.FC<Props> = ({
 
   if (size) classes.push(css[size]);
   if (color) classes.push(css[color]);
+  if (spin) classes.push(css.spin);
 
   const icon = (
     <span aria-label={title} className={classes.join(' ')}>
