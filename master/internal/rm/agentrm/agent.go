@@ -542,6 +542,8 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 						ErrMsg: aproto.ErrAgentMustReconnect.Error(),
 					},
 				}
+
+				ctx.Self().Stop()
 				return
 			}
 		} else {
