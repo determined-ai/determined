@@ -268,9 +268,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
-        print(e)
         raise CliError(
-            "Stack Deployment Failed. Check the AWS CloudFormation Console for details.", e_stack=e
+            f"Stack Deployment Failed: {e}\nCheck the AWS CloudFormation Console for details.",
+            e_stack=e,
         )
 
     if not args.no_wait_for_master:
