@@ -1966,7 +1966,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		}
 
 		var response apiv1.TrialsSnapshotResponse
-		newTrials, endTime, err := a.m.db.GenericTrialsSnapshot(experimentID,
+		newTrials, endTime, err := a.m.db.TrialsSnapshot(experimentID,
 			minBatches, maxBatches, metricName, startTime, metricGroup)
 		if err != nil {
 			return errors.Wrapf(err,

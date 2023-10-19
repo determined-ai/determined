@@ -236,9 +236,9 @@ func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Tr
 	return &trial, nil
 }
 
-// GenericTrialsSnapshot returns metrics across each trial in an experiment at a
+// TrialsSnapshot returns metrics across each trial in an experiment at a
 // specific point of progress, for metric groups other than training and validation.
-func (db *PgDB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
+func (db *PgDB) TrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 	metricName string, startTime time.Time, metricGroup model.MetricGroup,
 ) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error) {
 	var rows []snapshotWrapper

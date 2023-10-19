@@ -677,8 +677,8 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	return r0, r1
 }
 
-// GenericTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime, metricGroup
-func (_m *DB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup model.MetricGroup) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
+// TrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime, metricGroup
+func (_m *DB) TrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup model.MetricGroup) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
 	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
 
 	var r0 []*apiv1.TrialsSnapshotResponse_Trial
