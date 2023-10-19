@@ -165,25 +165,23 @@ const AppView: React.FC = () => {
           {isAuthChecked ? (
             <>
               {isServerReachable ? (
-                <SettingsProvider>
-                  <AntdApp>
-                    <ConfirmationProvider>
-                      <Navigation>
-                        <JupyterLabGlobal
-                          enabled={
-                            Loadable.isLoaded(loadableUser) &&
-                            (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                          }
-                          workspace={workspace ?? undefined}
-                        />
-                        <Omnibar />
-                        <main>
-                          <Router routes={appRoutes} />
-                        </main>
-                      </Navigation>
-                    </ConfirmationProvider>
-                  </AntdApp>
-                </SettingsProvider>
+                <AntdApp>
+                  <ConfirmationProvider>
+                    <Navigation>
+                      <JupyterLabGlobal
+                        enabled={
+                          Loadable.isLoaded(loadableUser) &&
+                          (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                        }
+                        workspace={workspace ?? undefined}
+                      />
+                      <Omnibar />
+                      <main>
+                        <Router routes={appRoutes} />
+                      </main>
+                    </Navigation>
+                  </ConfirmationProvider>
+                </AntdApp>
               ) : (
                 <PageMessage title="Server is Unreachable">
                   <p>
@@ -208,9 +206,11 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <DndProvider backend={HTML5Backend}>
-        <ThemeProvider>
-          <AppView />
-        </ThemeProvider>
+        <SettingsProvider>
+          <ThemeProvider>
+            <AppView />
+          </ThemeProvider>
+        </SettingsProvider>
       </DndProvider>
     </HelmetProvider>
   );
