@@ -22,6 +22,15 @@ html[data-theme="dark"] {
   --docsearch-modal-width: var(--docsearch-modal-max-width);
 }
 
+.sphinx-tabs-tab[aria-selected="true"] {
+  border-bottom: 1px solid transparent;
+  background-color: transparent;
+}
+
+.sphinx-tabs-panel {
+  background: transparent;
+}
+
 #site-navigation {
   overflow: visible;
 }
