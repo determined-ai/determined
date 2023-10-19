@@ -18,6 +18,8 @@ export const Size = {
 
 export type Size = ValueOf<typeof Size>;
 
+type Palette = 'bright' | 'muted';
+
 export interface Props {
   text: string;
   hideTooltip?: boolean;
@@ -25,7 +27,8 @@ export interface Props {
   noColor?: boolean;
   size?: Size;
   square?: boolean;
-  textColor?: 'black' | 'white';
+  /** Palette to use for background and text colors. Defaults to 'bright'. */
+  palette?: Palette;
   inactive?: boolean;
   tooltipText?: string;
 }
@@ -43,8 +46,15 @@ export const getInitials = (name = ''): string => {
     : initials;
 };
 
-export const getColor = (name = '', darkLight: DarkLight): string => {
+export const getColor = (name = '', darkLight: DarkLight, palette?: Palette): string => {
   const hslColor = name ? hex2hsl(md5(name).substring(0, 6)) : hex2hsl('#808080');
+  if (palette === 'muted') {
+    return hsl2str({
+      ...hslColor,
+      l: darkLight === DarkLight.Dark ? 80 : 90,
+      s: darkLight === DarkLight.Dark ? 40 : 77,
+    });
+  }
   return hsl2str({
     ...hslColor,
     l: darkLight === DarkLight.Dark ? 38 : 60,
@@ -57,15 +67,15 @@ const Avatar: React.FC<Props> = ({
   noColor,
   size = Size.Small,
   square,
-  textColor = 'white',
+  palette = 'bright',
   tooltipText,
   inactive,
 }) => {
   const { ui } = useUI();
 
   const style = {
-    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(text, ui.darkLight),
-    color: noColor ? 'var(--theme-stage-on-strong)' : textColor,
+    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(text, ui.darkLight, palette),
+    color: noColor ? 'var(--theme-stage-on-strong)' : palette === 'bright' ? 'white' : 'black',
   };
   const classes = [css.base, css[size]];
   if (square) classes.push(css.square);

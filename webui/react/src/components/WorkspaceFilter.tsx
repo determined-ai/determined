@@ -12,7 +12,7 @@ interface Props {
 const WorkspaceFilter: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <div className={css.item}>
-      <Avatar square text={workspace.name} textColor="black" />
+      <Avatar palette="muted" square text={workspace.name} />
       <span className={css.name}>{workspace.name}</span>
     </div>
   );

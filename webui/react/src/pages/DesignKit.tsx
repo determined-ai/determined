@@ -1577,11 +1577,12 @@ const AvatarSection: React.FC = () => {
         <Avatar size={AvatarSize.Large} text="Test User" />
         ExtraLarge
         <Avatar size={AvatarSize.ExtraLarge} text="Test User" />
-        <strong>Shape and color</strong>
+        <strong>Shape</strong>
         Square
         <Avatar square text="Test User" />
-        Text Color Black
-        <Avatar text="Test User" textColor="black" />
+        <strong>Color</strong>
+        Muted palette
+        <Avatar palette="muted" text="Test User" />
         No Color
         <Avatar noColor text="Test User" />
         Inactive

@@ -338,7 +338,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       if (!workspace) {
         return (
           <Link disabled>
-            <Avatar square text="-" textColor="black" />
+            <Avatar palette="muted" square text="-" />
           </Link>
         );
       }
@@ -352,7 +352,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
                   ? paths.projectDetails(workspaceId)
                   : paths.workspaceDetails(workspaceId)
               }>
-              <Avatar square text={workspace?.name} textColor="black" />
+              <Avatar palette="muted" square text={workspace?.name} />
             </Link>
           </div>
         </Tooltip>

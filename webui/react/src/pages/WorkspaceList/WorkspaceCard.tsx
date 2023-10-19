@@ -43,7 +43,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
         <div className={workspace.archived ? css.archived : ''}>
           <Columns gap={8}>
             <div className={css.icon}>
-              <Avatar size={Size.ExtraLarge} square text={workspace.name} textColor="black" />
+              <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
             </div>
             <div className={css.info}>
               <div className={css.nameRow}>

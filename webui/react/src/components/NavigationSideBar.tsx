@@ -319,7 +319,7 @@ const NavigationSideBar: React.FC = () => {
                           workspace={workspace}>
                           <li>
                             <NavigationItem
-                              icon={<Avatar square text={workspace.name} textColor="black" />}
+                              icon={<Avatar palette="muted" square text={workspace.name} />}
                               label={workspace.name}
                               labelRender={
                                 <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>

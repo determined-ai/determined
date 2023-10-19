@@ -192,7 +192,7 @@ export const taskWorkspaceRenderer = (
               ? paths.projectDetails(workspaceId)
               : paths.workspaceDetails(workspaceId)
           }>
-          <Avatar square text={workspace?.name ?? ''} textColor="black" />
+          <Avatar palette="muted" square text={workspace?.name ?? ''} />
         </Link>
       </div>
     </Tooltip>

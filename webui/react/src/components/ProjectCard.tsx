@@ -58,7 +58,7 @@ const ProjectCard: React.FC<Props> = ({
             {showWorkspace && project.workspaceId !== 1 && (
               <Tooltip content={project.workspaceName}>
                 <div className={css.workspaceIcon}>
-                  <Avatar size={Size.Small} square text={project.workspaceName} textColor="black" />
+                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
                 </div>
               </Tooltip>
             )}

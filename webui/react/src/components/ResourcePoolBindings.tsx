@@ -39,7 +39,7 @@ const ResourcePoolBindings = ({ pool }: Props): JSX.Element => {
         key: 'workspace',
         render: (_, record) => (
           <div className={css.tableRow}>
-            <Avatar size={Size.Medium} square text={record.name} textColor="black" />
+            <Avatar palette="muted" size={Size.Medium} square text={record.name} />
             <div>
               <div>
                 <Link path={paths.workspaceDetails(record.id)}>{record.name}</Link>
