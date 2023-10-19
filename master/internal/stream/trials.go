@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -49,9 +48,6 @@ type TrialMsg struct {
 
 	// permission scope
 	WorkspaceID int `json:"-"`
-
-	upsertCache *websocket.PreparedMessage
-	deleteCache *websocket.PreparedMessage
 }
 
 // SeqNum gets the SeqNum from a TrialMsg.
@@ -62,7 +58,7 @@ func (tm *TrialMsg) SeqNum() int64 {
 // UpsertMsg creates a Trial stream upsert message.
 func (tm *TrialMsg) UpsertMsg() stream.UpsertMsg {
 	return stream.UpsertMsg{
-		JsonKey: TrialsUpsertKey,
+		JSONKey: TrialsUpsertKey,
 		Msg:     tm,
 	}
 }
@@ -193,7 +189,7 @@ func TrialCollectStartupMsgs(
 		Deleted: missing,
 	})
 	for _, msg := range trialMsgs {
-		out = append(out, stream.UpsertMsg{JsonKey: TrialsUpsertKey, Msg: msg})
+		out = append(out, stream.UpsertMsg{JSONKey: TrialsUpsertKey, Msg: msg})
 	}
 	return out, nil
 }

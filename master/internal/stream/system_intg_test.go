@@ -31,7 +31,7 @@ func simpleUpsert(i stream.PreparableMessage) interface{} {
 type startupReadWriter struct {
 	Data           []interface{}
 	StartupMessage *StartupMsg
-	Msg            interface{}
+	Msg            *SubscriptionModMsg
 	KeepAlive      bool
 }
 
@@ -48,11 +48,12 @@ func (s *startupReadWriter) ReadJSON(data interface{}) error {
 		return nil
 	}
 	if s.Msg != nil {
-		_, ok := s.Msg.(*SubscriptionModMsg)
+		targetMsg, ok := data.(*SubscriptionModMsg)
 		if !ok {
 			return fmt.Errorf("target message type is not a pointer to SubscriptionModMsg")
 		}
-		data = s.Msg
+		targetMsg.Add = s.Msg.Add
+		targetMsg.Drop = s.Msg.Drop
 	}
 	if !s.KeepAlive {
 		return fmt.Errorf("no messages left to send")
@@ -106,7 +107,7 @@ func setup(t *testing.T, startupMsg StartupMsg) (
 
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
 	ps := NewPublisherSet()
-	ps.DBAddress = pgDB.Url
+	ps.DBAddress = pgDB.URL
 
 	testReadWriter := startupReadWriter{
 		StartupMessage: &startupMsg,
@@ -162,7 +163,7 @@ func TestStartup(t *testing.T) {
 	}
 	tester.StartupMessage = &startupMessage
 	publisherSet = NewPublisherSet()
-	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert) // XXX: fix prepare func
+	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
 	require.NoError(t, err)
 	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.Data)
 	require.NoError(t, err)

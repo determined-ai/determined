@@ -13,7 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 )
 
-// MigrationExtra contains some migration metadata
+// MigrationExtra contains some migration metadata.
 type MigrationExtra struct {
 	// When in the migration process the SQL should be executed.
 	When int64
