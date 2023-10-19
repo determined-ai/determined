@@ -35,7 +35,7 @@ describe('Badge', () => {
     expect(view.getByText(CONTENT)).toBeInTheDocument();
   });
 
-  it('should display dynamic content from state prop', () => {
+  it('should display dynamic content from state prop', async () => {
     const TestComponent = () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
@@ -47,11 +47,11 @@ describe('Badge', () => {
     };
 
     const view = render(<TestComponent />);
-    const slotFree = view.getByText(stateToLabel(SlotState.Free));
+    const slotFree = await view.getByText(stateToLabel(SlotState.Free));
 
     expect(slotFree).toHaveClass('state neutral');
 
-    user.click(view.getByRole('button'));
+    await user.click(view.getByRole('button'));
 
     waitFor(() => {
       expect(view.getByText(stateToLabel(SlotState.Running))).toBeInTheDocument();
