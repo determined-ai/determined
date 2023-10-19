@@ -181,7 +181,7 @@ export const ThemeProvider: React.FC<{
     };
   }, [handleSchemeChange]);
 
-  //Update darkLight and theme when branding, system mode, or mode changes.
+  // Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
     const theme = themes[branding][darkLight];
     dispatch({

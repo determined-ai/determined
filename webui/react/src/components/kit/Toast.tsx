@@ -8,16 +8,14 @@ import css from './Toast.module.scss';
 /**
  * Wrapper for static dialog functionality from antd. Regular static instances
  * are not responsive to the theming context, and will appear with the default
- * styling, so we use the app context  G,rfrom antd which hooks into the context.
+ * styling, so we use the app context from antd which hooks into the context.
  * This requires our code to call the `App.useApp` hook somewhere, so we do that
  * in the AppView. We fall back to the vanilla static methods so testing
  * functionality isn't broken.
  */
 
 antdNotification.config({
-  getContainer: () => {
-    return (document.getElementsByClassName('ui-provider')?.[0] || document.body) as HTMLElement;
-  },
+  getContainer: () => document.getElementsByClassName('ui-provider')?.[0] || document.body,
 });
 const notification: useAppProps['notification'] = antdNotification;
 
@@ -43,7 +41,7 @@ export const makeToast = ({
   title,
   severity = 'Info',
   closeable = true,
-  duration = 40.5,
+  duration = 4.5,
   description,
   link,
 }: ToastArgs): void => {

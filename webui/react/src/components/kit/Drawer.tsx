@@ -29,9 +29,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({
     <Drawer
       bodyStyle={{ padding: 0 }}
       closable={false}
-      getContainer={() =>
-        (document.getElementsByClassName('ui-provider')?.[0] || document.body) as HTMLElement
-      }
+      getContainer={() => document.getElementsByClassName('ui-provider')?.[0] || document.body}
       maskClosable={maskClosable}
       open={open}
       placement={placement}
