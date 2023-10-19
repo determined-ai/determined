@@ -242,11 +242,14 @@ func (db *PgDB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatch
 	metricName string, startTime time.Time, metricGroup model.MetricGroup,
 ) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error) {
 	var rows []snapshotWrapper
+
+	metricPath := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
+
 	err = db.queryRows(`
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
-  (s.metrics->'avg_metrics'->>$1)::float8 AS metric,
+  (s.metrics->'`+metricPath+`'->>$1)::float8 AS metric,
   s.end_time AS end_time,
   s.total_batches as batches
 FROM trials t
@@ -254,7 +257,7 @@ FROM trials t
 WHERE t.experiment_id=$2
   AND s.total_batches>=$3
   AND s.total_batches<=$4
-  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
+  AND s.metrics->'`+metricPath+`'->$1 IS NOT NULL
   AND s.end_time > $5
 	AND s.metric_group = $6
 ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime, metricGroup)
