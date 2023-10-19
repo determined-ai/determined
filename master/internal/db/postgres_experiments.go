@@ -236,47 +236,6 @@ func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Tr
 	return &trial, nil
 }
 
-// TrainingTrialsSnapshot returns a training metric across each trial in an experiment at a
-// specific point of progress.
-func (db *PgDB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error,
-) {
-	var rows []snapshotWrapper
-	err = db.queryRows(`
-SELECT
-  t.id AS trial_id,
-  t.hparams AS hparams,
-  (s.metrics->'avg_metrics'->>$1)::float8 AS metric,
-  s.end_time AS end_time,
-  s.total_batches as batches
-FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.experiment_id=$2
-  AND s.total_batches>=$3
-  AND s.total_batches<=$4
-  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
-  AND s.end_time > $5
-ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and training metric %s",
-			experimentID, metricName)
-	}
-	for _, row := range rows {
-		trial, err := snapshotWrapperToTrial(row)
-		if err != nil {
-			return nil, endTime, errors.Wrap(err, "Failed to process trial metadata")
-		}
-		trials = append(trials, trial)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return trials, endTime, nil
-}
-
 // GenericTrialsSnapshot returns metrics across each trial in an experiment at a
 // specific point of progress, for metric groups other than training and validation.
 func (db *PgDB) GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
@@ -291,7 +250,7 @@ SELECT
   s.end_time AS end_time,
   s.total_batches as batches
 FROM trials t
-  INNER JOIN metrics s ON t.id=s.trial_id
+	INNER JOIN metrics s ON t.id=s.trial_id
 WHERE t.experiment_id=$2
   AND s.total_batches>=$3
   AND s.total_batches<=$4
@@ -304,48 +263,6 @@ ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 			"failed to get snapshot for experiment %d and generic metric %s.%s",
 			experimentID, metricGroup, metricName)
 	}
-	for _, row := range rows {
-		trial, err := snapshotWrapperToTrial(row)
-		if err != nil {
-			return nil, endTime, errors.Wrap(err, "Failed to process trial metadata")
-		}
-		trials = append(trials, trial)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return trials, endTime, nil
-}
-
-// ValidationTrialsSnapshot returns a training metric across each trial in an experiment at a
-// specific point of progress.
-func (db *PgDB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error,
-) {
-	var rows []snapshotWrapper
-	err = db.queryRows(`
-SELECT
-  t.id AS trial_id,
-  t.hparams AS hparams,
-  (v.metrics->'validation_metrics'->>$1)::float8 AS metric,
-  v.end_time AS end_time,
-  v.total_batches as batches
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$2
-  AND v.total_batches>=$3
-  AND v.total_batches<=$4
-  AND v.metrics->'validation_metrics'->$1 IS NOT NULL
-  AND v.end_time > $5
-ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and validation metric %s",
-			experimentID, metricName)
-	}
-
 	for _, row := range rows {
 		trial, err := snapshotWrapperToTrial(row)
 		if err != nil {

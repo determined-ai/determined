@@ -1966,20 +1966,8 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		}
 
 		var response apiv1.TrialsSnapshotResponse
-		var newTrials []*apiv1.TrialsSnapshotResponse_Trial
-		var endTime time.Time
-		var err error
-		switch metricGroup {
-		case model.TrainingMetricGroup:
-			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		case model.ValidationMetricGroup:
-			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		default:
-			newTrials, endTime, err = a.m.db.GenericTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime, metricGroup)
-		}
+		newTrials, endTime, err := a.m.db.GenericTrialsSnapshot(experimentID,
+			minBatches, maxBatches, metricName, startTime, metricGroup)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",

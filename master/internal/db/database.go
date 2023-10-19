@@ -85,15 +85,9 @@ type DB interface {
 		batches []int32, endTime time.Time, err error)
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
-	TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-		metricName string, startTime time.Time) (
-		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
 	GenericTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 		metricName string, startTime time.Time, metricGroup model.MetricGroup) (
 		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
-	ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-		metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-		endTime time.Time, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
