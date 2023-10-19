@@ -53,7 +53,7 @@ describe('Badge', () => {
 
     await user.click(view.getByRole('button'));
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(view.getByText(stateToLabel(SlotState.Running))).toBeInTheDocument();
     });
   });
