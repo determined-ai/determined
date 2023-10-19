@@ -84,53 +84,42 @@ def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
 
 
 @authentication.required
-def print_workspace_list(
-    sess: api.Session, offset: int, sort_by: str, order_by: str, limit: int, json: bool
-):
-    orderArg = bindings.v1OrderBy[order_by.upper()]
-    sortArg = bindings.v1GetWorkspacesRequestSortBy[sort_by.upper()]
+def list_workspaces(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    orderArg = bindings.v1OrderBy[args.order_by.upper()]
+    sortArg = bindings.v1GetWorkspacesRequestSortBy[args.sort_by.upper()]
+    internal_offset = args.offset or 0
     all_workspaces: List[bindings.v1Workspace] = []
-    internal_offset = offset or 0
     while True:
         workspaces = bindings.get_GetWorkspaces(
             sess,
-            limit=limit,
+            limit=args.limit,
             offset=internal_offset,
             orderBy=orderArg,
             sortBy=sortArg,
         ).workspaces
         all_workspaces += workspaces
         internal_offset += len(workspaces)
-        if offset or len(workspaces) < limit:
+        if args.offset or len(workspaces) < args.limit:
             break
 
-    if json:
+    if args.json:
         determined.cli.render.print_json([w.to_json() for w in all_workspaces])
     else:
         render_workspaces(all_workspaces, from_list_api=True)
 
 
 @authentication.required
-def list_workspaces(args: Namespace) -> None:
+def list_workspace_projects(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    print_workspace_list(sess, args.offset, args.sort_by, args.order_by, args.limit, args.json)
+    all_projects = workspace.Workspace(
+        session=sess, workspace_name=args.workspace_name
+    ).list_projects()
 
-
-@authentication.required
-def print_workspace_projects_list(
-    sess: api.Session,
-    workspace_name: str,
-    sort_by: str,
-    order_by: str,
-    offset: int,
-    limit: int,
-    json: bool,
-):
-    all_projects = workspace.Workspace(session=sess, workspace_name=workspace_name).list_projects()
-
-    sort_key = sort_by
-    sort_order = order_by
-    offset = offset or 0  # No passed offset is interpreted as a 0 offset
+    sort_key = args.sort_by
+    sort_order = args.order_by
+    offset = args.offset or 0  # No passed offset is interpreted as a 0 offset
+    limit = args.limit
 
     # TODO: Remove typechecking suppression when mypy is upgraded to 1.4.0
     all_projects.sort(
@@ -139,7 +128,7 @@ def print_workspace_projects_list(
     )
     projects = all_projects[offset : offset + limit]
 
-    if json:
+    if args.json:
         determined.cli.render.print_json([render.project_to_json(p) for p in projects])
     else:
         values = [
@@ -153,14 +142,6 @@ def print_workspace_projects_list(
             for p in projects
         ]
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
-
-
-@authentication.required
-def list_workspace_projects(args: Namespace) -> None:
-    sess = cli.setup_session(args)
-    print_workspace_projects_list(
-        sess, args.workspace_name, args.sort_by, args.order_by, args.offset, args.limit, args.json
-    )
 
 
 @authentication.required
@@ -232,7 +213,11 @@ def describe_workspace(args: Namespace) -> None:
     else:
         render_workspaces([w])
         print("\nAssociated Projects")
-        print_workspace_projects_list(sess, args.workspace_name, "id", "asc", 0, 200, args.json)
+        vars(args)["order_by"] = "asc"
+        vars(args)["sort_by"] = "id"
+        vars(args)["offset"] = 0
+        vars(args)["limit"] = 200
+        list_workspace_projects(args)
 
 
 @authentication.required
