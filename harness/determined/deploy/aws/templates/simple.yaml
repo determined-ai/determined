@@ -305,7 +305,7 @@ Parameters:
       {{ end }}
       __internal: # TODO make it configurable.
         proxied_servers:
-          - destination: http://sidecar1:"${SidecarPort}"/lore
+          - destination: http://sidecar1:8080/lore # TODO: read it from SidecarPort
             path_prefix: /lore
 
 ### END INJECT CODE
