@@ -16,11 +16,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Streamable describes a determined streamable object.
 type Streamable struct {
 	Name   string
 	Fields []Field
 }
 
+// Field contains information of the fields of a streamable.
 type Field struct {
 	Name    string
 	Type    string
@@ -33,6 +35,7 @@ type RootVisitor struct {
 	out *[]Streamable
 }
 
+// Visit builds a DeclFinder object from the top level.
 func (x RootVisitor) Visit(node ast.Node) ast.Visitor {
 	if node == nil {
 		return nil
@@ -46,6 +49,7 @@ type DeclFinder struct {
 	out *[]Streamable
 }
 
+// Visit builds a StreamableFinder.
 func (x DeclFinder) Visit(node ast.Node) ast.Visitor {
 	if node == nil {
 		return nil
@@ -65,6 +69,7 @@ type StreamableFinder struct {
 	expectStreamable bool
 }
 
+// Visit traverses nodes and builds a Streamable object.
 func (x *StreamableFinder) Visit(node ast.Node) ast.Visitor {
 	if node == nil {
 		return nil
@@ -149,15 +154,15 @@ func parseFiles(files []string) ([]Streamable, error) {
 	var results []Streamable
 
 	for _, f := range files {
-		src, err := os.ReadFile(f)
+		src, err := os.ReadFile(f) // XXX: for security purposes should vet this file
 		if err != nil {
-			return nil, errors.Wrapf(err, "reading file: %v\n", src)
+			return nil, errors.Wrapf(err, "reading file: %v", src)
 		}
 		fs := token.NewFileSet()
 		opts := parser.ParseComments | parser.SkipObjectResolution
 		file, err := parser.ParseFile(fs, f, src, opts)
 		if err != nil {
-			return nil, errors.Wrapf(err, "in file: %v\n", f)
+			return nil, errors.Wrapf(err, "in file: %v", f)
 		}
 
 		ast.Walk(RootVisitor{src, &results}, file)
@@ -171,6 +176,7 @@ type Builder struct {
 	builder strings.Builder
 }
 
+// Writef is a convenience function for calling builder's WriteString.
 func (b *Builder) Writef(fstr string, args ...interface{}) {
 	if len(args) == 0 {
 		_, _ = b.builder.WriteString(fstr)
@@ -348,7 +354,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "output is up-to-date\n")
 		} else {
 			// write a new output
-			err := os.WriteFile(output, content, 0o666)
+			err := os.WriteFile(output, content, 0o666) // XXX: need proper readfile permissions
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed writing to %v: %v\n", output, err.Error())
 				os.Exit(1)
@@ -364,7 +370,10 @@ func main() {
 			var f *os.File
 			f, err = os.Create(stamp)
 			if f != nil {
-				f.Close()
+				err := f.Close()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "encountered err: %s", err.Error())
+				}
 			}
 		}
 		if err != nil {
