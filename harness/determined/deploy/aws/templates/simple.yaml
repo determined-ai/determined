@@ -303,6 +303,11 @@ Parameters:
       {{ if ne .notebook_timeout 0.0 }}
       notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
+      __internal: # TODO make it configurable.
+        proxied_servers:
+          - destination: http://sidecar1:"${SidecarPort}"/lore
+            path_prefix: /lore
+
 ### END INJECT CODE
 
 Conditions:
@@ -771,7 +776,10 @@ Resources:
             docker rm $(docker ps -a -q)
 
             if [ ! -z "${SidecarImage}" ] && [ ! -z "${SidecarPort}" ]; then
-              docker run -d -p 7080:"${SidecarPort}" "${SidecarImage}"
+              docker run -d \
+                --name sidecar1 \
+                --network determined \
+                "${SidecarImage}"
             fi
 
             # TODO: setup master config.
