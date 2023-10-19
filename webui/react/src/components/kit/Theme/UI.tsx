@@ -1,10 +1,23 @@
 import { theme as AntdTheme, ConfigProvider } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { Dispatch, useContext, useLayoutEffect, useMemo, useReducer, useRef } from 'react';
+import React, {
+  Dispatch,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
 import { RecordKey } from 'components/kit/internal/types';
 import { themes } from 'components/kit/Theme';
 import determinedInfo from 'stores/determinedInfo';
+
+const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 
 import { DarkLight, getDarkLight, getSystemMode, globalCssVars, Mode, Theme } from './themeUtils';
 interface StateUI {
@@ -147,9 +160,26 @@ export const ThemeProvider: React.FC<{
 }> = ({ children }) => {
   const info = useObservable(determinedInfo.info);
   const [state, dispatch] = useReducer(reducer, initUI);
-  const systemMode = getSystemMode();
-  const darkLight = getDarkLight(state.mode, systemMode);
+
   const branding = info?.branding || 'determined';
+
+  const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
+
+  const darkLight = getDarkLight(state.mode, systemMode);
+  const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
+    if (!event.matches) setSystemMode(getSystemMode());
+  }, []);
+
+  // Detect browser/OS level dark/light mode changes.
+  useEffect(() => {
+    matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
+    matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
+
+    return () => {
+      matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
+      matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).removeEventListener('change', handleSchemeChange);
+    };
+  }, [handleSchemeChange]);
 
   //Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
