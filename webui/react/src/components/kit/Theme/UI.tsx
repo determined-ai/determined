@@ -207,7 +207,7 @@ export const UIProvider: React.FC<{
   // Set global CSS variables shared across themes.
   Object.keys(globalCssVars).forEach((key) => {
     const value = (globalCssVars as Record<RecordKey, string>)[key];
-    ref.current?.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+    document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
   });
 
   // Set each theme property as top level CSS variable.
@@ -216,8 +216,58 @@ export const UIProvider: React.FC<{
     ref.current?.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
   });
 
-  const configTheme = {
-    algorithm: darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm,
+  ref.current?.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
+
+  const lightThemeConfig = {
+    components: {
+      Tooltip: {
+        colorBgDefault: 'var(--theme-float)',
+        colorTextLightSolid: 'var(--theme-float-on)',
+      },
+    },
+    token: {
+      colorPrimary: '#1890ff',
+    },
+  };
+
+  const darkThemeConfig = {
+    components: {
+      Checkbox: {
+        colorBgContainer: 'transparent',
+      },
+      DatePicker: {
+        colorBgContainer: 'transparent',
+      },
+      Input: {
+        colorBgContainer: 'transparent',
+      },
+      InputNumber: {
+        colorBgContainer: 'transparent',
+      },
+      Modal: {
+        colorBgElevated: 'var(--theme-stage)',
+      },
+      Pagination: {
+        colorBgContainer: 'transparent',
+      },
+      Radio: {
+        colorBgContainer: 'transparent',
+      },
+      Select: {
+        colorBgContainer: 'transparent',
+      },
+      Tree: {
+        colorBgContainer: 'transparent',
+      },
+    },
+    token: {
+      colorLink: '#57a3fa',
+      colorLinkHover: '#8dc0fb',
+      colorPrimary: '#1890ff',
+    },
+  };
+
+  const baseThemeConfig = {
     components: {
       Button: {
         colorBgContainer: 'transparent',
@@ -225,15 +275,25 @@ export const UIProvider: React.FC<{
       Progress: {
         marginXS: 0,
       },
-      Tooltip: {
-        colorBgDefault: 'var(--theme-float)',
-        colorTextLightSolid: 'var(--theme-float-on)',
-      },
     },
     token: {
       borderRadius: 2,
-      colorPrimary: '#1890ff',
       fontFamily: 'var(--theme-font-family)',
+    },
+  };
+
+  const algorithm = darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
+  const { token: baseToken, components: baseComponents } = baseThemeConfig;
+  const { token, components } = darkMode ? darkThemeConfig : lightThemeConfig;
+  const configTheme = {
+    algorithm,
+    components: {
+      ...baseComponents,
+      ...components,
+    },
+    token: {
+      ...baseToken,
+      ...token,
     },
   };
 

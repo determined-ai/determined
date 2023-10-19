@@ -5,8 +5,6 @@ import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 
 import css from './Drawer.module.scss';
-import { DarkLight } from './internal/types';
-import useUI, { UIProvider } from './Theme';
 
 type DrawerPlacement = 'left' | 'right';
 
@@ -27,31 +25,28 @@ const DrawerComponent: React.FC<DrawerProps> = ({
   title,
   onClose,
 }) => {
-  const {
-    ui: { mode, theme },
-  } = useUI();
-
   return (
     <Drawer
       bodyStyle={{ padding: 0 }}
       closable={false}
+      getContainer={() =>
+        (document.getElementsByClassName('ui-provider')?.[0] || document.body) as HTMLElement
+      }
       maskClosable={maskClosable}
       open={open}
       placement={placement}
       rootClassName={css.mobileWidth}
       width="700px"
       onClose={onClose}>
-      <UIProvider darkMode={mode === DarkLight.Dark} theme={theme}>
-        <div className={css.header}>
-          <div className={css.headerTitle}>{title}</div>
-          <Button
-            icon={<Icon name="close" size="small" title="Close drawer" />}
-            type="text"
-            onClick={onClose}
-          />
-        </div>
-        <div className={css.body}>{children}</div>
-      </UIProvider>
+      <div className={css.header}>
+        <div className={css.headerTitle}>{title}</div>
+        <Button
+          icon={<Icon name="close" size="small" title="Close drawer" />}
+          type="text"
+          onClick={onClose}
+        />
+      </div>
+      <div className={css.body}>{children}</div>
     </Drawer>
   );
 };
