@@ -80,14 +80,20 @@ func New(
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
-func (k ResourceManager) getResourcePoolRef(
+func (k ResourceManager) resourcePoolExists(
 	name string,
-) (*actor.Ref, error) {
-	rp := k.Ref().Child(name)
-	if rp == nil {
-		return nil, fmt.Errorf("cannot find resource pool: %s", name)
+) error {
+	resp, err := k.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
+	if err != nil {
+		return err
 	}
-	return rp, nil
+
+	for _, rp := range resp.ResourcePools {
+		if rp.Name == name {
+			return nil
+		}
+	}
+	return fmt.Errorf("cannot find resource pool: %s", name)
 }
 
 // ResolveResourcePool resolves the resource pool completely.
@@ -167,8 +173,7 @@ func (k ResourceManager) ValidateResources(
 
 // ValidateResourcePool validates that the named resource pool exists.
 func (k ResourceManager) ValidateResourcePool(name string) error {
-	_, err := k.getResourcePoolRef(name)
-	return err
+	return k.resourcePoolExists(name)
 }
 
 // ValidateResourcePoolAvailability checks the available resources for a given pool.
@@ -177,11 +182,7 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 	name string,
 	slots int,
 ) ([]command.LaunchWarning, error) {
-	if _, err := k.getResourcePoolRef(name); err != nil {
-		return nil, fmt.Errorf("%s is an invalid resource pool", name)
-	}
-
-	return nil, nil
+	return nil, k.resourcePoolExists(name)
 }
 
 // NotifyContainerRunning receives a notification from the container to let
@@ -450,49 +451,34 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			msg.ResourcePool = k.config.DefaultComputeResourcePool
 		}
 
-		rpRef := ctx.Child(msg.ResourcePool)
-		if rpRef == nil {
-			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
+		rp, err := k.poolByName(msg.ResourcePool)
+		if err != nil {
+			ctx.Respond(err)
 			return nil
 		}
-		resp := ctx.Ask(rpRef, msg).Get()
-		ctx.Respond(resp)
+		ctx.Respond(rp.GetJobQ(msg))
 
 	case *apiv1.GetJobQueueStatsRequest:
 		resp := &apiv1.GetJobQueueStatsResponse{
 			Results: make([]*apiv1.RPQueueStat, 0),
 		}
-		rpRefs := make([]*actor.Ref, 0)
-		if len(msg.ResourcePools) == 0 {
-			rpRefs = append(rpRefs, ctx.Children()...)
-		} else {
-			for _, rp := range msg.ResourcePools {
-				rpRefs = append(rpRefs, ctx.Child(rp))
+
+		for poolName, rp := range k.pools {
+			qStats := apiv1.RPQueueStat{
+				ResourcePool: poolName,
+				Stats:        rp.GetJobQStats(sproto.GetJobQStats{}),
 			}
+
+			aggregates, err := k.fetchAvgQueuedTime(poolName)
+			if err != nil {
+				ctx.Respond(fmt.Errorf("fetch average queued time: %s", err))
+				return nil
+			}
+			qStats.Aggregates = aggregates
+
+			resp.Results = append(resp.Results, &qStats)
 		}
 
-		actorResps := ctx.AskAll(sproto.GetJobQStats{}, rpRefs...).GetAll()
-		for _, rpRef := range rpRefs {
-			poolName := rpRef.Address().Local()
-			qStats := apiv1.RPQueueStat{ResourcePool: poolName}
-			aResp := actorResps[rpRef]
-			switch aMsg := aResp.(type) {
-			case error:
-				ctx.Log().WithError(aMsg).Error("")
-				ctx.Respond(aMsg)
-				return nil
-			case *jobv1.QueueStats:
-				qStats.Stats = aMsg
-				aggregates, err := k.fetchAvgQueuedTime(poolName)
-				if err != nil {
-					return fmt.Errorf("fetch average queued time: %s", err)
-				}
-				qStats.Aggregates = aggregates
-				resp.Results = append(resp.Results, &qStats)
-			default:
-				return fmt.Errorf("unexpected response type: %T", aMsg)
-			}
-		}
 		ctx.Respond(resp)
 		return nil
 
