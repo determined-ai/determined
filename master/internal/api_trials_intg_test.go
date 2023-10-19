@@ -513,7 +513,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 
 			err = api.TrialsSample(&apiv1.TrialsSampleRequest{
 				ExperimentId:  int32(trial.ExperimentID),
-				Group:         "validation",
+				Group:         model.ValidationMetricGroup,
 				MetricName:    metricName,
 				PeriodSeconds: 1,
 			}, resp)

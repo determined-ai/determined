@@ -244,6 +244,8 @@ func (db *PgDB) TrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 	var rows []snapshotWrapper
 
 	metricPath := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
+	mGroupString := string(metricGroup)
+	pType := customMetricGroupToPartitionType(&mGroupString)
 
 	err = db.queryRows(`
 SELECT
@@ -260,7 +262,8 @@ WHERE t.experiment_id=$2
   AND s.metrics->'`+metricPath+`'->$1 IS NOT NULL
   AND s.end_time > $5
 	AND s.metric_group = $6
-ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime, metricGroup)
+	AND partition_type = $7
+ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime, metricGroup, pType)
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err,
 			"failed to get snapshot for experiment %d and generic metric %s.%s",
