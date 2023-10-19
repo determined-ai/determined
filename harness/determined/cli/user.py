@@ -1,3 +1,4 @@
+import distutils.util
 import getpass
 from argparse import Namespace
 from collections import namedtuple
@@ -6,7 +7,7 @@ from typing import Any, List
 from determined.cli import errors, login_sdk_client, render, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
 FullUser = namedtuple(
@@ -251,26 +252,26 @@ args_description = [
             ),
             Arg("--display-name", default=None, help="new display name for target_user"),
             Arg("--username", default=None, help="new username for target_user"),
-            BoolOptArg(
+            Arg(
                 "--remote",
-                "--no-remote",
                 dest="remote",
-                true_help="set as remote user",
-                false_help="set as non-remote user"
+                type=lambda s: bool(distutils.util.strtobool(s)),
+                default=None,
+                help="set user as remote",
             ),
-            BoolOptArg(
+            Arg(
                 "--active",
-                "--no-active",
                 dest="activate",
-                true_help="set user as active",
-                false_help="deactivate user"
+                type=lambda s: bool(distutils.util.strtobool(s)),
+                default=None,
+                help="set user as active/inactive",
             ),
-            BoolOptArg(
+            Arg(
                 "--admin",
-                "--no-admin",
                 dest="admin",
-                true_help="grant user admin permissions",
-                false_help="remove admin permissions from user"
+                type=lambda s: bool(distutils.util.strtobool(s)),
+                default=None,
+                help="grant/remove user admin permissions",
             ),
         ]),
     ])
