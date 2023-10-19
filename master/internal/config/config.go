@@ -378,10 +378,12 @@ func (p *ProxiedServerConfig) Validate() []error {
 	}
 	if p.Destination == "" {
 		errs = append(errs, errors.New("destination must be set"))
+		return errs
 	}
 	target, err := url.Parse(p.Destination)
 	if err != nil {
 		errs = append(errs, errors.Wrap(err, "failed to parse proxied destination"))
+		return errs
 	}
 	// ensure scheme and port is set
 	if target.Scheme == "" {
