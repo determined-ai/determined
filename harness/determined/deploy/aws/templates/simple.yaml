@@ -212,6 +212,14 @@ Parameters:
     Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
     Default: 0
 
+  SidecarImage:
+    Type: String
+    Description: Docker image for sidecar service.
+
+  SidecarPort:
+    Type: Number
+    Description: Internal container port for sidecar service.
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -771,7 +779,7 @@ Resources:
             test $? -eq 0 || ( echo "Failed to generate master.yaml" && exit 1 )
 
             # run docker container to echo requests as daemon
-            # docker run -p 8080:8080 -p 8443:8443 mendhak/http-https-echo:26
+            docker run -p 7080:"${SidecarPort}" "${SidecarImage}" -d
 
 
             docker run \

@@ -241,6 +241,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.DOCKER_USER: args.docker_user,
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
         constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
+        constants.cloudformation.SIDECAR_IMAGE: args.sidecar_image,
+        constants.cloudformation.SIDECAR_PORT: args.sidecar_port,
     }
 
     if args.master_config_template_path:
@@ -266,6 +268,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
+        print(e)
         raise CliError(
             "Stack Deployment Failed. Check the AWS CloudFormation Console for details.", e_stack=e
         )
@@ -628,6 +631,16 @@ args_description = Cmd(
                     type=int,
                     help="Specifies the duration in seconds before idle notebook instances "
                     "are automatically terminated",
+                ),
+                Arg(
+                    "--sidecar-image",
+                    type=str,
+                    help="Docker image for the sidecar container",
+                ),
+                Arg(
+                    "--sidecar-port",
+                    type=int,
+                    help="Port for the sidecar container",
                 ),
             ],
         ),
