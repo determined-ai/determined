@@ -214,9 +214,8 @@ export const UIProvider: React.FC<{
   Object.keys(theme).forEach((key) => {
     const value = (theme as Record<RecordKey, string>)[key];
     ref.current?.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
+    document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
   });
-
-  ref.current?.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
 
   const lightThemeConfig = {
     components: {
