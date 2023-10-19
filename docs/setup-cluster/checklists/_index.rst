@@ -17,15 +17,18 @@ After completing these steps, your users will be able to see and access your Det
  Prerequisites
 ***************
 
-To complete the items in this checklist, ensure your system meets :ref:`advanced-setup-requirements`.
+To complete the items in this checklist, ensure your system meets
+:ref:`advanced-setup-requirements`.
 
 About Offline Installations
 ===========================
 
 -  If your master and compute nodes are offline, you'll need a local private registry that can
    satisfy necessary images (PostgreSQL + task container images).
--  You can install the Determined CLI package on your client machines and then take them offline again.
--  In addition, a local PyPi mirror for packages is highly recommended for installing packages from the internet in your task environments.
+-  You can install the Determined CLI package on your client machines and then take them offline
+   again.
+-  In addition, a local PyPi mirror for packages is highly recommended for installing packages from
+   the internet in your task environments.
 
 *******************
  Set Up PostgreSQL
@@ -40,12 +43,12 @@ installation method that best fits your environment and requirements.
    Kubernetes <determined-on-kubernetes>` uses the Determined Helm Chart which includes deployment
    of a PostgreSQL database.
 
-   Cloud Services
+Cloud Services
 
-   -  :ref:`AWS <install-aws>`. The Determined CLI manages the process of provisioning an Amazon RDS
-      instance for PostgreSQL.
-   -  :ref:`GCP <install-gcp>`. The Determined CLI manages the setup of Google Cloud SQL instances
-      for PostgreSQL.
+-  :ref:`AWS <install-aws>`. The Determined CLI manages the process of provisioning an Amazon RDS
+   instance for PostgreSQL.
+-  :ref:`GCP <install-gcp>`. The Determined CLI manages the setup of Google Cloud SQL instances for
+   PostgreSQL.
 
 .. tabs::
 
@@ -472,7 +475,7 @@ Test your setup to ensure it is functioning correctly.
 ************
 
 Congratulations! You have set up your Determined environment! Your users should be able to see and
-connect to the Determined master. 
+connect to the Determined master.
 
 .. toctree::
    :hidden:
