@@ -2,6 +2,7 @@ import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
 import Spinner from 'components/kit/Spinner';
+import useUI, { DarkLight, UIProvider } from 'components/kit/Theme';
 import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
@@ -35,25 +36,27 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
   const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
-
+  const { ui } = useUI();
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);
   }, []);
 
   return (
-    <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
-      <UserSettings.Provider
-        value={{
-          isLoading,
-          querySettings: querySettings.current,
-          // Note that this cast fails when a setting is anything other than a JsonObject.
-          // Settings that are not JsonObjects should only be accessed via the new store.
-          state: userSettings._forUseSettingsOnly() as unknown as WritableObservable<
-            Loadable<UserSettingsState>
-          >,
-        }}>
-        {children}
-      </UserSettings.Provider>
-    </Spinner>
+    <UIProvider darkMode={ui.mode === DarkLight.Dark} theme={ui.theme}>
+      <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
+        <UserSettings.Provider
+          value={{
+            isLoading,
+            querySettings: querySettings.current,
+            // Note that this cast fails when a setting is anything other than a JsonObject.
+            // Settings that are not JsonObjects should only be accessed via the new store.
+            state: userSettings._forUseSettingsOnly() as unknown as WritableObservable<
+              Loadable<UserSettingsState>
+            >,
+          }}>
+          {children}
+        </UserSettings.Provider>
+      </Spinner>
+    </UIProvider>
   );
 };

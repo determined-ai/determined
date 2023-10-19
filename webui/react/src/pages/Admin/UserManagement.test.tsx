@@ -54,13 +54,15 @@ const Container: React.FC = () => {
   }, [loadUsers]);
 
   return (
-    <SettingsProvider>
-      <HelmetProvider>
-        <BrowserRouter>
-          <UserManagement />;
-        </BrowserRouter>
-      </HelmetProvider>
-    </SettingsProvider>
+    <ThemeProvider>
+      <SettingsProvider>
+        <HelmetProvider>
+          <BrowserRouter>
+            <UserManagement />;
+          </BrowserRouter>
+        </HelmetProvider>
+      </SettingsProvider>
+    </ThemeProvider>
   );
 };
 

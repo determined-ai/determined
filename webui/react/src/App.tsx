@@ -203,11 +203,11 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <DndProvider backend={HTML5Backend}>
-        <SettingsProvider>
-          <ThemeProvider>
+        <ThemeProvider>
+          <SettingsProvider>
             <AppView />
-          </ThemeProvider>
-        </SettingsProvider>
+          </SettingsProvider>
+        </ThemeProvider>
       </DndProvider>
     </HelmetProvider>
   );
