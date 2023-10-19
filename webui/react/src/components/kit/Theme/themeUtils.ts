@@ -2,6 +2,7 @@
 import { RefObject } from 'react';
 
 import { isColor, rgba2str, rgbaMix, str2rgba } from 'components/kit/internal/color';
+import { findParentByClass } from 'components/kit/internal/functions';
 import { ValueOf } from 'components/kit/internal/types';
 
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
@@ -416,15 +417,6 @@ export const DarkLight = {
 
 export type DarkLight = ValueOf<typeof DarkLight>;
 
-const findParentByClass = (element: HTMLElement, className: string): Element => {
-  if (element.classList.contains(className)) {
-    return element;
-  }
-  if (element.parentElement) {
-    return findParentByClass(element.parentElement, className);
-  }
-  return element;
-};
 export const getCssVar = (ref: RefObject<HTMLElement>, name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
   const element = ref.current || document.documentElement;

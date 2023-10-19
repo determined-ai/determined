@@ -17,6 +17,7 @@ import css from './Toast.module.scss';
 antdNotification.config({
   getContainer: () => document.getElementsByClassName('ui-provider')?.[0] || document.body,
 });
+
 const notification: useAppProps['notification'] = antdNotification;
 
 export { notification };

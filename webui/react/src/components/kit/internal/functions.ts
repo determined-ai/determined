@@ -1,7 +1,6 @@
 import ansiConverter from 'ansi-to-html';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { RefObject } from 'react';
 dayjs.extend(utc);
 
 import { Metric, NullOrUndefined } from 'components/kit/internal/types';
@@ -350,7 +349,7 @@ const capitalizeWord = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-const findParentByClass = (element: HTMLElement, className: string): Element => {
+export const findParentByClass = (element: HTMLElement, className: string): Element => {
   if (element.classList.contains(className)) {
     return element;
   }
@@ -358,14 +357,6 @@ const findParentByClass = (element: HTMLElement, className: string): Element => 
     return findParentByClass(element.parentElement, className);
   }
   return element;
-};
-
-export const getCssVar = (ref: RefObject<HTMLElement>, name: string): string => {
-  const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
-  const element = ref.current || document.documentElement;
-  return window
-    .getComputedStyle(findParentByClass(element, 'ui-provider'))
-    ?.getPropertyValue(varName);
 };
 
 export const glasbeyColor = (sequence: number): string => {
