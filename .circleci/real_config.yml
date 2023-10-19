@@ -2528,13 +2528,14 @@ jobs:
           steps:
             - run:
                 name: Allocate Resources on Cluster
-                # Sed command reduces the slots to 8 for the cifar10_pytorch test since znode does not allocate more than 8 on agent
+                # Sed command reduces the slots to 8 to match '-N2 --gpus-per-node=4' usage below.
+                # Affects test e2e_tests/tests/cluster/test_slurm.py:test_mnist_pytorch_distributed
                 command: |
                   DET_MASTER_HOST=<<parameters.determined_master_host>>
                   # determined_master_host is localhost, so use actual hostname to pass to the agent
                   MASTER_HOST=$(hostname)
                   MASTER_PORT=$(echo $DET_MASTER_HOST | cut -d: -f2)
-                  sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/computer_vision/cifar10_pytorch/distributed.yaml
+                  sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/tutorials/mnist_pytorch/distributed.yaml
                   sudo cp agent/dist/determined-agent_linux_amd64_v1/determined-agent /scratch/launcher/.launcher.$HOSTNAME
                   # Include 40 minute time limit, name the job (determined-agent-$HOSTNAME) so we can selectively kill it
                   sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4 --time=40 -Jdetermined-agent-$HOSTNAME \
