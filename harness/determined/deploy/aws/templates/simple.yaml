@@ -215,10 +215,12 @@ Parameters:
   SidecarImage:
     Type: String
     Description: Docker image for sidecar service.
+    Default: ''
 
   SidecarPort:
     Type: Number
     Description: Internal container port for sidecar service.
+    Default: 1024
 
   MasterConfigTemplate:
     Type: String
@@ -768,6 +770,12 @@ Resources:
             docker stop $(docker ps -a -q)
             docker rm $(docker ps -a -q)
 
+            if [ ! -z "${SidecarImage}" ] && [ ! -z "${SidecarPort}" ]; then
+              docker run -d -p 7080:"${SidecarPort}" "${SidecarImage}"
+            fi
+
+            # TODO: setup master config.
+
             touch /usr/local/determined/etc/master.yaml
             docker run \
                 --name determined-master-configurator \
@@ -777,9 +785,6 @@ Resources:
                 ${ImageRepoPrefix}/${MasterImageName}:${Version} \
                 -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
             test $? -eq 0 || ( echo "Failed to generate master.yaml" && exit 1 )
-
-            # run docker container to echo requests as daemon
-            docker run -p 7080:"${SidecarPort}" "${SidecarImage}" -d
 
 
             docker run \
