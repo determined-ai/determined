@@ -1105,9 +1105,9 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
         new_display_name,
         "--username",
         new_username,
-        "--active",
-        "--remote",
-        "--admin",
+        "--active=true",
+        "--remote=true",
+        "--admin=true",
     ]
 
     child = det_spawn(command)
