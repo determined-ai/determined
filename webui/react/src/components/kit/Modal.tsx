@@ -135,6 +135,9 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         </div>
       }
+      getContainer={() =>
+        (document.getElementsByClassName('ui-provider')?.[0] || document.body) as HTMLElement
+      }
       key={key}
       maskClosable={true}
       open={isOpen}
