@@ -3,6 +3,7 @@ import { isRight, match } from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
+import { isEqual } from 'lodash';
 
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
@@ -260,9 +261,9 @@ export class UserSettingsStore extends PollingStore {
 
   protected updateSettingsFromResponse(response: V1GetUserSettingResponse): void {
     this.#settings.update((loadable) => {
-      let newSettings: State = Loadable.getOrElse(Map(), loadable);
+      const oldSettings: State = Loadable.getOrElse(Map(), loadable);
 
-      newSettings = newSettings.withMutations((newSettings) => {
+      const newSettings = oldSettings.withMutations((newSettings) => {
         for (const setting of response.settings) {
           const pathKey = setting.storagePath || setting.key;
           const oldPathSettings = newSettings.get(pathKey);
@@ -280,7 +281,7 @@ export class UserSettingsStore extends PollingStore {
           }
         }
       });
-      return Loaded(newSettings);
+      return isEqual(oldSettings.toJS(), newSettings.toJS()) ? loadable : Loaded(newSettings);
     });
   }
 
