@@ -170,10 +170,9 @@ func PaginateBunUnsafe(
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
-	tokenKeys *model.AuthTokenKeypair
-	sql       *sqlx.DB
-	queries   *StaticQueryMap
-	Url       string
+	sql     *sqlx.DB
+	queries *StaticQueryMap
+	URL     string
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -182,7 +181,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
-			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, Url: url}
+			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, URL: url}
 			initTheOneBun(db)
 			return db, nil
 		}
