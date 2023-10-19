@@ -2,9 +2,8 @@ import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { User } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import UserAvatar, { Props } from './UserAvatar';
 
@@ -26,9 +25,7 @@ const setup = (testUser: User) => {
   const user = userEvent.setup();
   const view = render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <Component user={testUser} />
-      </UIProvider>
+      <Component user={testUser} />
     </ThemeProvider>,
   );
 

@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
+import { ThemeProvider } from 'components/kit/Theme';
 
 import Avatar, { Props } from './Avatar';
 
@@ -12,9 +11,7 @@ const user = userEvent.setup();
 const setup = ({ displayName, hideTooltip = false, ...props }: Props) => {
   render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
-      </UIProvider>
+      <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
     </ThemeProvider>,
   );
 };

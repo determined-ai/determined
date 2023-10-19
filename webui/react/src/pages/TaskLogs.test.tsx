@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import * as src from 'components/kit/LogViewer/LogViewer';
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { flakyIt } from 'quarantineTests';
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
@@ -10,7 +10,6 @@ import { mapV1LogsResponse } from 'services/decoder';
 import { LogLevelFromApi } from 'types';
 import handleError from 'utils/error';
 import { generateAlphaNumeric } from 'utils/string';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 interface TestLog {
   id: number | string;
@@ -78,11 +77,9 @@ const generateLogs = (
 const setup = (props: src.Props) => {
   return render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <src.default {...props} />
-        {/* increase variation in DOM */}
-        <span> {Math.random()}</span>
-      </UIProvider>
+      <src.default {...props} />
+      {/* increase variation in DOM */}
+      <span> {Math.random()}</span>
     </ThemeProvider>,
   );
 };

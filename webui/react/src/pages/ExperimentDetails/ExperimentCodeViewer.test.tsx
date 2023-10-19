@@ -4,14 +4,13 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 import { generateExperiment } from 'utils/task';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import CodeViewer, { Props } from './ExperimentCodeViewer';
 
@@ -131,9 +130,7 @@ const setup = (props: Pick<Props, 'experiment'> = { experiment: experimentMock }
   render(
     <BrowserRouter>
       <ThemeProvider>
-        <UIProvider darkMode={isDarkMode} theme={theme}>
-          <Container {...props} />
-        </UIProvider>
+        <Container {...props} />
       </ThemeProvider>
     </BrowserRouter>,
   );

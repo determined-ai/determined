@@ -4,12 +4,10 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { UIProvider } from 'components/kit/Theme';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
 import { DetailedUser } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import CreateGroupModalComponent, {
   API_SUCCESS_MESSAGE_CREATE,
@@ -68,11 +66,7 @@ const Container: React.FC<Props> = ({ group }) => {
 };
 
 const setup = async (group?: V1GroupSearchResult) => {
-  const view = render(
-    <UIProvider darkMode={isDarkMode} theme={theme}>
-      <Container group={group} />,
-    </UIProvider>,
-  );
+  const view = render(<Container group={group} />);
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
   await view.getAllByText(group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE);

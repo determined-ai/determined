@@ -4,13 +4,11 @@ import React, { useCallback, useEffect } from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 vi.useFakeTimers();
 
@@ -82,13 +80,7 @@ const Container: React.FC = () => {
 };
 
 const setup = async () => {
-  const view = render(
-    <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <Container />
-      </UIProvider>
-    </ThemeProvider>,
-  );
+  const view = render(<Container />);
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
 

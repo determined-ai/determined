@@ -5,12 +5,11 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
 
@@ -68,11 +67,9 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <DndProvider backend={HTML5Backend}>
-          <Container />
-        </DndProvider>
-      </UIProvider>
+      <DndProvider backend={HTML5Backend}>
+        <Container />
+      </DndProvider>
     </ThemeProvider>,
   );
 

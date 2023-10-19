@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { Metric } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import MetricBadgeTag from './MetricBadgeTag';
 
@@ -12,9 +11,7 @@ const setup = (metric: Metric) => {
   const handleOnChange = vi.fn();
   const view = render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <MetricBadgeTag metric={metric} />
-      </UIProvider>
+      <MetricBadgeTag metric={metric} />
     </ThemeProvider>,
   );
   return { handleOnChange, view };

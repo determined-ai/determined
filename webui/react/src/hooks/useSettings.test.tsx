@@ -4,11 +4,10 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
@@ -126,9 +125,7 @@ const setup = (
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => {
     return (
       <ThemeProvider>
-        <UIProvider darkMode={isDarkMode} theme={theme}>
-          <Container>{children}</Container>
-        </UIProvider>
+        <Container>{children}</Container>
       </ThemeProvider>
     );
   };

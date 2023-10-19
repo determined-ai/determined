@@ -4,10 +4,9 @@ import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import authStore from 'stores/auth';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import InteractiveTask from './InteractiveTask';
 
@@ -38,13 +37,11 @@ const InteractiveTaskContainer: React.FC = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <UIProvider darkMode={isDarkMode} theme={theme}>
-          <HelmetProvider>
-            <ConfirmationProvider>
-              <InteractiveTaskPageContainer />
-            </ConfirmationProvider>
-          </HelmetProvider>
-        </UIProvider>
+        <HelmetProvider>
+          <ConfirmationProvider>
+            <InteractiveTaskPageContainer />
+          </ConfirmationProvider>
+        </HelmetProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

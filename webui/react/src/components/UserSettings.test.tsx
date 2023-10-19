@@ -3,14 +3,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect } from 'react';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import { ConfirmationProvider } from './kit/useConfirm';
 import UserSettings from './UserSettings';
@@ -78,11 +77,9 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <ConfirmationProvider>
-          <Container />
-        </ConfirmationProvider>
-      </UIProvider>
+      <ConfirmationProvider>
+        <Container />
+      </ConfirmationProvider>
     </ThemeProvider>,
   );
 

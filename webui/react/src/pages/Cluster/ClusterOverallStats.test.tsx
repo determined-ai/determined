@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
+import { ThemeProvider } from 'components/kit/Theme';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
@@ -15,9 +14,7 @@ vi.mock('services/api', () => ({
 const setup = () => {
   const view = render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <ClusterOverallStats />
-      </UIProvider>
+      <ClusterOverallStats />
     </ThemeProvider>,
   );
   return { view };

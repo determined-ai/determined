@@ -1,9 +1,8 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import { generateAlphaNumeric } from 'utils/string';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import BadgeTag, { Props } from './BadgeTag';
 
@@ -16,11 +15,9 @@ vi.mock('components/kit/Tooltip');
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <BadgeTag tooltip={tooltip} {...props}>
-          {children}
-        </BadgeTag>
-      </UIProvider>
+      <BadgeTag tooltip={tooltip} {...props}>
+        {children}
+      </BadgeTag>
     </ThemeProvider>,
   );
   return { view };

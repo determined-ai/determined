@@ -4,10 +4,9 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
+import { ThemeProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import { ConfirmationProvider } from './kit/useConfirm';
 
@@ -42,11 +41,9 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <ThemeProvider>
-        <UIProvider darkMode={isDarkMode} theme={theme}>
-          <ConfirmationProvider>
-            <ModalTrigger />
-          </ConfirmationProvider>
-        </UIProvider>
+        <ConfirmationProvider>
+          <ModalTrigger />
+        </ConfirmationProvider>
       </ThemeProvider>
     </BrowserRouter>,
   );

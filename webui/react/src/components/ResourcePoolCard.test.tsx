@@ -1,10 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React, { Suspense } from 'react';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { ResourcePool } from 'types';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
 
 import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
 
@@ -17,13 +15,9 @@ vi.mock('services/api', () => ({
 
 const setup = (pool: ResourcePool) => {
   const view = render(
-    <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <Suspense>
-          <RenderAllocationBarResourcePool resourcePool={pool} />
-        </Suspense>
-      </UIProvider>
-    </ThemeProvider>,
+    <Suspense>
+      <RenderAllocationBarResourcePool resourcePool={pool} />
+    </Suspense>,
   );
   return { view };
 };

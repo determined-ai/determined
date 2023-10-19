@@ -3,19 +3,16 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { Mode, ThemeProvider, UIProvider } from 'components/kit/Theme';
-import { isDarkMode, theme } from 'utils/tests/getTheme';
+import { Mode, ThemeProvider } from 'components/kit/Theme';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 
 const ThemeToggleContainer: React.FC = () => {
   return (
     <ThemeProvider>
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <BrowserRouter>
-          <ThemeToggle />
-        </BrowserRouter>
-      </UIProvider>
+      <BrowserRouter>
+        <ThemeToggle />
+      </BrowserRouter>
     </ThemeProvider>
   );
 };
