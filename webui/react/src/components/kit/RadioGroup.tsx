@@ -2,13 +2,65 @@ import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
 import Icon, { IconName, IconSize } from 'determined-ui/Icon';
 import Tooltip from 'determined-ui/Tooltip';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  RefObject,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { throttle } from 'throttle-debounce';
 
-import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import useResize from 'hooks/useResize';
-
 import css from './RadioGroup.module.scss';
+
+interface ResizeInfo {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
+const defaultResizeInfo = {
+  height: 0,
+  width: 0,
+  x: 0,
+  y: 0,
+};
+
+export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
+
+const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
+  const [resizeInfo, setResizeInfo] = useState<ResizeInfo>(defaultResizeInfo);
+
+  useLayoutEffect(() => {
+    let element = document.body;
+    if (ref) {
+      if (ref.current) element = ref.current;
+      else return;
+    }
+
+    const handleResize: ResizeObserverCallback = (entries: ResizeObserverEntry[]) => {
+      // Check to make sure the ref container is being observed for resize.
+      const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
+      if (!element || elements.indexOf(element) === -1) return;
+
+      const rect = element.getBoundingClientRect();
+      setResizeInfo(rect);
+    };
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(element);
+
+    // Set initial resize info
+    const rect = element.getBoundingClientRect();
+    setResizeInfo(rect);
+
+    return (): void => resizeObserver.unobserve(element);
+  }, [ref]);
+
+  return resizeInfo;
+};
 
 interface Props {
   defaultValue?: string;
@@ -114,32 +166,41 @@ const RadioGroup: React.FC<Props> = ({
       ref={baseRef}
       value={value}
       onChange={handleChange}>
-      {options.map((option) => (
-        <ConditionalWrapper
-          condition={!showLabels || iconOnly}
-          key={option.id}
-          wrapper={(children) => (
-            <Tooltip content={option.label} placement="top">
-              {children}
-            </Tooltip>
-          )}>
-          {radioType === 'radio' ? (
-            <Radio className={css.option} value={option.id}>
-              {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
-              {option.label && showLabels && !iconOnly && (
-                <span className={css.label}>{option.label}</span>
-              )}
-            </Radio>
-          ) : (
-            <Radio.Button className={css.option} value={option.id}>
-              {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
-              {option.label && showLabels && !iconOnly && (
-                <span className={css.label}>{option.label}</span>
-              )}
-            </Radio.Button>
-          )}
-        </ConditionalWrapper>
-      ))}
+      {options.map((option) =>
+        !showLabels || iconOnly ? (
+          <Tooltip content={option.label} key={option.id} placement="top">
+            {radioType === 'radio' ? (
+              <Radio className={css.option} value={option.id}>
+                {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
+                {option.label && showLabels && !iconOnly && (
+                  <span className={css.label}>{option.label}</span>
+                )}
+              </Radio>
+            ) : (
+              <Radio.Button className={css.option} value={option.id}>
+                {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
+                {option.label && showLabels && !iconOnly && (
+                  <span className={css.label}>{option.label}</span>
+                )}
+              </Radio.Button>
+            )}
+          </Tooltip>
+        ) : radioType === 'radio' ? (
+          <Radio className={css.option} key={option.id} value={option.id}>
+            {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
+            {option.label && showLabels && !iconOnly && (
+              <span className={css.label}>{option.label}</span>
+            )}
+          </Radio>
+        ) : (
+          <Radio.Button className={css.option} key={option.id} value={option.id}>
+            {option.icon && <Icon decorative name={option.icon} size={option.iconSize} />}
+            {option.label && showLabels && !iconOnly && (
+              <span className={css.label}>{option.label}</span>
+            )}
+          </Radio.Button>
+        ),
+      )}
     </Radio.Group>
   );
 };
