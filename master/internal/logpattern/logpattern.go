@@ -53,21 +53,26 @@ func Monitor(ctx context.Context,
 		}
 
 		for _, lpp := range policies {
-			// TODO we have this problem where a regex will always match itself.
-			// Should we match the regex against itself and regex it in expconf?
-			// This does this since the first line of logs is printing expconf
-			// which has the regex pattern. Maybe we can censor or omit the pattern?
-			// I'm not sure. Maybe this isn't an issue since
-			// regexes matching themself can be avoided by users.
-			regex := fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
+			// The first line of trial logs is printing expconf which has the regex pattern.
+			// We skip monitoring this line.
+			regex := "(.*)(\\\"log_pattern_policies\\\":)(.*)"
 			compiledRegex, err := getCompiledRegex(regex)
+			if err != nil {
+				return err
+			}
+			if compiledRegex.MatchString(l.Log) {
+				continue
+			}
+
+			regex = fmt.Sprintf("(.*)%s(.*)", lpp.Pattern())
+			compiledRegex, err = getCompiledRegex(regex)
 			if err != nil {
 				return err
 			}
 
 			if compiledRegex.MatchString(l.Log) {
 				switch policy := lpp.Policy().GetUnionMember().(type) {
-				case expconf.DontRetryPolicyV0:
+				case expconf.DontRetryPolicy:
 					if err := addDontRetry(
 						ctx, model.TaskID(l.TaskID), *l.AgentID, lpp.Pattern(), l.Log,
 					); err != nil {

@@ -672,25 +672,25 @@ func (_m *ResourceManager) ValidateResourcePool(name string) error {
 	return r0
 }
 
-// ValidateResourcePoolAvailability provides a mock function with given fields: name, slots
-func (_m *ResourceManager) ValidateResourcePoolAvailability(name string, slots int) ([]command.LaunchWarning, error) {
-	ret := _m.Called(name, slots)
+// ValidateResourcePoolAvailability provides a mock function with given fields: v
+func (_m *ResourceManager) ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityParam) ([]command.LaunchWarning, error) {
+	ret := _m.Called(v)
 
 	var r0 []command.LaunchWarning
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, int) ([]command.LaunchWarning, error)); ok {
-		return rf(name, slots)
+	if rf, ok := ret.Get(0).(func(*sproto.ValidateResourcePoolAvailabilityParam) ([]command.LaunchWarning, error)); ok {
+		return rf(v)
 	}
-	if rf, ok := ret.Get(0).(func(string, int) []command.LaunchWarning); ok {
-		r0 = rf(name, slots)
+	if rf, ok := ret.Get(0).(func(*sproto.ValidateResourcePoolAvailabilityParam) []command.LaunchWarning); ok {
+		r0 = rf(v)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]command.LaunchWarning)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, int) error); ok {
-		r1 = rf(name, slots)
+	if rf, ok := ret.Get(1).(func(*sproto.ValidateResourcePoolAvailabilityParam) error); ok {
+		r1 = rf(v)
 	} else {
 		r1 = ret.Error(1)
 	}

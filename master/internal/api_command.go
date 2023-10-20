@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -112,8 +113,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 
 	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
-		poolName,
-		resources.Slots,
+		sproto.NewValidateResourcePoolAvailabilityParam(
+			poolName,
+			resources.Slots,
+		),
 	)
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
