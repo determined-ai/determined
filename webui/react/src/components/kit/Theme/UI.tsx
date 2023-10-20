@@ -176,7 +176,9 @@ export const UIProvider: React.FC<{
    * - The Paragraph component within the Drawer.
    * The styling is dependent on the color-scheme set specifically on the
    * documentElement.
+   * - The "ThemeToggle" mode text on the DesignKit page.
    */
+
   document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
 
   const lightThemeConfig = {

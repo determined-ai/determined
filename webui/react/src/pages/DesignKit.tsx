@@ -36,7 +36,7 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight, UIProvider } from 'components/kit/Theme';
+import useUI, { UIProvider } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -53,6 +53,7 @@ import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { useTheme } from 'hooks/useTheme';
 import { CheckpointsDict } from 'pages/TrialDetails/TrialDetailsMetrics';
 import { serverAddress } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
@@ -3104,8 +3105,9 @@ const Components = {
 };
 export const DesignKitContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { ui } = useUI();
+  const { isDarkMode, theme } = useTheme(ui.mode, ui.theme);
   return (
-    <UIProvider darkMode={ui.mode === DarkLight.Dark} theme={ui.theme}>
+    <UIProvider darkMode={isDarkMode} theme={theme}>
       {children}
     </UIProvider>
   );
