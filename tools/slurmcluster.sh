@@ -44,6 +44,7 @@ SLOTTYPE=
 DEFAULTCOMPUTERESOURCEPOOL=
 # If empty use resource_manager: slurm|pbs, otherwise agent
 DETERMINED_AGENT=
+CHECKPOINTTYPE=shared_fs
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -111,6 +112,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_DEVCLUSTER_STAGE=1
             shift
             ;;
+        --S3)
+            CHECKPOINTTYPE=s3
+            shift
+            ;;
         -h | --help)
             echo "Usage: $0 [-Aanxtpedcuis] [-c {image}] [-u {username}] [-r {rp}] {cluster}"
             echo "  -h                 This help message & documentation."
@@ -131,6 +136,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --rocm             Force slot_type to rocm instead of the default (cuda)."
             echo "  -s                 Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
             echo "                     For example, e2e_slurm_restart tests manage their own instance of devcluster."
+            echo "  --S3               Use S3 checkpoint storage on http://10.30.91.81:30600 (default is shared_fs)"
             echo
             echo "Documentation:"
             head -n $HELPEND $0 | tail -n $((HELPEND - 1))
@@ -138,7 +144,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -* | --*)
             echo >&2 "$0: Illegal option $1"
-            echo >&2 "Usage: $0 [-anxtpde] [-c {image}] [-u {username}]  {cluster}"
+            echo >&2 "Usage: $0 [-anxtpde] [--rocm] [--cpu] [--S3] [-c {image}] [-u {username}]  {cluster}"
             exit 1
             ;;
         *) # Non Option args
@@ -615,6 +621,7 @@ export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
 export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
 export OPT_RESOURCEPOOLS=$(lookup "OPT_RESOURCEPOOLS_$CLUSTER")
 export OPT_WLMTYPE=$(lookup "OPT_WLMTYPE_$CLUSTER")
+export OPT_CHECKPOINTCONFIG=$(lookup "OPT_CHECKPOINTCONFIG_$CLUSTER")
 
 # If WLM type has not been specified, default to  Slurm
 if [[ -z $OPT_WLMTYPE ]]; then
@@ -696,6 +703,25 @@ if [[ -n $ENROOT ]]; then
     if [[ -z $OPT_TASKCONTAINERDEFAULTS ]]; then
         OPT_TASKCONTAINERDEFAULTS=$enroot_OPT_TASKCONTAINERDEFAULTS
     fi
+fi
+
+if [[ $CHECKPOINTTYPE == "shared_fs" ]]; then
+    export OPT_CHECKPOINTCONFIG=$(
+        cat <<EOF
+          type: shared_fs
+          host_path: $OPT_CHECKPOINTPATH
+EOF
+    )
+elif [[ $CHECKPOINTTYPE == "s3" ]]; then
+    export OPT_CHECKPOINTCONFIG=$(
+        cat <<EOF
+          type: s3
+          endpoint_url: http://10.30.91.81:30600/
+          access_key: minioadmin
+          secret_key: minioadmin
+          bucket: determined-checkpoints
+EOF
+    )
 fi
 
 if [[ -r ~/.${CLUSTER}.token ]]; then

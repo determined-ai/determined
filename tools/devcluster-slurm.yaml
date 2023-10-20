@@ -48,8 +48,7 @@ stages:
           user: postgres
           name: determined
         checkpoint_storage:
-          type: shared_fs
-          host_path: $OPT_CHECKPOINTPATH
+$OPT_CHECKPOINTCONFIG          
         log:
           level: $OPT_DEBUGLEVEL
         cache:
