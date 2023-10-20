@@ -1,6 +1,7 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'determined-ui/Button';
+import SyncProvider from 'determined-ui/SyncProvider';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
