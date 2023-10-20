@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 
 from .azure import AzureFetcher
 from .base import Fetcher
 from .gcs import GCSFetcher
 from .s3 import S3Fetcher
 from .shared import SharedFSFetcher
+from .directory import DirectoryFetcher
 
 __all__ = [
     "S3Fetcher",
@@ -18,6 +19,7 @@ _FETCHERS = {
     "gcs": GCSFetcher,
     "azure": AzureFetcher,
     "shared_fs": SharedFSFetcher,
+    "directory": DirectoryFetcher,
 }  # type: Dict[str, Type[Fetcher]]
 
 

@@ -22,10 +22,11 @@ const (
 //
 //go:generate ../gen.sh
 type CheckpointStorageConfigV0 struct {
-	RawSharedFSConfig *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
-	RawS3Config       *S3ConfigV0       `union:"type,s3" json:"-"`
-	RawGCSConfig      *GCSConfigV0      `union:"type,gcs" json:"-"`
-	RawAzureConfig    *AzureConfigV0    `union:"type,azure" json:"-"`
+	RawSharedFSConfig  *SharedFSConfigV0  `union:"type,shared_fs" json:"-"`
+	RawS3Config        *S3ConfigV0        `union:"type,s3" json:"-"`
+	RawGCSConfig       *GCSConfigV0       `union:"type,gcs" json:"-"`
+	RawAzureConfig     *AzureConfigV0     `union:"type,azure" json:"-"`
+	RawDirectoryConfig *DirectoryConfigV0 `union:"type,directory" json:"-"`
 
 	RawSaveExperimentBest *int `json:"save_experiment_best"`
 	RawSaveTrialBest      *int `json:"save_trial_best"`
@@ -70,10 +71,11 @@ func (c CheckpointStorageConfigV0) Printable() CheckpointStorageConfigV0 {
 //
 //go:generate ../gen.sh
 type TensorboardStorageConfigV0 struct {
-	RawSharedFSConfigV0 *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
-	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
-	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
-	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json:"-"`
+	RawSharedFSConfigV0 *SharedFSConfigV0  `union:"type,shared_fs" json:"-"`
+	RawS3Config         *S3ConfigV0        `union:"type,s3" json:"-"`
+	RawGCSConfig        *GCSConfigV0       `union:"type,gcs" json:"-"`
+	RawAzureConfig      *AzureConfigV0     `union:"type,azure" json:"-"`
+	RawDirectoryConfig  *DirectoryConfigV0 `union:"type,directory" json:"-"`
 }
 
 // Merge implements schemas.Mergeable.
@@ -211,6 +213,22 @@ func (c AzureConfigV0) Validate() []error {
 	if c.RawConnectionString != nil && c.RawCredential != nil {
 		errs = append(errs, errors.New(
 			"'credential' and 'connection_string' must not both be set"))
+	}
+	return errs
+}
+
+// DirectoryConfigV0 configures storing checkpoints in a container directory.
+//
+//go:generate ../gen.sh
+type DirectoryConfigV0 struct {
+	RawContainerPath *string `json:"container_path"`
+}
+
+// Validate implements the check.Validatable interface.
+func (c DirectoryConfigV0) Validate() []error {
+	var errs []error
+	if c.RawContainerPath == nil {
+		errs = append(errs, errors.New("'container_path' must be specified"))
 	}
 	return errs
 }

@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/directory.json",
+    "title": "DirectoryConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [
+        "container_path"
+    ],
+    "properties": {
+        "type": {
+            "const": "directory"
+        },
+        "container_path": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        }
+    }
+}

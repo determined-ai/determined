@@ -619,6 +619,36 @@ Optional. `Propagation behavior
 <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
 bind-mount. Defaults to ``rprivate``.
 
+Local Directory
+===============
+
+If ``type: directory`` is specified, checkpoints will be written to a local directory. For tasks
+running on Determined platform, it's a path within the container. For detached mode, it's simply a
+local path.
+
+The assumption is that a persistent storage will be mounted at the path parametrized by
+``container_path`` option using ``bind_mounts``, ``pod_spec``, or other mechanisms. Otherwise, this
+path will usually end up being ephemeral storage within the container, and the data will be lost
+when the container exits.
+
+.. warning::
+
+   TensorBoards currently do not inherit ``bind_mounts`` or ``pod_specs`` from their parent
+   experiments. Therefore, if an experiment is using ``type: directory`` storage, and mounts the
+   storage separately, a launched TensorBoard will need the same mount configuration provided
+   explicitly using ``det tensorboard start <experiment_id> --config-file <CONFIG FILE>`` or
+   similar.
+
+.. warning::
+
+   When downloading checkpoints (e.g., using ``det checkpoint download``), we assume the same
+   directory is present locally at the same ``container_path``.
+
+``container_path``
+------------------
+
+Required. The file system path to use.
+
 .. _experiment-configuration_hyperparameters:
 
 *****************

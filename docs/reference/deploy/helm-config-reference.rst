@@ -80,8 +80,8 @@
 -  ``checkpointStorage``: Specifies where model checkpoints will be stored. This can be overridden
    on a per-experiment basis in the :ref:`experiment-config-reference`. A checkpoint contains the
    architecture and weights of the model being trained. Determined currently supports several kinds
-   of checkpoint storage, ``gcs``, ``s3``, ``azure`` and ``shared_fs``, identified by the ``type``
-   subfield.
+   of checkpoint storage, ``gcs``, ``s3``, ``azure``, ``shared_fs``, and ``directory``, identified
+   by the ``type`` subfield.
 
    -  ``type: gcs``: Checkpoints are stored on Google Cloud Storage (GCS). Authentication is done
       using GCP's "`Application Default Credentials
@@ -127,6 +127,13 @@
 
       -  ``hostPath``: The file system path on each node to use. This directory will be mounted to
          ``/determined_shared_fs`` inside the trial pod.
+
+   -  ``type: directory``: Checkpoints are written to a local directory in the task container. Users
+      are responsible for mounting a persistent storage at this path, e.g., a shared PVC using
+      ``pod_spec`` configuration.
+
+      -  ``containerPath``: The file system path inside the task pods to use. The checkpoints and
+         tensorboard data will be stored under this path.
 
    -  When an experiment finishes, the system will optionally delete some checkpoints to reclaim
       space. The ``saveExperimentBest``, ``saveTrialBest`` and ``saveTrialLatest`` parameters

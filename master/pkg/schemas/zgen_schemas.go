@@ -273,11 +273,15 @@ var (
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 's3', 'gcs' or 'azure'",
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'directory', 's3', 'gcs', or 'azure'",
             "items": [
                 {
                     "unionKey": "const:type=shared_fs",
                     "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
+                },
+                {
+                    "unionKey": "const:type=directory",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/directory.json"
                 },
                 {
                     "unionKey": "const:type=s3",
@@ -390,6 +394,56 @@ var (
                     "pattern": "^/[^:]*:/[^:]*(:[rwm]*)?"
                 }
             ]
+        }
+    }
+}
+`)
+	textDirectoryConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/directory.json",
+    "title": "DirectoryConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [
+        "container_path"
+    ],
+    "properties": {
+        "type": {
+            "const": "directory"
+        },
+        "container_path": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
         }
     }
 }
@@ -3104,6 +3158,8 @@ var (
 
 	schemaDevicesConfigV0 interface{}
 
+	schemaDirectoryConfigV0 interface{}
+
 	schemaEnvironmentImageMapV0 interface{}
 
 	schemaEnvironmentImageV0 interface{}
@@ -3367,6 +3423,26 @@ func ParsedDevicesConfigV0() interface{} {
 		panic("invalid embedded json for DevicesConfigV0")
 	}
 	return schemaDevicesConfigV0
+}
+
+func ParsedDirectoryConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaDirectoryConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaDirectoryConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaDirectoryConfigV0 != nil {
+		return schemaDirectoryConfigV0
+	}
+	err := json.Unmarshal(textDirectoryConfigV0, &schemaDirectoryConfigV0)
+	if err != nil {
+		panic("invalid embedded json for DirectoryConfigV0")
+	}
+	return schemaDirectoryConfigV0
 }
 
 func ParsedEnvironmentImageMapV0() interface{} {
@@ -4380,6 +4456,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textDeviceV0
 	url = "http://determined.ai/schemas/expconf/v0/devices.json"
 	cachedSchemaBytesMap[url] = textDevicesConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/directory.json"
+	cachedSchemaBytesMap[url] = textDirectoryConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image-map.json"
 	cachedSchemaBytesMap[url] = textEnvironmentImageMapV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image.json"

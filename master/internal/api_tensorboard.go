@@ -291,6 +291,9 @@ func (a *apiServer) LaunchTensorboard(
 			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()
 
+		case expconf.DirectoryConfig:
+			logBasePath = c.ContainerPath()
+
 		case expconf.S3Config:
 			if c.AccessKey() != nil {
 				uniqEnvVars["AWS_ACCESS_KEY_ID"] = *c.AccessKey()

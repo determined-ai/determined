@@ -1,5 +1,5 @@
+import pathlib
 import subprocess
-from pathlib import Path
 from typing import Dict, Optional
 
 import pytest
@@ -60,7 +60,7 @@ def s3_config(num_trials: int, secrets: Dict[str, str], prefix: Optional[str] = 
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
-def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
+def test_start_tensorboard_for_shared_fs_experiment(tmp_path: pathlib.Path) -> None:
     """
     Start a random experiment configured with the shared_fs backend, start a
     TensorBoard instance pointed to the experiment, and kill the TensorBoard
@@ -84,7 +84,7 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
 @pytest.mark.tensorflow2
 @pytest.mark.parametrize("prefix", [None, "my/test/prefix"])
 def test_start_tensorboard_for_s3_experiment(
-    tmp_path: Path, secrets: Dict[str, str], prefix: Optional[str]
+    tmp_path: pathlib.Path, secrets: Dict[str, str], prefix: Optional[str]
 ) -> None:
     """
     Start a random experiment configured with the s3 backend, start a
@@ -107,7 +107,9 @@ def test_start_tensorboard_for_s3_experiment(
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
 @pytest.mark.tensorflow2
-def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
+def test_start_tensorboard_for_multi_experiment(
+    tmp_path: pathlib.Path, secrets: Dict[str, str]
+) -> None:
     """
     Start 3 random experiments configured with the s3 and shared_fs backends,
     start a TensorBoard instance pointed to the experiments and some select
@@ -154,7 +156,7 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
 
 
 @pytest.mark.e2e_cpu
-def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
+def test_start_tensorboard_with_custom_image() -> None:
     """
     Start a random experiment, start a TensorBoard instance pointed
     to the experiment with custom image, verify the image has been set.
@@ -189,7 +191,7 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_tensorboard_inherit_image_pull_secrets(tmp_path: Path) -> None:
+def test_tensorboard_inherit_image_pull_secrets() -> None:
     """
     Start a random experiment with image_pull_secrets, start a TensorBoard
     instance pointed to the experiment, verify the secrets are inherited.
@@ -219,3 +221,39 @@ def test_tensorboard_inherit_image_pull_secrets(tmp_path: Path) -> None:
     ips = config["environment"]["pod_spec"]["spec"]["imagePullSecrets"]
 
     assert ips == exp_secrets, (ips, exp_secrets)
+
+
+@pytest.mark.e2e_cpu
+def test_tensorboard_directory_storage(tmp_path: pathlib.Path) -> None:
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
+    config_obj["checkpoint_storage"] = {
+        "type": "directory",
+        "container_path": "/tmp/somepath",
+    }
+    tb_config = {}
+    tb_config["bind_mounts"] = config_obj["bind_mounts"] = [
+        {
+            "host_path": "/tmp/",
+            "container_path": "/tmp/somepath",
+        }
+    ]
+
+    tb_config_path = tmp_path / "tb.yaml"
+    with tb_config_path.open("w") as fout:
+        util.yaml_safe_dump(tb_config, fout)
+
+    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
+
+    command = [
+        "tensorboard",
+        "start",
+        str(experiment_id),
+        "--no-browser",
+        "--config-file",
+        str(tb_config_path),
+    ]
+
+    with cmd.interactive_command(*command) as tensorboard:
+        assert tensorboard.task_id is not None
+        err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
+        assert err is None, err

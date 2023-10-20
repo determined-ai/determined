@@ -67,6 +67,8 @@ func storageConfig2Str(config any) string {
 		return "s3"
 	case expconf.SharedFSConfig:
 		return "shared_fs"
+	case expconf.DirectoryConfig:
+		return "directory"
 	default:
 		return "unknown"
 	}
