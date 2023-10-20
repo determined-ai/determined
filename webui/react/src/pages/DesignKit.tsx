@@ -36,7 +36,12 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI, { UIProvider } from 'components/kit/Theme';
+import useUI, {
+  Theme,
+  themeDarkDetermined,
+  themeLightDetermined,
+  UIProvider,
+} from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -517,33 +522,149 @@ const SelectSection: React.FC = () => {
   );
 };
 
-const ThemeSection: React.FC = () => (
-  <ComponentSection id="Theme" title="Theme">
-    <AntDCard>
-      <p>
-        <code>{'<UIProvider>'}</code> is part of the UI kit, it is responsible for handling all
-        UI/theme related state, such as dark/light theme setup. It takes an optional{' '}
-        <code>{'branding'}</code> prop for adjusting branding specific theme/colors.
-      </p>
-      <p>
-        Besides the <code>{'<UIProvider>'}</code>, there are a few other helpers that can be used
-        from withing the UI kit.
+const ThemeSection: React.FC = () => {
+  const { ui } = useUI();
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
+  const baseTheme: Theme = isDarkMode ? themeDarkDetermined : themeLightDetermined;
+
+  const colorVariations = [
+    { color: baseTheme.statusActive, name: Status.Active },
+    { color: baseTheme.statusCritical, name: Status.Critical },
+    { color: baseTheme.statusPendingWeak, name: Status.PendingWeak },
+    { color: baseTheme.statusSuccess, name: Status.Success },
+    { color: baseTheme.statusWarning, name: Status.Warning },
+  ];
+
+  const themes = colorVariations.map((variation) => ({
+    theme: {
+      ...themeLightDetermined,
+      backgroundOnStrong: variation.color,
+      brand: variation.color,
+      stageBorder: variation.color,
+      statusCritical: variation.color,
+      surface: variation.color,
+    },
+    variation,
+  }));
+  const themeVariations = themes.map((themeVariation) => {
+    return (
+      <UIProvider
+        darkMode={isDarkMode}
+        key={themeVariation.variation.name}
+        theme={themeVariation.theme}>
+        <hr />
+        <div style={{ margin: '15px 0 45px 0' }}>
+          {
+            <div
+              style={{
+                marginBottom: '20px',
+                width: '250px',
+              }}>
+              <strong>
+                <p>Variation</p>
+              </strong>
+              <br />
+              <strong>
+                <p>Color</p>
+              </strong>{' '}
+              <br />
+              {themeVariation.variation.name.replace(/(var\(|\))/g, '')}
+              <div
+                style={{
+                  backgroundColor: themeVariation.variation.color,
+                  border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
+                  borderRadius: 'var(--theme-border-radius)',
+                  height: '40px',
+                  width: '100%',
+                }}
+              />
+            </div>
+          }
+          <br />
+          <strong>
+            <p>Spinner</p>
+          </strong>
+          <br />
+          <Spinner />
+          <br />
+          <strong>
+            <p>Card</p>
+          </strong>
+          <br />
+          <Card />
+          <br />
+          <strong>
+            <p>Primary Danger Button</p>
+          </strong>
+          <br />
+          <Button danger type="primary">
+            Danger
+          </Button>
+        </div>
+      </UIProvider>
+    );
+  });
+  return (
+    <ComponentSection id="Theme" title="Theme">
+      <AntDCard>
+        <p>
+          A <code>{'<ThemeProvider>'}</code> is included in the UI kit, it is responsible for
+          providing the necessary context for the custom <code>{'hook'}</code>
+        </p>
+        <p>
+          <code>{'<UIProvider>'}</code> is part of the UI kit, it is responsible for handling all
+          UI/theme related state, such as dark/light theme setup. It takes an optional{' '}
+          <code>{'branding'}</code> prop for adjusting branding specific theme/colors.
+        </p>
+        <p>
+          Besides the <code>{'<UIProvider>'}</code>, there are a few other helpers that can be used
+          from withing the UI kit.
+          <ul>
+            <li>
+              <code>{'useUI'}</code>, a custom hook for setting th new state for theme, mode and
+              other UI-related functionalities.
+            </li>
+            <li>
+              helper types, such as <code>{'DarkLight'}</code>.
+            </li>
+            <li>
+              helper functions, such as <code>{'getCssVar'}</code>.
+            </li>
+          </ul>
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>ThemeProvider</strong>
+        <code>{`
+      const AppWrapper: React.FC = () => {
+        return (
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
+        )
+      }
+
+      // The wrapped component can now call useUI() 
+
+      const App: React.FC = () => {
+        const { actions , ui } = useUI();
+      }
+      `}</code>
+        <strong>UIProvider</strong>
+        <strong>Variations</strong>
+        Each color scheme displays a custom theme with the following theme colors updated:
         <ul>
-          <li>
-            <code>{'useUI'}</code>, a custom hook for setting th new state for theme, mode and other
-            UI-related functionalities.
-          </li>
-          <li>
-            helper types, such as <code>{'DarkLight'}</code>.
-          </li>
-          <li>
-            helper functions, such as <code>{'getCssVar'}</code>.
-          </li>
+          <li>brand</li>
+          <li>surface</li>
+          <li>backgroundOnStrong</li>
+          <li>statusCritical</li>
+          <li>stageBorder</li>
         </ul>
-      </p>
-    </AntDCard>
-  </ComponentSection>
-);
+        {themeVariations}
+      </AntDCard>
+    </ComponentSection>
+  );
+};
 
 const ChartsSection: React.FC = () => {
   const [line1Data, setLine1Data] = useState<[number, number][]>([

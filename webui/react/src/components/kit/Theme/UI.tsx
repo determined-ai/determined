@@ -148,8 +148,8 @@ export const ThemeProvider: React.FC<{
 
 export const UIProvider: React.FC<{
   children?: React.ReactNode;
+  darkMode?: boolean;
   theme: Theme;
-  darkMode: boolean;
 }> = ({ children, theme, darkMode = false }) => {
   const ref = useRef<HTMLDivElement>(null);
 
