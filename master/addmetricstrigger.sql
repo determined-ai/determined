@@ -3,7 +3,7 @@ ALTER TABLE metrics ADD COLUMN IF NOT EXISTS seq bigint;
 CREATE SEQUENCE IF NOT EXISTS stream_metric_seq START 1;
 
 -- trigger function to update the sequence number on metric row modfication
--- thsi should fire before so that it can modify new directly
+-- this should fire before so that it can modify new directly
 CREATE OR REPLACE FUNCTION stream_metric_seq_modify() RETURNS TRIGGER AS $$ 
 BEGIN
     NEW.seq = nextval('stream_metric_seq');
