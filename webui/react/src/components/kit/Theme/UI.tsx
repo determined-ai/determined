@@ -163,8 +163,15 @@ export const UIProvider: React.FC<{
   Object.keys(theme).forEach((key) => {
     const value = (theme as Record<RecordKey, string>)[key];
     ref.current?.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
-    document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
   });
+
+  /**
+   * A few specific basic HTML elements within the application are styled based on the color-scheme
+   * css property. examples include the "Section" titles in the Drawer component which are
+   * <h5> elements. The styling is dependent on the color-scheme set specifically on the
+   * documentElement
+   */
+  document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
 
   const lightThemeConfig = {
     components: {
