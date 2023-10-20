@@ -166,10 +166,16 @@ export const UIProvider: React.FC<{
   });
 
   /**
-   * A few specific basic HTML elements within the application are styled based on the color-scheme
-   * css property. examples include the "Section" titles in the Drawer component which are
-   * <h5> elements. The styling is dependent on the color-scheme set specifically on the
-   * documentElement
+   * A few specific HTML elements and free form text
+   * within the application are styled based on the color-scheme
+   * css property. Examples include:
+   *  - the "Section" titles in the Drawer component which are
+   * <h5> elements.
+   * - The "Settings" section title within the Drawer which is
+   *   free form text.
+   * - The Paragraph component within the Drawer.
+   * The styling is dependent on the color-scheme set specifically on the
+   * documentElement.
    */
   document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
 
