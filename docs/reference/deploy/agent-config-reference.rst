@@ -44,6 +44,8 @@ Master hostname that containers started by this agent will connect to. Defaults 
 Master port that containers started by this agent will connect to. Defaults to the value of
 ``master_port``.
 
+.. _agent-resource-pool-reference:
+
 *******************
  ``resource_pool``
 *******************

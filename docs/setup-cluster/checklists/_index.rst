@@ -25,10 +25,13 @@ About Offline Installations
 
 -  If your master and compute nodes are offline, you'll need a local private registry that can
    satisfy necessary images (PostgreSQL + task container images).
+
 -  You can install the Determined CLI package on your client machines and then take them offline
    again.
+
 -  In addition, a local PyPi mirror for packages is highly recommended for installing packages from
-   the internet in your task environments.
+   the internet in your task environments. See also:
+   :ref:`advanced-setup-infrastructure-considerations`.
 
 *******************
  Set Up PostgreSQL
@@ -39,16 +42,20 @@ installation method that best fits your environment and requirements.
 
 .. note::
 
+   Kubernetes
+
    If you are using **Kubernetes**, you can skip this step. :ref:`Installing Determined on
    Kubernetes <determined-on-kubernetes>` uses the Determined Helm Chart which includes deployment
    of a PostgreSQL database.
 
-Cloud Services
+.. note::
 
--  :ref:`AWS <install-aws>`. The Determined CLI manages the process of provisioning an Amazon RDS
-   instance for PostgreSQL.
--  :ref:`GCP <install-gcp>`. The Determined CLI manages the setup of Google Cloud SQL instances for
-   PostgreSQL.
+   Cloud Services
+
+   -  :ref:`AWS <install-aws>`. The Determined CLI manages the process of provisioning an Amazon RDS
+      instance for PostgreSQL.
+   -  :ref:`GCP <install-gcp>`. The Determined CLI manages the setup of Google Cloud SQL instances
+      for PostgreSQL.
 
 .. tabs::
 
@@ -216,10 +223,10 @@ For an on-prem Determined agent installation, the process involves the following
 
 -  Configure :ref:`resource pools <resource-pools>`. These resource pools enable the segregation of
    tasks based on their resource requirements.
--  Configure the :ref:`agents <agent-config-reference>` to establish a connection to the Determined
-   master.
--  Link the agents with their respective resource pools. For reference, visit
-   :ref:`agent-config-reference`.
+
+-  Configure the agents to establish a connection to the Determined master. Then link the agents
+   with their respective resource pools. For reference, visit :ref:`resource_pool
+   <agent-resource-pool-reference>` under :ref:`agent-config-reference`.
 
 Configure the Cluster
 =====================
@@ -283,38 +290,36 @@ recommended.
 User Authentication (SSO)
 =========================
 
-Determined EE offers several options for user authentication:
+Determined offers several options for user authentication:
 
--  **SAML Integration**: Allows users to use single sign-on (SSO) with your organization’s identity
-   provider (IdP).
--  **OIDC Integration**: An alternative for user authentication.
--  **OAuth 2.0**: Yet another option for user authentication.
--  **SCIM Integration**: Useful for user provisioning.
-
-For standard setups, you can find out how to set up SSO by visiting :ref:`SAML Integration <saml>`.
++-------------------+----------------------------------------------------------------------------+
+| Feature           | Description                                                                |
++===================+============================================================================+
+| :ref:`oauth`      | Enable, list, and remove OAuth clients.                                    |
++-------------------+----------------------------------------------------------------------------+
+| :ref:`oidc`       | Integrate OpenID Connect, with and Okta example.                           |
++-------------------+----------------------------------------------------------------------------+
+| :ref:`saml`       | Integrate Security Assertion Markup Language (SAML) authentication to use  |
+|                   | single sign-on (SSO) with your organizationidentity provider (IdP).        |
++-------------------+----------------------------------------------------------------------------+
+| :ref:`scim`       | Integrate System for Cross-domain Identity Management (SCIM) for           |
+|                   | administrators to easily and securely provision users and groups.          |
++-------------------+----------------------------------------------------------------------------+
 
 .. note::
 
-   For Kubernetes deployments, you modify the master-related configurations through the helm chart.
-   Direct access to the `master.yaml` is not typically provided in such environments.
+   For Kubernetes deployments, you modify the master-related configurations through the :ref:`helm
+   <k8s-helm-reference>` chart.
 
 Non-Root Containers
 ===================
 
 You can enhance security and limit potential malicious activity by running containers as non-root
-users.
+users. To find out more, visit :ref:`run-as-user` and :ref:`run-unprivileged-tasks`.
 
-.. note::
+.. important::
 
    Red Hat OpenShift users should not configure non-root containers.
-
--  Create a non-root user in Dockerfile.
--  Ensure that the non-root user has the permissions to access and write to required directories and
-   files.
--  Modify your application's configuration to not require root permissions.
--  If deploying on Kubernetes, set the security context to run containers as a non-root user.
-
-Test your containers to ensure they function correctly as non-root.
 
 Configure Role-Based Access Control (RBAC)
 ==========================================
@@ -326,15 +331,21 @@ configure RBAC, visit :ref:`rbac`.
 
    RBAC is only available on Determined Enterprise Edition.
 
-*****************************
- Extra Configuration Options
-*****************************
+.. _advanced-setup-infrastructure-considerations:
+
+*******************************
+ Infrastructure Considerations
+*******************************
+
+When setting up Determined, you can adjust certain configurations for enhanced security and
+performance. While these are particularly crucial for offline installations, they can also benefit
+online installations by ensuring faster package retrieval and increased security.
 
 Configure Local Docker Image Repositories
 =========================================
 
-Configure local Docker image repositories as described in :ref:`Customizing Your Environment
-<custom-env>`.
+Configuring local Docker image repositories can enhance security and optimize performance. Learn how
+to configure local Docker image repositories in :ref:`Customizing Your Environment <custom-env>`.
 
 Configure Local PyPi Mirrors
 ============================
@@ -347,6 +358,10 @@ It's recommended to consider configuring local PyPi mirrors for:
 
 -  **Performance**: Local mirrors can substantially reduce the time taken to fetch packages,
    eliminating potential lags due to network issues or external server overloads.
+
+********************
+ Additional Options
+********************
 
 Create Workspaces and Projects
 ==============================
@@ -363,7 +378,8 @@ To set up your monitoring tools, visit :ref:`configure-prometheus-grafana`.
 Configure Infiniband
 ====================
 
-If applicable, configure :ref:`InfiniBand <infiniband>`.
+You may choose to configure :ref:`InfiniBand <infiniband>` when connecting multiple data streams in
+a single connection.
 
 ****************
  Set Up Clients
@@ -414,9 +430,7 @@ Test your setup to ensure it is functioning correctly.
       #. Enter the cluster address in the browser address bar to view experiment progress in the
          WebUI.
 
-         The figure shows two experiments. Experiment **11** has **COMPLETED** and experiment **12**
-         is still **ACTIVE**. Your experiment number and status can differ depending on how many
-         times you run the examples.
+         You should be able to see your experiment ID and its status.
 
    .. tab::
 
@@ -467,8 +481,8 @@ Test your setup to ensure it is functioning correctly.
 
       Test that your users can access the cluster.
 
-      #. To view the WebUI dashboard, enter the cluster address in the browser address bar, accept
-         the default username of ``determined``, and click **Sign In**. A password is not required.
+      To view the WebUI dashboard, enter the cluster address in the browser address bar, accept the
+      default username of ``determined``, and click **Sign In**. A password is not required.
 
 ************
  Next Steps
