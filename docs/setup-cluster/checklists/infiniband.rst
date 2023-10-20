@@ -4,8 +4,6 @@
  Configuring InfiniBand
 ########################
 
-You may choose to configure InfiniBand when connecting multiple data streams in a single connection.
-
 To configure InfiniBand, you'll need to edit your ``master.yaml`` file.
 
 ***************

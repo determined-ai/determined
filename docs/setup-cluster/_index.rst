@@ -17,8 +17,8 @@ Install and set up Determined using the cluster deployment guide for your enviro
 
 .. note::
 
-   Administrators should first consult the :ref:`advanced-setup-checklist` when setting up
-   Determined for an organization.
+   Administrators should first consult :ref:`advanced-setup-checklist` when setting up Determined
+   for an organization.
 
 *******
  Local
