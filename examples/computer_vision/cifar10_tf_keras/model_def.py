@@ -44,14 +44,6 @@ def load_numpy_data(
     return (X_train, Y_train), (X_test, Y_test)
 
 
-def to_generator(
-    xs: np.ndarray, ys: np.ndarray
-) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
-    n = xs.shape[0]
-    for i in range(n):
-        yield xs[i], ys[i]
-
-
 class CIFARTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context
@@ -94,9 +86,15 @@ class CIFARTrial(keras.TFKerasTrial):
     def build_training_data_loader(self) -> keras.InputData:
         hparams = self.context.get_hparams()
 
+        def train_generator():
+            xs, ys = self.train_np
+            n = xs.shape[0]
+            for i in range(n):
+                yield xs[i], ys[i]
+
         train_ds = self.context.wrap_dataset(
             tf.data.Dataset.from_generator(
-                lambda: to_generator(*self.train_np),
+                train_generator,
                 output_signature=(
                     tf.TensorSpec(shape=(32, 32, 3), dtype=tf.float32),
                     tf.TensorSpec(shape=(10,), dtype=tf.float32),
@@ -120,9 +118,15 @@ class CIFARTrial(keras.TFKerasTrial):
         return train_ds
 
     def build_validation_data_loader(self) -> keras.InputData:
+        def val_generator():
+            xs, ys = self.train_np
+            n = xs.shape[0]
+            for i in range(n):
+                yield xs[i], ys[i]
+
         test_ds = self.context.wrap_dataset(
             tf.data.Dataset.from_generator(
-                lambda: to_generator(*self.test_np),
+                val_generator,
                 output_signature=(
                     tf.TensorSpec(shape=(32, 32, 3), dtype=tf.float32),
                     tf.TensorSpec(shape=(10,), dtype=tf.float32),
