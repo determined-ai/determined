@@ -1,10 +1,10 @@
 import { Space, Table } from 'antd';
+import dayjs from 'dayjs';
 import Button from 'determined-ui/Button';
-import Dropdown from 'determined-ui/Dropdown';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
-import { makeToast } from 'determined-ui/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -15,18 +15,21 @@ import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
+import { getGroup, getGroups, getUsers } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
-import { DetailedUser } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import { DetailedUser, User } from 'types';
+import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './GroupManagement.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS } from './GroupManagement.settings';
+import RemoveUserFromGroupModalComponent from './RemoveUserFromGroupModal';
 
 interface DropdownProps {
   expanded: boolean;
@@ -41,9 +44,9 @@ const MenuKey = {
   Edit: 'edit',
 } as const;
 
-const DROPDOWN_MENU = [
-  { key: MenuKey.Edit, label: 'Edit' },
-  { key: MenuKey.Delete, label: 'Delete' },
+const DROPDOWN_MENU: MenuItem[] = [
+  { key: MenuKey.Edit, label: 'Edit Group' },
+  { danger: true, key: MenuKey.Delete, label: 'Delete Group' },
 ];
 
 const GroupActionDropdown = ({
@@ -90,6 +93,8 @@ const GroupManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
   const [users, setUsers] = useState<DetailedUser[]>([]);
+  const [groupResult, setGroupResult] = useState<V1GroupSearchResult | undefined>(undefined);
+  const [user, setUser] = useState<V1User | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState<readonly React.Key[]>([]);
@@ -99,6 +104,7 @@ const GroupManagement: React.FC = () => {
   const { settings, updateSettings } = useSettings(settingsConfig);
 
   const { canModifyGroups, canViewGroups } = usePermissions();
+  const RemoveUserFromGroupModal = useModal(RemoveUserFromGroupModalComponent);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     if (!('tableLimit' in settings) || !('tableOffset' in settings)) return;
@@ -172,28 +178,6 @@ const GroupManagement: React.FC = () => {
 
   const onExpandedRowsChange = (keys: readonly React.Key[]) => setExpandedKeys(keys);
 
-  const onRemoveUser = useCallback(
-    async (record: V1GroupSearchResult, userId?: number) => {
-      const {
-        group: { groupId },
-      } = record;
-      if (!groupId || !userId) return;
-      try {
-        await updateGroup({ groupId, removeUsers: [userId] });
-        makeToast({
-          severity: 'Confirm',
-          title: 'User has been removed from group.',
-        });
-        onExpand(true, record);
-        fetchGroups();
-      } catch (e) {
-        makeToast({ severity: 'Error', title: 'Error deleting group.' });
-        handleError(e, { silent: true, type: ErrorType.Input });
-      }
-    },
-    [onExpand, fetchGroups],
-  );
-
   const expandedUserRender = useCallback(
     (record: V1GroupSearchResult) => {
       const {
@@ -202,23 +186,38 @@ const GroupManagement: React.FC = () => {
       const g = groupUsers.find((gr) => gr.groupId === groupId);
       const userColumn = [
         {
-          dataIndex: 'displayName',
-          key: 'displayName',
-          title: 'Display Name',
-          width: '40%',
-        },
-        {
           dataIndex: 'username',
           key: 'username',
+          render: (_: string, r: V1User) => {
+            const user: User = {
+              displayName: r.displayName,
+              id: r.id ?? 0,
+              lastAuthAt: r.lastAuthAt ? dayjs(r.lastAuthAt).unix() : undefined,
+              modifiedAt: r.modifiedAt ? dayjs(r.modifiedAt).unix() : undefined,
+              username: r.username,
+            };
+            return <UserBadge user={user} />;
+          },
           title: 'User Name',
-          width: '50%',
+          width: '90%',
         },
         {
           key: 'action',
-          render: (_: string, r: V1User) =>
-            canModifyGroups ? (
-              <Button onClick={() => onRemoveUser(record, r.id)}>Remove</Button>
-            ) : null,
+          render: (_: string, r: V1User) => {
+            if (canModifyGroups) {
+              return (
+                <Button
+                  onClick={() => {
+                    setGroupResult(record);
+                    setUser(r);
+                    RemoveUserFromGroupModal.open();
+                  }}>
+                  Remove
+                </Button>
+              );
+            }
+            return null;
+          },
           title: '',
         },
       ];
@@ -226,14 +225,16 @@ const GroupManagement: React.FC = () => {
       return (
         <Table
           columns={userColumn}
-          dataSource={g?.users}
+          dataSource={g?.users?.sort((a, b) =>
+            alphaNumericSorter(a.displayName || a.username, b.displayName || b.username),
+          )}
           loading={!g}
           pagination={false}
           rowKey="id"
         />
       );
     },
-    [onRemoveUser, groupUsers, canModifyGroups],
+    [groupUsers, canModifyGroups, RemoveUserFromGroupModal],
   );
 
   const columns = useMemo(() => {
@@ -266,7 +267,7 @@ const GroupManagement: React.FC = () => {
         key: 'users',
         onCell: onRightClickableCell,
         render: (_: string, r: V1GroupSearchResult) => r.numMembers,
-        title: 'Users',
+        title: 'Members',
       },
       {
         className: 'fullCell',
@@ -325,6 +326,14 @@ const GroupManagement: React.FC = () => {
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
       <CreateGroupModal.Component users={users} onClose={fetchGroups} />
+      {groupResult && (
+        <RemoveUserFromGroupModal.Component
+          fetchGroups={fetchGroups}
+          groupResult={groupResult}
+          user={user}
+          onExpand={onExpand}
+        />
+      )}
     </>
   );
 };
