@@ -460,6 +460,21 @@ func (t *trial) maybeAllocateTask() error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
+
+	// TODO: The first return value is []command.LaunchWarning{command.CurrentSlotsExceeded}.
+	// How do we want to handle this? In newExperiment() the warning is part of the response back
+	// to the client.
+	_, err = t.rm.ValidateResourcePoolAvailability(
+		sproto.NewValidateResourcePoolAvailabilityParam(
+			t.config.Resources().ResourcePool(),
+			t.config.Resources().SlotsPerTrial(),
+			sproto.WithTaskID(&t.taskID),
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("checking resource availability: %v", err.Error())
+	}
+
 	err = task.DefaultService.StartAllocation(
 		t.logCtx, ar, t.db, t.rm, specifier,
 		t.AllocationExitedCallback,

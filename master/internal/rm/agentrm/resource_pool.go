@@ -13,6 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -23,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // resourcePool manages the agent and task lifecycles.
@@ -479,8 +481,16 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			defer func() {
 				rp.agentStatesCache = nil
 			}()
+
+			disallowedNodes := set.New[string]()
+			if msg.TaskID != nil {
+				disallowedNodes = *logpattern.DisallowedNodes(*msg.TaskID)
+			}
+			// check task speicifc slots here
 			for _, a := range rp.agentStatesCache {
-				totalSlots += len(a.slotStates)
+				if !disallowedNodes.Contains(a.Handler.Address().Local()) {
+					totalSlots += len(a.slotStates)
+				}
 			}
 		case rp.config.Provider.AWS != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.AWS.SlotsPerInstance()

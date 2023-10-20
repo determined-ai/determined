@@ -487,10 +487,13 @@ func (k ResourceManager) ValidateResourcePool(name string) error {
 // ValidateResourcePoolAvailability checks the available resources for a given pool.
 // This is a no-op for k8s.
 func (k ResourceManager) ValidateResourcePoolAvailability(
-	name string,
-	slots int,
+	v *sproto.ValidateResourcePoolAvailabilityParam,
 ) ([]command.LaunchWarning, error) {
-	return nil, k.resourcePoolExists(name)
+	if _, err := k.getResourcePoolRef(v.Name); err != nil {
+		return nil, fmt.Errorf("%s is an invalid resource pool", v.Name)
+	}
+
+	return nil, nil
 }
 
 // NotifyContainerRunning receives a notification from the container to let
