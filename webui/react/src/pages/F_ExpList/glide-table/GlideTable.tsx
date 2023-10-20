@@ -31,6 +31,7 @@ import useUI, { getCssVar } from 'components/kit/Theme';
 import { Loadable } from 'components/kit/utils/loadable';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
+import { useTheme as useThemeHook } from 'hooks/useTheme';
 import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -205,9 +206,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   >>(null);
 
   const {
-    ui: { theme: appTheme, darkLight },
+    ui: { theme: appTheme, mode },
   } = useUI();
-  const theme = getTheme(appTheme);
+
+  const themeSettings = useThemeHook(mode, appTheme);
+
+  const theme = getTheme(themeSettings.theme);
 
   const users = useObservable(usersStore.getUsers());
 
@@ -224,17 +228,17 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const columnDefs = useMemo<Record<string, ColumnDef>>(
     () =>
       getColumnDefs({
-        appTheme,
+        appTheme: themeSettings.theme,
         columnWidths,
-        darkLight,
+        isDarkMode: themeSettings.isDarkMode,
         rowSelection: selection.rows,
         selectAll,
         users,
       }),
-    [selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
+    [selectAll, selection.rows, columnWidths, users, themeSettings.theme, themeSettings.isDarkMode],
   );
 
-  const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
+  const headerIcons = useMemo(() => getHeaderIcons(themeSettings.theme), [themeSettings.theme]);
 
   const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
     return Loadable.map(projectColumns, (columns) => {

@@ -10,12 +10,12 @@ import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Section from 'components/kit/internal/Section';
-import { DarkLight, ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
+import { ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-
+import { useTheme } from 'hooks/useTheme';
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
 const { DirectoryTree } = Tree;
@@ -217,6 +217,8 @@ const CodeEditor: React.FC<Props> = ({
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
+
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (loadableFile.isFailed) {
     fileContent = <Message icon="error" title={loadableFile.error?.message ?? 'Unknown Error'} />;
@@ -229,7 +231,7 @@ const CodeEditor: React.FC<Props> = ({
           height="100%"
           readOnly={readonly}
           style={{ height: '100%' }}
-          theme={ui.darkLight === DarkLight.Dark ? 'dark' : 'light'}
+          theme={isDarkMode ? 'dark' : 'light'}
           value={Loadable.getOrElse('', loadableFile)}
           onChange={onChange}
         />

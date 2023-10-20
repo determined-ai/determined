@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Button from 'components/kit/Button';
 import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight, ThemeProvider, UIProvider } from 'components/kit/Theme';
+import useUI, { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { notification } from 'components/kit/Toast';
 import { ConfirmationProvider } from 'components/kit/useConfirm';
 import { Loadable } from 'components/kit/utils/loadable';
@@ -26,6 +26,7 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import { useSettings } from 'hooks/useSettings';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
+import { useTheme } from 'hooks/useTheme';
 import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
@@ -61,6 +62,8 @@ const AppView: React.FC = () => {
   } = useSettings<themeSettings>(themeConfig);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { ui, actions: uiActions } = useUI();
+
+  const { theme, isDarkMode } = useTheme(ui.mode, ui.theme);
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -157,7 +160,7 @@ const AppView: React.FC = () => {
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <UIProvider darkMode={ui.mode === DarkLight.Dark} theme={ui.theme}>
+      <UIProvider darkMode={isDarkMode} theme={theme}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>

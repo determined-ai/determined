@@ -2,8 +2,9 @@ import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
 import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight, UIProvider } from 'components/kit/Theme';
+import useUI, { UIProvider } from 'components/kit/Theme';
 import { Loadable, NotLoaded } from 'components/kit/utils/loadable';
+import { useTheme } from 'hooks/useTheme';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -37,12 +38,15 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const querySettings = useRef(new URLSearchParams(''));
   const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
   const { ui } = useUI();
+
+  const { theme, isDarkMode } = useTheme(ui.mode, ui.theme);
+
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);
   }, []);
 
   return (
-    <UIProvider darkMode={ui.mode === DarkLight.Dark} theme={ui.theme}>
+    <UIProvider darkMode={isDarkMode} theme={theme}>
       <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
         <UserSettings.Provider
           value={{

@@ -4,17 +4,12 @@ import uPlot, { AlignedData } from 'uplot';
 
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import {
-  DarkLight,
-  ErrorHandler,
-  ErrorLevel,
-  ErrorType,
-  XAxisDomain,
-} from 'components/kit/internal/types';
+import { ErrorHandler, ErrorLevel, ErrorType, XAxisDomain } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import useResize from 'components/kit/internal/useResize';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import { useTheme } from 'hooks/useTheme';
 
 import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
@@ -108,8 +103,9 @@ const UPlotChart: React.FC<Props> = ({
   const chartType: ChartType = options?.mode === 2 ? 'Scatter' : 'Line';
 
   const hasData = data && data.length > 1 && (chartType === 'Scatter' || data?.[0]?.length);
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
 
-  if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
+  if (isDarkMode) classes.push(css.dark);
 
   useEffect(() => {
     if (data !== undefined && chartType === 'Line')

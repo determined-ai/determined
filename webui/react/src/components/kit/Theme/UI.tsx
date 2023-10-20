@@ -1,34 +1,11 @@
 import { theme as AntdTheme, ConfigProvider } from 'antd';
-import { useObservable } from 'micro-observables';
-import React, {
-  Dispatch,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from 'react';
+import React, { Dispatch, useContext, useMemo, useReducer, useRef } from 'react';
 
 import { RecordKey } from 'components/kit/internal/types';
-import { themes } from 'components/kit/Theme';
-import determinedInfo from 'stores/determinedInfo';
 
-import {
-  DarkLight,
-  getDarkLight,
-  getSystemMode,
-  globalCssVars,
-  MATCH_MEDIA_SCHEME_DARK,
-  MATCH_MEDIA_SCHEME_LIGHT,
-  Mode,
-  Theme,
-} from './themeUtils';
+import { globalCssVars, Mode, Theme } from './themeUtils';
 interface StateUI {
   chromeCollapsed: boolean;
-  darkLight: DarkLight;
   isPageHidden: boolean;
   mode: Mode;
   showChrome: boolean;
@@ -38,7 +15,6 @@ interface StateUI {
 
 const initUI: StateUI = {
   chromeCollapsed: false,
-  darkLight: DarkLight.Light,
   isPageHidden: false,
   mode: Mode.System,
   showChrome: true,
@@ -159,42 +135,10 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   const uiActions = useMemo(() => new UIActions(dispatchContext), [dispatchContext]);
   return { actions: uiActions, ui: context };
 };
-
 export const ThemeProvider: React.FC<{
   children?: React.ReactNode;
 }> = ({ children }) => {
-  const info = useObservable(determinedInfo.info);
   const [state, dispatch] = useReducer(reducer, initUI);
-
-  const branding = info?.branding || 'determined';
-
-  const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
-
-  const darkLight = getDarkLight(state.mode, systemMode);
-  const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    if (!event.matches) setSystemMode(getSystemMode());
-  }, []);
-
-  // Detect browser/OS level dark/light mode changes.
-  useEffect(() => {
-    matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
-    matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
-
-    return () => {
-      matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
-      matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).removeEventListener('change', handleSchemeChange);
-    };
-  }, [handleSchemeChange]);
-
-  // Update darkLight and theme when branding, system mode, or mode changes.
-  useLayoutEffect(() => {
-    const theme = themes[branding][darkLight];
-    dispatch({
-      type: StoreActionUI.SetTheme,
-      value: { theme },
-    });
-  }, [darkLight, branding]);
-
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>

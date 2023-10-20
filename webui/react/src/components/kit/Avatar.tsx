@@ -2,9 +2,10 @@ import React from 'react';
 
 import { hex2hsl, hsl2str } from 'components/kit/internal/functions';
 import md5 from 'components/kit/internal/md5';
-import { DarkLight, ValueOf } from 'components/kit/internal/types';
+import { ValueOf } from 'components/kit/internal/types';
 import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
+import { useTheme } from 'hooks/useTheme';
 
 import css from './Avatar.module.scss';
 
@@ -38,11 +39,11 @@ export const getInitials = (name = ''): string => {
     : initials;
 };
 
-export const getColor = (name = '', darkLight: DarkLight): string => {
+export const getColor = (name = '', darkMode: boolean): string => {
   const hslColor = name ? hex2hsl(md5(name).substring(0, 6)) : hex2hsl('#808080');
   return hsl2str({
     ...hslColor,
-    l: darkLight === DarkLight.Dark ? 38 : 60,
+    l: darkMode ? 38 : 60,
   });
 };
 
@@ -54,9 +55,9 @@ const Avatar: React.FC<Props> = ({
   square,
 }) => {
   const { ui } = useUI();
-
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
   const style = {
-    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, ui.darkLight),
+    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, isDarkMode),
     borderRadius: square ? '10%' : '100%',
     color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
   };

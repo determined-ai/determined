@@ -5,9 +5,10 @@ import uPlot, { AlignedData } from 'uplot';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight } from 'components/kit/Theme';
+import useUI from 'components/kit/Theme';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
+import { useTheme } from 'hooks/useTheme';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import { useChartSync } from './SyncProvider';
@@ -94,12 +95,14 @@ const UPlotChart: React.FC<Props> = ({
   const { ui } = useUI();
   const { options: syncOptions, syncService } = useChartSync();
 
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
+
   // line charts have their zoom state handled by `SyncProvider`, scatter charts do not.
   const chartType: ChartType = options?.mode === 2 ? 'Scatter' : 'Line';
 
   const hasData = data && data.length > 1 && (chartType === 'Scatter' || data?.[0]?.length);
 
-  if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
+  if (isDarkMode) classes.push(css.dark);
 
   useEffect(() => {
     if (data !== undefined && chartType === 'Line')

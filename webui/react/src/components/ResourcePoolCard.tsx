@@ -10,13 +10,14 @@ import { MenuItem } from 'components/kit/Dropdown';
 import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight, ShirtSize } from 'components/kit/Theme';
+import useUI, { ShirtSize } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import { Loadable } from 'components/kit/utils/loadable';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { useTheme } from 'hooks/useTheme';
 import { handlePath, paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
@@ -71,11 +72,11 @@ const poolAttributes = [
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   const { ui } = useUI();
-
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
   let iconSrc = '';
   switch (type) {
     case V1ResourcePoolType.AWS:
-      iconSrc = ui.darkLight === DarkLight.Light ? awsLogo : awsLogoOnDark;
+      iconSrc = isDarkMode ? awsLogo : awsLogoOnDark;
       break;
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;

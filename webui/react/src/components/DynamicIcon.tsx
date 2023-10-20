@@ -1,6 +1,7 @@
 import React, { CSSProperties, useMemo } from 'react';
 
-import useUI, { DarkLight } from 'components/kit/Theme';
+import useUI from 'components/kit/Theme';
+import { useTheme } from 'hooks/useTheme';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
 
@@ -14,6 +15,7 @@ interface Props {
 
 const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
   const { ui } = useUI();
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
 
   const nameAcronym = useMemo(() => {
     if (!name) return '-';
@@ -27,10 +29,10 @@ const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     const hslColor = name ? hex2hsl(md5(name).substring(0, 6)) : hex2hsl('#808080');
     return hsl2str({
       ...hslColor,
-      l: ui.darkLight === DarkLight.Dark ? 80 : 90,
-      s: ui.darkLight === DarkLight.Dark ? 40 : 77,
+      l: isDarkMode ? 80 : 90,
+      s: isDarkMode ? 40 : 77,
     });
-  }, [name, ui.darkLight]);
+  }, [name, isDarkMode]);
 
   const fontSize = useMemo(() => {
     if (size > 50) return 16;

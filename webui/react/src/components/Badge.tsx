@@ -1,13 +1,9 @@
 import React, { CSSProperties, useMemo, useRef } from 'react';
 
-import useUI, {
-  DarkLight,
-  getCssVar,
-  getStateColorCssVar,
-  StateOfUnion,
-} from 'components/kit/Theme';
+import useUI, { getCssVar, getStateColorCssVar, StateOfUnion } from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
+import { useTheme } from 'hooks/useTheme';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { hsl2str, str2hsl } from 'utils/color';
 
@@ -36,9 +32,9 @@ const Badge: React.FC<BadgeProps> = ({
   ...props
 }: BadgeProps) => {
   const { ui } = useUI();
+  const { isDarkMode } = useTheme(ui.mode, ui.theme);
   const elementRef = useRef(null);
   const { classes, style } = useMemo(() => {
-    const isDark = ui.darkLight === DarkLight.Dark;
     const classes = [css.base];
     const style: CSSProperties = {};
 
@@ -46,8 +42,8 @@ const Badge: React.FC<BadgeProps> = ({
       const backgroundColor = str2hsl(getCssVar(elementRef, getStateColorCssVar(state)));
       style.backgroundColor = hsl2str({
         ...backgroundColor,
-        l: isDark ? 35 : 45,
-        s: backgroundColor.s > 0 ? (isDark ? 70 : 50) : 0,
+        l: isDarkMode ? 35 : 45,
+        s: backgroundColor.s > 0 ? (isDarkMode ? 70 : 50) : 0,
       });
       style.color = getStateColorCssVar(state, { isOn: true });
       classes.push(css.state);
@@ -61,7 +57,7 @@ const Badge: React.FC<BadgeProps> = ({
 
         if (state === ResourceState.Potential) classes.push(css.dashed);
       }
-      if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
+      if (isDarkMode) classes.push(css.dark);
     } else if (type === BadgeType.Id) {
       classes.push(css.id);
     } else if (type === BadgeType.Header) {
@@ -69,7 +65,7 @@ const Badge: React.FC<BadgeProps> = ({
     }
 
     return { classes, style };
-  }, [state, type, ui.darkLight]);
+  }, [state, type, isDarkMode]);
 
   const badge = (
     <span className={classes.join(' ')} ref={elementRef} style={style}>
