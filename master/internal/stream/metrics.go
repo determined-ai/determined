@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -16,8 +15,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
-// MetricsDeleteKey specifies the key for delete Metrics.
-const MetricsDeleteKey = "metrics_deleted"
+const (
+	// MetricsDeleteKey specifies the key for delete metrics.
+	MetricsDeleteKey = "metrics_deleted"
+	// MetricsUpsertKey specifies the key for upsert metrics.
+	MetricsUpsertKey = "metric"
+)
 
 // MetricMsg is a stream.Msg.
 // determined:streamable
@@ -43,9 +46,6 @@ type MetricMsg struct {
 
 	// subscription level
 	ExperimentID int `json:"-"`
-
-	upsertCache *websocket.PreparedMessage
-	deleteCache *websocket.PreparedMessage
 }
 
 // SeqNum gets the SeqNum from a MetricMsg.
@@ -53,18 +53,21 @@ func (mm *MetricMsg) SeqNum() int64 {
 	return mm.Seq
 }
 
-// UpsertMsg creates a Metric upserted prepared message.
-func (mm *MetricMsg) UpsertMsg() *websocket.PreparedMessage {
-	wrapper := struct {
-		Metric *MetricMsg `json:"metric"`
-	}{mm}
-	return prepareMessageWithCache(wrapper, &mm.upsertCache)
+// UpsertMsg creates a Metric stream upsert message.
+func (mm *MetricMsg) UpsertMsg() stream.UpsertMsg {
+	return stream.UpsertMsg{
+		JSONKey: MetricsUpsertKey,
+		Msg:     mm,
+	}
 }
 
-// DeleteMsg creates a Trial deleted prepared message.
-func (mm *MetricMsg) DeleteMsg() *websocket.PreparedMessage {
+// DeleteMsg creates a Metric stream delete message.
+func (mm *MetricMsg) DeleteMsg() stream.DeleteMsg {
 	deleted := strconv.FormatInt(int64(mm.ID), 10)
-	return newDeletedMsgWithCache(MetricsDeleteKey, deleted, &mm.deleteCache)
+	return stream.DeleteMsg{
+		Key:     MetricsDeleteKey,
+		Deleted: deleted,
+	}
 }
 
 // MetricSubscriptionSpec is what a user submits to define a Metric subscription.
@@ -103,13 +106,16 @@ func MetricCollectStartupMsgs(
 	known string,
 	spec MetricSubscriptionSpec,
 ) (
-	[]*websocket.PreparedMessage, error,
+	[]stream.PreparableMessage, error,
 ) {
-	var out []*websocket.PreparedMessage
+	var out []stream.PreparableMessage
 
-	if len(spec.MetricIds) == 0 {
+	if len(spec.MetricIds) == 0 && len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
-		out = append(out, newDeletedMsg(MetricsDeleteKey, known))
+		out = append(out, stream.DeleteMsg{
+			Key:     MetricsDeleteKey,
+			Deleted: known,
+		})
 		return out, nil
 	}
 	// step 0: get user's permitted access scopes
@@ -182,9 +188,10 @@ func MetricCollectStartupMsgs(
 	}
 
 	// step 4: emit deletions and updates to the client
-	if len(missing) > 0 {
-		out = append(out, newDeletedMsg(MetricsDeleteKey, missing))
-	}
+	out = append(out, stream.DeleteMsg{
+		Key:     MetricsDeleteKey,
+		Deleted: missing,
+	})
 	for _, msg := range metricMsgs {
 		out = append(out, msg.UpsertMsg())
 	}
@@ -194,9 +201,9 @@ func MetricCollectStartupMsgs(
 // MetricCollectSubscriptionModMsgs scrapes the database when a
 // user submits a new MetricSubscriptionSpec for initial matches.
 func MetricCollectSubscriptionModMsgs(ctx context.Context, addSpec MetricSubscriptionSpec) (
-	[]*websocket.PreparedMessage, error,
+	[]interface{}, error,
 ) {
-	if len(addSpec.MetricIds) == 0 {
+	if len(addSpec.MetricIds) == 0 && len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {
 		return nil, nil
 	}
 	var metricMsgs []*MetricMsg
@@ -215,7 +222,7 @@ func MetricCollectSubscriptionModMsgs(ctx context.Context, addSpec MetricSubscri
 		return nil, err
 	}
 
-	var out []*websocket.PreparedMessage
+	var out []interface{}
 	for _, msg := range metricMsgs {
 		out = append(out, msg.UpsertMsg())
 	}

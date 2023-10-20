@@ -35,8 +35,8 @@ const (
 // There is one PublisherSet for the whole process.  It has one Publisher per streamable type.
 type PublisherSet struct {
 	DBAddress string
-	Trials     *stream.Publisher[*TrialMsg]
-	Metrics *stream.Publisher[*MetricMsg]
+	Trials    *stream.Publisher[*TrialMsg]
+	Metrics   *stream.Publisher[*MetricMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
@@ -99,8 +99,8 @@ func newDBListener(address, channel string) (*pq.Listener, error) {
 func NewPublisherSet() *PublisherSet {
 	return &PublisherSet{
 		DBAddress: "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
-		Trials:     stream.NewPublisher[*TrialMsg](),
-		Metrics: stream.NewPublisher[*MetricMsg](),
+		Trials:    stream.NewPublisher[*TrialMsg](),
+		Metrics:   stream.NewPublisher[*MetricMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
 	}
@@ -595,8 +595,25 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 
 	var msgs []interface{}
 	var err error
-	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn)
-	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Metrics, sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn)
+	msgs, err = startup(ctx,
+		user,
+		msgs,
+		err,
+		ss.Trials,
+		known.Trials,
+		sub.Trials,
+		ss.Trials.Subscription.Streamer.PrepareFn,
+	)
+	msgs, err = startup(
+		ctx,
+		user,
+		msgs,
+		err,
+		ss.Metrics,
+		known.Metrics,
+		sub.Metrics,
+		ss.Metrics.Subscription.Streamer.PrepareFn,
+	)
 	return msgs, err
 }
 
