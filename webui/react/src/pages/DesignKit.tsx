@@ -609,26 +609,25 @@ const ThemeSection: React.FC = () => {
       <AntDCard>
         <p>
           A <code>{'<ThemeProvider>'}</code> is included in the UI kit, it is responsible for
-          providing the necessary context for the custom <code>{'hook'}</code>
+          providing the necessary context for the <code>{'useUI'}</code> hook described further
+          below.
         </p>
         <p>
-          <code>{'<UIProvider>'}</code> is part of the UI kit, it is responsible for handling all
-          UI/theme related state, such as dark/light theme setup. It takes an optional{' '}
-          <code>{'branding'}</code> prop for adjusting branding specific theme/colors.
+          A <code>{'<UIProvider>'}</code> is also included in the UI kit, it is responsible for
+          providing styling to children components. It requires a <code>{'theme'}</code> prop that
+          is the <code>{'Theme'}</code>
+          configuration. Additionally, it takes an optional <code>{'darkMode'}</code> prop to switch
+          the supplied theme between light and dark mode.
         </p>
         <p>
-          Besides the <code>{'<UIProvider>'}</code>, there are a few other helpers that can be used
-          from withing the UI kit.
+          There are several additional helpers that can be used from withing the UI kit.
           <ul>
             <li>
-              <code>{'useUI'}</code>, a custom hook for setting th new state for theme, mode and
+              <code>{'useUI'}</code>, a custom hook for setting the new state for theme, mode and
               other UI-related functionalities.
             </li>
             <li>
-              helper types, such as <code>{'DarkLight'}</code>.
-            </li>
-            <li>
-              helper functions, such as <code>{'getCssVar'}</code>.
+              helper functions, such as <code>{'getCssVar'}</code> .
             </li>
           </ul>
         </p>

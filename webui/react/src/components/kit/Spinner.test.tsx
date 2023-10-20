@@ -1,8 +1,9 @@
-import { StyleProvider } from '@ant-design/cssinjs';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
 import { Mock } from 'vitest';
+
+import { StyleProvider } from 'components/kit/Theme';
 
 import Spinner from './Spinner';
 

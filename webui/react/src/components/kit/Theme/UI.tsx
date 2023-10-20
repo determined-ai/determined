@@ -1,9 +1,12 @@
+import { StyleProvider } from '@ant-design/cssinjs';
 import { theme as AntdTheme, ConfigProvider } from 'antd';
 import React, { Dispatch, useContext, useMemo, useReducer, useRef } from 'react';
 
 import { RecordKey } from 'components/kit/internal/types';
 
 import { globalCssVars, Mode, Theme } from './themeUtils';
+
+export { StyleProvider };
 interface StateUI {
   chromeCollapsed: boolean;
   isPageHidden: boolean;

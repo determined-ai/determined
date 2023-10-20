@@ -1,6 +1,7 @@
-import { StyleProvider } from '@ant-design/cssinjs';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+import { StyleProvider } from 'components/kit/Theme';
 
 import Accordion from './Accordion';
 
