@@ -1,16 +1,14 @@
 package api
 
 import (
+	"strconv"
 	"strings"
 
-	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
-
-var upgrader = websocket.Upgrader{}
 
 // Route aims at routing HTTP and websocket requests to an actor. It returns an
 // echo handler function to register with endpoints. Requests will be routed to
@@ -35,7 +33,7 @@ func Route(system *actor.System, recipient *actor.Ref) echo.HandlerFunc {
 }
 
 func handleWSRequest(system *actor.System, recipient actor.Address, ctx echo.Context) error {
-	switch resp := system.AskAt(recipient, WebSocketConnected{Ctx: ctx}); {
+	switch resp := system.AskAt(recipient, WebSocketRequest{Ctx: ctx}); {
 	case resp.Source() == nil, resp.Empty():
 		// The actor could not be found or the actor did not respond.
 		return echo.ErrNotFound
@@ -69,6 +67,16 @@ func handleRequest(system *actor.System, recipient actor.Address, ctx echo.Conte
 		return errors.Errorf("%s: unexpected message (%T): %v",
 			ctx.Request().URL.Path, resp.Get(), resp.Get())
 	}
+}
+
+// WebSocketRequest notifies the actor that a websocket is attempting to connect.
+type WebSocketRequest struct {
+	Ctx echo.Context
+}
+
+// IsReconnect checks if agent is reconnecting after a network failure.
+func (w *WebSocketRequest) IsReconnect() (bool, error) {
+	return strconv.ParseBool(w.Ctx.QueryParam("reconnect"))
 }
 
 func parseAddr(rawPath string) actor.Address {
