@@ -169,19 +169,21 @@ export const UIProvider: React.FC<{
   });
 
   /**
-   * A few specific HTML elements and free form text
+   * A few specific HTML elements and free form text entries
    * within the application are styled based on the color-scheme
-   * css property. Examples include:
+   * css property set specifically on the documentElement.
+   *
+   * Examples include:
    *  - the "Section" titles in the Drawer component which are
-   * <h5> elements.
+   *    <h5> elements.
    * - The "Settings" section title within the Drawer which is
    *   free form text.
    * - The Paragraph component within the Drawer.
-   * The styling is dependent on the color-scheme set specifically on the
-   * documentElement.
    * - The "ThemeToggle" mode text on the DesignKit page.
+   *
+   *  the following line is needed to ensure styling in these
+   *  specific cases is still applied correctly.
    */
-
   document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
 
   const lightThemeConfig = {
