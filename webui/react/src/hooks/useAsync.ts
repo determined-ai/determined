@@ -1,6 +1,5 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { useCallback, useEffect, useInsertionEffect, useRef, useState } from 'react';
-
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 
 type LoadablePromiser<T> = (canceler: AbortController) => Promise<T | Loadable<T>>;
 
