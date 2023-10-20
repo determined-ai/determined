@@ -26,10 +26,10 @@ type Job interface {
 
 // Service manages the job service.
 type Service struct {
-	mu          sync.Mutex
-	rm          rm.ResourceManager
-	genericByID map[model.JobID]Job
-	syslog      *logrus.Entry
+	mu      sync.Mutex
+	rm      rm.ResourceManager
+	jobByID map[model.JobID]Job
+	syslog  *logrus.Entry
 }
 
 // DefaultService is the global singleton job service.
@@ -44,33 +44,33 @@ func SetDefaultService(rm rm.ResourceManager) {
 		)
 	}
 	DefaultService = &Service{
-		rm:          rm,
-		genericByID: make(map[model.JobID]Job),
-		syslog:      logrus.WithField("component", "jobs"),
+		rm:      rm,
+		jobByID: make(map[model.JobID]Job),
+		syslog:  logrus.WithField("component", "jobs"),
 	}
 }
 
 // RegisterJob takes an experiment/command (of interface type Service)
-// and registers it with the job manager's genericByID map.
+// and registers it with the job manager's jobByID map.
 func (s *Service) RegisterJob(jobID model.JobID, j Job) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.genericByID[jobID] = j
+	s.jobByID[jobID] = j
 }
 
-// UnregisterJob deletes a job from the genericByID map.
+// UnregisterJob deletes a job from the jobByID map.
 func (s *Service) UnregisterJob(jobID model.JobID) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.genericByID, jobID)
+	delete(s.jobByID, jobID)
 }
 
 func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) map[model.JobID]*jobv1.Job {
 	jobRefs := map[model.JobID]*jobv1.Job{}
 	for jID := range jobQ {
-		jobRef, ok := s.genericByID[jID]
+		jobRef, ok := s.jobByID[jID]
 		if ok {
 			jobRefs[jID] = jobRef.ToV1Job()
 		}
@@ -169,7 +169,7 @@ func (s *Service) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.Job
 
 func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 	jobID := model.JobID(update.JobId)
-	j := s.genericByID[jobID]
+	j := s.jobByID[jobID]
 	if j == nil {
 		return sproto.ErrJobNotFound(jobID)
 	}
