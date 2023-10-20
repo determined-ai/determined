@@ -119,7 +119,7 @@ class CIFARTrial(keras.TFKerasTrial):
 
     def build_validation_data_loader(self) -> keras.InputData:
         def val_generator():
-            xs, ys = self.train_np
+            xs, ys = self.test_np
             n = xs.shape[0]
             for i in range(n):
                 yield xs[i], ys[i]
