@@ -1,15 +1,18 @@
 package db
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // AddJob persists the existence of a job.
 func (db *PgDB) AddJob(j *model.Job) error {
-	return addJob(db.sql, j)
+	return AddJobTx(context.TODO(), Bun(), j)
 }
 
 // JobByID retrieves a job by ID.
@@ -25,12 +28,10 @@ WHERE job_id = $1
 	return &j, nil
 }
 
-// addJob persists the existence of a job from a tx.
-func addJob(tx queryHandler, j *model.Job) error {
-	if _, err := tx.NamedExec(`
-INSERT INTO jobs (job_id, job_type, owner_id, q_position)
-VALUES (:job_id, :job_type, :owner_id, :q_position)
-`, j); err != nil {
+// AddJobTx persists the existence of a job from a tx.
+func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
+	_, err := idb.NewInsert().Model(j).Exec(ctx)
+	if err != nil {
 		return errors.Wrap(err, "adding job")
 	}
 	return nil

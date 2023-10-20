@@ -2,76 +2,121 @@
 package command
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/pkg/model"
+	"context"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
-type tensorboardManager struct {
-	db *db.PgDB
-	rm rm.ResourceManager
-}
+func (cs *commandService) LaunchTensorboard(
+	ctx context.Context,
+	req *CreateGeneric,
+) (*tensorboardv1.Tensorboard, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
-func (t *tensorboardManager) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, t.db, t.rm, model.TaskTypeTensorboard)
-
-	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
-
-	case *apiv1.GetTensorboardsRequest:
-		resp := &apiv1.GetTensorboardsResponse{}
-		users := make(map[string]bool, len(msg.Users))
-		for _, user := range msg.Users {
-			users[user] = true
-		}
-		userIds := make(map[int32]bool, len(msg.UserIds))
-		for _, user := range msg.UserIds {
-			userIds[user] = true
-		}
-		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
-			typed := tensorboard.(*tensorboardv1.Tensorboard)
-			if msg.WorkspaceId != typed.WorkspaceId && msg.WorkspaceId != 0 {
-				continue
-			}
-			if (len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId] {
-				resp.Tensorboards = append(resp.Tensorboards, typed)
-			}
-		}
-		ctx.Respond(resp)
-
-	case *apiv1.DeleteWorkspaceRequest:
-		ctx.TellAll(msg, ctx.Children()...)
-
-	case *CreateGeneric:
-		taskID := model.NewTaskID()
-		jobID := model.NewJobID()
-		msg.Spec.CommandID = string(taskID)
-		if err := createGenericCommandActor(
-			ctx, t.db, t.rm, taskID, model.TaskTypeTensorboard, jobID,
-			model.JobTypeTensorboard, msg.Spec, msg.ContextDirectory,
-		); err != nil {
-			ctx.Log().WithError(err).Error("failed to launch tensorboard")
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(taskID)
-		}
-
-	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeTensorboard, model.JobTypeTensorboard, req)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return cmd.toTensorboard(), nil
+}
+
+func (cs *commandService) GetTensorboards(req *apiv1.GetTensorboardsRequest) (*apiv1.GetTensorboardsResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	resp := &apiv1.GetTensorboardsResponse{}
+	cmds, users, userIds := cs.listByType(req.Users, req.UserIds, model.TaskTypeTensorboard)
+	for _, c := range cmds {
+		t := c.toTensorboard()
+		// skip if it doesn't match the requested workspaceID if any.
+		if req.WorkspaceId != 0 && req.WorkspaceId != t.WorkspaceId {
+			continue
+		}
+		if (len(users) == 0 && len(userIds) == 0) || users[t.Username] || userIds[t.UserId] {
+			resp.Tensorboards = append(resp.Tensorboards, t)
+		}
+	}
+	return resp, nil
+}
+
+func (cs *commandService) GetTensorboard(req *apiv1.GetTensorboardRequest) (*apiv1.GetTensorboardResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.TensorboardId), model.TaskTypeTensorboard)
+	if err != nil {
+		return nil, api.NotFoundErrs("tensorboard", req.TensorboardId, true)
+	}
+
+	return &apiv1.GetTensorboardResponse{
+		Tensorboard: c.toTensorboard(),
+		Config:      protoutils.ToStruct(c.Config),
+	}, nil
+}
+
+func (cs *commandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*apiv1.KillTensorboardResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.TensorboardId), model.TaskTypeTensorboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+	if err != nil {
+		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+	}
+	return &apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard()}, nil
+}
+
+func (cs *commandService) SetTensorboardPriority(
+	req *apiv1.SetTensorboardPriorityRequest,
+) (*apiv1.SetTensorboardPriorityResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.TensorboardId), model.TaskTypeTensorboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.setNTSCPriority(int(req.Priority), true)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard()}, nil
+}
+
+func (c *command) toTensorboard() *tensorboardv1.Tensorboard {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	allo := c.refreshAllocationState()
+	state := enrichState(allo.State)
+	return &tensorboardv1.Tensorboard{
+		Id:             c.stringID(),
+		State:          state,
+		Description:    c.Config.Description,
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
+		Container:      allo.SingleContainer().ToProto(),
+		ServiceAddress: c.serviceAddress(),
+		ExperimentIds:  c.Metadata.ExperimentIDs,
+		TrialIds:       c.Metadata.TrialIDs,
+		Username:       c.Base.Owner.Username,
+		UserId:         int32(c.Base.Owner.ID),
+		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
+		ResourcePool:   c.Config.Resources.ResourcePool,
+		ExitStatus:     c.exitStatus.String(),
+		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
+	}
 }

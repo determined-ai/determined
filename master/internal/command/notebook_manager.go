@@ -1,77 +1,115 @@
-// Package command provides utilities for commands.
 package command
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
+	"context"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
 
-type notebookManager struct {
-	db *db.PgDB
-	rm rm.ResourceManager
+func (cs *commandService) LaunchNotebook(ctx context.Context, req *CreateGeneric) (*notebookv1.Notebook, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeNotebook, model.JobTypeNotebook, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.toNotebook(), nil
 }
 
-func (n *notebookManager) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, n.db, n.rm, model.TaskTypeNotebook)
+func (cs *commandService) GetNotebooks(req *apiv1.GetNotebooksRequest) (*apiv1.GetNotebooksResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
-	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
-
-	case *apiv1.GetNotebooksRequest:
-		resp := &apiv1.GetNotebooksResponse{}
-		users := make(map[string]bool, len(msg.Users))
-		for _, user := range msg.Users {
-			users[user] = true
+	resp := &apiv1.GetNotebooksResponse{}
+	cmds, users, userIds := cs.listByType(req.Users, req.UserIds, model.TaskTypeNotebook)
+	for _, c := range cmds {
+		n := c.toNotebook()
+		// skip if it doesn't match the requested workspaceID if any.
+		if req.WorkspaceId != 0 && req.WorkspaceId != n.WorkspaceId {
+			continue
 		}
-		userIds := make(map[int32]bool, len(msg.UserIds))
-		for _, user := range msg.UserIds {
-			userIds[user] = true
+		if (len(users) == 0 && len(userIds) == 0) || users[n.Username] || userIds[n.UserId] {
+			resp.Notebooks = append(resp.Notebooks, n)
 		}
-		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
-			typed := notebook.(*notebookv1.Notebook)
-			if !((len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId]) {
-				continue
-			}
-			// skip if it doesn't match the requested workspaceID if any.
-			if msg.WorkspaceId != 0 && msg.WorkspaceId != typed.WorkspaceId {
-				continue
-			}
-			resp.Notebooks = append(resp.Notebooks, typed)
-		}
-		ctx.Respond(resp)
-
-	case *apiv1.DeleteWorkspaceRequest:
-		ctx.TellAll(msg, ctx.Children()...)
-
-	case *CreateGeneric:
-		taskID := model.NewTaskID()
-		jobID := model.NewJobID()
-		msg.Spec.CommandID = string(taskID)
-		if err := createGenericCommandActor(
-			ctx, n.db, n.rm, taskID, model.TaskTypeNotebook, jobID,
-			model.JobTypeNotebook, msg.Spec, msg.ContextDirectory,
-		); err != nil {
-			ctx.Log().WithError(err).Error("failed to launch notebook")
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(taskID)
-		}
-
-	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
 	}
-	return nil
+	return resp, nil
+}
+
+func (cs *commandService) GetNotebook(req *apiv1.GetNotebookRequest) (*apiv1.GetNotebookResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.NotebookId), model.TaskTypeNotebook)
+	if err != nil {
+		return nil, api.NotFoundErrs("notebook", req.NotebookId, true)
+	}
+
+	return &apiv1.GetNotebookResponse{
+		Notebook: c.toNotebook(),
+		Config:   protoutils.ToStruct(c.Config),
+	}, nil
+}
+
+func (cs *commandService) KillNotebook(req *apiv1.KillNotebookRequest) (*apiv1.KillNotebookResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.NotebookId), model.TaskTypeNotebook)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+	if err != nil {
+		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+	}
+	return &apiv1.KillNotebookResponse{Notebook: c.toNotebook()}, nil
+}
+
+func (cs *commandService) SetNotebookPriority(
+	req *apiv1.SetNotebookPriorityRequest,
+) (*apiv1.SetNotebookPriorityResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.NotebookId), model.TaskTypeNotebook)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.setNTSCPriority(int(req.Priority), true)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook()}, nil
+}
+
+func (c *command) toNotebook() *notebookv1.Notebook {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	allo := c.refreshAllocationState()
+	return &notebookv1.Notebook{
+		Id:             c.stringID(),
+		State:          enrichState(allo.State),
+		Description:    c.Config.Description,
+		Container:      allo.SingleContainer().ToProto(),
+		ServiceAddress: c.serviceAddress(),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
+		Username:       c.Base.Owner.Username,
+		UserId:         int32(c.Base.Owner.ID),
+		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
+		ResourcePool:   c.Config.Resources.ResourcePool,
+		ExitStatus:     c.exitStatus.String(),
+		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
+	}
 }

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -28,14 +27,6 @@ DELETE FROM allocation_sessions WHERE allocation_id in (
 	WHERE start_time IS NOT NULL AND end_time IS NOT NULL
 )`)
 	return err
-}
-
-// queryHandler is an interface for a query handler to use tx/db for same queries.
-type queryHandler interface {
-	sqlx.Queryer
-	sqlx.Execer
-	// Unfortunately database/sql doesn't expose an interface for this like sqlx.
-	NamedExec(query string, arg interface{}) (sql.Result, error)
 }
 
 // CheckTaskExists checks if the task exists.

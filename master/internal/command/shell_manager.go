@@ -1,76 +1,118 @@
-// Package command provides utilities for commands. This package comment is to satisfy linters
-// without disabling golint for the file.
-//
-//nolint:dupl // So easy with generics, so hard without; just wait.
 package command
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/pkg/model"
+	"context"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
 
-type shellManager struct {
-	db *db.PgDB
-	rm rm.ResourceManager
+func (cs *commandService) LaunchShell(ctx context.Context, req *CreateGeneric) (*shellv1.Shell, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeShell, model.JobTypeShell, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.toShell(), nil
 }
 
-func (s *shellManager) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, s.db, s.rm, model.TaskTypeShell)
+func (cs *commandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShellsResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
-	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
-
-	case *apiv1.GetShellsRequest:
-		resp := &apiv1.GetShellsResponse{}
-		users := make(map[string]bool, len(msg.Users))
-		for _, user := range msg.Users {
-			users[user] = true
+	resp := &apiv1.GetShellsResponse{}
+	cmds, users, userIds := cs.listByType(req.Users, req.UserIds, model.TaskTypeShell)
+	for _, c := range cmds {
+		s := c.toShell()
+		// skip if it doesn't match the requested workspaceID if any.
+		if req.WorkspaceId != 0 && req.WorkspaceId != s.WorkspaceId {
+			continue
 		}
-		userIds := make(map[int32]bool, len(msg.UserIds))
-		for _, user := range msg.UserIds {
-			userIds[user] = true
+		if (len(users) == 0 && len(userIds) == 0) || users[s.Username] || userIds[s.UserId] {
+			resp.Shells = append(resp.Shells, s)
 		}
-		for _, shell := range ctx.AskAll(&shellv1.Shell{}, ctx.Children()...).GetAll() {
-			typed := shell.(*shellv1.Shell)
-			if (len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId] {
-				resp.Shells = append(resp.Shells, typed)
-			}
-		}
-		ctx.Respond(resp)
-
-	case *apiv1.DeleteWorkspaceRequest:
-		ctx.TellAll(msg, ctx.Children()...)
-
-	case *CreateGeneric:
-		taskID := model.NewTaskID()
-		jobID := model.NewJobID()
-		msg.Spec.CommandID = string(taskID)
-		if err := createGenericCommandActor(
-			ctx, s.db, s.rm, taskID, model.TaskTypeShell, jobID, model.JobTypeShell,
-			msg.Spec, msg.ContextDirectory,
-		); err != nil {
-			ctx.Log().WithError(err).Error("failed to launch shell")
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(taskID)
-		}
-
-	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
 	}
-	return nil
+	return resp, nil
+}
+
+func (cs *commandService) GetShell(req *apiv1.GetShellRequest) (*apiv1.GetShellResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.ShellId), model.TaskTypeShell)
+	if err != nil {
+		return nil, api.NotFoundErrs("shell", req.ShellId, true)
+	}
+
+	return &apiv1.GetShellResponse{
+		Shell:  c.toShell(),
+		Config: protoutils.ToStruct(c.Config),
+	}, nil
+}
+
+func (cs *commandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShellResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.ShellId), model.TaskTypeShell)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+	if err != nil {
+		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+	}
+	return &apiv1.KillShellResponse{Shell: c.toShell()}, nil
+}
+
+func (cs *commandService) SetShellPriority(
+	req *apiv1.SetShellPriorityRequest,
+) (*apiv1.SetShellPriorityResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.ShellId), model.TaskTypeShell)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.setNTSCPriority(int(req.Priority), true)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.SetShellPriorityResponse{Shell: c.toShell()}, nil
+}
+
+func (c *command) toShell() *shellv1.Shell {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	allo := c.refreshAllocationState()
+	return &shellv1.Shell{
+		Id:             c.stringID(),
+		State:          enrichState(allo.State),
+		Description:    c.Config.Description,
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
+		Container:      allo.SingleContainer().ToProto(),
+		PrivateKey:     *c.Metadata.PrivateKey,
+		PublicKey:      *c.Metadata.PublicKey,
+		Username:       c.Base.Owner.Username,
+		UserId:         int32(c.Base.Owner.ID),
+		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
+		ResourcePool:   c.Config.Resources.ResourcePool,
+		ExitStatus:     c.exitStatus.String(),
+		Addresses:      toProto(allo.SingleContainerAddresses()),
+		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
+		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
+	}
 }

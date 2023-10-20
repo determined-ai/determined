@@ -1,81 +1,114 @@
-// Package command provides utilities for commands.
-//
-//nolint:dupl
 package command
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
+	"context"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
 
-// CreateGeneric is a request to managers to create a generic command.
-type CreateGeneric struct {
-	ContextDirectory []byte
-	Spec             *tasks.GenericCommandSpec
-}
+func (cs *commandService) LaunchCommand(ctx context.Context, req *CreateGeneric) (*commandv1.Command, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
-type commandManager struct {
-	db *db.PgDB
-	rm rm.ResourceManager
-}
-
-func (c *commandManager) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, c.db, c.rm, model.TaskTypeCommand)
-
-	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
-
-	case *apiv1.GetCommandsRequest:
-		resp := &apiv1.GetCommandsResponse{}
-		users := make(map[string]bool, len(msg.Users))
-		for _, user := range msg.Users {
-			users[user] = true
-		}
-		userIds := make(map[int32]bool, len(msg.UserIds))
-		for _, user := range msg.UserIds {
-			userIds[user] = true
-		}
-		for _, command := range ctx.AskAll(&commandv1.Command{}, ctx.Children()...).GetAll() {
-			typed := command.(*commandv1.Command)
-			if (len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId] {
-				resp.Commands = append(resp.Commands, typed)
-			}
-		}
-		ctx.Respond(resp)
-
-	case *apiv1.DeleteWorkspaceRequest:
-		ctx.TellAll(msg, ctx.Children()...)
-
-	case *CreateGeneric:
-		taskID := model.NewTaskID()
-		jobID := model.NewJobID()
-		msg.Spec.CommandID = string(taskID)
-		if err := createGenericCommandActor(
-			ctx, c.db, c.rm, taskID, model.TaskTypeCommand, jobID,
-			model.JobTypeCommand, msg.Spec, msg.ContextDirectory,
-		); err != nil {
-			ctx.Log().WithError(err).Error("failed to launch command")
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(taskID)
-		}
-
-	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeCommand, model.JobTypeCommand, req)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return cmd.toCommand(), nil
+}
+
+func (cs *commandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.GetCommandsResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	resp := &apiv1.GetCommandsResponse{}
+	cmds, users, userIDs := cs.listByType(req.Users, req.UserIds, model.TaskTypeCommand)
+	for _, c := range cmds {
+		cmd := c.toCommand()
+		// skip if it doesn't match the requested workspaceID if any.
+		if req.WorkspaceId != 0 && req.WorkspaceId != cmd.WorkspaceId {
+			continue
+		}
+		if (len(users) == 0 && len(userIDs) == 0) || users[cmd.Username] || userIDs[cmd.UserId] {
+			resp.Commands = append(resp.Commands, cmd)
+		}
+	}
+	return resp, nil
+}
+
+func (cs *commandService) GetCommand(req *apiv1.GetCommandRequest) (*apiv1.GetCommandResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.CommandId), model.TaskTypeCommand)
+	if err != nil {
+		return nil, api.NotFoundErrs("command", req.CommandId, true)
+	}
+
+	return &apiv1.GetCommandResponse{
+		Command: c.toCommand(),
+		Config:  protoutils.ToStruct(c.Config),
+	}, nil
+}
+
+func (cs *commandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.KillCommandResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.CommandId), model.TaskTypeCommand)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+	if err != nil {
+		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+	}
+	return &apiv1.KillCommandResponse{Command: c.toCommand()}, nil
+}
+
+func (cs *commandService) SetCommandPriority(
+	req *apiv1.SetCommandPriorityRequest,
+) (*apiv1.SetCommandPriorityResponse, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(req.CommandId), model.TaskTypeCommand)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.setNTSCPriority(int(req.Priority), true)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.SetCommandPriorityResponse{Command: c.toCommand()}, nil
+}
+
+func (c *command) toCommand() *commandv1.Command {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	allo := c.refreshAllocationState()
+	return &commandv1.Command{
+		Id:           c.stringID(),
+		State:        enrichState(allo.State),
+		Description:  c.Config.Description,
+		Container:    allo.SingleContainer().ToProto(),
+		StartTime:    protoutils.ToTimestamp(c.registeredTime),
+		Username:     c.Base.Owner.Username,
+		UserId:       int32(c.Base.Owner.ID),
+		DisplayName:  c.Base.Owner.DisplayName.ValueOrZero(),
+		ResourcePool: c.Config.Resources.ResourcePool,
+		ExitStatus:   c.exitStatus.String(),
+		JobId:        c.jobID.String(),
+		WorkspaceId:  int32(c.GenericCommandSpec.Metadata.WorkspaceID),
+	}
 }

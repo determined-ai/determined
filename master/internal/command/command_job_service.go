@@ -3,7 +3,6 @@ package command
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -46,9 +45,9 @@ func (c *command) SetJobPriority(priority int) error {
 	defer c.mu.Unlock()
 
 	if priority < 1 || priority > 99 {
-		return errors.New("priority must be between 1 and 99")
+		return fmt.Errorf("priority must be between 1 and 99")
 	}
-	err := c.setPriority(priority, true)
+	err := c.setNTSCPriority(priority, true)
 	if err != nil {
 		c.syslog.WithError(err).Info("setting command job priority")
 	}
