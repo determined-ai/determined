@@ -50,21 +50,7 @@ def test_remove_note_raises_exception_when_name_not_found(
 
 
 @mock.patch("determined.common.api.bindings.get_GetProject")
-def test_remove_note_raises_exception_when_name_and_contents_not_found(
-    mock_get_project: mock.MagicMock, sample_project: project.Project
-) -> None:
-    bindings_project = api_responses.sample_get_project()
-    bindings_project.project.notes = [
-        bindings.v1Note(name="sample_name", contents="sample_contents")
-    ]
-    mock_get_project.return_value = bindings_project
-
-    with pytest.raises(ValueError):
-        sample_project.remove_note(name="sample_name", contents="nonexistent_contents")
-
-
-@mock.patch("determined.common.api.bindings.get_GetProject")
-def test_remove_note_raises_exception_when_multiple_names_found_contents_absent(
+def test_remove_note_raises_exception_when_multiple_matches_found(
     mock_get_project: mock.MagicMock, sample_project: project.Project
 ) -> None:
     bindings_project = api_responses.sample_get_project()
@@ -77,20 +63,3 @@ def test_remove_note_raises_exception_when_multiple_names_found_contents_absent(
 
     with pytest.raises(ValueError):
         sample_project.remove_note(name="repeated_note_name")
-
-
-@mock.patch("determined.common.api.bindings.get_GetProject")
-@responses.activate
-def test_remove_note_handles_removal_when_multiple_names_found_contents_present(
-    mock_get_project: mock.MagicMock, sample_project: project.Project
-) -> None:
-    bindings_project = api_responses.sample_get_project()
-    bindings_project.project.notes = [
-        bindings.v1Note(name="repeated_note_name", contents="1"),
-        bindings.v1Note(name="repeated_note_name", contents="2"),
-        bindings.v1Note(name="repeated_note_name", contents="3"),
-    ]
-    mock_get_project.return_value = bindings_project
-
-    responses.put(f"{_MASTER}/api/v1/projects/{sample_project.id}/notes", json={"notes": []})
-    sample_project.remove_note(name="repeated_note_name", contents="1")
