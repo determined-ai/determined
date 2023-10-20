@@ -16,10 +16,16 @@ import { RecordKey } from 'components/kit/internal/types';
 import { themes } from 'components/kit/Theme';
 import determinedInfo from 'stores/determinedInfo';
 
-const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
-const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
-
-import { DarkLight, getDarkLight, getSystemMode, globalCssVars, Mode, Theme } from './themeUtils';
+import {
+  DarkLight,
+  getDarkLight,
+  getSystemMode,
+  globalCssVars,
+  MATCH_MEDIA_SCHEME_DARK,
+  MATCH_MEDIA_SCHEME_LIGHT,
+  Mode,
+  Theme,
+} from './themeUtils';
 interface StateUI {
   chromeCollapsed: boolean;
   darkLight: DarkLight;
@@ -55,7 +61,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.HideUISpinner }
   | { type: typeof StoreActionUI.SetMode; value: Mode }
   | { type: typeof StoreActionUI.SetPageVisibility; value: boolean }
-  | { type: typeof StoreActionUI.SetTheme; value: { darkLight: DarkLight; theme: Theme } }
+  | { type: typeof StoreActionUI.SetTheme; value: { theme: Theme } }
   | { type: typeof StoreActionUI.ShowUIChrome }
   | { type: typeof StoreActionUI.ShowUISpinner };
 
@@ -78,8 +84,8 @@ class UIActions {
     this.dispatch({ type: StoreActionUI.SetPageVisibility, value: isPageHidden });
   };
 
-  public setTheme = (darkLight: DarkLight, theme: Theme): void => {
-    this.dispatch({ type: StoreActionUI.SetTheme, value: { darkLight, theme } });
+  public setTheme = (theme: Theme): void => {
+    this.dispatch({ type: StoreActionUI.SetTheme, value: { theme } });
   };
 
   public showChrome = (): void => {
@@ -121,7 +127,6 @@ const reducerUI = (state: StateUI, action: ActionUI): Partial<StateUI> | void =>
       return { isPageHidden: action.value };
     case StoreActionUI.SetTheme:
       return {
-        darkLight: action.value.darkLight,
         theme: action.value.theme,
       };
     case StoreActionUI.ShowUIChrome:
@@ -186,7 +191,7 @@ export const ThemeProvider: React.FC<{
     const theme = themes[branding][darkLight];
     dispatch({
       type: StoreActionUI.SetTheme,
-      value: { darkLight, theme },
+      value: { theme },
     });
   }, [darkLight, branding]);
 

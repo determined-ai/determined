@@ -5,8 +5,8 @@ import { isColor, rgba2str, rgbaMix, str2rgba } from 'components/kit/internal/co
 import { findParentByClass } from 'components/kit/internal/functions';
 import { ValueOf } from 'components/kit/internal/types';
 
-const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
-const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
+export const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+export const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 
 const STRONG_WEAK_DELTA = 45;
 
