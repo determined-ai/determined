@@ -215,8 +215,8 @@ timeout is ``300`` (5 minutes).
  ``notebook_timeout``
 **********************
 
-Specifies the duration in seconds before idle Notebook instances are automatically terminated. A
-Notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not
+Specifies the duration in seconds before idle notebook instances are automatically terminated. A
+notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not
 otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`task configuration
 <command-notebook-configuration>`). Defaults to ``null``, i.e. disabled.
 
