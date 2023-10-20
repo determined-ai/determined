@@ -23,6 +23,7 @@ var ErrMock = errors.New("mock error")
 type MockTask struct {
 	RMRef *actor.Ref
 
+	TaskID         model.TaskID
 	ID             model.AllocationID
 	JobID          string
 	Group          *MockGroup
@@ -132,6 +133,7 @@ func MockTaskToAllocateRequest(
 	}
 
 	req := &sproto.AllocateRequest{
+		TaskID:            mockTask.TaskID,
 		AllocationID:      mockTask.ID,
 		JobID:             model.JobID(jobID),
 		SlotsNeeded:       mockTask.SlotsNeeded,
