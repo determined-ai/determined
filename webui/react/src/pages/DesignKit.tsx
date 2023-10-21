@@ -651,7 +651,8 @@ const ThemeSection: React.FC = () => {
       `}</code>
         <strong>UIProvider</strong>
         <strong>Variations</strong>
-        Each color scheme displays a custom theme with the following theme colors updated:
+        Each color scheme displays a custom <code>{'Theme'}</code> with the following theme colors
+        updated:
         <ul>
           <li>brand</li>
           <li>surface</li>
