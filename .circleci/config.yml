@@ -1,0 +1,78 @@
+---
+# currently just a thin wrapper around real_config to add dynamic parameters
+version: '2.1'
+setup: true
+
+orbs:
+  continuation: circleci/continuation@1.0.0
+  gh: circleci/github-cli@2.0
+
+parameters:
+  workspace_path:
+    type: string
+    default: '/tmp/workspace'
+  params_basename:
+    type: string
+    default: params.json
+
+workflows:
+  determined_ai:
+    jobs:
+      - set_up_param_file:
+          context:
+            - github-read
+      - exec_config:
+          requires:
+            - set_up_param_file
+
+jobs:
+  exec_config:
+    executor: continuation/default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: '<<pipeline.parameters.workspace_path>>'
+      - continuation/continue:
+          configuration_path: .circleci/real_config.yml
+          parameters: '<<pipeline.parameters.workspace_path>>/<<pipeline.parameters.params_basename>>'
+
+  set_up_param_file:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - gh/install
+      - checkout
+
+      # this must be first; default to an empty params list
+      - run:
+          name: clear param file
+          command: echo '{}' > "<<pipeline.parameters.params_basename>>"
+
+      # add whatever parameters are needed.
+      # repeating keys is ok, since jq will either add or overwrite
+      - run:
+          name: Check for scheduled nightly run
+          command: |
+            if [[ "scheduled_pipeline" == "<<pipeline.trigger_source>>"
+               && "nightly_tests" == "<<pipeline.schedule.name>>"
+            ]]
+            then
+              # add the parameter(s) to the temp file
+              jq '. += {"do_nightly_tests": true}' < "<<pipeline.parameters.params_basename>>" > tmpfile
+              mv -v tmpfile "<<pipeline.parameters.params_basename>>"
+            fi
+      - run:
+          name: Check for labeled nightly run
+          command: |
+            if gh pr view --json labels --jq ".labels[].name" \
+               | grep -w "ci-run-nightly"
+            then
+              jq '. += {"do_nightly_tests": true}' < "<<pipeline.parameters.params_basename>>" > tmpfile
+              mv -v tmpfile "<<pipeline.parameters.params_basename>>"
+            fi
+
+      # this must be last; persist the file to the workspace
+      - persist_to_workspace:
+          root: .
+          paths:
+            - '<<pipeline.parameters.params_basename>>'
