@@ -23,8 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
-
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -1048,7 +1046,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		},
 		cert,
 	)
-	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
+	job.SetDefaultService(m.rm)
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
