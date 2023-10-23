@@ -1019,7 +1019,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	m.echo.Use(authzAuditLogMiddleware())
-	m.echo.Use(userService.ProcessAuthentication)
+
+	var proxiedRoutes []string
+	for _, ps := range m.config.InternalConfig.ProxiedServers {
+		proxiedRoutes = append(proxiedRoutes, ps.PathPrefix)
+	}
+	m.echo.Use(processAuthWithRedirect(proxiedRoutes))
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
@@ -1050,16 +1055,6 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
-
-	for _, ps := range m.config.InternalConfig.ProxiedServers {
-		psGroup := m.echo.Group(ps.PathPrefix)
-		psTarget, err := url.Parse(ps.Destination)
-		if err != nil {
-			return errors.Wrap(err, "failed to parse the given proxied server path")
-		}
-		psProxy := httputil.NewSingleHostReverseProxy(psTarget)
-		psGroup.Any("*", echo.WrapHandler(http.StripPrefix(ps.PathPrefix, psProxy)))
-	}
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
@@ -1215,6 +1210,16 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	handler := proxy.DefaultProxy.NewProxyHandler("service")
 	m.echo.Any("/proxy/:service/*", handler)
+
+	for _, ps := range m.config.InternalConfig.ProxiedServers {
+		psGroup := m.echo.Group(ps.PathPrefix)
+		psTarget, err := url.Parse(ps.Destination)
+		if err != nil {
+			return errors.Wrap(err, "failed to parse the given proxied server path")
+		}
+		psProxy := httputil.NewSingleHostReverseProxy(psTarget)
+		psGroup.Any("*", echo.WrapHandler(http.StripPrefix(ps.PathPrefix, psProxy)))
+	}
 
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched
