@@ -147,7 +147,7 @@ the steps outline in this tutorial and copy/paste the commands into a terminal w
 the cells in the notebook, do not run the entire notebook. You'll need to run the steps individually
 and then wait for the task to complete before running the next step.
 
-Review the objectives, and what will happen next: - - - - - - -
+Review the objectives, and what will happen next:
 
 *************************************************************
  Step x: Create a Project for Batch Inferencing in Pachyderm
