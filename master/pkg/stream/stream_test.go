@@ -1,48 +1,53 @@
 package stream
 
 import (
+	"strconv"
 	"testing"
 
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
 
-type BroadcastVerification struct {
-	Upserted []*websocket.PreparedMessage
-	Deleted  []*websocket.PreparedMessage
-}
+const (
+	TestMsgUpsertKey = "testmsg"
+	TestMsgDeleteKey = "testmsg_deleted"
+)
 
 type TestMsg struct {
-	Seq          int64
-	Verification *BroadcastVerification
+	Seq int64
+	ID  int
 }
 
 func (tm TestMsg) SeqNum() int64 {
 	return tm.Seq
 }
 
-func (tm TestMsg) UpsertMsg() *websocket.PreparedMessage {
-	message, err := websocket.NewPreparedMessage(websocket.BinaryMessage, []byte("upserted"))
-	if err != nil {
-		return nil
+func (tm TestMsg) UpsertMsg() UpsertMsg {
+	return UpsertMsg{
+		JSONKey: TestMsgUpsertKey,
+		Msg:     tm,
 	}
-	tm.Verification.Upserted = append(tm.Verification.Upserted, message)
-	return message
 }
 
-func (tm TestMsg) DeleteMsg() *websocket.PreparedMessage {
-	message, err := websocket.NewPreparedMessage(websocket.BinaryMessage, []byte("deleted"))
-	if err != nil {
-		return nil
+func (tm TestMsg) DeleteMsg() DeleteMsg {
+	deleted := strconv.FormatInt(int64(tm.ID), 10)
+	return DeleteMsg{
+		Key:     TestMsgDeleteKey,
+		Deleted: deleted,
 	}
-	tm.Verification.Deleted = append(tm.Verification.Deleted, message)
+}
+
+func alwaysTrue(msg TestMsg) bool {
+	return true
+}
+
+func prepareNothing(message PreparableMessage) interface{} {
 	return message
 }
 
 func TestConfigureSubscription(t *testing.T) {
-	streamer := NewStreamer()
+	streamer := NewStreamer(prepareNothing)
 	publisher := NewPublisher[TestMsg]()
-	sub := NewSubscription[TestMsg](streamer, publisher)
+	sub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
 	require.True(t, sub.filter == nil, "subscription filter is non nil after instantiation")
 	require.True(t, len(publisher.Subscriptions) == 0,
 		"publisher's subscriptions are non-nil after instantiation")
@@ -57,7 +62,7 @@ func TestConfigureSubscription(t *testing.T) {
 	require.True(t, publisher.Subscriptions[0].filter(TestMsg{}),
 		"publisher's subscription has the wrong filter")
 
-	sub2 := NewSubscription[TestMsg](streamer, publisher)
+	sub2 := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
 	require.True(t, sub2.filter == nil, "subscription filter is non nil after instantiation")
 	sub2.Configure(func(msg TestMsg) bool {
 		return false
@@ -86,36 +91,36 @@ func TestConfigureSubscription(t *testing.T) {
 }
 
 func TestBroadcast(t *testing.T) {
-	streamer := NewStreamer()
+	streamer := NewStreamer(prepareNothing)
 	publisher := NewPublisher[TestMsg]()
-	trueSub := NewSubscription[TestMsg](streamer, publisher)
-	falseSub := NewSubscription[TestMsg](streamer, publisher)
+	trueSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
+	falseSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
 	trueSub.Configure(func(msg TestMsg) bool {
 		return true
 	})
 	falseSub.Configure(func(msg TestMsg) bool {
 		return false
 	})
-	verifyBroadcast := BroadcastVerification{
-		Upserted: nil,
-		Deleted:  nil,
-	}
 	afterMsg := TestMsg{
-		Seq:          0,
-		Verification: &verifyBroadcast,
+		Seq: 0,
+		ID:  0,
 	}
 	event := Event[TestMsg]{After: &afterMsg}
 	publisher.Broadcast([]Event[TestMsg]{event})
 
-	require.Equal(t, 1, len(verifyBroadcast.Upserted), "message was not upserted")
-	require.Equal(t, 0, len(verifyBroadcast.Deleted), "deleted messages non-zero")
+	require.Equal(t, 1, len(streamer.Msgs), "upsert message was not upserted")
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 0, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	beforeMsg := TestMsg{
-		Seq:          1,
-		Verification: &verifyBroadcast,
+		Seq: 1,
+		ID:  1,
 	}
 	event = Event[TestMsg]{Before: &beforeMsg}
 	publisher.Broadcast([]Event[TestMsg]{event})
-	require.Equal(t, 1, len(verifyBroadcast.Upserted), "upserted message incorrectly added")
-	require.Equal(t, 1, len(verifyBroadcast.Deleted), "message was not deleted")
+	require.Equal(t, 2, len(streamer.Msgs), "delete message was not upsert")
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not a delete type")
+	require.Equal(t, "1", deleteMsg.Deleted)
 }
