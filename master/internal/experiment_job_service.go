@@ -15,7 +15,7 @@ import (
 // jobservice.Service methods
 
 // ToV1Jobs() takes an experiment and returns a job.
-func (e *experiment) ToV1Job() (*jobv1.Job, error) {
+func (e *internalExperiment) ToV1Job() (*jobv1.Job, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -46,7 +46,7 @@ func (e *experiment) ToV1Job() (*jobv1.Job, error) {
 }
 
 // SetJobPriority sets an experiment's job priority.
-func (e *experiment) SetJobPriority(priority int) error {
+func (e *internalExperiment) SetJobPriority(priority int) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -61,7 +61,7 @@ func (e *experiment) SetJobPriority(priority int) error {
 }
 
 // SetWeight sets the experiment's group weight.
-func (e *experiment) SetWeight(weight float64) error {
+func (e *internalExperiment) SetWeight(weight float64) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -73,7 +73,7 @@ func (e *experiment) SetWeight(weight float64) error {
 }
 
 // SetResourcePool sets the experiment's resource pool.
-func (e *experiment) SetResourcePool(resourcePool string) error {
+func (e *internalExperiment) SetResourcePool(resourcePool string) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 

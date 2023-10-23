@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -17,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -42,9 +40,6 @@ type deleteExperimentOKResult struct {
 	State    experimentv1.State
 }
 
-// ExperimentsAddr is the address to direct experiment actions.
-var ExperimentsAddr = actor.Addr("experiments")
-
 // ProtoStateDBCaseString helps bun extract the experiment state.
 func ProtoStateDBCaseString(
 	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
@@ -56,50 +51,21 @@ func ProtoStateDBCaseString(
 	return query + fmt.Sprintf("END AS %s", serializedName)
 }
 
-// For each experiment, based on the actor, add an error or non-error to results.
-func loadMultiExperimentActionResults(results []ExperimentActionResult,
-	resps map[*actor.Ref]actor.Message,
-) ([]ExperimentActionResult, error) {
-	for ref, actorResp := range resps {
-		originalID, err := strconv.ParseInt(ref.Address().Local(), 10, 32)
-		if err != nil {
-			return nil, err
-		}
-		if actorResp == nil {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.Internal, "actorResp nil."),
-				ID:    int32(originalID),
-			})
-		} else if typed, ok := actorResp.(error); ok && typed != nil {
-			results = append(results, ExperimentActionResult{
-				Error: typed,
-				ID:    int32(originalID),
-			})
-		} else {
-			results = append(results, ExperimentActionResult{
-				Error: nil,
-				ID:    int32(originalID),
-			})
-		}
-	}
-	return results, nil
-}
-
 // For each experiment, try to retrieve an actor or append an error message.
-func nonTerminalExperiments(system *actor.System, expIDs []int32,
+func nonTerminalExperiments(
+	expIDs []int32,
 	results []ExperimentActionResult,
-) ([]*actor.Ref, []ExperimentActionResult) {
-	var refs []*actor.Ref
+) (map[int32]Experiment, []ExperimentActionResult) {
+	refs := make(map[int32]Experiment)
 	for _, expID := range expIDs {
-		addr := ExperimentsAddr.Child(expID)
-		ref := system.Get(addr)
-		if ref == nil {
+		ref, ok := ExperimentRegistry.Load(int(expID))
+		if ref == nil || !ok {
 			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "experiment in terminal state"),
 				ID:    expID,
 			})
 		} else {
-			refs = append(refs, ref)
+			refs[expID] = ref
 		}
 	}
 	return refs, results
@@ -223,7 +189,7 @@ func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionRes
 }
 
 // ActivateExperiments works on one or many experiments.
-func ActivateExperiments(ctx context.Context, system *actor.System,
+func ActivateExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
@@ -246,13 +212,18 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	refs, results := nonTerminalExperiments(system, expIDs, results)
-	resps := system.AskAll(&apiv1.ActivateExperimentRequest{}, refs...).GetAll()
-	return loadMultiExperimentActionResults(results, resps)
+	refs, results := nonTerminalExperiments(expIDs, results)
+	for id, ref := range refs {
+		results = append(results, ExperimentActionResult{
+			Error: ref.ActivateExperiment(),
+			ID:    id,
+		})
+	}
+	return results, nil
 }
 
 // CancelExperiments works on one or many experiments.
-func CancelExperiments(ctx context.Context, system *actor.System,
+func CancelExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
@@ -277,26 +248,30 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	var refs []*actor.Ref
+	refs := make(map[int32]Experiment)
 	for _, expID := range expIDs {
-		addr := ExperimentsAddr.Child(expID)
-		ref := system.Get(addr)
-		if ref == nil {
+		ref, ok := ExperimentRegistry.Load(int(expID))
+		if ref == nil || !ok {
 			// For cancel/kill, it's OK if experiment already terminated.
 			results = append(results, ExperimentActionResult{
 				Error: nil,
 				ID:    expID,
 			})
 		} else {
-			refs = append(refs, ref)
+			refs[expID] = ref
 		}
 	}
-	resps := system.AskAll(&apiv1.CancelExperimentRequest{}, refs...).GetAll()
-	return loadMultiExperimentActionResults(results, resps)
+	for id, ref := range refs {
+		results = append(results, ExperimentActionResult{
+			Error: ref.CancelExperiment(),
+			ID:    id,
+		})
+	}
+	return results, nil
 }
 
 // KillExperiments works on one or many experiments.
-func KillExperiments(ctx context.Context, system *actor.System,
+func KillExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
@@ -321,26 +296,30 @@ func KillExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	var refs []*actor.Ref
+	refs := make(map[int32]Experiment)
 	for _, expID := range expIDs {
-		addr := ExperimentsAddr.Child(expID)
-		ref := system.Get(addr)
-		if ref == nil {
+		ref, ok := ExperimentRegistry.Load(int(expID))
+		if ref == nil || !ok {
 			// For cancel/kill, it's OK if experiment already terminated.
 			results = append(results, ExperimentActionResult{
 				Error: nil,
 				ID:    expID,
 			})
 		} else {
-			refs = append(refs, ref)
+			refs[expID] = ref
 		}
 	}
-	resps := system.AskAll(&apiv1.KillExperimentRequest{}, refs...).GetAll()
-	return loadMultiExperimentActionResults(results, resps)
+	for id, ref := range refs {
+		results = append(results, ExperimentActionResult{
+			Error: ref.KillExperiment(),
+			ID:    id,
+		})
+	}
+	return results, nil
 }
 
 // PauseExperiments works on one or many experiments.
-func PauseExperiments(ctx context.Context, system *actor.System,
+func PauseExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
@@ -363,13 +342,18 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	refs, results := nonTerminalExperiments(system, expIDs, results)
-	resps := system.AskAll(&apiv1.PauseExperimentRequest{}, refs...).GetAll()
-	return loadMultiExperimentActionResults(results, resps)
+	refs, results := nonTerminalExperiments(expIDs, results)
+	for id, ref := range refs {
+		results = append(results, ExperimentActionResult{
+			Error: ref.PauseExperiment(),
+			ID:    id,
+		})
+	}
+	return results, nil
 }
 
 // DeleteExperiments works on one or many experiments.
-func DeleteExperiments(ctx context.Context, system *actor.System,
+func DeleteExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, []*model.Experiment, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -464,7 +448,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 }
 
 // ArchiveExperiments works on one or many experiments.
-func ArchiveExperiments(ctx context.Context, system *actor.System,
+func ArchiveExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -556,7 +540,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 }
 
 // UnarchiveExperiments works on one or many experiments.
-func UnarchiveExperiments(ctx context.Context, system *actor.System,
+func UnarchiveExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -648,7 +632,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 }
 
 // MoveExperiments works on one or many experiments.
-func MoveExperiments(ctx context.Context, system *actor.System,
+func MoveExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters, destinationProjectID int32,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)

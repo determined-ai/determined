@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -38,7 +39,7 @@ func TestTrial(t *testing.T) {
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
-	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
+	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -51,7 +52,7 @@ func TestTrial(t *testing.T) {
 	require.NotNil(t, tr.allocationID)
 
 	// Running stage.
-	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
+	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -84,7 +85,7 @@ func TestTrialRestarts(t *testing.T) {
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
-	require.NoError(t, tr.PatchSearcherState(trialSearcherState{
+	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -157,7 +158,7 @@ func setup(t *testing.T) (
 		time.Now(),
 		1,
 		model.PausedState,
-		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		experiment.TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
 		rmImpl,
 		a.m.db,
 		schemas.WithDefaults(expconf.ExperimentConfig{

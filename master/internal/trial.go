@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -82,7 +83,7 @@ type trial struct {
 	// state is the current state of the trial. It's patched by experiment changes and kill trial.
 	state model.State
 	// searcher encapsulates the searcher state of the trial.
-	searcher trialSearcherState
+	searcher experiment.TrialSearcherState
 	// restarts is a failure count, it increments when the trial fails and we retry it.
 	restarts int
 	// runID is a count of how many times the task container(s) have stopped and restarted, which
@@ -108,7 +109,7 @@ func newTrial(
 	jobSubmissionTime time.Time,
 	experimentID int,
 	initialState model.State,
-	searcher trialSearcherState,
+	searcher experiment.TrialSearcherState,
 	rm rm.ResourceManager,
 	pgDB db.DB,
 	config expconf.ExperimentConfig,
@@ -221,7 +222,7 @@ func (t *trial) PatchState(req model.StateWithReason) error {
 	return t.patchState(req)
 }
 
-func (t *trial) PatchSearcherState(req trialSearcherState) error {
+func (t *trial) PatchSearcherState(req experiment.TrialSearcherState) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -257,13 +258,13 @@ func (t *trial) PatchRP(rp string) {
 	}
 }
 
-func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
+func (t *trial) SetUserInitiatedEarlyExit(req experiment.UserInitiatedEarlyTrialExit) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	switch req.reason {
+	switch req.Reason {
 	case model.InvalidHP, model.InitInvalidHP:
-		t.userInitiatedExit = &req.reason
+		t.userInitiatedExit = &req.Reason
 		// After a short time, force us to clean up if we're still handling messages.
 		t.wg.Go(func(ctx context.Context) {
 			tmr := time.NewTimer(InvalidHPKillDelay)
@@ -283,9 +284,9 @@ func (t *trial) SetUserInitiatedEarlyExit(req userInitiatedEarlyExit) error {
 		})
 		return nil
 	case model.UserRequestedStop, model.Errored:
-		return fmt.Errorf("should not report special exit reason %s to the master", req.reason)
+		return fmt.Errorf("should not report special exit reason %s to the master", req.Reason)
 	default:
-		return fmt.Errorf("unhandled early exit reason: %s", req.reason)
+		return fmt.Errorf("unhandled early exit reason: %s", req.Reason)
 	}
 }
 
