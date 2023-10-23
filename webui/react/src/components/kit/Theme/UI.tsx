@@ -1,6 +1,14 @@
 import { StyleProvider } from '@ant-design/cssinjs';
 import { theme as AntdTheme, ConfigProvider } from 'antd';
-import React, { Dispatch, useContext, useMemo, useReducer, useRef } from 'react';
+import React, {
+  Dispatch,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
 import { RecordKey } from 'components/kit/internal/types';
 
@@ -156,6 +164,12 @@ export const UIProvider: React.FC<{
   darkMode?: boolean;
   theme: Theme;
 }> = ({ children, theme, darkMode = false }) => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(darkMode);
+
+  useLayoutEffect(() => {
+    setIsDarkMode(darkMode);
+  }, [darkMode]);
+
   const ref = useRef<HTMLDivElement>(null);
 
   // Set global CSS variables shared across themes.
@@ -186,7 +200,7 @@ export const UIProvider: React.FC<{
    *  the following line is needed to ensure styling in these
    *  specific cases is still applied correctly.
    */
-  document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
+  document.documentElement.style.setProperty('color-scheme', isDarkMode ? 'dark' : 'light');
 
   const lightThemeConfig = {
     components: {
@@ -252,9 +266,10 @@ export const UIProvider: React.FC<{
     },
   };
 
-  const algorithm = darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
+  const algorithm = isDarkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
   const { token: baseToken, components: baseComponents } = baseThemeConfig;
-  const { token, components } = darkMode ? darkThemeConfig : lightThemeConfig;
+  const { token, components } = isDarkMode ? darkThemeConfig : lightThemeConfig;
+
   const configTheme = {
     algorithm,
     components: {
