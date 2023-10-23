@@ -139,9 +139,7 @@ type KnownKeySet struct {
 	// Experiments string `json:"experiments"`
 }
 
-// SubscriptionSpecSet is both the type for .Add and .Drop of
-// the SubscriptionModMsg type that a streaming client
-// can write to the websocket to change their message type.
+// SubscriptionSpecSet is the set of subscription specs that can be sent in startup message.
 type SubscriptionSpecSet struct {
 	Trials  *TrialSubscriptionSpec  `json:"trials"`
 	Metrics *MetricSubscriptionSpec `json:"metrics"`
