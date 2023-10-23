@@ -541,7 +541,7 @@ const ThemeSection: React.FC = () => {
       backgroundOnStrong: variation.color,
       brand: variation.color,
       stageBorder: variation.color,
-      statusCritical: variation.color,
+      statusSuccess: variation.color,
       surface: variation.color,
     },
     variation,
@@ -595,12 +595,10 @@ const ThemeSection: React.FC = () => {
           <Card />
           <br />
           <strong>
-            <p>Primary Danger Button</p>
+            <p>Icon with color success</p>
           </strong>
           <br />
-          <Button danger type="primary">
-            Danger
-          </Button>
+          <Icon color="success" name="star" showTooltip title="success" />
         </div>
       </UIProvider>
     );
@@ -680,7 +678,7 @@ const ThemeSection: React.FC = () => {
           <li>brand</li>
           <li>surface</li>
           <li>backgroundOnStrong</li>
-          <li>statusCritical</li>
+          <li>statusSuccess</li>
           <li>stageBorder</li>
         </ul>
         {themeVariations}

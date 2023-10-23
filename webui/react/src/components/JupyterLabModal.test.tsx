@@ -9,6 +9,8 @@ import { useModal } from 'components/kit/Modal';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';
+
+import { ThemeProvider } from './kit/Theme';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
@@ -58,7 +60,7 @@ const ModalTrigger: React.FC = () => {
 
   return (
     <SettingsProvider>
-      <>
+      <ThemeProvider>
         <Button onClick={JupyterLabModal.open}>Show Jupyter Lab</Button>
         <JupyterLabModal.Component
           workspace={{
@@ -73,7 +75,7 @@ const ModalTrigger: React.FC = () => {
             userId: 1,
           }}
         />
-      </>
+      </ThemeProvider>
     </SettingsProvider>
   );
 };
