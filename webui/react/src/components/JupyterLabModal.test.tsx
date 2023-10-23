@@ -60,22 +60,20 @@ const ModalTrigger: React.FC = () => {
 
   return (
     <SettingsProvider>
-      <ThemeProvider>
-        <Button onClick={JupyterLabModal.open}>Show Jupyter Lab</Button>
-        <JupyterLabModal.Component
-          workspace={{
-            archived: false,
-            id: 1,
-            immutable: false,
-            name: 'Uncategorized',
-            numExperiments: 0,
-            numProjects: 0,
-            pinned: false,
-            state: WorkspaceState.Unspecified,
-            userId: 1,
-          }}
-        />
-      </ThemeProvider>
+      <Button onClick={JupyterLabModal.open}>Show Jupyter Lab</Button>
+      <JupyterLabModal.Component
+        workspace={{
+          archived: false,
+          id: 1,
+          immutable: false,
+          name: 'Uncategorized',
+          numExperiments: 0,
+          numProjects: 0,
+          pinned: false,
+          state: WorkspaceState.Unspecified,
+          userId: 1,
+        }}
+      />
     </SettingsProvider>
   );
 };
@@ -85,7 +83,9 @@ const setup = async () => {
 
   render(
     <BrowserRouter>
-      <ModalTrigger />
+      <ThemeProvider>
+        <ModalTrigger />
+      </ThemeProvider>
     </BrowserRouter>,
   );
 
