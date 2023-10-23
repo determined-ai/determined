@@ -195,10 +195,12 @@ func TrialCollectStartupMsgs(
 	return out, nil
 }
 
-
-
 // TrialMakeFilter creates a TrialMsg filter based on the given TrialSubscriptionSpec.
 func TrialMakeFilter(spec *TrialSubscriptionSpec) (func(*TrialMsg) bool, error) {
+	// should this filter even run?
+	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
+		return nil, errors.Errorf("invalid subscription spec arguments: %v %v", spec.TrialIds, spec.ExperimentIds)
+	}
 	// create sets based on subscription spec
 	trialIds := make(map[int]struct{})
 	for _, id := range spec.TrialIds {

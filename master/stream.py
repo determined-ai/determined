@@ -1,8 +1,9 @@
 import time
 import uuid
+from string import Template
+
 import lomond
 from lomond import events
-from string import Template
 
 from determined.experimental import client
 
@@ -14,41 +15,48 @@ print(f"Logged in as: {client._determined._session._auth.session.username}")
 token = client._determined._session._auth.session.token
 
 
-def create_payload(
-    trials=input("Submit trial ids to subscribe to (default: 1,2,3): "),
-    metrics=input("Submit metric ids to subscribe to (default: 1,2,3): "),
-    experiments=input("Submit experiment ids to subscribe to (default: 1,2,3): ")
-):
+def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
     sync_id = uuid.uuid4()
     payload_template = Template(
         """
     {
         "sync_id": "$sync_id",
         "subscribe": {
-        "trials": {
-            "trial_ids": [$trial_ids],
-            "experiment_ids": [$experiment_ids],
-            "since": 0
+            "trials": {
+                "trial_ids":      [$trial_ids],
+                "experiment_ids": [$experiment_ids],
+                "since": 0
+            },
+            "metrics": {
+                "metric_ids":     [$metric_ids],
+                "trial_ids":      [$trial_ids],
+                "experiment_ids": [$experiment_ids],
+                "since": 0
+            }
         },
-        "metrics": {
-            "metric_ids": [$metric_ids],
-            "trial_ids": [$trial_ids],
-            "experiment_ids": [$experiment_ids],
-            "since": 0
+        "known": {
+            "trials":  "$trial_ids",
+            "metrics": "$metric_ids"
         }
-    },
-    "known": {
-        "trials": "$trial_ids",
-        "metrics": "$metric_ids"
     }
     """
     )
-    inputs = [trials, metrics, experiments]
-    for i, s in enumerate(inputs):
-        if s == "":
-            inputs[i] = "1,2,3"
-    
-    startupMsg = payload_template.substitute(sync_id=sync_id, trial_ids=trials, metric_ids=metrics, experiment_ids=experiments)
+
+    if trials is None:
+        trials = input("Submit trials to subscribe to (default: 1,2,3): ") or "1,2,3"
+    if metrics is None:
+        metrics = input("Submit metrics to subscribe to (default: 1,2,3): ") or "1,2,3"
+    if experiments is None:
+        experiments = (
+            input("Submit experiments to subscribe to (default: 1,2,3): ") or "1,2,3"
+        )
+
+    startupMsg = payload_template.substitute(
+        sync_id=sync_id,
+        trial_ids=trials,
+        metric_ids=metrics,
+        experiment_ids=experiments,
+    )
     print(f"startupMsg ({sync_id}) created")
     return startupMsg.encode()
 
@@ -68,6 +76,7 @@ def stream_loop():
             elif isinstance(event, events.Ready):
                 print("ready")
                 ws.send_binary(create_payload())
+                # ws.send_binary(create_payload())
             elif isinstance(
                 event, (events.ConnectFail, events.Rejected, events.ProtocolError)
             ):

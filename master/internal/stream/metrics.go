@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -198,99 +199,37 @@ func MetricCollectStartupMsgs(
 	return out, nil
 }
 
-// MetricCollectSubscriptionModMsgs scrapes the database when a
-// user submits a new MetricSubscriptionSpec for initial matches.
-func MetricCollectSubscriptionModMsgs(ctx context.Context, addSpec MetricSubscriptionSpec) (
-	[]interface{}, error,
-) {
-	if len(addSpec.MetricIds) == 0 && len(addSpec.TrialIds) == 0 && len(addSpec.ExperimentIds) == 0 {
-		return nil, nil
-	}
-	var metricMsgs []*MetricMsg
-	q := getMetricMsgsWithWorkspaceID(metricMsgs)
-
-	// Use WhereSince to build a complex WHERE clause.
-	ws := stream.WhereSince{Since: addSpec.Since}
-	if len(addSpec.MetricIds) > 0 {
-		ws.Include("id in (?)", bun.In(addSpec.MetricIds))
-	}
-	q = ws.Apply(q)
-
-	err := q.Scan(ctx)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error: %v\n", err)
-		return nil, err
-	}
-
-	var out []interface{}
-	for _, msg := range metricMsgs {
-		out = append(out, msg.UpsertMsg())
-	}
-	return out, nil
-}
-
-// MetricFilterMaker tracks the metric id's that are to be filtered for.
-type MetricFilterMaker struct {
-	MetricIds     map[int]bool
-	TrialIds      map[int]bool
-	ExperimentIds map[int]bool
-}
-
-// NewMetricFilterMaker creates a new FilterMaker.
-func NewMetricFilterMaker() FilterMaker[*MetricMsg, MetricSubscriptionSpec] {
-	return &MetricFilterMaker{
-		make(map[int]bool),
-		make(map[int]bool),
-		make(map[int]bool),
-	}
-}
-
-// AddSpec adds MetricIds specified in MetricSubscriptionSpec.
-func (ms *MetricFilterMaker) AddSpec(spec MetricSubscriptionSpec) {
-	for _, id := range spec.MetricIds {
-		ms.MetricIds[id] = true
-	}
-	for _, id := range spec.TrialIds {
-		ms.TrialIds[id] = true
-	}
-	for _, id := range spec.ExperimentIds {
-		ms.ExperimentIds[id] = true
-	}
-}
-
-// DropSpec removes MetricIds specified in MetricSubscriptionSpec.
-func (ms *MetricFilterMaker) DropSpec(spec MetricSubscriptionSpec) {
-	for _, id := range spec.MetricIds {
-		delete(ms.MetricIds, id)
-	}
-	for _, id := range spec.TrialIds {
-		delete(ms.TrialIds, id)
-	}
-	for _, id := range spec.ExperimentIds {
-		delete(ms.ExperimentIds, id)
-	}
-}
-
-// MakeFilter returns a function that determines if a MetricMsg based on
-// the MetricFilterMaker's spec.
-func (ms *MetricFilterMaker) MakeFilter() func(*MetricMsg) bool {
+// MetricMakeFilter creates a MetricMsg filter based on the given MetricSubscriptionSpec.
+func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, error) {
 	// Should this filter even run?
-	if len(ms.MetricIds) == 0 && len(ms.TrialIds) == 0 && len(ms.ExperimentIds) == 0 {
-		return nil
+	if len(spec.MetricIds) == 0 && len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
+		return nil, fmt.Errorf(
+			"invalid subscription spec arguments: %v %v %v",
+			spec.MetricIds, spec.TrialIds, spec.ExperimentIds,
+		)
 	}
 
 	// Make a copy of the map, because the filter must run safely off-thread.
-	metricIds := make(map[int]bool)
-	trialIds := make(map[int]bool)
-	experimentIds := make(map[int]bool)
-	for id := range ms.MetricIds {
-		metricIds[id] = true
+	metricIds := make(map[int]struct{})
+	trialIds := make(map[int]struct{})
+	experimentIds := make(map[int]struct{})
+	for _, id := range spec.MetricIds {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid metric id: %d", id)
+		}
+		metricIds[id] = struct{}{}
 	}
-	for id := range ms.TrialIds {
-		trialIds[id] = true
+	for _, id := range spec.TrialIds {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid trial id: %d", id)
+		}
+		trialIds[id] = struct{}{}
 	}
-	for id := range ms.ExperimentIds {
-		experimentIds[id] = true
+	for _, id := range spec.ExperimentIds {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid experiment id: %d", id)
+		}
+		experimentIds[id] = struct{}{}
 	}
 
 	// return a closure around our copied map
@@ -305,7 +244,7 @@ func (ms *MetricFilterMaker) MakeFilter() func(*MetricMsg) bool {
 			return true
 		}
 		return false
-	}
+	}, nil
 }
 
 // MetricMakePermissionFilter returns a function that checks if a MetricMsg

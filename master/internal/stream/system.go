@@ -202,19 +202,14 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	streamer := stream.NewStreamer(prepareFunc)
-	user := c.(*detContext.DetContext).MustGetUser()
-	ss, err := NewSubscriptionSet(ctx, streamer, ps, user)
-	if err != nil {
-		return errors.Wrap(err, "creating subscription set")
-	}
-	defer ss.UnsubscribeAll()
-
 	// read and handle in initial startup message
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
 		return errors.Wrapf(err, "error while reading initial startup message")
 	}
+	var ss SubscriptionSet
+	defer ss.UnsubscribeAll()
 	msgs, err := startupMsgHandler(ctx, startupMsg, ps, &ss, user, streamer)
 	if err != nil {
 		if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
@@ -280,7 +275,7 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	// waitForSomething returns a tuple of (msgs, closed)
-	waitForSomething := func() ([]StartupMsg, []*websocket.PreparedMessage, bool) {
+	waitForSomething := func() ([]StartupMsg, []interface{}, bool) {
 		streamer.Cond.L.Lock()
 		defer streamer.Cond.L.Unlock()
 		streamer.Cond.Wait()
@@ -351,14 +346,6 @@ func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
 	return msg
 }
 
-		err := writeAll(socket, msgs)
-		// XXX: don't log broken pipe errors.
-		if err != nil {
-			return errors.Wrapf(err, "error writing to socket")
-		}
-	}
-}
-
 // startupMsgHandler reads and responds to startup messages sent by streaming clients.
 func startupMsgHandler(
 	ctx context.Context,
@@ -367,7 +354,7 @@ func startupMsgHandler(
 	ss *SubscriptionSet,
 	user model.User,
 	streamer *stream.Streamer,
-) (msgs []*websocket.PreparedMessage, err error) {
+) (msgs []interface{}, err error) {
 	defer func() {
 		syncMsg := SyncMsg{SyncID: startupMsg.SyncID}
 		msgs = append(msgs, syncMsg.toPreparedMessage())
@@ -592,16 +579,6 @@ func NewSubscriptionSet(
 			),
 			MetricCollectStartupMsgs,
 		},
-		Metrics: &subscriptionState[*MetricMsg, MetricSubscriptionSpec]{
-			stream.NewSubscription(
-				streamer,
-				ps.Metrics,
-				newPermFilter(ctx, user, MetricMakePermissionFilter, &err),
-			),
-			NewMetricFilterMaker(),
-			MetricCollectStartupMsgs,
-			MetricCollectSubscriptionModMsgs,
-		},
 	}, err
 }
 
@@ -663,6 +640,9 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 func (ss *SubscriptionSet) UnsubscribeAll() {
 	if ss.Trials != nil {
 		ss.Trials.Subscription.Unsubscribe()
+	}
+	if ss.Metrics != nil {
+		ss.Metrics.Subscription.Unsubscribe()
 	}
 	// ss.Experiments.Subscription.Unsubscribe()
 }
