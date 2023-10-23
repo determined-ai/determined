@@ -1,4 +1,3 @@
-import distutils.util
 import getpass
 from argparse import Namespace
 from collections import namedtuple
@@ -7,7 +6,7 @@ from typing import Any, List
 from determined.cli import errors, login_sdk_client, render, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, string_to_bool
 from determined.experimental import client
 
 FullUser = namedtuple(
@@ -252,21 +251,21 @@ args_description = [
             Arg(
                 "--remote",
                 dest="remote",
-                type=lambda s: bool(distutils.util.strtobool(s)),
+                type=string_to_bool,
                 default=None,
                 help="set user as remote",
             ),
             Arg(
                 "--active",
                 dest="activate",
-                type=lambda s: bool(distutils.util.strtobool(s)),
+                type=string_to_bool,
                 default=None,
                 help="set user as active/inactive",
             ),
             Arg(
                 "--admin",
                 dest="admin",
-                type=lambda s: bool(distutils.util.strtobool(s)),
+                type=string_to_bool,
                 default=None,
                 help="grant/remove user admin permissions",
             ),

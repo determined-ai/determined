@@ -1,3 +1,4 @@
+import distutils.util
 import functools
 import itertools
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
@@ -242,3 +243,8 @@ def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 
     # the default print help.
     if subparsers is not None and parser.get_default("func") is None:
         parser.set_defaults(func=help_func(parser))
+
+
+# Converts string values to boolean for flag arguments (e.g. --active=true)
+def string_to_bool(s: str) -> bool:
+    return bool(distutils.util.strtobool(s))
