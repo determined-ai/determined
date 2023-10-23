@@ -1,10 +1,11 @@
-import Select, { Option, RefSelectProps } from 'determined-ui/Select';
 import Form from 'determined-ui/Form';
 import Icon from 'determined-ui/Icon';
 import { Modal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
+import Select, { Option, RefSelectProps } from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
-import React, { useCallback, useId, useState } from 'react';
+import _ from 'lodash';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
