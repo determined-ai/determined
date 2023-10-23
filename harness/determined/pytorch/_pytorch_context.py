@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import pathlib
+import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
 import torch
@@ -628,6 +629,13 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         if self._scaler is not None and self._scaler.is_enabled():
             raise det.errors.InvalidExperimentException("Do not mix APEX with PyTorch AMP.")
+
+        warnings.warn(
+            "PyTorchTrial support for NVIDIA/apex has been deprecated and will be removed "
+            "in a future version. We recommend users to migrate to Torch AMP (`torch.cuda.amp`).",
+            FutureWarning,
+            stacklevel=2,
+        )
 
         if self._use_apex:
             raise det.errors.InvalidExperimentException("Please only call configure_apex_amp once.")
