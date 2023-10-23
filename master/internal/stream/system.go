@@ -23,9 +23,10 @@ import (
 type JSONB interface{}
 
 const (
-	minReconn = 1 * time.Second
-	maxReconn = 10 * time.Second
-	trialChan = "stream_trial_chan"
+	minReconn  = 1 * time.Second
+	maxReconn  = 10 * time.Second
+	trialChan  = "stream_trial_chan"
+	metricChan = "stream_metric_chan"
 )
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
@@ -35,6 +36,7 @@ const (
 type PublisherSet struct {
 	DBAddress string
 	Trials    *stream.Publisher[*TrialMsg]
+	Metrics   *stream.Publisher[*MetricMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
@@ -45,7 +47,8 @@ type PublisherSet struct {
 // There is one SubscriptionSet for each websocket connection.  It has one SubscriptionManager per
 // streamable type.
 type SubscriptionSet struct {
-	Trials *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
+	Trials  *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
+	Metrics *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
 	// Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 }
 
@@ -97,6 +100,7 @@ func NewPublisherSet() *PublisherSet {
 	return &PublisherSet{
 		DBAddress: "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
 		Trials:    stream.NewPublisher[*TrialMsg](),
+		Metrics:   stream.NewPublisher[*MetricMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
 	}
@@ -124,7 +128,8 @@ type SubscriptionModMsg struct {
 //
 // Each field of a KnownKeySet is a comma-separated list of int64s and ranges like "a,b-c,d".
 type KnownKeySet struct {
-	Trials string `json:"trials"`
+	Trials  string `json:"trials"`
+	Metrics string `json:"metrics"`
 	// Experiments string `json:"experiments"`
 }
 
@@ -132,7 +137,8 @@ type KnownKeySet struct {
 // the SubscriptionModMsg type that a streaming client
 // can write to the websocket to change their message type.
 type SubscriptionSpecSet struct {
-	Trials *TrialSubscriptionSpec `json:"trials"`
+	Trials  *TrialSubscriptionSpec  `json:"trials"`
+	Metrics *MetricSubscriptionSpec `json:"metrics"`
 	// Experiments *ExperimentSubscriptionSpec `json:"experiments"`
 }
 
@@ -164,6 +170,11 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 	eg.Go(
 		func(c context.Context) error {
 			return start(ctx, ps.DBAddress, trialChan, ps.Trials)
+		},
+	)
+	eg.Go(
+		func(c context.Context) error {
+			return start(ctx, ps.DBAddress, metricChan, ps.Metrics)
 		},
 	)
 	// eg.Go(start(ctx, "stream_experiment_chan", ps.Experiments))
@@ -208,6 +219,7 @@ func (ps *PublisherSet) entrypoint(
 	err = socket.ReadJSON(&startupMsg)
 	// XXX: errors here don't seem to appear on the websocket side...?
 	if err != nil {
+		log.Error(errors.Wrap(err, "reading startup message"))
 		return errors.Wrap(err, "reading startup message")
 	}
 	// Use the declarative strategy to process all offline events:
@@ -524,25 +536,35 @@ func NewSubscriptionSet(
 			TrialCollectStartupMsgs,
 			TrialCollectSubscriptionModMsgs,
 		},
+		Metrics: &subscriptionState[*MetricMsg, MetricSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Metrics,
+				newPermFilter(ctx, user, MetricMakePermissionFilter, &err),
+			),
+			NewMetricFilterMaker(),
+			MetricCollectStartupMsgs,
+			MetricCollectSubscriptionModMsgs,
+		},
 	}, err
 }
 
 func startup[T stream.Msg, S any](
 	ctx context.Context,
 	user model.User,
-	msgs []interface{},
+	msgs *[]interface{},
 	err error,
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
 	prepare func(message stream.PreparableMessage) interface{},
-) ([]interface{}, error) {
+) error {
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if spec == nil {
 		// no change
-		return msgs, nil
+		return nil
 	}
 
 	// configure initial filter
@@ -556,12 +578,12 @@ func startup[T stream.Msg, S any](
 	// Scan for historical msgs matching newly-added subscriptions.
 	newmsgs, err := state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
-		return nil, err
+		return echo.ErrCookieNotFound
 	}
 	for _, msg := range newmsgs {
-		msgs = append(msgs, prepare(msg))
+		*msgs = append(*msgs, prepare(msg))
 	}
-	return msgs, nil
+	return nil
 }
 
 // Startup handles starting up the Subscription objects in the SubscriptionSet.
@@ -573,8 +595,16 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 
 	var msgs []interface{}
 	var err error
-	msgs, err = startup(ctx, user, msgs, err, ss.Trials, known.Trials, sub.Trials,
-		ss.Trials.Subscription.Streamer.PrepareFn)
+	err = startup(
+		ctx, user, &msgs, err,
+		ss.Trials, known.Trials,
+		sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn,
+	)
+	err = startup(
+		ctx, user, &msgs, err,
+		ss.Metrics, known.Metrics,
+		sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
+	)
 	return msgs, err
 }
 
@@ -629,6 +659,7 @@ func (ss *SubscriptionSet) SubscriptionMod(ctx context.Context, msg Subscription
 	var msgs []interface{}
 	var err error
 	msgs, err = subMod(ctx, msgs, err, ss.Trials, add.Trials, drop.Trials)
+	msgs, err = subMod(ctx, msgs, err, ss.Metrics, add.Metrics, drop.Metrics)
 	// msgs, err = subMod(msgs, err, ctx, ss.Experiments, add.Experiments, drop.Experiments)
 	return msgs, err
 }
@@ -636,5 +667,6 @@ func (ss *SubscriptionSet) SubscriptionMod(ctx context.Context, msg Subscription
 // UnsubscribeAll unsubscribes all Subscription's in the SubscriptionSet.
 func (ss *SubscriptionSet) UnsubscribeAll() {
 	ss.Trials.Subscription.Configure(nil)
+	ss.Metrics.Subscription.Configure(nil)
 	// ss.Experiments.Subscription.Configure(nil)
 }

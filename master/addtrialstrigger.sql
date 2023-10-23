@@ -62,7 +62,7 @@ BEGIN
     ELSEIF (TG_OP = 'DELETE') THEN
         proj = project_id from experiments where experiments.id = OLD.experiment_id;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_trial_notify(to_jsonb(OLD), work, NULL, NULL);
+        PERFORM stream_trial_notify(to_jsonb(OLD), work,  NULL, NULL);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
