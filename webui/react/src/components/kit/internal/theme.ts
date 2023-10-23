@@ -58,6 +58,7 @@ export const themeBase = {
     // Font styles.
     fontFamily: 'Inter, Arial, Helvetica, sans-serif',
     fontFamilyCode: '"Source Code Pro", monospace',
+
     // Specialized and unique styles.
     density: '2',
     fontFamilyVar: '"Inter var", Arial, Helvetica, sans-serif',
@@ -96,7 +97,6 @@ export const themeBase = {
     ixOnWeak: undefined,
     stageWeak: undefined,
     ixStrong: undefined,
-
     surface: undefined,
     ixWeak: undefined,
     surfaceBorder: undefined,
@@ -106,6 +106,7 @@ export const themeBase = {
     surfaceOn: undefined,
     overlayWeak: undefined,
     surfaceOnStrong: undefined,
+
     // Status styles.
     statusActive: 'rgba(0, 155, 222, 1.0)',
     surfaceStrong: undefined,
