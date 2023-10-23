@@ -1,6 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
 import {
-  BrandingType,
   CheckpointState,
   CommandState,
   JobState,
@@ -10,14 +9,6 @@ import {
   ValueOf,
   WorkspaceState,
 } from 'components/kit/internal/types';
-
-import {
-  DarkLight,
-  themeDarkDetermined,
-  themeDarkHpe,
-  themeLightDetermined,
-  themeLightHpe,
-} from './themeUtils';
 
 /*
  * Where did we get our sizes from?
@@ -89,14 +80,4 @@ export const getStateColorCssVar = (
   const on = options.isOn ? '-on' : '';
   const strongWeak = options.strongWeak ? `-${options.strongWeak}` : '';
   return `var(--theme-status-${name}${on}${strongWeak})`;
-};
-export const themes = {
-  [BrandingType.Determined]: {
-    [DarkLight.Dark]: themeDarkDetermined,
-    [DarkLight.Light]: themeLightDetermined,
-  },
-  [BrandingType.HPE]: {
-    [DarkLight.Dark]: themeDarkHpe,
-    [DarkLight.Light]: themeLightHpe,
-  },
 };

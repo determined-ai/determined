@@ -24,6 +24,11 @@ import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
 import { TypographySize } from 'components/kit/internal/fonts';
+import {
+  themeBase,
+  themeDarkDetermined,
+  themeLightDetermined,
+} from 'components/kit/internal/theme';
 import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
 import { LineChart } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
@@ -36,12 +41,7 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Spinner from 'components/kit/Spinner';
-import useUI, {
-  Theme,
-  themeDarkDetermined,
-  themeLightDetermined,
-  UIProvider,
-} from 'components/kit/Theme';
+import useUI, { Mode, Theme, UIProvider } from 'components/kit/Theme';
 import { makeToast } from 'components/kit/Toast';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
@@ -546,6 +546,7 @@ const ThemeSection: React.FC = () => {
     },
     variation,
   }));
+
   const themeVariations = themes.map((themeVariation) => {
     return (
       <UIProvider
@@ -615,22 +616,44 @@ const ThemeSection: React.FC = () => {
         <p>
           A <code>{'<UIProvider>'}</code> is also included in the UI kit, it is responsible for
           providing styling to children components. It requires a <code>{'theme'}</code> prop that
-          is the <code>{'Theme'}</code>
-          configuration. Additionally, it takes an optional <code>{'darkMode'}</code> prop to switch
-          the supplied theme between light and dark mode.
+          is a <code>{'Theme'}</code>
+          configuration with the custom theme options shown below. Additionally, it takes an
+          optional <code>{'darkMode'}</code> prop to switch the supplied theme between light and
+          dark mode.
         </p>
+        <p>There are several additional helpers that can be used from within the UI kit.</p>
+      </AntDCard>
+      <AntDCard title="Helper Functions">
         <p>
-          There are several additional helpers that can be used from withing the UI kit.
-          <ul>
-            <li>
-              <code>{'useUI'}</code>, a custom hook for setting the new state for theme, mode and
-              other UI-related functionalities.
-            </li>
-            <li>
-              helper functions, such as <code>{'getCssVar'}</code> .
-            </li>
-          </ul>
+          <strong>UseUI</strong>
         </p>
+        A custom hook that can be used for setting and retrieving the global state for the theme,
+        mode and other UI-related functionalities.
+        <br />
+        <p>
+          <strong>GetCssVar</strong>
+        </p>
+        Enables retrieving a value for a specified theme option.
+        <br />
+        <p>
+          <strong>getSystemMode</strong>
+        </p>
+        Returns the current mode for the users device. The Mode options are shown below.
+      </AntDCard>
+      <AntDCard title="Mode">
+        The {'mode'} can be of the following types:
+        {Object.keys(Mode).map((mode) => (
+          <p key={mode}>{mode}</p>
+        ))}
+      </AntDCard>
+      <AntDCard title="Theme Options">
+        <p>The UIProvider takes a Theme prop with the following properties:</p>
+        <br />
+        <Grid>
+          {Object.keys(themeBase).map((property) => (
+            <p key={property}>{property}</p>
+          ))}
+        </Grid>
       </AntDCard>
       <AntDCard title="Usage">
         <strong>ThemeProvider</strong>
@@ -651,8 +674,8 @@ const ThemeSection: React.FC = () => {
       `}</code>
         <strong>UIProvider</strong>
         <strong>Variations</strong>
-        Each color scheme displays a custom <code>{'Theme'}</code> with the following theme colors
-        updated:
+        Each variation displays a custom Theme with the following theme options set to the specified
+        color:
         <ul>
           <li>brand</li>
           <li>surface</li>

@@ -7,6 +7,8 @@ import { RecordKey } from 'components/kit/internal/types';
 import { globalCssVars, Mode, Theme } from './themeUtils';
 
 export { StyleProvider };
+export type { Theme };
+
 interface StateUI {
   chromeCollapsed: boolean;
   isPageHidden: boolean;

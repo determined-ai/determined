@@ -2,9 +2,14 @@ import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DarkLight, themes } from 'components/kit/Theme';
 import {
-  getDarkLight,
+  themeDarkDetermined,
+  themeDarkHpe,
+  themeLightDetermined,
+  themeLightHpe,
+} from 'components/kit/internal/theme';
+import { DarkLight } from 'components/kit/internal/types';
+import {
   getSystemMode,
   MATCH_MEDIA_SCHEME_DARK,
   MATCH_MEDIA_SCHEME_LIGHT,
@@ -12,6 +17,23 @@ import {
   Theme,
 } from 'components/kit/Theme/themeUtils';
 import determinedInfo, { BrandingType } from 'stores/determinedInfo';
+
+const themes = {
+  [BrandingType.Determined]: {
+    [DarkLight.Dark]: themeDarkDetermined,
+    [DarkLight.Light]: themeLightDetermined,
+  },
+  [BrandingType.HPE]: {
+    [DarkLight.Dark]: themeDarkHpe,
+    [DarkLight.Light]: themeLightHpe,
+  },
+};
+
+const getDarkLight = (mode: Mode, systemMode: Mode): DarkLight => {
+  const resolvedMode =
+    mode === Mode.System ? (systemMode === Mode.System ? Mode.Light : systemMode) : mode;
+  return resolvedMode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
+};
 
 export const useTheme = (
   mode: Mode,
