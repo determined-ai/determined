@@ -51,6 +51,8 @@ UUID, run
 
    <br />
 
+.. _shells:
+
 ********
  Shells
 ********
