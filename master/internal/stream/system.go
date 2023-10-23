@@ -552,19 +552,19 @@ func NewSubscriptionSet(
 func startup[T stream.Msg, S any](
 	ctx context.Context,
 	user model.User,
-	msgs []interface{},
+	msgs *[]interface{},
 	err error,
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
 	prepare func(message stream.PreparableMessage) interface{},
-) ([]interface{}, error) {
+) error {
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if spec == nil {
 		// no change
-		return msgs, nil
+		return nil
 	}
 
 	// configure initial filter
@@ -578,12 +578,12 @@ func startup[T stream.Msg, S any](
 	// Scan for historical msgs matching newly-added subscriptions.
 	newmsgs, err := state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
-		return nil, err
+		return echo.ErrCookieNotFound
 	}
 	for _, msg := range newmsgs {
-		msgs = append(msgs, prepare(msg))
+		*msgs = append(*msgs, prepare(msg))
 	}
-	return msgs, nil
+	return nil
 }
 
 // Startup handles starting up the Subscription objects in the SubscriptionSet.
@@ -595,24 +595,15 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 
 	var msgs []interface{}
 	var err error
-	msgs, err = startup(ctx,
-		user,
-		msgs,
-		err,
-		ss.Trials,
-		known.Trials,
-		sub.Trials,
-		ss.Trials.Subscription.Streamer.PrepareFn,
+	err = startup(
+		ctx, user, &msgs, err,
+		ss.Trials, known.Trials,
+		sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn,
 	)
-	msgs, err = startup(
-		ctx,
-		user,
-		msgs,
-		err,
-		ss.Metrics,
-		known.Metrics,
-		sub.Metrics,
-		ss.Metrics.Subscription.Streamer.PrepareFn,
+	err = startup(
+		ctx, user, &msgs, err,
+		ss.Metrics, known.Metrics,
+		sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
 	)
 	return msgs, err
 }
