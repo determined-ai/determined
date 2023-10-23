@@ -13,13 +13,16 @@ In this tutorial, we'll show you how to manage sharded checkpoints using :ref:`d
 We will guide you through a process that includes setting up torch distributed for distributed
 training, sharding data between different processes, and saving sharded checkpoints.
 
+For the full script, visit the `Github repository
+<https://github.com/determined-ai/determined/blob/main/examples/features/unmanaged/3_torch_distributed.py>`_.
+
 ************
  Objectives
 ************
 
 These step-by-step instructions will cover:
 
--  Initializing communications library and distributed context
+-  Initializing communications libraries and distributed context
 -  Implementing sharding for batches across processes
 -  Reporting training and validation metrics
 -  Storing sharded checkpoints
@@ -27,9 +30,9 @@ These step-by-step instructions will cover:
 
 By the end of this guide, you'll:
 
--  Grasp how distributed training functions in detached mode
+-  Understand how distributed training functions in detached mode
 -  Know how to shard checkpoints effectively
--  Understand how to employ the core API for managing distributed training sessions
+-  Understand how to employ the Core API for managing distributed training sessions
 
 ***************
  Prerequisites
@@ -42,14 +45,15 @@ By the end of this guide, you'll:
 
 **Recommended**
 
--  `Simple Metrics Reporting User Guide <simple-metrics-reporting>`_
--  `Save and Load State using Checkpoints User Guide <save-load-checkpoints>`_
+-  :ref:`simple-metrics-reporting`
+-  :ref:`save-load-checkpoints`
 
 *******************************************************************
  Step 1: Initialize Communications Library and Distributed Context
 *******************************************************************
 
-Import necessary libraries and set up the distributed context:
+Import necessary libraries, initialize the communications library, and set up the distributed
+context:
 
 .. code:: python
 
@@ -73,7 +77,7 @@ Import necessary libraries and set up the distributed context:
  Step 2: Shard Batches Across Processes
 ****************************************
 
-Distribute data between processes and report metrics:
+Shard the batches between processes and report training metrics:
 
 .. code:: python
 
@@ -89,6 +93,8 @@ Distribute data between processes and report metrics:
  Step 3: Report Validation Metrics Periodically
 ************************************************
 
+Report validation metrics periodically, adding rank as a metric in addition to loss:
+
 .. code:: python
 
    if (i + 1) % 10 == 0:
@@ -101,6 +107,8 @@ Distribute data between processes and report metrics:
  Step 4: Store Sharded Checkpoints
 ***********************************
 
+Save the sharded checkpoints:
+
 .. code:: python
 
    ckpt_metadata = {"steps_completed": i, f"rank_{dist.get_rank()}": "ok"}
@@ -111,6 +119,8 @@ Distribute data between processes and report metrics:
 *******************************************************
  Step 5: Retrieve Web Server Address and Close Context
 *******************************************************
+
+Get the address of the web server where our metrics will be sent, and close the core context:
 
 .. code:: python
 
@@ -125,8 +135,8 @@ Distribute data between processes and report metrics:
  Step 6: Run Code with Torch Distributed
 *****************************************
 
-Execute your code with the following command, setting appropriate parameters for your cluster
-topology:
+Run the code with torch distributed and the appropriate arguments for cluster topology (number of
+nodes, processes per node, chief workers address, port, etc.):
 
 .. code:: bash
 
@@ -134,10 +144,12 @@ topology:
     --master_addr 127.0.0.1 --master_port 29400 --max_restarts 0 \
     my_torch_disributed_script.py
 
+Navigate to ``<DET_MASTER_IP:PORT>`` in your web browser to see the experiment.
+
 ************
  Next Steps
 ************
 
-Now that you've mastered the art of using detached mode for distributed training with sharded
-checkpointing, you're poised to scale your training sessions and tackle larger datasets and more
-complex models.
+Now that you've successfully used detached mode for distributed training with sharded checkpointing,
+you can try more examples using detached mode or learn more about Determined by visiting the
+:ref:`tutorials <tutorials-index>`.

@@ -1,8 +1,8 @@
 .. _save-load-checkpoints:
 
-#######################################
- Save and Load State using Checkpoints
-#######################################
+###########################################
+ Save and Load the State Using Checkpoints
+###########################################
 
 .. meta::
    :description: Learn how to utilize detached mode to save and load states via checkpoints. This guide will lead you through the necessary steps.
@@ -11,22 +11,25 @@ Leveraging :ref:`detached mode <detached-mode-index>`, you can easily save the s
 point during training and restore it when needed. This is especially useful for resuming training
 after interruptions or failures.
 
+For the full script, visit the `Github repository
+<https://github.com/determined-ai/determined/blob/main/examples/features/unmanaged/2_checkpoints.py>`_.
+
 ************
  Objectives
 ************
 
 These step-by-step instructions walk you through:
 
--  Setting up a checkpoint storage path
+-  Initializing the core context with checkpoint storage
 -  Loading the latest checkpoint
--  Resuming metrics submission to the trial
+-  Resuming sending metrics to the trial
 -  Saving checkpoints periodically
 
 After completing this guide, you will be able to:
 
 -  Understand how checkpoints operate in detached mode
 -  Implement state-saving and restoration in your training routine
--  Use the core API to handle checkpoints effectively
+-  Use the Core API to handle checkpoints effectively
 
 ***************
  Prerequisites
@@ -38,7 +41,7 @@ After completing this guide, you will be able to:
 
 **Recommended**
 
--  `Simple Metrics Reporting User Guide <simple-metrics-reporting>`_
+-  :ref:`simple-metrics-reporting`
 
 *************************************************************
  Step 1: Initialize the Core Context with Checkpoint Storage
@@ -105,16 +108,18 @@ Store a new checkpoint every 10 steps:
            with (path / "state").open("w") as fout:
                fout.write(f"{i},{loss}")
 
-End your training script and close the core:
+End your training script and close the core context:
 
 .. code:: python
 
    core_v2.close()
+
+Navigate to ``<DET_MASTER_IP:PORT>`` in your web browser to see the experiment.
 
 ************
  Next Steps
 ************
 
 Having walked through this guide, you now understand how to effectively use checkpoints in detached
-mode. With this skill, you can ensure the continuity of your training sessions and handle
-interruptions seamlessly.
+mode. Try more examples using detached mode or learn more about Determined by visiting the
+:ref:`tutorials <tutorials-index>`.

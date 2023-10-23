@@ -30,36 +30,36 @@ Upon completing this user guide, you will:
  Set Up Your Training Environment
 **********************************
 
-To begin, you'll need a Determined cluster. If you are new to Determined AI (Determined), you can
-install the Determined library and start a cluster locally.
+To begin, you'll need a Determined cluster. If you are new to Determined, you can install the
+Determined library and start a cluster locally.
 
 -  Ensure you have Docker running and then run the following command:
 
-.. code::
+   .. code::
 
-   pip install determined
+      pip install determined
 
-   # If your machine has GPUs:
-   det deploy local cluster-up
+      # If your machine has GPUs:
+      det deploy local cluster-up
 
-   # If your machine does not have GPUs:
-   det deploy local cluster-up --no-gpu
+      # If your machine does not have GPUs:
+      det deploy local cluster-up --no-gpu
 
-.. include:: ../../_shared/note-pip-install-determined.txt
+   .. include:: ../../_shared/note-pip-install-determined.txt
 
 ********************************************
  Step 1: Import and Initialize the Core API
 ********************************************
 
-#. Start by importing the necessary modules for your training code:
+Start by importing the necessary modules for your training code:
 
 .. code:: python
 
    import random
    from determined.experimental import core_v2
 
-2. Initialize the core context to recognize the trial with some identifying metadata in the main
-   function:
+Initialize the core context to recognize the trial with some identifying metadata in the main
+function:
 
 .. code:: python
 
@@ -70,7 +70,7 @@ install the Determined library and start a cluster locally.
            ),
        )
 
-3. Report your trial and validation metrics:
+Report your trial and validation metrics:
 
 .. code:: python
 
@@ -91,24 +91,25 @@ install the Determined library and start a cluster locally.
  Step 2: Set Master Address and Execute Your Training Script
 *************************************************************
 
-#. Define the Determined master address:
+Define the Determined master address:
 
 .. code:: bash
 
    export DET_MASTER=<DET_MASTER_IP:PORT>
 
-2. Run your training script:
+Run your training script:
 
 .. code:: bash
 
    python3 <my_training_script.py>
 
-3. Visualize the metrics! Navigate to ``<DET_MASTER_IP:PORT>`` in your web browser to see the trial.
+Visualize the metrics! Navigate to ``<DET_MASTER_IP:PORT>`` in your web browser to see the
+experiment.
 
 ************
  Next Steps
 ************
 
-You've now grasped the essence of simple metrics reporting in detached mode. This guide facilitated
-understanding detached mode, running trials, and visualizing metrics. Dive deeper into other
-features of Determined to maximize your model training efficiency!
+Now that you've grasped the essence of simple metrics reporting in detached mode, try more examples
+using detached mode or learn more about Determined by visiting the :ref:`tutorials
+<tutorials-index>`.

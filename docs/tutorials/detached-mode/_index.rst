@@ -15,27 +15,26 @@ This means you can try out Determined's experiment tracking and visualization fe
 transition to submitting your workloads to Determined when you want to perform distributed training,
 hyperparameter search, and resource management.
 
-**********
- Examples
-**********
+***********
+ Tutorials
+***********
 
-To get started with detached mode, try the following examples:
+To get started with detached mode, try the following tutorials:
 
 .. note::
 
    If you have not yet installed Determined, visit the :ref:`quick installation guide <basic>` to
    get up and running quickly.
 
--  :ref:`Example 1: Simple Metrics Reporting <simple-metrics-reporting>`
--  :ref:`Example 2: Save and Load State using Checkpoints <save-load-checkpoints>`
--  :ref:`Example 3: Use Distributed Training with Sharded Checkpointing
-   <distributed-training-checkpointing>`
--  :ref:`Example 4: Transition to Managed Determined <transition-managed-determined>`
+-  :ref:`simple-metrics-reporting`
+-  :ref:`save-load-checkpoints`
+-  :ref:`distributed-training-checkpointing`
+-  :ref:`transition-managed-determined`
 
 .. toctree::
    :hidden:
 
    Simple Metrics Reporting <simple-metrics-reporting>
-   Save and Load States using Checkpoints <save-load-checkpoints>
-   Distributed Training with Sharded Checkpointing <distributed-training-checkpointing>
-   Transition to Managed Determined <transition-managed-determined>
+   Save and Load States Using Checkpoints <save-load-checkpoints>
+   Distributed Training With Sharded Checkpointing <distributed-training-checkpointing>
+   Transition From Detached Mode <transition-managed-determined>
