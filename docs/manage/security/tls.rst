@@ -190,7 +190,7 @@ Perform a Certificate Request
 Certificate Creation
 ^^^^^^^^^^^^^^^^^^^^
 
-If port 80 of the Determined Master is accessible, you can use a simple `HTTP-01 challenge
+If port 80 of the Determined master is accessible, you can use a simple `HTTP-01 challenge
 <https://letsencrypt.org/docs/challenge-types/#http-01-challenge>`_ type.
 
 Certificate Creation When the Determined Master is Behind a VPN

@@ -38,7 +38,7 @@ For a successful TLS setup during installation, follow these guidelines:
  Network Connectivity
 **********************
 
-Ensure your firewall rules to allow traffic to and from the master and agents according to the
+Ensure your firewall rules allow traffic to and from the master and agents according to the
 following criteria:
 
 -  **Master-Compute Connection**: Compute nodes must connect to the master node on the master's

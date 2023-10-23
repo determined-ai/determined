@@ -42,7 +42,7 @@ The key can be found in the cluster configuration. For example it will be return
 Event Payload
 =============
 
-Currently we support two types of webhooks: ``Slack`` and ``Default``. A payload for a ``Default``
+Determined supports two types of webhooks: ``Slack`` and ``Default``. A payload for a ``Default``
 webhook will contain information about the event itself, the trigger for the event, and the entity
 that triggered the event. The shape of ``event_data`` is determined by ``event_type``. Below is an
 example payload for ``EXPERIMENT_STATE_CHANGE``; other types may be structured differently.
