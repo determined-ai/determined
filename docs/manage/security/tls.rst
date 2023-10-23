@@ -14,9 +14,8 @@ those with :ref:`shells <shells>` use SSH.
 
 .. note::
 
-   Communication between agents during :ref:`distributed training <multi-gpu-training>` does
-   not use TLS, and neither do proxied connections from the master to :ref:`TensorBoards
-   <tensorboards>`.
+   Communication between agents during :ref:`distributed training <multi-gpu-training>` does not use
+   TLS, and neither do proxied connections from the master to :ref:`TensorBoards <tensorboards>`.
 
 After the master and agent are configured to use TLS, no additional configuration is needed for
 tasks run in the cluster. In shells and notebooks, the Determined Python libraries automatically
