@@ -27,6 +27,9 @@ interface FormInputs {
   userOrGroupId: string;
 }
 
+const userPrefix = 'u_';
+const groupPrefix = 'g_';
+
 const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   addableUsersAndGroups,
   rolesAssignableToScope,
@@ -45,15 +48,18 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   const handleSearch = useCallback(
     (value: string) => {
       const regex = new RegExp(value, 'i');
-      setFilteredOption(
-        value
-          ? _.filter(addableUsersAndGroups, (o) =>
-              isUser(o)
-                ? (o.displayName && regex.test(o.displayName)) || regex.test(o.username) || false
-                : (o.name && regex.test(o.name)) || false,
-            )
-          : [],
-      );
+      // Only show options for select if user had typed in something.
+      if (value) {
+        setFilteredOption(
+          _.filter(addableUsersAndGroups, (o) =>
+            isUser(o)
+              ? (o.displayName && regex.test(o.displayName)) || regex.test(o.username) || false
+              : (o.name && regex.test(o.name)) || false,
+          ),
+        );
+      } else {
+        setFilteredOption([]);
+      }
     },
     [addableUsersAndGroups],
   );
@@ -63,14 +69,14 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
     try {
       if (values) {
         const userOrGroup = _.groupBy(values.userOrGroupId, (o) => o.substring(0, 2));
-        const groupPayload = _.map(userOrGroup['g_'], (o) => ({
+        const groupPayload = _.map(userOrGroup[groupPrefix], (o) => ({
           groupId: Number(o.substring(2)),
           roleIds: [values.roleId],
           scopeWorkspaceId: workspace.id,
         }));
         groupPayload.length > 0 && (await assignRolesToGroup(groupPayload));
 
-        const userPayload = _.map(userOrGroup['u_'], (o) => ({
+        const userPayload = _.map(userOrGroup[userPrefix], (o) => ({
           roleIds: [values.roleId],
           scopeWorkspaceId: workspace.id,
           userId: Number(o.substring(2)),
@@ -139,9 +145,9 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
             onSearch={handleSearch}>
             {_.map(filteredOption, (option) => (
               <Option
-                key={(isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option)}
+                key={(isUser(option) ? userPrefix : groupPrefix) + getIdFromUserOrGroup(option)}
                 label={isUser(option) ? option.username : option.name}
-                value={(isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option)}>
+                value={(isUser(option) ? userPrefix : groupPrefix) + getIdFromUserOrGroup(option)}>
                 {isUser(option) ? (
                   <UserBadge compact user={option as User} />
                 ) : (
