@@ -209,8 +209,7 @@ args_description = [
         Cmd("rename", rename, "change username for user", [
             Arg("target_user", default=None, help="name of user whose username should be changed"),
             Arg("new_username", default=None, help="new username for target_user"),
-        ], is_default=False,
-            deprecation_message="Please use 'det user edit <target_user> --username <username>'"),
+        ], deprecation_message="Please use 'det user edit <target_user> --username <username>'"),
         Cmd("change-password", change_password, "change password for user", [
             Arg("target_user", nargs="?", default=None, help="name of user to change password of")
         ]),
@@ -224,12 +223,10 @@ args_description = [
         ]),
         Cmd("activate", activate_user, "activate user", [
             Arg("username", help="name of user to activate")
-        ], is_default=False,
-            deprecation_message="Please use 'det user edit <target_user> --activate'"),
+        ], deprecation_message="Please use 'det user edit <target_user> --activate'"),
         Cmd("deactivate", deactivate_user, "deactivate user", [
             Arg("username", help="name of user to deactivate")
-        ], is_default=False,
-            deprecation_message="Please use 'det user edit <target_user> --deactivate'"),
+        ], deprecation_message="Please use 'det user edit <target_user> --deactivate'"),
         Cmd("create", create_user, "create user", [
             Arg("username", help="name of new user"),
             Arg("--admin", action="store_true", help="give new user admin rights"),
