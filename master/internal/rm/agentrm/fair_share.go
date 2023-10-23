@@ -342,7 +342,36 @@ func assignTasks(
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]model.AllocationID, 0)
 
+	// freeOfferedSlots are slots that cannot be used because an agent failed a hard constraint.
+	// We calculate this by getting the difference between the slots a group will be able to schedule
+	// and the amount of slots it is offered.
+	freeOfferedSlots := 0
 	for _, state := range states {
+		pendingOffer := state.offered - state.activeSlots
+		if pendingOffer > 0 {
+			for _, req := range state.pendingReqs {
+				if pendingOffer >= req.SlotsNeeded {
+					if fits := findFits(
+						req,
+						agents,
+						fittingMethod,
+						allowHetergenousAgentFits,
+					); len(fits) == 0 {
+						continue
+					}
+					pendingOffer -= req.SlotsNeeded
+				}
+			}
+
+			// Removing any slots in the group's offer that it won't be able to use.
+			state.offered -= pendingOffer
+			freeOfferedSlots += pendingOffer
+		}
+	}
+
+	for _, state := range states {
+		state.offered += freeOfferedSlots
+
 		if state.activeSlots > state.offered {
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
@@ -356,6 +385,7 @@ func assignTasks(
 					}
 				}
 			}
+			freeOfferedSlots = state.offered - state.activeSlots
 		} else if state.activeSlots < state.offered {
 			// Start tasks while there are still offered slots remaining. Because slots are not
 			// freed immediately, we cannot terminate and start tasks in the same scheduling call.
@@ -374,6 +404,7 @@ func assignTasks(
 					state.offered -= req.SlotsNeeded
 				}
 			}
+			freeOfferedSlots = state.offered
 		}
 	}
 	return toAllocate, toRelease
