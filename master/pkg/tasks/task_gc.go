@@ -7,14 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types/mount"
-
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/docker/docker/api/types/mount"
 )
 
 // GCCkptSpec is a description of a task for running checkpoint GC.
@@ -106,9 +105,13 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
 		"--storage-config", fmt.Sprintf("/run/determined/%s", storageConfigPath),
-		"--delete", fmt.Sprintf("/run/determined/%s", checkpointsToDeletePath),
-		"--globs", fmt.Sprintf("/run/determined/%s", checkpointsGlobsPath),
 	}
+
+	if len(g.ToDelete) > 0 {
+		res.Entrypoint = append(res.Entrypoint, "--delete", fmt.Sprintf("/run/determined/%s", checkpointsToDeletePath))
+		res.Entrypoint = append(res.Entrypoint, "--globs", fmt.Sprintf("/run/determined/%s", checkpointsGlobsPath))
+	}
+
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
 	}

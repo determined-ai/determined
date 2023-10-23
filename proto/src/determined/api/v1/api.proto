@@ -1498,6 +1498,17 @@ service Determined {
       tags: "Tensorboards"
     };
   }
+  // Delete tensorboard files.
+  rpc DeleteTensorboard(DeleteTensorboardRequest)
+      returns (DeleteTensorboardResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tensorboards/delete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tensorboards"
+    };
+  }
 
   // Get a count of active tasks.
   rpc GetActiveTasksCount(GetActiveTasksCountRequest)

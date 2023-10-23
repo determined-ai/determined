@@ -2426,6 +2426,26 @@ export interface V1DeleteProjectResponse {
 export interface V1DeleteTemplateResponse {
 }
 /**
+ * Request to delete a tensorboard.
+ * @export
+ * @interface V1DeleteTensorboardRequest
+ */
+export interface V1DeleteTensorboardRequest {
+    /**
+     * ID of experiment that the tensorboard is linked to.
+     * @type {number}
+     * @memberof V1DeleteTensorboardRequest
+     */
+    experimentId?: number;
+}
+/**
+ * Response to DeleteTensorboardRequest.
+ * @export
+ * @interface V1DeleteTensorboardResponse
+ */
+export interface V1DeleteTensorboardResponse {
+}
+/**
  * Response to DeleteWebhookRequest.
  * @export
  * @interface V1DeleteWebhookResponse
@@ -28238,6 +28258,44 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
     return {
         /**
          * 
+         * @summary Delete tensorboard files.
+         * @param {V1DeleteTensorboardRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTensorboard(body: V1DeleteTensorboardRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteTensorboard.');
+            }
+            const localVarPath = `/api/v1/tensorboards/delete`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -28466,6 +28524,25 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Delete tensorboard files.
+         * @param {V1DeleteTensorboardRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTensorboard(body: V1DeleteTensorboardRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).deleteTensorboard(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -28577,6 +28654,16 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
     return {
         /**
          * 
+         * @summary Delete tensorboard files.
+         * @param {V1DeleteTensorboardRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTensorboard(body: V1DeleteTensorboardRequest, options?: any) {
+            return TensorboardsApiFp(configuration).deleteTensorboard(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -28642,6 +28729,18 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
  * @extends {BaseAPI}
  */
 export class TensorboardsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Delete tensorboard files.
+     * @param {V1DeleteTensorboardRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TensorboardsApi
+     */
+    public deleteTensorboard(body: V1DeleteTensorboardRequest, options?: any) {
+        return TensorboardsApiFp(this.configuration).deleteTensorboard(body, options)(this.fetch, this.basePath)
+    }
+    
     /**
      * 
      * @summary Get the requested tensorboard.

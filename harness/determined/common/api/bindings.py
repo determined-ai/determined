@@ -2937,6 +2937,33 @@ class v1DeleteProjectResponse(Printable):
         }
         return out
 
+class v1DeleteTensorboardRequest(Printable):
+    """Request to delete a tensorboard."""
+    experimentId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        experimentId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(experimentId, Unset):
+            self.experimentId = experimentId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteTensorboardRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "experimentId" in obj:
+            kwargs["experimentId"] = obj["experimentId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "experimentId" in vars(self):
+            out["experimentId"] = self.experimentId
+        return out
+
 class v1DeleteWorkspaceResponse(Printable):
     """Response to DeleteWorkspaceRequest."""
 
@@ -15945,6 +15972,27 @@ def delete_DeleteTemplate(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
+
+def post_DeleteTensorboard(
+    session: "api.Session",
+    *,
+    body: "v1DeleteTensorboardRequest",
+) -> None:
+    """Delete tensorboard files."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/tensorboards/delete",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_DeleteTensorboard", _resp)
 
 def delete_DeleteWebhook(
     session: "api.Session",

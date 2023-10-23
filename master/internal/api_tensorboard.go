@@ -17,6 +17,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 
@@ -31,6 +33,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/trials"
+	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -523,4 +527,42 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 	}
 
 	return configs, nil
+}
+
+func (a *apiServer) DeleteTensorboard(
+	ctx context.Context, req *apiv1.DeleteTensorboardRequest,
+) (resp *apiv1.DeleteTensorboardResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	exp, err := db.ExperimentByID(context.TODO(), int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceID, err := workspace.WorkspacesIDsByExperimentIDs(ctx, []int{exp.ID})
+	if err != nil {
+		return nil, err
+	}
+	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceID[0])
+	if err != nil {
+		return nil, err
+	}
+
+	var uuidList []uuid.UUID
+
+	err = runCheckpointGCTask(
+		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
+		exp.Config, uuidList, nil, true, agentUserGroup, curUser,
+		nil,
+	)
+
+	if err != nil {
+		log.WithError(err).Errorf("failed to gc tensorboard for experiment: %d", exp.ID)
+		return nil, err
+	}
+
+	return &apiv1.DeleteTensorboardResponse{}, nil
 }
