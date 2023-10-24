@@ -1,6 +1,6 @@
+import Avatar from 'determined-ui/Avatar';
 import React from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
 import { Workspace } from 'types';
 
 import css from './WorkspaceFilter.module.scss';
@@ -12,7 +12,7 @@ interface Props {
 const WorkspaceFilter: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <div className={css.item}>
-      <DynamicIcon name={workspace.name} size={24} />
+      <Avatar palette="muted" square text={workspace.name} />
       <span className={css.name}>{workspace.name}</span>
     </div>
   );

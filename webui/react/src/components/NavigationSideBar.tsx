@@ -1,3 +1,4 @@
+import Avatar from 'determined-ui/Avatar';
 import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon, { IconName, IconSize } from 'determined-ui/Icon';
@@ -13,7 +14,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
@@ -311,7 +311,7 @@ const NavigationSideBar: React.FC = () => {
                           workspace={workspace}>
                           <li>
                             <NavigationItem
-                              icon={<DynamicIcon name={workspace.name} size={24} />}
+                              icon={<Avatar palette="muted" square text={workspace.name} />}
                               label={workspace.name}
                               path={paths.workspaceDetails(workspace.id)}
                               tooltip={settings.navbarCollapsed}
