@@ -1,15 +1,13 @@
 import { StyleProvider } from '@ant-design/cssinjs';
 import { theme as AntdTheme, ConfigProvider } from 'antd';
-import React, {
-  Dispatch,
-  useContext,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from 'react';
+import React, { Dispatch, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 
+import {
+  ThemeContext,
+  ThemeDispatchContext,
+  themeStateReducer,
+  useThemeState,
+} from 'components/kit/internal/theme';
 import { RecordKey } from 'components/kit/internal/types';
 
 import { globalCssVars, Mode, Theme } from './themeUtils';
@@ -96,12 +94,6 @@ const camelCaseToKebab = (text: string): string => {
     .join('');
 };
 
-/**
- * return a part of the input state that should be updated.
- * @param state ui state
- * @param action
- * @returns
- */
 const reducerUI = (state: StateUI, action: ActionUI): Partial<StateUI> | void => {
   switch (action.type) {
     case StoreActionUI.HideUIChrome:
@@ -148,6 +140,7 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   const uiActions = useMemo(() => new UIActions(dispatchContext), [dispatchContext]);
   return { actions: uiActions, ui: context };
 };
+
 export const ThemeProvider: React.FC<{
   children?: React.ReactNode;
 }> = ({ children }) => {
@@ -164,11 +157,28 @@ export const UIProvider: React.FC<{
   darkMode?: boolean;
   theme: Theme;
 }> = ({ children, theme, darkMode = false }) => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(darkMode);
+  const [state, dispatch] = useReducer(themeStateReducer, { darkMode });
+  return (
+    <ThemeContext.Provider value={state}>
+      <ThemeDispatchContext.Provider value={dispatch}>
+        <UI darkMode={darkMode} theme={theme}>
+          {children}
+        </UI>
+      </ThemeDispatchContext.Provider>
+    </ThemeContext.Provider>
+  );
+};
 
-  useLayoutEffect(() => {
-    setIsDarkMode(darkMode);
-  }, [darkMode]);
+export const UI: React.FC<{
+  children?: React.ReactNode;
+  darkMode?: boolean;
+  theme: Theme;
+}> = ({ children, theme, darkMode = false }) => {
+  const { actions } = useThemeState();
+
+  useEffect(() => {
+    actions.setDarkMode(darkMode);
+  }, [darkMode, actions]);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -200,7 +210,7 @@ export const UIProvider: React.FC<{
    *  the following line is needed to ensure styling in these
    *  specific cases is still applied correctly.
    */
-  document.documentElement.style.setProperty('color-scheme', isDarkMode ? 'dark' : 'light');
+  document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
 
   const lightThemeConfig = {
     components: {
@@ -266,9 +276,9 @@ export const UIProvider: React.FC<{
     },
   };
 
-  const algorithm = isDarkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
+  const algorithm = darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
   const { token: baseToken, components: baseComponents } = baseThemeConfig;
-  const { token, components } = isDarkMode ? darkThemeConfig : lightThemeConfig;
+  const { token, components } = darkMode ? darkThemeConfig : lightThemeConfig;
 
   const configTheme = {
     algorithm,

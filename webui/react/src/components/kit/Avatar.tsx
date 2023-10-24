@@ -2,10 +2,9 @@ import React from 'react';
 
 import { hex2hsl, hsl2str } from 'components/kit/internal/functions';
 import md5 from 'components/kit/internal/md5';
+import { useThemeState } from 'components/kit/internal/theme';
 import { ValueOf } from 'components/kit/internal/types';
-import useUI from 'components/kit/Theme';
 import Tooltip from 'components/kit/Tooltip';
-import { useTheme } from 'hooks/useTheme';
 
 import css from './Avatar.module.scss';
 
@@ -54,10 +53,11 @@ const Avatar: React.FC<Props> = ({
   size = Size.Medium,
   square,
 }) => {
-  const { ui } = useUI();
-  const { isDarkMode } = useTheme(ui.mode, ui.theme);
+  const { themeState } = useThemeState();
   const style = {
-    backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, isDarkMode),
+    backgroundColor: noColor
+      ? 'var(--theme-stage-strong)'
+      : getColor(displayName, themeState.darkMode),
     borderRadius: square ? '10%' : '100%',
     color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
   };

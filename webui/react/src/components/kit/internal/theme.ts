@@ -1,10 +1,68 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
 
+import React, { Dispatch, useContext, useMemo } from 'react';
+
 import { isColor, rgba2str, rgbaMix, str2rgba } from 'components/kit/internal/color';
 
 const STRONG_WEAK_DELTA = 45;
 
 export type Theme = Record<keyof typeof themeBase, string>;
+
+const ThemeStateAction = {
+  SetDarkMode: 'SetDarkMode',
+} as const;
+
+type ThemeStateAction = { type: typeof ThemeStateAction.SetDarkMode; value: boolean };
+
+class ThemeStateActions {
+  constructor(private dispatch: Dispatch<ThemeStateAction>) {}
+
+  public setDarkMode = (isDarkMode: boolean): void => {
+    this.dispatch({ type: ThemeStateAction.SetDarkMode, value: isDarkMode });
+  };
+}
+
+interface ThemeState {
+  darkMode: boolean;
+}
+
+const reducerThemeState = (action: ThemeStateAction): Partial<ThemeState> | void => {
+  switch (action.type) {
+    case ThemeStateAction.SetDarkMode:
+      return { darkMode: action.value };
+    default:
+      return;
+  }
+};
+
+export const ThemeContext = React.createContext<ThemeState | undefined>(undefined);
+export const ThemeDispatchContext = React.createContext<Dispatch<ThemeStateAction> | undefined>(
+  undefined,
+);
+
+export const themeStateReducer = (state: ThemeState, action: ThemeStateAction): ThemeState => {
+  const newState = reducerThemeState(action);
+  return { ...state, ...newState };
+};
+
+export const useThemeState = (): { actions: ThemeStateActions; themeState: ThemeState } => {
+  /**
+   * Some UI Kit components such as the CodeEditor do not inherit the theme from css or page styling
+   * and instead require us to set a theme realted prop dynamically. This context allows us to
+   * subscribe to UIProvider theme updates and re-render these child components with the correct
+   * thehe.
+   */
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useStore(UI) must be used within a UIProvider');
+  }
+  const dispatchContext = useContext(ThemeDispatchContext);
+  if (dispatchContext === undefined) {
+    throw new Error('useStoreDispatch must be used within a UIProvider');
+  }
+  const actions = useMemo(() => new ThemeStateActions(dispatchContext), [dispatchContext]);
+  return { actions, themeState: context };
+};
 
 const generateStrongWeak = (theme: Theme): Theme => {
   const rgbaStrong = str2rgba(theme.strong);

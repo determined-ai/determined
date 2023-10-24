@@ -10,12 +10,11 @@ import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Section from 'components/kit/internal/Section';
+import { useThemeState } from 'components/kit/internal/theme';
 import { ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import { useTheme } from 'hooks/useTheme';
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
 const { DirectoryTree } = Tree;
@@ -129,7 +128,6 @@ const CodeEditor: React.FC<Props> = ({
 }) => {
   const loadableFile = useMemo(() => (typeof file === 'string' ? Loaded(file) : file), [file]);
   const sortedFiles = useMemo(() => [...files].sort(sortTree), [files]);
-  const { ui } = useUI();
 
   const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
   const activeFile = useMemo(() => {
@@ -217,7 +215,7 @@ const CodeEditor: React.FC<Props> = ({
 
   const treeClasses = [css.fileTree, viewMode === 'editor' ? css.hideElement : ''];
 
-  const { isDarkMode } = useTheme(ui.mode, ui.theme);
+  const { themeState } = useThemeState();
 
   let fileContent = <h5>Please, choose a file to preview.</h5>;
   if (loadableFile.isFailed) {
@@ -231,7 +229,7 @@ const CodeEditor: React.FC<Props> = ({
           height="100%"
           readOnly={readonly}
           style={{ height: '100%' }}
-          theme={isDarkMode ? 'dark' : 'light'}
+          theme={themeState.darkMode ? 'dark' : 'light'}
           value={Loadable.getOrElse('', loadableFile)}
           onChange={onChange}
         />
