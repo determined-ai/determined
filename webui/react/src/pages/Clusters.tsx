@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
+import ClustersOverview from 'pages/Cluster/ClustersOverview';
 import { paths } from 'routes/utils';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
@@ -13,7 +14,6 @@ import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
-import ClustersOverview from './Clusters/ClustersOverview';
 
 const TabType = {
   HistoricalUsage: 'historical-usage',
