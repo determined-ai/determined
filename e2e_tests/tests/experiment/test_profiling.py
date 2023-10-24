@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 
 import pytest
 
-from determined.common import api, util
+from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from tests import config as conf
 from tests import experiment as exp
@@ -31,7 +31,7 @@ def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: b
     config_obj = conf.set_profiling_enabled(config_obj)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
+            yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, model_def)
 
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)

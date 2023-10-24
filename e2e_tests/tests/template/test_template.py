@@ -2,7 +2,7 @@ from typing import Optional, Tuple
 
 import pytest
 
-from determined.common import util
+from determined.common import yaml
 from determined.common.api import Session, bindings, errors
 from tests import api_utils
 from tests import command as cmd
@@ -15,7 +15,7 @@ def test_set_template() -> None:
     template_name = "test_set_template"
     template_path = conf.fixtures_path("templates/template.yaml")
     tpl.set_template(template_name, template_path)
-    config = util.yaml_safe_load(tpl.describe_template(template_name))
+    config = yaml.safe_load(tpl.describe_template(template_name))
     assert config == conf.load_config(template_path)
 
 

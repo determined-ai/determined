@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import determined
 from determined import core, experimental
-from determined.common import util
+from determined.common import yaml
 from determined.experimental import core_v2
 
 logger = logging.getLogger("determined.experimental.core_v2")
@@ -166,7 +166,7 @@ def _init_context(
         "project": unmanaged_config.project,
     }
 
-    config_text = util.yaml_safe_dump(config)
+    config_text = yaml.dump(config)
     assert config_text is not None
 
     unmanaged_info = core_v2._get_or_create_experiment_and_trial(
