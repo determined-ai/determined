@@ -1,9 +1,9 @@
-import { Typography } from 'antd';
 import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon, { IconName, IconSize } from 'determined-ui/Icon';
 import { matchesShortcut, shortcutToString } from 'determined-ui/InputShortcut';
 import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
 import Spinner from 'determined-ui/Spinner';
 import useUI from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
@@ -43,7 +43,6 @@ interface ItemProps extends LinkProps {
   icon: IconName | React.ReactElement;
   iconSize?: IconSize;
   label: string;
-  labelRender?: React.ReactNode;
   status?: string;
   tooltip?: string | boolean;
 }
@@ -88,12 +87,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
   const link = (
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} path={path} {...props}>
-        {typeof props.icon === 'string' ? (
-          <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
-        ) : (
-          props.icon
-        )}
-        <div className={css.label}>{props.labelRender ? props.labelRender : props.label}</div>
+        <Nameplate icon={props.icon} iconSize={props.iconSize ?? 'large'} name={props.label} />
       </Link>
       <div className={css.navItemExtra}>
         {status && (
@@ -319,12 +313,8 @@ const NavigationSideBar: React.FC = () => {
                             <NavigationItem
                               icon={<DynamicIcon name={workspace.name} size={24} />}
                               label={workspace.name}
-                              labelRender={
-                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                  {workspace.name}
-                                </Typography.Paragraph>
-                              }
                               path={paths.workspaceDetails(workspace.id)}
+                              tooltip={settings.navbarCollapsed}
                             />
                           </li>
                         </WorkspaceActionDropdown>
@@ -335,14 +325,12 @@ const NavigationSideBar: React.FC = () => {
                     {canCreateWorkspace && (
                       <li>
                         <NavigationItem
-                          icon="add"
-                          iconSize="tiny"
-                          label="New Workspace"
-                          labelRender={
-                            <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                              New Workspace
-                            </Typography.Paragraph>
+                          icon={
+                            <div className={css.newWorkspaceIcon}>
+                              <Icon decorative name="add" size="tiny" />
+                            </div>
                           }
+                          label="New Workspace"
                           tooltip={settings.navbarCollapsed}
                           onClick={WorkspaceCreateModal.open}
                         />

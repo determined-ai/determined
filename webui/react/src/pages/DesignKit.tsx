@@ -1592,9 +1592,9 @@ const NameplateSection: React.FC = () => {
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
+        <Nameplate icon="group" name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
+        <Nameplate compact icon="group" name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
