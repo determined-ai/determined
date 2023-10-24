@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ThemeProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 
 import Avatar, { Props } from './Avatar';
+import { themeLightDetermined } from './internal/theme';
 
 vi.mock('components/kit/Tooltip');
 const user = userEvent.setup();
@@ -11,7 +12,9 @@ const user = userEvent.setup();
 const setup = ({ displayName, hideTooltip = false, ...props }: Props) => {
   render(
     <ThemeProvider>
-      <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
+      <UIProvider theme={themeLightDetermined}>
+        <Avatar displayName={displayName} hideTooltip={hideTooltip} {...props} />
+      </UIProvider>
     </ThemeProvider>,
   );
 };
