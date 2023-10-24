@@ -18,11 +18,11 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/T
 import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import { getGroup, getGroups, getUsers } from 'services/api';
+import { getGroup, getGroups } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
-import { DetailedUser, User } from 'types';
+import { User } from 'types';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter } from 'utils/sort';
@@ -36,7 +36,6 @@ interface DropdownProps {
   fetchGroup: (groupId: number) => void;
   fetchGroups: () => void;
   group: V1GroupSearchResult;
-  users: DetailedUser[];
 }
 
 const MenuKey = {
@@ -49,13 +48,7 @@ const DROPDOWN_MENU: MenuItem[] = [
   { danger: true, key: MenuKey.Delete, label: 'Delete Group' },
 ];
 
-const GroupActionDropdown = ({
-  expanded,
-  fetchGroups,
-  fetchGroup,
-  group,
-  users,
-}: DropdownProps) => {
+const GroupActionDropdown = ({ expanded, fetchGroups, fetchGroup, group }: DropdownProps) => {
   const onFinishEdit = () => {
     fetchGroups();
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
@@ -82,7 +75,7 @@ const GroupActionDropdown = ({
       <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
-      <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
+      <EditGroupModal.Component group={group} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
     </div>
   );
@@ -92,7 +85,6 @@ const GroupManagement: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
-  const [users, setUsers] = useState<DetailedUser[]>([]);
   const [groupResult, setGroupResult] = useState<V1GroupSearchResult | undefined>(undefined);
   const [user, setUser] = useState<V1User | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -139,18 +131,6 @@ const GroupManagement: React.FC = () => {
     [groupUsers],
   );
 
-  const fetchUsers = useCallback(async (): Promise<void> => {
-    try {
-      const response = await getUsers({}, { signal: canceler.current.signal });
-      setUsers((prev) => {
-        if (_.isEqual(prev, response.users)) return prev;
-        return response.users;
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch users.' });
-    }
-  }, []);
-
   useEffect(() => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();
@@ -158,8 +138,7 @@ const GroupManagement: React.FC = () => {
 
   useEffect(() => {
     fetchGroups();
-    fetchUsers();
-  }, [fetchGroups, fetchUsers]);
+  }, [fetchGroups]);
 
   useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
@@ -245,7 +224,6 @@ const GroupManagement: React.FC = () => {
           fetchGroup={fetchGroup}
           fetchGroups={fetchGroups}
           group={record}
-          users={users}
         />
       ) : null;
     };
@@ -280,7 +258,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
+  }, [fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
 
   const table = useMemo(() => {
     return settings ? (
@@ -325,7 +303,7 @@ const GroupManagement: React.FC = () => {
         title="Groups">
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
-      <CreateGroupModal.Component users={users} onClose={fetchGroups} />
+      <CreateGroupModal.Component onClose={fetchGroups} />
       {groupResult && (
         <RemoveUserFromGroupModal.Component
           fetchGroups={fetchGroups}
