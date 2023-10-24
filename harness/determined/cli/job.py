@@ -4,7 +4,7 @@ from typing import Any, List, Union
 
 from determined import cli
 from determined.cli import render
-from determined.common import api, yaml
+from determined.common import api, util
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.util import parse_protobuf_timestamp
@@ -46,7 +46,7 @@ def ls(args: Namespace) -> None:
             "jobs": [v.to_json() for v in jobs],
         }
         if args.yaml:
-            print(yaml.safe_dump(data, default_flow_style=False))
+            print(util.yaml_safe_dump(data, default_flow_style=False))
         elif args.json:
             render.print_json(data)
         return

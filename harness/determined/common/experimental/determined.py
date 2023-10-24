@@ -5,7 +5,7 @@ import warnings
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import determined as det
-from determined.common import api, context, util, yaml
+from determined.common import api, context, util
 from determined.common.api import authentication, bindings, certs, errors
 from determined.common.experimental import (
     checkpoint,
@@ -164,7 +164,7 @@ class Determined:
                 config_text = f.read()
             _ = util.safe_load_yaml_with_exceptions(config_text)
         elif isinstance(config, Dict):
-            yaml_dump = yaml.dump(config)
+            yaml_dump = util.yaml_safe_dump(config)
             assert yaml_dump is not None
             config_text = yaml_dump
         else:

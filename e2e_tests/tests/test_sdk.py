@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from determined.common import yaml
+from determined.common import util
 from determined.common.api import bindings, errors
 from determined.common.experimental import resource_pool
 from determined.common.experimental.metrics import TrialMetrics
@@ -17,7 +17,7 @@ from tests import config as conf
 @pytest.mark.e2e_cpu
 def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) -> None:
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = yaml.safe_load(f)
+        config = util.yaml_safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
     # Test the use of the includes parameter, by feeding the model definition file via includes.
     emptydir = tempfile.mkdtemp()
@@ -89,7 +89,7 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
 @pytest.mark.e2e_cpu
 def test_checkpoint_apis(client: _client.Determined) -> None:
     with open(conf.fixtures_path("no_op/single-default-ckpt.yaml")) as f:
-        config = yaml.safe_load(f)
+        config = util.yaml_safe_load(f)
 
     # Test for 100 batches/checkpoint every 10 = 10 checkpoints.
     config["min_checkpoint_period"]["batches"] = 10
@@ -238,7 +238,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
 def _make_live_experiment(client: _client.Determined) -> _client.Experiment:
     # Create an experiment that takes a long time to run
     with open(conf.fixtures_path("no_op/single-very-many-long-steps.yaml")) as f:
-        config = yaml.safe_load(f)
+        config = util.yaml_safe_load(f)
 
     exp = client.create_experiment(config, conf.fixtures_path("no_op"))
     # Wait for a trial to actually start.
@@ -346,7 +346,7 @@ def test_models(client: _client.Determined) -> None:
 @pytest.mark.e2e_cpu
 def test_stream_metrics(client: _client.Determined) -> None:
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = yaml.safe_load(f)
+        config = util.yaml_safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
     exp = client.create_experiment(config, conf.fixtures_path("no_op"))
     assert exp.wait() == _client.ExperimentState.COMPLETED
@@ -392,7 +392,7 @@ def test_stream_metrics(client: _client.Determined) -> None:
 @pytest.mark.e2e_cpu
 def test_model_versions(client: _client.Determined) -> None:
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = yaml.safe_load(f)
+        config = util.yaml_safe_load(f)
     exp = client.create_experiment(config, conf.fixtures_path("no_op"))
     assert exp.wait() == _client.ExperimentState.COMPLETED
     ckpt = exp.top_checkpoint()
