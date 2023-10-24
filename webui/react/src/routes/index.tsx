@@ -1,8 +1,8 @@
 import React from 'react';
 
 import Admin from 'pages/Admin';
+import Clusters from 'pages/Cluster';
 import ClusterLogs from 'pages/ClusterLogs';
-import Clusters from 'pages/Clusters';
 import Dashboard from 'pages/Dashboard';
 import DefaultRoute from 'pages/DefaultRoute';
 import Deprecated from 'pages/Deprecated';

@@ -15,7 +15,7 @@ import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import ClustersQueuedChart from 'pages/Cluster/ClustersQueuedChart';
+import ClustersQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';

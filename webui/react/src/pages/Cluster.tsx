@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
-import ClustersOverview from 'pages/Cluster/ClustersOverview';
+import ClustersOverview from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';

@@ -6,7 +6,7 @@ import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
 
 import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
-import css from './ClustersQueuedChart.module.scss';
+import css from './ClusterQueuedChart.module.scss';
 
 interface Props {
   poolStats: V1RPQueueStat | undefined;
