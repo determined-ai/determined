@@ -236,75 +236,39 @@ func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Tr
 	return &trial, nil
 }
 
-// TrainingTrialsSnapshot returns a training metric across each trial in an experiment at a
-// specific point of progress.
-func (db *PgDB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error,
-) {
+// TrialsSnapshot returns metrics across each trial in an experiment at a
+// specific point of progress, for metric groups other than training and validation.
+func (db *PgDB) TrialsSnapshot(experimentID int, minBatches int, maxBatches int,
+	metricName string, startTime time.Time, metricGroup model.MetricGroup,
+) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error) {
 	var rows []snapshotWrapper
+
+	metricPath := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
+	mGroupString := string(metricGroup)
+	pType := customMetricGroupToPartitionType(&mGroupString)
+
 	err = db.queryRows(`
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
-  (s.metrics->'avg_metrics'->>$1)::float8 AS metric,
+  (s.metrics->'`+metricPath+`'->>$1)::float8 AS metric,
   s.end_time AS end_time,
   s.total_batches as batches
 FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
+	INNER JOIN metrics s ON t.id=s.trial_id
 WHERE t.experiment_id=$2
   AND s.total_batches>=$3
   AND s.total_batches<=$4
-  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
+  AND s.metrics->'`+metricPath+`'->$1 IS NOT NULL
   AND s.end_time > $5
-ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
+	AND s.metric_group = $6
+	AND partition_type = $7
+ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime, metricGroup, pType)
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and training metric %s",
-			experimentID, metricName)
+			"failed to get snapshot for experiment %d and generic metric %s.%s",
+			experimentID, metricGroup, metricName)
 	}
-	for _, row := range rows {
-		trial, err := snapshotWrapperToTrial(row)
-		if err != nil {
-			return nil, endTime, errors.Wrap(err, "Failed to process trial metadata")
-		}
-		trials = append(trials, trial)
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-
-	return trials, endTime, nil
-}
-
-// ValidationTrialsSnapshot returns a training metric across each trial in an experiment at a
-// specific point of progress.
-func (db *PgDB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
-	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error,
-) {
-	var rows []snapshotWrapper
-	err = db.queryRows(`
-SELECT
-  t.id AS trial_id,
-  t.hparams AS hparams,
-  (v.metrics->'validation_metrics'->>$1)::float8 AS metric,
-  v.end_time AS end_time,
-  v.total_batches as batches
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$2
-  AND v.total_batches>=$3
-  AND v.total_batches<=$4
-  AND v.metrics->'validation_metrics'->$1 IS NOT NULL
-  AND v.end_time > $5
-ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
-	if err != nil {
-		return nil, endTime, errors.Wrapf(err,
-			"failed to get snapshot for experiment %d and validation metric %s",
-			experimentID, metricName)
-	}
-
 	for _, row := range rows {
 		trial, err := snapshotWrapperToTrial(row)
 		if err != nil {
@@ -911,74 +875,19 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	tx, err := Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		txErr := tx.Rollback()
-		if txErr != nil && txErr != sql.ErrTxDone {
-			log.WithError(txErr).Error("error rolling back transaction in DeleteExperiments")
-		}
-	}()
-	var delIDs []int32
-	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_steps").
-		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting steps for experiments %v", ids)
-	}
 
-	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_validations").
-		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting validations for experiments %v", ids)
-	}
-
-	// Even with migration away from checkpoints_v1,
-	// Keeping this to keep behavior of fully deleting checkpoints.
-	if _, err = tx.NewDelete().Model(&delIDs).Table("raw_checkpoints").
-		Where("trial_id IN (SELECT id FROM trials WHERE experiment_id IN (?))", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting checkpoints for experiments %v", ids)
-	}
-
-	if _, err = tx.NewDelete().Model(&delIDs).Table("checkpoints_v2").
-		Where(`task_id IN (
-	SELECT tt.task_id
-	FROM trial_id_task_id tt
-	JOIN trials t ON t.id = tt.trial_id
-	WHERE experiment_id IN (?)
-)`, bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting checkpoints (v2) for experiments %v", ids)
-	}
-
-	if err := db.DeleteSnapshotsForExperiments(ids)(ctx, &tx); err != nil {
-		return errors.Wrapf(err, "error deleting snapshots for experiments %v", ids)
-	}
-
-	if _, err = tx.NewDelete().Model(&delIDs).Table("trials").
-		Where("experiment_id IN (?)", bun.In(ids)).
-		Returning("id").
-		Exec(ctx); err != nil {
-		return errors.Wrapf(err, "error deleting trials for experiments %v", ids)
-	}
-
-	_, err = tx.NewDelete().Model(&delIDs).Table("experiments").
+	var deletedIDs []int32
+	_, err := Bun().NewDelete().Model(&deletedIDs).Table("experiments").
 		Where("id IN (?)", bun.In(ids)).
 		Returning("id").
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting experiments %v", ids)
 	}
-	if len(delIDs) != len(ids) {
+	if len(deletedIDs) != len(ids) {
 		return errors.Errorf("mis-match in delete-able experiments versus requested %v", ids)
 	}
-	return tx.Commit()
+	return nil
 }
 
 // ExperimentHasCheckpointsInRegistry checks if the experiment has any checkpoints in the registry.

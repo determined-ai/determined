@@ -260,6 +260,25 @@ class TrialProfilerMetricLabelsProfilerMetricType(DetEnum):
     TIMING = "PROFILER_METRIC_TYPE_TIMING"
     MISC = "PROFILER_METRIC_TYPE_MISC"
 
+class checkpointv1SortBy(DetEnum):
+    """Sorts options for checkpoints by the given field.
+    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
+    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+    - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
+    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
+    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
+    - SORT_BY_STATE: Returns checkpoints sorted by state.
+    - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
+    configuration setting.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    UUID = "SORT_BY_UUID"
+    TRIAL_ID = "SORT_BY_TRIAL_ID"
+    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
+
 class checkpointv1State(DetEnum):
     """The current state of the checkpoint.
     - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -2818,6 +2837,29 @@ class v1DeleteCheckpointsRequest(Printable):
         }
         return out
 
+class v1DeleteExperimentLabelResponse(Printable):
+    """Response to DeleteExperimentLabelRequest."""
+
+    def __init__(
+        self,
+        *,
+        labels: "typing.Sequence[str]",
+    ):
+        self.labels = labels
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteExperimentLabelResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "labels": obj["labels"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "labels": self.labels,
+        }
+        return out
+
 class v1DeleteExperimentsRequest(Printable):
     """Delete multiple experiments."""
     filters: "typing.Optional[v1BulkExperimentFilters]" = None
@@ -4104,25 +4146,6 @@ class v1GetCurrentTrialSearcherOperationResponse(Printable):
         if not omit_unset or "op" in vars(self):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
-
-class v1GetExperimentCheckpointsRequestSortBy(DetEnum):
-    """Sorts checkpoints by the given field.
-    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
-    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
-    - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
-    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
-    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
-    - SORT_BY_STATE: Returns checkpoints sorted by state.
-    - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
-    configuration setting.
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    UUID = "SORT_BY_UUID"
-    TRIAL_ID = "SORT_BY_TRIAL_ID"
-    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
-    SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
 
 class v1GetExperimentCheckpointsResponse(Printable):
     """Response to GetExperimentCheckpointsRequest."""
@@ -5785,20 +5808,6 @@ class v1GetTrainingMetricsResponse(Printable):
             "metrics": [x.to_json(omit_unset) for x in self.metrics],
         }
         return out
-
-class v1GetTrialCheckpointsRequestSortBy(DetEnum):
-    """Sorts checkpoints by the given field.
-    - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
-    - SORT_BY_UUID: Returns checkpoints sorted by UUID.
-    - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
-    - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
-    - SORT_BY_STATE: Returns checkpoints sorted by state.
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    UUID = "SORT_BY_UUID"
-    BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse(Printable):
     """Response to GetTrialCheckpointsRequest."""
@@ -10498,6 +10507,29 @@ class v1ProxyPortConfig(Printable):
             out["serviceId"] = self.serviceId
         if not omit_unset or "unauthenticated" in vars(self):
             out["unauthenticated"] = self.unauthenticated
+        return out
+
+class v1PutExperimentLabelResponse(Printable):
+    """Response to PutExperimentLabelRequest."""
+
+    def __init__(
+        self,
+        *,
+        labels: "typing.Sequence[str]",
+    ):
+        self.labels = labels
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentLabelResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "labels": obj["labels"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "labels": self.labels,
+        }
         return out
 
 class v1PutExperimentResponse(Printable):
@@ -15745,6 +15777,32 @@ def delete_DeleteExperiment(
         return
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
+def delete_DeleteExperimentLabel(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    label: str,
+) -> "v1DeleteExperimentLabelResponse":
+    """Delete a label from the experiment.
+
+    - experimentId: The ID of the experiment.
+    - label: The label to delete.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/experiments/{experimentId}/labels/{label}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1DeleteExperimentLabelResponse.from_json(_resp.json())
+    raise APIHttpError("delete_DeleteExperimentLabel", _resp)
+
 def delete_DeleteExperiments(
     session: "api.Session",
     *,
@@ -16376,7 +16434,8 @@ def get_GetExperimentCheckpoints(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
+    sortByAttr: "typing.Optional[checkpointv1SortBy]" = None,
+    sortByMetric: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     """Get a list of checkpoints for an experiment.
@@ -16390,7 +16449,7 @@ denote number of checkpoints to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
-    - sortBy: Sort checkpoints by the given field.
+    - sortByAttr: Sort by preset checkpoint attribute.
 
  - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
  - SORT_BY_UUID: Returns checkpoints sorted by UUID.
@@ -16400,6 +16459,7 @@ denote number of checkpoints to skip from the end before returning results.
  - SORT_BY_STATE: Returns checkpoints sorted by state.
  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
 configuration setting.
+    - sortByMetric: Sort by custom validation metric name.
     - states: Limit the checkpoints to those that match the states.
 
  - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -16413,7 +16473,8 @@ configuration setting.
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
+        "sortByAttr": sortByAttr.value if sortByAttr is not None else None,
+        "sortByMetric": sortByMetric,
         "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
@@ -18046,7 +18107,8 @@ def get_GetTrialCheckpoints(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
+    sortByAttr: "typing.Optional[checkpointv1SortBy]" = None,
+    sortByMetric: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     """Get a list of checkpoints for a trial.
@@ -18060,13 +18122,17 @@ denote number of checkpoints to skip from the end before returning results.
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
-    - sortBy: Sort checkpoints by the given field.
+    - sortByAttr: Sort by preset checkpoint attribute.
 
  - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.
  - SORT_BY_UUID: Returns checkpoints sorted by UUID.
+ - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.
  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.
  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.
  - SORT_BY_STATE: Returns checkpoints sorted by state.
+ - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric`
+configuration setting.
+    - sortByMetric: Sort by custom validation metric name.
     - states: Limit the checkpoints to those that match the states.
 
  - STATE_UNSPECIFIED: The state of the checkpoint is unknown.
@@ -18080,7 +18146,8 @@ denote number of checkpoints to skip from the end before returning results.
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
+        "sortByAttr": sortByAttr.value if sortByAttr is not None else None,
+        "sortByMetric": sortByMetric,
         "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
@@ -20106,6 +20173,32 @@ def put_PutExperiment(
     if _resp.status_code == 200:
         return v1PutExperimentResponse.from_json(_resp.json())
     raise APIHttpError("put_PutExperiment", _resp)
+
+def put_PutExperimentLabel(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    label: str,
+) -> "v1PutExperimentLabelResponse":
+    """Put a new label on the experiment.
+
+    - experimentId: The ID of the experiment.
+    - label: The label to add.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/experiments/{experimentId}/labels/{label}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutExperimentLabelResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutExperimentLabel", _resp)
 
 def put_PutProjectNotes(
     session: "api.Session",

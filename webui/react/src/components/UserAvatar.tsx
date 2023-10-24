@@ -1,6 +1,6 @@
+import Avatar, { Props as AvatarProps } from 'determined-ui/Avatar';
 import React from 'react';
 
-import Avatar, { Props as AvatarProps } from 'components/kit/Avatar';
 import { User } from 'types';
 import { getDisplayName } from 'utils/user';
 

@@ -21,8 +21,8 @@ func (e errUnexpectedMessage) Error() string {
 		msg = v.Elem().Interface()
 	}
 	sender := "<external>"
-	if e.ctx.Sender() != nil {
-		sender = e.ctx.Sender().Address().String()
+	if e.ctx.sender != nil {
+		sender = e.ctx.sender.Address().String()
 	}
 	self := "<unknown>"
 	if e.ctx.Self() != nil {

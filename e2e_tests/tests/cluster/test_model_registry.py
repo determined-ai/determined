@@ -51,6 +51,7 @@ def test_model_registry() -> None:
         assert mnist.metadata == {"testing": "metadata"}
 
         # Confirm we can look up a model by its ID
+        assert mnist.model_id is not None, "mnist.model_id set by create_model"
         db_model = d.get_model_by_id(mnist.model_id)
         assert db_model.name == "mnist"
         db_model = d.get_model(mnist.model_id)
@@ -106,6 +107,7 @@ def test_model_registry() -> None:
 
         latest_version = mnist.get_version()
         assert latest_version is not None
+        assert latest_version.checkpoint
         assert latest_version.checkpoint.uuid == checkpoint.uuid
 
         latest_version.set_name("Test 2021")
@@ -131,6 +133,7 @@ def test_model_registry() -> None:
 
         latest_version = mnist.get_version()
         assert latest_version is not None
+        assert latest_version.checkpoint
         assert latest_version.checkpoint.uuid == checkpoint.uuid
 
         # Ensure the correct number of versions are present.

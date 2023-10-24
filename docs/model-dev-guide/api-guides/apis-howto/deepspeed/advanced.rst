@@ -23,7 +23,7 @@ engine passed to :meth:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.wrap
 
 For more advanced cases where model engines have different model parallel topologies, contact
 support on the Determined `community Slack
-<https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew/>`_.
+<https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`_.
 
 *****************
  Custom Reducers

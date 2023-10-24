@@ -4,7 +4,7 @@ import React from 'react';
 
 import RoutePagination from './RoutePagination';
 
-vi.mock('components/kit/Tooltip');
+vi.mock('determined-ui/Tooltip');
 
 const FIRST_ID = 6;
 const MIDDLE_ID = 66;

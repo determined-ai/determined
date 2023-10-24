@@ -556,6 +556,7 @@ func setupSchedulerStates(
 				ID: req.AllocationID,
 				Resources: map[sproto.ResourcesID]sproto.Resources{
 					sproto.ResourcesID(containerID): &containerResources{
+						system:      system,
 						req:         req,
 						agent:       agentState,
 						containerID: containerID,

@@ -26,13 +26,9 @@ Some configuration settings, such as searcher training lengths and budgets,
 training units: records, batches, or epochs.
 
 -  ``records``: A *record* is a single labeled example (sometimes called a sample).
-
 -  ``batches``: A *batch* is a group of records. The number of records in a batch is configured via
    the ``global_batch_size`` hyperparameter.
-
--  ``epoch``: An *epoch* is a single copy of the entire training data set; the number of records in
-   an epoch is configured via the :ref:`records_per_epoch <config-records-per-epoch>` configuration
-   field.
+-  ``epoch``: An *epoch* is a single copy of the entire training data set.
 
 For example, to specify the ``max_length`` for a searcher in terms of batches, the configuration
 would read as shown below.
@@ -43,9 +39,10 @@ would read as shown below.
      batches: 900
 
 To express it in terms of records or epochs, ``records`` or ``epochs`` would be specified in place
-of ``batches``. In the case of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also
-be specified. Below is an example that configures a ``single`` searcher to train a model for 64
-epochs.
+of ``batches``. For :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+:class:`~determined.keras.TFKerasTrial`, :ref:`records_per_epoch <config-records-per-epoch>` must
+also be specified if using epochs. Below is an example that configures a ``single`` searcher to
+train a model for 64 epochs.
 
 .. code:: yaml
 
@@ -266,9 +263,10 @@ Optional. The number of records in the training data set. It must be configured 
 specify ``min_validation_period``, ``min_checkpoint_period``, and ``searcher.max_length`` in units
 of ``epochs``.
 
--  The system does not attempt to determine the size of an epoch automatically, because the size of
-   the training set might vary based on data augmentation, changes to external storage, or other
-   factors.
+.. note::
+
+   For :class:`~determined.pytorch.PyTorchTrial`, epoch length is automatically determined using the
+   chief worker's dataset length, and this value will be ignored.
 
 .. _max-restarts:
 
@@ -301,8 +299,9 @@ Optional. Specifies the minimum frequency at which validation should be run for 
    min_validation_period:
       epochs: 2
 
--  If this is in the unit of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must be
-   specified.
+-  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
+   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 .. _experiment-config-perform-initial-validation:
 
@@ -341,8 +340,9 @@ Optional. Specifies the minimum frequency for running checkpointing for each tri
       min_checkpoint_period:
          epochs: 2
 
--  If the unit is in epochs, you must also specify :ref:`records_per_epoch
-   <config-records-per-epoch>`.
+-  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+   :class:`~determined.keras.TFKerasTrial`: If the unit is in epochs, you must also specify
+   :ref:`records_per_epoch <config-records-per-epoch>`.
 
 ``checkpoint_policy``
 =====================
@@ -799,8 +799,9 @@ Required. The length of the trial.
       max_length:
          epochs: 2
 
--  If this is in the unit of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must be
-      specified.
+-  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
+   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -857,8 +858,9 @@ Required. The length of each trial.
       max_length:
          epochs: 2
 
--  If this is in the unit of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must be
-   specified.
+-  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
+   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -913,8 +915,9 @@ Required. The length of each trial.
       max_length:
          epochs: 2
 
--  If this is in the unit of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must be
-   specified.
+-  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
+   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -974,8 +977,9 @@ to converge on the data set.
       max_length:
          epochs: 2
 
--  If this is in the unit of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must be
-   specified.
+-  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
+   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
+   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 ``max_trials``
 --------------

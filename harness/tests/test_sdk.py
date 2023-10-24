@@ -45,7 +45,7 @@ def test_trial_sort_by() -> None:
 
 def test_trial_order_by() -> None:
     do_enum_test(
-        client.TrialOrderBy,
+        client.OrderBy,
         bindings.v1OrderBy,
         # We don't give the user the UNSPECIFIED option.
         ignore=[bindings.v1OrderBy.UNSPECIFIED],
@@ -53,7 +53,11 @@ def test_trial_order_by() -> None:
 
 
 def test_checkpoint_state() -> None:
-    do_enum_test(client.CheckpointState, bindings.checkpointv1State)
+    do_enum_test(
+        client.CheckpointState,
+        bindings.checkpointv1State,
+        ignore=[bindings.checkpointv1State.UNSPECIFIED],
+    )
 
 
 def test_model_sort_by() -> None:
@@ -62,7 +66,7 @@ def test_model_sort_by() -> None:
 
 def test_model_order_by() -> None:
     do_enum_test(
-        client.ModelOrderBy,
+        client.OrderBy,
         bindings.v1OrderBy,
         # We don't give the user the UNSPECIFIED option.
         ignore=[bindings.v1OrderBy.UNSPECIFIED],

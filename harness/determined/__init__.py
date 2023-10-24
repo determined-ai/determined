@@ -5,7 +5,7 @@ from determined._import import import_from_path
 from determined import core
 from determined._env_context import EnvContext
 from determined._trial_context import TrialContext
-from determined._trial import Trial
+from determined._trial import LegacyTrial
 from determined._trial_controller import (
     _DistributedBackend,
     TrialController,

@@ -1,10 +1,10 @@
 import { Typography } from 'antd';
+import Avatar, { Size } from 'determined-ui/Avatar';
+import Card from 'determined-ui/Card';
+import Icon from 'determined-ui/Icon';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
-import Avatar, { Size } from 'components/kit/Avatar';
-import Card from 'components/kit/Card';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';

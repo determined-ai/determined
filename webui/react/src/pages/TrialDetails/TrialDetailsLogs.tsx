@@ -1,19 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import ClipboardButton from 'components/kit/ClipboardButton';
+import ClipboardButton from 'determined-ui/ClipboardButton';
 import LogViewer, {
   FetchConfig,
   FetchDirection,
   FetchType,
-} from 'components/kit/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'components/kit/LogViewer/LogViewerSelect';
-import {
-  Settings,
-  settingsConfigForTrial,
-} from 'components/kit/LogViewer/LogViewerSelect.settings';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import useConfirm from 'components/kit/useConfirm';
+} from 'determined-ui/LogViewer/LogViewer';
+import LogViewerSelect, { Filters } from 'determined-ui/LogViewer/LogViewerSelect';
+import { Settings, settingsConfigForTrial } from 'determined-ui/LogViewer/LogViewerSelect.settings';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import useConfirm from 'determined-ui/useConfirm';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';

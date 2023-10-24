@@ -1,12 +1,11 @@
-import { Alert } from 'antd';
+import { LineChart } from 'determined-ui/LineChart';
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { LineChart } from 'components/kit/LineChart';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
-import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
@@ -25,7 +24,6 @@ import {
   Hyperparameter,
   HyperparameterType,
   Metric,
-  metricTypeParamMap,
   RunState,
   Scale,
   Serie,
@@ -150,7 +148,7 @@ const LearningCurve: React.FC<Props> = ({
 
   const handlePointClick = useCallback(
     (e: MouseEvent, point: UPlotPoint) => {
-      const trialId = point ? trialIds[point.seriesIdx - 1] : undefined;
+      const trialId = trialIds[point.seriesIdx];
       if (trialId) handleTrialClick(e, trialId);
     },
     [handleTrialClick, trialIds],
@@ -158,7 +156,7 @@ const LearningCurve: React.FC<Props> = ({
 
   const handlePointFocus = useCallback(
     (point?: UPlotPoint) => {
-      const trialId = point ? trialIds[point.seriesIdx - 1] : undefined;
+      const trialId = point ? trialIds[point.seriesIdx] : undefined;
       if (trialId) handleTrialFocus(trialId);
     },
     [handleTrialFocus, trialIds],
@@ -190,8 +188,8 @@ const LearningCurve: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.group],
         undefined,
+        selectedMetric.group,
         selectedMaxTrial,
         MAX_DATAPOINTS,
         undefined,
@@ -312,12 +310,12 @@ const LearningCurve: React.FC<Props> = ({
     return <Message title={pageError.message} />;
   } else if ((hasLoaded && !hasTrials) || !selectedMetric) {
     return isExperimentTerminal ? (
-      <Message title="No learning curve data to show." type={MessageType.Empty} />
+      <Message icon="warning" title="No learning curve data to show." />
     ) : (
       <div className={css.waiting}>
-        <Alert
+        <Message
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

@@ -7,7 +7,6 @@ import (
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -371,8 +370,8 @@ func (s ResourcesSummary) Slots() int {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.System, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
-	Kill(*actor.System, logger.Context)
+	Start(logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
+	Kill(logger.Context)
 }
 
 // ResourceList is a wrapper for a list of resources.

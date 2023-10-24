@@ -1,17 +1,17 @@
 import { Card, type TabsProps } from 'antd';
+import Breadcrumb from 'determined-ui/Breadcrumb';
+import Message from 'determined-ui/Message';
+import Notes from 'determined-ui/Notes';
+import Pivot from 'determined-ui/Pivot';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
-import Breadcrumb from 'components/kit/Breadcrumb';
-import Notes from 'components/kit/Notes';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -270,6 +270,7 @@ const ModelVersionDetails: React.FC = () => {
               disableTitle
               notes={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
               onError={handleError}
+              onPageUnloadHook={unstable_useBlocker}
               onSave={saveNotes}
             />
           </div>
@@ -293,7 +294,7 @@ const ModelVersionDetails: React.FC = () => {
     return <Message title={`Invalid Version ID ${versionNum}`} />;
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
-    return <Message title={message} type={MessageType.Warning} />;
+    return <Message icon="warning" title={message} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
   } else if (!modelVersion || rbacLoading) {

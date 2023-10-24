@@ -1,8 +1,8 @@
+import Icon from 'determined-ui/Icon';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { createOmitableRenderer, relativeTimeRenderer } from 'components/Table/Table';
@@ -83,17 +83,9 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'type',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
     key: 'type',
-    render: (_: unknown, record: Job): ReactNode => {
-      const title = jobTypeLabel(record.type);
-      const TypeCell = (
-        <Tooltip content={title} placement="topLeft">
-          <div>
-            <Icon name={jobTypeIconName(record.type)} title={jobTypeLabel(record.type)} />
-          </div>
-        </Tooltip>
-      );
-      return TypeCell;
-    },
+    render: (_: unknown, record: Job): ReactNode => (
+      <Icon name={jobTypeIconName(record.type)} showTooltip title={jobTypeLabel(record.type)} />
+    ),
     title: 'Type',
   },
   {

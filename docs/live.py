@@ -26,11 +26,11 @@ def make_refresh_script(path, x_rebuild_time):
                 let xhr = new XMLHttpRequest();
                 xhr.open("POST", "/");
                 xhr.setRequestHeader("X-rebuild-time", "'''
-            + x
-            + b'''");
+        + x
+        + b'''");
                 xhr.setRequestHeader("X-rebuild-path", "'''
-            + path.encode("utf8")
-            + b"""");
+        + path.encode("utf8")
+        + b"""");
                 xhr.send();
                 xhr.onload = function() {
                     // alert(`Loaded: ${xhr.status} ${xhr.response}`);

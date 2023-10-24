@@ -1,12 +1,11 @@
-import { Alert } from 'antd';
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
@@ -21,7 +20,6 @@ import {
   HyperparameterType,
   Metric,
   MetricType,
-  metricTypeParamMap,
   Primitive,
   Range,
   Scale,
@@ -227,8 +225,8 @@ const HpHeatMaps: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.group],
-        undefined, // custom metric group
+        undefined,
+        selectedMetric.group,
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
@@ -339,12 +337,12 @@ const HpHeatMaps: React.FC<Props> = ({
     return <Message title={pageError.message} />;
   } else if ((hasLoaded && !chartData) || !selectedMetric) {
     return isExperimentTerminal ? (
-      <Message title="No data to plot." type={MessageType.Empty} />
+      <Message icon="warning" title="No data to plot." />
     ) : (
       <div>
-        <Alert
+        <Message
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
+          title="Not enough data points to plot."
         />
         <Spinner spinning />
       </div>
@@ -387,7 +385,7 @@ const HpHeatMaps: React.FC<Props> = ({
               </div>
             </>
           ) : (
-            <Message title="No data to plot." type={MessageType.Empty} />
+            <Message icon="warning" title="No data to plot." />
           )}
         </div>
       </Section>

@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { UIProvider } from 'determined-ui/Theme';
 
-import { UIProvider } from 'components/kit/Theme';
 import { Metric } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
 
-vi.mock('components/kit/Tooltip');
+vi.mock('determined-ui/Tooltip');
 
 const setup = (metric: Metric) => {
   const handleOnChange = vi.fn();

@@ -105,7 +105,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
         remote_url = repo.git.config(f"remote.{remote_name}.url", get=True)
         print(f"Using remote URL '{remote_url}' from upstream branch '{upstream_branch}'")
     except Exception as e:
-        raise CliError("Failed to find the upstream branch: ", e)
+        raise CliError(f"Failed to find the upstream branch: {e}")
 
     return (remote_url, commit_hash, committer, commit_date)
 
@@ -667,9 +667,20 @@ def download_model_def(args: Namespace) -> None:
 
 @authentication.required
 def download(args: Namespace) -> None:
-    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
-    checkpoints = exp.top_n_checkpoints(
-        args.top_n, sort_by=args.sort_by, smaller_is_better=args.smaller_is_better
+    sess = cli.setup_session(args)
+    exp = client.Experiment(args.experiment_id, sess)
+
+    ckpt_order_by = None
+
+    if args.smaller_is_better is True:
+        ckpt_order_by = client.OrderBy.ASC
+    if args.smaller_is_better is False:
+        ckpt_order_by = client.OrderBy.DESC
+
+    checkpoints = exp.list_checkpoints(
+        sort_by=args.sort_by,
+        order_by=ckpt_order_by,
+        max_results=args.top_n,
     )
 
     top_level = pathlib.Path(args.output_dir)
@@ -691,7 +702,8 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
+    sess = cli.setup_session(args)
+    exp = client.Experiment(args.experiment_id, sess)
     state = exp.wait(interval=args.polling_interval)
     if state != client.ExperimentState.COMPLETED:
         sys.exit(1)

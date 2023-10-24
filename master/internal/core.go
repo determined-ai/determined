@@ -11,7 +11,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,8 +22,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
@@ -46,7 +46,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -957,7 +957,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	userService := user.GetService()
 
 	proxy.InitProxy(processProxyAuthentication)
-	portregistry.InitPortRegistry()
+	portregistry.InitPortRegistry(config.GetMasterConfig().ReservedPorts)
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	// Initialize the HTTP server and listen for incoming requests.
@@ -1019,7 +1019,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	m.echo.Use(authzAuditLogMiddleware())
-	m.echo.Use(userService.ProcessAuthentication)
+
+	var proxiedRoutes []string
+	for _, ps := range m.config.InternalConfig.ProxiedServers {
+		proxiedRoutes = append(proxiedRoutes, ps.PathPrefix)
+	}
+	m.echo.Use(processAuthWithRedirect(proxiedRoutes))
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
@@ -1046,7 +1051,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		},
 		cert,
 	)
-	jobservice.SetDefaultService(job.NewManager(m.rm, m.system))
+	jobservice.SetDefaultService(m.rm)
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
@@ -1205,6 +1210,16 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	handler := proxy.DefaultProxy.NewProxyHandler("service")
 	m.echo.Any("/proxy/:service/*", handler)
+
+	for _, ps := range m.config.InternalConfig.ProxiedServers {
+		psGroup := m.echo.Group(ps.PathPrefix)
+		psTarget, err := url.Parse(ps.Destination)
+		if err != nil {
+			return errors.Wrap(err, "failed to parse the given proxied server path")
+		}
+		psProxy := httputil.NewSingleHostReverseProxy(psTarget)
+		psGroup.Any("*", echo.WrapHandler(http.StripPrefix(ps.PathPrefix, psProxy)))
+	}
 
 	// Catch-all for requests not matched by any above handler
 	// echo does not set the response error on the context if no handler is matched

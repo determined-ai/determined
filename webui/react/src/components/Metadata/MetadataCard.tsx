@@ -1,10 +1,9 @@
-import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Spinner from 'components/kit/Spinner';
-import Tooltip from 'components/kit/Tooltip';
 import { Metadata } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 
@@ -71,9 +70,11 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
           </Space>
         ) : (
           disabled || (
-            <Tooltip content="Edit">
-              <EditOutlined onClick={editMetadata} />
-            </Tooltip>
+            <Button
+              icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
+              type="text"
+              onClick={editMetadata}
+            />
           )
         )
       }

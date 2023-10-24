@@ -1,5 +1,6 @@
-import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import { Dropdown, DropDownProps, type MenuProps } from 'antd';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
 import { useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
@@ -7,8 +8,6 @@ import ConjunctionContainer from 'components/FilterForm/components/ConjunctionCo
 import FilterField from 'components/FilterForm/components/FilterField';
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import { Conjunction, FormField, FormGroup, FormKind } from 'components/FilterForm/components/type';
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterGroup.module.scss';
@@ -143,15 +142,15 @@ const FilterGroup = ({
                 disabled={group.children.length > ITEM_LIMIT}
                 menu={menuItems}
                 trigger={['click']}>
-                <Button icon={<PlusOutlined />} type="text" />
+                <Button icon={<Icon name="add" size="tiny" title="Add field" />} type="text" />
               </Dropdown>
               <Button
-                icon={<Icon name="close" title="Close Group" />}
+                icon={<Icon name="close" size="tiny" title="Close Group" />}
                 type="text"
                 onClick={() => formStore.removeChild(group.id)}
               />
               <div ref={drag}>
-                <Button icon={<HolderOutlined />} type="text" />
+                <Button icon={<Icon name="holder" size="small" title="Move group" />} type="text" />
               </div>
             </>
           )}

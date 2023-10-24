@@ -1,4 +1,10 @@
 import { App as AntdApp } from 'antd';
+import Button from 'determined-ui/Button';
+import Spinner from 'determined-ui/Spinner';
+import useUI, { UIProvider } from 'determined-ui/Theme';
+import { notification } from 'determined-ui/Toast';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -7,12 +13,6 @@ import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
-import Button from 'components/kit/Button';
-import Spinner from 'components/kit/Spinner';
-import useUI, { UIProvider } from 'components/kit/Theme';
-import { notification } from 'components/kit/Toast';
-import { ConfirmationProvider } from 'components/kit/useConfirm';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
@@ -53,7 +53,6 @@ const AppView: React.FC = () => {
   const loadableUser = useObservable(userStore.currentUser);
   const loadableInfo = useObservable(determinedStore.loadableInfo);
   const isServerReachable = useObservable(determinedStore.isServerReachable);
-  const info = useObservable(determinedStore.info);
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
   const {
@@ -164,27 +163,23 @@ const AppView: React.FC = () => {
         {isAuthChecked ? (
           <>
             {isServerReachable ? (
-              <SettingsProvider>
-                <UIProvider branding={info.branding}>
-                  <AntdApp>
-                    <ConfirmationProvider>
-                      <Navigation>
-                        <JupyterLabGlobal
-                          enabled={
-                            Loadable.isLoaded(loadableUser) &&
-                            (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                          }
-                          workspace={workspace ?? undefined}
-                        />
-                        <Omnibar />
-                        <main>
-                          <Router routes={appRoutes} />
-                        </main>
-                      </Navigation>
-                    </ConfirmationProvider>
-                  </AntdApp>
-                </UIProvider>
-              </SettingsProvider>
+              <AntdApp>
+                <ConfirmationProvider>
+                  <Navigation>
+                    <JupyterLabGlobal
+                      enabled={
+                        Loadable.isLoaded(loadableUser) &&
+                        (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                      }
+                      workspace={workspace ?? undefined}
+                    />
+                    <Omnibar />
+                    <main>
+                      <Router routes={appRoutes} />
+                    </main>
+                  </Navigation>
+                </ConfirmationProvider>
+              </AntdApp>
             ) : (
               <PageMessage title="Server is Unreachable">
                 <p>
@@ -205,12 +200,17 @@ const AppView: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const info = useObservable(determinedStore.info);
   return (
     <HelmetProvider>
       <StoreProvider>
-        <DndProvider backend={HTML5Backend}>
-          <AppView />
-        </DndProvider>
+        <SettingsProvider>
+          <UIProvider branding={info.branding}>
+            <DndProvider backend={HTML5Backend}>
+              <AppView />
+            </DndProvider>
+          </UIProvider>
+        </SettingsProvider>
       </StoreProvider>
     </HelmetProvider>
   );

@@ -1,18 +1,17 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Alert, Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
+import { Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
+import Button from 'determined-ui/Button';
+import Checkbox from 'determined-ui/Checkbox';
+import Form from 'determined-ui/Form';
+import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
+import InputNumber from 'determined-ui/InputNumber';
+import Message from 'determined-ui/Message';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
+import { Loadable } from 'determined-ui/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Checkbox from 'components/kit/Checkbox';
-import Form from 'components/kit/Form';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import Select, { Option, SelectValue } from 'components/kit/Select';
-import Tooltip from 'components/kit/Tooltip';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
@@ -369,7 +368,7 @@ const useModalHyperparameterSearch = ({
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        {modalError && <Alert className={css.error} message={modalError} type="error" />}
+        {modalError && <Message icon="error" title={modalError} />}
         <div className={css.labelWithLink}>
           <p>Select hyperparameters and define the search space.</p>
           <Link
@@ -417,7 +416,7 @@ const useModalHyperparameterSearch = ({
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        {modalError && <Alert className={css.error} message={modalError} type="error" />}
+        {modalError && <Message icon="error" title={modalError} />}
         <Form.Item
           initialValue={searcher.name}
           label={
@@ -511,9 +510,11 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
-                <Tooltip content="How aggressively to perform early stopping of underperforming trials">
-                  <InfoCircleOutlined />
-                </Tooltip>
+                <Icon
+                  name="info"
+                  showTooltip
+                  title="How aggressively to perform early stopping of underperforming trials"
+                />
               </div>
             }
             name="mode"
@@ -552,9 +553,7 @@ const useModalHyperparameterSearch = ({
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
-                <Tooltip content="Use 0 for max possible parallelism">
-                  <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
-                </Tooltip>
+                <Icon name="info" showTooltip title="Use 0 for max possible parallelism" />
               </div>
             }
             name="max_concurrent_trials"

@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,6 +36,9 @@ const (
 // thread-safe API by specializing for JSON encoding/decoding and using channels for read/write. The
 // Close method must be called or resources will be leaked.
 type WebSocket[TIn, TOut any] struct {
+	id   string
+	name string
+
 	log  *logrus.Entry
 	conn *websocket.Conn
 
@@ -55,12 +62,16 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) (*WebSocket[TIn, TOu
 	inbox := make(chan TIn, inboxBufferSize)
 	outbox := make(chan TOut, outboxBufferSize)
 	done := make(chan struct{})
+	id := uuid.NewString()
 
 	s := &WebSocket[TIn, TOut]{
+		id:   id,
+		name: name,
 		log: logrus.WithFields(logrus.Fields{
 			"component":   "websocket",
 			"remote-addr": conn.RemoteAddr(),
 			"name":        name,
+			"id":          id,
 		}),
 		conn:   conn,
 		cancel: cancel,
@@ -103,6 +114,11 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) (*WebSocket[TIn, TOu
 	return s, nil
 }
 
+// Name grants access to the WebSocket's name.
+func (s *WebSocket[TIn, TOut]) Name() string {
+	return s.name
+}
+
 func (s *WebSocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn) error {
 	s.log.Trace("running socket read loop")
 	defer s.cancel()
@@ -126,6 +142,7 @@ func (s *WebSocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn
 			if err := json.Unmarshal(msg, &parsed); err != nil {
 				return fmt.Errorf("unmarshalling message: %w", err)
 			}
+
 			inbox <- parsed
 		}
 	}
@@ -171,7 +188,7 @@ func (s *WebSocket[TIn, TOut]) runWriteLoop(ctx context.Context, outbox <-chan T
 	}
 }
 
-// Close closes the websocket by performing the close handshake and closing the underlying
+// Close closes the WebSocket by performing the close handshake and closing the underlying
 // connection, rendering it unusable.
 func (s *WebSocket[TIn, TOut]) Close() error {
 	s.closeOnce.Do(func() {
@@ -249,4 +266,23 @@ func (s *WebSocket[TIn, TOut]) setError(err error) {
 	if s.err == nil {
 		s.err = err
 	}
+}
+
+var upgrader = websocket.Upgrader{}
+
+// UpgradeConnection is a helper function for upgrading stdlib HTTP requests to WebSockets using
+// a zero-value Gorilla Upgrader.
+func UpgradeConnection(resp http.ResponseWriter, req *http.Request) (*websocket.Conn, error) {
+	conn, err := upgrader.Upgrade(resp, req, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "websocket connection error")
+	}
+
+	return conn, nil
+}
+
+// UpgradeEchoConnection is a helper function for upgrading Echo requests to WebSockets using
+// a zero-value Gorilla Upgrader.
+func UpgradeEchoConnection(e echo.Context) (*websocket.Conn, error) {
+	return UpgradeConnection(e.Response(), e.Request())
 }

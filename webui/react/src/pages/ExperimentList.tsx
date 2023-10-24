@@ -1,5 +1,13 @@
 import { Space, Typography } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import Input from 'determined-ui/Input';
+import { useModal } from 'determined-ui/Modal';
+import Tags from 'determined-ui/Tags';
+import Toggle from 'determined-ui/Toggle';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -10,14 +18,6 @@ import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Input from 'components/kit/Input';
-import { useModal } from 'components/kit/Modal';
-import Tags from 'components/kit/Tags';
-import Toggle from 'components/kit/Toggle';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import InteractiveTable, {
   ColumnDef,
@@ -894,9 +894,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown menu={menuItems} onClick={handleDropdown}>
-            <div>
-              <Icon name="overflow-vertical" title="Action menu" />
-            </div>
+            <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
           </Dropdown>
         </div>
       </div>

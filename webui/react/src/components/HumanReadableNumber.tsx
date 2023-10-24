@@ -1,6 +1,6 @@
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
-import Tooltip from 'components/kit/Tooltip';
 import { CommonProps } from 'types';
 import { humanReadableNumber } from 'utils/number';
 

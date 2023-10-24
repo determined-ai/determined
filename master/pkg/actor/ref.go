@@ -201,6 +201,9 @@ func (r *Ref) deleteChild(address Address) {
 	delete(r.system.refs, address)
 }
 
+// processMessage processes the next message from the actor's inbox. It handes internal system
+// messages (such as stop) and returns whether the actor should be shut down. Messages not
+// handled here are passed through to actors' Receive method.
 func (r *Ref) processMessage() bool {
 	ctx := r.inbox.get()
 
@@ -254,7 +257,7 @@ func (r *Ref) processMessage() bool {
 	}
 
 	// Any message not handled internally is sent to the actor implementation.
-	if ctx.Sender() == nil || !r.deadChildren[ctx.Sender().address] {
+	if ctx.sender == nil || !r.deadChildren[ctx.sender.address] {
 		r.err = r.actor.Receive(ctx)
 	}
 

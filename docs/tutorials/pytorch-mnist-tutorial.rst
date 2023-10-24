@@ -276,7 +276,6 @@ fixed values for the model's hyperparameters:
      n_filters2: 64
      dropout1: 0.25
      dropout2: 0.5
-   records_per_epoch: 50_000
    searcher:
      name: single
      metric: validation_loss

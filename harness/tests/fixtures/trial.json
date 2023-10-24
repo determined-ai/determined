@@ -1,0 +1,108 @@
+{
+  "trial": {
+    "id": 1,
+    "experimentId": 1,
+    "startTime": "2023-06-23T16:49:37.796199Z",
+    "endTime": "2023-06-23T16:50:18.015108Z",
+    "state": "STATE_COMPLETED",
+    "restarts": 0,
+    "hparams": {
+      "dense1": 128,
+      "global_batch_size": 32
+    },
+    "totalBatchesProcessed": 9375,
+    "bestValidation": {
+      "endTime": "2023-06-23T16:50:16.710948Z",
+      "metrics": {
+        "avgMetrics": {
+          "val_accuracy": 0.8729000091552734,
+          "val_loss": 0.345882773399353
+        },
+        "batchMetrics": []
+      },
+      "numInputs": 0,
+      "totalBatches": 9375
+    },
+    "latestValidation": {
+      "endTime": "2023-06-23T16:50:16.710948Z",
+      "metrics": {
+        "avgMetrics": {
+          "val_accuracy": 0.8729000091552734,
+          "val_loss": 0.345882773399353
+        },
+        "batchMetrics": []
+      },
+      "numInputs": 0,
+      "totalBatches": 9375
+    },
+    "bestCheckpoint": {
+      "uuid": "4e8a8dd3-6a4d-415a-94f2-dd2e1bb34385",
+      "endTime": "2023-06-23T16:50:15.991402Z",
+      "state": "STATE_COMPLETED",
+      "resources": {
+        "checkpoint": "117",
+        "code/": "0",
+        "code/README.md": "1449",
+        "code/adaptive.yaml": "333",
+        "code/const.yaml": "347",
+        "code/data.py": "2345",
+        "code/distributed.yaml": "297",
+        "code/model_def.py": "2388",
+        "determined-callbacks.v1.pkl": "336",
+        "determined-keras-model-weights.data-00000-of-00001": "1223457",
+        "determined-keras-model-weights.index": "1211",
+        "determined-keras-optimizer-weights.h5": "834064",
+        "load_data.json": "2357",
+        "metadata.json": "133",
+        "rng_state.pkl": "6828",
+        "workload_sequencer.pkl": "91"
+      },
+      "totalBatches": 9375,
+      "metadata": null
+    },
+    "runnerState": "validating",
+    "wallClockTime": 39.646941,
+    "warmStartCheckpointUuid": "",
+    "taskId": "2911.08edbca9-b281-48fc-a170-8c413a52d48c",
+    "totalCheckpointSize": "2075753",
+    "checkpointCount": 1,
+    "summaryMetrics": {
+      "avg_metrics": {
+        "accuracy": {
+          "count": 94,
+          "last": 0.8791666626930237,
+          "max": 0.9006249904632568,
+          "min": 0.6737499833106995,
+          "sum": 81.66416656970978,
+          "type": "number"
+        },
+        "loss": {
+          "count": 94,
+          "last": 0.3044380843639374,
+          "max": 0.9649808406829834,
+          "min": 0.27345189452171326,
+          "sum": 34.21618124842644,
+          "type": "number"
+        }
+      },
+      "validation_metrics": {
+        "val_accuracy": {
+          "count": 1,
+          "last": 0.8729000091552734,
+          "max": 0.8729000091552734,
+          "min": 0.8729000091552734,
+          "sum": 0.8729000091552734,
+          "type": "number"
+        },
+        "val_loss": {
+          "count": 1,
+          "last": 0.345882773399353,
+          "max": 0.345882773399353,
+          "min": 0.345882773399353,
+          "sum": 0.345882773399353,
+          "type": "number"
+        }
+      }
+    }
+  }
+}

@@ -479,7 +479,7 @@ func (a *apiServer) GetActiveTasksCount(
 func (a *apiServer) GetTasks(
 	ctx context.Context, req *apiv1.GetTasksRequest,
 ) (resp *apiv1.GetTasksResponse, err error) {
-	summary, err := a.m.rm.GetAllocationSummaries(a.m.system, sproto.GetAllocationSummaries{})
+	summary, err := a.m.rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	if err != nil {
 		return nil, err
 	}

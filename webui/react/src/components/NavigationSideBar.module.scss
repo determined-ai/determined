@@ -128,13 +128,19 @@
       cursor: pointer;
       display: flex;
       flex-grow: 1;
+      gap: 16px;
       height: 48px;
       max-width: 100%;
+      padding-right: 16px;
 
-      .icon {
+      &:first-child {
         min-width: 56px;
-        padding-inline: 16px;
-        text-align: center;
+        padding-left: 16px;
+      }
+      .newWorkspaceIcon {
+        display: flex;
+        justify-content: center;
+        width: var(--icon-large);
       }
       .label {
         font-size: 13px;

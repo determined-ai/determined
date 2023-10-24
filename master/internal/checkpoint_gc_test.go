@@ -17,15 +17,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 func TestRunCheckpointGCTask(t *testing.T) {
-	system := actor.NewSystem(uuid.NewString())
-
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
 	user := db.RequireMockUser(t, pgDB)
@@ -98,9 +95,8 @@ func TestRunCheckpointGCTask(t *testing.T) {
 							return ok
 						}),
 						mock.Anything,
-						mock.Anything,
 					).Return(nil).Run(func(args mock.Arguments) {
-						cb := args.Get(6).(func(*task.AllocationExited))
+						cb := args.Get(5).(func(*task.AllocationExited))
 						cb(&task.AllocationExited{FinalState: task.AllocationState{
 							State: model.AllocationStateTerminated,
 						}})
@@ -142,7 +138,6 @@ func TestRunCheckpointGCTask(t *testing.T) {
 			jobID := db.RequireMockJob(t, pgDB, &user.ID)
 
 			if err := runCheckpointGCTask(
-				system,
 				tt.args.rm,
 				pgDB,
 				model.NewTaskID(),

@@ -1,15 +1,16 @@
-import { Alert, Select } from 'antd';
+import { Select } from 'antd';
+import Button from 'determined-ui/Button';
+import Form, { FormInstance } from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import InputNumber from 'determined-ui/InputNumber';
+import Message from 'determined-ui/Message';
+import { Modal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Form, { FormInstance } from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -80,7 +81,7 @@ interface Props {
   workspace?: Workspace;
 }
 
-const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
+const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const idPrefix = useId();
@@ -334,7 +335,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           />
         </Form.Item>
       </React.Suspense>
-      {configError && <Alert message={configError} type="error" />}
+      {configError && <Message icon="error" title={configError} />}
     </Form>
   );
 };

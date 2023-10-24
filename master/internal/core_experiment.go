@@ -296,15 +296,14 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial())
+		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial())
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
-	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
+	if err = m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), false); err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		m.system,
 		poolName,
 		m.config.TaskContainerDefaults,
 	)

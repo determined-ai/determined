@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
@@ -26,7 +25,6 @@ import (
 const fullDeleteGlob = "**/*"
 
 func runCheckpointGCTask(
-	system *actor.System,
 	rm rm.ResourceManager,
 	db *db.PgDB,
 	taskID model.TaskID,
@@ -51,7 +49,7 @@ func runCheckpointGCTask(
 		return nil
 	}
 
-	rp, err := rm.ResolveResourcePool(system, "", -1, 0)
+	rp, err := rm.ResolveResourcePool("", -1, 0)
 	if err != nil {
 		return fmt.Errorf("resolving resource pool: %w", err)
 	}
@@ -59,7 +57,6 @@ func runCheckpointGCTask(
 	// t.Base is just a shallow copy of the m.taskSpec on the master, so
 	// use caution when mutating it.
 	tcd, err := rm.TaskContainerDefaults(
-		system,
 		rp,
 		config.GetMasterConfig().TaskContainerDefaults)
 	if err != nil {
@@ -122,7 +119,7 @@ func runCheckpointGCTask(
 			SingleAgent: true,
 		},
 		ResourcePool: rp,
-	}, db, rm, gcSpec, system, onExit)
+	}, db, rm, gcSpec, onExit)
 	if err != nil {
 		return err
 	}

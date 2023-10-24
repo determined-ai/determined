@@ -11,7 +11,7 @@ import (
 )
 
 func (m *Master) getPrometheusTargets(c echo.Context) (interface{}, error) {
-	resp, err := m.rm.GetAgents(m.system, &apiv1.GetAgentsRequest{})
+	resp, err := m.rm.GetAgents(&apiv1.GetAgentsRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("gather agent statuses: %w", err)
 	}

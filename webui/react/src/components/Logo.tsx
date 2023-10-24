@@ -1,3 +1,4 @@
+import useUI, { DarkLight } from 'determined-ui/Theme';
 import React, { useMemo } from 'react';
 
 import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg?url';
@@ -6,7 +7,6 @@ import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-li
 import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg?url';
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
-import useUI, { DarkLight } from 'components/kit/Theme';
 import { serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
@@ -14,16 +14,16 @@ import { reactHostAddress } from 'utils/routes';
 
 import css from './Logo.module.scss';
 
-export const Orientation = {
+const Orientation = {
   Horizontal: 'horizontal',
   Vertical: 'vertical',
 } as const;
 
-export type Orientation = ValueOf<typeof Orientation>;
+type Orientation = ValueOf<typeof Orientation>;
 
 interface Props {
-  branding: BrandingType;
-  orientation: Orientation;
+  branding?: BrandingType;
+  orientation?: Orientation;
 }
 
 const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>> = {
@@ -49,7 +49,10 @@ const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>
   },
 };
 
-const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
+const Logo: React.FC<Props> = ({
+  branding = BrandingType.Determined,
+  orientation = Orientation.Vertical,
+}: Props) => {
   const { ui } = useUI();
   const classes = [css[branding], css[orientation]];
 

@@ -1,10 +1,10 @@
+import Avatar, { Size } from 'determined-ui/Avatar';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import Avatar, { Size } from 'components/kit/Avatar';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import ResourcePoolBindingModalComponent from 'components/ResourcePoolBindingModal';
 import { ColumnDef } from 'components/Table/InteractiveTable';

@@ -1,4 +1,5 @@
-import { makeToast, Severity } from 'components/kit/Toast';
+import { makeToast, Severity } from 'determined-ui/Toast';
+
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'types';

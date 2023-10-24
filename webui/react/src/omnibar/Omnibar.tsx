@@ -1,7 +1,7 @@
+import { matchesShortcut } from 'determined-ui/InputShortcut';
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { matchesShortcut } from 'components/kit/InputShortcut';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';

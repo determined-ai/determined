@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
+import Message from 'determined-ui/Message';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
-import Message, { MessageType } from 'components/Message';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { glasbeyColor } from 'utils/color';
 
@@ -137,7 +137,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   ]);
 
   if (!hasData) {
-    return <Message title="No data to plot." type={MessageType.Empty} />;
+    return <Message icon="warning" title="No data to plot." />;
   }
 
   return (

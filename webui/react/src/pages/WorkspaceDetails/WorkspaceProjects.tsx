@@ -1,19 +1,19 @@
 import { Space } from 'antd';
+import Button from 'determined-ui/Button';
+import Card from 'determined-ui/Card';
+import { Column, Columns } from 'determined-ui/Columns';
+import Input from 'determined-ui/Input';
+import Message from 'determined-ui/Message';
+import { useModal } from 'determined-ui/Modal';
+import Select, { Option } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import Toggle from 'determined-ui/Toggle';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import Button from 'components/kit/Button';
-import Card from 'components/kit/Card';
-import { Column, Columns } from 'components/kit/Columns';
-import Input from 'components/kit/Input';
-import { useModal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import Toggle from 'components/kit/Toggle';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
 import ProjectCreateModalComponent from 'components/ProjectCreateModal';
@@ -445,16 +445,16 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           projectsList
         ) : workspace.numProjects === 0 ? (
           <Message
-            message={
+            description={
               canCreateProject({ workspace: { id } })
                 ? 'Create a project with the "New Project" button or in the CLI.'
                 : 'User cannot create a project in this workspace.'
             }
+            icon="warning"
             title="Workspace contains no projects. "
-            type={MessageType.Empty}
           />
         ) : (
-          <Message title="No projects matching the current filters" type={MessageType.Empty} />
+          <Message icon="warning" title="No projects matching the current filters" />
         )}
       </Spinner>
       <ProjectCreateModal.Component workspaceId={workspace.id} />

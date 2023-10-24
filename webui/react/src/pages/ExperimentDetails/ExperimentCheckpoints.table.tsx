@@ -1,6 +1,6 @@
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { stateRenderer } from 'components/Table/Table';
-import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
+import { Checkpointv1SortBy } from 'services/api-ts-sdk';
 import { CoreApiGenericCheckpoint } from 'types';
 
 import { DEFAULT_COLUMN_WIDTHS } from './ExperimentCheckpoints.settings';
@@ -9,28 +9,28 @@ export const columns: ColumnDef<CoreApiGenericCheckpoint>[] = [
   {
     dataIndex: 'uuid',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['uuid'],
-    key: V1GetExperimentCheckpointsRequestSortBy.UUID,
+    key: Checkpointv1SortBy.UUID,
     sorter: true,
     title: 'UUID',
   },
   {
     dataIndex: 'totalBatches',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['totalBatches'],
-    key: V1GetExperimentCheckpointsRequestSortBy.BATCHNUMBER,
+    key: Checkpointv1SortBy.BATCHNUMBER,
     sorter: true,
     title: 'Total Batches',
   },
   {
     dataIndex: 'searcherMetric',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetric'],
-    key: V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC,
+    key: Checkpointv1SortBy.SEARCHERMETRIC,
     sorter: true,
     title: 'Searcher Metric',
   },
   {
     dataIndex: 'state',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
-    key: V1GetExperimentCheckpointsRequestSortBy.STATE,
+    key: Checkpointv1SortBy.STATE,
     render: stateRenderer,
     sorter: true,
     title: 'State',

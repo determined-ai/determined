@@ -102,7 +102,7 @@ class NoOpTrialController(det.TrialController):
             self.trained_steps = collections.Counter()
 
     @staticmethod
-    def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
+    def from_trial(trial_inst: det.LegacyTrial, *args: Any, **kwargs: Any) -> det.TrialController:
         return NoOpTrialController(*args, **kwargs)
 
     @staticmethod
@@ -251,7 +251,7 @@ class NoOpTrialController(det.TrialController):
             raise Exception("CHAOS! Executing random failure.")
 
 
-class NoOpTrial(det.Trial):
+class NoOpTrial(det.LegacyTrial):
     trial_context_class = NoOpTrialContext
     trial_controller_class = NoOpTrialController
 

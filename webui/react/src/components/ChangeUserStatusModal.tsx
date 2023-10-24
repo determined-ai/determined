@@ -1,8 +1,9 @@
-import Form from 'components/kit/Form';
-import { ValueOf } from 'components/kit/internal/types';
-import { Modal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import { makeToast } from 'components/kit/Toast';
+import Form from 'determined-ui/Form';
+import { Modal } from 'determined-ui/Modal';
+import Select, { Option } from 'determined-ui/Select';
+import { makeToast } from 'determined-ui/Toast';
+import { ValueOf } from 'determined-ui/utils/types';
+
 import { patchUsers } from 'services/api';
 import handleError from 'utils/error';
 

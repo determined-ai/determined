@@ -15,7 +15,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
@@ -41,7 +40,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 const (
@@ -108,7 +106,6 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		syslog              *logrus.Entry
-		system              *actor.System
 		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
@@ -140,7 +137,6 @@ func newExperiment(
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
-	system *actor.System,
 ) (*experiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
@@ -149,7 +145,7 @@ func newExperiment(
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
+		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -157,12 +153,11 @@ func newExperiment(
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		err := m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false)
+		err := m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), false)
 		if err != nil {
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
 		}
 		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
-			m.system,
 			poolName,
 			resources.SlotsPerTrial(),
 		)
@@ -219,7 +214,6 @@ func newExperiment(
 			"experiment-id": expModel.ID,
 		},
 		),
-		system:              system,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
 
@@ -273,24 +267,24 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.self = ctx.Self()
 		ctx.AddLabels(e.logCtx)
 		priorityChange := func(priority int) error {
-			return e.SetPriority(ctx, &priority, false)
+			return e.SetPriority(&priority, false)
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Add(e.JobID, priorityChange); err != nil {
 			return err
 		}
 
-		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
+		e.rm.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
 			MaxSlots: e.activeConfig.Resources().MaxSlots(),
 			JobID:    e.JobID,
 		})
-		if err := e.setWeight(ctx, e.activeConfig.Resources().Weight()); err != nil {
+		if err := e.setWeight(e.activeConfig.Resources().Weight()); err != nil {
 			e.updateState(model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
 			})
 			return err
 		}
-		if err := e.setPriority(ctx, e.activeConfig.Resources().Priority(), true); err != nil {
+		if err := e.setPriority(e.activeConfig.Resources().Priority(), true); err != nil {
 			e.updateState(model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
@@ -298,7 +292,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		jobservice.Default.RegisterJob(e.JobID, e.self)
+		jobservice.DefaultService.RegisterJob(e.JobID, e)
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -311,7 +305,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			}
 
 			if j.QPos.GreaterThan(decimal.Zero) {
-				e.rm.RecoverJobPosition(ctx, sproto.RecoverJobPosition{
+				e.rm.RecoverJobPosition(sproto.RecoverJobPosition{
 					JobID:        e.JobID,
 					JobPosition:  j.QPos,
 					ResourcePool: e.activeConfig.Resources().ResourcePool(),
@@ -416,9 +410,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources.SetMaxSlots(msg.MaxSlots)
 		e.activeConfig.SetResources(resources)
 		msg.JobID = e.JobID
-		e.rm.SetGroupMaxSlots(ctx, msg)
+		e.rm.SetGroupMaxSlots(msg)
 	case sproto.SetGroupWeight:
-		err := e.setWeight(ctx, msg.Weight)
+		err := e.setWeight(msg.Weight)
 		if err != nil {
 			e.syslog.WithError(err).Info("setting experiment job weight")
 		}
@@ -426,7 +420,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case sproto.SetGroupPriority:
-		err := e.setPriority(ctx, &msg.Priority, true)
+		err := e.setPriority(&msg.Priority, true)
 		if err != nil {
 			e.syslog.WithError(err).Info("setting experiment job priority")
 		}
@@ -434,16 +428,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case sproto.GetJob:
-		j, err := e.toV1Job()
-		if err != nil && err != sql.ErrNoRows {
-			// FIXME: DET-9563 workspace and/or project is deleted.
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(j)
-		}
+		ctx.Respond(e.ToV1Job())
 
 	case sproto.SetResourcePool:
-		if err := e.setRP(ctx, msg); err != nil {
+		if err := e.setRP(msg); err != nil {
 			ctx.Respond(err)
 		}
 
@@ -457,7 +445,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Error(err)
 			}
 		}
-		jobservice.Default.UnregisterJob(e.JobID)
+		go jobservice.DefaultService.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if state == "" {
 			state = model.ErrorState
@@ -496,7 +484,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 			go func() {
 				err := runCheckpointGCTask(
-					ctx.Self().System(), e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
+					e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
 					e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
 					false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 				)
@@ -788,7 +776,7 @@ func (e *experiment) processOperations(
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
-				nil, e.continueFromTrialID, e.system, e.self, e.TrialClosed,
+				nil, e.continueFromTrialID, e.TrialClosed,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
@@ -993,14 +981,14 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) SetPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
+func (e *experiment) SetPriority(priority *int, forward bool) (err error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return e.setPriority(ctx, priority, forward)
+	return e.setPriority(priority, forward)
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
+func (e *experiment) setPriority(priority *int, forward bool) (err error) {
 	if priority == nil {
 		return nil
 	}
@@ -1030,7 +1018,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	}
 
 	if forward {
-		switch err := e.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
+		switch err := e.rm.SetGroupPriority(sproto.SetGroupPriority{
 			Priority: *priority,
 			JobID:    e.JobID,
 		}).(type) {
@@ -1045,7 +1033,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	return nil
 }
 
-func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
+func (e *experiment) setWeight(weight float64) error {
 	resources := e.activeConfig.Resources()
 	oldWeight := resources.Weight()
 	resources.SetWeight(weight)
@@ -1056,7 +1044,7 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		return fmt.Errorf("setting experiment %d weight: %w", e.ID, err)
 	}
 
-	switch err := e.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
+	switch err := e.rm.SetGroupWeight(sproto.SetGroupWeight{
 		Weight: weight,
 		JobID:  e.JobID,
 	}).(type) {
@@ -1071,7 +1059,7 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	return nil
 }
 
-func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error {
+func (e *experiment) setRP(msg sproto.SetResourcePool) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
@@ -1080,7 +1068,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		e.system, msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+		msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
@@ -1110,31 +1098,4 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	_ = g.Wait() // Errors handled in g.Go.
 
 	return nil
-}
-
-func (e *experiment) toV1Job() (*jobv1.Job, error) {
-	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-
-	j := jobv1.Job{
-		JobId:          e.JobID.String(),
-		EntityId:       fmt.Sprint(e.ID),
-		Type:           jobv1.Type_TYPE_EXPERIMENT,
-		SubmissionTime: timestamppb.New(e.StartTime),
-		Username:       e.Username,
-		UserId:         int32(*e.OwnerID),
-		Progress:       float32(e.searcher.Progress()),
-		Name:           e.activeConfig.Name().String(),
-		WorkspaceId:    int32(workspace.ID),
-	}
-
-	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
-	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.activeConfig))
-	j.Weight = config.ReadWeight(j.ResourcePool, &e.activeConfig)
-
-	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
-
-	return &j, nil
 }

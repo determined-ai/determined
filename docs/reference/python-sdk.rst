@@ -33,9 +33,8 @@ The next step is to call create_experiment():
    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
    print(f"started experiment {exp.id}")
 
-The returned object will be an ``ExperimentReference`` object, which has methods for controlling the
-lifetime of the experiment running on the cluster. In this example, we will just wait for the
-experiment to complete.
+The returned object is an ``Experiment`` object, which offers methods to manage the experiment's
+lifecycle. In the following example, we simply await the experiment's completion.
 
 .. code:: python
 
@@ -46,7 +45,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. code:: python
 
-   best_checkpoint = exp.top_checkpoint()
+   best_checkpoint = exp.list_checkpoints()[0]
    print(f"best checkpoint was {best_checkpoint.uuid}")
 
 .. _python-sdk-reference:
@@ -59,7 +58,14 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 ==========
 
 .. automodule:: determined.experimental.client
-   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, stream_trials_metrics, stream_trials_training_metrics, stream_trials_validation_metrics
+   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, iter_trials_metrics
+   :member-order: bysource
+
+``OrderBy``
+===========
+
+.. autoclass:: determined.experimental.client.OrderBy
+   :members:
    :member-order: bysource
 
 ``Checkpoint``
@@ -74,13 +80,15 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Determined
    :members:
+   :exclude-members: stream_trials_metrics, stream_trials_training_metrics, stream_trials_validation_metrics
    :member-order: bysource
 
-``ExperimentReference``
-=======================
+``Experiment``
+==============
 
-.. autoclass:: determined.experimental.client.ExperimentReference
+.. autoclass:: determined.experimental.client.Experiment
    :members:
+   :exclude-members: get_trials
    :member-order: bysource
 
 ``DownloadMode``
@@ -95,13 +103,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 
 .. autoclass:: determined.experimental.client.Model
    :members:
-   :member-order: bysource
-
-``ModelOrderBy``
-================
-
-.. autoclass:: determined.experimental.client.ModelOrderBy
-   :members:
+   :exclude-members: get_metrics
    :member-order: bysource
 
 ``ModelSortBy``
@@ -118,23 +120,29 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :members:
    :member-order: bysource
 
-``TrialReference``
-==================
+``Project``
+===========
 
-.. autoclass:: determined.experimental.client.TrialReference
+.. autoclass:: determined.experimental.client.Project
    :members:
    :member-order: bysource
 
-``TrainingMetrics``
-===================
+``Trial``
+=========
 
-.. autoclass:: determined.experimental.client.TrainingMetrics
+.. autoclass:: determined.experimental.client.Trial
    :members:
+   :exclude-members: stream_metrics, stream_training_metrics, stream_validation_metrics
    :member-order: bysource
 
-``ValidationMetrics``
-=====================
+``TrialMetrics``
+================
 
-.. autoclass:: determined.experimental.client.ValidationMetrics
+.. autoclass:: determined.experimental.client.TrialMetrics
+
+``Workspace``
+=============
+
+.. autoclass:: determined.experimental.client.Workspace
    :members:
    :member-order: bysource

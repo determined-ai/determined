@@ -5,10 +5,7 @@ package allocationmocks
 import (
 	context "context"
 
-	actor "github.com/determined-ai/determined/master/pkg/actor"
-
 	db "github.com/determined-ai/determined/master/internal/db"
-
 	logger "github.com/determined-ai/determined/master/pkg/logger"
 
 	mock "github.com/stretchr/testify/mock"
@@ -209,13 +206,13 @@ func (_m *AllocationService) Signal(id model.AllocationID, sig task.AllocationSi
 	return r0
 }
 
-// StartAllocation provides a mock function with given fields: logCtx, req, _a2, _a3, specifier, system, onExit
-func (_m *AllocationService) StartAllocation(logCtx logger.Context, req sproto.AllocateRequest, _a2 db.DB, _a3 rm.ResourceManager, specifier tasks.TaskSpecifier, system *actor.System, onExit func(*task.AllocationExited)) error {
-	ret := _m.Called(logCtx, req, _a2, _a3, specifier, system, onExit)
+// StartAllocation provides a mock function with given fields: logCtx, req, _a2, _a3, specifier, onExit
+func (_m *AllocationService) StartAllocation(logCtx logger.Context, req sproto.AllocateRequest, _a2 db.DB, _a3 rm.ResourceManager, specifier tasks.TaskSpecifier, onExit func(*task.AllocationExited)) error {
+	ret := _m.Called(logCtx, req, _a2, _a3, specifier, onExit)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(logger.Context, sproto.AllocateRequest, db.DB, rm.ResourceManager, tasks.TaskSpecifier, *actor.System, func(*task.AllocationExited)) error); ok {
-		r0 = rf(logCtx, req, _a2, _a3, specifier, system, onExit)
+	if rf, ok := ret.Get(0).(func(logger.Context, sproto.AllocateRequest, db.DB, rm.ResourceManager, tasks.TaskSpecifier, func(*task.AllocationExited)) error); ok {
+		r0 = rf(logCtx, req, _a2, _a3, specifier, onExit)
 	} else {
 		r0 = ret.Error(0)
 	}

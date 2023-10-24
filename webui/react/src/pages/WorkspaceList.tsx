@@ -1,19 +1,18 @@
 import { Space } from 'antd';
+import Button from 'determined-ui/Button';
+import Card from 'determined-ui/Card';
+import { Column, Columns } from 'determined-ui/Columns';
+import Message from 'determined-ui/Message';
+import { useModal } from 'determined-ui/Modal';
+import Select, { Option } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import Toggle from 'determined-ui/Toggle';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import Button from 'components/kit/Button';
-import Card from 'components/kit/Card';
-import { Column, Columns } from 'components/kit/Columns';
-import Empty from 'components/kit/Empty';
-import { useModal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import Toggle from 'components/kit/Toggle';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
@@ -326,7 +325,7 @@ const WorkspaceList: React.FC = () => {
   }, [canceler]);
 
   if (pageError) {
-    return <Message title="Unable to fetch workspaces" type={MessageType.Warning} />;
+    return <Message icon="warning" title="Unable to fetch workspaces" />;
   }
 
   return (
@@ -372,13 +371,13 @@ const WorkspaceList: React.FC = () => {
         {workspaces.length !== 0 ? (
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
-          <Empty
+          <Message
             description="Create a workspace to keep track of related projects and experiments."
             icon="workspaces"
             title="No Workspaces"
           />
         ) : (
-          <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
+          <Message icon="warning" title="No workspaces matching the current filters" />
         )}
       </Spinner>
       <WorkspaceCreateModal.Component />

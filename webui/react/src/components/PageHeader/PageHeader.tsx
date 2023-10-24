@@ -1,8 +1,8 @@
+import Breadcrumb from 'determined-ui/Breadcrumb';
+import { MenuItem } from 'determined-ui/Dropdown';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useMemo } from 'react';
 
-import Breadcrumb from 'components/kit/Breadcrumb';
-import { MenuItem } from 'components/kit/Dropdown';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { BreadCrumbRoute } from 'components/Page';
 import { CommonProps } from 'types';

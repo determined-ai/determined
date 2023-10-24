@@ -1,14 +1,14 @@
 import { Space } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import Message from 'determined-ui/Message';
+import { useModal } from 'determined-ui/Modal';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Empty from 'components/kit/Empty';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -205,7 +205,7 @@ const WebhooksView: React.FC = () => {
       }
       title="Webhooks">
       {webhooks.length === 0 && !isLoading ? (
-        <Empty
+        <Message
           description="Call external services when experiments complete or throw errors."
           icon="webhooks"
           title="No Webhooks Registered"

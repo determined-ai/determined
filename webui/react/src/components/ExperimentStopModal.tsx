@@ -1,9 +1,9 @@
-import { Alert } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import Checkbox from 'determined-ui/Checkbox';
+import Message from 'determined-ui/Message';
+import { Modal } from 'determined-ui/Modal';
 import React, { useState } from 'react';
 
-import Checkbox from 'components/kit/Checkbox';
-import { Modal } from 'components/kit/Modal';
 import { cancelExperiment, killExperiment } from 'services/api';
 import { ExperimentAction, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
@@ -63,9 +63,9 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
         {CHECKBOX_TEXT}
       </Checkbox>
       {type !== ActionType.Cancel && (
-        <Alert
-          message={'Note: Any progress/data on incomplete workflows will be lost.'}
-          type="warning"
+        <Message
+          icon="warning"
+          title={'Note: Any progress/data on incomplete workflows will be lost.'}
         />
       )}
     </Modal>

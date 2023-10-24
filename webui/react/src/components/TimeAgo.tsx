@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import Tooltip from 'components/kit/Tooltip';
 import { ValueOf } from 'types';
 import { isNumber, isString } from 'utils/data';
 import {

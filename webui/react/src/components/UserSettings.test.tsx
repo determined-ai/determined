@@ -1,9 +1,10 @@
 import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { UIProvider } from 'determined-ui/Theme';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import React, { useCallback, useEffect } from 'react';
 
-import { UIProvider } from 'components/kit/Theme';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';
@@ -11,7 +12,6 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 
-import { ConfirmationProvider } from './kit/useConfirm';
 import UserSettings from './UserSettings';
 
 vi.mock('services/api', () => ({

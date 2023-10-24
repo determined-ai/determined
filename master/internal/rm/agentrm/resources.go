@@ -16,6 +16,8 @@ import (
 
 // containerResources contains information for tasks have been allocated but not yet started.
 type containerResources struct {
+	system *actor.System
+
 	req         *sproto.AllocateRequest
 	agent       *agentState
 	devices     []device.Device
@@ -42,7 +44,7 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 
 // StartContainer notifies the agent to start a container.
 func (c containerResources) Start(
-	ctx *actor.System, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.containerID)
@@ -59,7 +61,7 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 
-	return ctx.Ask(handler, sproto.StartTaskContainer{
+	return c.system.Ask(handler, sproto.StartTaskContainer{
 		AllocationID: c.req.AllocationID,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
@@ -75,8 +77,8 @@ func (c containerResources) Start(
 }
 
 // Kill notifies the agent to kill the container.
-func (c containerResources) Kill(ctx *actor.System, logCtx logger.Context) {
-	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
+func (c containerResources) Kill(logCtx logger.Context) {
+	c.system.Tell(c.agent.Handler, sproto.KillTaskContainer{
 		ContainerID: c.containerID,
 		LogContext:  logCtx,
 	})

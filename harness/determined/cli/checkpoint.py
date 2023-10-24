@@ -1,5 +1,5 @@
+import argparse
 import json
-from argparse import Namespace
 from typing import Any, List, Optional
 
 from determined import cli, errors, experimental
@@ -14,6 +14,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
         print("Local checkpoint path:")
         print(path, "\n")
 
+    assert checkpoint.metadata
     # Print information about the downloaded step/checkpoint.
     table = [
         ["Experiment ID", checkpoint.training.experiment_id if checkpoint.training else None],
@@ -38,16 +39,16 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
 
 @authentication.required
-def list_checkpoints(args: Namespace) -> None:
+def list_checkpoints(args: argparse.Namespace) -> None:
     if args.best:
-        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SEARCHER_METRIC
+        sorter = bindings.checkpointv1SortBy.SEARCHER_METRIC
     else:
-        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.END_TIME
+        sorter = bindings.checkpointv1SortBy.END_TIME
     r = bindings.get_GetExperimentCheckpoints(
         cli.setup_session(args),
         id=args.experiment_id,
         limit=args.best,
-        sortBy=sorter,
+        sortByAttr=sorter,
     )
     checkpoints = r.checkpoints
     searcher_metric = ""
@@ -90,7 +91,7 @@ def list_checkpoints(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-def download(args: Namespace) -> None:
+def download(args: argparse.Namespace) -> None:
     checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
 
     try:
@@ -104,13 +105,13 @@ def download(args: Namespace) -> None:
         render_checkpoint(checkpoint, path)
 
 
-def describe(args: Namespace) -> None:
+def describe(args: argparse.Namespace) -> None:
     checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
 
 @authentication.required
-def delete_checkpoints(args: Namespace) -> None:
+def delete_checkpoints(args: argparse.Namespace) -> None:
     if args.yes or render.yes_or_no(
         "Deleting checkpoints will result in deletion of all data associated\n"
         "with each checkpoint in the checkpoint storage. Do you still want to proceed?"
@@ -124,7 +125,7 @@ def delete_checkpoints(args: Namespace) -> None:
 
 
 @authentication.required
-def checkpoints_file_rm(args: Namespace) -> None:
+def checkpoints_file_rm(args: argparse.Namespace) -> None:
     if (
         args.yes
         or len(args.glob) == 0

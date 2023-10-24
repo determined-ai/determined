@@ -1234,39 +1234,6 @@ func (_m *DB) TrainingMetricBatches(experimentID int, metricName string, startTi
 	return r0, r1, r2
 }
 
-// TrainingTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime
-func (_m *DB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
-	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime)
-
-	var r0 []*apiv1.TrialsSnapshotResponse_Trial
-	var r1 time.Time
-	var r2 error
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
-		return rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	}
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time) []*apiv1.TrialsSnapshotResponse_Trial); ok {
-		r0 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*apiv1.TrialsSnapshotResponse_Trial)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time) time.Time); ok {
-		r1 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	} else {
-		r1 = ret.Get(1).(time.Time)
-	}
-
-	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time) error); ok {
-		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
 // TrialExperimentAndRequestID provides a mock function with given fields: id
 func (_m *DB) TrialExperimentAndRequestID(id int) (int, model.RequestID, error) {
 	ret := _m.Called(id)
@@ -1473,6 +1440,39 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
+// TrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime, metricGroup
+func (_m *DB) TrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time, metricGroup model.MetricGroup) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
+	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+
+	var r0 []*apiv1.TrialsSnapshotResponse_Trial
+	var r1 time.Time
+	var r2 error
+	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, model.MetricGroup) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
+		return rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	}
+	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time, model.MetricGroup) []*apiv1.TrialsSnapshotResponse_Trial); ok {
+		r0 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*apiv1.TrialsSnapshotResponse_Trial)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time, model.MetricGroup) time.Time); ok {
+		r1 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	} else {
+		r1 = ret.Get(1).(time.Time)
+	}
+
+	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time, model.MetricGroup) error); ok {
+		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime, metricGroup)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // UpdateAllocationProxyAddress provides a mock function with given fields: allocation
 func (_m *DB) UpdateAllocationProxyAddress(allocation model.Allocation) error {
 	ret := _m.Called(allocation)
@@ -1665,39 +1665,6 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 
 	if rf, ok := ret.Get(2).(func(int, string, time.Time) error); ok {
 		r2 = rf(experimentID, metricName, startTime)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// ValidationTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime
-func (_m *DB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
-	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime)
-
-	var r0 []*apiv1.TrialsSnapshotResponse_Trial
-	var r1 time.Time
-	var r2 error
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error)); ok {
-		return rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	}
-	if rf, ok := ret.Get(0).(func(int, int, int, string, time.Time) []*apiv1.TrialsSnapshotResponse_Trial); ok {
-		r0 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*apiv1.TrialsSnapshotResponse_Trial)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, int, int, string, time.Time) time.Time); ok {
-		r1 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
-	} else {
-		r1 = ret.Get(1).(time.Time)
-	}
-
-	if rf, ok := ret.Get(2).(func(int, int, int, string, time.Time) error); ok {
-		r2 = rf(experimentID, minBatches, maxBatches, metricName, startTime)
 	} else {
 		r2 = ret.Error(2)
 	}

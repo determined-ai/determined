@@ -12,9 +12,16 @@ var (
 )
 
 // InitPortRegistry initializes the global port registry tree.
-func InitPortRegistry() {
+func InitPortRegistry(reservedPorts []int) {
 	// initialize tree with node -1 because tree cannot be empty.
 	portRegistryTree = rbt.NewWithIntComparator()
+	registerAnyReservedPorts(reservedPorts)
+}
+
+func registerAnyReservedPorts(reservedPorts []int) {
+	for _, port := range reservedPorts {
+		portRegistryTree.Put(port, struct{}{}) // we only care about key.
+	}
 }
 
 // IteratorAt(baseport node) or return base port

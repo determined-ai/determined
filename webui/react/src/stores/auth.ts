@@ -1,6 +1,6 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { observable, WritableObservable } from 'micro-observables';
 
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { globalStorage } from 'globalStorage';
 import { Auth } from 'types';
 import { getCookie, setCookie } from 'utils/browser';

@@ -29,12 +29,10 @@
     color: var(--theme-float-on);
     display: flex;
     flex-shrink: 0;
+    gap: 16px;
     height: var(--nav-bottom-bar-height);
     padding: 0 16px;
 
-    .icon {
-      padding-right: 16px;
-    }
     .label {
       font-size: 14px;
     }

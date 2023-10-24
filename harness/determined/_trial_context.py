@@ -27,13 +27,13 @@ class TrialContext:
         """
         Create a context object suitable for debugging outside of Determined.
 
-        An example for a subclass of :class:`~determined.pytorch._pytorch_trial.PyTorchTrial`:
+        An example for a subclass of :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`:
 
         .. code-block:: python
 
             config = { ... }
-            context = det.pytorch.PyTorchTrialContext.from_config(config)
-            my_trial = MyPyTorchTrial(context)
+            context = det.pytorch.deepspeed.DeepSpeedTrialContext.from_config(config)
+            my_trial = MyDeepSpeedTrial(context)
 
             train_ds = my_trial.build_training_data_loader()
             for epoch_idx in range(3):

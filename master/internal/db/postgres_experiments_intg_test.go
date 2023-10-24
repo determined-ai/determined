@@ -19,6 +19,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -516,4 +518,214 @@ func TestTopTrialsByMetric(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteExperiments(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	var experimentIDs,
+		trialIDs,
+		checkpointIDs []int
+
+	// Sets containing IDs of elements removed from database.
+	var (
+		removedExperimentIDs = make(map[int]int)
+		removedTrialIDs      = make(map[int]int)
+		removedCheckpointIDs = make(map[int]int)
+	)
+
+	var (
+		numExpts   = 4
+		numTrs     = 2 // Trials per experiment
+		numChkpts  = 2 // Checkpoints per trial
+		numMtrsRaw = 2 // Training metrics per trial
+		numMtrsVal = 1 // Validation metrics per trial
+		numExptSns = 1 // Experiment snapshots per experiment
+	)
+
+	createMetric := func(sc int32, mv float64, trID int) *trialv1.TrialMetrics {
+		m := &trialv1.TrialMetrics{
+			TrialId:        int32(trID),
+			StepsCompleted: sc,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						defaultSearcherMetric: {
+							Kind: &structpb.Value_NumberValue{
+								NumberValue: mv,
+							},
+						},
+					},
+				},
+				BatchMetrics: []*structpb.Struct{},
+			},
+		}
+		return m
+	}
+
+	checkPointIndex := 1
+	for i := 0; i < numExpts; i++ { // Create experiments
+		exp := RequireMockExperiment(t, db, user)
+		experimentIDs = append(experimentIDs, exp.ID)
+
+		for j := 0; j < numTrs; j++ { // Create trials
+			tr, task := RequireMockTrial(t, db, exp)
+			allocation := RequireMockAllocation(t, db, task.TaskID)
+			trialIDs = append(trialIDs, tr.ID)
+
+			for k := 0; k < numChkpts; k++ { // Create checkpoints
+				ckpt := uuid.New()
+				checkpoint := MockModelCheckpoint(ckpt, allocation)
+				err := AddCheckpointMetadata(ctx, &checkpoint)
+				require.NoError(t, err)
+				checkpointIDs = append(checkpointIDs, checkpoint.ID)
+				checkPointIndex++
+			}
+
+			// training metrics (raw_steps)
+			mRaw1 := createMetric(10, 0.5, tr.ID)
+			err := db.AddTrainingMetrics(ctx, mRaw1)
+			require.NoError(t, err)
+			mRaw2 := createMetric(11, 0.9, tr.ID)
+			err = db.AddTrainingMetrics(ctx, mRaw2)
+			require.NoError(t, err)
+
+			//  validation metrics (raw_validations)
+			mValidation := createMetric(12, 0.95, tr.ID)
+			err = db.AddValidationMetrics(ctx, mValidation)
+			require.NoError(t, err)
+		}
+
+		// Create experiment snapshot
+		config := expconf.SearcherConfig{
+			RawCustomConfig: &expconf.CustomConfig{},
+		}
+		searcher1 := searcher.NewSearcher(3, searcher.NewSearchMethod(config), nil)
+		_, err := searcher1.InitialOperations()
+		require.NoError(t, err)
+		_, err = searcher1.TrialExitedEarly(model.RequestID(uuid.New()), model.Errored)
+		require.NoError(t, err)
+
+		snapshot, err := searcher1.Snapshot()
+		require.NoError(t, err)
+		err = db.SaveSnapshot(exp.ID, 2, snapshot)
+		require.NoError(t, err)
+	}
+
+	type expected struct {
+		numExperiments         int
+		numTrials              int
+		numCheckpoints         int
+		numMetricsRaw          int
+		numMetricsValidation   int
+		numExperimentSnapshots int
+	}
+
+	// verifyNumsAndElems verifies correct number of rows (num) exist given column in table
+	// and that no retrieved database elements are in removed.
+	verifyNumAndElems := func(table string, column string, removed map[int]int, num int) {
+		var ids []int
+		err := Bun().NewSelect().Table(table).Column(column).Scan(context.Background(), &ids)
+		require.NoError(t, err)
+		require.Equal(t, num, len(ids))
+
+		for _, id := range ids {
+			_, inRm := removed[id]
+			require.Equal(t, false, inRm)
+		}
+	}
+
+	verifyData := func(e expected) {
+		verifyNumAndElems("experiments", "id", removedExperimentIDs, e.numExperiments)
+		verifyNumAndElems("trials", "id", removedTrialIDs, e.numTrials)
+		verifyNumAndElems("checkpoints_v2", "id", removedCheckpointIDs, e.numCheckpoints)
+		verifyNumAndElems("raw_steps", "trial_id", removedTrialIDs, e.numMetricsRaw)
+		verifyNumAndElems("raw_validations", "trial_id", removedTrialIDs, e.numMetricsValidation)
+		verifyNumAndElems("experiment_snapshots", "experiment_id", removedExperimentIDs,
+			e.numExperimentSnapshots)
+	}
+
+	// addToMap adds elements from indexes st to end of ids to rmIDs.
+	addToMap := func(st, end int, rmIds map[int]int, ids []int) map[int]int {
+		var i int
+		for i = st; i < end; i++ {
+			rmIds[ids[i]] = 0
+		}
+		return rmIds
+	}
+
+	subtractRows := func(e expected, amt int) expected {
+		e.numExperiments -= amt
+		e.numTrials -= amt * numTrs
+		e.numCheckpoints -= amt * numChkpts * numTrs
+		e.numMetricsRaw -= amt * numMtrsRaw * numTrs
+		e.numMetricsValidation -= amt * numMtrsVal * numTrs
+		e.numExperimentSnapshots -= amt * numExptSns
+		return e
+	}
+
+	// Capture current state of database tables that will be altered by experiment deletion.
+	currExpts, err := Bun().NewSelect().Table("experiments").Count(ctx)
+	require.NoError(t, err)
+
+	currTrials, err := Bun().NewSelect().Table("trials").Count(ctx)
+	require.NoError(t, err)
+
+	currChkpts, err := Bun().NewSelect().Table("checkpoints_v2").Count(ctx)
+	require.NoError(t, err)
+
+	currMetricsRaw, err := Bun().NewSelect().Table("raw_steps").Count(ctx)
+	require.NoError(t, err)
+
+	currMetricsVal, err := Bun().NewSelect().Table("raw_validations").Count(ctx)
+	require.NoError(t, err)
+
+	currExptSns, err := Bun().NewSelect().Table("experiment_snapshots").Count(ctx)
+	require.NoError(t, err)
+
+	oldAllocs, err := Bun().NewSelect().Table("allocations").Count(ctx)
+	require.NoError(t, err)
+
+	e := expected{
+		numExperiments: currExpts, numTrials: currTrials, numCheckpoints: currChkpts,
+		numMetricsRaw: currMetricsRaw, numMetricsValidation: currMetricsVal,
+		numExperimentSnapshots: currExptSns,
+	}
+
+	verifyData(e)
+
+	require.NoError(t, db.DeleteExperiments(ctx, experimentIDs[:1]))
+	removedExperimentIDs[experimentIDs[0]] = 0
+	removedTrialIDs = addToMap(0, 2, removedTrialIDs, trialIDs)
+	removedCheckpointIDs = addToMap(0, 4, removedCheckpointIDs, checkpointIDs)
+	e = subtractRows(e, 1)
+
+	verifyData(e)
+
+	require.NoError(t, db.DeleteExperiments(ctx, experimentIDs[1:3]))
+	removedExperimentIDs = addToMap(1, 3, removedExperimentIDs, experimentIDs)
+	removedTrialIDs = addToMap(2, 6, removedTrialIDs, trialIDs)
+	removedCheckpointIDs = addToMap(4, 12, removedCheckpointIDs, checkpointIDs)
+	e = subtractRows(e, 2)
+
+	verifyData(e)
+
+	require.NoError(t, db.DeleteExperiments(ctx, experimentIDs[3:]))
+	removedExperimentIDs[experimentIDs[3]] = 0
+	removedTrialIDs = addToMap(6, 8, removedTrialIDs, trialIDs)
+	removedCheckpointIDs = addToMap(12, 16, removedCheckpointIDs, checkpointIDs)
+	e = subtractRows(e, 1)
+
+	verifyData(e)
+
+	// Verify that no allocations were removed
+	newAllocs, err := Bun().NewSelect().Table("allocations").Count(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, oldAllocs, newAllocs)
 }

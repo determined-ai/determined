@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -336,7 +337,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-	jobSummary, err := jobservice.Default.GetJobSummary(jobID, exp.ResourcePool)
+	jobSummary, err := jobservice.DefaultService.GetJobSummary(jobID, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't
@@ -474,7 +475,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 			if len(checkpoints) > 0 {
 				err = runCheckpointGCTask(
-					a.m.system, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+					a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
 					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
 					true, agentUserGroup, userModel, nil,
 				)
@@ -485,7 +486,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 
 			// delete jobs per experiment
-			resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
+			resp, err := a.m.rm.DeleteJob(sproto.DeleteJob{
 				JobID: exp.JobID,
 			})
 			if err != nil {
@@ -1289,7 +1290,7 @@ func (a *apiServer) PatchExperiment(
 			taskID := model.NewTaskID()
 			go func() {
 				err = runCheckpointGCTask(
-					a.m.system, a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
+					a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
 					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
 					agentUserGroup, user, nil,
 				)
@@ -1312,7 +1313,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
 	experimentID := int(req.Id)
-	useSearcherSortBy := req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
+	useSearcherSortBy := req.GetSortByAttr() == checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC
 	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
 		exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
 	if err != nil {
@@ -1368,22 +1369,28 @@ func (a *apiServer) GetExperimentCheckpoints(
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 			aj, ai = ai, aj
 		}
-
-		switch req.SortBy {
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			return protoless.CheckpointStepsCompletedLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
-			return ai.Uuid < aj.Uuid
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
-			return protoless.CheckpointTrialIDLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
-			return protoless.CheckpointReportTimeLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
-			return ai.State.Number() < aj.State.Number()
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
-			return protoless.CheckpointSearcherMetricLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
-			fallthrough
+		switch req.GetSortBy().(type) {
+		case *apiv1.GetExperimentCheckpointsRequest_SortByAttr:
+			switch req.GetSortByAttr() {
+			case checkpointv1.SortBy_SORT_BY_BATCH_NUMBER:
+				return protoless.CheckpointStepsCompletedLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_UUID:
+				return ai.Uuid < aj.Uuid
+			case checkpointv1.SortBy_SORT_BY_TRIAL_ID:
+				return protoless.CheckpointTrialIDLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_END_TIME:
+				return protoless.CheckpointReportTimeLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_STATE:
+				return ai.State.Number() < aj.State.Number()
+			case checkpointv1.SortBy_SORT_BY_SEARCHER_METRIC:
+				return protoless.CheckpointSearcherMetricLess(ai, aj)
+			case checkpointv1.SortBy_SORT_BY_UNSPECIFIED:
+				fallthrough
+			default:
+				return protoless.CheckpointTrialIDLess(ai, aj)
+			}
+		case *apiv1.GetExperimentCheckpointsRequest_SortByMetric:
+			return protoless.CheckpointMetricNameLess(ai, aj, req.GetSortByMetric())
 		default:
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
@@ -1507,7 +1514,7 @@ func (a *apiServer) ContinueExperiment(
 	dbExp.ID = int(req.Id)
 	dbExp.JobID = origExperiment.JobID // Revive job.
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1656,7 +1663,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec, a.m.system)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1914,11 +1921,21 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
+
+	var metricGroup model.MetricGroup
 	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricType
-	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricGroup = model.TrainingMetricGroup //nolint:goconst
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricGroup = model.ValidationMetricGroup //nolint:goconst
+	default:
+		metricGroup = model.MetricGroup(req.Group)
+	}
+	if metricGroup == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
+
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1950,19 +1967,8 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		}
 
 		var response apiv1.TrialsSnapshotResponse
-		var newTrials []*apiv1.TrialsSnapshotResponse_Trial
-		var endTime time.Time
-		var err error
-		switch metricGroup {
-		case apiv1.MetricType_METRIC_TYPE_TRAINING:
-			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		default:
-			panic("Invalid metric type")
-		}
+		newTrials, endTime, err := a.m.db.TrialsSnapshot(experimentID,
+			minBatches, maxBatches, metricName, startTime, metricGroup)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
@@ -2037,7 +2043,7 @@ func (a *apiServer) topTrials(
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup apiv1.MetricType,
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup model.MetricGroup,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
@@ -2045,7 +2051,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID model.MetricGroup
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -2064,18 +2069,10 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	if !seenBefore {
 		startTime = zeroTime
 	}
-	switch metricGroup {
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = model.TrainingMetricGroup //nolint:goconst
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = model.ValidationMetricGroup //nolint:goconst
-	default:
-		panic("Invalid metric type")
-	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
 		[]string{metricName},
 		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
-		"batches", nil, metricID)
+		"batches", nil, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
@@ -2126,13 +2123,22 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	metricName := req.MetricName
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricType
-	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric group")
-	}
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
+
+	var metricGroup model.MetricGroup
+	//nolint:staticcheck // SA1019: backward compatibility
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricGroup = model.TrainingMetricGroup
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricGroup = model.ValidationMetricGroup
+	default:
+		metricGroup = model.MetricGroup(req.Group)
+	}
+	if metricGroup == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 
 	var timeSinceLastAuth time.Time
@@ -2845,4 +2851,121 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 	}
 
 	return resp, nil
+}
+
+func (a *apiServer) PutExperimentLabel(ctx context.Context,
+	req *apiv1.PutExperimentLabelRequest,
+) (*apiv1.PutExperimentLabelResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.ExperimentId)
+	if err = query.Scan(ctx); err != nil {
+		return nil, err
+	}
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	if slices.Contains(exp.Labels, req.Label) {
+		return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+	}
+	exp.Labels = append(exp.Labels, req.Label)
+
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error updating experiment %v in database %w", exp.Id, err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not commit patch experiment labels transaction %w", err)
+	}
+
+	return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+}
+
+func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
+	req *apiv1.DeleteExperimentLabelRequest,
+) (*apiv1.DeleteExperimentLabelResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.ExperimentId).
+		For("UPDATE")
+	if err = query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	i := slices.Index(exp.Labels, req.Label)
+	if i == -1 {
+		return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
+	}
+	exp.Labels = slices.Delete(exp.Labels, i, i+1)
+
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not commit delete experiment labels transaction: %w", err)
+	}
+
+	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
 }

@@ -1,4 +1,10 @@
 import { Button, Space, Typography } from 'antd';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import Tags from 'determined-ui/Tags';
+import { getStateColorCssVar } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge from 'components/Badge';
@@ -11,12 +17,6 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import Tags from 'components/kit/Tags';
-import { getStateColorCssVar } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
@@ -371,29 +371,19 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const returnStatusIcon = useCallback(
     (iconNode: React.ReactNode): React.ReactNode => {
       {
-        const cssProps: React.CSSProperties = { height: '32px', width: '32px' };
-        switch (experiment.state) {
-          case JobState.SCHEDULED:
-          case JobState.SCHEDULEDBACKFILLED:
-          case JobState.QUEUED:
-          case RunState.Queued:
-            cssProps['backgroundColor'] = 'white';
-            cssProps['opacity'] = '0.25';
-            break;
-          case RunState.Running:
-            cssProps['borderColor'] = 'white';
-            break;
-          default:
-            break;
-        }
-
         return isShownAnimation(experiment.state) ? (
           <>
-            <ExperimentIcons showTooltip={false} state={experiment.state} style={cssProps} />
+            <ExperimentIcons
+              backgroundColor="white" // only gets applied for scheduled and queued states
+              opacity={0.25} // only gets applied for scheduled and queued states
+              showTooltip={false}
+              size="large"
+              state={experiment.state}
+            />
             <div className={css.icon}>{iconNode}</div>
           </>
         ) : (
-          <>{iconNode}</>
+          iconNode
         );
       }
     },

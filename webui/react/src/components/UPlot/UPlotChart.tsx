@@ -1,11 +1,11 @@
-import { DownloadOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import useUI, { DarkLight } from 'determined-ui/Theme';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight } from 'components/kit/Theme';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
@@ -287,9 +287,13 @@ const DownloadButton = ({
   }, [containerRef]);
 
   return (
-    <Tooltip className={css.download} title="Download Chart">
-      <DownloadOutlined onClick={handleDownloadClick} />
-      {/* this is an invisible button to programatically download the image file */}
+    <>
+      <Button
+        icon={<Icon name="download" showTooltip size="small" title="Download Chart" />}
+        type="text"
+        onClick={handleDownloadClick}
+      />
+      {/* this is an invisible link used to programatically download the image file */}
       <a
         aria-disabled
         className={css.invisibleLink}
@@ -297,6 +301,6 @@ const DownloadButton = ({
         href={downloadUrl.current}
         ref={downloadNode}
       />
-    </Tooltip>
+    </>
   );
 };

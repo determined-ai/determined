@@ -1,4 +1,8 @@
 import { Divider } from 'antd';
+import Button from 'determined-ui/Button';
+import Form from 'determined-ui/Form';
+import useUI from 'determined-ui/Theme';
+import { notification } from 'determined-ui/Toast';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -7,11 +11,7 @@ import LogoGoogle from 'assets/images/logo-sso-google-white.svg?url';
 import LogoOkta from 'assets/images/logo-sso-okta-white.svg?url';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
-import Button from 'components/kit/Button';
-import Form from 'components/kit/Form';
-import useUI from 'components/kit/Theme';
-import { notification } from 'components/kit/Toast';
-import Logo, { Orientation } from 'components/Logo';
+import Logo from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
@@ -20,7 +20,7 @@ import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import authStore from 'stores/auth';
-import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import { RecordKey } from 'types';
 import { locationToPath, routeToReactUrl } from 'utils/routes';
 import { capitalize } from 'utils/string';
@@ -123,10 +123,7 @@ const SignIn: React.FC = () => {
     <Page breadcrumb={[]} docTitle="Sign In" ignorePermissions noScroll>
       <div className={css.base}>
         <div className={css.content}>
-          <Logo
-            branding={info.branding || BrandingType.Determined}
-            orientation={Orientation.Vertical}
-          />
+          <Logo branding={info.branding} orientation="vertical" />
           <DeterminedAuth canceler={canceler} />
           {info.ssoProviders && info.ssoProviders.length > 0 && (
             <>

@@ -1,5 +1,11 @@
 import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
 import { Space } from 'antd';
+import { Column, Columns } from 'determined-ui/Columns';
+import Message from 'determined-ui/Message';
+import Pagination from 'determined-ui/Pagination';
+import { getCssVar } from 'determined-ui/Theme';
+import { notification } from 'determined-ui/Toast';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,12 +18,6 @@ import {
   FormGroup,
   IOFilterFormSet,
 } from 'components/FilterForm/components/type';
-import { Column, Columns } from 'components/kit/Columns';
-import Empty from 'components/kit/Empty';
-import Pagination from 'components/kit/Pagination';
-import { getCssVar } from 'components/kit/Theme';
-import { notification } from 'components/kit/Toast';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -768,7 +768,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           numFilters === 0 ? (
             <NoExperiments />
           ) : (
-            <Empty description="No results matching your filters" icon="search" />
+            <Message description="No results matching your filters" icon="search" />
           )
         ) : error ? (
           <Error />

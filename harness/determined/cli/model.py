@@ -8,7 +8,7 @@ from determined.cli import render
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.experimental import Determined, Model, ModelOrderBy, ModelSortBy, ModelVersion
+from determined.experimental import Determined, Model, ModelSortBy, ModelVersion, OrderBy
 
 
 def render_model(model: Model) -> None:
@@ -27,8 +27,7 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def render_model_version(model_version: ModelVersion) -> None:
-    checkpoint = model_version.checkpoint
+def _render_model_versions(model_versions: List[ModelVersion]) -> None:
     headers = [
         "Version #",
         "Trial ID",
@@ -38,20 +37,24 @@ def render_model_version(model_version: ModelVersion) -> None:
         "Metadata",
     ]
 
-    values = [
-        [
-            model_version.model_version,
-            checkpoint.training.trial_id if checkpoint.training else None,
-            checkpoint.metadata["steps_completed"],
-            checkpoint.uuid,
-            (
-                json.dumps(checkpoint.training.validation_metrics, indent=2)
-                if checkpoint.training
-                else ""
-            ),
-            json.dumps(checkpoint.metadata, indent=2),
-        ]
-    ]
+    values = []
+    for model_version in model_versions:
+        assert model_version.checkpoint
+        checkpoint = model_version.checkpoint
+        values.append(
+            [
+                model_version.model_version,
+                checkpoint.training.trial_id if checkpoint.training else None,
+                checkpoint.metadata["steps_completed"] if checkpoint.metadata else None,
+                checkpoint.uuid,
+                (
+                    json.dumps(checkpoint.training.validation_metrics, indent=2)
+                    if checkpoint.training
+                    else ""
+                ),
+                json.dumps(checkpoint.metadata, indent=2),
+            ]
+        )
 
     render.tabulate_or_csv(headers, values, False)
 
@@ -62,11 +65,11 @@ def list_models(args: Namespace) -> None:
         workspace_names = args.workspace_names.split(",")
     models = Determined(args.master, args.user).get_models(
         sort_by=ModelSortBy[args.sort_by.upper()],
-        order_by=ModelOrderBy[args.order_by.upper()],
+        order_by=OrderBy[args.order_by.upper()],
         workspace_names=workspace_names,
     )
     if args.json:
-        determined.cli.render.print_json([m.to_json() for m in models])
+        determined.cli.render.print_json([render.model_to_json(m) for m in models])
     else:
         headers = ["ID", "Name", "Workspace ID", "Creation Time", "Last Updated Time", "Metadata"]
 
@@ -100,33 +103,7 @@ def list_versions(args: Namespace) -> None:
     else:
         render_model(model)
         print("\n")
-
-        headers = [
-            "Version #",
-            "Trial ID",
-            "Batch #",
-            "Checkpoint UUID",
-            "Validation Metrics",
-            "Metadata",
-        ]
-
-        values = [
-            [
-                version.model_version,
-                version.checkpoint.training.trial_id if version.checkpoint.training else None,
-                version.checkpoint.metadata["steps_completed"],
-                version.checkpoint.uuid,
-                (
-                    json.dumps(version.checkpoint.training.validation_metrics, indent=2)
-                    if version.checkpoint.training
-                    else ""
-                ),
-                json.dumps(version.checkpoint.metadata, indent=2),
-            ]
-            for version in model.get_versions()
-        ]
-
-        render.tabulate_or_csv(headers, values, False)
+        _render_model_versions(model.get_versions())
 
 
 def create(args: Namespace) -> None:
@@ -135,7 +112,7 @@ def create(args: Namespace) -> None:
     )
 
     if args.json:
-        determined.cli.render.print_json(model.to_json())
+        determined.cli.render.print_json(render.model_to_json(model))
     else:
         render_model(model)
 
@@ -150,12 +127,12 @@ def describe(args: Namespace) -> None:
     model_version = model.get_version(args.version)
 
     if args.json:
-        determined.cli.render.print_json(model.to_json())
+        determined.cli.render.print_json(render.model_to_json(model))
     else:
         render_model(model)
         if model_version is not None:
             print("\n")
-            render_model_version(model_version)
+            _render_model_versions([model_version])
 
 
 @authentication.required
@@ -173,7 +150,7 @@ def register_version(args: Namespace) -> None:
         model_version = model.register_version(args.uuid)
         render_model(model)
         print("\n")
-        render_model_version(model_version)
+        _render_model_versions([model_version])
 
 
 args_description = [

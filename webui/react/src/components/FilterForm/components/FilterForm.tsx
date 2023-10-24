@@ -1,13 +1,13 @@
+import Button from 'determined-ui/Button';
+import Spinner from 'determined-ui/Spinner';
+import Toggle from 'determined-ui/Toggle';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useRef } from 'react';
 
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import FilterGroup from 'components/FilterForm/components/FilterGroup';
 import { FormKind } from 'components/FilterForm/components/type';
-import Button from 'components/kit/Button';
-import Spinner from 'components/kit/Spinner';
-import Toggle from 'components/kit/Toggle';
-import { Loadable } from 'components/kit/utils/loadable';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterForm.module.scss';

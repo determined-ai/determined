@@ -49,7 +49,7 @@ Hardware
    -  8GB RAM
    -  200GB of free disk space.
 
--  Agent Node:
+-  Agent node:
 
    -  At least 2 CPU cores, Intel Broadwell or later.
    -  If you are using GPUs, NVIDIA GPUs with compute capability 3.7 or greater are required: K80,

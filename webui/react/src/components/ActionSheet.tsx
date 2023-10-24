@@ -1,7 +1,8 @@
+import { IconName } from 'determined-ui/Icon';
+import Nameplate from 'determined-ui/Nameplate';
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import Icon, { IconName } from 'components/kit/Icon';
 import Link, { Props as LinkProps } from 'components/Link';
 
 import css from './ActionSheet.module.scss';
@@ -26,13 +27,13 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
     (e: React.MouseEvent) => {
       // Prevent `onCancel` from getting called if the sheet (not the overlay) was clicked
       if (sheetRef.current?.contains(e.target as HTMLElement)) return;
-      if (onCancel) onCancel();
+      onCancel?.();
     },
     [onCancel],
   );
 
   const handleCancelClick = useCallback(() => {
-    if (onCancel) onCancel();
+    onCancel?.();
   }, [onCancel]);
 
   function renderActionItem(action: ActionItem) {
@@ -41,15 +42,11 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
     } else {
       return (
         <Link className={css.item} key={action.label} path={action.path} {...action}>
-          {action.icon && typeof action.icon === 'string' ? (
-            <div className={css.icon}>
-              <Icon decorative name={action.icon} size="large" />
-            </div>
-          ) : (
-            <div className={css.icon}>{action.icon}</div>
-          )}
-          {!action.icon && <span className={css.spacer} />}
-          <div className={css.label}>{action.label}</div>
+          <Nameplate
+            icon={action.icon ?? <span className={css.spacer} />}
+            iconSize="large"
+            name={action.label}
+          />
         </Link>
       );
     }
@@ -76,10 +73,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
           </div>
           {!props.hideCancel && (
             <Link className={css.item} key="cancel" onClick={handleCancelClick}>
-              <div className={css.icon}>
-                <Icon decorative name="error" size="large" />
-              </div>
-              <div className={css.label}>Cancel</div>
+              <Nameplate icon="error" iconSize="large" name="Cancel" />
             </Link>
           )}
         </div>

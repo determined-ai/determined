@@ -1,10 +1,10 @@
 import { findAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { UIProvider } from 'determined-ui/Theme';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { UIProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -158,7 +158,7 @@ describe('CodeViewer', () => {
 
     await user.click(treeNodes[1]);
 
-    const button = await screen.findByLabelText('download');
+    const button = await screen.findByRole('button', { name: 'Download File' });
 
     await user.click(button);
 

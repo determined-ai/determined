@@ -1,13 +1,13 @@
+import Avatar from 'determined-ui/Avatar';
+import Icon, { IconName } from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
-import Avatar from 'components/kit/Avatar';
-import Icon, { IconName } from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
@@ -99,18 +99,22 @@ const NavigationTabbar: React.FC = () => {
     (workspaces) =>
       workspaces.map(
         (workspace) =>
-          ({
-            icon: <Avatar palette="muted" square text={workspace.name} />,
-            label: workspace.name,
-            onClick: (e: AnyMouseEvent) =>
-              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-          } as ActionItem),
+        ({
+          icon: <Avatar palette="muted" square text={workspace.name} />,
+          label: workspace.name,
+          onClick: (e: AnyMouseEvent) =>
+            handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+        } as ActionItem),
       ),
   );
 
   if (canCreateWorkspace) {
     workspaceActions.push({
-      icon: <Icon name="add-small" size="large" title="Create Workspace" />,
+      icon: (
+        <div className={css.newWorkspaceIcon}>
+          <Icon decorative name="add" size="tiny" />
+        </div>
+      ),
       label: 'New Workspace',
       onClick: WorkspaceCreateModal.open,
     });
