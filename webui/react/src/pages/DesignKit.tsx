@@ -42,7 +42,6 @@ import useConfirm, { voidPromiseFn } from 'determined-ui/useConfirm';
 import { useTags } from 'determined-ui/useTags';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { ValueOf } from 'determined-ui/utils/types';
-import Nameplate from 'determined-ui/Nameplate';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 

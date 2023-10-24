@@ -1,9 +1,9 @@
-import { Typography } from 'antd';
 import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon, { IconName, IconSize } from 'determined-ui/Icon';
 import { matchesShortcut, shortcutToString } from 'determined-ui/InputShortcut';
 import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
 import Spinner from 'determined-ui/Spinner';
 import useUI from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
