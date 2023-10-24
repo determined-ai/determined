@@ -172,9 +172,7 @@ describe('FilterFormStore', () => {
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const loadableFormset = filterFormStore.formset.get();
-        let formset = Loadable.getOrElse(null, loadableFormset);
-
+        let formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
@@ -195,7 +193,7 @@ describe('FilterFormStore', () => {
 
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        formset = Loadable.getOrElse(null, loadableFormset);
+        formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
@@ -230,8 +228,7 @@ describe('FilterFormStore', () => {
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
-        const loadableFormset = filterFormStore.formset.get();
-        let formset = Loadable.getOrElse(null, loadableFormset);
+        let formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [{ children: [], conjunction: Conjunction.And, kind: FormKind.Group }],
@@ -243,7 +240,7 @@ describe('FilterFormStore', () => {
 
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
-        formset = Loadable.getOrElse(null, loadableFormset);
+        formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
             children: [
@@ -262,7 +259,7 @@ describe('FilterFormStore', () => {
         if (group?.kind === FormKind.Group) {
           filterFormStore.addChild(group.id, FormKind.Group);
 
-          formset = Loadable.getOrElse(null, loadableFormset);
+          formset = getFormset(filterFormStore);
           expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
             filterGroup: {
               children: [
@@ -378,14 +375,13 @@ describe('FilterFormStore', () => {
         const filterFormStore = new FilterFormStore();
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
-        const loadableFormset = filterFormStore.formset.get();
-        let formset = Loadable.getOrElse(null, loadableFormset);
+        let formset = getFormset(filterFormStore);
         const groupId = formset?.filterGroup?.children?.[0]?.id;
         if (groupId) {
           filterFormStore.removeChild(groupId);
         }
 
-        formset = Loadable.getOrElse(null, loadableFormset);
+        formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual(EMPTY_DATA);
         expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
       });
@@ -456,6 +452,17 @@ describe('FilterFormStore', () => {
       });
     });
 
+    const getFormset = (filterFormStore: FilterFormStore) => {
+      const loadableFormset = filterFormStore.formset.get();
+      if (!Loadable.isLoaded(loadableFormset)) {
+        throw new Error('formstore is unloaded');
+      }
+      return loadableFormset.data;
+    };
+    const getField = (filterFormStore: FilterFormStore) => {
+      return getFormset(filterFormStore).filterGroup.children[0];
+    };
+
     describe('Order Field and Group Interaction', () => {
       const ID = 'unique_id';
       const item: FormField = {
@@ -475,19 +482,18 @@ describe('FilterFormStore', () => {
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field, { index: 2, item: item });
-        const loadableFormset = filterFormStore.formset.get();
-        let formset = Loadable.getOrElse(null, loadableFormset);
-        const fields = formset?.filterGroup?.children ?? [];
+        let formset = getFormset(filterFormStore);
+        const fields = formset.filterGroup.children;
         expect(fields).toHaveLength(3);
         expect(fields[2].id).toBe(ID);
         // move index2 to index0
         filterFormStore.removeChild(fields[2].id);
-        formset = Loadable.getOrElse(null, loadableFormset);
-        expect(formset?.filterGroup?.children).toHaveLength(2);
+        formset = getFormset(filterFormStore);
+        expect(formset.filterGroup.children).toHaveLength(2);
         filterFormStore.addChild(ROOT_ID, FormKind.Field, { index: 0, item: item });
-        formset = Loadable.getOrElse(null, loadableFormset);
-        expect(formset?.filterGroup?.children).toHaveLength(3);
-        expect(formset?.filterGroup?.children?.[0]?.id).toBe(ID);
+        formset = getFormset(filterFormStore);
+        expect(formset.filterGroup.children).toHaveLength(3);
+        expect(formset.filterGroup.children[0].id).toBe(ID);
 
         // to make sure the original object is not referenced (should not be shallow copy)
         filterFormStore.setFieldValue(ID, 'value');
@@ -500,27 +506,26 @@ describe('FilterFormStore', () => {
 
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
         filterFormStore.addChild(ROOT_ID, FormKind.Field, { index: 2, item: item });
-        const loadableFormset = filterFormStore.formset.get();
-        let formset = Loadable.getOrElse(null, loadableFormset);
-        const fields = formset?.filterGroup?.children;
-        expect(fields).toHaveLength(2);
-        expect(fields?.[1]?.id).toBe(ID);
+        let formset = getFormset(filterFormStore);
+        const fields = formset.filterGroup.children;
+        expect(formset.filterGroup.children).toHaveLength(2);
+        expect(fields[1]?.id).toBe(ID);
 
         // move index2 to index0
         filterFormStore.removeChild(ID);
-        formset = Loadable.getOrElse(null, loadableFormset);
+        formset = getFormset(filterFormStore);
         expect(formset?.filterGroup?.children).toHaveLength(1);
 
         filterFormStore.addChild(fields?.[0]?.id ?? '', FormKind.Field, { index: 0, item: item });
-        formset = Loadable.getOrElse(null, loadableFormset);
+        formset = getFormset(filterFormStore);
         const group = formset?.filterGroup?.children?.[0];
         if (group && group.kind === FormKind.Group) {
-          formset = Loadable.getOrElse(null, loadableFormset);
           expect(formset?.filterGroup?.children).toHaveLength(1);
           expect(group.children).toHaveLength(1);
           expect(group.children[0].id).toBe(ID);
 
           // to make sure the original object is not referenced (should not be shallow copy)
+          formset = getFormset(filterFormStore);
           filterFormStore.setFieldValue(ID, 'value');
           expect(item.value).toBeNull();
         }
@@ -533,23 +538,17 @@ describe('FilterFormStore', () => {
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const loadableFormset = filterFormStore.formset.get();
-        const formset = Loadable.getOrElse(null, loadableFormset);
-
-        const field = formset?.filterGroup?.children?.[0];
-        if (field && field.kind === FormKind.Field) {
-          expect(field.columnName).toBe('name');
-        }
+        let field = getField(filterFormStore);
+        expect(field).toMatchObject({ columnName: 'name' });
         const col: V1ProjectColumn = {
           column: 'id',
           displayName: 'ID',
           location: V1LocationType.EXPERIMENT,
           type: 'COLUMN_TYPE_NUMBER',
         };
-        filterFormStore.setFieldColumnName(field?.id ?? '', col);
-        if (field && field.kind === FormKind.Field) {
-          expect(field.columnName).toBe('id');
-        }
+        filterFormStore.setFieldColumnName(field.id, col);
+        field = getField(filterFormStore);
+        expect(field).toMatchObject({ columnName: 'id' });
       });
 
       it('should change operator', () => {
@@ -557,15 +556,11 @@ describe('FilterFormStore', () => {
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const loadableFormset = filterFormStore.formset.get();
-        const formset = Loadable.getOrElse(null, loadableFormset);
-
-        const field = formset?.filterGroup?.children?.[0];
-        if (field && field.kind === FormKind.Field) {
-          expect(field.operator).toBe(Operator.Contains);
-          filterFormStore.setFieldOperator(field.id, Operator.GreaterEq);
-          expect(field.operator).toBe(Operator.GreaterEq);
-        }
+        let field = getField(filterFormStore);
+        expect(field).toMatchObject({ operator: Operator.Contains });
+        filterFormStore.setFieldOperator(field.id, Operator.GreaterEq);
+        field = getField(filterFormStore);
+        expect(field).toMatchObject({ operator: Operator.GreaterEq });
       });
 
       it('should change value', () => {
@@ -573,34 +568,26 @@ describe('FilterFormStore', () => {
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
-        const loadableFormset = filterFormStore.formset.get();
-        const formset = Loadable.getOrElse(null, loadableFormset);
-
-        const field = formset?.filterGroup?.children?.[0];
-        if (field && field.kind === FormKind.Field) {
-          const value = 'test';
-          expect(field.value).toBeNull();
-          filterFormStore.setFieldValue(field.id, value);
-          expect(field.value).toBe(value);
-        }
+        let field = getField(filterFormStore);
+        const value = 'test';
+        expect(field).toMatchObject({ value: null });
+        filterFormStore.setFieldValue(field.id, value);
+        field = getField(filterFormStore);
+        expect(field).toMatchObject({ value });
       });
     });
 
     describe('Group Value Interaction', () => {
-      it('should change conjugation', () => {
+      it('should change conjunction', () => {
         const filterFormStore = new FilterFormStore();
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
-        const loadableFormset = filterFormStore.formset.get();
-        const formset = Loadable.getOrElse(null, loadableFormset);
-
-        const field = formset?.filterGroup?.children[0];
-        if (field?.kind === FormKind.Group) {
-          expect(field.conjunction).toBe(Conjunction.And);
-          filterFormStore.setFieldConjunction(field.id, Conjunction.Or);
-          expect(field.conjunction).toBe(Conjunction.Or);
-        }
+        let field = getField(filterFormStore);
+        expect(field).toMatchObject({ conjunction: Conjunction.And });
+        filterFormStore.setFieldConjunction(field.id, Conjunction.Or);
+        field = getField(filterFormStore);
+        expect(field).toMatchObject({ conjunction: Conjunction.Or });
       });
     });
   });
