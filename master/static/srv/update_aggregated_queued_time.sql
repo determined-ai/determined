@@ -17,6 +17,9 @@ day_agg AS (
     FROM task_stats, const, allocations
     WHERE
         allocations.allocation_id = task_stats.allocation_id
+        -- Exclude the rows with NULL start_time. When Bun sees StartTime is nil,
+        -- it saves it as 0001-01-01 00:00:00+00.
+        AND task_stats.start_time != '0001-01-01 00:00:00+00:00'::TIMESTAMPTZ
         AND task_stats.end_time >= const.target_date
         AND task_stats.end_time < (const.target_date + interval '1 day')
         AND event_type = 'QUEUED'
