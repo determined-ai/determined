@@ -2,17 +2,17 @@ import { Radio } from 'antd';
 import React, { useMemo, useState } from 'react';
 
 import Section from 'components/Section';
+import ClusterHistoricalUsageChart from 'pages/Cluster/ClusterHistoricalUsageChart';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
 
-import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
 import css from './ClusterQueuedChart.module.scss';
 
 interface Props {
   poolStats: V1RPQueueStat | undefined;
 }
 
-const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
+const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
   const [viewDays, setViewDays] = useState(7);
 
   const queuedStats = useMemo(() => {
@@ -62,4 +62,4 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
   );
 };
 
-export default ClustersQueuedChart;
+export default ClusterQueuedChart;
