@@ -39,13 +39,19 @@ const API_FAILURE_MESSAGE_CREATE = 'Error creating new group.';
 const API_FAILURE_MESSAGE_EDIT = 'Error editing group.';
 const FORM_ID = 'create-group-form';
 
-const CREATE_VALUES = {
+interface Messages {
+  API_FAILURE_MESSAGE: string;
+  API_SUCCESS_MESSAGE: string;
+  MODAL_HEADER_LABEL: string;
+}
+
+const CREATE_VALUES: Messages = {
   API_FAILURE_MESSAGE: API_FAILURE_MESSAGE_CREATE,
   API_SUCCESS_MESSAGE: API_SUCCESS_MESSAGE_CREATE,
   MODAL_HEADER_LABEL: MODAL_HEADER_LABEL_CREATE,
 };
 
-const EDIT_VALUES = {
+const EDIT_VALUES: Messages = {
   API_FAILURE_MESSAGE: API_FAILURE_MESSAGE_EDIT,
   API_SUCCESS_MESSAGE: API_SUCCESS_MESSAGE_EDIT,
   MODAL_HEADER_LABEL: MODAL_HEADER_LABEL_EDIT,
@@ -134,18 +140,20 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
           const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
           const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
-          rolesToAdd.size > 0 &&
-            (await assignRolesToGroup([
+          if (rolesToAdd.size > 0) {
+            await assignRolesToGroup([
               {
                 groupId: group.group.groupId,
                 roleIds: Array.from(rolesToAdd),
               },
-            ]));
-          rolesToRemove.size > 0 &&
-            (await removeRolesFromGroup({
+            ]);
+          }
+          if (rolesToRemove.size > 0) {
+            await removeRolesFromGroup({
               groupId: group.group.groupId,
               roleIds: Array.from(rolesToRemove),
-            }));
+            });
+          }
           await fetchGroupRoles();
         }
       } else {
@@ -153,11 +161,14 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
         if (canModifyPermissions && newGroup.group.groupId) {
           const newRoles: Array<number> = formData.roles;
 
-          newRoles.length > 0 &&
-            (await assignRolesToGroup({
-              groupId: newGroup.group.groupId,
-              roleIds: newRoles,
-            }));
+          if (newRoles.length > 0) {
+            await assignRolesToGroup([
+              {
+                groupId: newGroup.group.groupId,
+                roleIds: newRoles,
+              },
+            ]);
+          }
         }
       }
       makeToast({ severity: 'Confirm', title: messages.API_SUCCESS_MESSAGE });
@@ -191,6 +202,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
             label={GROUP_NAME_LABEL}
             name={GROUP_NAME_NAME}
             required
+            rules={[{ whitespace: true }]}
             validateTrigger={['onSubmit', 'onChange']}>
             <Input autoComplete="off" autoFocus maxLength={128} placeholder={GROUP_NAME_LABEL} />
           </Form.Item>
@@ -203,11 +215,14 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
                   optionFilterProp="children"
                   placeholder={'Add Roles'}
                   showSearch>
-                  {roles.getOrElse([]).map((r) => (
-                    <Select.Option key={r.id} value={r.id}>
-                      {r.name}
-                    </Select.Option>
-                  ))}
+                  {roles
+                    .getOrElse([])
+                    .sort((r1, r2) => r1.id - r2.id)
+                    .map((r) => (
+                      <Select.Option key={r.id} value={r.id}>
+                        {r.name}
+                      </Select.Option>
+                    ))}
                 </Select>
               </Form.Item>
               <Typography.Text type="secondary">
