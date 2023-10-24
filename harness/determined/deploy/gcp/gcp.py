@@ -11,13 +11,13 @@ import googleapiclient.discovery
 from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import storage
 from googleapiclient.errors import HttpError
-from ruamel import yaml
 from tabulate import tabulate
 from termcolor import colored
 
 from determined import util
 from determined.cli import render
 from determined.cli.errors import CliError
+from determined.common import util as common_util
 from determined.deploy import healthcheck
 
 from .preflight import check_quota
@@ -398,7 +398,7 @@ def list_clusters(bucket_name: str, project_id: str, print_format: str = "table"
     if print_format == "json":
         render.print_json(cluster_json)
     elif print_format == "yaml":
-        cluster_yaml = yaml.dump(cluster_json)
+        cluster_yaml = common_util.yaml_safe_dump(cluster_json)
         print(cluster_yaml)
     else:
         print(tabulate(cluster_list, headers="firstrow"))

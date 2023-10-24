@@ -38,8 +38,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 import numpy as np
 import torch
 
-from determined import experimental, pytorch
-from determined.common import yaml
+from determined import pytorch
 from determined.pytorch import samplers
 from tests.experiment.fixtures import pytorch_counter_callback
 
@@ -668,23 +667,3 @@ class OneVarTrialCallbacks(OneVarTrial):
 
     def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
         return {"counter": self.counter, "legacyCounter": self.legacy_counter}
-
-
-if __name__ == "__main__":
-    conf = yaml.safe_load(
-        """
-    description: test-native-api-local-test-mode
-    hyperparameters:
-      global_batch_size: 32
-      dataloader_type: determined
-    scheduling_unit: 1
-    searcher:
-      name: single
-      metric: val_loss
-      max_length:
-        batches: 1
-      smaller_is_better: true
-    max_restarts: 0
-    """
-    )
-    experimental.create(OneVarTrial, conf, context_dir=".", local=True, test=True)
