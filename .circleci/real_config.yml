@@ -2346,6 +2346,17 @@ jobs:
             auth_file: /home/launcher/.launcher.$HOSTNAME.token
             path: /opt/singularity/bin:/usr/local/bin:${PATH}
             ld_library_path:
+      reserved_ports_znode50:
+        type: string
+        default: |
+            reserved_ports:
+              - 12350
+              - 12351
+              - 12360
+              - 12361
+              - 12365
+              - 12366
+              - 29400
       determined_master_host:
         type: string
         default: localhost:8080
@@ -2449,6 +2460,13 @@ jobs:
             cat \<< EOF > ./master.yaml
             <<parameters.master_config>>
             EOF
+            cat \<< EOF > ./reserved.yaml
+            <<parameters.reserved_ports_znode50>>
+            EOF
+            echo "hostname is $(hostname)"
+            # Disallow certain ports on znode50 for fewer conflicts with znode51
+            if [[ "$(hostname)" == "znode50" ]] ; then cat ./reserved.yaml >> ./master.yaml ; fi
+            cat ./master.yaml
             sudo cp ./master.yaml /etc/determined/master.yaml
             sudo systemctl daemon-reload
             sudo systemctl start determined-master
