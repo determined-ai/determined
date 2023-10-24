@@ -12,9 +12,12 @@ from termcolor import colored
 import determined.cli.render
 from determined import cli
 from determined.cli import render
-from determined.common import api, context, util
+from determined.common import api, context, util, yaml
 from determined.common.api import authentication
 from determined.util import merge_dicts
+
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
+
 
 CONFIG_DESC = """
 Additional configuration arguments for setting up a command.
@@ -325,15 +328,15 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.
             if key in _CONFIG_PATHS_COERCE_TO_LIST and value.startswith("{"):
-                value = [util.yaml_safe_load(value)]
+                value = [yaml.load(value)]
             else:
-                value = util.yaml_safe_load(value)
-        # Separate values if a comma exists. Use yaml_safe_load() to cast
+                value = yaml.load(value)
+        # Separate values if a comma exists. Use yaml.load() to cast
         # the value(s) to the type YAML would use, e.g., "4" -> 4.
         elif "," in value:
-            value = [util.yaml_safe_load(v) for v in value.split(",")]
+            value = [yaml.load(v) for v in value.split(",")]
         else:
-            value = util.yaml_safe_load(value)
+            value = yaml.load(value)
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.
             if key in _CONFIG_PATHS_COERCE_TO_LIST:

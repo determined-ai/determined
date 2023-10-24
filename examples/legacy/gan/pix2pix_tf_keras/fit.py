@@ -56,7 +56,7 @@ def fit(train_ds, test_ds, steps, preview=0):
 def main():
     import yaml
 
-    config = yaml.safe_load(open("const.yaml", "r"), Loader=yaml.BaseLoader)
+    config = yaml.load(open("const.yaml", "r"), Loader=yaml.BaseLoader)
     path, dataset_name = config["data"]["base"], config["data"]["dataset"]
     path = download(path, dataset_name)
 

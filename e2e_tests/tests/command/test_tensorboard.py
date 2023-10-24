@@ -4,7 +4,7 @@ from typing import Dict, Optional
 
 import pytest
 
-from determined.common import api, util
+from determined.common import api, yaml
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
@@ -55,7 +55,7 @@ def s3_config(num_trials: int, secrets: Dict[str, str], prefix: Optional[str] = 
     if prefix is not None:
         config_dict["checkpoint_storage"]["prefix"] = prefix  # type: ignore
 
-    return str(util.yaml_safe_dump(config_dict))
+    return str(yaml.dump(config_dict))
 
 
 @pytest.mark.slow
@@ -180,7 +180,7 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     t_id = res.stdout.strip("\n")
     command = ["det", "-m", conf.make_master_url(), "tensorboard", "config", t_id]
     res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
-    config = util.yaml_safe_load(res.stdout)
+    config = yaml.safe_load(res.stdout)
     assert (
         config["environment"]["image"]["cpu"] == "python:3.8.16"
         and config["environment"]["image"]["cuda"] == "python:3.8.16"
@@ -214,7 +214,7 @@ def test_tensorboard_inherit_image_pull_secrets(tmp_path: Path) -> None:
     t_id = res.stdout.strip("\n")
     command = ["det", "-m", conf.make_master_url(), "tensorboard", "config", t_id]
     res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
-    config = util.yaml_safe_load(res.stdout)
+    config = yaml.safe_load(res.stdout)
 
     ips = config["environment"]["pod_spec"]["spec"]["imagePullSecrets"]
 

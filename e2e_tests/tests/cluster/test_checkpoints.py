@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Set, Tuple
 import pytest
 
 from determined import errors
-from determined.common import api, storage, util
+from determined.common import api, storage, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import checkpointv1State
 from tests import api_utils
@@ -256,7 +256,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
         with tempfile.NamedTemporaryFile() as tf:
             with open(tf.name, "w") as f:
-                util.yaml_safe_dump(config, f)
+                yaml.dump(config, f)
 
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 

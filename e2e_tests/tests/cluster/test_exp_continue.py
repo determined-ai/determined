@@ -4,7 +4,7 @@ from typing import Any, List, Tuple
 
 import pytest
 
-from determined.common import util
+from determined.common import yaml
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
@@ -32,7 +32,7 @@ def test_continue_config_file_cli() -> None:
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump({"hyperparameters": {"metrics_sigma": 1.0}}, f)
+            yaml.dump({"hyperparameters": {"metrics_sigma": 1.0}}, f)
         det_cmd(["e", "continue", str(exp_id), "--config-file", tf.name], check=True)
 
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
@@ -50,9 +50,7 @@ def test_continue_config_file_and_args_cli() -> None:
     expected_name = "checkThis"
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(
-                {"name": expected_name, "hyperparameters": {"metrics_sigma": -1.0}}, f
-            )
+            yaml.dump({"name": expected_name, "hyperparameters": {"metrics_sigma": -1.0}}, f)
 
         stdout = det_cmd(
             [

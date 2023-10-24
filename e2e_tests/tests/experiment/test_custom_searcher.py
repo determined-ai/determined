@@ -9,7 +9,7 @@ import pytest
 from urllib3 import connectionpool
 
 from determined import searcher
-from determined.common import util
+from determined.common import yaml
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
@@ -196,7 +196,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
+            yaml.dump(config, f)
 
         searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
         exp.wait_for_experiment_state(

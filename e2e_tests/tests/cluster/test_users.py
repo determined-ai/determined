@@ -15,7 +15,7 @@ import pexpect
 import pytest
 from pexpect import spawn
 
-from determined.common import api, constants, util
+from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
 from determined.experimental import Determined
 from tests import api_utils, command
@@ -862,7 +862,7 @@ def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: path
             model_def_content = f.read()
 
         with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-            config = util.yaml_safe_load(f)
+            config = yaml.safe_load(f)
 
         # Use a user-owned path to ensure shared_fs uses the container_path and not host_path.
         with non_tmp_shared_fs_path() as host_path:
@@ -876,7 +876,7 @@ def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: path
                 tmp_path,
                 {
                     "startup-hook.sh": "det --version || exit 77",
-                    "const.yaml": util.yaml_safe_dump(config),  # type: ignore
+                    "const.yaml": yaml.dump(config),  # type: ignore
                     "model_def.py": model_def_content,
                 },
             ) as tree:

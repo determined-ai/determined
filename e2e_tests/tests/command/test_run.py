@@ -10,7 +10,7 @@ import docker
 import docker.errors
 import pytest
 
-from determined.common import util
+from determined.common import yaml
 from tests import command as cmd
 from tests import config as conf
 from tests.filetree import FileTree
@@ -55,7 +55,7 @@ def _run_cmd_with_config_expecting_success(
 ) -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
+            yaml.dump(config, f)
 
         command = ["det", "-m", conf.make_master_url(), "cmd", "run", "--config-file", tf.name]
         if context_path:
@@ -70,7 +70,7 @@ def _run_cmd_with_config_expecting_failure(
 ) -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
+            yaml.dump(config, f)
 
         with pytest.raises(subprocess.CalledProcessError):
             _run_and_verify_failure(
@@ -639,7 +639,7 @@ def test_log_wait_timeout(tmp_path: Path, secrets: Dict[str, str]) -> None:
     config = {"environment": {"environment_variables": ["DET_LOG_WAIT_TIME=10"]}}
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
+            yaml.dump(config, f)
 
         cli = ["det", "-m", conf.make_master_url(), "cmd", "run", "--config-file", tf.name, cmd]
         p = subprocess.run(cli, stdout=subprocess.PIPE, check=True)

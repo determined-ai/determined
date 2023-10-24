@@ -21,7 +21,7 @@ from determined import cli
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
-from determined.common import api, context, set_logger, util
+from determined.common import api, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings, logs
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.experimental import client
@@ -243,7 +243,7 @@ def submit_experiment(args: Namespace) -> None:
         # The user provided tweaks as cli args, so we have to reserialize the submitted experiment
         # config.  This will unfortunately remove comments they had in the yaml, so we only do it
         # when we have to.
-        yaml_dump = util.yaml_safe_dump(experiment_config)
+        yaml_dump = yaml.dump(experiment_config)
         assert yaml_dump is not None
         config_text = yaml_dump
 
@@ -272,7 +272,7 @@ def submit_experiment(args: Namespace) -> None:
         print(termcolor.colored("Creating test experiment...", "yellow"), end="\r")
         req.validateOnly = False
         test_config = det._make_test_experiment_config(experiment_config)
-        req.config = util.yaml_safe_dump(test_config)
+        req.config = yaml.dump(test_config)
         resp = bindings.post_CreateExperiment(sess, body=req)
         print(termcolor.colored(f"Created test experiment {resp.experiment.id}", "green"))
 
@@ -308,7 +308,7 @@ def continue_experiment(args: Namespace) -> None:
     else:
         experiment_config = parse_config_overrides({}, args.config)
 
-    config_text = util.yaml_safe_dump(experiment_config)
+    config_text = yaml.dump(experiment_config)
 
     sess = cli.setup_session(args)
     req = bindings.v1ContinueExperimentRequest(
@@ -654,7 +654,7 @@ def config(args: Namespace) -> None:
     result = bindings.get_GetExperiment(
         cli.setup_session(args), experimentId=args.experiment_id
     ).experiment.config
-    util.yaml_safe_dump(result, stream=sys.stdout, default_flow_style=False)
+    yaml.safe_dump(result, stream=sys.stdout, default_flow_style=False)
 
 
 @authentication.required

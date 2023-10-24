@@ -61,24 +61,17 @@ def fetch_instance_type_quota(boto_session: boto3.session.Session, quota_code: s
 # They can't be parsed by a simple yaml parser, but we can safely ignore them,
 # since we only make use of the default parameters section,
 # and it doesn't contain any such function calls.
-#
-# This strategy isn't a documented API in ruamel.yaml, but it was recommended by the ruamel.yaml
-# author in stack overflow[1].
-#
-# [1] https://stackoverflow.com/a/76870790
-class IgnoreUnknownTagConstructor(yaml.SafeConstructor):
+class LoaderIgnoreUnknown(yaml.SafeLoader):
     def ignore_unknown(self, node: Any) -> None:
         return None
 
 
-IgnoreUnknownTagConstructor.add_constructor(None, IgnoreUnknownTagConstructor.ignore_unknown)
+LoaderIgnoreUnknown.add_constructor(None, LoaderIgnoreUnknown.ignore_unknown)
 
 
 def get_default_cf_parameter(deployment_object: DeterminedDeployment, parameter: str) -> Any:
-    y = yaml.YAML(typ="safe", pure=True)
-    y.Constructor = IgnoreUnknownTagConstructor
     with open(deployment_object.template_path) as fin:
-        data = y.load(fin)
+        data = yaml.load(fin, Loader=LoaderIgnoreUnknown)
 
     return data["Parameters"][parameter]["Default"]
 
