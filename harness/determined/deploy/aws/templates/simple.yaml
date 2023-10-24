@@ -778,6 +778,7 @@ Resources:
             if [ ! -z "${SidecarImage}" ] && [ ! -z "${SidecarPort}" ]; then
               docker run -d \
                 --name sidecar1 \
+                --env DET_MASTER=http://determined-master:8080 \
                 --network determined \
                 "${SidecarImage}"
             fi
