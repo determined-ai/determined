@@ -54,11 +54,11 @@ export const useThemeState = (): { actions: ThemeStateActions; themeState: Theme
    */
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error('useStore(UI) must be used within a UIProvider');
+    throw new Error('useStore(Theme) must be used within a UIProvider');
   }
   const dispatchContext = useContext(ThemeDispatchContext);
   if (dispatchContext === undefined) {
-    throw new Error('useStoreDispatch must be used within a UIProvider');
+    throw new Error('useStoreDispatch(Theme) must be used within a UIProvider');
   }
   const actions = useMemo(() => new ThemeStateActions(dispatchContext), [dispatchContext]);
   return { actions, themeState: context };

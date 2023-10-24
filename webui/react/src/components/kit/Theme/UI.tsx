@@ -131,11 +131,11 @@ const reducer = (state: StateUI, action: ActionUI): StateUI => {
 const useUI = (): { actions: UIActions; ui: StateUI } => {
   const context = useContext(StateContext);
   if (context === undefined) {
-    throw new Error('useStore(UI) must be used within a UIProvider');
+    throw new Error('useStore(UI) must be used within a ThemeProvider');
   }
   const dispatchContext = useContext(DispatchContext);
   if (dispatchContext === undefined) {
-    throw new Error('useStoreDispatch must be used within a UIProvider');
+    throw new Error('useStoreDispatch must be used within a ThemeProvider');
   }
   const uiActions = useMemo(() => new UIActions(dispatchContext), [dispatchContext]);
   return { actions: uiActions, ui: context };
