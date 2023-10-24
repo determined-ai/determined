@@ -1,4 +1,3 @@
-import { ConfigProvider } from 'antd';
 import Button from 'determined-ui/Button';
 import Form from 'determined-ui/Form';
 import Icon from 'determined-ui/Icon';
@@ -33,14 +32,8 @@ interface FromValues {
 const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
-const buttonTheme = {
-  components: {
-    Button: {
-      colorPrimary: 'var(--theme-brand)',
-      colorPrimaryActive: 'var(--theme-brand-strong)',
-      colorPrimaryHover: 'var(--theme-brand-weak)',
-    },
-  },
+const theme = {
+  brand: 'green',
 };
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
@@ -128,11 +121,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <ConfigProvider theme={buttonTheme}>
+        <ThemeProvider theme={theme}>
           <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
             Sign In
           </Button>
-        </ConfigProvider>
+        </ThemeProvider>
       </Form.Item>
     </Form>
   );

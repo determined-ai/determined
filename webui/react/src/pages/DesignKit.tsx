@@ -46,6 +46,47 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
+import Accordion from 'components/kit/Accordion';
+import Avatar from 'components/kit/Avatar';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
+import Checkbox from 'components/kit/Checkbox';
+import ClipboardButton from 'components/kit/ClipboardButton';
+import CodeEditor from 'components/kit/CodeEditor';
+import { Column, Columns } from 'components/kit/Columns';
+import DatePicker from 'components/kit/DatePicker';
+import Drawer from 'components/kit/Drawer';
+import Dropdown, { MenuItem } from 'components/kit/Dropdown';
+import Empty from 'components/kit/Empty';
+import Form from 'components/kit/Form';
+import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
+import InlineForm from 'components/kit/InlineForm';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
+import InputSearch from 'components/kit/InputSearch';
+import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
+import { TypographySize } from 'components/kit/internal/fonts';
+import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
+import { LineChart } from 'components/kit/LineChart';
+import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
+import LogViewer from 'components/kit/LogViewer/LogViewer';
+import { Modal, useModal } from 'components/kit/Modal';
+import Nameplate from 'components/kit/Nameplate';
+import Notes, { Props as NotesProps } from 'components/kit/Notes';
+import Pagination from 'components/kit/Pagination';
+import Pivot from 'components/kit/Pivot';
+import Select, { Option } from 'components/kit/Select';
+import Spinner from 'components/kit/Spinner';
+import useUI, { ThemeProvider } from 'components/kit/Theme';
+import { makeToast } from 'components/kit/Toast';
+import Toggle from 'components/kit/Toggle';
+import Tooltip from 'components/kit/Tooltip';
+import Header from 'components/kit/Typography/Header';
+import Paragraph from 'components/kit/Typography/Paragraph';
+import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
+import { useTags } from 'components/kit/useTags';
+import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -677,11 +718,47 @@ const ThemeSection: React.FC = () => {
           <li>statusSuccess</li>
           <li>stageBorder</li>
         </ul>
-        {themeVariations}
-      </AntDCard>
-    </ComponentSection>
-  );
-};
+      </p>
+    </AntDCard>
+    <AntDCard title="Usage">
+      <ThemeProvider
+        theme={{
+          brand: 'green',
+        }}>
+        <Button type="primary">Hi</Button>
+      </ThemeProvider>
+      <hr />
+      <ThemeProvider
+        theme={{
+          brand: 'orange',
+        }}>
+        <Toggle checked />
+      </ThemeProvider>
+      <hr />
+      <ThemeProvider
+        theme={{
+          brand: 'purple',
+        }}>
+        <Pagination current={1} pageSize={50} total={500} />
+      </ThemeProvider>
+      <hr />
+      <ThemeProvider
+        theme={{
+          brand: 'teal',
+        }}>
+        <Input />
+      </ThemeProvider>
+      <hr />
+      <ThemeProvider
+        theme={{
+          brand: 'magenta',
+        }}>
+        <Spinner />
+        <p>The spinner does not work because it is styled using `--theme-brand`</p>
+      </ThemeProvider>
+    </AntDCard>
+  </ComponentSection >
+);
 
 const ChartsSection: React.FC = () => {
   const [line1Data, setLine1Data] = useState<[number, number][]>([

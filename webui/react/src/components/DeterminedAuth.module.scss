@@ -1,17 +1,6 @@
 .base {
   button {
-    background-color: var(--theme-brand);
-    border-color: var(--theme-brand);
     width: 100%;
-  }
-  button:focus,
-  button:hover {
-    background-color: var(--theme-brand-weak);
-    border-color: var(--theme-brand-weak);
-  }
-  button:active {
-    background-color: var(--theme-brand-strong);
-    border-color: var(--theme-brand-strong);
   }
   .content > a {
     font-size: 12px;

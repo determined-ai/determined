@@ -1,19 +1,22 @@
 import { StyleProvider } from '@ant-design/cssinjs';
-import { theme as AntdTheme, ConfigProvider } from 'antd';
-import { RecordKey } from 'components/kit/internal/types';
-import React, { Dispatch, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import { App as AntdApp, ConfigProvider, theme } from 'antd';
+import { ThemeConfig } from 'antd/es/config-provider/context';
+import React, {
+  Dispatch,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
 
-import {
-  ThemeContext,
-  ThemeDispatchContext,
-  themeStateReducer,
-  useThemeState,
-} from 'components/kit/internal/theme';
+import { BrandingType, RecordKey } from 'components/kit/internal/types';
 
-import { globalCssVars, Mode, Theme } from './themeUtils';
-
+import { themes } from './themes';
+import { createTheme, DarkLight, globalCssVars, Mode, Theme } from './themeUtils';
 export { StyleProvider };
-export type { Theme };
 
 interface StateUI {
   chromeCollapsed: boolean;
@@ -53,7 +56,7 @@ type ActionUI =
   | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
-  constructor(private dispatch: Dispatch<ActionUI>) {}
+  constructor(private dispatch: Dispatch<ActionUI>) { }
 
   public hideChrome = (): void => {
     this.dispatch({ type: StoreActionUI.HideUIChrome });
@@ -176,127 +179,215 @@ export const UI: React.FC<{
 }> = ({ children, theme, darkMode = false }) => {
   const { actions } = useThemeState();
 
-  useEffect(() => {
-    actions.setDarkMode(darkMode);
-  }, [darkMode, actions]);
+  interface ThemeUpdates {
+    strong?: string;
+    weak?: string;
+    brand: string;
+    brandStrong?: string;
+    brandWeak?: string;
+  }
 
-  const ref = useRef<HTMLDivElement>(null);
+  export const ThemeProvider: React.FC<{ children?: React.ReactNode; theme: ThemeUpdates }> = ({
+    children,
+    theme,
+  }) => {
+    /***
+     1. There are two ways to update the theme currently
+         a. setTheme via useUI which will update our css vars
+         b. Using ConfigProvider via AntD
+           1. The config provider takes in seed and component tokens, then provides styling for
+           components.
+  
+     the theming in the app is ultimately provided by using a ConfigProvider in
+     the UIProvider.
+  
+     2. The theme may applied to components in different ways:
+       a. Button
+          1. Themed solely using the ConfigProvider.
+          2. Currently there is no way to to have css variables impact the color
+          of the component.
+       b. Spinner, special case where the coloring is only based on a provided
+          css var
+          1. Easy enough to remove the custom styling.
+  
+     Paths forward:
+      1. Determine what needs to be customizable and use the ConfigProvider to the best of its ability.
+      2.
+    */
 
-  // Set global CSS variables shared across themes.
-  Object.keys(globalCssVars).forEach((key) => {
-    const value = (globalCssVars as Record<RecordKey, string>)[key];
-    document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
-  });
+    // Example of creating and setting a new theme
+    // const { actions } = useUI();
+    // const { lightTheme } = getTheme(theme)
+    // useEffect(() => {
+    //   actions.setTheme(DarkLight.Light, lightTheme);
+    // }, [theme])
 
-  // Set each theme property as top level CSS variable.
-  Object.keys(theme).forEach((key) => {
-    const value = (theme as Record<RecordKey, string>)[key];
-    ref.current?.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
-  });
-
-  /**
-   * A few specific HTML elements and free form text entries
-   * within the application are styled based on the color-scheme
-   * css property set specifically on the documentElement.
-   *
-   * Examples include:
-   *  - the "Section" titles in the Drawer component which are
-   *    <h5> elements.
-   * - The "Settings" section title within the Drawer which is
-   *   free form text.
-   * - The Paragraph component within the Drawer.
-   * - The "ThemeToggle" mode text on the DesignKit page.
-   *
-   *  the following line is needed to ensure styling in these
-   *  specific cases is still applied correctly.
-   */
-  document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
-
-  const lightThemeConfig = {
-    components: {
-      Tooltip: {
-        colorBgDefault: 'var(--theme-float)',
-        colorTextLightSolid: 'var(--theme-float-on)',
+    // Example of updating design via an AntD seed token
+    const updatedTheme = {
+      token: {
+        colorPrimary: theme.brand,
       },
-    },
-    token: {
-      colorPrimary: '#1890ff',
-    },
+    };
+
+    return <ConfigProvider theme={updatedTheme}>{children}</ConfigProvider>;
   };
 
-  const darkThemeConfig = {
-    components: {
-      Checkbox: {
-        colorBgContainer: 'transparent',
+  export const UIProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType }> = ({
+    children,
+    branding,
+  }) => {
+    const [state, dispatch] = useReducer(reducer, initUI);
+    const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
+    const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
+      if (!event.matches) setSystemMode(getSystemMode());
+    }, []);
+
+    useLayoutEffect(() => {
+      // Set global CSS variables shared across themes.
+      Object.keys(globalCssVars).forEach((key) => {
+        const value = (globalCssVars as Record<RecordKey, string>)[key];
+        document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+      });
+
+      // Set each theme property as top level CSS variable.
+      Object.keys(state.theme).forEach((key) => {
+        const value = (state.theme as Record<RecordKey, string>)[key];
+        document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
+      });
+    }, [state.theme]);
+
+    // Detect browser/OS level dark/light mode changes.
+    useEffect(() => {
+      actions.setDarkMode(darkMode);
+    }, [darkMode, actions]);
+
+    const ref = useRef<HTMLDivElement>(null);
+
+    // Set global CSS variables shared across themes.
+    Object.keys(globalCssVars).forEach((key) => {
+      const value = (globalCssVars as Record<RecordKey, string>)[key];
+      document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+    });
+
+    // Set each theme property as top level CSS variable.
+    Object.keys(theme).forEach((key) => {
+      const value = (theme as Record<RecordKey, string>)[key];
+      ref.current?.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
+    });
+
+    /**
+     * A few specific HTML elements and free form text entries
+     * within the application are styled based on the color-scheme
+     * css property set specifically on the documentElement.
+     *
+     * Examples include:
+     *  - the "Section" titles in the Drawer component which are
+     *    <h5> elements.
+     * - The "Settings" section title within the Drawer which is
+     *   free form text.
+     * - The Paragraph component within the Drawer.
+     * - The "ThemeToggle" mode text on the DesignKit page.
+     *
+     *  the following line is needed to ensure styling in these
+     *  specific cases is still applied correctly.
+     */
+    document.documentElement.style.setProperty('color-scheme', darkMode ? 'dark' : 'light');
+
+    const lightThemeConfig = {
+      components: {
+        Tooltip: {
+          colorBgDefault: 'var(--theme-float)',
+          colorTextLightSolid: 'var(--theme-float-on)',
+        },
       },
-      DatePicker: {
-        colorBgContainer: 'transparent',
+      token: {
+        colorPrimary: '#1890ff',
       },
-      Input: {
-        colorBgContainer: 'transparent',
+    };
+
+    const darkThemeConfig = {
+      components: {
+        Checkbox: {
+          colorBgContainer: 'transparent',
+        },
+        DatePicker: {
+          colorBgContainer: 'transparent',
+        },
+        Input: {
+          colorBgContainer: 'transparent',
+        },
+        InputNumber: {
+          colorBgContainer: 'transparent',
+        },
+        Modal: {
+          colorBgElevated: 'var(--theme-stage)',
+        },
+        Pagination: {
+          colorBgContainer: 'transparent',
+        },
+        Radio: {
+          colorBgContainer: 'transparent',
+        },
+        Select: {
+          colorBgContainer: 'transparent',
+        },
+        Tree: {
+          colorBgContainer: 'transparent',
+        },
       },
-      InputNumber: {
-        colorBgContainer: 'transparent',
+      token: {
+        colorLink: '#57a3fa',
+        colorLinkHover: '#8dc0fb',
+        colorPrimary: '#1890ff',
       },
-      Modal: {
-        colorBgElevated: 'var(--theme-stage)',
+    };
+
+    const baseThemeConfig = {
+      components: {
+        Button: {
+          colorBgContainer: 'transparent',
+        },
+        Progress: {
+          marginXS: 0,
+        },
       },
-      Pagination: {
-        colorBgContainer: 'transparent',
+      token: {
+        borderRadius: 2,
+        fontFamily: 'var(--theme-font-family)',
       },
-      Radio: {
-        colorBgContainer: 'transparent',
+    };
+
+    const algorithm = darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
+    const { token: baseToken, components: baseComponents } = baseThemeConfig;
+    const { token, components } = darkMode ? darkThemeConfig : lightThemeConfig;
+
+    const configTheme = {
+      algorithm,
+      components: {
+        ...baseComponents,
+        ...components,
       },
-      Select: {
-        colorBgContainer: 'transparent',
+      token: {
+        ...baseToken,
+        ...token,
       },
-      Tree: {
-        colorBgContainer: 'transparent',
-      },
-    },
-    token: {
-      colorLink: '#57a3fa',
-      colorLinkHover: '#8dc0fb',
-      colorPrimary: '#1890ff',
-    },
+    };
+
+    return (
+<<<<<<< HEAD
+      <div className="ui-provider" ref={ref}>
+        <ConfigProvider theme={configTheme}>{children}</ConfigProvider>
+      </div>
+=======
+    <AntdApp>
+      <ConfigProvider theme={antdTheme}>
+        <StateContext.Provider value={state}>
+          <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+        </StateContext.Provider>
+      </ConfigProvider>
+    </AntdApp>
+>>>>>>> 82b7920f595dea0e1c5cf437117e9150267ff567
+    );
   };
 
-  const baseThemeConfig = {
-    components: {
-      Button: {
-        colorBgContainer: 'transparent',
-      },
-      Progress: {
-        marginXS: 0,
-      },
-    },
-    token: {
-      borderRadius: 2,
-      fontFamily: 'var(--theme-font-family)',
-    },
-  };
-
-  const algorithm = darkMode ? AntdTheme.darkAlgorithm : AntdTheme.defaultAlgorithm;
-  const { token: baseToken, components: baseComponents } = baseThemeConfig;
-  const { token, components } = darkMode ? darkThemeConfig : lightThemeConfig;
-
-  const configTheme = {
-    algorithm,
-    components: {
-      ...baseComponents,
-      ...components,
-    },
-    token: {
-      ...baseToken,
-      ...token,
-    },
-  };
-
-  return (
-    <div className="ui-provider" ref={ref}>
-      <ConfigProvider theme={configTheme}>{children}</ConfigProvider>
-    </div>
-  );
-};
-
-export default useUI;
+  export default useUI;
