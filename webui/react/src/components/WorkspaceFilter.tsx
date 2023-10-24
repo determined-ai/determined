@@ -1,4 +1,4 @@
-import Avatar from 'components/kit/Avatar';
+import Avatar from 'determined-ui/Avatar';
 import React from 'react';
 
 import { Workspace } from 'types';
