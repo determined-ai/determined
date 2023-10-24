@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StyleProvider } from 'components/kit/Theme';
+import { StyleProvider } from 'determined-ui/Theme';
 import React, { useEffect, useState } from 'react';
 import { Mock } from 'vitest';
 
