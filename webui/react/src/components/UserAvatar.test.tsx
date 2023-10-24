@@ -2,9 +2,10 @@ import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ThemeProvider } from 'components/kit/Theme';
+import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { User } from 'types';
 
+import { themeLightDetermined } from './kit/internal/theme';
 import UserAvatar, { Props } from './UserAvatar';
 
 const testUsers: User[] = [
@@ -25,7 +26,9 @@ const setup = (testUser: User) => {
   const user = userEvent.setup();
   const view = render(
     <ThemeProvider>
-      <Component user={testUser} />
+      <UIProvider theme={themeLightDetermined}>
+        <Component user={testUser} />
+      </UIProvider>
     </ThemeProvider>,
   );
 
