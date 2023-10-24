@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -307,7 +307,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		job.DefaultService.RegisterJob(c.jobID, c)
+		jobservice.DefaultService.RegisterJob(c.jobID, c)
 
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
@@ -324,7 +324,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		go job.DefaultService.UnregisterJob(c.jobID)
+		go jobservice.DefaultService.UnregisterJob(c.jobID)
 		if err := user.DeleteSessionByToken(
 			context.TODO(),
 			c.GenericCommandSpec.Base.UserSessionToken,
