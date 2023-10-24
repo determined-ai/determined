@@ -195,7 +195,7 @@ def create_deepspeed_env_file() -> None:
             if "\n" not in line:
                 f.write(f"{line}\n")
             else:
-                logging.debug(
+                logging.warning(
                     f"Excluding environment variable {k} because it contains a newline character."
                 )
 
