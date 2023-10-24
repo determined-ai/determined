@@ -1,4 +1,4 @@
-package job
+package jobservice
 
 import (
 	"fmt"

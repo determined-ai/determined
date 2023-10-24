@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -16,7 +17,7 @@ import (
 func (a *apiServer) GetJobs(
 	ctx context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	jobs, err := job.DefaultService.GetJobs(
+	jobs, err := jobservice.DefaultService.GetJobs(
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -47,7 +48,7 @@ func (a *apiServer) GetJobs(
 func (a *apiServer) GetJobsV2(
 	ctx context.Context, req *apiv1.GetJobsV2Request,
 ) (resp *apiv1.GetJobsV2Response, err error) {
-	jobs, err := job.DefaultService.GetJobs(
+	jobs, err := jobservice.DefaultService.GetJobs(
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -118,7 +119,7 @@ func (a *apiServer) UpdateJobQueue(
 	if permErr != nil {
 		return nil, permErr
 	}
-	err = job.DefaultService.UpdateJobQueue(req.Updates)
+	err = jobservice.DefaultService.UpdateJobQueue(req.Updates)
 	if err != nil {
 		return nil, err
 	}

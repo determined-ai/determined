@@ -19,7 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -292,7 +292,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-		job.DefaultService.RegisterJob(e.JobID, e)
+		jobservice.DefaultService.RegisterJob(e.JobID, e)
 
 		if e.restored {
 			j, err := e.db.JobByID(e.JobID)
@@ -445,7 +445,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.syslog.Error(err)
 			}
 		}
-		go job.DefaultService.UnregisterJob(e.JobID)
+		go jobservice.DefaultService.UnregisterJob(e.JobID)
 		state := model.StoppingToTerminalStates[e.State]
 		if state == "" {
 			state = model.ErrorState
