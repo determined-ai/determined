@@ -11,7 +11,7 @@ you are at the right place!
  Prerequisites
 ***************
 
-Your system must meet the software and hardware requirements described in the :ref:`Installation
+Your system must meet the software and hardware requirements described in the :ref:`System
 Requirements <system-requirements>`.
 
 *************************

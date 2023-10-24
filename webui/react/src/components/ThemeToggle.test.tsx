@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Mode, ThemeProvider } from 'determined-ui/Theme';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-
-import { Mode, ThemeProvider } from 'components/kit/Theme';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 

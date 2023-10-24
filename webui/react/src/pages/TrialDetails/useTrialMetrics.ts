@@ -1,9 +1,9 @@
+import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'determined-ui/LineChart';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';

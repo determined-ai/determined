@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import * as src from 'determined-ui/LogViewer/LogViewer';
+import { ThemeProvider } from 'determined-ui/Theme';
 
-import * as src from 'components/kit/LogViewer/LogViewer';
-import { ThemeProvider } from 'components/kit/Theme';
-import { flakyIt } from 'quarantineTests';
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -138,7 +137,7 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('components/kit/internal/useResize', () => {
+vi.mock('determined-ui/internal/useResize', () => {
   const refObject = { current: null };
   return {
     __esModule: true,
@@ -149,12 +148,12 @@ vi.mock('components/kit/internal/useResize', () => {
   };
 });
 
-vi.mock('components/kit/internal/useGetCharMeasureInContainer', () => ({
+vi.mock('determined-ui/internal/useGetCharMeasureInContainer', () => ({
   __esModule: true,
   default: () => ({ height: 18, width: 7 }),
 }));
 
-vi.mock('components/kit/internal/services', () => ({
+vi.mock('determined-ui/internal/services', () => ({
   __esModule: true,
   readLogStream: (
     serverAddress: (path: string) => string,
@@ -294,22 +293,18 @@ describe('LogViewer', () => {
       });
     });
 
-    flakyIt(
-      'should render logs with streaming',
-      async () => {
-        setup({ decoder, onError: handleError, onFetch, serverAddress });
+    it('should render logs with streaming @flaky', async () => {
+      setup({ decoder, onError: handleError, onFetch, serverAddress });
 
-        await waitFor(
-          () => {
-            const lastLog = logsReference[logsReference.length - 1];
-            expect(lastLog.message).not.toBeNull();
-            expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-          },
-          { timeout: 6000 },
-        );
-      },
-      6500,
-    );
+      await waitFor(
+        () => {
+          const lastLog = logsReference[logsReference.length - 1];
+          expect(lastLog.message).not.toBeNull();
+          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+        },
+        { timeout: 6000 },
+      );
+    }, 6500);
 
     it('should show oldest logs', async () => {
       setup({ decoder, onError: handleError, onFetch, serverAddress });

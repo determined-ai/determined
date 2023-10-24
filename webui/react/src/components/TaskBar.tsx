@@ -1,7 +1,8 @@
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import useConfirm from 'determined-ui/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
@@ -9,7 +10,6 @@ import { CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
-import useConfirm from './kit/useConfirm';
 import css from './TaskBar.module.scss';
 
 interface Props {

@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ThemeProvider } from 'determined-ui/Theme';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider } from 'components/kit/Theme';
-import { ConfirmationProvider } from 'components/kit/useConfirm';
 import authStore from 'stores/auth';
 
 import InteractiveTask from './InteractiveTask';

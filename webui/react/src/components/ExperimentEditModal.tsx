@@ -1,8 +1,8 @@
+import Form, { hasErrors } from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import { Modal } from 'determined-ui/Modal';
 import React, { useId, useState } from 'react';
 
-import Form, { hasErrors } from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import { Modal } from 'components/kit/Modal';
 import { patchExperiment } from 'services/api';
 import { ExperimentItem } from 'types';
 import handleError from 'utils/error';

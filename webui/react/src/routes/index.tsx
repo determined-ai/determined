@@ -13,7 +13,7 @@ import ModelRegistryPage from 'pages/ModelRegistryPage';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
 import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
-import ResourcepoolDetail from 'pages/ResourcepoolDetail';
+import ResourcepoolDetail from 'pages/ResourcePool/ResourcepoolDetail';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskListPage from 'pages/TaskListPage';

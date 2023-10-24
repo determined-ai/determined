@@ -1,8 +1,7 @@
 import { Drawer } from 'antd';
-import React from 'react';
-
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
+import React from 'react';
 
 import css from './Drawer.module.scss';
 

@@ -1,6 +1,6 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { getExperiments } from 'services/api';
 import { V1Pagination } from 'services/api-ts-sdk';
 import { GetExperimentsParams } from 'services/types';

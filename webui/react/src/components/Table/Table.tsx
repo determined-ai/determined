@@ -1,4 +1,8 @@
 import { Space, Typography } from 'antd';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import { StateOfUnion } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -6,10 +10,6 @@ import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/kit/Icon';
-import Spinner from 'components/kit/Spinner';
-import { StateOfUnion } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';

@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
 import React from 'react';
 
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
 import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 

@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback, useEffect } from 'react';
 
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';

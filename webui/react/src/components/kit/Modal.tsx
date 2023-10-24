@@ -1,4 +1,8 @@
 import { Modal as AntdModal } from 'antd';
+import Button from 'components/kit/Button';
+import Icon, { IconName } from 'components/kit/Icon';
+import { ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
+import Spinner from 'components/kit/Spinner';
 import React, {
   createContext,
   Dispatch,
@@ -8,11 +12,6 @@ import React, {
   useContext,
   useState,
 } from 'react';
-
-import Button from 'components/kit/Button';
-import Icon, { IconName } from 'components/kit/Icon';
-import { ErrorHandler, ErrorLevel, ErrorType } from 'components/kit/internal/types';
-import Spinner from 'components/kit/Spinner';
 
 import css from './Modal.module.scss';
 

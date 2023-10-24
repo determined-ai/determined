@@ -1,10 +1,10 @@
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
@@ -13,14 +13,7 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import {
-  ExperimentBase,
-  HyperparameterType,
-  Metric,
-  metricTypeParamMap,
-  Primitive,
-  Scale,
-} from 'types';
+import { ExperimentBase, HyperparameterType, Metric, Primitive, Scale } from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToStr } from 'utils/metric';
 
@@ -154,8 +147,8 @@ const ScatterPlots: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.group],
-        undefined, // custom metric group
+        undefined,
+        selectedMetric.group,
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },

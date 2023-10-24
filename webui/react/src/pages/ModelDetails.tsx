@@ -1,15 +1,15 @@
 import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import Input from 'determined-ui/Input';
+import Message from 'determined-ui/Message';
+import Notes from 'determined-ui/Notes';
+import Spinner from 'determined-ui/Spinner';
+import Tags, { tagsActionHelper } from 'determined-ui/Tags';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { unstable_useBlocker, useParams } from 'react-router-dom';
 
-import Input from 'components/kit/Input';
-import Message from 'components/kit/Message';
-import Notes from 'components/kit/Notes';
-import Spinner from 'components/kit/Spinner';
-import Tags, { tagsActionHelper } from 'components/kit/Tags';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -462,6 +462,7 @@ const ModelDetails: React.FC = () => {
           disableTitle
           notes={{ contents: model.notes ?? '', name: 'Notes' }}
           onError={handleError}
+          onPageUnloadHook={unstable_useBlocker}
           onSave={saveNotes}
         />
         <MetadataCard

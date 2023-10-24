@@ -2,9 +2,9 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
+import Spinner from 'determined-ui/Spinner';
 import React, { useEffect, useRef, useState } from 'react';
 
-import Spinner from 'components/kit/Spinner';
 import useResize from 'hooks/useResize';
 import { TrialItem } from 'types';
 import { hasObjectKeys } from 'utils/data';

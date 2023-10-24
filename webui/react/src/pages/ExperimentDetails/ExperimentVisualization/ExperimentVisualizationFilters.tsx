@@ -1,11 +1,11 @@
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
 import * as t from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HpSelect from 'components/HpSelect';
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';

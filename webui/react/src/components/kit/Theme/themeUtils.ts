@@ -1,9 +1,9 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { ValueOf } from 'components/kit/internal/types';
 import { RefObject } from 'react';
 
 import { findParentByClass } from 'components/kit/internal/functions';
 import { Theme } from 'components/kit/internal/theme';
-import { ValueOf } from 'components/kit/internal/types';
 
 export type { Theme };
 export const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';

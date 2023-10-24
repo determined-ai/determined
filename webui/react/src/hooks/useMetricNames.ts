@@ -1,7 +1,7 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';

@@ -7,6 +7,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
+import Spinner from 'determined-ui/Spinner';
 import _ from 'lodash';
 import React, {
   createContext,
@@ -27,7 +28,6 @@ import {
   DraggableEventHandler,
 } from 'react-draggable';
 
-import Spinner from 'components/kit/Spinner';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';

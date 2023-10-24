@@ -3,6 +3,7 @@ import math
 import os
 from typing import Callable
 from unittest import mock
+from urllib import parse
 
 import pytest
 import requests
@@ -101,7 +102,7 @@ def test_wait_raises_exception_when_experiment_is_paused(
 
 
 @responses.activate
-def test_list_trials_iterates_through_all_trials(
+def test_iter_trials_iterates_through_all_trials(
     make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
@@ -119,13 +120,13 @@ def test_list_trials_iterates_through_all_trials(
         callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
     )
 
-    trials = expref.list_trials(limit=page_size)
+    trials = expref.iter_trials(limit=page_size)
 
     assert len(list(trials)) == len(tr_resp.trials)
 
 
 @responses.activate
-def test_list_trials_requests_pages_lazily(
+def test_iter_trials_requests_pages_lazily(
     make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
@@ -143,7 +144,7 @@ def test_list_trials_requests_pages_lazily(
         callback=api_responses.serve_by_page(tr_resp, "trials", max_page_size=page_size),
     )
 
-    trials = expref.list_trials(limit=page_size)
+    trials = expref.iter_trials(limit=page_size)
 
     # Iterate through each item in generator and ensure API is called to fetch new pages.
     for i, _ in enumerate(trials):
@@ -211,6 +212,85 @@ def test_unarchive_doesnt_update_local_on_rest_failure(
         raise AssertionError("bindings API call should raise an exception")
     except bindings.APIHttpError:
         assert expref.archived is None
+
+
+@mock.patch("determined.common.api.bindings.put_PutExperimentLabel")
+def test_add_label_url_encodes_label(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    label = "label with @#$%^&* symbols"
+    url_encoded_label = "label%20with%20%40%23%24%25%5E%26%2A%20symbols"
+    assert parse.unquote(url_encoded_label) == label
+
+    expref.add_label(label=label)
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+    assert call_kwargs["label"] == url_encoded_label
+
+
+@mock.patch("determined.common.api.bindings.delete_DeleteExperimentLabel")
+def test_remove_label_url_encodes_label(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    label = "label with @#$%^&* symbols"
+    url_encoded_label = "label%20with%20%40%23%24%25%5E%26%2A%20symbols"
+    assert parse.unquote(url_encoded_label) == label
+
+    expref.remove_label(label=label)
+
+    _, call_kwargs = mock_bindings.call_args_list[0]
+    assert call_kwargs["label"] == url_encoded_label
+
+
+@mock.patch("determined.common.api.bindings.put_PutExperimentLabel")
+def test_add_label_updates_local_state_with_remote(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    mock_bindings.return_value = bindings.v1PutExperimentLabelResponse(
+        labels=["label 1", "label 2", "label 3"]
+    )
+
+    expref.add_label(label="label 3")
+
+    assert expref.labels == set(mock_bindings.return_value.labels)
+
+
+@mock.patch("determined.common.api.bindings.delete_DeleteExperimentLabel")
+def test_remove_label_updates_local_state_with_remote(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    mock_bindings.return_value = bindings.v1DeleteExperimentLabelResponse(
+        labels=["label 1", "label 2", "label 3"]
+    )
+
+    expref.remove_label(label="label 4")
+
+    assert expref.labels == set(mock_bindings.return_value.labels)
+
+
+@mock.patch("determined.common.api.bindings.patch_PatchExperiment")
+def test_set_labels_updates_local_state_with_remote(
+    mock_bindings: mock.MagicMock,
+    make_expref: Callable[[int], experiment.Experiment],
+) -> None:
+    expref = make_expref(1)
+    labels_to_set = {"label 1", "label 2", "label 3"}
+
+    exp_resp = api_responses.sample_get_experiment(labels=list(labels_to_set))
+    mock_bindings.return_value = bindings.v1PatchExperimentResponse(experiment=exp_resp.experiment)
+
+    expref.set_labels(labels=labels_to_set)
+
+    assert mock_bindings.return_value.experiment and mock_bindings.return_value.experiment.labels
+    assert expref.labels == set(mock_bindings.return_value.experiment.labels)
 
 
 @mock.patch("determined.common.api.bindings.get_GetModelDef")

@@ -1,6 +1,6 @@
+import Icon, { Props as IconProps, IconSize } from 'determined-ui/Icon';
 import React, { useMemo } from 'react';
 
-import Icon, { Props as IconProps, IconSize } from 'components/kit/Icon';
 import { stateToLabel } from 'constants/states';
 import { CompoundRunState, JobState, RunState } from 'types';
 

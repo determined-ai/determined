@@ -9,9 +9,13 @@ Using Determined to debug models depends on your environment.
 Your code on a Determined cluster differs from typical training scripts in the following ways:
 
 -  The code conforms to the Trial APIs as a subclass of the Determined ``Trial`` class, indirectly,
-   by using one of the concrete subclasses, such as :class:`~determined.pytorch.PyTorchTrial`.
+   by using one of the concrete subclasses, such as
+   :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`.
+
 -  The code runs in a Docker container on another machine.
+
 -  Your model can run many times in a hyperparameter search.
+
 -  Your model can be distributed across multiple GPUs or machines.
 
 These debugging steps introduce code changes incrementally, working toward a fully functioning
@@ -60,12 +64,15 @@ This step assumes you have a working local environment for training. If you typi
 in a Docker environment, skip to :ref:`Step 4 <step4>`. This step also ensures that your class
 performs as expected by calling its methods and verifying the output.
 
+:class:`~determined.pytorch.PyTorchTrial` supports a fully-local training mode, which can be useful
+for debugging. See :ref:`pytorch_trainer_ug` for usage details.
+
 #. Create simple tests to verify each ``Trial`` subclass method.
 
-   Examples of what these tests might look like for :class:`~determined.pytorch.PyTorchTrial` and
-   :class:`~determined.keras.TFKerasTrial` can be found in the
-   :meth:`determined.TrialContext.from_config` documentation, but only you can verify what is
-   reasonable for your test.
+   Examples of what these tests might look like for
+   :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and :class:`~determined.keras.TFKerasTrial`
+   can be found in the :meth:`determined.TrialContext.from_config` documentation, but only you can
+   verify what is reasonable for your test.
 
 #. Diagnose failures:
 
@@ -112,7 +119,7 @@ This step assumes you have a working local environment for training. If you do n
    possible that you have found a bug or an invalid assumption in the Determined software and should
    `file a GitHub issue <https://github.com/determined-ai/determined/issues/new>`__ or contact
    Determined on `Slack
-   <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__.
+   <https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
 
 .. _step4:
 
@@ -291,7 +298,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
       has errors. Review the :ref:`experiment configuration <experiment-config-reference>`.
 
 If you are unable to identify the cause of the problem, contact Determined `community support
-<https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__!
+<https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
 
 .. _step8:
 

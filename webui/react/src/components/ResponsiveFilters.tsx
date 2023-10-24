@@ -1,8 +1,8 @@
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
 import React, { useEffect, useRef, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
 import useResize from 'hooks/useResize';
 
 import css from './ResponsiveFilters.module.scss';

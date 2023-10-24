@@ -1,8 +1,8 @@
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import { useModal } from 'components/kit/Modal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveModel, unarchiveModel } from 'services/api';

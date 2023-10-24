@@ -1,13 +1,7 @@
-import React, { ReactNode, useMemo, useRef } from 'react';
-import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
-import uPlot, { AlignedData, Plugin } from 'uplot';
-
-import { getTimeTickValues, glasbeyColor, metricToStr } from 'components/kit/internal/functions';
 import ScaleSelect from 'components/kit/internal/ScaleSelect';
 import { ErrorHandler, Scale, Serie, XAxisDomain } from 'components/kit/internal/types';
 import { SyncProvider } from 'components/kit/internal/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/kit/internal/UPlot/types';
-import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/kit/internal/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/kit/internal/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'components/kit/internal/useResize';
@@ -16,6 +10,12 @@ import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { getCssVar } from 'components/kit/Theme';
 import { Loadable } from 'components/kit/utils/loadable';
+import React, { ReactNode, useMemo, useRef } from 'react';
+import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
+import uPlot, { AlignedData, Plugin } from 'uplot';
+
+import { getTimeTickValues, glasbeyColor, metricToStr } from 'components/kit/internal/functions';
+import UPlotChart, { Options } from 'components/kit/internal/UPlot/UPlotChart';
 
 import css from './LineChart.module.scss';
 

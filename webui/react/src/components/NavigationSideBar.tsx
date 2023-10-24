@@ -1,19 +1,19 @@
-import { Typography } from 'antd';
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon, { IconName, IconSize } from 'determined-ui/Icon';
+import { matchesShortcut, shortcutToString } from 'determined-ui/InputShortcut';
+import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import DynamicIcon from 'components/DynamicIcon';
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon, { IconName, IconSize } from 'components/kit/Icon';
-import { matchesShortcut, shortcutToString } from 'components/kit/InputShortcut';
-import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
@@ -43,7 +43,6 @@ interface ItemProps extends LinkProps {
   icon: IconName | React.ReactElement;
   iconSize?: IconSize;
   label: string;
-  labelRender?: React.ReactNode;
   status?: string;
   tooltip?: string | boolean;
 }
@@ -88,12 +87,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
   const link = (
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} path={path} {...props}>
-        {typeof props.icon === 'string' ? (
-          <Icon decorative name={props.icon} size={props.iconSize ?? 'large'} />
-        ) : (
-          props.icon
-        )}
-        <div className={css.label}>{props.labelRender ? props.labelRender : props.label}</div>
+        <Nameplate icon={props.icon} iconSize={props.iconSize ?? 'large'} name={props.label} />
       </Link>
       <div className={css.navItemExtra}>
         {status && (
@@ -319,12 +313,8 @@ const NavigationSideBar: React.FC = () => {
                             <NavigationItem
                               icon={<DynamicIcon name={workspace.name} size={24} />}
                               label={workspace.name}
-                              labelRender={
-                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                  {workspace.name}
-                                </Typography.Paragraph>
-                              }
                               path={paths.workspaceDetails(workspace.id)}
+                              tooltip={settings.navbarCollapsed}
                             />
                           </li>
                         </WorkspaceActionDropdown>
@@ -335,14 +325,12 @@ const NavigationSideBar: React.FC = () => {
                     {canCreateWorkspace && (
                       <li>
                         <NavigationItem
-                          icon="add"
-                          iconSize="tiny"
-                          label="New Workspace"
-                          labelRender={
-                            <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                              New Workspace
-                            </Typography.Paragraph>
+                          icon={
+                            <div className={css.newWorkspaceIcon}>
+                              <Icon decorative name="add" size="tiny" />
+                            </div>
                           }
+                          label="New Workspace"
                           tooltip={settings.navbarCollapsed}
                           onClick={WorkspaceCreateModal.open}
                         />

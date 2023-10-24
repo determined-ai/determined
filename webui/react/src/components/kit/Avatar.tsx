@@ -1,10 +1,10 @@
+import md5 from 'components/kit/internal/md5';
+import { ValueOf } from 'components/kit/internal/types';
+import Tooltip from 'components/kit/Tooltip';
 import React from 'react';
 
 import { hex2hsl, hsl2str } from 'components/kit/internal/functions';
-import md5 from 'components/kit/internal/md5';
 import { useThemeState } from 'components/kit/internal/theme';
-import { ValueOf } from 'components/kit/internal/types';
-import Tooltip from 'components/kit/Tooltip';
 
 import css from './Avatar.module.scss';
 
