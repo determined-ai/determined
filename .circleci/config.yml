@@ -3412,7 +3412,8 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["distributed-quarantine"]
+              # Cluster name lengths are limited by bucket name lengths in AWS.
+              cluster-id-prefix: ["dist-quarantine"]
               mark: ["distributed_quarantine"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
