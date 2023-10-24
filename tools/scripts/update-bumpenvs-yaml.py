@@ -217,6 +217,10 @@ def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
     return True
 
 
+def yaml_safe_load(obj: Any) -> Any:
+    return yaml.YAML(typ="safe", pure=True).load(obj)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=pathlib.Path, help="path/to/bumpenvs.yaml")
@@ -234,19 +238,17 @@ if __name__ == "__main__":
     commit = args.commit
 
     with open(path) as f:
-        conf = yaml.safe_load(f)
+        conf = yaml.YAML(typ="safe", pure=True).load(f)
 
     builds = get_all_builds(commit, args.dev, args.cloud_images)
     artifacts = get_all_artifacts(builds, args.cloud_images)
 
     tag_list = [
-        *(yaml.safe_load(artifacts[artifact]) for artifact in DOCKER_ARTIFACTS),
+        yaml.YAML(typ="safe", pure=True).load(artifacts[artifact]) for artifact in DOCKER_ARTIFACTS
     ]
 
     if args.cloud_images:
-        tag_list += [
-            *(parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS),
-        ]
+        tag_list += [parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS]
 
     # Flatten tag_list dicts into one dict.
     new_tags = {k: v for d in tag_list for (k, v) in d.items()}
@@ -267,6 +269,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     with open(path, "w") as f:
-        yaml.dump(conf, f)
+        yaml.YAML(typ="safe", pure=True).dump(conf, f)
 
     print(f"done, {path} has been updated", file=sys.stderr)

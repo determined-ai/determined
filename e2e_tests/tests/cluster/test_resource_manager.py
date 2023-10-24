@@ -6,7 +6,7 @@ from typing import List
 
 import pytest
 
-from determined.common import yaml
+from determined.common import util
 from determined.common.api import bindings
 from determined.common.api.bindings import experimentv1State
 from tests import api_utils
@@ -42,7 +42,7 @@ def test_allocation_resources_incremental_release() -> None:
                 **config_obj.get("hyperparameters", {}),
                 **{"non_chief_exit_immediately": True},
             }
-            yaml.dump(config_obj, config_file)
+            util.yaml_safe_dump(config_obj, config_file)
 
             shutil.copy(
                 conf.fixtures_path("no_op/model_def.py"), os.path.join(context_dir, "model_def.py")

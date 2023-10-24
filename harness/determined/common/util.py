@@ -104,6 +104,43 @@ def preserve_random_state(fn: Callable) -> Callable:
     return wrapped
 
 
+def yaml_safe_dump(
+    data: Any,
+    stream: Optional[Union[io.FileIO, IO[Any], str]] = None,
+    default_flow_style: Optional[bool] = None,
+) -> Any:
+    """
+    A utility wrapper to mimick the pre-0.18.0 ruamel.yaml.safe_dump() API.
+
+    The new API is needlessly verbose, and has some benefits we don't care about.
+    """
+
+    if default_flow_style is None:
+        # Reuse-existing YAML object.
+        y = _yaml
+    else:
+        y = yaml.YAML(typ="safe", pure=True)
+        y.default_flow_style = default_flow_style
+    if stream is not None:
+        # Write directly to the provided stream.
+        return y.dump(data, stream=stream)
+    # Write to a fake stream and return the result as a string.
+    stream = io.StringIO()
+    y.dump(data, stream=stream)
+    return stream.getvalue()
+
+
+def yaml_safe_load(f: Union[io.FileIO, IO[Any], str]) -> Any:
+    """
+    A utility wrapper to mimick the pre-0.18.0 ruamel.yaml.safe_load() API.
+
+    In user-facing places like the CLI, safe_load_yaml_with_exceptions may be preferable.
+
+    In internal places like e2e tests, this yaml_safe_load() should be preferred.
+    """
+    return _yaml.load(f)
+
+
 def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any], str]) -> Any:
     """Attempts to use ruamel.yaml.safe_load on the specified file. If successful, returns
     the output. If not, formats a ruamel.yaml Exception so that the user does not see a traceback
@@ -134,6 +171,7 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any], str]) ->
         in "constrained_adaptive.yaml", line 23, column 3
     ---------------------------------------------------------------------------------------------
     """
+
     try:
         config = _yaml.load(yaml_file)
     except (

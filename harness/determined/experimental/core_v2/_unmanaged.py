@@ -1,10 +1,9 @@
-import io
 import logging
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 import determined as det
 from determined import core, experimental
-from determined.common import api, yaml
+from determined.common import api, util
 from determined.common.api import bindings
 
 logger = logging.getLogger("determined.experimental.unmanaged")
@@ -237,7 +236,7 @@ def _build_unmanaged_trial_cluster_info(
             experiment_id=exp_id,
             trial_seed=0,
             hparams=hparams or {},
-            config=yaml.safe_load(io.StringIO(config_text)),
+            config=util.yaml_safe_load(config_text),
             steps_completed=resp.stepsCompleted,
             trial_run_id=resp.trialRunId,
             debug=False,
