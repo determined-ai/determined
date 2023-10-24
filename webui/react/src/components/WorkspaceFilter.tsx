@@ -1,6 +1,6 @@
+import Avatar from 'components/kit/Avatar';
 import React from 'react';
 
-import Avatar from 'components/kit/Avatar';
 import { Workspace } from 'types';
 
 import css from './WorkspaceFilter.module.scss';
