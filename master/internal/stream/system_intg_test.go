@@ -32,7 +32,7 @@ type startupReadWriter struct {
 	Data           []interface{}
 	StartupMessage *StartupMsg
 	Msg            *SubscriptionModMsg
-	KeepAlive      bool
+	EarlyTerminate bool
 }
 
 // ReadJSON sends the StartupMessage first, then send any Msg that is set.
@@ -55,7 +55,7 @@ func (s *startupReadWriter) ReadJSON(data interface{}) error {
 		targetMsg.Add = s.Msg.Add
 		targetMsg.Drop = s.Msg.Drop
 	}
-	if !s.KeepAlive {
+	if s.EarlyTerminate {
 		return fmt.Errorf("no messages left to send")
 	}
 	return nil
@@ -133,7 +133,7 @@ func TestStartup(t *testing.T) {
 
 	ssupCtx := context.TODO()
 	ctx, testUser, publisherSet, tester, _, pgDB, cleanup := setup(t, startupMessage)
-	tester.KeepAlive = false
+	tester.EarlyTerminate = true
 	defer cleanup()
 
 	trials := streamdata.GenerateStreamTrials()
@@ -308,7 +308,11 @@ func TestTrialUpdate(t *testing.T) {
 		}
 
 		// send messages, check responses
-		err = streamdata.ModTrial(ctx, 1, 1, false, false, "CANCELED")
+		err = streamdata.ModTrial(ctx, streamdata.Trial{
+			ID:           1,
+			ExperimentID: 1,
+			State:        "CANCELED",
+		})
 		if err != nil {
 			return err
 		}
