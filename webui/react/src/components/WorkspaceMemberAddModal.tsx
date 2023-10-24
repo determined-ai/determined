@@ -27,8 +27,8 @@ interface FormInputs {
   userOrGroupId: string;
 }
 
-const userPrefix = 'u_';
-const groupPrefix = 'g_';
+const USER_PREFIX = 'u_';
+const GROUP_PREFIX = 'g_';
 
 const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   addableUsersAndGroups,
@@ -43,13 +43,13 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
 
   useEffect(() => {
     ref.current?.focus();
-  }, [ref]);
+  }, []);
 
   const handleSearch = useCallback(
     (value: string) => {
-      const regex = new RegExp(value, 'i');
       // Only show options for select if user had typed in something.
       if (value) {
+        const regex = new RegExp(value, 'i');
         setFilteredOption(
           _.filter(addableUsersAndGroups, (o) =>
             isUser(o)
@@ -69,17 +69,17 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
     try {
       if (values) {
         const userOrGroup = _.groupBy(values.userOrGroupId, (o) => o.substring(0, 2));
-        const groupPayload = _.map(userOrGroup[groupPrefix], (o) => ({
-          groupId: Number(o.substring(2)),
+        const groupPayload = _.map(userOrGroup[GROUP_PREFIX], (o) => ({
+          groupId: Number(o.substring(USER_PREFIX.length)),
           roleIds: [values.roleId],
           scopeWorkspaceId: workspace.id,
         }));
         groupPayload.length > 0 && (await assignRolesToGroup(groupPayload));
 
-        const userPayload = _.map(userOrGroup[userPrefix], (o) => ({
+        const userPayload = _.map(userOrGroup[USER_PREFIX], (o) => ({
           roleIds: [values.roleId],
           scopeWorkspaceId: workspace.id,
-          userId: Number(o.substring(2)),
+          userId: Number(o.substring(USER_PREFIX.length)),
         }));
         userPayload.length > 0 && (await assignRolesToUser(userPayload));
 
@@ -143,11 +143,13 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
             searchable={true}
             onBlur={() => setFilteredOption([])}
             onSearch={handleSearch}>
-            {_.map(filteredOption, (option) => (
+            {filteredOption.map((option) => (
               <Option
-                key={(isUser(option) ? userPrefix : groupPrefix) + getIdFromUserOrGroup(option)}
+                key={(isUser(option) ? USER_PREFIX : GROUP_PREFIX) + getIdFromUserOrGroup(option)}
                 label={isUser(option) ? option.username : option.name}
-                value={(isUser(option) ? userPrefix : groupPrefix) + getIdFromUserOrGroup(option)}>
+                value={
+                  (isUser(option) ? USER_PREFIX : GROUP_PREFIX) + getIdFromUserOrGroup(option)
+                }>
                 {isUser(option) ? (
                   <UserBadge compact user={option as User} />
                 ) : (
