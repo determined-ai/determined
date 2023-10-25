@@ -372,7 +372,8 @@ func assignTasks(
 	for _, state := range states {
 		state.offered += freeOfferedSlots
 
-		if state.activeSlots > state.offered {
+		switch {
+		case state.activeSlots > state.offered:
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
@@ -385,8 +386,11 @@ func assignTasks(
 					}
 				}
 			}
-			freeOfferedSlots = state.offered - state.activeSlots
-		} else if state.activeSlots < state.offered {
+
+			// I don't think this can actually be negative we should preoffer
+			// the slots for non preemptable jobs.
+			freeOfferedSlots = mathx.Max(state.offered-state.activeSlots, 0)
+		case state.activeSlots < state.offered:
 			// Start tasks while there are still offered slots remaining. Because slots are not
 			// freed immediately, we cannot terminate and start tasks in the same scheduling call.
 			state.offered -= state.activeSlots
@@ -405,6 +409,8 @@ func assignTasks(
 				}
 			}
 			freeOfferedSlots = state.offered
+		default:
+			freeOfferedSlots = 0
 		}
 	}
 	return toAllocate, toRelease

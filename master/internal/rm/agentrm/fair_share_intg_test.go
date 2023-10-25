@@ -135,3 +135,29 @@ func TestFairShareBlocklistDontPreempt(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
+
+func TestFairShareBlocklistEqual(t *testing.T) {
+	agents := []*MockAgent{
+		{ID: "agent0", Slots: 1},
+	}
+	tasks := []*MockTask{
+		{ID: "task0.1", TaskID: "task0", SlotsNeeded: 1},
+		{ID: "task1.1", TaskID: "task1", SlotsNeeded: 1, AllocatedAgent: agents[0]},
+		{ID: "task2.1", TaskID: "task2", SlotsNeeded: 1, AllocatedAgent: agents[0]},
+		{ID: "task3.1", TaskID: "task3", SlotsNeeded: 1, AllocatedAgent: agents[0]},
+	}
+
+	expectedToAllocate := []*MockTask{}
+	expectedToRelease := []*MockTask{tasks[2], tasks[3]}
+
+	logpattern.SetDisallowedNodesCacheTest(t, map[model.TaskID]*set.Set[string]{
+		"task0": ptrs.Ptr(set.FromSlice([]string{"agent0"})),
+	})
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, nil, agents)
+
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}
