@@ -32,7 +32,7 @@ import Pagination from 'determined-ui/Pagination';
 import Pivot from 'determined-ui/Pivot';
 import Select, { Option } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
-import useUI, { ThemeProvider, UIProvider } from 'determined-ui/Theme';
+import useUI, { UIProvider } from 'determined-ui/Theme';
 import { makeToast } from 'determined-ui/Toast';
 import Toggle from 'determined-ui/Toggle';
 import Tooltip from 'determined-ui/Tooltip';

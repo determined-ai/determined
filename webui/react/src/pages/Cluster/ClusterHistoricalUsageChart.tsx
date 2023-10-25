@@ -1,9 +1,9 @@
+import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import dayjs from 'dayjs';
 import Message from 'determined-ui/Message';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
-import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { glasbeyColor } from 'utils/color';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';

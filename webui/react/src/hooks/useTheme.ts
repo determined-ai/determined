@@ -1,7 +1,3 @@
-import _ from 'lodash';
-import { useObservable } from 'micro-observables';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
 import {
   themeDarkDetermined,
   themeDarkHpe,
@@ -16,6 +12,10 @@ import {
   Mode,
   Theme,
 } from 'components/kit/Theme/themeUtils';
+import _ from 'lodash';
+import { useObservable } from 'micro-observables';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import determinedInfo, { BrandingType } from 'stores/determinedInfo';
 
 const themes = {
