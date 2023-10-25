@@ -8,6 +8,7 @@ from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from determined.common.declarative_argparse import Arg, Cmd, string_to_bool
 from determined.experimental import client
+from determined.experimental.client import Determined
 
 FullUser = namedtuple(
     "FullUser",
@@ -156,9 +157,10 @@ def whoami(parsed_args: Namespace) -> None:
 
 
 @authentication.required
-@login_sdk_client
 def edit(parsed_args: Namespace) -> None:
-    user_obj = client.get_user_by_name(parsed_args.target_user)
+    session = setup_session(parsed_args)
+    det = Determined._from_session(session)
+    user_obj = det.get_user_by_name(parsed_args.target_user)
     changes = []
     patch_user = bindings.v1PatchUser()
     if parsed_args.display_name is not None:
@@ -182,9 +184,7 @@ def edit(parsed_args: Namespace) -> None:
         changes.append("Admin")
 
     if len(changes) > 0:
-        bindings.patch_PatchUser(
-            setup_session(parsed_args), body=patch_user, userId=user_obj.user_id
-        )
+        bindings.patch_PatchUser(session=session, body=patch_user, userId=user_obj.user_id)
         print("Changes made to the following fields: " + ", ".join(changes))
     else:
         raise errors.CliError("No field provided. Use 'det user edit -h' for usage.")
