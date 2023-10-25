@@ -245,6 +245,6 @@ def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 
         parser.set_defaults(func=help_func(parser))
 
 
-# Converts string values to boolean for flag arguments (e.g. --active=true)
 def string_to_bool(s: str) -> bool:
+    """Converts string values to boolean for flag arguments (e.g. --active=true)"""
     return bool(distutils.util.strtobool(s))
