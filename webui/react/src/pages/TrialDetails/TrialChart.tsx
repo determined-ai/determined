@@ -1,4 +1,3 @@
-import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
@@ -7,6 +6,7 @@ import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';
 import Section from 'components/Section';
+import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import usePolling from 'hooks/usePolling';
