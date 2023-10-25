@@ -102,7 +102,6 @@ type retryOnDifferentNode struct {
 	NodeName      string       `bun:"node_name"`
 	Regex         string       `bun:"regex"`
 	TriggeringLog string       `bun:"triggering_log"`
-	TaskEnded     bool         `bun:"task_ended"`
 }
 
 // GetBlockedNodes returns nodes you can't schedule on due to log pattern policies.
@@ -131,7 +130,6 @@ func addRetryOnDifferentNode(
 		NodeName:      nodeName,
 		Regex:         regex,
 		TriggeringLog: triggeringLog,
-		TaskEnded:     false,
 	}
 	res, err := db.Bun().NewInsert().Model(m).
 		On("CONFLICT (task_id, node_name, regex) DO NOTHING"). // Only care about the first log.

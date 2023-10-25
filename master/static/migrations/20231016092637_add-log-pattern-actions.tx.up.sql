@@ -4,7 +4,6 @@ CREATE TABLE log_policy_retry_on_different_node (
   node_name      text NOT NULL,
   regex          text NOT NULL,
   triggering_log text NOT NULL,
-  task_ended     bool NOT NULL DEFAULT FALSE,
   CONSTRAINT unique_retry_on_different_node UNIQUE (task_id, node_name, regex)
 );
 CREATE INDEX idx_log_policy_retry_on_different_node_task_id ON
