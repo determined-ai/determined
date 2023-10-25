@@ -16,15 +16,15 @@ Version 0.26.2
 **Release Date:** October 25, 2023
 
 Notice: The ``ruamel.yaml`` library's 0.18.0 release includes breaking changes that affect earlier
-versions of Determined. The failure behavior is that commands which emit YAML like ``det experiment
-config`` will emit nothing to ``stdout`` or ``stderr`` message but exit 1 (originating from the new
-``ruamel.yaml`` library). This release of Determined has included a ``ruamel.yaml<0.18.0``
+versions of Determined. The failure behavior is that commands that emit YAML, such as ``det experiment
+config``, will emit nothing to ``stdout`` or ``stderr`` but instead silently exit 1 due to the new
+version of ``ruamel.yaml``. This release of Determined has included a ``ruamel.yaml<0.18.0``
 requirement, but older versions of Determined will also be affected, so users of older versions of
 Determined may have to manually downgrade ``ruamel.yaml`` if they observe this behavior.
 
 **New Features**
 
--  Python SDK: various new features and enhancements. A few highlights are listed below.
+-  Python SDK: Add various new features and enhancements. A few highlights are listed below.
       -  Add support for downloading a zipped archive of experiment code
          (:meth:`Experiment.download_code
          <determined.experimental.client.Experiment.download_code>`).
@@ -45,12 +45,12 @@ Determined may have to manually downgrade ``ruamel.yaml`` if they observe this b
          attributes from the server. Previously, attributes were most easily refreshed by creating
          an entirely new object.
 
--  Python SDK: all ``GET`` API calls now retry the request (maximum of 5 times) on failure.
+-  Python SDK: All ``GET`` API calls now retry the request up to 5 times on failure.
 
 **Deprecated Features**
 
--  Python SDK: several methods have been renamed for better API standardization.
-      -  ``list_*`` and ``iter_*`` for methods returning a ``List`` and ``Iterator``, respectively.
+-  Python SDK: Several methods have been renamed for better API standardization.
+      -  Methods returning a ``List`` and ``Iterator`` now have names starting with ``list_*`` and ``iter_*``, respectively.
 
       -  :class:`~determined.experimental.client.TrialReference` and
          :class:`~determined.experimental.client.ExperimentReference` are now
@@ -59,20 +59,20 @@ Determined may have to manually downgrade ``ruamel.yaml`` if they observe this b
 
 -  Python SDK: consolidate various ways of fetching checkpoints.
       -  :meth:`Experiment.top_checkpoint
-         <determined.experimental.client.Experiment.top_checkpoint>`, and
+         <determined.experimental.client.Experiment.top_checkpoint>` and
          :meth:`Experiment.top_n_checkpoints
-         <determined.experimental.client.Experiment.top_n_checkpoints>` deprecated in favor of
+         <determined.experimental.client.Experiment.top_n_checkpoints>` are deprecated in favor of
          :meth:`Experiment.list_checkpoints
          <determined.experimental.client.Experiment.list_checkpoints>`.
 
       -  :meth:`Trial.get_checkpoints <determined.experimental.client.Trial.get_checkpoints>`,
          :meth:`Trial.top_checkpoint <determined.experimental.client.Trial.top_checkpoint>`, and
          :meth:`Trial.select_checkpoint <determined.experimental.client.Trial.select_checkpoint>`
-         deprecated in favor of :meth:`Trial.list_checkpoints
+         are deprecated in favor of :meth:`Trial.list_checkpoints
          <determined.experimental.client.Trial.list_checkpoints>`.
 
--  Python SDK: deprecate resource ordering enum classes (``CheckpointOrderBy``,
-   ``ExperimentOrderBy``, ``TrialOrderBy``, ``ModelOrderBy``) in favor of a singular shared
+-  Python SDK: Deprecate resource ordering enum classes (``CheckpointOrderBy``,
+   ``ExperimentOrderBy``, ``TrialOrderBy``, ``ModelOrderBy``) in favor of a shared
    :class:`~determined.experimental.client.OrderBy`.
 
 **Bug Fixes**
