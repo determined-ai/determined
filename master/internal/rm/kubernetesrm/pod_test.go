@@ -34,6 +34,7 @@ func createPod(
 	task tasks.TaskSpec,
 ) *pod {
 	msg := StartTaskPod{
+		Req:          &sproto.AllocateRequest{},
 		AllocationID: allocationID,
 		Spec:         task,
 		Slots:        1,

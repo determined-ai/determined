@@ -10,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/logpattern"
 
 	"github.com/docker/docker/api/types/mount"
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -230,12 +230,12 @@ func addNodeDisabledAffinityToPodSpec(pod *k8sV1.Pod, clusterID string) {
 	// so we can skip the step in k8s disable where we kill everything in non drain.
 }
 
-func addDisallowedNodesToPodSpec(pod *k8sV1.Pod, taskID model.TaskID) {
+func addDisallowedNodesToPodSpec(req *sproto.AllocateRequest, pod *k8sV1.Pod) {
 	// Can't just replace []string{nodeName} with
 	// logpattern.DisallowedNodes(taskID).ToSlice() and not loop
 	// because of the k8s error given "Required value:
 	// must be only one value when `operator` is 'In' or 'NotIn' for node field selector".
-	for _, nodeName := range logpattern.DisallowedNodes(taskID).ToSlice() {
+	for _, nodeName := range req.BlockedNodes {
 		addNodeSelectorRequirement(pod, k8sV1.NodeSelectorRequirement{
 			Key:      "metadata.name",
 			Operator: k8sV1.NodeSelectorOpNotIn,
@@ -366,7 +366,7 @@ func (p *pod) configurePodSpec(
 	p.modifyPodSpec(podSpec, scheduler)
 
 	addNodeDisabledAffinityToPodSpec(podSpec, clusterIDNodeLabel())
-	addDisallowedNodesToPodSpec(podSpec, model.TaskID(p.submissionInfo.taskSpec.TaskID))
+	addDisallowedNodesToPodSpec(p.req, podSpec)
 
 	nonDeterminedContainers := make([]k8sV1.Container, 0)
 	for idx, container := range podSpec.Spec.Containers {
