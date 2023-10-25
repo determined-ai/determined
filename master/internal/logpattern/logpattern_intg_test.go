@@ -71,19 +71,16 @@ func TestRetryOnDifferentNode(t *testing.T) {
 			NodeName:      "n0",
 			Regex:         "regexa",
 			TriggeringLog: "loga",
-			TaskEnded:     false,
 		},
 		{
 			NodeName:      "n1",
 			Regex:         "regexa",
 			TriggeringLog: "logb",
-			TaskEnded:     false,
 		},
 		{
 			NodeName:      "n0",
 			Regex:         "regexb",
 			TriggeringLog: "logc",
-			TaskEnded:     false,
 		},
 	}, actual)
 
