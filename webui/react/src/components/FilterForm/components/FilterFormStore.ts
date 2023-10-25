@@ -177,7 +177,7 @@ export class FilterFormStore {
   #updateField(id: string, patch: PatchFunc<FormField>): void {
     return this.#updateForm(id, (arg) => {
       if (arg.kind === FormKind.Group) {
-        throw new Error('update intended for field, recieved group');
+        return arg;
       }
       return patch(arg);
     });
@@ -186,7 +186,7 @@ export class FilterFormStore {
   #updateGroup(id: string, patch: PatchFunc<FormGroup>): void {
     return this.#updateForm(id, (arg) => {
       if (arg.kind === FormKind.Field) {
-        throw new Error('update intended for group, recieved field');
+        return arg;
       }
       return patch(arg);
     });
@@ -196,24 +196,33 @@ export class FilterFormStore {
     id: string,
     col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
   ): void {
-    return this.#updateField(id, (form) => ({
-      ...form,
-      columnName: col.column,
-      location: col.location,
-      type: col.type,
-    }));
+    return this.#updateField(id, (form) => {
+      if (form.columnName === col.column && form.location === col.location) {
+        return form;
+      }
+      return {
+        ...form,
+        columnName: col.column,
+        location: col.location,
+        type: col.type,
+      };
+    });
   }
 
   public setFieldOperator(id: string, operator: Operator): void {
-    return this.#updateField(id, (form) => ({ ...form, operator }));
+    return this.#updateField(id, (form) =>
+      form.operator === operator ? form : { ...form, operator },
+    );
   }
 
   public setFieldConjunction(id: string, conjunction: Conjunction): void {
-    return this.#updateGroup(id, (form) => ({ ...form, conjunction }));
+    return this.#updateGroup(id, (form) =>
+      form.conjunction === conjunction ? form : { ...form, conjunction },
+    );
   }
 
   public setFieldValue(id: string, value: FormFieldValue): void {
-    return this.#updateField(id, (form) => ({ ...form, value }));
+    return this.#updateField(id, (form) => (form.value === value ? form : { ...form, value }));
   }
 
   public addChild(
