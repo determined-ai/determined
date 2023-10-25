@@ -8,13 +8,14 @@
 data being transmitted from being modified or read while it is in transit and allows clients to
 verify the identity of the server (in this case, the Determined master). Determined can be
 configured to use TLS for all connections made to the master. That means that all CLI and WebUI
-connections will be secured by TLS, as well as connections from agents and tasks to the master.
+connections will be secured by TLS, as well as connections from agents and tasks to the master. By
+default, proxied connections between the master and :ref:`notebooks <notebooks>` use TLS, while
+those with :ref:`shells <shells>` use SSH.
 
 .. note::
 
-   Communication between agents that occur as part of :ref:`distributed training
-   <multi-gpu-training>` will not use TLS, nor will proxied connections from the master to a
-   :ref:`TensorBoards <tensorboards>` or :ref:`notebook <notebooks>` instance.
+   Communication between agents during :ref:`distributed training <multi-gpu-training>` does not use
+   TLS, and neither do proxied connections from the master to :ref:`TensorBoards <tensorboards>`.
 
 After the master and agent are configured to use TLS, no additional configuration is needed for
 tasks run in the cluster. In shells and notebooks, the Determined Python libraries automatically
@@ -189,7 +190,7 @@ Perform a Certificate Request
 Certificate Creation
 ^^^^^^^^^^^^^^^^^^^^
 
-If port 80 of the Determined Master is accessible, you can use a simple `HTTP-01 challenge
+If port 80 of the Determined master is accessible, you can use a simple `HTTP-01 challenge
 <https://letsencrypt.org/docs/challenge-types/#http-01-challenge>`_ type.
 
 Certificate Creation When the Determined Master is Behind a VPN

@@ -12,7 +12,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// job.Service methods
+// jobservice.Service methods
 
 // ToV1Job() takes a command and returns a job.
 func (c *command) ToV1Job() *jobv1.Job {

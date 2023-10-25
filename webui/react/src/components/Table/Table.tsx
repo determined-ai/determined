@@ -1,4 +1,5 @@
 import { Space, Typography } from 'antd';
+import Avatar from 'determined-ui/Avatar';
 import Icon from 'determined-ui/Icon';
 import Spinner from 'determined-ui/Spinner';
 import { StateOfUnion } from 'determined-ui/Theme';
@@ -7,7 +8,6 @@ import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
@@ -192,7 +192,7 @@ export const taskWorkspaceRenderer = (
               ? paths.projectDetails(workspaceId)
               : paths.workspaceDetails(workspaceId)
           }>
-          <DynamicIcon name={workspace?.name} size={24} />
+          <Avatar palette="muted" square text={workspace?.name ?? ''} />
         </Link>
       </div>
     </Tooltip>

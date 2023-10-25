@@ -5,6 +5,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
+import Avatar from 'determined-ui/Avatar';
 import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
@@ -19,7 +20,6 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
-import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Link from 'components/Link';
 import { ModelActionMenuKey as MenuKey, ModelActionDropdown } from 'components/ModelActionDropdown';
@@ -338,7 +338,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       if (!workspace) {
         return (
           <Link disabled>
-            <DynamicIcon name="-" size={24} />
+            <Avatar palette="muted" square text="-" />
           </Link>
         );
       }
@@ -352,7 +352,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
                   ? paths.projectDetails(workspaceId)
                   : paths.workspaceDetails(workspaceId)
               }>
-              <DynamicIcon name={workspace?.name} size={24} />
+              <Avatar palette="muted" square text={workspace?.name} />
             </Link>
           </div>
         </Tooltip>

@@ -1,7 +1,7 @@
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import Accordion from 'determined-ui/Accordion';
-import Avatar from 'determined-ui/Avatar';
+import Avatar, { AvatarGroup, Size as AvatarSize } from 'determined-ui/Avatar';
 import Breadcrumb from 'determined-ui/Breadcrumb';
 import Button from 'determined-ui/Button';
 import Card from 'determined-ui/Card';
@@ -1557,8 +1557,36 @@ const AvatarSection: React.FC = () => {
           abbreviated with an option to hover for an unabbreviated view.
         </p>
       </AntDCard>
-      <AntDCard title="Usage">
-        <Avatar displayName="Test User" />
+      <AntDCard title="Variations">
+        <strong>Sizes</strong>
+        ExtraSmall
+        <Avatar size={AvatarSize.ExtraSmall} text="Test User" />
+        Small (Default Size)
+        <Avatar size={AvatarSize.Small} text="Test User" />
+        Medium
+        <Avatar size={AvatarSize.Medium} text="Test User" />
+        Large
+        <Avatar size={AvatarSize.Large} text="Test User" />
+        ExtraLarge
+        <Avatar size={AvatarSize.ExtraLarge} text="Test User" />
+        <strong>Shape</strong>
+        Square
+        <Avatar square text="Test User" />
+        <strong>Color</strong>
+        Muted palette
+        <Avatar palette="muted" text="Test User" />
+        No Color
+        <Avatar noColor text="Test User" />
+        Inactive
+        <Avatar inactive text="Test User" />
+        <strong>Tooltip</strong>
+        Custom tooltip text
+        <Avatar text="Test User" tooltipText="Custom tooltip text" />
+        Hide tooltip
+        <Avatar hideTooltip text="Test User" />
+      </AntDCard>
+      <AntDCard title="Group">
+        <AvatarGroup items={['Test User', 'Sample Person', 'Example Individual']} />
       </AntDCard>
     </ComponentSection>
   );
@@ -1581,20 +1609,20 @@ const NameplateSection: React.FC = () => {
         <li>With name and alias</li>
         <Nameplate
           alias={testUser.displayName}
-          icon={<Avatar displayName={testUser.displayName} />}
+          icon={<Avatar text={testUser.displayName} />}
           name={testUser.username}
         />
         <li>Compact format</li>
         <Nameplate
           alias={testUser.displayName}
           compact
-          icon={<Avatar displayName={testUser.displayName} />}
+          icon={<Avatar text={testUser.displayName} />}
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
+        <Nameplate icon="group" name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
+        <Nameplate compact icon="group" name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
