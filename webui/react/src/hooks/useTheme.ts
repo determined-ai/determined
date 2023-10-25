@@ -3,15 +3,15 @@ import {
   themeDarkHpe,
   themeLightDetermined,
   themeLightHpe,
-} from 'components/kit/internal/theme';
-import { DarkLight } from 'components/kit/internal/types';
+} from 'determined-ui/internal/theme';
+import { DarkLight } from 'determined-ui/internal/types';
 import {
   getSystemMode,
   MATCH_MEDIA_SCHEME_DARK,
   MATCH_MEDIA_SCHEME_LIGHT,
   Mode,
   Theme,
-} from 'components/kit/Theme/themeUtils';
+} from 'determined-ui/Theme/themeUtils';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo, useState } from 'react';
