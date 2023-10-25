@@ -138,10 +138,12 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
           rolesToAdd.size > 0 &&
-            (await assignRolesToGroup({
-              groupId: group.group.groupId,
-              roleIds: Array.from(rolesToAdd),
-            }));
+            (await assignRolesToGroup([
+              {
+                groupId: group.group.groupId,
+                roleIds: Array.from(rolesToAdd),
+              },
+            ]));
           rolesToRemove.size > 0 &&
             (await removeRolesFromGroup({
               groupId: group.group.groupId,
