@@ -1,6 +1,9 @@
 import router from 'router';
 
 export const samlUrl = (basePath: string, queries?: string): string => {
+  if (queries) {
+    queries = queries.replace(/r=0\.\d+[&]?/, '');
+  }
   if (!queries) return basePath;
   return `${basePath}?relayState=${encodeURIComponent(queries)}`;
 };
