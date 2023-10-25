@@ -334,7 +334,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def set_profiler(self, *args: List[str], **kwargs: Any) -> None:
         """
-        ``set_profiler()`` is a thin wrapper around the native PyTorch profiler, torch-tb-profiler.
+        ``set_profiler()`` is a thin wrapper around PyTorch profiler, torch-tb-profiler.
         It overrides the ``on_trace_ready`` parameter to the determined tensorboard path, while all
         other arguments are passed directly into ``torch.profiler.profile``. Stepping the profiler
         will be handled automatically during the training loop.
