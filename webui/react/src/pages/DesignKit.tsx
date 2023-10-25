@@ -20,7 +20,7 @@ import InputNumber from 'determined-ui/InputNumber';
 import InputSearch from 'determined-ui/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'determined-ui/InputShortcut';
 import { TypographySize } from 'determined-ui/internal/fonts';
-import { MetricType, Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
+import { Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
 import { LineChart } from 'determined-ui/LineChart';
 import { useChartGrid } from 'determined-ui/LineChart/useChartGrid';
 import LogViewer from 'determined-ui/LogViewer/LogViewer';

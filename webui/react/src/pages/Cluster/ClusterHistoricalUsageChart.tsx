@@ -1,6 +1,4 @@
-import dayjs from 'dayjs';
 import LineChart from 'determined-ui/LineChart';
-import Message from 'determined-ui/Message';
 import React, { useMemo } from 'react';
 
 import { Serie, XAxisDomain } from 'types';
