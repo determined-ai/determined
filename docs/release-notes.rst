@@ -60,7 +60,7 @@ behavior.
       :class:`~determined.experimental.client.Trial` and
       :class:`~determined.experimental.client.Experiment`.
 
--  Python SDK: consolidate various ways of fetching checkpoints.
+-  Python SDK: Consolidate various ways of fetching checkpoints.
 
    -  :meth:`Experiment.top_checkpoint <determined.experimental.client.Experiment.top_checkpoint>`
       and :meth:`Experiment.top_n_checkpoints
