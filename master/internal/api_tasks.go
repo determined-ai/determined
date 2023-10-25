@@ -496,17 +496,18 @@ func (a *apiServer) GetTasks(
 			return nil, err
 		}
 
-		var ok bool
 		if !isExp {
-			ok, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
+			_, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
 		} else {
 			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
-		if !authz.IsPermissionDenied(err) || !ok {
-			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
+		if authz.IsPermissionDenied(err) {
+			continue
 		} else if err != nil {
 			return nil, err
 		}
+
+		pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 	}
 
 	return &apiv1.GetTasksResponse{AllocationIdToSummary: pbAllocationIDToSummary}, nil

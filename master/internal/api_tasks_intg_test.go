@@ -4,12 +4,15 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -18,7 +21,10 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -96,6 +102,96 @@ func TestPostTaskLogs(t *testing.T) {
 		require.Equal(t, e.Source, a.Source)
 		require.Equal(t, e.Stdtype, a.Stdtype)
 	}
+}
+
+func mockNotebookWithWorkspaceID(
+	ctx context.Context, api *apiServer, t *testing.T, workspaceID int,
+) model.TaskID {
+	nb := &model.Task{
+		TaskID:   model.NewTaskID(),
+		TaskType: model.TaskTypeNotebook,
+	}
+	require.NoError(t, api.m.db.AddTask(nb))
+
+	allocationID := model.AllocationID(string(nb.TaskID) + ".1")
+	require.NoError(t, api.m.db.AddAllocation(&model.Allocation{
+		TaskID:       nb.TaskID,
+		AllocationID: allocationID,
+	}))
+
+	type commandSnapshot struct { // can't use command.CommandSnapshot since metadata isn't exposed.
+		bun.BaseModel `bun:"table:command_state"`
+
+		TaskID             model.TaskID       `bun:"task_id"`
+		RegisteredTime     time.Time          `bun:"registered_time"`
+		AllocationID       model.AllocationID `bun:"allocation_id"`
+		GenericCommandSpec map[string]any     `bun:"generic_command_spec"`
+	}
+
+	_, err := db.Bun().NewInsert().Model(&commandSnapshot{
+		TaskID:       nb.TaskID,
+		AllocationID: allocationID,
+		GenericCommandSpec: map[string]any{
+			"Metadata": map[string]any{
+				"workspace_id": workspaceID,
+			},
+		},
+	}).Exec(ctx)
+	require.NoError(t, err)
+
+	return nb.TaskID
+}
+
+func TestGetTasksAuthZ(t *testing.T) {
+	var allocations map[model.AllocationID]sproto.AllocationSummary
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil, func(context *actor.Context) error {
+		switch context.Message().(type) {
+		case sproto.GetAllocationSummaries:
+			context.Respond(allocations)
+		}
+		return nil
+	})
+	_, authZNSC, _, _ := setupNTSCAuthzTest(t) //nolint: dogsled
+
+	canAccessTrial, expCanAccessTask := createTestTrial(t, api, curUser)
+	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.MatchedBy(
+		func(e *model.Experiment) bool {
+			return e.ID == canAccessTrial.ExperimentID
+		})).Return(nil).Once()
+
+	cantAccessTrial, expCantAccessTask := createTestTrial(t, api, curUser)
+	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.MatchedBy(
+		func(e *model.Experiment) bool {
+			return e.ID == cantAccessTrial.ExperimentID
+		})).Return(authz2.PermissionDeniedError{}).Once()
+
+	canAccessNotebookID := mockNotebookWithWorkspaceID(ctx, api, t, -100)
+	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-100)).
+		Return(nil).Once()
+
+	cantAccessNotebookID := mockNotebookWithWorkspaceID(ctx, api, t, -101)
+	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-101)).
+		Return(authz2.PermissionDeniedError{}).Once()
+
+	allocations = map[model.AllocationID]sproto.AllocationSummary{
+		"alloc0": {
+			TaskID: expCanAccessTask.TaskID,
+		},
+		"alloc1": {
+			TaskID: expCantAccessTask.TaskID,
+		},
+		"alloc2": {
+			TaskID: canAccessNotebookID,
+		},
+		"alloc3": {
+			TaskID: cantAccessNotebookID,
+		},
+	}
+
+	resp, err := api.GetTasks(ctx, &apiv1.GetTasksRequest{})
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, []string{"alloc0", "alloc2"}, maps.Keys(resp.AllocationIdToSummary))
 }
 
 func TestTaskAuthZ(t *testing.T) {

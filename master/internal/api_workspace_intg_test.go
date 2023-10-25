@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -214,8 +215,9 @@ var wAuthZ *mocks.WorkspaceAuthZ
 // pgdb can be nil to use the singleton database for testing.
 func setupWorkspaceAuthZTest(
 	t *testing.T, pgdb *db.PgDB,
+	actorFunc ...func(context *actor.Context) error,
 ) (*apiServer, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, _, curUser, ctx := setupUserAuthzTest(t, pgdb)
+	api, _, curUser, ctx := setupUserAuthzTest(t, pgdb, actorFunc...)
 
 	if wAuthZ == nil {
 		wAuthZ = &mocks.WorkspaceAuthZ{}
