@@ -20,6 +20,12 @@ import InputNumber from 'determined-ui/InputNumber';
 import InputSearch from 'determined-ui/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'determined-ui/InputShortcut';
 import { TypographySize } from 'determined-ui/internal/fonts';
+import {
+  Theme,
+  themeBase,
+  themeDarkDetermined,
+  themeLightDetermined,
+} from 'determined-ui/internal/theme';
 import { MetricType, Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
 import { LineChart } from 'determined-ui/LineChart';
 import { useChartGrid } from 'determined-ui/LineChart/useChartGrid';
@@ -32,7 +38,7 @@ import Pagination from 'determined-ui/Pagination';
 import Pivot from 'determined-ui/Pivot';
 import Select, { Option } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
-import useUI, { UIProvider } from 'determined-ui/Theme';
+import useUI, { Mode, UIProvider } from 'determined-ui/Theme';
 import { makeToast } from 'determined-ui/Toast';
 import Toggle from 'determined-ui/Toggle';
 import Tooltip from 'determined-ui/Tooltip';

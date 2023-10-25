@@ -1,11 +1,11 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { themeLightDetermined } from 'determined-ui/internal/theme';
 import { ThemeProvider, UIProvider } from 'determined-ui/Theme';
 
 import { User } from 'types';
 
-import { themeLightDetermined } from './kit/internal/theme';
 import UserAvatar, { Props } from './UserAvatar';
 
 const testUsers: User[] = [
