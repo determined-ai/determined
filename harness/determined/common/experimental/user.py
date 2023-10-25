@@ -77,14 +77,14 @@ class User:
 
     def change_display_name(self, display_name: str) -> None:
         patch_user = bindings.v1PatchUser(displayName=display_name)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._reload(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def change_password(self, new_password: str) -> None:
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
-        resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self._reload(resp.user)
+        bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
+        self.reload()
 
     def link_with_agent(
         self,
