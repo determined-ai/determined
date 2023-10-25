@@ -13,9 +13,8 @@ import { ValueOf } from 'types';
 import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
+import css from './Cluster.module.scss';
 import ClusterLogs from './ClusterLogs';
-
-import css from './Clusters.module.scss';
 
 const TabType = {
   HistoricalUsage: 'historical-usage',
