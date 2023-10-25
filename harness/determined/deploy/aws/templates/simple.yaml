@@ -280,6 +280,13 @@ Parameters:
             cpu_slots_allowed: true
             {{- toYaml .resource_pools.aws | nindent 6}}
 
+      {{ if ne .sidecar1_port 0.0 }}
+      __internal:
+        proxied_servers:
+          - destination: "http://sidecar1:{{ .sidecar1_port }}/lore"
+            path_prefix: /lore
+      {{ end }}
+
       {{ if eq .scheme "https" }}
       security:
         tls:
@@ -303,10 +310,6 @@ Parameters:
       {{ if ne .notebook_timeout 0.0 }}
       notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
-      __internal: # TODO make it configurable.
-        proxied_servers:
-          - destination: http://sidecar1:9011/lore # TODO: read it from SidecarPort
-            path_prefix: /lore
 
 ### END INJECT CODE
 
@@ -745,6 +748,7 @@ Resources:
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
             notebook_timeout: ${NotebookTimeout}
+            sidecar1_port: ${SidecarPort}
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc
@@ -776,6 +780,7 @@ Resources:
             docker rm $(docker ps -a -q)
 
             if [ ! -z "${SidecarImage}" ] && [ ! -z "${SidecarPort}" ]; then
+              # TODO: pick up from $port and $scheme?
               docker run -d \
                 --name sidecar1 \
                 --env DET_MASTER=http://determined-master:8080 \
