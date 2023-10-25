@@ -190,9 +190,4 @@ export const IOFilterFormSet = t.type({
   showArchived: t.boolean,
 });
 
-type Patch<T extends { kind: unknown }> = Partial<Omit<T, 'id'>> & Pick<T, 'kind'>;
-export type FormPatch =
-  | Patch<FormGroup>
-  | Patch<FormField>
-  | ((arg: FormGroup | FormField) => FormGroup | FormField | undefined)
-  | undefined;
+export type PatchFunc<T> = (arg: T) => T | undefined;
