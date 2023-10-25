@@ -549,6 +549,13 @@ See the `PyTorch tensorboard profiler tutorial
 <https://pytorch.org/tutorials/intermediate/tensorboard_profiler_tutorial.html#use-profiler-to-record-execution-events>`_
 for a complete list of accepted configurations parameters.
 
+.. note::
+
+   Though configuring a profiling schedule ``torch.profiler.schedule`` is optional, profiling every
+   batch may cause a large amount of data to be uploaded to Tensorboard. This may result in long
+   rendering times for Tensorboard and memory issues. For long-running experiments, it is
+   recommended to configure a profiling schedule.
+
 Porting Checklist
 =================
 
