@@ -4,7 +4,7 @@ import React from 'react';
 import { User } from 'types';
 import { getDisplayName } from 'utils/user';
 
-export interface Props extends Omit<AvatarProps, 'darkLight' | 'text'> {
+export interface Props extends Omit<AvatarProps, 'text'> {
   user?: User;
   deactivated?: boolean;
 }
