@@ -1,4 +1,5 @@
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+
 import { listRoles } from 'services/api';
 import { ListRolesParams } from 'services/types';
 import { UserRole } from 'types';

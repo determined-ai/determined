@@ -1,14 +1,14 @@
 import { Modal, Tag, Typography } from 'antd';
+import Message from 'determined-ui/Message';
+import Select, { Option, SelectValue } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
+import usePrevious from 'determined-ui/utils/usePrevious';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import usePrevious from 'components/kit/internal/usePrevious';
-import Message from 'components/kit/Message';
-import Select, { Option, SelectValue } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';

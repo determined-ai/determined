@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ThemeProvider, UIProvider } from 'determined-ui/Theme';
 
-import { ThemeProvider, UIProvider } from 'components/kit/Theme';
 import { User } from 'types';
 
 import { themeLightDetermined } from './kit/internal/theme';
@@ -16,7 +16,7 @@ const testUsers: User[] = [
   },
 ];
 
-vi.mock('components/kit/Tooltip');
+vi.mock('determined-ui/Tooltip');
 
 const Component = ({ user }: Partial<Props> = {}) => {
   return <UserAvatar hideTooltip={false} user={user} />;

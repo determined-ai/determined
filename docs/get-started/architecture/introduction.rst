@@ -147,12 +147,12 @@ Determined Notebooks have the following benefits:
 
 .. note::
 
-   -  Once a Notebook is terminated, it is not possible to restore the files that are not stored in
+   -  Once a notebook is terminated, it is not possible to restore the files that are not stored in
       the persistent directories. **You need to ensure that the cluster is configured to mount
       persistent directories into the container and save files in the persistent directories in the
       container.** See :ref:`notebook-state` for more information.
 
-   -  If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
+   -  If you open a notebook tab in JupyterLab, it will automatically open a kernel that will not be
       shut down automatically so you need to manually terminate the kernels.
 
 TensorBoards

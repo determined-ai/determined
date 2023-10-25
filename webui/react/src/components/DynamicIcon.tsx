@@ -1,6 +1,6 @@
+import useUI from 'components/kit/Theme';
 import React, { CSSProperties, useMemo } from 'react';
 
-import useUI from 'components/kit/Theme';
 import { useTheme } from 'hooks/useTheme';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';

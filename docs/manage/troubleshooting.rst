@@ -53,7 +53,7 @@ If this proceeds successfully, then mark the migration as successful by running 
    UPDATE schema_migrations SET dirty = false;
 
 And restart the master. Otherwise, please seek assistance in the community `Slack
-<https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__.
+<https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
 
 .. _validate-nvidia-container-toolkit:
 

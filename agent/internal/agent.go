@@ -290,7 +290,7 @@ func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, 
 
 		return nil, errors.Wrapf(err, "error dialing master: %s", b)
 	}
-	return ws.Wrap[*aproto.AgentMessage, *aproto.MasterMessage](a.opts.AgentID, conn)
+	return ws.Wrap[*aproto.AgentMessage, *aproto.MasterMessage]("agent-"+a.opts.AgentID, conn)
 }
 
 func (a *Agent) sender(out chan *aproto.MasterMessage) events.Publisher[container.Event] {

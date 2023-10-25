@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
+import { Theme } from 'determined-ui/Theme';
 import uPlot from 'uplot';
 
-import { Theme } from 'components/kit/Theme';
 import { Primitive, Range } from 'types';
 import { ColorScale } from 'utils/color';
 import { primitiveSorter } from 'utils/sort';

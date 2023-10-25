@@ -1,10 +1,9 @@
+import { Modal } from 'determined-ui/Modal';
+import Paragraph from 'determined-ui/Typography/Paragraph';
 import React, { useRef, useState } from 'react';
 
-import { Modal } from 'components/kit/Modal';
 import Transfer from 'components/Transfer';
 import handleError from 'utils/error';
-
-import Paragraph from './kit/Typography/Paragraph';
 
 interface Props {
   pool: string;

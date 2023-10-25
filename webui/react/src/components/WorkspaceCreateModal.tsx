@@ -1,13 +1,13 @@
 import { Divider, Switch } from 'antd';
+import Form from 'determined-ui/Form';
+import Input from 'determined-ui/Input';
+import InputNumber from 'determined-ui/InputNumber';
+import { Modal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo } from 'react';
 
-import Form from 'components/kit/Form';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import { Modal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { patchWorkspace } from 'services/api';
@@ -37,7 +37,7 @@ interface Props {
   workspaceId?: number;
 }
 
-const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
+const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const idPrefix = useId();

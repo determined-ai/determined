@@ -1,9 +1,9 @@
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import { ShirtSize } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useMemo } from 'react';
 
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import { ShirtSize } from 'components/kit/Theme';
-import { Loadable } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import clusterStore from 'stores/cluster';

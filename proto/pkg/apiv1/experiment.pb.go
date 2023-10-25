@@ -700,6 +700,220 @@ func (x *GetExperimentLabelsResponse) GetLabels() []string {
 	return nil
 }
 
+// Request for adding a new experiment label.
+type PutExperimentLabelRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the experiment.
+	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
+	// The label to add.
+	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+}
+
+func (x *PutExperimentLabelRequest) Reset() {
+	*x = PutExperimentLabelRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PutExperimentLabelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PutExperimentLabelRequest) ProtoMessage() {}
+
+func (x *PutExperimentLabelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PutExperimentLabelRequest.ProtoReflect.Descriptor instead.
+func (*PutExperimentLabelRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PutExperimentLabelRequest) GetExperimentId() int32 {
+	if x != nil {
+		return x.ExperimentId
+	}
+	return 0
+}
+
+func (x *PutExperimentLabelRequest) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+// Response to PutExperimentLabelRequest.
+type PutExperimentLabelResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The complete list of labels associated with the experiment.
+	Labels []string `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels,omitempty"`
+}
+
+func (x *PutExperimentLabelResponse) Reset() {
+	*x = PutExperimentLabelResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PutExperimentLabelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PutExperimentLabelResponse) ProtoMessage() {}
+
+func (x *PutExperimentLabelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PutExperimentLabelResponse.ProtoReflect.Descriptor instead.
+func (*PutExperimentLabelResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *PutExperimentLabelResponse) GetLabels() []string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+// Request for deleting an experiment label.
+type DeleteExperimentLabelRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the experiment.
+	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
+	// The label to delete.
+	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+}
+
+func (x *DeleteExperimentLabelRequest) Reset() {
+	*x = DeleteExperimentLabelRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteExperimentLabelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteExperimentLabelRequest) ProtoMessage() {}
+
+func (x *DeleteExperimentLabelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteExperimentLabelRequest.ProtoReflect.Descriptor instead.
+func (*DeleteExperimentLabelRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeleteExperimentLabelRequest) GetExperimentId() int32 {
+	if x != nil {
+		return x.ExperimentId
+	}
+	return 0
+}
+
+func (x *DeleteExperimentLabelRequest) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+// Response to DeleteExperimentLabelRequest.
+type DeleteExperimentLabelResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The complete list of labels associated with the experiment.
+	Labels []string `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels,omitempty"`
+}
+
+func (x *DeleteExperimentLabelResponse) Reset() {
+	*x = DeleteExperimentLabelResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteExperimentLabelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteExperimentLabelResponse) ProtoMessage() {}
+
+func (x *DeleteExperimentLabelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteExperimentLabelResponse.ProtoReflect.Descriptor instead.
+func (*DeleteExperimentLabelResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DeleteExperimentLabelResponse) GetLabels() []string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
 // Delete a single experiment.
 type DeleteExperimentRequest struct {
 	state         protoimpl.MessageState
@@ -713,7 +927,7 @@ type DeleteExperimentRequest struct {
 func (x *DeleteExperimentRequest) Reset() {
 	*x = DeleteExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[7]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -726,7 +940,7 @@ func (x *DeleteExperimentRequest) String() string {
 func (*DeleteExperimentRequest) ProtoMessage() {}
 
 func (x *DeleteExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[7]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -739,7 +953,7 @@ func (x *DeleteExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExperimentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{7}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteExperimentRequest) GetExperimentId() int32 {
@@ -759,7 +973,7 @@ type DeleteExperimentResponse struct {
 func (x *DeleteExperimentResponse) Reset() {
 	*x = DeleteExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[8]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -772,7 +986,7 @@ func (x *DeleteExperimentResponse) String() string {
 func (*DeleteExperimentResponse) ProtoMessage() {}
 
 func (x *DeleteExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[8]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -785,7 +999,7 @@ func (x *DeleteExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExperimentResponse.ProtoReflect.Descriptor instead.
 func (*DeleteExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{8}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{12}
 }
 
 // Delete multiple experiments.
@@ -803,7 +1017,7 @@ type DeleteExperimentsRequest struct {
 func (x *DeleteExperimentsRequest) Reset() {
 	*x = DeleteExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[9]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -816,7 +1030,7 @@ func (x *DeleteExperimentsRequest) String() string {
 func (*DeleteExperimentsRequest) ProtoMessage() {}
 
 func (x *DeleteExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[9]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -829,7 +1043,7 @@ func (x *DeleteExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*DeleteExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{9}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeleteExperimentsRequest) GetExperimentIds() []int32 {
@@ -859,7 +1073,7 @@ type DeleteExperimentsResponse struct {
 func (x *DeleteExperimentsResponse) Reset() {
 	*x = DeleteExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[10]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -872,7 +1086,7 @@ func (x *DeleteExperimentsResponse) String() string {
 func (*DeleteExperimentsResponse) ProtoMessage() {}
 
 func (x *DeleteExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[10]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -885,7 +1099,7 @@ func (x *DeleteExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*DeleteExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{10}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DeleteExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -908,7 +1122,7 @@ type GetBestSearcherValidationMetricRequest struct {
 func (x *GetBestSearcherValidationMetricRequest) Reset() {
 	*x = GetBestSearcherValidationMetricRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[11]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -921,7 +1135,7 @@ func (x *GetBestSearcherValidationMetricRequest) String() string {
 func (*GetBestSearcherValidationMetricRequest) ProtoMessage() {}
 
 func (x *GetBestSearcherValidationMetricRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[11]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -934,7 +1148,7 @@ func (x *GetBestSearcherValidationMetricRequest) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use GetBestSearcherValidationMetricRequest.ProtoReflect.Descriptor instead.
 func (*GetBestSearcherValidationMetricRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{11}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetBestSearcherValidationMetricRequest) GetExperimentId() int32 {
@@ -957,7 +1171,7 @@ type GetBestSearcherValidationMetricResponse struct {
 func (x *GetBestSearcherValidationMetricResponse) Reset() {
 	*x = GetBestSearcherValidationMetricResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[12]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -970,7 +1184,7 @@ func (x *GetBestSearcherValidationMetricResponse) String() string {
 func (*GetBestSearcherValidationMetricResponse) ProtoMessage() {}
 
 func (x *GetBestSearcherValidationMetricResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[12]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -983,7 +1197,7 @@ func (x *GetBestSearcherValidationMetricResponse) ProtoReflect() protoreflect.Me
 
 // Deprecated: Use GetBestSearcherValidationMetricResponse.ProtoReflect.Descriptor instead.
 func (*GetBestSearcherValidationMetricResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{12}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetBestSearcherValidationMetricResponse) GetMetric() float32 {
@@ -1008,7 +1222,7 @@ type PreviewHPSearchRequest struct {
 func (x *PreviewHPSearchRequest) Reset() {
 	*x = PreviewHPSearchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[13]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1021,7 +1235,7 @@ func (x *PreviewHPSearchRequest) String() string {
 func (*PreviewHPSearchRequest) ProtoMessage() {}
 
 func (x *PreviewHPSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[13]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1034,7 +1248,7 @@ func (x *PreviewHPSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewHPSearchRequest.ProtoReflect.Descriptor instead.
 func (*PreviewHPSearchRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{13}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PreviewHPSearchRequest) GetConfig() *_struct.Struct {
@@ -1064,7 +1278,7 @@ type PreviewHPSearchResponse struct {
 func (x *PreviewHPSearchResponse) Reset() {
 	*x = PreviewHPSearchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[14]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1077,7 +1291,7 @@ func (x *PreviewHPSearchResponse) String() string {
 func (*PreviewHPSearchResponse) ProtoMessage() {}
 
 func (x *PreviewHPSearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[14]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1090,7 +1304,7 @@ func (x *PreviewHPSearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewHPSearchResponse.ProtoReflect.Descriptor instead.
 func (*PreviewHPSearchResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{14}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PreviewHPSearchResponse) GetSimulation() *experimentv1.ExperimentSimulation {
@@ -1113,7 +1327,7 @@ type ActivateExperimentRequest struct {
 func (x *ActivateExperimentRequest) Reset() {
 	*x = ActivateExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[15]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1126,7 +1340,7 @@ func (x *ActivateExperimentRequest) String() string {
 func (*ActivateExperimentRequest) ProtoMessage() {}
 
 func (x *ActivateExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[15]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1139,7 +1353,7 @@ func (x *ActivateExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivateExperimentRequest.ProtoReflect.Descriptor instead.
 func (*ActivateExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{15}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ActivateExperimentRequest) GetId() int32 {
@@ -1159,7 +1373,7 @@ type ActivateExperimentResponse struct {
 func (x *ActivateExperimentResponse) Reset() {
 	*x = ActivateExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[16]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1172,7 +1386,7 @@ func (x *ActivateExperimentResponse) String() string {
 func (*ActivateExperimentResponse) ProtoMessage() {}
 
 func (x *ActivateExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[16]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1185,7 +1399,7 @@ func (x *ActivateExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivateExperimentResponse.ProtoReflect.Descriptor instead.
 func (*ActivateExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{16}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{20}
 }
 
 // Message for results of individual experiments in a multi-experiment action.
@@ -1203,7 +1417,7 @@ type ExperimentActionResult struct {
 func (x *ExperimentActionResult) Reset() {
 	*x = ExperimentActionResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[17]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1216,7 +1430,7 @@ func (x *ExperimentActionResult) String() string {
 func (*ExperimentActionResult) ProtoMessage() {}
 
 func (x *ExperimentActionResult) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[17]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1229,7 +1443,7 @@ func (x *ExperimentActionResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExperimentActionResult.ProtoReflect.Descriptor instead.
 func (*ExperimentActionResult) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{17}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ExperimentActionResult) GetError() string {
@@ -1261,7 +1475,7 @@ type ActivateExperimentsRequest struct {
 func (x *ActivateExperimentsRequest) Reset() {
 	*x = ActivateExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[18]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1274,7 +1488,7 @@ func (x *ActivateExperimentsRequest) String() string {
 func (*ActivateExperimentsRequest) ProtoMessage() {}
 
 func (x *ActivateExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[18]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1501,7 @@ func (x *ActivateExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivateExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*ActivateExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{18}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ActivateExperimentsRequest) GetExperimentIds() []int32 {
@@ -1317,7 +1531,7 @@ type ActivateExperimentsResponse struct {
 func (x *ActivateExperimentsResponse) Reset() {
 	*x = ActivateExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[19]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1330,7 +1544,7 @@ func (x *ActivateExperimentsResponse) String() string {
 func (*ActivateExperimentsResponse) ProtoMessage() {}
 
 func (x *ActivateExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[19]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1343,7 +1557,7 @@ func (x *ActivateExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActivateExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*ActivateExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{19}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ActivateExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -1366,7 +1580,7 @@ type PauseExperimentRequest struct {
 func (x *PauseExperimentRequest) Reset() {
 	*x = PauseExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[20]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1379,7 +1593,7 @@ func (x *PauseExperimentRequest) String() string {
 func (*PauseExperimentRequest) ProtoMessage() {}
 
 func (x *PauseExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[20]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1392,7 +1606,7 @@ func (x *PauseExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseExperimentRequest.ProtoReflect.Descriptor instead.
 func (*PauseExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{20}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PauseExperimentRequest) GetId() int32 {
@@ -1412,7 +1626,7 @@ type PauseExperimentResponse struct {
 func (x *PauseExperimentResponse) Reset() {
 	*x = PauseExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[21]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1425,7 +1639,7 @@ func (x *PauseExperimentResponse) String() string {
 func (*PauseExperimentResponse) ProtoMessage() {}
 
 func (x *PauseExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[21]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1438,7 +1652,7 @@ func (x *PauseExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseExperimentResponse.ProtoReflect.Descriptor instead.
 func (*PauseExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{21}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{25}
 }
 
 // Filters to apply actions to multiple experiments.
@@ -1470,7 +1684,7 @@ type BulkExperimentFilters struct {
 func (x *BulkExperimentFilters) Reset() {
 	*x = BulkExperimentFilters{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[22]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1483,7 +1697,7 @@ func (x *BulkExperimentFilters) String() string {
 func (*BulkExperimentFilters) ProtoMessage() {}
 
 func (x *BulkExperimentFilters) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[22]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1496,7 +1710,7 @@ func (x *BulkExperimentFilters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BulkExperimentFilters.ProtoReflect.Descriptor instead.
 func (*BulkExperimentFilters) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{22}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *BulkExperimentFilters) GetDescription() string {
@@ -1570,7 +1784,7 @@ type PauseExperimentsRequest struct {
 func (x *PauseExperimentsRequest) Reset() {
 	*x = PauseExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[23]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1583,7 +1797,7 @@ func (x *PauseExperimentsRequest) String() string {
 func (*PauseExperimentsRequest) ProtoMessage() {}
 
 func (x *PauseExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[23]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1596,7 +1810,7 @@ func (x *PauseExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*PauseExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{23}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PauseExperimentsRequest) GetExperimentIds() []int32 {
@@ -1626,7 +1840,7 @@ type PauseExperimentsResponse struct {
 func (x *PauseExperimentsResponse) Reset() {
 	*x = PauseExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[24]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1639,7 +1853,7 @@ func (x *PauseExperimentsResponse) String() string {
 func (*PauseExperimentsResponse) ProtoMessage() {}
 
 func (x *PauseExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[24]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1652,7 +1866,7 @@ func (x *PauseExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*PauseExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{24}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *PauseExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -1675,7 +1889,7 @@ type CancelExperimentRequest struct {
 func (x *CancelExperimentRequest) Reset() {
 	*x = CancelExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[25]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1688,7 +1902,7 @@ func (x *CancelExperimentRequest) String() string {
 func (*CancelExperimentRequest) ProtoMessage() {}
 
 func (x *CancelExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[25]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1701,7 +1915,7 @@ func (x *CancelExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelExperimentRequest.ProtoReflect.Descriptor instead.
 func (*CancelExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{25}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *CancelExperimentRequest) GetId() int32 {
@@ -1721,7 +1935,7 @@ type CancelExperimentResponse struct {
 func (x *CancelExperimentResponse) Reset() {
 	*x = CancelExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[26]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1734,7 +1948,7 @@ func (x *CancelExperimentResponse) String() string {
 func (*CancelExperimentResponse) ProtoMessage() {}
 
 func (x *CancelExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[26]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1747,7 +1961,7 @@ func (x *CancelExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelExperimentResponse.ProtoReflect.Descriptor instead.
 func (*CancelExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{26}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{30}
 }
 
 // Cancel multiple experiments.
@@ -1765,7 +1979,7 @@ type CancelExperimentsRequest struct {
 func (x *CancelExperimentsRequest) Reset() {
 	*x = CancelExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[27]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1778,7 +1992,7 @@ func (x *CancelExperimentsRequest) String() string {
 func (*CancelExperimentsRequest) ProtoMessage() {}
 
 func (x *CancelExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[27]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1791,7 +2005,7 @@ func (x *CancelExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*CancelExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{27}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *CancelExperimentsRequest) GetExperimentIds() []int32 {
@@ -1821,7 +2035,7 @@ type CancelExperimentsResponse struct {
 func (x *CancelExperimentsResponse) Reset() {
 	*x = CancelExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[28]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1834,7 +2048,7 @@ func (x *CancelExperimentsResponse) String() string {
 func (*CancelExperimentsResponse) ProtoMessage() {}
 
 func (x *CancelExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[28]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1847,7 +2061,7 @@ func (x *CancelExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*CancelExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{28}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CancelExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -1870,7 +2084,7 @@ type KillExperimentRequest struct {
 func (x *KillExperimentRequest) Reset() {
 	*x = KillExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[29]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1883,7 +2097,7 @@ func (x *KillExperimentRequest) String() string {
 func (*KillExperimentRequest) ProtoMessage() {}
 
 func (x *KillExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[29]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1896,7 +2110,7 @@ func (x *KillExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillExperimentRequest.ProtoReflect.Descriptor instead.
 func (*KillExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{29}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *KillExperimentRequest) GetId() int32 {
@@ -1916,7 +2130,7 @@ type KillExperimentResponse struct {
 func (x *KillExperimentResponse) Reset() {
 	*x = KillExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[30]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1929,7 +2143,7 @@ func (x *KillExperimentResponse) String() string {
 func (*KillExperimentResponse) ProtoMessage() {}
 
 func (x *KillExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[30]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1942,7 +2156,7 @@ func (x *KillExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillExperimentResponse.ProtoReflect.Descriptor instead.
 func (*KillExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{30}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{34}
 }
 
 // Kill multiple experiments.
@@ -1960,7 +2174,7 @@ type KillExperimentsRequest struct {
 func (x *KillExperimentsRequest) Reset() {
 	*x = KillExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[31]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1973,7 +2187,7 @@ func (x *KillExperimentsRequest) String() string {
 func (*KillExperimentsRequest) ProtoMessage() {}
 
 func (x *KillExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[31]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1986,7 +2200,7 @@ func (x *KillExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*KillExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{31}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *KillExperimentsRequest) GetExperimentIds() []int32 {
@@ -2016,7 +2230,7 @@ type KillExperimentsResponse struct {
 func (x *KillExperimentsResponse) Reset() {
 	*x = KillExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[32]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2029,7 +2243,7 @@ func (x *KillExperimentsResponse) String() string {
 func (*KillExperimentsResponse) ProtoMessage() {}
 
 func (x *KillExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[32]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2042,7 +2256,7 @@ func (x *KillExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*KillExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{32}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *KillExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -2065,7 +2279,7 @@ type ArchiveExperimentRequest struct {
 func (x *ArchiveExperimentRequest) Reset() {
 	*x = ArchiveExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[33]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2078,7 +2292,7 @@ func (x *ArchiveExperimentRequest) String() string {
 func (*ArchiveExperimentRequest) ProtoMessage() {}
 
 func (x *ArchiveExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[33]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2091,7 +2305,7 @@ func (x *ArchiveExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveExperimentRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{33}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ArchiveExperimentRequest) GetId() int32 {
@@ -2111,7 +2325,7 @@ type ArchiveExperimentResponse struct {
 func (x *ArchiveExperimentResponse) Reset() {
 	*x = ArchiveExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[34]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2124,7 +2338,7 @@ func (x *ArchiveExperimentResponse) String() string {
 func (*ArchiveExperimentResponse) ProtoMessage() {}
 
 func (x *ArchiveExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[34]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2137,7 +2351,7 @@ func (x *ArchiveExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveExperimentResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{34}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{38}
 }
 
 // Archive multiple experiments.
@@ -2155,7 +2369,7 @@ type ArchiveExperimentsRequest struct {
 func (x *ArchiveExperimentsRequest) Reset() {
 	*x = ArchiveExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[35]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2168,7 +2382,7 @@ func (x *ArchiveExperimentsRequest) String() string {
 func (*ArchiveExperimentsRequest) ProtoMessage() {}
 
 func (x *ArchiveExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[35]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2181,7 +2395,7 @@ func (x *ArchiveExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{35}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ArchiveExperimentsRequest) GetExperimentIds() []int32 {
@@ -2211,7 +2425,7 @@ type ArchiveExperimentsResponse struct {
 func (x *ArchiveExperimentsResponse) Reset() {
 	*x = ArchiveExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[36]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2224,7 +2438,7 @@ func (x *ArchiveExperimentsResponse) String() string {
 func (*ArchiveExperimentsResponse) ProtoMessage() {}
 
 func (x *ArchiveExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[36]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2237,7 +2451,7 @@ func (x *ArchiveExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{36}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ArchiveExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -2260,7 +2474,7 @@ type UnarchiveExperimentRequest struct {
 func (x *UnarchiveExperimentRequest) Reset() {
 	*x = UnarchiveExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[37]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2273,7 +2487,7 @@ func (x *UnarchiveExperimentRequest) String() string {
 func (*UnarchiveExperimentRequest) ProtoMessage() {}
 
 func (x *UnarchiveExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[37]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2286,7 +2500,7 @@ func (x *UnarchiveExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveExperimentRequest.ProtoReflect.Descriptor instead.
 func (*UnarchiveExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{37}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *UnarchiveExperimentRequest) GetId() int32 {
@@ -2306,7 +2520,7 @@ type UnarchiveExperimentResponse struct {
 func (x *UnarchiveExperimentResponse) Reset() {
 	*x = UnarchiveExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[38]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2319,7 +2533,7 @@ func (x *UnarchiveExperimentResponse) String() string {
 func (*UnarchiveExperimentResponse) ProtoMessage() {}
 
 func (x *UnarchiveExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[38]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2332,7 +2546,7 @@ func (x *UnarchiveExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveExperimentResponse.ProtoReflect.Descriptor instead.
 func (*UnarchiveExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{38}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{42}
 }
 
 // Unarchive multiple experiments.
@@ -2350,7 +2564,7 @@ type UnarchiveExperimentsRequest struct {
 func (x *UnarchiveExperimentsRequest) Reset() {
 	*x = UnarchiveExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[39]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2363,7 +2577,7 @@ func (x *UnarchiveExperimentsRequest) String() string {
 func (*UnarchiveExperimentsRequest) ProtoMessage() {}
 
 func (x *UnarchiveExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[39]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2376,7 +2590,7 @@ func (x *UnarchiveExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*UnarchiveExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{39}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UnarchiveExperimentsRequest) GetExperimentIds() []int32 {
@@ -2406,7 +2620,7 @@ type UnarchiveExperimentsResponse struct {
 func (x *UnarchiveExperimentsResponse) Reset() {
 	*x = UnarchiveExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[40]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[44]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2419,7 +2633,7 @@ func (x *UnarchiveExperimentsResponse) String() string {
 func (*UnarchiveExperimentsResponse) ProtoMessage() {}
 
 func (x *UnarchiveExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[40]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[44]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2432,7 +2646,7 @@ func (x *UnarchiveExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*UnarchiveExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{40}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *UnarchiveExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -2457,7 +2671,7 @@ type PatchExperimentRequest struct {
 func (x *PatchExperimentRequest) Reset() {
 	*x = PatchExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[41]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2470,7 +2684,7 @@ func (x *PatchExperimentRequest) String() string {
 func (*PatchExperimentRequest) ProtoMessage() {}
 
 func (x *PatchExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[41]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2483,7 +2697,7 @@ func (x *PatchExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchExperimentRequest.ProtoReflect.Descriptor instead.
 func (*PatchExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{41}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *PatchExperimentRequest) GetExperiment() *experimentv1.PatchExperiment {
@@ -2506,7 +2720,7 @@ type PatchExperimentResponse struct {
 func (x *PatchExperimentResponse) Reset() {
 	*x = PatchExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[42]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[46]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2519,7 +2733,7 @@ func (x *PatchExperimentResponse) String() string {
 func (*PatchExperimentResponse) ProtoMessage() {}
 
 func (x *PatchExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[42]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[46]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2532,7 +2746,7 @@ func (x *PatchExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchExperimentResponse.ProtoReflect.Descriptor instead.
 func (*PatchExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{42}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *PatchExperimentResponse) GetExperiment() *experimentv1.Experiment {
@@ -2571,7 +2785,7 @@ type GetExperimentCheckpointsRequest struct {
 func (x *GetExperimentCheckpointsRequest) Reset() {
 	*x = GetExperimentCheckpointsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[43]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[47]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2584,7 +2798,7 @@ func (x *GetExperimentCheckpointsRequest) String() string {
 func (*GetExperimentCheckpointsRequest) ProtoMessage() {}
 
 func (x *GetExperimentCheckpointsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[43]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[47]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2597,7 +2811,7 @@ func (x *GetExperimentCheckpointsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExperimentCheckpointsRequest.ProtoReflect.Descriptor instead.
 func (*GetExperimentCheckpointsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{43}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *GetExperimentCheckpointsRequest) GetId() int32 {
@@ -2689,7 +2903,7 @@ type GetExperimentCheckpointsResponse struct {
 func (x *GetExperimentCheckpointsResponse) Reset() {
 	*x = GetExperimentCheckpointsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[44]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[48]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2702,7 +2916,7 @@ func (x *GetExperimentCheckpointsResponse) String() string {
 func (*GetExperimentCheckpointsResponse) ProtoMessage() {}
 
 func (x *GetExperimentCheckpointsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[44]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[48]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2715,7 +2929,7 @@ func (x *GetExperimentCheckpointsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExperimentCheckpointsResponse.ProtoReflect.Descriptor instead.
 func (*GetExperimentCheckpointsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{44}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *GetExperimentCheckpointsResponse) GetCheckpoints() []*checkpointv1.Checkpoint {
@@ -2747,7 +2961,7 @@ type GetExperimentValidationHistoryRequest struct {
 func (x *GetExperimentValidationHistoryRequest) Reset() {
 	*x = GetExperimentValidationHistoryRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[45]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[49]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2760,7 +2974,7 @@ func (x *GetExperimentValidationHistoryRequest) String() string {
 func (*GetExperimentValidationHistoryRequest) ProtoMessage() {}
 
 func (x *GetExperimentValidationHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[45]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[49]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2773,7 +2987,7 @@ func (x *GetExperimentValidationHistoryRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use GetExperimentValidationHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetExperimentValidationHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{45}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *GetExperimentValidationHistoryRequest) GetExperimentId() int32 {
@@ -2798,7 +3012,7 @@ type GetExperimentValidationHistoryResponse struct {
 func (x *GetExperimentValidationHistoryResponse) Reset() {
 	*x = GetExperimentValidationHistoryResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[46]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[50]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2811,7 +3025,7 @@ func (x *GetExperimentValidationHistoryResponse) String() string {
 func (*GetExperimentValidationHistoryResponse) ProtoMessage() {}
 
 func (x *GetExperimentValidationHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[46]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[50]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2824,7 +3038,7 @@ func (x *GetExperimentValidationHistoryResponse) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use GetExperimentValidationHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetExperimentValidationHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{46}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *GetExperimentValidationHistoryResponse) GetValidationHistory() []*experimentv1.ValidationHistoryEntry {
@@ -2869,7 +3083,7 @@ type CreateExperimentRequest struct {
 func (x *CreateExperimentRequest) Reset() {
 	*x = CreateExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[47]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[51]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2882,7 +3096,7 @@ func (x *CreateExperimentRequest) String() string {
 func (*CreateExperimentRequest) ProtoMessage() {}
 
 func (x *CreateExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[47]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[51]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2895,7 +3109,7 @@ func (x *CreateExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateExperimentRequest.ProtoReflect.Descriptor instead.
 func (*CreateExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{47}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *CreateExperimentRequest) GetModelDefinition() []*utilv1.File {
@@ -2999,7 +3213,7 @@ type CreateExperimentResponse struct {
 func (x *CreateExperimentResponse) Reset() {
 	*x = CreateExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[48]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[52]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3012,7 +3226,7 @@ func (x *CreateExperimentResponse) String() string {
 func (*CreateExperimentResponse) ProtoMessage() {}
 
 func (x *CreateExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[48]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[52]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3025,7 +3239,7 @@ func (x *CreateExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateExperimentResponse.ProtoReflect.Descriptor instead.
 func (*CreateExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{48}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *CreateExperimentResponse) GetExperiment() *experimentv1.Experiment {
@@ -3065,7 +3279,7 @@ type PutExperimentRequest struct {
 func (x *PutExperimentRequest) Reset() {
 	*x = PutExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[49]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[53]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3078,7 +3292,7 @@ func (x *PutExperimentRequest) String() string {
 func (*PutExperimentRequest) ProtoMessage() {}
 
 func (x *PutExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[49]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[53]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3091,7 +3305,7 @@ func (x *PutExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutExperimentRequest.ProtoReflect.Descriptor instead.
 func (*PutExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{49}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *PutExperimentRequest) GetCreateExperimentRequest() *CreateExperimentRequest {
@@ -3123,7 +3337,7 @@ type PutExperimentResponse struct {
 func (x *PutExperimentResponse) Reset() {
 	*x = PutExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[50]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[54]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3136,7 +3350,7 @@ func (x *PutExperimentResponse) String() string {
 func (*PutExperimentResponse) ProtoMessage() {}
 
 func (x *PutExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[50]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[54]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3149,7 +3363,7 @@ func (x *PutExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutExperimentResponse.ProtoReflect.Descriptor instead.
 func (*PutExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{50}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *PutExperimentResponse) GetExperiment() *experimentv1.Experiment {
@@ -3181,7 +3395,7 @@ type ContinueExperimentRequest struct {
 func (x *ContinueExperimentRequest) Reset() {
 	*x = ContinueExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[51]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[55]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3194,7 +3408,7 @@ func (x *ContinueExperimentRequest) String() string {
 func (*ContinueExperimentRequest) ProtoMessage() {}
 
 func (x *ContinueExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[51]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[55]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3207,7 +3421,7 @@ func (x *ContinueExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContinueExperimentRequest.ProtoReflect.Descriptor instead.
 func (*ContinueExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{51}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *ContinueExperimentRequest) GetId() int32 {
@@ -3239,7 +3453,7 @@ type ContinueExperimentResponse struct {
 func (x *ContinueExperimentResponse) Reset() {
 	*x = ContinueExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[52]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[56]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3252,7 +3466,7 @@ func (x *ContinueExperimentResponse) String() string {
 func (*ContinueExperimentResponse) ProtoMessage() {}
 
 func (x *ContinueExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[52]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[56]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3265,7 +3479,7 @@ func (x *ContinueExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContinueExperimentResponse.ProtoReflect.Descriptor instead.
 func (*ContinueExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{52}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ContinueExperimentResponse) GetExperiment() *experimentv1.Experiment {
@@ -3297,7 +3511,7 @@ type ExpMetricNamesRequest struct {
 func (x *ExpMetricNamesRequest) Reset() {
 	*x = ExpMetricNamesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[53]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3310,7 +3524,7 @@ func (x *ExpMetricNamesRequest) String() string {
 func (*ExpMetricNamesRequest) ProtoMessage() {}
 
 func (x *ExpMetricNamesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[53]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3323,7 +3537,7 @@ func (x *ExpMetricNamesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExpMetricNamesRequest.ProtoReflect.Descriptor instead.
 func (*ExpMetricNamesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{53}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *ExpMetricNamesRequest) GetIds() []int32 {
@@ -3363,7 +3577,7 @@ type ExpMetricNamesResponse struct {
 func (x *ExpMetricNamesResponse) Reset() {
 	*x = ExpMetricNamesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[54]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3376,7 +3590,7 @@ func (x *ExpMetricNamesResponse) String() string {
 func (*ExpMetricNamesResponse) ProtoMessage() {}
 
 func (x *ExpMetricNamesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[54]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3389,7 +3603,7 @@ func (x *ExpMetricNamesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExpMetricNamesResponse.ProtoReflect.Descriptor instead.
 func (*ExpMetricNamesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{54}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ExpMetricNamesResponse) GetSearcherMetrics() []string {
@@ -3446,7 +3660,7 @@ type MetricBatchesRequest struct {
 func (x *MetricBatchesRequest) Reset() {
 	*x = MetricBatchesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[55]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3459,7 +3673,7 @@ func (x *MetricBatchesRequest) String() string {
 func (*MetricBatchesRequest) ProtoMessage() {}
 
 func (x *MetricBatchesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[55]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3472,7 +3686,7 @@ func (x *MetricBatchesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricBatchesRequest.ProtoReflect.Descriptor instead.
 func (*MetricBatchesRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{55}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *MetricBatchesRequest) GetExperimentId() int32 {
@@ -3525,7 +3739,7 @@ type MetricBatchesResponse struct {
 func (x *MetricBatchesResponse) Reset() {
 	*x = MetricBatchesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[56]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3538,7 +3752,7 @@ func (x *MetricBatchesResponse) String() string {
 func (*MetricBatchesResponse) ProtoMessage() {}
 
 func (x *MetricBatchesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[56]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3551,7 +3765,7 @@ func (x *MetricBatchesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricBatchesResponse.ProtoReflect.Descriptor instead.
 func (*MetricBatchesResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{56}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *MetricBatchesResponse) GetBatches() []int32 {
@@ -3588,7 +3802,7 @@ type TrialsSnapshotRequest struct {
 func (x *TrialsSnapshotRequest) Reset() {
 	*x = TrialsSnapshotRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3601,7 +3815,7 @@ func (x *TrialsSnapshotRequest) String() string {
 func (*TrialsSnapshotRequest) ProtoMessage() {}
 
 func (x *TrialsSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3614,7 +3828,7 @@ func (x *TrialsSnapshotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrialsSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*TrialsSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{57}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *TrialsSnapshotRequest) GetExperimentId() int32 {
@@ -3680,7 +3894,7 @@ type TrialsSnapshotResponse struct {
 func (x *TrialsSnapshotResponse) Reset() {
 	*x = TrialsSnapshotResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3693,7 +3907,7 @@ func (x *TrialsSnapshotResponse) String() string {
 func (*TrialsSnapshotResponse) ProtoMessage() {}
 
 func (x *TrialsSnapshotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3706,7 +3920,7 @@ func (x *TrialsSnapshotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrialsSnapshotResponse.ProtoReflect.Descriptor instead.
 func (*TrialsSnapshotResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{58}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *TrialsSnapshotResponse) GetTrials() []*TrialsSnapshotResponse_Trial {
@@ -3747,7 +3961,7 @@ type TrialsSampleRequest struct {
 func (x *TrialsSampleRequest) Reset() {
 	*x = TrialsSampleRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3760,7 +3974,7 @@ func (x *TrialsSampleRequest) String() string {
 func (*TrialsSampleRequest) ProtoMessage() {}
 
 func (x *TrialsSampleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3773,7 +3987,7 @@ func (x *TrialsSampleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrialsSampleRequest.ProtoReflect.Descriptor instead.
 func (*TrialsSampleRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{59}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *TrialsSampleRequest) GetExperimentId() int32 {
@@ -3857,7 +4071,7 @@ type TrialsSampleResponse struct {
 func (x *TrialsSampleResponse) Reset() {
 	*x = TrialsSampleResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3870,7 +4084,7 @@ func (x *TrialsSampleResponse) String() string {
 func (*TrialsSampleResponse) ProtoMessage() {}
 
 func (x *TrialsSampleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3883,7 +4097,7 @@ func (x *TrialsSampleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrialsSampleResponse.ProtoReflect.Descriptor instead.
 func (*TrialsSampleResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *TrialsSampleResponse) GetTrials() []*TrialsSampleResponse_Trial {
@@ -3920,7 +4134,7 @@ type GetModelDefRequest struct {
 func (x *GetModelDefRequest) Reset() {
 	*x = GetModelDefRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3933,7 +4147,7 @@ func (x *GetModelDefRequest) String() string {
 func (*GetModelDefRequest) ProtoMessage() {}
 
 func (x *GetModelDefRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3946,7 +4160,7 @@ func (x *GetModelDefRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefRequest.ProtoReflect.Descriptor instead.
 func (*GetModelDefRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{61}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *GetModelDefRequest) GetExperimentId() int32 {
@@ -3969,7 +4183,7 @@ type GetModelDefResponse struct {
 func (x *GetModelDefResponse) Reset() {
 	*x = GetModelDefResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3982,7 +4196,7 @@ func (x *GetModelDefResponse) String() string {
 func (*GetModelDefResponse) ProtoMessage() {}
 
 func (x *GetModelDefResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3995,7 +4209,7 @@ func (x *GetModelDefResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefResponse.ProtoReflect.Descriptor instead.
 func (*GetModelDefResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{62}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GetModelDefResponse) GetB64Tgz() string {
@@ -4020,7 +4234,7 @@ type MoveExperimentRequest struct {
 func (x *MoveExperimentRequest) Reset() {
 	*x = MoveExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4033,7 +4247,7 @@ func (x *MoveExperimentRequest) String() string {
 func (*MoveExperimentRequest) ProtoMessage() {}
 
 func (x *MoveExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4046,7 +4260,7 @@ func (x *MoveExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentRequest.ProtoReflect.Descriptor instead.
 func (*MoveExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{63}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *MoveExperimentRequest) GetExperimentId() int32 {
@@ -4073,7 +4287,7 @@ type MoveExperimentResponse struct {
 func (x *MoveExperimentResponse) Reset() {
 	*x = MoveExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4086,7 +4300,7 @@ func (x *MoveExperimentResponse) String() string {
 func (*MoveExperimentResponse) ProtoMessage() {}
 
 func (x *MoveExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4099,7 +4313,7 @@ func (x *MoveExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentResponse.ProtoReflect.Descriptor instead.
 func (*MoveExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{64}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{68}
 }
 
 // Request to move an experiment into a project.
@@ -4119,7 +4333,7 @@ type MoveExperimentsRequest struct {
 func (x *MoveExperimentsRequest) Reset() {
 	*x = MoveExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4132,7 +4346,7 @@ func (x *MoveExperimentsRequest) String() string {
 func (*MoveExperimentsRequest) ProtoMessage() {}
 
 func (x *MoveExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4145,7 +4359,7 @@ func (x *MoveExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*MoveExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{65}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *MoveExperimentsRequest) GetExperimentIds() []int32 {
@@ -4182,7 +4396,7 @@ type MoveExperimentsResponse struct {
 func (x *MoveExperimentsResponse) Reset() {
 	*x = MoveExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4195,7 +4409,7 @@ func (x *MoveExperimentsResponse) String() string {
 func (*MoveExperimentsResponse) ProtoMessage() {}
 
 func (x *MoveExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4208,7 +4422,7 @@ func (x *MoveExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*MoveExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{66}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *MoveExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -4231,7 +4445,7 @@ type GetModelDefTreeRequest struct {
 func (x *GetModelDefTreeRequest) Reset() {
 	*x = GetModelDefTreeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4244,7 +4458,7 @@ func (x *GetModelDefTreeRequest) String() string {
 func (*GetModelDefTreeRequest) ProtoMessage() {}
 
 func (x *GetModelDefTreeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4257,7 +4471,7 @@ func (x *GetModelDefTreeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefTreeRequest.ProtoReflect.Descriptor instead.
 func (*GetModelDefTreeRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{67}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *GetModelDefTreeRequest) GetExperimentId() int32 {
@@ -4280,7 +4494,7 @@ type GetModelDefTreeResponse struct {
 func (x *GetModelDefTreeResponse) Reset() {
 	*x = GetModelDefTreeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4293,7 +4507,7 @@ func (x *GetModelDefTreeResponse) String() string {
 func (*GetModelDefTreeResponse) ProtoMessage() {}
 
 func (x *GetModelDefTreeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4306,7 +4520,7 @@ func (x *GetModelDefTreeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefTreeResponse.ProtoReflect.Descriptor instead.
 func (*GetModelDefTreeResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{68}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *GetModelDefTreeResponse) GetFiles() []*experimentv1.FileNode {
@@ -4331,7 +4545,7 @@ type GetModelDefFileRequest struct {
 func (x *GetModelDefFileRequest) Reset() {
 	*x = GetModelDefFileRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4344,7 +4558,7 @@ func (x *GetModelDefFileRequest) String() string {
 func (*GetModelDefFileRequest) ProtoMessage() {}
 
 func (x *GetModelDefFileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4357,7 +4571,7 @@ func (x *GetModelDefFileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefFileRequest.ProtoReflect.Descriptor instead.
 func (*GetModelDefFileRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{69}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *GetModelDefFileRequest) GetExperimentId() int32 {
@@ -4387,7 +4601,7 @@ type GetModelDefFileResponse struct {
 func (x *GetModelDefFileResponse) Reset() {
 	*x = GetModelDefFileResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4400,7 +4614,7 @@ func (x *GetModelDefFileResponse) String() string {
 func (*GetModelDefFileResponse) ProtoMessage() {}
 
 func (x *GetModelDefFileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4413,7 +4627,7 @@ func (x *GetModelDefFileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefFileResponse.ProtoReflect.Descriptor instead.
 func (*GetModelDefFileResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{70}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *GetModelDefFileResponse) GetFile() []byte {
@@ -4436,7 +4650,7 @@ type GetSearcherEventsRequest struct {
 func (x *GetSearcherEventsRequest) Reset() {
 	*x = GetSearcherEventsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4449,7 +4663,7 @@ func (x *GetSearcherEventsRequest) String() string {
 func (*GetSearcherEventsRequest) ProtoMessage() {}
 
 func (x *GetSearcherEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4462,7 +4676,7 @@ func (x *GetSearcherEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSearcherEventsRequest.ProtoReflect.Descriptor instead.
 func (*GetSearcherEventsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{71}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *GetSearcherEventsRequest) GetExperimentId() int32 {
@@ -4485,7 +4699,7 @@ type GetSearcherEventsResponse struct {
 func (x *GetSearcherEventsResponse) Reset() {
 	*x = GetSearcherEventsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[76]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4498,7 +4712,7 @@ func (x *GetSearcherEventsResponse) String() string {
 func (*GetSearcherEventsResponse) ProtoMessage() {}
 
 func (x *GetSearcherEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[76]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4511,7 +4725,7 @@ func (x *GetSearcherEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSearcherEventsResponse.ProtoReflect.Descriptor instead.
 func (*GetSearcherEventsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{72}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *GetSearcherEventsResponse) GetSearcherEvents() []*experimentv1.SearcherEvent {
@@ -4538,7 +4752,7 @@ type PostSearcherOperationsRequest struct {
 func (x *PostSearcherOperationsRequest) Reset() {
 	*x = PostSearcherOperationsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[77]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4551,7 +4765,7 @@ func (x *PostSearcherOperationsRequest) String() string {
 func (*PostSearcherOperationsRequest) ProtoMessage() {}
 
 func (x *PostSearcherOperationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[77]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4564,7 +4778,7 @@ func (x *PostSearcherOperationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostSearcherOperationsRequest.ProtoReflect.Descriptor instead.
 func (*PostSearcherOperationsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{73}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *PostSearcherOperationsRequest) GetExperimentId() int32 {
@@ -4598,7 +4812,7 @@ type PostSearcherOperationsResponse struct {
 func (x *PostSearcherOperationsResponse) Reset() {
 	*x = PostSearcherOperationsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[78]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4611,7 +4825,7 @@ func (x *PostSearcherOperationsResponse) String() string {
 func (*PostSearcherOperationsResponse) ProtoMessage() {}
 
 func (x *PostSearcherOperationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[78]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4624,7 +4838,7 @@ func (x *PostSearcherOperationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostSearcherOperationsResponse.ProtoReflect.Descriptor instead.
 func (*PostSearcherOperationsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{74}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{78}
 }
 
 // Request for searching experiments
@@ -4648,7 +4862,7 @@ type SearchExperimentsRequest struct {
 func (x *SearchExperimentsRequest) Reset() {
 	*x = SearchExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[79]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4661,7 +4875,7 @@ func (x *SearchExperimentsRequest) String() string {
 func (*SearchExperimentsRequest) ProtoMessage() {}
 
 func (x *SearchExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[79]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4674,7 +4888,7 @@ func (x *SearchExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*SearchExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{75}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *SearchExperimentsRequest) GetProjectId() int32 {
@@ -4727,7 +4941,7 @@ type SearchExperimentExperiment struct {
 func (x *SearchExperimentExperiment) Reset() {
 	*x = SearchExperimentExperiment{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[76]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[80]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4740,7 +4954,7 @@ func (x *SearchExperimentExperiment) String() string {
 func (*SearchExperimentExperiment) ProtoMessage() {}
 
 func (x *SearchExperimentExperiment) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[76]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[80]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4753,7 +4967,7 @@ func (x *SearchExperimentExperiment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchExperimentExperiment.ProtoReflect.Descriptor instead.
 func (*SearchExperimentExperiment) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{76}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *SearchExperimentExperiment) GetExperiment() *experimentv1.Experiment {
@@ -4785,7 +4999,7 @@ type SearchExperimentsResponse struct {
 func (x *SearchExperimentsResponse) Reset() {
 	*x = SearchExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[77]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[81]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4798,7 +5012,7 @@ func (x *SearchExperimentsResponse) String() string {
 func (*SearchExperimentsResponse) ProtoMessage() {}
 
 func (x *SearchExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[77]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[81]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4811,7 +5025,7 @@ func (x *SearchExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*SearchExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{77}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *SearchExperimentsResponse) GetExperiments() []*SearchExperimentExperiment {
@@ -4847,7 +5061,7 @@ type TrialsSnapshotResponse_Trial struct {
 func (x *TrialsSnapshotResponse_Trial) Reset() {
 	*x = TrialsSnapshotResponse_Trial{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[78]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[82]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4860,7 +5074,7 @@ func (x *TrialsSnapshotResponse_Trial) String() string {
 func (*TrialsSnapshotResponse_Trial) ProtoMessage() {}
 
 func (x *TrialsSnapshotResponse_Trial) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[78]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[82]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4873,7 +5087,7 @@ func (x *TrialsSnapshotResponse_Trial) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrialsSnapshotResponse_Trial.ProtoReflect.Descriptor instead.
 func (*TrialsSnapshotResponse_Trial) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{58, 0}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{62, 0}
 }
 
 func (x *TrialsSnapshotResponse_Trial) GetTrialId() int32 {
@@ -4922,7 +5136,7 @@ type TrialsSampleResponse_Trial struct {
 func (x *TrialsSampleResponse_Trial) Reset() {
 	*x = TrialsSampleResponse_Trial{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[79]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[83]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4935,7 +5149,7 @@ func (x *TrialsSampleResponse_Trial) String() string {
 func (*TrialsSampleResponse_Trial) ProtoMessage() {}
 
 func (x *TrialsSampleResponse_Trial) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[79]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[83]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4948,7 +5162,7 @@ func (x *TrialsSampleResponse_Trial) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrialsSampleResponse_Trial.ProtoReflect.Descriptor instead.
 func (*TrialsSampleResponse_Trial) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60, 0}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{64, 0}
 }
 
 func (x *TrialsSampleResponse_Trial) GetTrialId() int32 {
@@ -5119,6 +5333,30 @@ var file_determined_api_v1_experiment_proto_rawDesc = []byte{
 	0x1b, 0x47, 0x65, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x4c, 0x61,
 	0x62, 0x65, 0x6c, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06,
 	0x6c, 0x61, 0x62, 0x65, 0x6c, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x6c, 0x61,
+	0x62, 0x65, 0x6c, 0x73, 0x22, 0x75, 0x0a, 0x19, 0x50, 0x75, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72,
+	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x4c, 0x61, 0x62, 0x65, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
+	0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x3a, 0x1d, 0x92, 0x41,
+	0x1a, 0x0a, 0x18, 0xd2, 0x01, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x5f, 0x69, 0x64, 0xd2, 0x01, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x22, 0x44, 0x0a, 0x1a, 0x50,
+	0x75, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x4c, 0x61, 0x62, 0x65,
+	0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6c, 0x61, 0x62,
+	0x65, 0x6c, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x6c, 0x61, 0x62, 0x65, 0x6c,
+	0x73, 0x3a, 0x0e, 0x92, 0x41, 0x0b, 0x0a, 0x09, 0xd2, 0x01, 0x06, 0x6c, 0x61, 0x62, 0x65, 0x6c,
+	0x73, 0x22, 0x78, 0x0a, 0x1c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72,
+	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x4c, 0x61, 0x62, 0x65, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
+	0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x3a, 0x1d, 0x92, 0x41,
+	0x1a, 0x0a, 0x18, 0xd2, 0x01, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x5f, 0x69, 0x64, 0xd2, 0x01, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x22, 0x47, 0x0a, 0x1d, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x4c,
+	0x61, 0x62, 0x65, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06,
+	0x6c, 0x61, 0x62, 0x65, 0x6c, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x6c, 0x61,
+	0x62, 0x65, 0x6c, 0x73, 0x3a, 0x0e, 0x92, 0x41, 0x0b, 0x0a, 0x09, 0xd2, 0x01, 0x06, 0x6c, 0x61,
 	0x62, 0x65, 0x6c, 0x73, 0x22, 0x3e, 0x0a, 0x17, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x78,
 	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
 	0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64,
@@ -5756,7 +5994,7 @@ func file_determined_api_v1_experiment_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_experiment_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_determined_api_v1_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 80)
+var file_determined_api_v1_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 84)
 var file_determined_api_v1_experiment_proto_goTypes = []interface{}{
 	(MetricType)(0),                                 // 0: determined.api.v1.MetricType
 	(GetExperimentsRequest_SortBy)(0),               // 1: determined.api.v1.GetExperimentsRequest.SortBy
@@ -5767,168 +6005,172 @@ var file_determined_api_v1_experiment_proto_goTypes = []interface{}{
 	(*GetExperimentsResponse)(nil),                  // 6: determined.api.v1.GetExperimentsResponse
 	(*GetExperimentLabelsRequest)(nil),              // 7: determined.api.v1.GetExperimentLabelsRequest
 	(*GetExperimentLabelsResponse)(nil),             // 8: determined.api.v1.GetExperimentLabelsResponse
-	(*DeleteExperimentRequest)(nil),                 // 9: determined.api.v1.DeleteExperimentRequest
-	(*DeleteExperimentResponse)(nil),                // 10: determined.api.v1.DeleteExperimentResponse
-	(*DeleteExperimentsRequest)(nil),                // 11: determined.api.v1.DeleteExperimentsRequest
-	(*DeleteExperimentsResponse)(nil),               // 12: determined.api.v1.DeleteExperimentsResponse
-	(*GetBestSearcherValidationMetricRequest)(nil),  // 13: determined.api.v1.GetBestSearcherValidationMetricRequest
-	(*GetBestSearcherValidationMetricResponse)(nil), // 14: determined.api.v1.GetBestSearcherValidationMetricResponse
-	(*PreviewHPSearchRequest)(nil),                  // 15: determined.api.v1.PreviewHPSearchRequest
-	(*PreviewHPSearchResponse)(nil),                 // 16: determined.api.v1.PreviewHPSearchResponse
-	(*ActivateExperimentRequest)(nil),               // 17: determined.api.v1.ActivateExperimentRequest
-	(*ActivateExperimentResponse)(nil),              // 18: determined.api.v1.ActivateExperimentResponse
-	(*ExperimentActionResult)(nil),                  // 19: determined.api.v1.ExperimentActionResult
-	(*ActivateExperimentsRequest)(nil),              // 20: determined.api.v1.ActivateExperimentsRequest
-	(*ActivateExperimentsResponse)(nil),             // 21: determined.api.v1.ActivateExperimentsResponse
-	(*PauseExperimentRequest)(nil),                  // 22: determined.api.v1.PauseExperimentRequest
-	(*PauseExperimentResponse)(nil),                 // 23: determined.api.v1.PauseExperimentResponse
-	(*BulkExperimentFilters)(nil),                   // 24: determined.api.v1.BulkExperimentFilters
-	(*PauseExperimentsRequest)(nil),                 // 25: determined.api.v1.PauseExperimentsRequest
-	(*PauseExperimentsResponse)(nil),                // 26: determined.api.v1.PauseExperimentsResponse
-	(*CancelExperimentRequest)(nil),                 // 27: determined.api.v1.CancelExperimentRequest
-	(*CancelExperimentResponse)(nil),                // 28: determined.api.v1.CancelExperimentResponse
-	(*CancelExperimentsRequest)(nil),                // 29: determined.api.v1.CancelExperimentsRequest
-	(*CancelExperimentsResponse)(nil),               // 30: determined.api.v1.CancelExperimentsResponse
-	(*KillExperimentRequest)(nil),                   // 31: determined.api.v1.KillExperimentRequest
-	(*KillExperimentResponse)(nil),                  // 32: determined.api.v1.KillExperimentResponse
-	(*KillExperimentsRequest)(nil),                  // 33: determined.api.v1.KillExperimentsRequest
-	(*KillExperimentsResponse)(nil),                 // 34: determined.api.v1.KillExperimentsResponse
-	(*ArchiveExperimentRequest)(nil),                // 35: determined.api.v1.ArchiveExperimentRequest
-	(*ArchiveExperimentResponse)(nil),               // 36: determined.api.v1.ArchiveExperimentResponse
-	(*ArchiveExperimentsRequest)(nil),               // 37: determined.api.v1.ArchiveExperimentsRequest
-	(*ArchiveExperimentsResponse)(nil),              // 38: determined.api.v1.ArchiveExperimentsResponse
-	(*UnarchiveExperimentRequest)(nil),              // 39: determined.api.v1.UnarchiveExperimentRequest
-	(*UnarchiveExperimentResponse)(nil),             // 40: determined.api.v1.UnarchiveExperimentResponse
-	(*UnarchiveExperimentsRequest)(nil),             // 41: determined.api.v1.UnarchiveExperimentsRequest
-	(*UnarchiveExperimentsResponse)(nil),            // 42: determined.api.v1.UnarchiveExperimentsResponse
-	(*PatchExperimentRequest)(nil),                  // 43: determined.api.v1.PatchExperimentRequest
-	(*PatchExperimentResponse)(nil),                 // 44: determined.api.v1.PatchExperimentResponse
-	(*GetExperimentCheckpointsRequest)(nil),         // 45: determined.api.v1.GetExperimentCheckpointsRequest
-	(*GetExperimentCheckpointsResponse)(nil),        // 46: determined.api.v1.GetExperimentCheckpointsResponse
-	(*GetExperimentValidationHistoryRequest)(nil),   // 47: determined.api.v1.GetExperimentValidationHistoryRequest
-	(*GetExperimentValidationHistoryResponse)(nil),  // 48: determined.api.v1.GetExperimentValidationHistoryResponse
-	(*CreateExperimentRequest)(nil),                 // 49: determined.api.v1.CreateExperimentRequest
-	(*CreateExperimentResponse)(nil),                // 50: determined.api.v1.CreateExperimentResponse
-	(*PutExperimentRequest)(nil),                    // 51: determined.api.v1.PutExperimentRequest
-	(*PutExperimentResponse)(nil),                   // 52: determined.api.v1.PutExperimentResponse
-	(*ContinueExperimentRequest)(nil),               // 53: determined.api.v1.ContinueExperimentRequest
-	(*ContinueExperimentResponse)(nil),              // 54: determined.api.v1.ContinueExperimentResponse
-	(*ExpMetricNamesRequest)(nil),                   // 55: determined.api.v1.ExpMetricNamesRequest
-	(*ExpMetricNamesResponse)(nil),                  // 56: determined.api.v1.ExpMetricNamesResponse
-	(*MetricBatchesRequest)(nil),                    // 57: determined.api.v1.MetricBatchesRequest
-	(*MetricBatchesResponse)(nil),                   // 58: determined.api.v1.MetricBatchesResponse
-	(*TrialsSnapshotRequest)(nil),                   // 59: determined.api.v1.TrialsSnapshotRequest
-	(*TrialsSnapshotResponse)(nil),                  // 60: determined.api.v1.TrialsSnapshotResponse
-	(*TrialsSampleRequest)(nil),                     // 61: determined.api.v1.TrialsSampleRequest
-	(*TrialsSampleResponse)(nil),                    // 62: determined.api.v1.TrialsSampleResponse
-	(*GetModelDefRequest)(nil),                      // 63: determined.api.v1.GetModelDefRequest
-	(*GetModelDefResponse)(nil),                     // 64: determined.api.v1.GetModelDefResponse
-	(*MoveExperimentRequest)(nil),                   // 65: determined.api.v1.MoveExperimentRequest
-	(*MoveExperimentResponse)(nil),                  // 66: determined.api.v1.MoveExperimentResponse
-	(*MoveExperimentsRequest)(nil),                  // 67: determined.api.v1.MoveExperimentsRequest
-	(*MoveExperimentsResponse)(nil),                 // 68: determined.api.v1.MoveExperimentsResponse
-	(*GetModelDefTreeRequest)(nil),                  // 69: determined.api.v1.GetModelDefTreeRequest
-	(*GetModelDefTreeResponse)(nil),                 // 70: determined.api.v1.GetModelDefTreeResponse
-	(*GetModelDefFileRequest)(nil),                  // 71: determined.api.v1.GetModelDefFileRequest
-	(*GetModelDefFileResponse)(nil),                 // 72: determined.api.v1.GetModelDefFileResponse
-	(*GetSearcherEventsRequest)(nil),                // 73: determined.api.v1.GetSearcherEventsRequest
-	(*GetSearcherEventsResponse)(nil),               // 74: determined.api.v1.GetSearcherEventsResponse
-	(*PostSearcherOperationsRequest)(nil),           // 75: determined.api.v1.PostSearcherOperationsRequest
-	(*PostSearcherOperationsResponse)(nil),          // 76: determined.api.v1.PostSearcherOperationsResponse
-	(*SearchExperimentsRequest)(nil),                // 77: determined.api.v1.SearchExperimentsRequest
-	(*SearchExperimentExperiment)(nil),              // 78: determined.api.v1.SearchExperimentExperiment
-	(*SearchExperimentsResponse)(nil),               // 79: determined.api.v1.SearchExperimentsResponse
-	(*TrialsSnapshotResponse_Trial)(nil),            // 80: determined.api.v1.TrialsSnapshotResponse.Trial
-	(*TrialsSampleResponse_Trial)(nil),              // 81: determined.api.v1.TrialsSampleResponse.Trial
-	(*_struct.Struct)(nil),                          // 82: google.protobuf.Struct
-	(*timestamp.Timestamp)(nil),                     // 83: google.protobuf.Timestamp
-	(*experimentv1.Experiment)(nil),                 // 84: determined.experiment.v1.Experiment
-	(*jobv1.JobSummary)(nil),                        // 85: determined.job.v1.JobSummary
-	(OrderBy)(0),                                    // 86: determined.api.v1.OrderBy
-	(*wrappers.BoolValue)(nil),                      // 87: google.protobuf.BoolValue
-	(experimentv1.State)(0),                         // 88: determined.experiment.v1.State
-	(*commonv1.Int32FieldFilter)(nil),               // 89: determined.common.v1.Int32FieldFilter
-	(*Pagination)(nil),                              // 90: determined.api.v1.Pagination
-	(*experimentv1.ExperimentSimulation)(nil),       // 91: determined.experiment.v1.ExperimentSimulation
-	(*experimentv1.PatchExperiment)(nil),            // 92: determined.experiment.v1.PatchExperiment
-	(checkpointv1.SortBy)(0),                        // 93: determined.checkpoint.v1.SortBy
-	(checkpointv1.State)(0),                         // 94: determined.checkpoint.v1.State
-	(*checkpointv1.Checkpoint)(nil),                 // 95: determined.checkpoint.v1.Checkpoint
-	(*experimentv1.ValidationHistoryEntry)(nil),     // 96: determined.experiment.v1.ValidationHistoryEntry
-	(*utilv1.File)(nil),                             // 97: determined.util.v1.File
-	(LaunchWarning)(0),                              // 98: determined.api.v1.LaunchWarning
-	(*metricv1.MetricIdentifier)(nil),               // 99: determined.metric.v1.MetricIdentifier
-	(*experimentv1.FileNode)(nil),                   // 100: determined.experiment.v1.FileNode
-	(*experimentv1.SearcherEvent)(nil),              // 101: determined.experiment.v1.SearcherEvent
-	(*experimentv1.SearcherOperation)(nil),          // 102: determined.experiment.v1.SearcherOperation
-	(*trialv1.Trial)(nil),                           // 103: determined.trial.v1.Trial
+	(*PutExperimentLabelRequest)(nil),               // 9: determined.api.v1.PutExperimentLabelRequest
+	(*PutExperimentLabelResponse)(nil),              // 10: determined.api.v1.PutExperimentLabelResponse
+	(*DeleteExperimentLabelRequest)(nil),            // 11: determined.api.v1.DeleteExperimentLabelRequest
+	(*DeleteExperimentLabelResponse)(nil),           // 12: determined.api.v1.DeleteExperimentLabelResponse
+	(*DeleteExperimentRequest)(nil),                 // 13: determined.api.v1.DeleteExperimentRequest
+	(*DeleteExperimentResponse)(nil),                // 14: determined.api.v1.DeleteExperimentResponse
+	(*DeleteExperimentsRequest)(nil),                // 15: determined.api.v1.DeleteExperimentsRequest
+	(*DeleteExperimentsResponse)(nil),               // 16: determined.api.v1.DeleteExperimentsResponse
+	(*GetBestSearcherValidationMetricRequest)(nil),  // 17: determined.api.v1.GetBestSearcherValidationMetricRequest
+	(*GetBestSearcherValidationMetricResponse)(nil), // 18: determined.api.v1.GetBestSearcherValidationMetricResponse
+	(*PreviewHPSearchRequest)(nil),                  // 19: determined.api.v1.PreviewHPSearchRequest
+	(*PreviewHPSearchResponse)(nil),                 // 20: determined.api.v1.PreviewHPSearchResponse
+	(*ActivateExperimentRequest)(nil),               // 21: determined.api.v1.ActivateExperimentRequest
+	(*ActivateExperimentResponse)(nil),              // 22: determined.api.v1.ActivateExperimentResponse
+	(*ExperimentActionResult)(nil),                  // 23: determined.api.v1.ExperimentActionResult
+	(*ActivateExperimentsRequest)(nil),              // 24: determined.api.v1.ActivateExperimentsRequest
+	(*ActivateExperimentsResponse)(nil),             // 25: determined.api.v1.ActivateExperimentsResponse
+	(*PauseExperimentRequest)(nil),                  // 26: determined.api.v1.PauseExperimentRequest
+	(*PauseExperimentResponse)(nil),                 // 27: determined.api.v1.PauseExperimentResponse
+	(*BulkExperimentFilters)(nil),                   // 28: determined.api.v1.BulkExperimentFilters
+	(*PauseExperimentsRequest)(nil),                 // 29: determined.api.v1.PauseExperimentsRequest
+	(*PauseExperimentsResponse)(nil),                // 30: determined.api.v1.PauseExperimentsResponse
+	(*CancelExperimentRequest)(nil),                 // 31: determined.api.v1.CancelExperimentRequest
+	(*CancelExperimentResponse)(nil),                // 32: determined.api.v1.CancelExperimentResponse
+	(*CancelExperimentsRequest)(nil),                // 33: determined.api.v1.CancelExperimentsRequest
+	(*CancelExperimentsResponse)(nil),               // 34: determined.api.v1.CancelExperimentsResponse
+	(*KillExperimentRequest)(nil),                   // 35: determined.api.v1.KillExperimentRequest
+	(*KillExperimentResponse)(nil),                  // 36: determined.api.v1.KillExperimentResponse
+	(*KillExperimentsRequest)(nil),                  // 37: determined.api.v1.KillExperimentsRequest
+	(*KillExperimentsResponse)(nil),                 // 38: determined.api.v1.KillExperimentsResponse
+	(*ArchiveExperimentRequest)(nil),                // 39: determined.api.v1.ArchiveExperimentRequest
+	(*ArchiveExperimentResponse)(nil),               // 40: determined.api.v1.ArchiveExperimentResponse
+	(*ArchiveExperimentsRequest)(nil),               // 41: determined.api.v1.ArchiveExperimentsRequest
+	(*ArchiveExperimentsResponse)(nil),              // 42: determined.api.v1.ArchiveExperimentsResponse
+	(*UnarchiveExperimentRequest)(nil),              // 43: determined.api.v1.UnarchiveExperimentRequest
+	(*UnarchiveExperimentResponse)(nil),             // 44: determined.api.v1.UnarchiveExperimentResponse
+	(*UnarchiveExperimentsRequest)(nil),             // 45: determined.api.v1.UnarchiveExperimentsRequest
+	(*UnarchiveExperimentsResponse)(nil),            // 46: determined.api.v1.UnarchiveExperimentsResponse
+	(*PatchExperimentRequest)(nil),                  // 47: determined.api.v1.PatchExperimentRequest
+	(*PatchExperimentResponse)(nil),                 // 48: determined.api.v1.PatchExperimentResponse
+	(*GetExperimentCheckpointsRequest)(nil),         // 49: determined.api.v1.GetExperimentCheckpointsRequest
+	(*GetExperimentCheckpointsResponse)(nil),        // 50: determined.api.v1.GetExperimentCheckpointsResponse
+	(*GetExperimentValidationHistoryRequest)(nil),   // 51: determined.api.v1.GetExperimentValidationHistoryRequest
+	(*GetExperimentValidationHistoryResponse)(nil),  // 52: determined.api.v1.GetExperimentValidationHistoryResponse
+	(*CreateExperimentRequest)(nil),                 // 53: determined.api.v1.CreateExperimentRequest
+	(*CreateExperimentResponse)(nil),                // 54: determined.api.v1.CreateExperimentResponse
+	(*PutExperimentRequest)(nil),                    // 55: determined.api.v1.PutExperimentRequest
+	(*PutExperimentResponse)(nil),                   // 56: determined.api.v1.PutExperimentResponse
+	(*ContinueExperimentRequest)(nil),               // 57: determined.api.v1.ContinueExperimentRequest
+	(*ContinueExperimentResponse)(nil),              // 58: determined.api.v1.ContinueExperimentResponse
+	(*ExpMetricNamesRequest)(nil),                   // 59: determined.api.v1.ExpMetricNamesRequest
+	(*ExpMetricNamesResponse)(nil),                  // 60: determined.api.v1.ExpMetricNamesResponse
+	(*MetricBatchesRequest)(nil),                    // 61: determined.api.v1.MetricBatchesRequest
+	(*MetricBatchesResponse)(nil),                   // 62: determined.api.v1.MetricBatchesResponse
+	(*TrialsSnapshotRequest)(nil),                   // 63: determined.api.v1.TrialsSnapshotRequest
+	(*TrialsSnapshotResponse)(nil),                  // 64: determined.api.v1.TrialsSnapshotResponse
+	(*TrialsSampleRequest)(nil),                     // 65: determined.api.v1.TrialsSampleRequest
+	(*TrialsSampleResponse)(nil),                    // 66: determined.api.v1.TrialsSampleResponse
+	(*GetModelDefRequest)(nil),                      // 67: determined.api.v1.GetModelDefRequest
+	(*GetModelDefResponse)(nil),                     // 68: determined.api.v1.GetModelDefResponse
+	(*MoveExperimentRequest)(nil),                   // 69: determined.api.v1.MoveExperimentRequest
+	(*MoveExperimentResponse)(nil),                  // 70: determined.api.v1.MoveExperimentResponse
+	(*MoveExperimentsRequest)(nil),                  // 71: determined.api.v1.MoveExperimentsRequest
+	(*MoveExperimentsResponse)(nil),                 // 72: determined.api.v1.MoveExperimentsResponse
+	(*GetModelDefTreeRequest)(nil),                  // 73: determined.api.v1.GetModelDefTreeRequest
+	(*GetModelDefTreeResponse)(nil),                 // 74: determined.api.v1.GetModelDefTreeResponse
+	(*GetModelDefFileRequest)(nil),                  // 75: determined.api.v1.GetModelDefFileRequest
+	(*GetModelDefFileResponse)(nil),                 // 76: determined.api.v1.GetModelDefFileResponse
+	(*GetSearcherEventsRequest)(nil),                // 77: determined.api.v1.GetSearcherEventsRequest
+	(*GetSearcherEventsResponse)(nil),               // 78: determined.api.v1.GetSearcherEventsResponse
+	(*PostSearcherOperationsRequest)(nil),           // 79: determined.api.v1.PostSearcherOperationsRequest
+	(*PostSearcherOperationsResponse)(nil),          // 80: determined.api.v1.PostSearcherOperationsResponse
+	(*SearchExperimentsRequest)(nil),                // 81: determined.api.v1.SearchExperimentsRequest
+	(*SearchExperimentExperiment)(nil),              // 82: determined.api.v1.SearchExperimentExperiment
+	(*SearchExperimentsResponse)(nil),               // 83: determined.api.v1.SearchExperimentsResponse
+	(*TrialsSnapshotResponse_Trial)(nil),            // 84: determined.api.v1.TrialsSnapshotResponse.Trial
+	(*TrialsSampleResponse_Trial)(nil),              // 85: determined.api.v1.TrialsSampleResponse.Trial
+	(*_struct.Struct)(nil),                          // 86: google.protobuf.Struct
+	(*timestamp.Timestamp)(nil),                     // 87: google.protobuf.Timestamp
+	(*experimentv1.Experiment)(nil),                 // 88: determined.experiment.v1.Experiment
+	(*jobv1.JobSummary)(nil),                        // 89: determined.job.v1.JobSummary
+	(OrderBy)(0),                                    // 90: determined.api.v1.OrderBy
+	(*wrappers.BoolValue)(nil),                      // 91: google.protobuf.BoolValue
+	(experimentv1.State)(0),                         // 92: determined.experiment.v1.State
+	(*commonv1.Int32FieldFilter)(nil),               // 93: determined.common.v1.Int32FieldFilter
+	(*Pagination)(nil),                              // 94: determined.api.v1.Pagination
+	(*experimentv1.ExperimentSimulation)(nil),       // 95: determined.experiment.v1.ExperimentSimulation
+	(*experimentv1.PatchExperiment)(nil),            // 96: determined.experiment.v1.PatchExperiment
+	(checkpointv1.SortBy)(0),                        // 97: determined.checkpoint.v1.SortBy
+	(checkpointv1.State)(0),                         // 98: determined.checkpoint.v1.State
+	(*checkpointv1.Checkpoint)(nil),                 // 99: determined.checkpoint.v1.Checkpoint
+	(*experimentv1.ValidationHistoryEntry)(nil),     // 100: determined.experiment.v1.ValidationHistoryEntry
+	(*utilv1.File)(nil),                             // 101: determined.util.v1.File
+	(LaunchWarning)(0),                              // 102: determined.api.v1.LaunchWarning
+	(*metricv1.MetricIdentifier)(nil),               // 103: determined.metric.v1.MetricIdentifier
+	(*experimentv1.FileNode)(nil),                   // 104: determined.experiment.v1.FileNode
+	(*experimentv1.SearcherEvent)(nil),              // 105: determined.experiment.v1.SearcherEvent
+	(*experimentv1.SearcherOperation)(nil),          // 106: determined.experiment.v1.SearcherOperation
+	(*trialv1.Trial)(nil),                           // 107: determined.trial.v1.Trial
 }
 var file_determined_api_v1_experiment_proto_depIdxs = []int32{
-	82,  // 0: determined.api.v1.DataPoint.values:type_name -> google.protobuf.Struct
-	83,  // 1: determined.api.v1.DataPoint.time:type_name -> google.protobuf.Timestamp
-	84,  // 2: determined.api.v1.GetExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	85,  // 3: determined.api.v1.GetExperimentResponse.job_summary:type_name -> determined.job.v1.JobSummary
+	86,  // 0: determined.api.v1.DataPoint.values:type_name -> google.protobuf.Struct
+	87,  // 1: determined.api.v1.DataPoint.time:type_name -> google.protobuf.Timestamp
+	88,  // 2: determined.api.v1.GetExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	89,  // 3: determined.api.v1.GetExperimentResponse.job_summary:type_name -> determined.job.v1.JobSummary
 	1,   // 4: determined.api.v1.GetExperimentsRequest.sort_by:type_name -> determined.api.v1.GetExperimentsRequest.SortBy
-	86,  // 5: determined.api.v1.GetExperimentsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	87,  // 6: determined.api.v1.GetExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
-	88,  // 7: determined.api.v1.GetExperimentsRequest.states:type_name -> determined.experiment.v1.State
-	89,  // 8: determined.api.v1.GetExperimentsRequest.experiment_id_filter:type_name -> determined.common.v1.Int32FieldFilter
-	84,  // 9: determined.api.v1.GetExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
-	90,  // 10: determined.api.v1.GetExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
-	24,  // 11: determined.api.v1.DeleteExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 12: determined.api.v1.DeleteExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	82,  // 13: determined.api.v1.PreviewHPSearchRequest.config:type_name -> google.protobuf.Struct
-	91,  // 14: determined.api.v1.PreviewHPSearchResponse.simulation:type_name -> determined.experiment.v1.ExperimentSimulation
-	24,  // 15: determined.api.v1.ActivateExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 16: determined.api.v1.ActivateExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	87,  // 17: determined.api.v1.BulkExperimentFilters.archived:type_name -> google.protobuf.BoolValue
-	88,  // 18: determined.api.v1.BulkExperimentFilters.states:type_name -> determined.experiment.v1.State
-	24,  // 19: determined.api.v1.PauseExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 20: determined.api.v1.PauseExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	24,  // 21: determined.api.v1.CancelExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 22: determined.api.v1.CancelExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	24,  // 23: determined.api.v1.KillExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 24: determined.api.v1.KillExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	24,  // 25: determined.api.v1.ArchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 26: determined.api.v1.ArchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	24,  // 27: determined.api.v1.UnarchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 28: determined.api.v1.UnarchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	92,  // 29: determined.api.v1.PatchExperimentRequest.experiment:type_name -> determined.experiment.v1.PatchExperiment
-	84,  // 30: determined.api.v1.PatchExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	93,  // 31: determined.api.v1.GetExperimentCheckpointsRequest.sort_by_attr:type_name -> determined.checkpoint.v1.SortBy
-	86,  // 32: determined.api.v1.GetExperimentCheckpointsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	94,  // 33: determined.api.v1.GetExperimentCheckpointsRequest.states:type_name -> determined.checkpoint.v1.State
-	95,  // 34: determined.api.v1.GetExperimentCheckpointsResponse.checkpoints:type_name -> determined.checkpoint.v1.Checkpoint
-	90,  // 35: determined.api.v1.GetExperimentCheckpointsResponse.pagination:type_name -> determined.api.v1.Pagination
-	96,  // 36: determined.api.v1.GetExperimentValidationHistoryResponse.validation_history:type_name -> determined.experiment.v1.ValidationHistoryEntry
-	97,  // 37: determined.api.v1.CreateExperimentRequest.model_definition:type_name -> determined.util.v1.File
-	83,  // 38: determined.api.v1.CreateExperimentRequest.git_commit_date:type_name -> google.protobuf.Timestamp
-	84,  // 39: determined.api.v1.CreateExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	82,  // 40: determined.api.v1.CreateExperimentResponse.config:type_name -> google.protobuf.Struct
-	98,  // 41: determined.api.v1.CreateExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
-	49,  // 42: determined.api.v1.PutExperimentRequest.create_experiment_request:type_name -> determined.api.v1.CreateExperimentRequest
-	84,  // 43: determined.api.v1.PutExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	82,  // 44: determined.api.v1.PutExperimentResponse.config:type_name -> google.protobuf.Struct
-	84,  // 45: determined.api.v1.ContinueExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	98,  // 46: determined.api.v1.ContinueExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
-	99,  // 47: determined.api.v1.ExpMetricNamesResponse.metric_names:type_name -> determined.metric.v1.MetricIdentifier
+	90,  // 5: determined.api.v1.GetExperimentsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	91,  // 6: determined.api.v1.GetExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
+	92,  // 7: determined.api.v1.GetExperimentsRequest.states:type_name -> determined.experiment.v1.State
+	93,  // 8: determined.api.v1.GetExperimentsRequest.experiment_id_filter:type_name -> determined.common.v1.Int32FieldFilter
+	88,  // 9: determined.api.v1.GetExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
+	94,  // 10: determined.api.v1.GetExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
+	28,  // 11: determined.api.v1.DeleteExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 12: determined.api.v1.DeleteExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	86,  // 13: determined.api.v1.PreviewHPSearchRequest.config:type_name -> google.protobuf.Struct
+	95,  // 14: determined.api.v1.PreviewHPSearchResponse.simulation:type_name -> determined.experiment.v1.ExperimentSimulation
+	28,  // 15: determined.api.v1.ActivateExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 16: determined.api.v1.ActivateExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	91,  // 17: determined.api.v1.BulkExperimentFilters.archived:type_name -> google.protobuf.BoolValue
+	92,  // 18: determined.api.v1.BulkExperimentFilters.states:type_name -> determined.experiment.v1.State
+	28,  // 19: determined.api.v1.PauseExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 20: determined.api.v1.PauseExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	28,  // 21: determined.api.v1.CancelExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 22: determined.api.v1.CancelExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	28,  // 23: determined.api.v1.KillExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 24: determined.api.v1.KillExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	28,  // 25: determined.api.v1.ArchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 26: determined.api.v1.ArchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	28,  // 27: determined.api.v1.UnarchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 28: determined.api.v1.UnarchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	96,  // 29: determined.api.v1.PatchExperimentRequest.experiment:type_name -> determined.experiment.v1.PatchExperiment
+	88,  // 30: determined.api.v1.PatchExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	97,  // 31: determined.api.v1.GetExperimentCheckpointsRequest.sort_by_attr:type_name -> determined.checkpoint.v1.SortBy
+	90,  // 32: determined.api.v1.GetExperimentCheckpointsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	98,  // 33: determined.api.v1.GetExperimentCheckpointsRequest.states:type_name -> determined.checkpoint.v1.State
+	99,  // 34: determined.api.v1.GetExperimentCheckpointsResponse.checkpoints:type_name -> determined.checkpoint.v1.Checkpoint
+	94,  // 35: determined.api.v1.GetExperimentCheckpointsResponse.pagination:type_name -> determined.api.v1.Pagination
+	100, // 36: determined.api.v1.GetExperimentValidationHistoryResponse.validation_history:type_name -> determined.experiment.v1.ValidationHistoryEntry
+	101, // 37: determined.api.v1.CreateExperimentRequest.model_definition:type_name -> determined.util.v1.File
+	87,  // 38: determined.api.v1.CreateExperimentRequest.git_commit_date:type_name -> google.protobuf.Timestamp
+	88,  // 39: determined.api.v1.CreateExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	86,  // 40: determined.api.v1.CreateExperimentResponse.config:type_name -> google.protobuf.Struct
+	102, // 41: determined.api.v1.CreateExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
+	53,  // 42: determined.api.v1.PutExperimentRequest.create_experiment_request:type_name -> determined.api.v1.CreateExperimentRequest
+	88,  // 43: determined.api.v1.PutExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	86,  // 44: determined.api.v1.PutExperimentResponse.config:type_name -> google.protobuf.Struct
+	88,  // 45: determined.api.v1.ContinueExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	102, // 46: determined.api.v1.ContinueExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
+	103, // 47: determined.api.v1.ExpMetricNamesResponse.metric_names:type_name -> determined.metric.v1.MetricIdentifier
 	0,   // 48: determined.api.v1.MetricBatchesRequest.metric_type:type_name -> determined.api.v1.MetricType
 	0,   // 49: determined.api.v1.TrialsSnapshotRequest.metric_type:type_name -> determined.api.v1.MetricType
-	80,  // 50: determined.api.v1.TrialsSnapshotResponse.trials:type_name -> determined.api.v1.TrialsSnapshotResponse.Trial
+	84,  // 50: determined.api.v1.TrialsSnapshotResponse.trials:type_name -> determined.api.v1.TrialsSnapshotResponse.Trial
 	0,   // 51: determined.api.v1.TrialsSampleRequest.metric_type:type_name -> determined.api.v1.MetricType
-	81,  // 52: determined.api.v1.TrialsSampleResponse.trials:type_name -> determined.api.v1.TrialsSampleResponse.Trial
-	24,  // 53: determined.api.v1.MoveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	19,  // 54: determined.api.v1.MoveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	100, // 55: determined.api.v1.GetModelDefTreeResponse.files:type_name -> determined.experiment.v1.FileNode
-	101, // 56: determined.api.v1.GetSearcherEventsResponse.searcher_events:type_name -> determined.experiment.v1.SearcherEvent
-	102, // 57: determined.api.v1.PostSearcherOperationsRequest.searcher_operations:type_name -> determined.experiment.v1.SearcherOperation
-	101, // 58: determined.api.v1.PostSearcherOperationsRequest.triggered_by_event:type_name -> determined.experiment.v1.SearcherEvent
-	84,  // 59: determined.api.v1.SearchExperimentExperiment.experiment:type_name -> determined.experiment.v1.Experiment
-	103, // 60: determined.api.v1.SearchExperimentExperiment.best_trial:type_name -> determined.trial.v1.Trial
-	78,  // 61: determined.api.v1.SearchExperimentsResponse.experiments:type_name -> determined.api.v1.SearchExperimentExperiment
-	90,  // 62: determined.api.v1.SearchExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
-	82,  // 63: determined.api.v1.TrialsSnapshotResponse.Trial.hparams:type_name -> google.protobuf.Struct
-	82,  // 64: determined.api.v1.TrialsSampleResponse.Trial.hparams:type_name -> google.protobuf.Struct
+	85,  // 52: determined.api.v1.TrialsSampleResponse.trials:type_name -> determined.api.v1.TrialsSampleResponse.Trial
+	28,  // 53: determined.api.v1.MoveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	23,  // 54: determined.api.v1.MoveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	104, // 55: determined.api.v1.GetModelDefTreeResponse.files:type_name -> determined.experiment.v1.FileNode
+	105, // 56: determined.api.v1.GetSearcherEventsResponse.searcher_events:type_name -> determined.experiment.v1.SearcherEvent
+	106, // 57: determined.api.v1.PostSearcherOperationsRequest.searcher_operations:type_name -> determined.experiment.v1.SearcherOperation
+	105, // 58: determined.api.v1.PostSearcherOperationsRequest.triggered_by_event:type_name -> determined.experiment.v1.SearcherEvent
+	88,  // 59: determined.api.v1.SearchExperimentExperiment.experiment:type_name -> determined.experiment.v1.Experiment
+	107, // 60: determined.api.v1.SearchExperimentExperiment.best_trial:type_name -> determined.trial.v1.Trial
+	82,  // 61: determined.api.v1.SearchExperimentsResponse.experiments:type_name -> determined.api.v1.SearchExperimentExperiment
+	94,  // 62: determined.api.v1.SearchExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
+	86,  // 63: determined.api.v1.TrialsSnapshotResponse.Trial.hparams:type_name -> google.protobuf.Struct
+	86,  // 64: determined.api.v1.TrialsSampleResponse.Trial.hparams:type_name -> google.protobuf.Struct
 	2,   // 65: determined.api.v1.TrialsSampleResponse.Trial.data:type_name -> determined.api.v1.DataPoint
 	66,  // [66:66] is the sub-list for method output_type
 	66,  // [66:66] is the sub-list for method input_type
@@ -6030,7 +6272,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteExperimentRequest); i {
+			switch v := v.(*PutExperimentLabelRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6042,7 +6284,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteExperimentResponse); i {
+			switch v := v.(*PutExperimentLabelResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6054,7 +6296,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteExperimentsRequest); i {
+			switch v := v.(*DeleteExperimentLabelRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6066,7 +6308,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteExperimentsResponse); i {
+			switch v := v.(*DeleteExperimentLabelResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6078,7 +6320,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetBestSearcherValidationMetricRequest); i {
+			switch v := v.(*DeleteExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6090,7 +6332,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetBestSearcherValidationMetricResponse); i {
+			switch v := v.(*DeleteExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6102,7 +6344,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PreviewHPSearchRequest); i {
+			switch v := v.(*DeleteExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6114,7 +6356,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PreviewHPSearchResponse); i {
+			switch v := v.(*DeleteExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6126,7 +6368,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ActivateExperimentRequest); i {
+			switch v := v.(*GetBestSearcherValidationMetricRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6138,7 +6380,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ActivateExperimentResponse); i {
+			switch v := v.(*GetBestSearcherValidationMetricResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6150,7 +6392,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExperimentActionResult); i {
+			switch v := v.(*PreviewHPSearchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6162,7 +6404,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ActivateExperimentsRequest); i {
+			switch v := v.(*PreviewHPSearchResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6174,7 +6416,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ActivateExperimentsResponse); i {
+			switch v := v.(*ActivateExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6186,7 +6428,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PauseExperimentRequest); i {
+			switch v := v.(*ActivateExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6198,7 +6440,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PauseExperimentResponse); i {
+			switch v := v.(*ExperimentActionResult); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6210,7 +6452,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BulkExperimentFilters); i {
+			switch v := v.(*ActivateExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6222,7 +6464,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PauseExperimentsRequest); i {
+			switch v := v.(*ActivateExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6234,7 +6476,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PauseExperimentsResponse); i {
+			switch v := v.(*PauseExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6246,7 +6488,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelExperimentRequest); i {
+			switch v := v.(*PauseExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6258,7 +6500,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelExperimentResponse); i {
+			switch v := v.(*BulkExperimentFilters); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6270,7 +6512,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelExperimentsRequest); i {
+			switch v := v.(*PauseExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6282,7 +6524,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CancelExperimentsResponse); i {
+			switch v := v.(*PauseExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6294,7 +6536,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KillExperimentRequest); i {
+			switch v := v.(*CancelExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6306,7 +6548,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KillExperimentResponse); i {
+			switch v := v.(*CancelExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6318,7 +6560,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KillExperimentsRequest); i {
+			switch v := v.(*CancelExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6330,7 +6572,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*KillExperimentsResponse); i {
+			switch v := v.(*CancelExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6342,7 +6584,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchiveExperimentRequest); i {
+			switch v := v.(*KillExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6354,7 +6596,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchiveExperimentResponse); i {
+			switch v := v.(*KillExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6366,7 +6608,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchiveExperimentsRequest); i {
+			switch v := v.(*KillExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6378,7 +6620,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchiveExperimentsResponse); i {
+			switch v := v.(*KillExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6390,7 +6632,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnarchiveExperimentRequest); i {
+			switch v := v.(*ArchiveExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6402,7 +6644,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnarchiveExperimentResponse); i {
+			switch v := v.(*ArchiveExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6414,7 +6656,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnarchiveExperimentsRequest); i {
+			switch v := v.(*ArchiveExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6426,7 +6668,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnarchiveExperimentsResponse); i {
+			switch v := v.(*ArchiveExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6438,7 +6680,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PatchExperimentRequest); i {
+			switch v := v.(*UnarchiveExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6450,7 +6692,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PatchExperimentResponse); i {
+			switch v := v.(*UnarchiveExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6462,7 +6704,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetExperimentCheckpointsRequest); i {
+			switch v := v.(*UnarchiveExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6474,7 +6716,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetExperimentCheckpointsResponse); i {
+			switch v := v.(*UnarchiveExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6486,7 +6728,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetExperimentValidationHistoryRequest); i {
+			switch v := v.(*PatchExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6498,7 +6740,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetExperimentValidationHistoryResponse); i {
+			switch v := v.(*PatchExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6510,7 +6752,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateExperimentRequest); i {
+			switch v := v.(*GetExperimentCheckpointsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6522,7 +6764,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateExperimentResponse); i {
+			switch v := v.(*GetExperimentCheckpointsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6534,7 +6776,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutExperimentRequest); i {
+			switch v := v.(*GetExperimentValidationHistoryRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6546,7 +6788,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutExperimentResponse); i {
+			switch v := v.(*GetExperimentValidationHistoryResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6558,7 +6800,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ContinueExperimentRequest); i {
+			switch v := v.(*CreateExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6570,7 +6812,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ContinueExperimentResponse); i {
+			switch v := v.(*CreateExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6582,7 +6824,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExpMetricNamesRequest); i {
+			switch v := v.(*PutExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6594,7 +6836,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExpMetricNamesResponse); i {
+			switch v := v.(*PutExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6606,7 +6848,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MetricBatchesRequest); i {
+			switch v := v.(*ContinueExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6618,7 +6860,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MetricBatchesResponse); i {
+			switch v := v.(*ContinueExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6630,7 +6872,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSnapshotRequest); i {
+			switch v := v.(*ExpMetricNamesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6642,7 +6884,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSnapshotResponse); i {
+			switch v := v.(*ExpMetricNamesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6654,7 +6896,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSampleRequest); i {
+			switch v := v.(*MetricBatchesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6666,7 +6908,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSampleResponse); i {
+			switch v := v.(*MetricBatchesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6678,7 +6920,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetModelDefRequest); i {
+			switch v := v.(*TrialsSnapshotRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6690,7 +6932,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetModelDefResponse); i {
+			switch v := v.(*TrialsSnapshotResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6702,7 +6944,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MoveExperimentRequest); i {
+			switch v := v.(*TrialsSampleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6714,7 +6956,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MoveExperimentResponse); i {
+			switch v := v.(*TrialsSampleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6726,7 +6968,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MoveExperimentsRequest); i {
+			switch v := v.(*GetModelDefRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6738,7 +6980,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MoveExperimentsResponse); i {
+			switch v := v.(*GetModelDefResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6750,7 +6992,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetModelDefTreeRequest); i {
+			switch v := v.(*MoveExperimentRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6762,7 +7004,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetModelDefTreeResponse); i {
+			switch v := v.(*MoveExperimentResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6774,7 +7016,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetModelDefFileRequest); i {
+			switch v := v.(*MoveExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6786,7 +7028,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetModelDefFileResponse); i {
+			switch v := v.(*MoveExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6798,7 +7040,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSearcherEventsRequest); i {
+			switch v := v.(*GetModelDefTreeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6810,7 +7052,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSearcherEventsResponse); i {
+			switch v := v.(*GetModelDefTreeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6822,7 +7064,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PostSearcherOperationsRequest); i {
+			switch v := v.(*GetModelDefFileRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6834,7 +7076,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PostSearcherOperationsResponse); i {
+			switch v := v.(*GetModelDefFileResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6846,7 +7088,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SearchExperimentsRequest); i {
+			switch v := v.(*GetSearcherEventsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6858,7 +7100,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SearchExperimentExperiment); i {
+			switch v := v.(*GetSearcherEventsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6870,7 +7112,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[77].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SearchExperimentsResponse); i {
+			switch v := v.(*PostSearcherOperationsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6882,7 +7124,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[78].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSnapshotResponse_Trial); i {
+			switch v := v.(*PostSearcherOperationsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6894,6 +7136,54 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[79].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SearchExperimentsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_experiment_proto_msgTypes[80].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SearchExperimentExperiment); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_experiment_proto_msgTypes[81].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SearchExperimentsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_experiment_proto_msgTypes[82].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TrialsSnapshotResponse_Trial); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_experiment_proto_msgTypes[83].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TrialsSampleResponse_Trial); i {
 			case 0:
 				return &v.state
@@ -6907,19 +7197,19 @@ func file_determined_api_v1_experiment_proto_init() {
 		}
 	}
 	file_determined_api_v1_experiment_proto_msgTypes[0].OneofWrappers = []interface{}{}
-	file_determined_api_v1_experiment_proto_msgTypes[43].OneofWrappers = []interface{}{
+	file_determined_api_v1_experiment_proto_msgTypes[47].OneofWrappers = []interface{}{
 		(*GetExperimentCheckpointsRequest_SortByAttr)(nil),
 		(*GetExperimentCheckpointsRequest_SortByMetric)(nil),
 	}
-	file_determined_api_v1_experiment_proto_msgTypes[47].OneofWrappers = []interface{}{}
-	file_determined_api_v1_experiment_proto_msgTypes[75].OneofWrappers = []interface{}{}
+	file_determined_api_v1_experiment_proto_msgTypes[51].OneofWrappers = []interface{}{}
+	file_determined_api_v1_experiment_proto_msgTypes[79].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_experiment_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   80,
+			NumMessages:   84,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

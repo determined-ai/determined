@@ -1,10 +1,10 @@
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import { Failed, Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { TreeNode } from 'determined-ui/utils/types';
 import yaml from 'js-yaml';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import Icon from 'components/kit/Icon';
-import { TreeNode } from 'components/kit/internal/types';
-import Spinner from 'components/kit/Spinner';
-import { Failed, Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
@@ -14,7 +14,7 @@ import { isSingleTrialExperiment } from 'utils/experiment';
 
 import css from './ExperimentCodeViewer.module.scss';
 
-const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
+const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
 
 const configIcon = <Icon name="settings" title="settings" />;
 

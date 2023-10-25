@@ -1,6 +1,6 @@
+import Message from 'determined-ui/Message';
 import React from 'react';
 
-import Message from 'components/kit/Message';
 import Link from 'components/Link';
 import Profiler from 'pages/TrialDetails/Profiles/Profiler';
 import { paths } from 'routes/utils';

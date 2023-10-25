@@ -1,16 +1,16 @@
 import { Typography } from 'antd';
+import Avatar, { Size } from 'determined-ui/Avatar';
+import Card from 'determined-ui/Card';
+import Icon from 'determined-ui/Icon';
+import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
-import Card from 'components/kit/Card';
-import Icon from 'components/kit/Icon';
-import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 
-import DynamicIcon from './DynamicIcon';
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
 
@@ -58,7 +58,7 @@ const ProjectCard: React.FC<Props> = ({
             {showWorkspace && project.workspaceId !== 1 && (
               <Tooltip content={project.workspaceName}>
                 <div className={css.workspaceIcon}>
-                  <DynamicIcon name={project.workspaceName} size={20} />
+                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
                 </div>
               </Tooltip>
             )}

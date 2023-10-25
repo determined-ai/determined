@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
+import { ThemeProvider } from 'determined-ui/Theme';
 import React, { useCallback, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider } from 'components/kit/Theme';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';

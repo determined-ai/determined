@@ -1,17 +1,25 @@
+import Avatar, { Props as AvatarProps } from 'determined-ui/Avatar';
 import React from 'react';
 
-import Avatar, { Props as AvatarProps } from 'components/kit/Avatar';
 import { User } from 'types';
 import { getDisplayName } from 'utils/user';
 
-export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
+export interface Props extends Omit<AvatarProps, 'darkLight' | 'text'> {
   user?: User;
+  deactivated?: boolean;
 }
 
-const UserAvatar: React.FC<Props> = ({ user, ...rest }) => {
+const UserAvatar: React.FC<Props> = ({ user, deactivated, ...rest }) => {
   const displayName = getDisplayName(user);
 
-  return <Avatar {...rest} displayName={displayName} />;
+  return (
+    <Avatar
+      {...rest}
+      inactive={deactivated}
+      text={displayName}
+      tooltipText={deactivated ? `${displayName} (deactivated)` : displayName}
+    />
+  );
 };
 
 export default UserAvatar;

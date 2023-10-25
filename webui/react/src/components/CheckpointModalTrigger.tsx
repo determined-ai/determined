@@ -1,8 +1,8 @@
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback } from 'react';
 
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
 import ModelCreateModal from 'components/ModelCreateModal';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { ModalCloseReason } from 'hooks/useModal/useModal';

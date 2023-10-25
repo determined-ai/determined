@@ -1,10 +1,9 @@
 import { Select as AntdSelect, SelectProps as AntdSelectProps } from 'antd';
 import type { DefaultOptionType, RefSelectProps, SelectValue } from 'antd/es/select';
-import React, { forwardRef, useCallback, useMemo, useState } from 'react';
-
 import Icon from 'components/kit/Icon';
 import Label, { LabelTypes } from 'components/kit/internal/Label';
 import { useSelectEscape } from 'components/kit/internal/useInputEscape';
+import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import css from './Select.module.scss';
 

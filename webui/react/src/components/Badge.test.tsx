@@ -1,8 +1,8 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ThemeProvider } from 'determined-ui/Theme';
 import React, { useState } from 'react';
 
-import { ThemeProvider } from 'components/kit/Theme';
 import { stateToLabel } from 'constants/states';
 import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';

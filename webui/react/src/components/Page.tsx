@@ -1,9 +1,9 @@
+import { MenuItem } from 'determined-ui/Dropdown';
+import Spinner from 'determined-ui/Spinner';
 import { useObservable } from 'micro-observables';
 import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
-import { MenuItem } from 'components/kit/Dropdown';
-import Spinner from 'components/kit/Spinner';
 import PageHeader from 'components/PageHeader';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';

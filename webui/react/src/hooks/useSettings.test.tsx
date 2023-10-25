@@ -1,10 +1,10 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
+import { ThemeProvider } from 'determined-ui/Theme';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import { ThemeProvider } from 'components/kit/Theme';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -37,8 +37,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -47,8 +47,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };

@@ -1,7 +1,7 @@
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';

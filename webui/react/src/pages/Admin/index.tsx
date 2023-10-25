@@ -1,14 +1,17 @@
 import type { TabsProps } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import Pivot from 'determined-ui/Pivot';
+import { Loadable } from 'determined-ui/utils/loadable';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
 import GroupManagement from 'pages/Admin/GroupManagement';
 import UserManagement from 'pages/Admin/UserManagement';
 import { paths } from 'routes/utils';
+import { getGroups } from 'services/api';
 import determinedStore from 'stores/determinedInfo';
+import userStore from 'stores/users';
 import { ValueOf } from 'types';
 import { useObservable } from 'utils/observable';
 
@@ -33,9 +36,27 @@ const SettingsContent: React.FC = () => {
   const navigate = useNavigate();
   const { tab } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-
+  const [totalGroup, setTotalGroup] = useState<number | undefined>(undefined);
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canAdministrateUsers } = usePermissions();
+  const canceler = useRef(new AbortController());
+
+  const loadableUsers = useObservable(userStore.getUsers());
+
+  const getGroupTotal = useCallback(async () => {
+    const response = await getGroups(
+      {
+        limit: 1,
+        offset: 0,
+      },
+      { signal: canceler.current.signal },
+    );
+    setTotalGroup(response.pagination?.total);
+  }, [canceler]);
+
+  useEffect(() => {
+    getGroupTotal();
+  }, [getGroupTotal]);
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -49,10 +70,15 @@ const SettingsContent: React.FC = () => {
     const items: TabsProps['items'] = [];
 
     if (canAdministrateUsers) {
-      items.push({
-        children: <UserManagement />,
-        key: TAB_KEYS[TabType.UserManagement],
-        label: TabType.UserManagement,
+      Loadable.match(loadableUsers, {
+        _: () => null,
+        Loaded: (users) => {
+          items.push({
+            children: <UserManagement />,
+            key: TAB_KEYS[TabType.UserManagement],
+            label: `${TabType.UserManagement} ${users.length}`,
+          });
+        },
       });
     }
 
@@ -60,12 +86,12 @@ const SettingsContent: React.FC = () => {
       items.push({
         children: <GroupManagement />,
         key: TAB_KEYS[TabType.GroupManagement],
-        label: TabType.GroupManagement,
+        label: `${TabType.GroupManagement} ${totalGroup ?? ''}`,
       });
     }
 
     return items;
-  }, [canAdministrateUsers, rbacEnabled]);
+  }, [canAdministrateUsers, rbacEnabled, totalGroup, loadableUsers]);
 
   return (
     <Pivot

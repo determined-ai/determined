@@ -1,4 +1,10 @@
 import { Button, Space, Typography } from 'antd';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Spinner from 'determined-ui/Spinner';
+import Tags from 'determined-ui/Tags';
+import { getStateColorCssVar } from 'determined-ui/Theme';
+import Tooltip from 'determined-ui/Tooltip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge from 'components/Badge';
@@ -11,12 +17,6 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Spinner from 'components/kit/Spinner';
-import Tags from 'components/kit/Tags';
-import { getStateColorCssVar } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';

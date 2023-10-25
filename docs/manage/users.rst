@@ -206,6 +206,8 @@ user and group on an agent can be configured in the ``master.yaml`` file located
        group: root
        gid: 0
 
+.. _run-unprivileged-tasks:
+
 ***********************************
  Run Unprivileged Tasks by Default
 ***********************************

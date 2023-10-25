@@ -5,16 +5,16 @@ import { json } from '@codemirror/legacy-modes/mode/javascript';
 import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { Tree } from 'antd';
-import React, { lazy, Suspense, useCallback, useMemo } from 'react';
-
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
 import Section from 'components/kit/internal/Section';
-import { useThemeState } from 'components/kit/internal/theme';
 import { ErrorHandler, TreeNode, ValueOf } from 'components/kit/internal/types';
 import Message from 'components/kit/Message';
 import Spinner from 'components/kit/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
+import React, { lazy, Suspense, useCallback, useMemo } from 'react';
+
+import { useThemeState } from 'components/kit/internal/theme';
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
 const { DirectoryTree } = Tree;

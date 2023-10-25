@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Button from 'determined-ui/Button';
+import { useModal } from 'determined-ui/Modal';
 import React from 'react';
 
 import ExperimentCreateModalComponent, {
@@ -7,8 +9,6 @@ import ExperimentCreateModalComponent, {
   FULL_CONFIG_BUTTON_TEXT,
   SIMPLE_CONFIG_BUTTON_TEXT,
 } from 'components/ExperimentCreateModal';
-import Button from 'components/kit/Button';
-import { useModal } from 'components/kit/Modal';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 

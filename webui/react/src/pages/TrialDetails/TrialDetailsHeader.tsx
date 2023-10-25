@@ -1,10 +1,10 @@
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';

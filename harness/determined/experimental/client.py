@@ -48,7 +48,7 @@ import functools
 import logging
 import pathlib
 import warnings
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, TypeVar, Union
 
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental._util import OrderBy
@@ -68,14 +68,17 @@ from determined.common.experimental.experiment import (  # noqa: F401
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy  # noqa: F401
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
+from determined.common.experimental.project import Project  # noqa: F401
 from determined.common.experimental.trial import Trial, TrialOrderBy, TrialSortBy  # noqa: F401
 from determined.common.experimental.user import User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 _determined = None  # type: Optional[Determined]
 
+C = TypeVar("C", bound=Callable[..., Any])
 
-def _require_singleton(fn: Callable) -> Callable:
+
+def _require_singleton(fn: C) -> C:
     @functools.wraps(fn)
     def _fn(*args: Any, **kwargs: Any) -> Any:
         global _determined
@@ -83,7 +86,8 @@ def _require_singleton(fn: Callable) -> Callable:
             _determined = Determined()
         return fn(*args, **kwargs)
 
-    return _fn
+    # Force type checker to accept that the signature of _fn is the same as the signature of fn.
+    return _fn  # type: ignore
 
 
 def login(
@@ -427,23 +431,34 @@ def remove_oauth_client(client_id: str) -> None:
     return _determined.remove_oauth_client(client_id)
 
 
-@_require_singleton
 def stream_trials_metrics(trial_ids: List[int], group: str) -> Iterable[TrialMetrics]:
+    warnings.warn(
+        "client.stream_trials_metrics is deprecated. Use client.iter_trials_metrics instead",
+        FutureWarning,
+        stacklevel=2,
+    )
+    return iter_trials_metrics(trial_ids, group=group)
+
+
+@_require_singleton
+def iter_trials_metrics(trial_ids: List[int], group: str) -> Iterable[TrialMetrics]:
     """Iterate over the metrics for one or more trials.
 
     This function opens up a persistent connection to the Determined master to receive trial
     metrics. For as long as the connection remains open, the generator it returns yields the
     TrialMetrics it receives.
 
-    Args:
-        trial_ids: List of trial IDs to get metrics for.
-        group: The metrics group to stream. Must be either "training" or "validation".
+    Arguments:
+        trial_ids: The trial IDs to iterate over metrics for.
+        group: The metric group to iterate over.  Common values are "validation" and "training",
+            but group can be any value passed to master when reporting metrics during training
+            (usually via a context's `report_metrics`).
 
     Returns:
         A generator of :class:`~determined.experimental.client.TrialMetrics` objects.
     """
     assert _determined is not None
-    return _determined.stream_trials_metrics(trial_ids, group=group)
+    return _determined.iter_trials_metrics(trial_ids, group=group)
 
 
 @_require_singleton

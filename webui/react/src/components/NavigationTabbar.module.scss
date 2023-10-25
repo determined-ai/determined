@@ -38,4 +38,9 @@
   .user {
     padding: 9px 16px;
   }
+  .newWorkspaceIcon {
+    display: flex;
+    place-content: center;
+    width: var(--icon-large);
+  }
 }

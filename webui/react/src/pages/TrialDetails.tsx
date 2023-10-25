@@ -1,11 +1,11 @@
 import type { TabsProps } from 'antd';
+import Message from 'determined-ui/Message';
+import Pivot from 'determined-ui/Pivot';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import Message from 'components/kit/Message';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
