@@ -3,6 +3,7 @@ import useUI, { UIProvider } from 'determined-ui/Theme';
 import { Loadable, NotLoaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
+
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

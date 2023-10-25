@@ -1,5 +1,6 @@
 import { StyleProvider } from '@ant-design/cssinjs';
 import { theme as AntdTheme, ConfigProvider } from 'antd';
+import { RecordKey } from 'components/kit/internal/types';
 import React, { Dispatch, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import {
@@ -8,7 +9,6 @@ import {
   themeStateReducer,
   useThemeState,
 } from 'components/kit/internal/theme';
-import { RecordKey } from 'components/kit/internal/types';
 
 import { globalCssVars, Mode, Theme } from './themeUtils';
 

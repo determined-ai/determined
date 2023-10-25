@@ -1,15 +1,15 @@
-import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { throttle } from 'throttle-debounce';
-import uPlot, { AlignedData } from 'uplot';
-
 import Button from 'components/kit/Button';
 import Icon from 'components/kit/Icon';
-import { useThemeState } from 'components/kit/internal/theme';
 import { ErrorHandler, ErrorLevel, ErrorType, XAxisDomain } from 'components/kit/internal/types';
 import usePrevious from 'components/kit/internal/usePrevious';
 import useResize from 'components/kit/internal/useResize';
 import Spinner from 'components/kit/Spinner';
 import useUI from 'components/kit/Theme';
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
+import uPlot, { AlignedData } from 'uplot';
+
+import { useThemeState } from 'components/kit/internal/theme';
 
 import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
