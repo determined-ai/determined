@@ -46,3 +46,4 @@ Examples let you build off of an existing model that already runs on Determined.
    :glob:
 
    ./*
+   ./*/_index
