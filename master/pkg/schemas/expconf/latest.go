@@ -27,6 +27,11 @@ type (
 	IntHyperparameter         = IntHyperparameterV0
 	Labels                    = LabelsV0
 	Length                    = LengthV0
+	LogPoliciesConfig         = LogPoliciesConfigV0
+	LogPolicy                 = LogPolicyV0
+	LogAction                 = LogActionV0
+	LogActionCancelRetries    = LogActionCancelRetriesV0
+	LogActionExcludeNode      = LogActionExcludeNodeV0
 	LogHyperparameter         = LogHyperparameterV0
 	OptimizationsConfig       = OptimizationsConfigV0
 	ProfilingConfig           = ProfilingConfigV0

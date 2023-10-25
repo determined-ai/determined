@@ -108,6 +108,16 @@
                 "type": "string"
             }
         },
+        "log_policies": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-policy.json"
+            }
+        },
         "max_restarts": {
             "type": [
                 "integer",
