@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
 
-from determined.common import api, yaml
+from determined.common import api, util
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import experimentv1State, trialv1State
 from tests import api_utils
@@ -954,7 +954,7 @@ def run_basic_test_with_temp_config(
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         experiment_id = run_basic_test(
             tf.name,
             model_def_path,
@@ -972,7 +972,7 @@ def run_failure_test_with_temp_config(
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         return run_failure_test(tf.name, model_def_path, error_str=error_str)
 
 

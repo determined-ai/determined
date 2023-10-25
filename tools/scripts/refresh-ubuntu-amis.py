@@ -54,7 +54,7 @@ def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
 
 def update_bumpenvs_yaml(table: List[List[str]], path: str) -> None:
     with open(path) as f:
-        bumpenvs_conf = yaml.safe_load(f)
+        bumpenvs_conf = yaml.YAML(typ="safe", pure=True).load(f)
 
     # All master-amis and bastion-amis in bumpenvs.yaml are updated.
     # The agent-amis are updated after each rebuild of the environments repo.
@@ -74,7 +74,7 @@ def update_bumpenvs_yaml(table: List[List[str]], path: str) -> None:
                 update_tag_for_image_type(subconf, new_ami)
 
     with open(path, "w") as f:
-        yaml.dump(bumpenvs_conf, f)
+        yaml.YAML(typ="safe", pure=True).dump(bumpenvs_conf, f)
 
 
 def update_packer_json(table: List[List[str]], path: str) -> None:

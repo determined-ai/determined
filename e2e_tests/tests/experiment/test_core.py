@@ -4,7 +4,7 @@ import tempfile
 
 import pytest
 
-from determined.common import api, yaml
+from determined.common import api, util
 from determined.common.api import bindings
 from determined.experimental import Determined
 from tests import api_utils
@@ -350,7 +350,7 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config_obj, f)
+            util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), [])
 
     try:

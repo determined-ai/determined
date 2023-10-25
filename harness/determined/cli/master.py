@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 import determined.cli.render
 from determined import cli
 from determined.cli.errors import CliError
-from determined.common import yaml
+from determined.common import util
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -62,7 +62,7 @@ def config(args: Namespace) -> None:
     if args.json:
         determined.cli.render.print_json(resp)
     else:
-        print(yaml.safe_dump(resp, default_flow_style=False))
+        print(util.yaml_safe_dump(resp, default_flow_style=False))
 
 
 def get_master(args: Namespace) -> None:
@@ -70,7 +70,7 @@ def get_master(args: Namespace) -> None:
     if args.json:
         determined.cli.render.print_json(resp.to_json())
     else:
-        print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
+        print(util.yaml_safe_dump(resp.to_json(), default_flow_style=False))
 
 
 def format_log_entry(log: bindings.v1LogEntry) -> str:

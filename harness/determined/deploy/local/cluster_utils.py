@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Typ
 import appdirs
 import docker
 
-from determined.common import yaml
+from determined.common import util
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.healthcheck import wait_for_master
 
@@ -158,7 +158,7 @@ def master_up(
 
     if master_config_path is not None:
         with master_config_path.open() as f:
-            master_conf = yaml.safe_load(f)
+            master_conf = util.yaml_safe_load(f)
     else:
         master_conf = MASTER_CONF_DEFAULT
         make_temp_conf = True
@@ -188,7 +188,7 @@ def master_up(
     if make_temp_conf:
         fd, temp_path = tempfile.mkstemp(prefix="det-deploy-local-master-config-")
         with open(fd, "w") as f:
-            yaml.dump(master_conf, f)
+            util.yaml_safe_dump(master_conf, f)
         master_config_path = pathlib.Path(temp_path)
 
     # This is always true by now, but mypy needs help.
@@ -423,7 +423,7 @@ def agent_up(
     volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
     if agent_config_path is not None:
         with agent_config_path.open() as f:
-            agent_conf = yaml.safe_load(f)
+            agent_conf = util.yaml_safe_load(f)
         volumes += [f"{os.path.abspath(agent_config_path)}:/etc/determined/agent.yaml"]
 
     # Fallback on agent config for options not specified as flags.
