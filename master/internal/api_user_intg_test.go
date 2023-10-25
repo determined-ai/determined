@@ -25,6 +25,7 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -68,6 +69,10 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 			thePgDB = db.MustResolveTestPostgres(t)
 			db.MustMigrateTestPostgres(t, thePgDB, "file://../static/migrations")
 			require.NoError(t, etc.SetRootPath("../static/srv"))
+
+			l, err := logpattern.New(context.TODO())
+			require.NoError(t, err)
+			logpattern.SetDefault(l)
 		}
 		pgdb = thePgDB
 	} else {

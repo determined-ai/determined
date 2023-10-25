@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -22,11 +23,13 @@ import (
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -192,6 +195,56 @@ func TestGetTasksAuthZ(t *testing.T) {
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, []string{"alloc0", "alloc2"}, maps.Keys(resp.AllocationIdToSummary))
+}
+
+func TestPostTaskLogsLogPattern(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
+	require.NoError(t, err)
+	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "sub", RawAction: expconf.LogAction{
+			RawCancelRetries: &expconf.LogActionCancelRetries{},
+		}},
+		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: expconf.LogAction{
+			RawExcludeNode: &expconf.LogActionExcludeNode{},
+		}},
+	}
+
+	v, err := json.Marshal(activeConfig)
+	require.NoError(t, err)
+	var m map[string]any
+	require.NoError(t, json.Unmarshal(v, &m))
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Where("id = ?", trial.ExperimentID).
+		Set("config = ?", m).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "stringsubstring",
+			},
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "12345",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"a1"}, logpattern.DisallowedNodes(task.TaskID).ToSlice())
+
+	retryInfo, err := logpattern.ShouldRetry(ctx, task.TaskID)
+	require.NoError(t, err)
+	require.Equal(t,
+		[]logpattern.DontRetryTrigger{{Regex: `sub`, TriggeringLog: "stringsubstring"}},
+		retryInfo)
 }
 
 func TestTaskAuthZ(t *testing.T) {

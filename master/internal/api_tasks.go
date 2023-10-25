@@ -9,6 +9,7 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -380,6 +382,27 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func (a *apiServer) monitor(ctx context.Context, taskID model.TaskID, logs []*model.TaskLog) error {
+	isExp, exp, err := expFromTaskID(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		return nil
+	}
+
+	policies, err := db.ActiveLogPolicies(ctx, exp.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := logpattern.Monitor(ctx, taskID, logs, policies); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *apiServer) PostTaskLogs(
 	ctx context.Context, req *apiv1.PostTaskLogsRequest,
 ) (*apiv1.PostTaskLogsResponse, error) {
@@ -412,6 +435,10 @@ func (a *apiServer) PostTaskLogs(
 
 	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
+	}
+
+	if err := a.monitor(ctx, model.TaskID(taskID), logs); err != nil {
+		log.Errorf("moniter logs against log pattern policies: %s", err)
 	}
 
 	return &apiv1.PostTaskLogsResponse{}, nil

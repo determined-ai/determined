@@ -130,6 +130,12 @@ func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
 		RequiredDuringSchedulingIgnoredDuringExecution.
 		NodeSelectorTerms[0].
 		MatchExpressions, nodeSelectorTerm)
+
+	// Test idempotency.
+	copy := p.DeepCopy()
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+	require.Equal(t, copy, p)
 }
 
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
