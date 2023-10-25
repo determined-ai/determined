@@ -4,16 +4,13 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sync"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/set"
 
 	"github.com/uptrace/bun"
 )
@@ -23,9 +20,19 @@ const regexCacheSize = 256
 var defaultSingleton *logPatternPolicies
 
 type logPatternPolicies struct {
-	blockListCache map[model.TaskID]*set.Set[string]
-	mu             sync.RWMutex
-	regexCache     *lru.Cache[string, *regexp.Regexp]
+	regexCache *lru.Cache[string, *regexp.Regexp]
+}
+
+// New create the log pattern policies singleton.
+func New(ctx context.Context) (*logPatternPolicies, error) { //nolint: revive
+	regexCache, err := lru.New[string, *regexp.Regexp](regexCacheSize)
+	if err != nil {
+		return nil, fmt.Errorf("creating LRU cache: %w", err)
+	}
+
+	return &logPatternPolicies{
+		regexCache: regexCache,
+	}, nil
 }
 
 func (l *logPatternPolicies) getCompiledRegex(regex string) (*regexp.Regexp, error) {
@@ -40,42 +47,6 @@ func (l *logPatternPolicies) getCompiledRegex(regex string) (*regexp.Regexp, err
 	l.regexCache.Add(regex, compiledRegex)
 
 	return compiledRegex, nil
-}
-
-// New create the log pattern policies singleton.
-// There are two reasons for this using a cache
-//  1. Avoid the possibility this feature causes a major slowdown to Scheduler
-//     that won't be obvious till it run at scale.
-//  2. Avoid putting possible transient db errors in the path of the Scheduler.
-//
-// I think there is going to be a decent chance this cache approach will somehow leak tasks
-// in the future but I think even if we never removed items from the cache
-// we would still probably be okay.
-func New(ctx context.Context) (*logPatternPolicies, error) { //nolint: revive
-	var blockedNodes []*retryOnDifferentNode
-	if err := db.Bun().NewSelect().Model(&blockedNodes).
-		Where("task_ended = false").
-		Scan(ctx, &blockedNodes); err != nil {
-		return nil, fmt.Errorf("getting blocked nodes: %w", err)
-	}
-
-	blockListCache := make(map[model.TaskID]*set.Set[string])
-	for _, b := range blockedNodes {
-		if _, ok := blockListCache[b.TaskID]; !ok {
-			blockListCache[b.TaskID] = ptrs.Ptr(set.New[string]())
-		}
-		blockListCache[b.TaskID].Insert(b.NodeName)
-	}
-
-	regexCache, err := lru.New[string, *regexp.Regexp](regexCacheSize)
-	if err != nil {
-		return nil, fmt.Errorf("creating LRU cache: %w", err)
-	}
-
-	return &logPatternPolicies{
-		blockListCache: blockListCache,
-		regexCache:     regexCache,
-	}, nil
 }
 
 func (l *logPatternPolicies) monitor(ctx context.Context,
@@ -107,7 +78,7 @@ func (l *logPatternPolicies) monitor(ctx context.Context,
 					}
 
 				case expconf.LogActionExcludeNode:
-					if err := l.addRetryOnDifferentNode(
+					if err := addRetryOnDifferentNode(
 						ctx, model.TaskID(log.TaskID), *log.AgentID, policy.Pattern(), log.Log,
 					); err != nil {
 						return fmt.Errorf("adding retry on different node: %w", err)
@@ -123,25 +94,6 @@ func (l *logPatternPolicies) monitor(ctx context.Context,
 	return nil
 }
 
-func (l *logPatternPolicies) disallowedNodes(taskID model.TaskID) *set.Set[string] {
-	l.mu.RLock()
-	defer l.mu.RUnlock()
-
-	disallowedNodes := l.blockListCache[taskID]
-	if disallowedNodes != nil {
-		return disallowedNodes
-	}
-
-	return ptrs.Ptr(set.New[string]())
-}
-
-func (l *logPatternPolicies) reportTaskDone(taskID model.TaskID) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	delete(l.blockListCache, taskID)
-}
-
 type retryOnDifferentNode struct {
 	bun.BaseModel `bun:"table:log_policy_retry_on_different_node"`
 
@@ -153,12 +105,27 @@ type retryOnDifferentNode struct {
 	TaskEnded     bool         `bun:"task_ended"`
 }
 
-func (l *logPatternPolicies) addRetryOnDifferentNode(
+// GetBlockedNodes returns nodes you can't schedule on due to log pattern policies.
+func GetBlockedNodes(ctx context.Context, taskID model.TaskID) ([]string, error) {
+	var resp []retryOnDifferentNode
+	if err := db.Bun().NewSelect().Model(&resp).
+		Where("task_id = ?", taskID).
+		Column("node_name").
+		Distinct().
+		Scan(ctx, &resp); err != nil {
+		return nil, fmt.Errorf("getting nodes for taskID %s: %w", taskID, err)
+	}
+
+	var o []string
+	for _, r := range resp {
+		o = append(o, r.NodeName)
+	}
+	return o, nil
+}
+
+func addRetryOnDifferentNode(
 	ctx context.Context, taskID model.TaskID, nodeName, regex, triggeringLog string,
 ) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	m := &retryOnDifferentNode{
 		TaskID:        taskID,
 		NodeName:      nodeName,
@@ -181,11 +148,6 @@ func (l *logPatternPolicies) addRetryOnDifferentNode(
 	tasklogger.Insert(tasklogger.CreateLogFromMaster(taskID, model.LogLevelError,
 		fmt.Sprintf("(log '%q' matched regex %s) therefore will not schedule on %s\n",
 			triggeringLog, regex, nodeName)))
-
-	if _, ok := l.blockListCache[taskID]; !ok {
-		l.blockListCache[taskID] = ptrs.Ptr(set.New[string]())
-	}
-	l.blockListCache[taskID].Insert(nodeName)
 	return nil
 }
 

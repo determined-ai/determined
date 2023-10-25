@@ -472,6 +472,44 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 	}
 }
 
+func TestFindFitDisallowedNodes(t *testing.T) {
+	system := actor.NewSystem(t.Name())
+	agents := []*agentState{
+		newFakeAgentState(t, system, "agent1", 4, 0, 100, 0),
+		newFakeAgentState(t, system, "agent2", 4, 0, 100, 0),
+	}
+	agentsByHandler, _ := byHandler(agents...)
+
+	task := &sproto.AllocateRequest{
+		BlockedNodes: []string{"agent1", "agent2"},
+		AllocationID: "a",
+		SlotsNeeded:  1,
+		TaskID:       "noAgents",
+	}
+	fits := findFits(task, agentsByHandler, BestFit, false)
+	assert.Assert(t, len(fits) == 0)
+
+	task = &sproto.AllocateRequest{
+		BlockedNodes: []string{"agent1"},
+		AllocationID: "a",
+		SlotsNeeded:  1,
+		TaskID:       "notOnAgent1",
+	}
+	fits = findFits(task, agentsByHandler, BestFit, false)
+	assert.Assert(t, len(fits) == 1)
+	assert.Equal(t, fits[0].Agent, agents[1])
+
+	task = &sproto.AllocateRequest{
+		BlockedNodes: []string{"agent2"},
+		AllocationID: "a",
+		SlotsNeeded:  1,
+		TaskID:       "notOnAgent2",
+	}
+	fits = findFits(task, agentsByHandler, BestFit, false)
+	assert.Assert(t, len(fits) == 1)
+	assert.Equal(t, fits[0].Agent, agents[0])
+}
+
 func byHandler(
 	handlers ...*agentState,
 ) (map[*actor.Ref]*agentState, []*agentState) {

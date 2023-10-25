@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -136,6 +137,42 @@ func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
 	require.Equal(t, copy, p)
+}
+
+func TestAddDisallowedNodesToPodSpec(t *testing.T) {
+	p := &k8sV1.Pod{}
+	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
+
+	copy := p.DeepCopy()
+
+	// No block list adds anything.
+	addDisallowedNodesToPodSpec(&sproto.AllocateRequest{
+		BlockedNodes: nil,
+	}, p)
+	require.Equal(t, copy, p)
+
+	addDisallowedNodesToPodSpec(&sproto.AllocateRequest{
+		BlockedNodes: []string{"a1", "a2"},
+	}, p)
+
+	expectedA1 := k8sV1.NodeSelectorRequirement{
+		Key:      "metadata.name",
+		Operator: k8sV1.NodeSelectorOpNotIn,
+		Values:   []string{"a1"},
+	}
+	expectedA2 := k8sV1.NodeSelectorRequirement{
+		Key:      "metadata.name",
+		Operator: k8sV1.NodeSelectorOpNotIn,
+		Values:   []string{"a2"},
+	}
+
+	for _, e := range []k8sV1.NodeSelectorRequirement{expectedA1, expectedA2} {
+		require.Contains(t, p.Spec.Affinity.
+			NodeAffinity.
+			RequiredDuringSchedulingIgnoredDuringExecution.
+			NodeSelectorTerms[0].
+			MatchFields, e)
+	}
 }
 
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {

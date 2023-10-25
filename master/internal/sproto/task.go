@@ -48,6 +48,8 @@ type (
 
 		// Logging context of the allocation actor.
 		LogContext logger.Context
+
+		BlockedNodes []string
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.

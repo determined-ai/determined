@@ -584,6 +584,7 @@ func (k *kubernetesResourcePool) restoreResources(
 	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) ([]*k8sPodResources, error) {
 	restoreResponses, err := k.podsService.ReattachAllocationPods(reattachAllocationPods{
+		req:          req,
 		allocationID: req.AllocationID,
 		numPods:      numPods,
 		slots:        slotsPerPod,
@@ -727,6 +728,7 @@ func (p k8sPodResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
 	return p.podsService.StartTaskPod(StartTaskPod{
+		Req:          p.req,
 		AllocationID: p.req.AllocationID,
 		Spec:         spec,
 		Slots:        p.slots,

@@ -1,6 +1,8 @@
 package kubernetesrm
 
 import (
+	"github.com/determined-ai/determined/master/internal/sproto"
+
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -11,6 +13,7 @@ import (
 type (
 	// StartTaskPod notifies the pods actor to start a pod with the task spec.
 	StartTaskPod struct {
+		Req          *sproto.AllocateRequest
 		AllocationID model.AllocationID
 		Spec         tasks.TaskSpec
 		Slots        int

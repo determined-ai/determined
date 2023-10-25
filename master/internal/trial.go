@@ -195,8 +195,6 @@ func (t *trial) exit(reason *model.ExitedReason) {
 }
 
 func (t *trial) close() error {
-	logpattern.ReportTaskDone(t.taskID)
-
 	t.wg.Close()
 	if !t.idSet {
 		return nil
@@ -377,6 +375,11 @@ func (t *trial) maybeAllocateTask() error {
 	name := fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID)
 	t.syslog.Info("decided to allocate trial")
 
+	blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), t.taskID)
+	if err != nil {
+		return err
+	}
+
 	restoredAllocation, err := t.maybeRestoreAllocation()
 	if err != nil {
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
@@ -404,6 +407,8 @@ func (t *trial) maybeAllocateTask() error {
 			Restore:     true,
 			ProxyPorts: sproto.NewProxyPortConfig(
 				tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
+
+			BlockedNodes: blockedNodes,
 		}
 		t.syslog.
 			WithField("allocation-id", ar.AllocationID).
@@ -445,6 +450,8 @@ func (t *trial) maybeAllocateTask() error {
 
 		Preemptible: true,
 		ProxyPorts:  sproto.NewProxyPortConfig(tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
+
+		BlockedNodes: blockedNodes,
 	}
 
 	t.syslog.
