@@ -159,6 +159,17 @@ describe('FilterFormStore', () => {
   });
 
   describe('Data Interaction', () => {
+    const getFormset = (filterFormStore: FilterFormStore) => {
+      const loadableFormset = filterFormStore.formset.get();
+      if (!Loadable.isLoaded(loadableFormset)) {
+        throw new Error('formstore is unloaded');
+      }
+      return loadableFormset.data;
+    };
+    const getField = (filterFormStore: FilterFormStore) => {
+      return getFormset(filterFormStore).filterGroup.children[0];
+    };
+
     describe('Basic Field and Group Interaction', () => {
       it('should sweep invalid groups and conditions', () => {
         const filterFormStore = new FilterFormStore();
@@ -451,17 +462,6 @@ describe('FilterFormStore', () => {
         expect(formset?.showArchived).toBeTruthy();
       });
     });
-
-    const getFormset = (filterFormStore: FilterFormStore) => {
-      const loadableFormset = filterFormStore.formset.get();
-      if (!Loadable.isLoaded(loadableFormset)) {
-        throw new Error('formstore is unloaded');
-      }
-      return loadableFormset.data;
-    };
-    const getField = (filterFormStore: FilterFormStore) => {
-      return getFormset(filterFormStore).filterGroup.children[0];
-    };
 
     describe('Order Field and Group Interaction', () => {
       const ID = 'unique_id';
