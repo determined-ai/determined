@@ -1,17 +1,17 @@
 .. _save-load-checkpoints:
 
-###########################################
- Save and Load the State Using Checkpoints
-###########################################
+#######################################
+ Save and Load State Using Checkpoints
+#######################################
 
 .. meta::
-   :description: Learn how to utilize detached mode to save and load states via checkpoints. This guide will lead you through the necessary steps.
+   :description: Learn how to utilize detached mode to save and load states via checkpoints.
 
 Leveraging :ref:`detached mode <detached-mode-index>`, you can easily save the state at a particular
 point during training and restore it when needed. This is especially useful for resuming training
 after interruptions or failures.
 
-For the full script, visit the `Github repository
+For the full script, visit the `GitHub repository
 <https://github.com/determined-ai/determined/blob/main/examples/features/unmanaged/2_checkpoints.py>`_.
 
 ************
@@ -48,7 +48,7 @@ After completing this guide, you will be able to:
 *************************************************************
 
 To begin, you need to set up the core context, specifying the checkpoint storage path. If recovering
-from a failure, an external experiment and trial id can be used to identify which artifact to log
+from a failure, an external experiment and trial ID can be used to identify which artifact to log
 metrics to:
 
 .. code:: python
@@ -62,7 +62,7 @@ metrics to:
            unmanaged=core_v2.UnmanagedConfig(
                external_experiment_id="my-existing-experiment",
                external_trial_id="my-existing-trial",
-           )
+           ),
        )
 
 ************************************

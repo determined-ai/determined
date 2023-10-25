@@ -4,10 +4,13 @@
  Perform Simple Metrics Reporting
 ##################################
 
+.. meta::
+   :description: Discover how to perform simple metrics reporting using Determined's detached mode.
+
 In this tutorial, we'll walk through how to perform simple metrics reporting using :ref:`detached
 mode <detached-mode-index>`.
 
-For the full script, visit the `Github repository
+For the full script, visit the `GitHub repository
 <https://github.com/determined-ai/determined/blob/main/examples/features/unmanaged/1_singleton.py>`_.
 
 ************

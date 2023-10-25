@@ -5,14 +5,12 @@
 ########################################
 
 .. meta::
-   :description: Discover how to transition from standalone training to leveraging Determined's managed mode. This guide highlights the process of moving to Determined's distributed training and resource management.
+   :description: Discover how to transition from detached mode to leveraging Determined's features such as distributed training.
 
-Now that you know how to run a workloads via :ref:`detached mode <detached-mode-index>` and submit
+Now that you know how to run a workload via :ref:`detached mode <detached-mode-index>` and submit
 metrics associated with it to Determined, you are ready to transition to submitting the workload to
-Determined.
-
-This will give you access to features such as distributed training, hyperparameter search, and
-resource management.
+Determined. Submitting the workload to Determined will give you access to features such as
+distributed training, hyperparameter search, and resource management.
 
 ************
  Objectives
@@ -58,10 +56,10 @@ Use the following code to create the experiment configuration file:
 .. code:: yaml
 
    name: unmanaged-3-torch-distributed
-   # Here we use Determined's torch distributed launcher.
-   # You don't need to specify details about the cluster topology.
-   # Determined takes care of that for you.
-   # Simply specify resource requirements like resources.slots_per_trial
+   # Here we use Determined's PyTorch distributed launcher.
+   # You don't need to specify details about the cluster topology; Determined
+   # takes care of that for you.
+   # Simply specify resource requirements like resources.slots_per_trial.
    entrypoint: >-
      python3 -m determined.launch.torch_distributed
      python3 3_torch_distributed.py
@@ -69,7 +67,7 @@ Use the following code to create the experiment configuration file:
    resources:
      slots_per_trial: 2
 
-   # Use the single-searcher to run just one instance of the training script
+   # Use the single searcher to run just one instance of the training script.
    searcher:
       name: single
        # metric is required but it shouldn't hurt to ignore it at this point.
@@ -90,8 +88,7 @@ experiment:
 
    det e create -m <MASTER_IP:PORT> exp_config_yaml .
 
-..
-   note:
+.. note::
 
    To run the experiment on a machine with a single CPU or GPU, set ``slots_per_trial`` to ``1``.
 

@@ -5,15 +5,15 @@
 #####################################################
 
 .. meta::
-   :description: Discover how to employ detached mode for distributed training with sharded checkpointing. This guide will illustrate the necessary steps.
+   :description: Discover how to employ detached mode for distributed training with sharded checkpointing.
 
 In this tutorial, we'll show you how to manage sharded checkpoints using :ref:`detached mode
 <detached-mode-index>`.
 
-We will guide you through a process that includes setting up torch distributed for distributed
-training, sharding data between different processes, and saving sharded checkpoints.
+We will guide you through a process that includes setting up PyTorch for distributed training,
+sharding data between different processes, and saving sharded checkpoints.
 
-For the full script, visit the `Github repository
+For the full script, visit the `GitHub repository
 <https://github.com/determined-ai/determined/blob/main/examples/features/unmanaged/3_torch_distributed.py>`_.
 
 ************
@@ -26,7 +26,7 @@ These step-by-step instructions will cover:
 -  Implementing sharding for batches across processes
 -  Reporting training and validation metrics
 -  Storing sharded checkpoints
--  Running code with torch distributed and the appropriate cluster topology arguments
+-  Running distributed code with PyTorch and the appropriate cluster topology arguments
 
 By the end of this guide, you'll:
 
@@ -41,7 +41,7 @@ By the end of this guide, you'll:
 **Required**
 
 -  A Determined cluster
--  Torch library for distributed training
+-  PyTorch library for distributed training
 
 **Recommended**
 
@@ -131,18 +131,18 @@ Get the address of the web server where our metrics will be sent, and close the 
        )
    core_v2.close()
 
-*****************************************
- Step 6: Run Code with Torch Distributed
-*****************************************
+*******************************
+ Step 6: Run Code with PyTorch
+*******************************
 
-Run the code with torch distributed and the appropriate arguments for cluster topology (number of
-nodes, processes per node, chief workers address, port, etc.):
+Run the code with PyTorch and the appropriate arguments for cluster topology (number of nodes,
+processes per node, chief worker's address, port, etc.):
 
 .. code:: bash
 
    python3 -m torch.distributed.run --nnodes=1 --nproc_per_node=2 \
-    --master_addr 127.0.0.1 --master_port 29400 --max_restarts 0 \
-    my_torch_disributed_script.py
+     --master_addr 127.0.0.1 --master_port 29400 --max_restarts 0 \
+     my_torch_disributed_script.py
 
 Navigate to ``<DET_MASTER_IP:PORT>`` in your web browser to see the experiment.
 
