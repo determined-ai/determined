@@ -16,11 +16,12 @@ Version 0.26.2
 **Release Date:** October 25, 2023
 
 Notice: The ``ruamel.yaml`` library's 0.18.0 release includes breaking changes that affect earlier
-versions of Determined. The failure behavior is that commands that emit YAML, such as ``det experiment
-config``, will emit nothing to ``stdout`` or ``stderr`` but instead silently exit 1 due to the new
-version of ``ruamel.yaml``. This release of Determined has included a ``ruamel.yaml<0.18.0``
-requirement, but older versions of Determined will also be affected, so users of older versions of
-Determined may have to manually downgrade ``ruamel.yaml`` if they observe this behavior.
+versions of Determined. The failure behavior is that commands that emit YAML, such as ``det
+experiment config``, will emit nothing to ``stdout`` or ``stderr`` but instead silently exit 1 due
+to the new version of ``ruamel.yaml``. This release of Determined has included a
+``ruamel.yaml<0.18.0`` requirement, but older versions of Determined will also be affected, so users
+of older versions of Determined may have to manually downgrade ``ruamel.yaml`` if they observe this
+behavior.
 
 **New Features**
 
@@ -50,7 +51,8 @@ Determined may have to manually downgrade ``ruamel.yaml`` if they observe this b
 **Deprecated Features**
 
 -  Python SDK: Several methods have been renamed for better API standardization.
-      -  Methods returning a ``List`` and ``Iterator`` now have names starting with ``list_*`` and ``iter_*``, respectively.
+      -  Methods returning a ``List`` and ``Iterator`` now have names starting with ``list_*`` and
+         ``iter_*``, respectively.
 
       -  :class:`~determined.experimental.client.TrialReference` and
          :class:`~determined.experimental.client.ExperimentReference` are now
