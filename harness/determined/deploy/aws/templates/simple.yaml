@@ -784,6 +784,11 @@ Resources:
               docker run -d \
                 --name sidecar1 \
                 --env DET_MASTER=http://determined-master:8080 \
+                --env DB_NAME=lore \
+                --env DB_USER=postgres \
+                --env DB_PASSWORD=${DBPassword} \
+                --env DB_HOST=${Database.Endpoint.Address} \
+                --env DB_PORT=5432 \
                 --network determined \
                 "${SidecarImage}"
             fi
