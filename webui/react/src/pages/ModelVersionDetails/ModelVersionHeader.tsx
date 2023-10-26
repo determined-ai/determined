@@ -1,6 +1,7 @@
 import { Modal, Space, Typography } from 'antd';
 import Button from 'determined-ui/Button';
 import ClipboardButton from 'determined-ui/ClipboardButton';
+import CodeSample from 'determined-ui/CodeSample';
 import Dropdown, { MenuOption } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
@@ -222,9 +223,7 @@ with det.import_from_path(path + "/code"):
           <p>Reference this model in a notebook</p>
           <ClipboardButton getContent={() => referenceText} />
         </div>
-        <pre className={css.codeSample}>
-          <code>{referenceText}</code>
-        </pre>
+        <CodeSample text={referenceText} />
         <p>Copy/paste code into a notebook cell</p>
       </Modal>
     </header>

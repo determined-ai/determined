@@ -50,17 +50,6 @@
     display: flex;
     justify-content: space-between;
   }
-  .codeSample {
-    background-color: var(--theme-colors-monochrome-13);
-    border: 1px solid var(--theme-colors-monochrome-11);
-    border-radius: 4px;
-    padding: 8px;
-    white-space: pre-wrap;
-
-    code {
-      padding: 0;
-    }
-  }
 }
 
 @media only screen and (min-width: $breakpoint-desktop-small) {
