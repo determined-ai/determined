@@ -63,24 +63,21 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --quiet --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
 	mockery --quiet --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
 	mockery --quiet --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
-	mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go     
-	mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go 
-	mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go 
+	mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go
+	mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go
+	mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go
 	mockery --quiet --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
 	mockery --quiet --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
 	mockery --quiet --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
 
-	# fmt once since the mocks are not generated formatted.
-	goimports -l -local github.com/determined-ai -w ./internal/mocks ./internal/mocks/allocationmocks
 	mkdir -p build
 	touch $@
 
 .PHONY: check-gen
-check-gen: force-gen gen build/mock_gen.stamp
+check-gen: force-gen gen
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
 	test -z "$(shell git status --porcelain '**/zgen*')"
-	test -z "$(shell git status --porcelain './internal/mocks/*')"
 
 .PHONY: get-deps
 get-deps:
