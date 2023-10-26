@@ -122,7 +122,7 @@ func (s *Subscription[T]) Register() {
 	s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
 }
 
-// Deregister removes the subscription from its Publisher.
+// Deregister removes a Subscription from its Publisher.
 func (s *Subscription[T]) Deregister() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
