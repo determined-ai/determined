@@ -128,7 +128,6 @@ func (s *Subscription[T]) Unsubscribe() {
 		s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
 		break
 	}
-	s.filter = nil
 }
 
 // Register a Subscription with it's Publisher.

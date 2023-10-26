@@ -353,11 +353,6 @@ func startupMsgHandler(
 	user model.User,
 	streamer *stream.Streamer,
 ) (msgs []interface{}, err error) {
-	defer func() {
-		syncMsg := SyncMsg{SyncID: startupMsg.SyncID}
-		msgs = append(msgs, syncMsg.toPreparedMessage())
-	}()
-
 	// check for active subscriptions
 	if ss != nil {
 		ss.UnsubscribeAll()
@@ -376,6 +371,11 @@ func startupMsgHandler(
 		return msgs, errors.Wrapf(err, "gathering startup messages")
 	}
 	msgs = append(msgs, offlineMsgs...)
+
+	// add sync message if everything else went correctly
+	syncMsg := SyncMsg{SyncID: startupMsg.SyncID}
+	msgs = append(msgs, syncMsg.toPreparedMessage())
+
 	return msgs, nil
 }
 

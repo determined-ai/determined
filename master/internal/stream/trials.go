@@ -217,11 +217,6 @@ func TrialMakeFilter(spec *TrialSubscriptionSpec) (func(*TrialMsg) bool, error) 
 		experimentIds[id] = struct{}{}
 	}
 
-	// should this filter even run?
-	if len(trialIds) == 0 && len(experimentIds) == 0 {
-		return nil, errors.New("subscription spec cannot be empty")
-	}
-
 	// return a closure around our copied maps
 	return func(msg *TrialMsg) bool {
 		if _, ok := trialIds[msg.ID]; ok {
