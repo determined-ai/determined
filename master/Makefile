@@ -54,6 +54,9 @@ build/schema_gen.stamp: $(GENERATION_INPUTS)
 	mkdir -p build
 	touch $@
 
+.PHONY: mocks
+mocks: build/mock_gen.stamp
+
 build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --quiet --name=DB --dir=internal/db --output internal/mocks --filename db.go
 	mockery --quiet --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
