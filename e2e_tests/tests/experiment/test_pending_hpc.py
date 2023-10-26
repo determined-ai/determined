@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from determined.common import yaml
+from determined.common import util
 from determined.common.api import bindings
 from determined.common.api.bindings import experimentv1State
 from tests import api_utils
@@ -54,7 +54,7 @@ def test_hpc_job_pending_reason() -> None:
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         running_exp_id = exp.create_experiment(tf.name, conf.tutorials_path("mnist_pytorch"), None)
     print(f"Created experiment {running_exp_id}")
     exp.wait_for_experiment_state(running_exp_id, experimentv1State.RUNNING)
@@ -62,7 +62,7 @@ def test_hpc_job_pending_reason() -> None:
     # Launch another experiment requesting 6 CPUs
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         pending_exp_id = exp.create_experiment(tf.name, conf.tutorials_path("mnist_pytorch"), None)
     print(f"Created experiment {pending_exp_id}")
 

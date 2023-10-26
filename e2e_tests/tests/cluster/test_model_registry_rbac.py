@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 import pytest
 
 from determined import cli
-from determined.common import yaml
+from determined.common import util
 from determined.common.api import Session, authentication, bindings, errors
 from determined.common.api.bindings import experimentv1State
 from determined.common.experimental import model
@@ -246,7 +246,7 @@ def test_model_registry_rbac() -> None:
             # Same pattern is followed below.
             d = Determined(master_url)
             with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-                config = yaml.safe_load(f)
+                config = util.yaml_safe_load(f)
             exp = d.create_experiment(config, conf.fixtures_path("no_op"))
             # wait for exp state to be completed
             assert exp.wait() == _client.ExperimentState.COMPLETED
