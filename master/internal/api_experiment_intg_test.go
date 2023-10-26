@@ -341,9 +341,13 @@ searcher:
 // nolint: exhaustruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
-	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
+	configVal := api.m.config.Load()
+	configVal.CheckpointStorage = expconf.CheckpointStorageConfig{}
+	api.m.config.Store(configVal)
 	defer func() {
-		api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
+		configVal = api.m.config.Load()
+		configVal.CheckpointStorage = expconf.CheckpointStorageConfig{}
+		api.m.config.Store(configVal)
 	}()
 
 	conf := `
@@ -399,12 +403,14 @@ resources:
 	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
 
 	// Checkpoint specified in master config.
-	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{
+	configVal = api.m.config.Load()
+	configVal.CheckpointStorage = expconf.CheckpointStorageConfig{
 		RawS3Config: &expconf.S3Config{
 			RawBucket:    ptrs.Ptr("masterbucket"),
 			RawSecretKey: ptrs.Ptr("mastersecret"),
 		},
 	}
+	api.m.config.Store(configVal)
 
 	createReq.ProjectId = 1
 

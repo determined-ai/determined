@@ -121,15 +121,15 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
 	}
-	if a.m.config.ResourceManager.AgentRM != nil &&
-		a.m.config.LaunchError &&
+	if a.m.config.Load().ResourceManager.AgentRM != nil &&
+		a.m.config.Load().LaunchError &&
 		len(launchWarnings) > 0 {
 		return nil, nil, errors.New("slots requested exceeds cluster capacity")
 	}
 	// Get the base TaskSpec.
 	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
 		poolName,
-		a.m.config.TaskContainerDefaults,
+		a.m.config.Load().TaskContainerDefaults,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting TaskContainerDefaults: %v", err)

@@ -123,7 +123,7 @@ func newExperiment(
 		if err != nil {
 			return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
 		}
-		if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
+		if m.config.Load().ResourceManager.AgentRM != nil && m.config.Load().LaunchError && len(launchWarnings) > 0 {
 			return nil, nil, errors.New("slots requested exceeds cluster capacity")
 		}
 	}

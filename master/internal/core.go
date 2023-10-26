@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coreos/go-systemd/activation"
@@ -91,7 +92,7 @@ type Master struct {
 	ClusterID string
 	MasterID  string
 
-	config   *config.Config
+	config   atomic.Pointer[config.Config]
 	taskSpec *tasks.TaskSpec
 
 	logs   *logger.LogBuffer
@@ -107,28 +108,30 @@ type Master struct {
 // New creates an instance of the Determined master.
 func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	logger.SetLogrus(config.Log)
-	return &Master{
+	m := &Master{
 		MasterID: uuid.New().String(),
 		logs:     logStore,
-		config:   config,
 	}
+	m.config.Store(config)
+	return m
 }
 
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
-	if m.config.Telemetry.SegmentWebUIKey != "" {
-		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
+	configVal := m.config.Load()
+	if configVal.Telemetry.SegmentWebUIKey != "" {
+		telemetryInfo.SegmentKey = configVal.Telemetry.SegmentWebUIKey
 	}
 
-	if m.config.Telemetry.Enabled {
+	if configVal.Telemetry.Enabled {
 		// Only advertise a Segment WebUI key if a key has been configured and
 		// telemetry is enabled.
 		telemetryInfo.Enabled = true
 
-		if m.config.Telemetry.OtelEnabled && m.config.Telemetry.OtelExportedOtlpEndpoint != "" {
+		if configVal.Telemetry.OtelEnabled && configVal.Telemetry.OtelExportedOtlpEndpoint != "" {
 			telemetryInfo.OtelEnabled = true
-			telemetryInfo.OtelExportedOtlpEndpoint = m.config.Telemetry.OtelExportedOtlpEndpoint
+			telemetryInfo.OtelExportedOtlpEndpoint = configVal.Telemetry.OtelExportedOtlpEndpoint
 		}
 	}
 
@@ -137,9 +140,9 @@ func (m *Master) Info() aproto.MasterInfo {
 		MasterID:    m.MasterID,
 		Version:     version.Version,
 		Telemetry:   telemetryInfo,
-		ClusterName: m.config.ClusterName,
+		ClusterName: configVal.ClusterName,
 	}
-	sso.AddProviderInfoToMasterInfo(m.config, &masterInfo)
+	sso.AddProviderInfoToMasterInfo(configVal, &masterInfo)
 	return masterInfo
 }
 
@@ -624,9 +627,12 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 			return pErr
 		}
 		log.Infof("found port %d for systemd listener", port)
-		m.config.Port = int(port)
+		oldConfig := m.config.Load()
+		newConfig := *oldConfig
+		newConfig.Port = int(port)
+		m.config.CompareAndSwap(oldConfig, &newConfig)
 	default:
-		baseListener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
+		baseListener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.config.Load().Port))
 		if err != nil {
 			return err
 		}
@@ -637,8 +643,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 	if cert != nil {
 		var clientCAs *x509.CertPool
 		clientAuthMode := tls.NoClientCert
-
-		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
+		if agentRM := m.config.Load().ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
 			// Most connections don't require client certificates, but we do want to make sure that any that
 			// are provided are valid, so individual handlers that care can just check for the presence of
 			// certificates.
@@ -666,12 +671,12 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 	// This must be before grpcutil.RegisterHTTPProxy is called since it may use stuff set up by the
 	// gRPC server (logger initialization, maybe more). Found by --race.
 	gRPCServer := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
-		m.config.Observability.EnablePrometheus,
-		&m.config.InternalConfig.ExternalSessions,
+		m.config.Load().Observability.EnablePrometheus,
+		&m.config.Load().InternalConfig.ExternalSessions,
 		m.logs,
 	)
 
-	err = grpcutil.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
+	err = grpcutil.RegisterHTTPProxy(ctx, m.echo, m.config.Load().Port, cert)
 	if err != nil {
 		return errors.Wrap(err, "failed to register gRPC gateway")
 	}
@@ -718,7 +723,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 	if systemdListener != nil {
 		log.Infof("accepting incoming connections on a socket inherited from systemd")
 	} else {
-		log.Infof("accepting incoming connections on port %d", m.config.Port)
+		log.Infof("accepting incoming connections on port %d", m.config.Load().Port)
 	}
 
 	if gRPCLogInitDone != nil {
@@ -872,17 +877,17 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	var err error
 
-	if err = etc.SetRootPath(filepath.Join(m.config.Root, "static/srv")); err != nil {
+	if err = etc.SetRootPath(filepath.Join(m.config.Load().Root, "static/srv")); err != nil {
 		return errors.Wrap(err, "could not set static root")
 	}
 
-	m.db, err = db.Setup(&m.config.DB)
+	m.db, err = db.Setup(&m.config.Load().DB)
 	if err != nil {
 		return err
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
+	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Load().Telemetry.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
@@ -899,7 +904,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	logpattern.SetDefault(l)
 
-	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
+	err = m.checkIfRMDefaultsAreUnbound(m.config.Load().ResourceManager)
 	if err != nil {
 		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
 	}
@@ -907,18 +912,18 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
 	cluster.InitTheLastBootClusterHeartbeat()
 
-	cert, err := m.config.Security.TLS.ReadCertificate()
+	cert, err := m.config.Load().Security.TLS.ReadCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
 	}
 	m.taskSpec = &tasks.TaskSpec{
 		ClusterID:             m.ClusterID,
-		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
-		TaskContainerDefaults: m.config.TaskContainerDefaults,
+		HarnessPath:           filepath.Join(m.config.Load().Root, "wheels"),
+		TaskContainerDefaults: m.config.Load().TaskContainerDefaults,
 		MasterCert:            config.GetCertPEM(cert),
-		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
-		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
-		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
+		SSHRsaSize:            m.config.Load().Security.SSH.RsaKeySize,
+		SegmentEnabled:        m.config.Load().Telemetry.Enabled && m.config.Load().Telemetry.SegmentMasterKey != "",
+		SegmentAPIKey:         m.config.Load().Telemetry.SegmentMasterKey,
 	}
 
 	go m.cleanUpExperimentSnapshots()
@@ -951,11 +956,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}()
 
 	switch {
-	case m.config.Logging.DefaultLoggingConfig != nil:
+	case m.config.Load().Logging.DefaultLoggingConfig != nil:
 		m.trialLogBackend = m.db
 		m.taskLogBackend = m.db
-	case m.config.Logging.ElasticLoggingConfig != nil:
-		es, eErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+	case m.config.Load().Logging.ElasticLoggingConfig != nil:
+		es, eErr := elastic.Setup(*m.config.Load().Logging.ElasticLoggingConfig)
 		if eErr != nil {
 			return eErr
 		}
@@ -966,7 +971,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	tasklogger.SetDefaultLogger(tasklogger.New(m.taskLogBackend))
 
-	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
+	user.InitService(m.db, m.system, &m.config.Load().InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
 	proxy.InitProxy(processProxyAuthentication)
@@ -1000,7 +1005,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}))
 	setupEchoRedirects(m)
 
-	if m.config.EnableCors {
+	if m.config.Load().EnableCors {
 		m.echo.Use(api.CORSWithTargetedOrigin)
 	}
 
@@ -1023,19 +1028,19 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	m.echo.Use(convertDBErrorsToNotFound)
 
-	if m.config.InternalConfig.AuditLoggingEnabled {
+	if m.config.Load().InternalConfig.AuditLoggingEnabled {
 		m.echo.Use(auditLogMiddleware())
 	}
 
-	if m.config.Telemetry.OtelEnabled {
-		opentelemetry.ConfigureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint, "determined-master")
+	if m.config.Load().Telemetry.OtelEnabled {
+		opentelemetry.ConfigureOtel(m.config.Load().Telemetry.OtelExportedOtlpEndpoint, "determined-master")
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
 	m.echo.Use(authzAuditLogMiddleware())
 
 	var proxiedRoutes []string
-	for _, ps := range m.config.InternalConfig.ProxiedServers {
+	for _, ps := range m.config.Load().InternalConfig.ProxiedServers {
 		proxiedRoutes = append(proxiedRoutes, ps.PathPrefix)
 	}
 	m.echo.Use(processAuthWithRedirect(proxiedRoutes))
@@ -1057,11 +1062,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		m.system,
 		m.db,
 		m.echo,
-		&m.config.ResourceConfig,
-		&m.config.TaskContainerDefaults,
+		&m.config.Load().ResourceConfig,
+		&m.config.Load().TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
-			LoggingOptions: m.config.Logging,
+			LoggingOptions: m.config.Load().Logging,
 		},
 		cert,
 	)
@@ -1106,7 +1111,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	go trials.MarkLostTrialsWorker(ctx)
 
 	// Docs and WebUI.
-	webuiRoot := filepath.Join(m.config.Root, "webui")
+	webuiRoot := filepath.Join(m.config.Load().Root, "webui")
 	reactRoot := filepath.Join(webuiRoot, "react")
 	reactRootAbs, err := filepath.Abs(reactRoot)
 	if err != nil {
@@ -1164,7 +1169,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	})
 
 	m.echo.File("/api/v1/api.swagger.json",
-		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
+		filepath.Join(m.config.Load().Root, "swagger/determined/api/v1/api.swagger.json"))
 
 	m.echo.GET("/info", api.Route(m.getInfo))
 
@@ -1201,7 +1206,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	)
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
-	if m.config.Observability.EnablePrometheus {
+	if m.config.Load().Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
 		// Group and obscure URLs returning 400 or 500 errors outside of /api/v1 and /det
 		// This is to prevent a cardinality explosion that could be caused by mass non-200 requests
@@ -1225,7 +1230,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	handler := proxy.DefaultProxy.NewProxyHandler("service")
 	m.echo.Any("/proxy/:service/*", handler)
 
-	for _, ps := range m.config.InternalConfig.ProxiedServers {
+	for _, ps := range m.config.Load().InternalConfig.ProxiedServers {
 		psGroup := m.echo.Group(ps.PathPrefix)
 		psTarget, err := url.Parse(ps.Destination)
 		if err != nil {
@@ -1246,10 +1251,10 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	user.RegisterAPIHandler(m.echo, userService)
 
-	telemetry.Init(m.ClusterID, m.config.Telemetry)
+	telemetry.Init(m.ClusterID, m.config.Load().Telemetry)
 	go telemetry.PeriodicallyReportMasterTick(m.db, m.rm, m.system)
 
-	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
+	if err := sso.RegisterAPIHandlers(m.config.Load(), m.db, m.echo); err != nil {
 		return err
 	}
 

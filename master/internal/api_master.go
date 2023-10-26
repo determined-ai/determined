@@ -3,6 +3,8 @@ package internal
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -29,25 +31,26 @@ func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
 	product := apiv1.GetMasterResponse_PRODUCT_UNSPECIFIED
-	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+	configVal := a.m.config.Load()
+	if configVal.InternalConfig.ExternalSessions.Enabled() {
 		product = apiv1.GetMasterResponse_PRODUCT_COMMUNITY
 	}
 	masterResp := &apiv1.GetMasterResponse{
 		Version:               version.Version,
 		MasterId:              a.m.MasterID,
 		ClusterId:             a.m.ClusterID,
-		ClusterName:           a.m.config.ClusterName,
-		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
-		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
-		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
+		ClusterName:           configVal.ClusterName,
+		TelemetryEnabled:      configVal.Telemetry.Enabled && configVal.Telemetry.SegmentWebUIKey != "",
+		ExternalLoginUri:      configVal.InternalConfig.ExternalSessions.LoginURI,
+		ExternalLogoutUri:     configVal.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              "determined",
 		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
 		StrictJobQueueControl: config.GetAuthZConfig().StrictJobQueueControl,
 		Product:               product,
-		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
-		FeatureSwitches:       a.m.config.FeatureSwitches,
+		UserManagementEnabled: !configVal.InternalConfig.ExternalSessions.Enabled(),
+		FeatureSwitches:       configVal.FeatureSwitches,
 	}
-	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
+	sso.AddProviderInfoToMasterResponse(configVal, masterResp)
 
 	return masterResp, nil
 }
@@ -56,9 +59,10 @@ func (a *apiServer) GetTelemetry(
 	_ context.Context, _ *apiv1.GetTelemetryRequest,
 ) (*apiv1.GetTelemetryResponse, error) {
 	resp := apiv1.GetTelemetryResponse{}
-	if a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "" {
+	configVal := a.m.config.Load()
+	if configVal.Telemetry.Enabled && configVal.Telemetry.SegmentWebUIKey != "" {
 		resp.Enabled = true
-		resp.SegmentKey = a.m.config.Telemetry.SegmentWebUIKey
+		resp.SegmentKey = configVal.Telemetry.SegmentWebUIKey
 	}
 	return &resp, nil
 }
@@ -78,7 +82,7 @@ func (a *apiServer) GetMasterConfig(
 		return nil, permErr
 	}
 
-	config, err := a.m.config.Printable()
+	config, err := a.m.config.Load().Printable()
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing master config")
 	}
@@ -109,17 +113,32 @@ func (a *apiServer) PatchMasterConfig(
 	for _, path := range paths {
 		switch path {
 		case "log.level":
-			a.m.config.Log.Level = logger.ProtoToLogrusLevel(req.Config.Log.Level).String()
-			logger.SetLogrus(a.m.config.Log)
+			if !isValidLogLevel(req.Config.Log.Level.String()) {
+				panic(fmt.Sprintf("invalid log level: %s", req.Config.Log.Level))
+			}
+			oldConfig := a.m.config.Load()
+			newConfig := *oldConfig
+			newConfig.Log.Level = req.Config.Log.Level.String()
+			ok := a.m.config.CompareAndSwap(oldConfig, &newConfig)
+			if !ok {
+				return nil, status.Error(http.StatusConflict, "failed to update the master config")
+			}
+			logger.SetLogrus(a.m.config.Load().Log)
 		case "log.color":
-			a.m.config.Log.Color = req.Config.Log.Color
-			logger.SetLogrus(a.m.config.Log)
+			oldConfig := a.m.config.Load()
+			newConfig := *oldConfig
+			newConfig.Log.Color = req.Config.Log.Color
+			ok := a.m.config.CompareAndSwap(oldConfig, &newConfig)
+			if !ok {
+				return nil, status.Error(http.StatusConflict, "failed to update the master config")
+			}
+			logger.SetLogrus(a.m.config.Load().Log)
 		default:
 			panic(fmt.Sprintf("unsupported or invalid field: %s", path))
 		}
 	}
 
-	config, err := a.m.config.Printable()
+	config, err := a.m.config.Load().Printable()
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing master config")
 	}
@@ -240,4 +259,12 @@ func (a *apiServer) ResourceAllocationAggregated(
 	}
 
 	return a.m.fetchAggregatedResourceAllocation(req)
+}
+func isValidLogLevel(lvl string) bool {
+	switch strings.ToLower(lvl) {
+	case "fatal", "error", "warn", "info", "debug", "trace":
+		return true
+	default:
+		return false
+	}
 }

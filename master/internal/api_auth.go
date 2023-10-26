@@ -42,7 +42,7 @@ func replicateClientSideSaltAndHash(password string) string {
 func (a *apiServer) Login(
 	ctx context.Context, req *apiv1.LoginRequest,
 ) (*apiv1.LoginResponse, error) {
-	if a.m.config.InternalConfig.ExternalSessions.JwtKey != "" {
+	if a.m.config.Load().InternalConfig.ExternalSessions.JwtKey != "" {
 		return nil, status.Error(codes.FailedPrecondition, "please run `det auth login` to authenticate")
 	}
 

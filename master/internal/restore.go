@@ -106,7 +106,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
-		m.config.TaskContainerDefaults,
+		m.config.Load().TaskContainerDefaults,
 	)
 	if err != nil {
 		return fmt.Errorf("error getting TaskContainerDefaults: %w", err)

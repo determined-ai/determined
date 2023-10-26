@@ -247,9 +247,9 @@ func (a *apiServer) LaunchNotebook(
 	launchReq.Spec.WatchRunnerIdleTimeout = true
 
 	// Postprocess the launchReq.Spec.
-	if launchReq.Spec.Config.IdleTimeout == nil && a.m.config.NotebookTimeout != nil {
+	if launchReq.Spec.Config.IdleTimeout == nil && a.m.config.Load().NotebookTimeout != nil {
 		launchReq.Spec.Config.IdleTimeout = ptrs.Ptr(model.Duration(
-			time.Second * time.Duration(*a.m.config.NotebookTimeout)))
+			time.Second * time.Duration(*a.m.config.Load().NotebookTimeout)))
 	}
 	if launchReq.Spec.Config.Description == "" {
 		petName := petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep)

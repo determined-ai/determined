@@ -305,7 +305,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
-		m.config.TaskContainerDefaults,
+		m.config.Load().TaskContainerDefaults,
 	)
 	if err != nil {
 		return nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
@@ -330,7 +330,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(
-		config.RawCheckpointStorage, &m.config.CheckpointStorage,
+		config.RawCheckpointStorage, &m.config.Load().CheckpointStorage,
 	)
 
 	// Lastly, apply any json-schema-defined defaults.

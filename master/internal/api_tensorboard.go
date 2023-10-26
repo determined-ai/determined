@@ -241,7 +241,7 @@ func (a *apiServer) LaunchTensorboard(
 	// Postprocess the launchReq.Spec.
 	if launchReq.Spec.Config.IdleTimeout == nil {
 		masterTensorBoardIdleTimeout := model.Duration(
-			time.Duration(a.m.config.TensorBoardTimeout) * time.Second)
+			time.Duration(a.m.config.Load().TensorBoardTimeout) * time.Second)
 		launchReq.Spec.Config.IdleTimeout = &masterTensorBoardIdleTimeout
 	}
 

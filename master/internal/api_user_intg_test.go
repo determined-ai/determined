@@ -90,18 +90,24 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 			db:              pgdb,
 			taskLogBackend:  pgdb,
 			rm:              mockRM,
-			config: &config.Config{
-				InternalConfig: config.InternalConfig{
-					ExternalSessions: model.ExternalSessions{},
-				},
-				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
-				ResourceConfig: config.ResourceConfig{
-					ResourceManager: &config.ResourceManagerConfig{},
-				},
-			},
-			taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},
+			taskSpec:        &tasks.TaskSpec{SSHRsaSize: 1024},
 		},
 	}
+	configVal := &config.Config{
+		InternalConfig: config.InternalConfig{
+			ExternalSessions: model.ExternalSessions{},
+		},
+		TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
+		ResourceConfig: config.ResourceConfig{
+			ResourceManager: &config.ResourceManagerConfig{
+				AgentRM: &config.AgentResourceManagerConfig{},
+			},
+		},
+		Logging: model.LoggingConfig{
+			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
+		},
+	}
+	api.m.config.Store(configVal)
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
 	username := uuid.New().String()

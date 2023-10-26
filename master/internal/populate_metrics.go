@@ -206,10 +206,10 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 			db:              pgdb,
 			taskLogBackend:  pgdb,
 			rm:              mockRM,
-			config:          masterConfig,
 			taskSpec:        &tasks.TaskSpec{},
 		},
 	}
+	api.m.config.Store(masterConfig)
 
 	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
 	if err != nil {
