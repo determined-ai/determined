@@ -324,7 +324,6 @@ func (ps *PublisherSet) entrypoint(
 				streamer.Cond.L.Lock()
 				defer streamer.Cond.L.Unlock()
 				streamer.Cond.Signal()
-				// start
 				startups = append(startups, mods)
 			}()
 		}
