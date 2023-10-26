@@ -1,12 +1,12 @@
 import Button from 'determined-ui/Button';
 import Icon from 'determined-ui/Icon';
+import RadioGroup from 'determined-ui/RadioGroup';
 import Select, { Option, SelectValue } from 'determined-ui/Select';
 import * as t from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HpSelect from 'components/HpSelect';
-import RadioGroup from 'components/kit/RadioGroup';
 import MetricSelect from 'components/MetricSelect';
 import ScaleSelect from 'components/ScaleSelect';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';

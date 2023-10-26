@@ -1,6 +1,6 @@
+import RadioGroup from 'determined-ui/RadioGroup';
 import React, { useMemo, useState } from 'react';
 
-import RadioGroup from 'components/kit/RadioGroup';
 import Section from 'components/Section';
 import ClusterHistoricalUsageChart from 'pages/Cluster/ClusterHistoricalUsageChart';
 import { V1RPQueueStat } from 'services/api-ts-sdk';

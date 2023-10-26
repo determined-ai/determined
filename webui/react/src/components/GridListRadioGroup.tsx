@@ -1,8 +1,7 @@
+import RadioGroup from 'determined-ui/RadioGroup';
 import React, { useCallback } from 'react';
 
 import { ValueOf } from 'types';
-
-import RadioGroup from './kit/RadioGroup';
 
 export const GridListView = {
   Grid: 'grid',
