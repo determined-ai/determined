@@ -130,7 +130,7 @@ func (s *Subscription[T]) Unsubscribe() {
 	}
 }
 
-// Register a Subscription with it's Publisher.
+// Register a Subscription with its Publisher.
 func (s *Subscription[T]) Register() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
