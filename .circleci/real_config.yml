@@ -2926,9 +2926,9 @@ workflows:
       - test-e2e-aws:
           name: test-e2e-gpu-single-quarantined
           context: aws
-#          filters:
-#            branches:
-#              only: main
+          filters:
+            branches:
+              only: main
           requires:
             - package-and-push-system-local
           matrix:
