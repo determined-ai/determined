@@ -117,7 +117,9 @@ func fairshareSchedule(
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
 	capacity := totalCapacity(agents)
-	groupStates := calculateGroupStates(taskList, groups, capacity)
+	groupStates := calculateGroupStates(
+		taskList, groups, capacity, agents, fittingMethod, allowHeterogeneousAgentFits,
+	)
 
 	allocateSlotOffers(groupStates, capacity)
 	toAllocate, toRelease := assignTasks(
@@ -143,7 +145,12 @@ func totalCapacity(agents map[*actor.Ref]*agentState) int {
 }
 
 func calculateGroupStates(
-	taskList *tasklist.TaskList, groups map[model.JobID]*tasklist.Group, capacity int,
+	taskList *tasklist.TaskList,
+	groups map[model.JobID]*tasklist.Group,
+	capacity int,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+	allowHeterogeneousAgentFits bool,
 ) []*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
@@ -154,6 +161,22 @@ func calculateGroupStates(
 		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacity {
 			continue
 		}
+
+		// Remove any tasks that cannot be scheduled from consideration.
+		// This is more than a performance optimization. This is needed to
+		// prevent tasks that will fail a hard constraint from "wasting" offered slots
+		// and potentially preventing progress from being made.
+		if taskList.Allocation(req.AllocationID) == nil {
+			if fits := findFits(
+				req,
+				agents,
+				fittingMethod,
+				allowHeterogeneousAgentFits,
+			); len(fits) == 0 {
+				continue
+			}
+		}
+
 		group := groups[req.JobID]
 		state, ok := groupMapping[group]
 		if !ok {
@@ -342,38 +365,8 @@ func assignTasks(
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]model.AllocationID, 0)
 
-	// freeOfferedSlots are slots that cannot be used because an agent failed a hard constraint.
-	// We calculate this by getting the difference between the slots a group will be able to schedule
-	// and the amount of slots it is offered.
-	freeOfferedSlots := 0
 	for _, state := range states {
-		pendingOffer := state.offered - state.activeSlots
-		if pendingOffer > 0 {
-			for _, req := range state.pendingReqs {
-				if pendingOffer >= req.SlotsNeeded {
-					if fits := findFits(
-						req,
-						agents,
-						fittingMethod,
-						allowHetergenousAgentFits,
-					); len(fits) == 0 {
-						continue
-					}
-					pendingOffer -= req.SlotsNeeded
-				}
-			}
-
-			// Removing any slots in the group's offer that it won't be able to use.
-			state.offered -= pendingOffer
-			freeOfferedSlots += pendingOffer
-		}
-	}
-
-	for _, state := range states {
-		state.offered += freeOfferedSlots
-
-		switch {
-		case state.activeSlots > state.offered:
+		if state.activeSlots > state.offered {
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
@@ -386,11 +379,7 @@ func assignTasks(
 					}
 				}
 			}
-
-			// I don't think this can actually be negative we should preoffer
-			// the slots for non preemptable jobs.
-			freeOfferedSlots = mathx.Max(state.offered-state.activeSlots, 0)
-		case state.activeSlots < state.offered:
+		} else if state.activeSlots < state.offered {
 			// Start tasks while there are still offered slots remaining. Because slots are not
 			// freed immediately, we cannot terminate and start tasks in the same scheduling call.
 			state.offered -= state.activeSlots
@@ -408,9 +397,6 @@ func assignTasks(
 					state.offered -= req.SlotsNeeded
 				}
 			}
-			freeOfferedSlots = state.offered
-		default:
-			freeOfferedSlots = 0
 		}
 	}
 	return toAllocate, toRelease
