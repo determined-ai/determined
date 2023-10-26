@@ -1,8 +1,5 @@
 name: mnist_pytorch_adaptive_search
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
-  global_batch_size: 64
   learning_rate:
     type: double
     minval: .0001
@@ -29,5 +26,5 @@ searcher:
   smaller_is_better: true
   max_trials: 16
   max_length:
-    batches: 937 #60,000 training images with batch size 64
-entrypoint: model_def:MNistTrial
+    epochs: 1
+entrypoint: python3 train.py

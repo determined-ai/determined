@@ -10,7 +10,7 @@ def get_dataset(data_dir: str, train: bool) -> Any:
     data_path.mkdir(parents=True, exist_ok=True)
 
     # Use a file lock so that only one worker on each node downloads.
-    with filelock.FileLock(data_path / "lock"):
+    with filelock.FileLock(str(data_path / "lock")):
         return datasets.MNIST(
             root=str(data_dir),
             train=train,

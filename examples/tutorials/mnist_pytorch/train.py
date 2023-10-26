@@ -8,8 +8,8 @@ and `wrap_optimizer`. This model is single-input and single-output.
 The methods `train_batch` and `evaluate_batch` define the forward pass
 for training and evaluation respectively.
 
-Then, configure and run the training loop with PyTorch Trainer.
-The model can be trained either locally or on-cluster.
+Then, configure and run the training loop with the PyTorch Trainer API.
+The model can be trained either locally or on-cluster with the same training code.
 
 """
 import logging
@@ -86,13 +86,15 @@ class MNistTrial(pytorch.PyTorchTrial):
 def run(local: bool = False):
     """Initializes the trial and runs the training loop.
 
-    This method configures the appropriate training parameters for both local and on-cluster training modes. It
-    is an example of a standalone training script that can run both locally and on-cluster without any code
-    changes. To run the training code solely locally or on-cluster, simply remove the conditional parameter logic for
-    the unnecessary mode.
+    This method configures the appropriate training parameters for both local and on-cluster
+    training modes. It is an example of a standalone training script that can run both locally and
+    on-cluster without any code changes.
+
+    To run the training code solely locally or on-cluster, remove the conditional parameter logic
+    for the undesired training mode.
 
     Arguments:
-        local: Whether or not to run this script locally. Defaults to false (on-cluster training).
+        local: Whether to run this script locally. Defaults to false (on-cluster training).
     """
 
     info = det.get_cluster_info()
