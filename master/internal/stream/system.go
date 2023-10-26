@@ -202,7 +202,7 @@ func (ps *PublisherSet) processStream(
 	if err != nil {
 		return nil, errors.Wrap(err, "creating subscription set")
 	}
-	defer ss.UnsubscribeAll()
+	defer ss.DeregisterAll()
 
 	// startup subscription set
 	msgs := []interface{}{}
@@ -645,13 +645,13 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 	return msgs, err
 }
 
-// UnsubscribeAll unsubscribes all Subscription's in the SubscriptionSet.
-func (ss *SubscriptionSet) UnsubscribeAll() {
+// DeregisterAll unsubscribes all Subscription's in the SubscriptionSet.
+func (ss *SubscriptionSet) DeregisterAll() {
 	if ss.Trials != nil {
-		ss.Trials.Subscription.Unsubscribe()
+		ss.Trials.Subscription.Deregister()
 	}
 	if ss.Metrics != nil {
-		ss.Metrics.Subscription.Unsubscribe()
+		ss.Metrics.Subscription.Deregister()
 	}
-	// ss.Experiments.Subscription.Unsubscribe()
+	// ss.Experiments.Subscription.Deregister()
 }

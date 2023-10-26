@@ -115,8 +115,15 @@ func NewSubscription[T Msg](
 	}
 }
 
-// Unsubscribe removes the subscription from its Publisher.
-func (s *Subscription[T]) Unsubscribe() {
+// Register a Subscription with its Publisher.
+func (s *Subscription[T]) Register() {
+	s.Publisher.Lock.Lock()
+	defer s.Publisher.Lock.Unlock()
+	s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
+}
+
+// Deregister removes the subscription from its Publisher.
+func (s *Subscription[T]) Deregister() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
 	for i, sub := range s.Publisher.Subscriptions {
@@ -128,13 +135,6 @@ func (s *Subscription[T]) Unsubscribe() {
 		s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
 		break
 	}
-}
-
-// Register a Subscription with its Publisher.
-func (s *Subscription[T]) Register() {
-	s.Publisher.Lock.Lock()
-	defer s.Publisher.Lock.Unlock()
-	s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
 }
 
 // Publisher is responsible for publishing messages of type T
