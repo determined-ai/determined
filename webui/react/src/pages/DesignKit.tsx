@@ -30,6 +30,7 @@ import Nameplate from 'determined-ui/Nameplate';
 import Notes, { Props as NotesProps } from 'determined-ui/Notes';
 import Pagination from 'determined-ui/Pagination';
 import Pivot from 'determined-ui/Pivot';
+import Section from 'determined-ui/Section';
 import Select, { Option } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
 import useUI from 'determined-ui/Theme';
@@ -46,7 +47,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
-import Section from 'components/kit/Section';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -912,7 +912,7 @@ const SectionComponentSection: React.FC = () => {
         </Section>
         <br />
         <p>With divider</p>
-        <Section divider title="Title of the section">
+        <Section title="Title of the section" titleDivider>
           <p>
             Lorem ipsum dolor sit amet consectetur, adipisicing elit. Explicabo voluptatem porro
             exercitationem, labore, suscipit atque ullam...

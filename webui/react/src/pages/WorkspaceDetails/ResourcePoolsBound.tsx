@@ -1,10 +1,10 @@
 import Card from 'determined-ui/Card';
 import Icon from 'determined-ui/Icon';
+import Section from 'determined-ui/Section';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import Section from 'components/kit/Section';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import usePermissions from 'hooks/usePermissions';
 import { patchWorkspace } from 'services/api';

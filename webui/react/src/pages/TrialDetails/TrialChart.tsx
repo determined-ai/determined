@@ -1,8 +1,8 @@
+import Section from 'determined-ui/Section';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
-import Section from 'components/kit/Section';
 import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelect from 'components/ScaleSelect';

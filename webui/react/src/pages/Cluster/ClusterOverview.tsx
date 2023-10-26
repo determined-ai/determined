@@ -1,9 +1,9 @@
 import Card from 'determined-ui/Card';
 import Icon from 'determined-ui/Icon';
+import Section from 'determined-ui/Section';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
-import Section from 'components/kit/Section';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import useFeature from 'hooks/useFeature';

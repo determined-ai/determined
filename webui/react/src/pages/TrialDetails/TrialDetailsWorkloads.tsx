@@ -1,4 +1,5 @@
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
+import Section from 'determined-ui/Section';
 import Select, { Option, SelectValue } from 'determined-ui/Select';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
@@ -6,7 +7,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Section from 'components/kit/Section';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/Table/ResponsiveTable';

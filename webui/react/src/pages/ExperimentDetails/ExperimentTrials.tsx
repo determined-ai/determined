@@ -1,13 +1,13 @@
 import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import Dropdown from 'determined-ui/Dropdown';
+import Section from 'determined-ui/Section';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Section from 'components/kit/Section';
 import Link from 'components/Link';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import { defaultRowClassName, getFullPaginationConfig, Renderer } from 'components/Table/Table';

@@ -2,13 +2,13 @@ import Breadcrumb from 'determined-ui/Breadcrumb';
 import Card from 'determined-ui/Card';
 import Icon from 'determined-ui/Icon';
 import Message from 'determined-ui/Message';
+import Section from 'determined-ui/Section';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
-import Section from 'components/kit/Section';
 import Link from 'components/Link';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';

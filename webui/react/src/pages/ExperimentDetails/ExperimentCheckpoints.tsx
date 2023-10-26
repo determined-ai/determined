@@ -1,12 +1,12 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import { useModal } from 'determined-ui/Modal';
+import Section from 'determined-ui/Section';
 import useConfirm from 'determined-ui/useConfirm';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import Section from 'components/kit/Section';
 import ModelCreateModal from 'components/ModelCreateModal';
 import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';

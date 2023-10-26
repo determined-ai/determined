@@ -7,6 +7,7 @@ import InlineForm from 'determined-ui/InlineForm';
 import Input from 'determined-ui/Input';
 import InputShortcut, { KeyboardShortcut, shortcutToString } from 'determined-ui/InputShortcut';
 import { useModal } from 'determined-ui/Modal';
+import Section from 'determined-ui/Section';
 import Select, { Option } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
 import useUI, { Mode } from 'determined-ui/Theme';
@@ -16,7 +17,6 @@ import useConfirm from 'determined-ui/useConfirm';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
-import Section from 'components/kit/Section';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
@@ -146,7 +146,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
 
         return (
           <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
-            <Section divider title="Profile">
+            <Section title="Profile" titleDivider>
               <div className={css.section}>
                 <InlineForm<string>
                   initialValue={currentUser?.username ?? ''}
@@ -204,7 +204,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                 )}
               </div>
             </Section>
-            <Section divider title="Preferences">
+            <Section title="Preferences" titleDivider>
               <div className={css.section}>
                 <InlineForm<Mode>
                   initialValue={currentThemeOption.className}
@@ -271,7 +271,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                 </InlineForm>
               </div>
             </Section>
-            <Section divider title="Shortcuts">
+            <Section title="Shortcuts" titleDivider>
               <div className={css.section}>
                 <InlineForm<KeyboardShortcut>
                   initialValue={shortcutSettings.omnibar}
@@ -311,7 +311,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                 </InlineForm>
               </div>
             </Section>
-            <Section divider title="Experimental">
+            <Section title="Experimental" titleDivider>
               <div className={css.section}>
                 {Object.entries(FEATURES).map(([feature, description]) => (
                   <InlineForm<boolean>

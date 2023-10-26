@@ -1,6 +1,7 @@
 import { Divider, type TabsProps } from 'antd';
 import Message from 'determined-ui/Message';
 import Pivot from 'determined-ui/Pivot';
+import Section from 'determined-ui/Section';
 import Spinner from 'determined-ui/Spinner';
 import { ShirtSize } from 'determined-ui/Theme';
 import { Loadable } from 'determined-ui/utils/loadable';
@@ -8,7 +9,6 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
-import Section from 'components/kit/Section';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';

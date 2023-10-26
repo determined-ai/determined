@@ -1,9 +1,9 @@
 import Card from 'determined-ui/Card';
 import { useModal } from 'determined-ui/Modal';
+import Section from 'determined-ui/Section';
 import React, { useCallback, useMemo } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
-import Section from 'components/kit/Section';
 import ModelCreateModal from 'components/ModelCreateModal';
 import OverviewStats from 'components/OverviewStats';
 import TimeAgo from 'components/TimeAgo';

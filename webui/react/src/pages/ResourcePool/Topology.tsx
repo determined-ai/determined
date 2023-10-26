@@ -1,6 +1,6 @@
+import Section from 'determined-ui/Section';
 import React, { PropsWithChildren } from 'react';
 
-import Section from 'components/kit/Section';
 import { Agent, Resource } from 'types';
 
 import css from './Topology.module.scss';

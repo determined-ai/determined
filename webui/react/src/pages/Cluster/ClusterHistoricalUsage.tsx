@@ -1,11 +1,11 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'determined-ui/Button';
+import Section from 'determined-ui/Section';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Section from 'components/kit/Section';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';

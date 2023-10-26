@@ -5,13 +5,13 @@ import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
+import Section from 'determined-ui/Section';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
 import CreateGroupModalComponent from 'components/CreateGroupModal';
 import DeleteGroupModalComponent from 'components/DeleteGroupModal';
-import Section from 'components/kit/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';

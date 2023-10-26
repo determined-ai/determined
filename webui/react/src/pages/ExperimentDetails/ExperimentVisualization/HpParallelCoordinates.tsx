@@ -1,10 +1,10 @@
 import Message from 'determined-ui/Message';
+import Section from 'determined-ui/Section';
 import Spinner from 'determined-ui/Spinner';
 import useUI from 'determined-ui/Theme';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Section from 'components/kit/Section';
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';

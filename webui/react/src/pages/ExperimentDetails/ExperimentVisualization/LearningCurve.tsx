@@ -1,12 +1,12 @@
 import { LineChart } from 'determined-ui/LineChart';
 import Message from 'determined-ui/Message';
+import Section from 'determined-ui/Section';
 import Spinner from 'determined-ui/Spinner';
 import useUI from 'determined-ui/Theme';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Section from 'components/kit/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
