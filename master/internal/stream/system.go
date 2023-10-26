@@ -183,6 +183,100 @@ func writeAll(socketLike WebsocketLike, msgs []interface{}) error {
 	return nil
 }
 
+// processStream processes as startup message, then streams live updates until either:
+// - another startup message arrives, in which case it returns it or
+// - the streamer is closed gracefully, in which case it returns nil, or
+// - an error occurs.
+func (ps *PublisherSet) processStream(
+	ctx context.Context,
+	streamer *stream.Streamer,
+	user model.User,
+	startupMsg StartupMsg,
+	startups *[]StartupMsg,
+	socket WebsocketLike,
+) (
+	nextStartup *StartupMsg, err error,
+) {
+	// create new subscription set
+	ss, err := NewSubscriptionSet(ctx, streamer, ps, user, startupMsg.Subscribe)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating subscription set")
+	}
+	defer ss.UnsubscribeAll()
+
+	// startup subscription set
+	msgs := []interface{}{}
+	offlineMsgs, err := ss.Startup(ctx, user, startupMsg)
+	if err != nil {
+		return nil, errors.Wrapf(err, "gathering startup messages")
+	}
+	msgs = append(msgs, offlineMsgs...)
+
+	// always include a sync message
+	syncMsg := SyncMsg{SyncID: startupMsg.SyncID}.toPreparedMessage()
+	msgs = append(msgs, syncMsg)
+
+	// write offline msgs to the websocket
+	err = writeAll(socket, msgs)
+	if err != nil {
+		// don't log broken pipe errors
+		if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+			log.Debugf("unable to handle startup message: %s", err)
+		}
+		return nil, errors.Wrapf(err, "error handling startup message")
+	}
+
+	// startup done, begin streaming supported online events:
+	//	- insertions
+	//	- updates
+	//	- deletions
+	//	- fallin
+	//	- fallout
+	// note: online appearances and disappearances are not supported; we'll detect those
+	// situtations and break the connection to the streaming clients
+
+	// waitForSomething Returns a tuple of (first-startup-msg, msgs, closed)
+	waitForSomething := func() (*StartupMsg, []interface{}, bool) {
+		streamer.Cond.L.Lock()
+		defer streamer.Cond.L.Unlock()
+
+		if len(*startups) == 0 && len(streamer.Msgs) == 0 && streamer.Closed {
+			streamer.Cond.Wait()
+		}
+		// steal outputs
+		var startup *StartupMsg
+		if len(*startups) > 0 {
+			startup = &(*startups)[0]
+			*startups = (*startups)[1:]
+		}
+		msgs := streamer.Msgs
+		streamer.Msgs = nil
+		return startup, msgs, streamer.Closed
+	}
+	for {
+		startup, msgs, closed := waitForSomething()
+
+		// is the streamer closed?
+		if closed {
+			return nil, nil
+		}
+
+		// soft reset?
+		if startup != nil {
+			return startup, nil
+		}
+
+		// otherwise write all the messages we just got
+		err = writeAll(socket, msgs)
+		if err != nil {
+			if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+				log.Debugf("unable to handle startup message: %s", err)
+			}
+			return nil, errors.Wrapf(err, "error writing to socket")
+		}
+	}
+}
+
 // Websocket is an Echo websocket endpoint.
 func (ps *PublisherSet) entrypoint(
 	ssupCtx context.Context,
@@ -200,31 +294,18 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	streamer := stream.NewStreamer(prepareFunc)
-	// read and handle in initial startup message
+
+	// read first startup message
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
 		return errors.Wrapf(err, "error while reading initial startup message")
 	}
-	var ss SubscriptionSet
-	defer ss.UnsubscribeAll()
-	msgs, err := startupMsgHandler(ctx, startupMsg, ps, &ss, user, streamer)
-	if err != nil {
-		if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-			log.Debugf("unable to handle startup message: %s", err)
-		}
-		return errors.Wrapf(err, "error handling startup message")
-	}
-	err = writeAll(socket, msgs)
-	if err != nil {
-		return errors.Wrapf(err, "writing startup messages")
-	}
 
-	// startups is where we collect StartupMsg messages we read from the websocket until
-	// waitForSomething() delivers those messages to the websocket goroutine.
+	// startups is where we collect StartupMsg
+	// waitForSomething() in processStream delivers those messages to the websocket goroutine.
 	var startups []StartupMsg
 
-	// always be reading for new startup messages
 	go func() {
 		defer streamer.Close()
 		for {
@@ -238,25 +319,16 @@ func (ps *PublisherSet) entrypoint(
 				}
 				break
 			}
-			// wake up streamer goroutine with the newly-read StartupMsg
+			// wake up streamer goroutine with thew newly-read StartupMsg
 			func() {
 				streamer.Cond.L.Lock()
 				defer streamer.Cond.L.Unlock()
 				streamer.Cond.Signal()
+				// start
 				startups = append(startups, mods)
 			}()
 		}
 	}()
-
-	// startup done, begin streaming of supported online events:
-	//   - insertions
-	//   - updates
-	//   - deletions
-	//   - fallin
-	//   - fallout
-	//
-	// (note that online appearances and disappearances are not supported; we'll detect those
-	// situations and just break the connection to streaming clients).
 
 	// detect context cancelation, and bring it into the websocket thread
 	go func() {
@@ -272,44 +344,18 @@ func (ps *PublisherSet) entrypoint(
 		}
 	}()
 
-	// waitForSomething returns a tuple of (msgs, closed)
-	waitForSomething := func() ([]StartupMsg, []interface{}, bool) {
-		streamer.Cond.L.Lock()
-		defer streamer.Cond.L.Unlock()
-		streamer.Cond.Wait()
-		// steal outputs
-		starts := startups
-		startups = nil
-		msgs := streamer.Msgs
-		streamer.Msgs = nil
-		return starts, msgs, streamer.Closed
-	}
-
 	for {
-		starts, msgs, closed := waitForSomething()
-
-		// is the streamer closed?
-		if closed {
+		nextStartupMsg, err := ps.processStream(ctx, streamer, user, startupMsg, &startups, socket)
+		if err != nil {
+			// stream failed
+			return err
+		}
+		if nextStartupMsg == nil {
+			// stream closed
 			return nil
 		}
-
-		// any new startups?
-		for _, start := range starts {
-			temp, err := startupMsgHandler(ctx, start, ps, &ss, user, streamer)
-			if err != nil {
-				return errors.Wrapf(err, "error handling additional startup messages")
-			}
-			msgs = append(msgs, temp...)
-		}
-
-		// write msgs to the websocket
-		err = writeAll(socket, msgs)
-		if err != nil {
-			// XXX: don't log broken pipe errors.
-			if err != nil {
-				return errors.Wrapf(err, "error writing to socket")
-			}
-		}
+		// stream soft reset: the last subscription ended due to a user sending another StartupMsg
+		startupMsg = *nextStartupMsg
 	}
 }
 
@@ -342,41 +388,6 @@ func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
 		return nil
 	}
 	return msg
-}
-
-// startupMsgHandler reads and responds to startup messages sent by streaming clients.
-func startupMsgHandler(
-	ctx context.Context,
-	startupMsg StartupMsg,
-	ps *PublisherSet,
-	ss *SubscriptionSet,
-	user model.User,
-	streamer *stream.Streamer,
-) (msgs []interface{}, err error) {
-	// check for active subscriptions
-	if ss != nil {
-		ss.UnsubscribeAll()
-	}
-
-	// create new subscription set
-	tempSS, err := NewSubscriptionSet(ctx, streamer, ps, user, startupMsg.Subscribe)
-	*ss = tempSS
-	if err != nil {
-		return msgs, errors.Wrap(err, "creating subscription set")
-	}
-
-	// startup subscription set
-	offlineMsgs, err := ss.Startup(ctx, user, startupMsg)
-	if err != nil {
-		return msgs, errors.Wrapf(err, "gathering startup messages")
-	}
-	msgs = append(msgs, offlineMsgs...)
-
-	// add sync message if everything else went correctly
-	syncMsg := SyncMsg{SyncID: startupMsg.SyncID}
-	msgs = append(msgs, syncMsg.toPreparedMessage())
-
-	return msgs, nil
 }
 
 // bootStreamers closes and replaces the bootem channel with a new channel.
