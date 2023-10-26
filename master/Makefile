@@ -77,7 +77,7 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	touch $@
 
 .PHONY: check-gen
-check-gen: force-gen gen
+check-gen: force-gen gen build/mock_gen.stamp
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
 	test -z "$(shell git status --porcelain '**/zgen*')"
