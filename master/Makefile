@@ -33,7 +33,7 @@ NVCR_TAGS = \
 
 .PHONY: clean
 clean: ungen
-	rm -rf build pkg # TODO
+	rm -rf build pkg/generatedproto
 	rm -rf dist
 	rm -rf build
 
