@@ -9,7 +9,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Get the requested project.
 message GetProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the project.
@@ -19,7 +19,7 @@ message GetProjectRequest {
 // Response to GetProjectRequest.
 message GetProjectResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "project" ]}
+    json_schema: { required: [ "project" ] }
   };
 
   // The project requested.
@@ -29,7 +29,7 @@ message GetProjectResponse {
 // Request for experiment list columns
 message GetProjectColumnsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the project.
@@ -38,9 +38,9 @@ message GetProjectColumnsRequest {
 
 // Response for experiment list columns
 message GetProjectColumnsResponse {
-  reserved 1 to 3; // deprecated previous columns
+  reserved 1 to 3;  // deprecated previous columns
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "columns" ]}
+    json_schema: { required: [ "columns" ] }
   };
   // List of columns.
   repeated determined.project.v1.ProjectColumn columns = 4;
@@ -49,7 +49,7 @@ message GetProjectColumnsResponse {
 // Request for experiment list metrics ranges
 message GetProjectNumericMetricsRangeRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the project.
@@ -59,7 +59,7 @@ message GetProjectNumericMetricsRangeRequest {
 // Response for experiment list metrics ranges
 message GetProjectNumericMetricsRangeResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "range" ]}
+    json_schema: { required: [ "range" ] }
   };
   // List of ranges.
   repeated determined.project.v1.MetricsRange ranges = 1;
@@ -68,7 +68,7 @@ message GetProjectNumericMetricsRangeResponse {
 // Request for creating a project.
 message PostProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "name", "workspace_id" ]}
+    json_schema: { required: [ "name", "workspace_id" ] }
   };
 
   // The name of the project.
@@ -82,7 +82,7 @@ message PostProjectRequest {
 // Response to PostProjectRequest.
 message PostProjectResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "project" ]}
+    json_schema: { required: [ "project" ] }
   };
 
   // The project created.
@@ -92,7 +92,7 @@ message PostProjectResponse {
 // Request for adding a note to a project.
 message AddProjectNoteRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "note", "project_id" ]}
+    json_schema: { required: [ "note", "project_id" ] }
   };
   // The note to add.
   determined.project.v1.Note note = 1;
@@ -103,7 +103,7 @@ message AddProjectNoteRequest {
 // Response to AddProjectNoteRequest.
 message AddProjectNoteResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "notes" ]}
+    json_schema: { required: [ "notes" ] }
   };
 
   // The complete list of notes on a project.
@@ -113,7 +113,7 @@ message AddProjectNoteResponse {
 // Request for setting project notes.
 message PutProjectNotesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "notes", "project_id" ]}
+    json_schema: { required: [ "notes", "project_id" ] }
   };
   // The complete list of notes.
   repeated determined.project.v1.Note notes = 1;
@@ -124,7 +124,7 @@ message PutProjectNotesRequest {
 // Response to PutProjectNotesRequest.
 message PutProjectNotesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "notes" ]}
+    json_schema: { required: [ "notes" ] }
   };
 
   // The complete list of notes on a project.
@@ -134,7 +134,7 @@ message PutProjectNotesResponse {
 // Request for updating a project.
 message PatchProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id", "project" ]}
+    json_schema: { required: [ "id", "project" ] }
   };
 
   // The id of the project.
@@ -146,7 +146,7 @@ message PatchProjectRequest {
 // Response to PatchProjectRequest.
 message PatchProjectResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "project" ]}
+    json_schema: { required: [ "project" ] }
   };
 
   // The updated project.
@@ -156,7 +156,7 @@ message PatchProjectResponse {
 // Request for deleting a project.
 message DeleteProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the project.
@@ -166,7 +166,7 @@ message DeleteProjectRequest {
 // Response to DeleteProjectRequest.
 message DeleteProjectResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "completed" ]}
+    json_schema: { required: [ "completed" ] }
   };
 
   // Status of deletion.
@@ -176,7 +176,7 @@ message DeleteProjectResponse {
 // Request to move a project into a workspace.
 message MoveProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "destination_workspace_id", "project_id" ]}
+    json_schema: { required: [ "destination_workspace_id", "project_id" ] }
   };
 
   // The id of the project being moved.
@@ -191,7 +191,7 @@ message MoveProjectResponse {}
 // Request for archiving a project.
 message ArchiveProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the project.
@@ -204,7 +204,7 @@ message ArchiveProjectResponse {}
 // Request for un-archiving a project.
 message UnarchiveProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the project.

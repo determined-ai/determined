@@ -12,8 +12,8 @@ import "determined/task/v1/task.proto";
 // Notebook is a Jupyter notebook in a containerized environment.
 message Notebook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [
+    json_schema: {
+      required: [
         "id",
         "description",
         "start_time",

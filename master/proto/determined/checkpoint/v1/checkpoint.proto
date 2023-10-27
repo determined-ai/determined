@@ -47,7 +47,7 @@ enum SortBy {
 // CheckpointTrainingMetadata is specifically metadata about training.
 message CheckpointTrainingMetadata {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : []}
+    json_schema: { required: [] }
   };
   // The ID of the trial that created this checkpoint.
   google.protobuf.Int32Value trial_id = 1;
@@ -69,8 +69,8 @@ message CheckpointTrainingMetadata {
 // Checkpoint a collection of files saved by a task.
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "uuid", "resources", "metadata", "training", "state" ]
+    json_schema: {
+      required: [ "uuid", "resources", "metadata", "training", "state" ]
     }
   };
   // ID of the task which generated this checkpoint.
@@ -95,7 +95,7 @@ message Checkpoint {
 // Request to change checkpoint database information.
 message PatchCheckpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "uuid" ]}
+    json_schema: { required: [ "uuid" ] }
   };
 
   // Gets around not being able to do "Optional map<string, int64>".

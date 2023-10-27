@@ -8,7 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // MetricIdentifier packages metric name and group.
 message MetricIdentifier {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "group", "name" ]}
+    json_schema: { required: [ "group", "name" ] }
   };
   // The group of the metric.
   string group = 1;

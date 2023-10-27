@@ -10,7 +10,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Message for results of individual users in a multi-user action.
 message UserActionResult {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "error", "id" ]}
+    json_schema: { required: [ "error", "id" ] }
   };
   // Optional error message.
   string error = 1;
@@ -75,7 +75,7 @@ message GetUserRequest {
 // Response to GetUserRequest.
 message GetUserResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "user" ]}
+    json_schema: { required: [ "user" ] }
   };
   // The requested user.
   determined.user.v1.User user = 1;
@@ -89,7 +89,7 @@ message GetUserByUsernameRequest {
 // Response to GetUserByUsernameRequest.
 message GetUserByUsernameResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "user" ]}
+    json_schema: { required: [ "user" ] }
   };
   // The requested user.
   determined.user.v1.User user = 1;
@@ -100,7 +100,7 @@ message GetMeRequest {}
 // Response to GetMeRequest.
 message GetMeResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "user" ]}
+    json_schema: { required: [ "user" ] }
   };
   // The requested user.
   determined.user.v1.User user = 1;
@@ -144,7 +144,7 @@ message PatchUserRequest {
 // Response to PatchUserRequest.
 message PatchUserResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "user" ]}
+    json_schema: { required: [ "user" ] }
   };
   // The updated user.
   determined.user.v1.User user = 1;
@@ -161,7 +161,7 @@ message UserFilters {
 // Update activation status for multiple users.
 message PatchUsersRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "activate", "user_ids" ]}
+    json_schema: { required: [ "activate", "user_ids" ] }
   };
 
   // A list of user IDs to update.
@@ -174,7 +174,7 @@ message PatchUsersRequest {
 // Response to PatchUsersRequest.
 message PatchUsersResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "results" ]}
+    json_schema: { required: [ "results" ] }
   };
 
   // Details on success or error for each user.
@@ -186,7 +186,7 @@ message GetUserSettingRequest {}
 // Response to GetUserSettingRequest.
 message GetUserSettingResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "settings" ]}
+    json_schema: { required: [ "settings" ] }
   };
   // List of user settings.
   repeated determined.user.v1.UserWebSetting settings = 1;
@@ -194,7 +194,7 @@ message GetUserSettingResponse {
 // Update user settings.
 message PostUserSettingRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "settings" ]}
+    json_schema: { required: [ "settings" ] }
   };
   // Setting key value pair.
   repeated determined.user.v1.UserWebSetting settings = 1;
@@ -209,7 +209,7 @@ message ResetUserSettingResponse {}
 // Update user activity.
 message PostUserActivityRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "activity_type", "entity_type", "entity_id" ]}
+    json_schema: { required: [ "activity_type", "entity_type", "entity_id" ] }
   };
   // The type of the activity.
   determined.user.v1.ActivityType activity_type = 1;

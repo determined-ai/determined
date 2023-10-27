@@ -8,8 +8,8 @@ import "protoc-gen-swagger/options/annotations.proto";
 // File is a Unix file.
 message File {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "path", "type", "content", "mtime", "mode", "uid", "gid" ]
+    json_schema: {
+      required: [ "path", "type", "content", "mtime", "mode", "uid", "gid" ]
     }
   };
   // Path to the file.

@@ -10,7 +10,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Get a list of jobs sorted by number of jobs ahead & job ID.
 message GetJobsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : []}
+    json_schema: { required: [] }
   };
   // Pagination offset.
   int32 offset = 10;
@@ -28,7 +28,7 @@ message GetJobsRequest {
 // Response to GetJobsRequest.
 message GetJobsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "jobs", "pagination" ]}
+    json_schema: { required: [ "jobs", "pagination" ] }
   };
   // Pagination information of the full dataset.
   Pagination pagination = 1;
@@ -39,7 +39,7 @@ message GetJobsResponse {
 // Get a list of jobs sorted by number of jobs ahead & job ID.
 message GetJobsV2Request {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : []}
+    json_schema: { required: [] }
   };
   // Pagination offset.
   int32 offset = 10;
@@ -57,7 +57,7 @@ message GetJobsV2Request {
 // Response to GetJobsV2Request.
 message GetJobsV2Response {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "jobs", "pagination" ]}
+    json_schema: { required: [ "jobs", "pagination" ] }
   };
 
   // Pagination information of the full dataset.
@@ -70,7 +70,7 @@ message GetJobsV2Response {
 // Request to update the job queue.
 message UpdateJobQueueRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "updates" ]}
+    json_schema: { required: [ "updates" ] }
   };
   // List of job queue control requests.
   repeated determined.job.v1.QueueControl updates = 1;
@@ -81,7 +81,7 @@ message UpdateJobQueueResponse {}
 // Job stats for a resource pool.
 message RPQueueStat {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "stats", "resource_pool" ]}
+    json_schema: { required: [ "stats", "resource_pool" ] }
   };
   // Job queue stats.
   determined.job.v1.QueueStats stats = 1;
@@ -98,7 +98,7 @@ message GetJobQueueStatsRequest {
 // Response to GetJobQueueStatsRequest.
 message GetJobQueueStatsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "results" ]}
+    json_schema: { required: [ "results" ] }
   };
   // List of queue stats per resource pool.
   repeated RPQueueStat results = 1;

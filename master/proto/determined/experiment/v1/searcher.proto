@@ -17,7 +17,7 @@ message InitialOperations {
 // TrialCreated is a searcher event signaling the creation of a trial.
 message TrialCreated {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "request_id" ]}
+    json_schema: { required: [ "request_id" ] }
   };
   // UUID identifying the trial to the searcher.
   string request_id = 1;
@@ -27,7 +27,7 @@ message TrialCreated {
 // completed in the trial.
 message TrialProgress {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "request_id", "partial_units" ]}
+    json_schema: { required: [ "request_id", "partial_units" ] }
   };
   // UUID identifying the trial to the searcher.
   string request_id = 1;
@@ -40,8 +40,8 @@ message TrialProgress {
 // completed.
 message ValidationCompleted {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "request_id", "metric", "validate_after_length" ]
+    json_schema: {
+      required: [ "request_id", "metric", "validate_after_length" ]
     }
   };
   // UUID identifying the trial to the searcher.
@@ -56,7 +56,7 @@ message ValidationCompleted {
 // finished.
 message TrialClosed {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "request_id" ]}
+    json_schema: { required: [ "request_id" ] }
   };
   // UUID identifying the trial to the searcher.
   string request_id = 1;
@@ -66,7 +66,7 @@ message TrialClosed {
 // prematurely.
 message TrialExitedEarly {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "request_id", "exited_reason" ]}
+    json_schema: { required: [ "request_id", "exited_reason" ] }
   };
   // UUID identifying the trial to the searcher.
   string request_id = 1;
@@ -90,7 +90,7 @@ message TrialExitedEarly {
 // is no longer active.
 message ExperimentInactive {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "experiment_state" ]}
+    json_schema: { required: [ "experiment_state" ] }
   };
   // Current state of the experiment.
   State experiment_state = 1;
@@ -100,7 +100,7 @@ message ExperimentInactive {
 // informing it of relevant changes in the state of an experiment.
 message SearcherEvent {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
   // Incremental ID of the event.
   int32 id = 1;

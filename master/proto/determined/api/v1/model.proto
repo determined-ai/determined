@@ -13,7 +13,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Get the requested model.
 message GetModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name" ]}
+    json_schema: { required: [ "model_name" ] }
   };
 
   // The name of the model.
@@ -23,7 +23,7 @@ message GetModelRequest {
 // Response to GetModelRequest.
 message GetModelResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model" ]}
+    json_schema: { required: [ "model" ] }
   };
 
   // The model requested.
@@ -91,7 +91,7 @@ message GetModelsRequest {
 // Response to GetModelsRequest.
 message GetModelsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "models", "pagination" ]}
+    json_schema: { required: [ "models", "pagination" ] }
   };
   // The list of returned models.
   repeated determined.model.v1.Model models = 1;
@@ -108,7 +108,7 @@ message GetModelLabelsRequest {
 // Response to GetModelLabelsRequest.
 message GetModelLabelsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "labels" ]}
+    json_schema: { required: [ "labels" ] }
   };
 
   // List of labels used across all models.
@@ -118,7 +118,7 @@ message GetModelLabelsResponse {
 // Request for creating a model in the registry.
 message PostModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "name" ]}
+    json_schema: { required: [ "name" ] }
   };
   // The name of the model.
   string name = 1;
@@ -139,7 +139,7 @@ message PostModelRequest {
 // Response to PostModelRequest.
 message PostModelResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model" ]}
+    json_schema: { required: [ "model" ] }
   };
 
   // The model created.
@@ -149,7 +149,7 @@ message PostModelResponse {
 // Request for updating a model in the registry.
 message PatchModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model", "model_name" ]}
+    json_schema: { required: [ "model", "model_name" ] }
   };
 
   // The model desired model fields and values.
@@ -161,7 +161,7 @@ message PatchModelRequest {
 // Response to PatchModelRequest.
 message PatchModelResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model" ]}
+    json_schema: { required: [ "model" ] }
   };
 
   // The model created.
@@ -171,7 +171,7 @@ message PatchModelResponse {
 // Request for archiving a model in the registry.
 message ArchiveModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name" ]}
+    json_schema: { required: [ "model_name" ] }
   };
 
   // The name of the model to archive.
@@ -184,7 +184,7 @@ message ArchiveModelResponse {}
 // Request for un-archiving a model in the registry.
 message UnarchiveModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name" ]}
+    json_schema: { required: [ "model_name" ] }
   };
 
   // The name of the model to un-archive.
@@ -197,7 +197,7 @@ message UnarchiveModelResponse {}
 // Request to move a model to a workspace.
 message MoveModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name", "destination_workspace_id" ]}
+    json_schema: { required: [ "model_name", "destination_workspace_id" ] }
   };
 
   // The target model name.
@@ -212,7 +212,7 @@ message MoveModelResponse {}
 // Request for deleting a model in the registry.
 message DeleteModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name" ]}
+    json_schema: { required: [ "model_name" ] }
   };
 
   // The name of the model to delete.
@@ -225,7 +225,7 @@ message DeleteModelResponse {}
 // Request for a version of a model in the registry.
 message GetModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name", "model_version_num" ]}
+    json_schema: { required: [ "model_name", "model_version_num" ] }
   };
 
   // The name of the model.
@@ -237,7 +237,7 @@ message GetModelVersionRequest {
 // Response for GetModelVersionRequest.
 message GetModelVersionResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_version" ]}
+    json_schema: { required: [ "model_version" ] }
   };
 
   // The model version requested.
@@ -247,7 +247,7 @@ message GetModelVersionResponse {
 // Get a list of versions of the requested model.
 message GetModelVersionsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name" ]}
+    json_schema: { required: [ "model_name" ] }
   };
 
   // Sort models by the given field.
@@ -276,7 +276,7 @@ message GetModelVersionsRequest {
 // Response for GetModelVersionRequest.
 message GetModelVersionsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model", "model_versions", "pagination" ]}
+    json_schema: { required: [ "model", "model_versions", "pagination" ] }
   };
 
   // The model requested.
@@ -290,7 +290,7 @@ message GetModelVersionsResponse {
 // Request for creating a model version.
 message PostModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name", "checkpoint_uuid" ]}
+    json_schema: { required: [ "model_name", "checkpoint_uuid" ] }
   };
   // The name of the model to add this version to.
   string model_name = 8;
@@ -311,7 +311,7 @@ message PostModelVersionRequest {
 // Response for PostModelVersionRequest.
 message PostModelVersionResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_version" ]}
+    json_schema: { required: [ "model_version" ] }
   };
 
   // The model version requested.
@@ -321,8 +321,8 @@ message PostModelVersionResponse {
 // Request for updating a model version in the registry.
 message PatchModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "model_name", "model_version", "model_version_id" ]
+    json_schema: {
+      required: [ "model_name", "model_version", "model_version_id" ]
     }
   };
 
@@ -337,7 +337,7 @@ message PatchModelVersionRequest {
 // Response to PatchModelVersionRequest.
 message PatchModelVersionResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_version" ]}
+    json_schema: { required: [ "model_version" ] }
   };
 
   // The model version created.
@@ -347,7 +347,7 @@ message PatchModelVersionResponse {
 // Request for deleting a model version in the registry.
 message DeleteModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name", "model_version_num" ]}
+    json_schema: { required: [ "model_name", "model_version_num" ] }
   };
 
   // The name of the model associated with the model version.
@@ -362,7 +362,7 @@ message DeleteModelVersionResponse {}
 // Request for all metrics related to a given model version
 message GetTrialMetricsByModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "model_name", "model_version_num" ]}
+    json_schema: { required: [ "model_name", "model_version_num" ] }
   };
   // The name of the model associated with the model version.
   string model_name = 1;
@@ -378,7 +378,7 @@ message GetTrialMetricsByModelVersionRequest {
 // Response for all metrics related to a given checkpoint
 message GetTrialMetricsByModelVersionResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "metrics" ]}
+    json_schema: { required: [ "metrics" ] }
   };
   // All the related trials and their metrics
   repeated determined.trial.v1.MetricsReport metrics = 1;

@@ -46,7 +46,7 @@ message GetCommandsRequest {
 // Response to GetCommandsRequest.
 message GetCommandsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "commands" ]}
+    json_schema: { required: [ "commands" ] }
   };
   // The list of returned commands.
   repeated determined.command.v1.Command commands = 1;
@@ -62,7 +62,7 @@ message GetCommandRequest {
 // Response to GetCommandRequest.
 message GetCommandResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "command", "config" ]}
+    json_schema: { required: [ "command", "config" ] }
   };
   // The requested command.
   determined.command.v1.Command command = 1;
@@ -119,7 +119,7 @@ enum LaunchWarning {
 // Response to LaunchCommandRequest.
 message LaunchCommandResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "command", "config" ]}
+    json_schema: { required: [ "command", "config" ] }
   };
   // The requested command.
   determined.command.v1.Command command = 1;

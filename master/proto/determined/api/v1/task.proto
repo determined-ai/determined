@@ -14,7 +14,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Get the requested task.
 message GetTaskRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task_id" ]}
+    json_schema: { required: [ "task_id" ] }
   };
   // The requested task id.
   string task_id = 1;
@@ -23,7 +23,7 @@ message GetTaskRequest {
 // Response to GetTaskRequest.
 message GetTaskResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task" ]}
+    json_schema: { required: [ "task" ] }
   };
 
   // The requested task.
@@ -39,7 +39,7 @@ message GetTaskContextDirectoryRequest {
 // Response to GetTaskContextDirectoryRequest.
 message GetTaskContextDirectoryResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "b64_tgz" ]}
+    json_schema: { required: [ "b64_tgz" ] }
   };
   // The base64-encoded, gzipped, tarball.
   string b64_tgz = 1;
@@ -48,7 +48,7 @@ message GetTaskContextDirectoryResponse {
 // Request to PostTaskLogs.
 message PostTaskLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "logs" ]}
+    json_schema: { required: [ "logs" ] }
   };
   // The logs to persist.
   repeated task.v1.TaskLog logs = 1;
@@ -63,8 +63,8 @@ message GetActiveTasksCountRequest {}
 // Response to GetActiveTasksCountRequest.
 message GetActiveTasksCountResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "commands", "notebooks", "shells", "tensorboards" ]
+    json_schema: {
+      required: [ "commands", "notebooks", "shells", "tensorboards" ]
     }
   };
 
@@ -97,7 +97,7 @@ message AllocationWaitingResponse {}
 // Stream task logs.
 message TaskLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task_id" ]}
+    json_schema: { required: [ "task_id" ] }
   };
   // The id of the task.
   string task_id = 1;
@@ -132,8 +132,8 @@ message TaskLogsRequest {
 // Response to TaskLogsRequest.
 message TaskLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "id", "level", "log", "message", "task_id", "timestamp" ]
+    json_schema: {
+      required: [ "id", "level", "log", "message", "task_id", "timestamp" ]
     }
   };
   // The ID of the log.
@@ -141,7 +141,7 @@ message TaskLogsResponse {
   // The timestamp of the log.
   google.protobuf.Timestamp timestamp = 2;
   // The flat version of the log that UIs have shown historically.
-  string message = 3 [ deprecated = true ];
+  string message = 3 [deprecated = true];
   // The level of the log.
   determined.log.v1.LogLevel level = 4;
   // The ID of the task.
@@ -165,7 +165,7 @@ message TaskLogsResponse {
 // Stream distinct task log fields.
 message TaskLogsFieldsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task_id" ]}
+    json_schema: { required: [ "task_id" ] }
   };
   // The ID of the task.
   string task_id = 1;
@@ -176,7 +176,7 @@ message TaskLogsFieldsRequest {
 // Response to TaskLogsFieldsRequest.
 message TaskLogsFieldsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : []}
+    json_schema: { required: [] }
   };
   // The distint allocation IDs present in the logs.
   repeated string allocation_ids = 1;
@@ -195,7 +195,7 @@ message TaskLogsFieldsResponse {
 // Report the given checkpoint for the task.
 message ReportCheckpointRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "checkpoint" ]}
+    json_schema: { required: [ "checkpoint" ] }
   };
   // The training metrics to persist.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
@@ -216,7 +216,7 @@ message GetTasksResponse {
 // Get the accelerator data for each allocation associated with a task.
 message GetTaskAcceleratorDataRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task_id" ]}
+    json_schema: { required: [ "task_id" ] }
   };
   // The id of the task.
   string task_id = 1;
@@ -224,7 +224,7 @@ message GetTaskAcceleratorDataRequest {
 // Response to GetTaskAcceleratorDataResponse
 message GetTaskAcceleratorDataResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "accelerator_data" ]}
+    json_schema: { required: [ "accelerator_data" ] }
   };
   // The accelerator data for each allocation associated with the task.
   repeated AcceleratorData accelerator_data = 1;
@@ -233,7 +233,7 @@ message GetTaskAcceleratorDataResponse {
 // Gets some allocation.
 message GetAllocationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "allocation_id" ]}
+    json_schema: { required: [ "allocation_id" ] }
   };
   // The id of the allocation.
   string allocation_id = 1;
@@ -241,7 +241,7 @@ message GetAllocationRequest {
 // Response to GetAllocationRequest
 message GetAllocationResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "allocation" ]}
+    json_schema: { required: [ "allocation" ] }
   };
   // The id of the allocation.
   determined.task.v1.Allocation allocation = 1;

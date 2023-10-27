@@ -9,7 +9,7 @@ option go_package = "github.com/determined-ai/determined/master/pkg/generatedpro
 // User is an account in the determined cluster.
 message User {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "username", "admin", "active" ]}
+    json_schema: { required: [ "username", "admin", "active" ] }
   };
   // The user ID.
   int32 id = 1;
@@ -69,7 +69,7 @@ message AgentUserGroup {
 // UserWebSetting represents user web setting.
 message UserWebSetting {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "key" ]}
+    json_schema: { required: [ "key" ] }
   };
   // The key of setting.
   string key = 1;

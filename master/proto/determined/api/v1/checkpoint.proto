@@ -16,7 +16,7 @@ message GetCheckpointRequest {
 // Response to GetCheckpointRequest.
 message GetCheckpointResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "checkpoint" ]}
+    json_schema: { required: [ "checkpoint" ] }
   };
   // The requested checkpoint.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
@@ -37,7 +37,7 @@ message PostCheckpointMetadataResponse {
 // Request to delete files matching globs in checkpoints.
 message CheckpointsRemoveFilesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "checkpoint_uuids", "checkpoint_globs" ]}
+    json_schema: { required: [ "checkpoint_uuids", "checkpoint_globs" ] }
   };
   // The list of checkpoint_uuids for the requested checkpoints.
   repeated string checkpoint_uuids = 1;
@@ -53,7 +53,7 @@ message CheckpointsRemoveFilesResponse {}
 // Request to patch database info about a checkpoint.
 message PatchCheckpointsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "checkpoints" ]}
+    json_schema: { required: [ "checkpoints" ] }
   };
 
   // List of checkpoints to patch.
@@ -66,7 +66,7 @@ message PatchCheckpointsResponse {}
 // Request to Delete the list of checkpoints
 message DeleteCheckpointsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "checkpoint_uuids" ]}
+    json_schema: { required: [ "checkpoint_uuids" ] }
   };
   // The list of checkpoint_uuids for the requested checkpoint.
   repeated string checkpoint_uuids = 1;
@@ -78,7 +78,7 @@ message DeleteCheckpointsResponse {}
 // Request for all metrics related to a given checkpoint
 message GetTrialMetricsByCheckpointRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "checkpoint_uuid" ]}
+    json_schema: { required: [ "checkpoint_uuid" ] }
   };
   // UUID of the checkpoint.
   string checkpoint_uuid = 1;
@@ -92,7 +92,7 @@ message GetTrialMetricsByCheckpointRequest {
 // Response for all metrics related to a given checkpoint
 message GetTrialMetricsByCheckpointResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "metrics" ]}
+    json_schema: { required: [ "metrics" ] }
   };
   // All the related trials and their metrics
   repeated determined.trial.v1.MetricsReport metrics = 1;

@@ -16,7 +16,7 @@ message GetPermissionsSummaryRequest {}
 // Response to GetPermissionsSummaryRequest.
 message GetPermissionsSummaryResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "assignments", "roles" ]}
+    json_schema: { required: [ "assignments", "roles" ] }
   };
 
   // A group of roles in cluster and other scopes.
@@ -38,8 +38,8 @@ message GetGroupsAndUsersAssignedToWorkspaceRequest {
 // Response object for GetGroupsAndUsersAssignedToWorkspace.
 message GetGroupsAndUsersAssignedToWorkspaceResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "groups", "users_assigned_directly", "assignments" ]
+    json_schema: {
+      required: [ "groups", "users_assigned_directly", "assignments" ]
     }
   };
 
@@ -74,7 +74,7 @@ message GetRolesAssignedToUserRequest {
 // Response object for GetRolesAssignedToUser
 message GetRolesAssignedToUserResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "roles" ]}
+    json_schema: { required: [ "roles" ] }
   };
 
   // The roles assigned to the requested user with assignment information.
@@ -90,7 +90,7 @@ message GetRolesAssignedToGroupRequest {
 // Response object for GetRolesAssignedToGroup
 message GetRolesAssignedToGroupResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "roles", "assignments" ]}
+    json_schema: { required: [ "roles", "assignments" ] }
   };
 
   // The roles assigned to the requested groups.
@@ -103,7 +103,7 @@ message GetRolesAssignedToGroupResponse {
 // Request object for SearchRolesAssignableToScope
 message SearchRolesAssignableToScopeRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "limit" ]}
+    json_schema: { required: [ "limit" ] }
   };
 
   // The maximum number of results to return
@@ -126,7 +126,7 @@ message SearchRolesAssignableToScopeResponse {
 // to search for a role.
 message ListRolesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "limit" ]}
+    json_schema: { required: [ "limit" ] }
   };
   // the offset for pagination.
   int32 offset = 3;
@@ -138,7 +138,7 @@ message ListRolesRequest {
 // to search for a role.
 message ListRolesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "roles", "pagination" ]}
+    json_schema: { required: [ "roles", "pagination" ] }
   };
   // a set of roles and all assignments belonging to it.
   repeated determined.rbac.v1.Role roles = 1;

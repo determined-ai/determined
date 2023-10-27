@@ -50,7 +50,7 @@ enum TaskType {
 // Allocation tracks a specific instance of a Task.
 message Allocation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task_id", "state", "allocation_id", "slots" ]}
+    json_schema: { required: [ "task_id", "state", "allocation_id", "slots" ] }
   };
   // Unique ID of task associated with the allocation.
   string task_id = 1;
@@ -75,8 +75,8 @@ message Allocation {
 // Task is the model for a task in the database.
 message Task {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "task_id", "task_type", "allocations", "start_time" ]
+    json_schema: {
+      required: [ "task_id", "task_type", "allocations", "start_time" ]
     }
   };
   // Unique ID of task.
@@ -244,7 +244,7 @@ message AllocationSummary {
 // TaskLog is the model for a task log in the database
 message TaskLog {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "task_id", "log" ]}
+    json_schema: { required: [ "task_id", "log" ] }
   };
   // The ID of the log.
   optional int32 id = 1;

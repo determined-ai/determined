@@ -12,7 +12,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "state", "total_batches" ]}
+    json_schema: { required: [ "state", "total_batches" ] }
   };
   // UUID of the checkpoint.
   string uuid = 1;
@@ -68,8 +68,8 @@ enum State {
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "metrics", "state", "num_inputs", "total_batches" ]
+    json_schema: {
+      required: [ "metrics", "state", "num_inputs", "total_batches" ]
     }
   };
   // The time the workload finished or was stopped.
@@ -77,7 +77,7 @@ message MetricsWorkload {
   // Metrics.
   determined.common.v1.Metrics metrics = 40;
   // Number of inputs processed.
-  int32 num_inputs = 5 [ deprecated = true ];
+  int32 num_inputs = 5 [deprecated = true];
   // Total number of batches as of this workload's completion.
   int32 total_batches = 8;
 }
@@ -86,8 +86,8 @@ message MetricsWorkload {
 // hyperparameters.
 message Trial {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [
+    json_schema: {
+      required: [
         "id",
         "experimentId",
         "startTime",
@@ -129,7 +129,7 @@ message Trial {
   string warm_start_checkpoint_uuid = 13;
   // Id of the first task associated with this trial.
   // This field is deprecated since trials can have multiple tasks.
-  string task_id = 14 [ deprecated = true ];
+  string task_id = 14 [deprecated = true];
   // The sum of sizes of all resources in all checkpoints for the trial.
   uint64 total_checkpoint_size = 15;
   // The count of checkpoints.
@@ -150,7 +150,7 @@ message Trial {
 // is a defined as all metrics sharing a distinct set of labels
 message TrialProfilerMetricLabels {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "trial_id", "name" ]}
+    json_schema: { required: [ "trial_id", "name" ] }
   };
   // To distinguish the 2 different categories of metrics.
   enum ProfilerMetricType {
@@ -182,7 +182,7 @@ message TrialProfilerMetricLabels {
 // reading.
 message TrialProfilerMetricsBatch {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "values", "batches", "timestamps", "labels" ]}
+    json_schema: { required: [ "values", "batches", "timestamps", "labels" ] }
   };
   // The measurement for a reading, repeated for the batch of metrics.
   repeated float values = 1;
@@ -198,7 +198,7 @@ message TrialProfilerMetricsBatch {
 // Signals to the experiment the trial early exited.
 message TrialEarlyExit {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "reason" ]}
+    json_schema: { required: [ "reason" ] }
   };
   // The reason for an early exit.
   enum ExitedReason {
@@ -217,7 +217,7 @@ message TrialEarlyExit {
 // The rendezvous info for the trial to rendezvous with sibling containers.
 message RendezvousInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "addresses", "rank", "slots" ]}
+    json_schema: { required: [ "addresses", "rank", "slots" ] }
   };
   // The rendezvous addresses of the other containers.
   repeated string addresses = 1;
@@ -230,7 +230,7 @@ message RendezvousInfo {
 // The metadata pertaining to the current running task for a trial.
 message TrialRunnerMetadata {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "state" ]}
+    json_schema: { required: [ "state" ] }
   };
   // The state of the trial runner.
   string state = 1;
@@ -239,8 +239,8 @@ message TrialRunnerMetadata {
 // Metrics from the trial some duration of training.
 message TrialMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
+    json_schema: {
+      required: [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
     }
   };
   // The trial associated with these metrics.
@@ -258,8 +258,8 @@ message TrialMetrics {
 // Metrics report.
 message MetricsReport {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [
+    json_schema: {
+      required: [
         "trial_id",
         "end_time",
         "metrics",
@@ -304,8 +304,8 @@ enum TrialSourceInfoType {
 // checkpoint or model_version
 message TrialSourceInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [ "trial_id", "checkpoint_uuid", "trial_source_info_type" ]
+    json_schema: {
+      required: [ "trial_id", "checkpoint_uuid", "trial_source_info_type" ]
     }
   };
   // ID of the trial.

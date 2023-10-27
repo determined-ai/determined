@@ -62,8 +62,8 @@ message ExperimentTrial {
 // user-defined hyperparameter space.
 message Experiment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {
-      required : [
+    json_schema: {
+      required: [
         "id",
         "name",
         "start_time",
@@ -162,7 +162,7 @@ message Experiment {
 // PatchExperiment is a partial update to an experiment with only id required.
 message PatchExperiment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
   // The id of the experiment.
   int32 id = 1;
@@ -205,7 +205,7 @@ message PatchExperiment {
 // experiment.
 message ValidationHistoryEntry {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "trial_id", "end_time", "searcher_metric" ]}
+    json_schema: { required: [ "trial_id", "end_time", "searcher_metric" ] }
   };
   // The id for the trial associated with this validation entry.
   int32 trial_id = 1;

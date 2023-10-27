@@ -15,7 +15,7 @@ message GetWebhookRequest {
 // Response to GetWebhookRequest.
 message GetWebhookResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "webhook" ]}
+    json_schema: { required: [ "webhook" ] }
   };
   // The requested Webhook.
   determined.webhook.v1.Webhook webhook = 1;
@@ -27,7 +27,7 @@ message GetWebhooksRequest {}
 // Response to GetWebhooksRequest.
 message GetWebhooksResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "webhooks" ]}
+    json_schema: { required: [ "webhooks" ] }
   };
 
   // The list of returned webhooks.
@@ -37,7 +37,7 @@ message GetWebhooksResponse {
 // Request for creating a webhook
 message PostWebhookRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "webhook" ]}
+    json_schema: { required: [ "webhook" ] }
   };
 
   // The webhook to store.
@@ -47,7 +47,7 @@ message PostWebhookRequest {
 // Response to PostWebhookRequest.
 message PostWebhookResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "webhook" ]}
+    json_schema: { required: [ "webhook" ] }
   };
 
   // The webhook created.
@@ -57,7 +57,7 @@ message PostWebhookResponse {
 // Request for deleting a webhook.
 message DeleteWebhookRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the webhook.
@@ -70,7 +70,7 @@ message DeleteWebhookResponse {}
 // Request for testing a webhook.
 message TestWebhookRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "id" ]}
+    json_schema: { required: [ "id" ] }
   };
 
   // The id of the webhook.
@@ -80,7 +80,7 @@ message TestWebhookRequest {
 // Response to TestWebhookRequest.
 message TestWebhookResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema : {required : [ "completed" ]}
+    json_schema: { required: [ "completed" ] }
   };
 
   // Status of test.
