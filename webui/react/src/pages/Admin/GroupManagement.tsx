@@ -10,7 +10,7 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
-import AddMemberModalComponent from 'components/AddMemberModal';
+import AddUsersToGroupModalComponent from 'components/AddUsersToGroupModal';
 import CreateGroupModalComponent from 'components/CreateGroupModal';
 import DeleteGroupModalComponent from 'components/DeleteGroupModal';
 import Section from 'components/Section';
@@ -66,14 +66,14 @@ const GroupActionDropdown = ({
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
   };
   const EditGroupModal = useModal(CreateGroupModalComponent);
-  const AddMemberModal = useModal(AddMemberModalComponent);
+  const AddUsersToGroupModal = useModal(AddUsersToGroupModalComponent);
   const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
   const handleDropdown = useCallback(
     (key: string) => {
       switch (key) {
         case MenuKey.AddMembers:
-          AddMemberModal.open();
+          AddUsersToGroupModal.open();
           break;
         case MenuKey.Delete:
           DeleteGroupModal.open();
@@ -83,7 +83,7 @@ const GroupActionDropdown = ({
           break;
       }
     },
-    [AddMemberModal, DeleteGroupModal, EditGroupModal],
+    [AddUsersToGroupModal, DeleteGroupModal, EditGroupModal],
   );
 
   return (
@@ -91,7 +91,7 @@ const GroupActionDropdown = ({
       <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
-      <AddMemberModal.Component group={group} users={availabeUsers} onClose={onFinishEdit} />
+      <AddUsersToGroupModal.Component group={group} users={availabeUsers} onClose={onFinishEdit} />
       <EditGroupModal.Component group={group} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
     </div>

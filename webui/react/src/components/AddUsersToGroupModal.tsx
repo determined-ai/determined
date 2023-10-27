@@ -21,7 +21,7 @@ type FormInputs = {
   userIds: number[];
 };
 
-const AddMemberModalComponent: React.FC<Props> = ({ users, onClose, group }: Props) => {
+const AddUsersToGroupModalComponent: React.FC<Props> = ({ users, onClose, group }: Props) => {
   const idPrefix = useId();
   const [filteredUsers, setFilteredUsers] = useState<DetailedUser[]>([]);
   const [form] = Form.useForm<FormInputs>();
@@ -126,4 +126,4 @@ const AddMemberModalComponent: React.FC<Props> = ({ users, onClose, group }: Pro
   );
 };
 
-export default AddMemberModalComponent;
+export default AddUsersToGroupModalComponent;
