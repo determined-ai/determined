@@ -21,7 +21,6 @@ stages:
 
   - master:
       pre:
-        - sh: make -C proto build
         - sh: make -C master build
         - sh: make -C tools prep-root
         - sh: mkdir -p /tmp/determined-cp
