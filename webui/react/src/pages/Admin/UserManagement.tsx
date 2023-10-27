@@ -367,6 +367,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'displayName',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.NAME ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
@@ -379,6 +380,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'isActive',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.ACTIVE ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['isActive'],
         key: V1GetUsersRequestSortBy.ACTIVE,
         onCell: onRightClickableCell,
         render: (isActive: boolean) => <>{isActive ? 'Active' : 'Inactive'}</>,
@@ -389,6 +391,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'isAdmin',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.ADMIN ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['isAdmin'],
         key: V1GetUsersRequestSortBy.ADMIN,
         onCell: onRightClickableCell,
         render: (isAdmin: boolean) => <>{isAdmin ? 'Admin' : 'Member'}</>,
@@ -399,6 +402,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'modifiedAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['modifiedAt'],
         key: V1GetUsersRequestSortBy.MODIFIEDTIME,
         onCell: onRightClickableCell,
         render: (value: number): React.ReactNode => relativeTimeRenderer(new Date(value)),
@@ -409,6 +413,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'lastAuthAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.LASTAUTHTIME ? defaultSortOrder : undefined,
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastAuthAt'],
         key: V1GetUsersRequestSortBy.LASTAUTHTIME,
         onCell: onRightClickableCell,
         render: (value: number | undefined): React.ReactNode => {
@@ -424,6 +429,7 @@ const UserManagement: React.FC = () => {
       {
         className: 'fullCell',
         dataIndex: 'action',
+        defaultWidth: 46,
         key: 'action',
         onCell: onRightClickableCell,
         render: actionRenderer,
