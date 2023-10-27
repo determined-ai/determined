@@ -114,7 +114,7 @@ func (user *User) UpdatePasswordHash(password string) error {
 		user.PasswordHash = null.NewString("", false)
 	} else {
 		passwordHash, err := bcrypt.GenerateFromPassword(
-			[]byte(password),
+			[]byte(password)[:72],
 			BCryptCost,
 		)
 		if err != nil {
