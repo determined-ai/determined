@@ -216,6 +216,16 @@ Parameters:
     Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
     Default: 0
 
+  SidecarImage:
+    Type: String
+    Description: Docker image for sidecar service.
+    Default: ''
+
+  SidecarPort:
+    Type: Number
+    Description: Internal container port for sidecar service.
+    Default: 0
+
   MountEFSId:
     Type: String
     Description: preexisting EFS ID to mount
@@ -284,6 +294,13 @@ Parameters:
         tls:
           cert: /etc/determined/master.crt
           key: /etc/determined/master.key
+      {{ end }}
+
+      {{ if ne .sidecar1_port 0.0 }}
+      __internal:
+        proxied_servers:
+          - destination: "http://sidecar1:{{ .sidecar1_port }}/lore"
+            path_prefix: /lore
       {{ end }}
 
       {{ if or (or .cpu_env_image .gpu_env_image) .bind_mounts }}
@@ -895,6 +912,7 @@ Resources:
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
             notebook_timeout: ${NotebookTimeout}
+            sidecar1_port: ${SidecarPort}
 
             bind_mounts:
               - host_path: /mnt/efs
@@ -945,6 +963,20 @@ Resources:
             fi
 
             mount -t efs ${EFSVal}:/ /mnt/efs
+
+            if [ ! -z "${SidecarImage}" ] && [ ! -z "${SidecarPort}" ]; then
+              # TODO: pick up from $port and $scheme?
+              docker run -d \
+                --name sidecar1 \
+                --env DET_MASTER=http://determined-master:8080 \
+                --env DB_NAME=lore \
+                --env DB_USER=postgres \
+                --env DB_PASSWORD=${DBPassword} \
+                --env DB_HOST=${Database.Endpoint.Address} \
+                --env DB_PORT=5432 \
+                --network determined \
+                "${SidecarImage}"
+            fi
 
             touch /usr/local/determined/etc/master.yaml
             docker run \
