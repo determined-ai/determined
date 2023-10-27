@@ -5,7 +5,7 @@
 package apiv1
 
 import (
-	templatev1 "github.com/determined-ai/determined/proto/pkg/templatev1"
+	templatev1 "github.com/determined-ai/determined/master/pkg/generatedproto/templatev1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

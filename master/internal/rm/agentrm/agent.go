@@ -26,8 +26,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ws"
-	"github.com/determined-ai/determined/proto/pkg/agentv1"
-	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/agentv1"
+	proto "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 type (

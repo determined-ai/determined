@@ -27,9 +27,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/modelv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/modelv1"
 )
 
 func errCheckpointsNotFound(ids []string) error {

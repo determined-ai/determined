@@ -5,8 +5,8 @@
 package agentv1
 
 import (
-	containerv1 "github.com/determined-ai/determined/proto/pkg/containerv1"
-	devicev1 "github.com/determined-ai/determined/proto/pkg/devicev1"
+	containerv1 "github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
+	devicev1 "github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

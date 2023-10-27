@@ -47,13 +47,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/metricv1"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
-	"github.com/determined-ai/determined/proto/pkg/rbacv1"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/metricv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 // Catches information on active running experiments.

@@ -6,7 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 // AddProviderInfoToMasterResponse modifies passed in master response adds sso

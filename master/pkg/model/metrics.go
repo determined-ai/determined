@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/metricv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/metricv1"
 )
 
 const (

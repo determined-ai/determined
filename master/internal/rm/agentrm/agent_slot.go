@@ -9,7 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
-	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
+	proto "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 type slotProxy struct {

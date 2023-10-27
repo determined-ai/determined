@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/tensorboardv1"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/tensorboardv1"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
@@ -23,10 +23,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/commandv1"
-	"github.com/determined-ai/determined/proto/pkg/notebookv1"
-	"github.com/determined-ai/determined/proto/pkg/shellv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commandv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/notebookv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/shellv1"
 )
 
 /*

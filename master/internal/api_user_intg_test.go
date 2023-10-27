@@ -32,8 +32,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/userv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
 )
 
 var (

@@ -24,7 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/taskv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
 )
 
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the

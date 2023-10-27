@@ -13,12 +13,12 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/test/testutils"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 
 	"github.com/google/uuid"
 
@@ -27,7 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 func TestGetCheckpoint(t *testing.T) {

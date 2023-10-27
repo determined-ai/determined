@@ -5,8 +5,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
-	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 )
 
 // WorkspaceAuthZ is the interface for workspace authorization.

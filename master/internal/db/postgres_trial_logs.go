@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 
 	"github.com/determined-ai/determined/master/internal/api"
 

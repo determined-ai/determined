@@ -5,8 +5,8 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/proto/pkg/containerv1"
-	"github.com/determined-ai/determined/proto/pkg/devicev1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
 )
 
 // Container tracks a container running in the cluster.

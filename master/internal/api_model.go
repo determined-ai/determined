@@ -21,10 +21,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/trials"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/modelv1"
-	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/modelv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )

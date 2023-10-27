@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/mathx"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
 )
 
 func computeSlice(startID int, endID int, limit int, totalEntries int, capacity int) (int, int) {

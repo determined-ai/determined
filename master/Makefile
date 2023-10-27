@@ -281,7 +281,10 @@ ifeq "$(shell uname)" "Darwin"
 else
 	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
 endif
+    # TODO avoid this rewrite
+    #find . -type f -name "*.go" -exec sed -i 's|"github.com/determined-ai/determined/proto/pkg/\(.*\)"|"github.com/determined-ai/determined/master/pkg/generatedproto/\1"|g' {} +
 	touch $@
+
 
 # Update buf image for breaking change check.
 .PHONY: gen-buf-image

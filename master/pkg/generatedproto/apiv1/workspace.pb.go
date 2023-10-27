@@ -5,9 +5,9 @@
 package apiv1
 
 import (
-	projectv1 "github.com/determined-ai/determined/proto/pkg/projectv1"
-	userv1 "github.com/determined-ai/determined/proto/pkg/userv1"
-	workspacev1 "github.com/determined-ai/determined/proto/pkg/workspacev1"
+	projectv1 "github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
+	userv1 "github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
+	workspacev1 "github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"

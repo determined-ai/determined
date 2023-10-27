@@ -5,8 +5,8 @@
 package shellv1
 
 import (
-	containerv1 "github.com/determined-ai/determined/proto/pkg/containerv1"
-	taskv1 "github.com/determined-ai/determined/proto/pkg/taskv1"
+	containerv1 "github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
+	taskv1 "github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"

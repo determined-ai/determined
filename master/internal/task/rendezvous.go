@@ -12,7 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 const (

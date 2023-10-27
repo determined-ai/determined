@@ -5,7 +5,7 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 // Paginate calculates pagination info for a Bun query and returns the SelectQuery for the

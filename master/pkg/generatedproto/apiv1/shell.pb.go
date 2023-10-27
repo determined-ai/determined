@@ -5,8 +5,8 @@
 package apiv1
 
 import (
-	shellv1 "github.com/determined-ai/determined/proto/pkg/shellv1"
-	utilv1 "github.com/determined-ai/determined/proto/pkg/utilv1"
+	shellv1 "github.com/determined-ai/determined/master/pkg/generatedproto/shellv1"
+	utilv1 "github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

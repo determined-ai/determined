@@ -68,8 +68,8 @@ import (
 	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/version"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/masterv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/masterv1"
 )
 
 const (

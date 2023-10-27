@@ -32,8 +32,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 const (

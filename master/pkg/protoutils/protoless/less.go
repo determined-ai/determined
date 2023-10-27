@@ -5,7 +5,7 @@ package protoless
 
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
 )
 
 // CheckpointStepsCompletedLess compares checkpoints by their number of steps completed, falling

@@ -17,7 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 // WebhooksAPIServer is an embedded api server struct.

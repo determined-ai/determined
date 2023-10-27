@@ -7,7 +7,7 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 )
 
 const (

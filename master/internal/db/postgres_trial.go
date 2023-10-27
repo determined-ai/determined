@@ -17,7 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 // AddTrial adds the trial to the database and sets its ID.

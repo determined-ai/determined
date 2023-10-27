@@ -5,7 +5,7 @@
 package apiv1
 
 import (
-	groupv1 "github.com/determined-ai/determined/proto/pkg/groupv1"
+	groupv1 "github.com/determined-ai/determined/master/pkg/generatedproto/groupv1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

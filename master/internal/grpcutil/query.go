@@ -1,7 +1,7 @@
 package grpcutil
 
 import (
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 // OrderBySQL maps our protobuf OrderBy enum to SQL. Unspecified maps to ASC.

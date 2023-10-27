@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
 
 	"github.com/uptrace/bun"
 
@@ -45,12 +45,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/test/olddata"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/rbacv1"
-	"github.com/determined-ai/determined/proto/pkg/userv1"
-	"github.com/determined-ai/determined/proto/pkg/utilv1"
-	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 )
 
 type mockStream[T any] struct {

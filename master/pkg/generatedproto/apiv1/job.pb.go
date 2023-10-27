@@ -5,7 +5,7 @@
 package apiv1
 
 import (
-	jobv1 "github.com/determined-ai/determined/proto/pkg/jobv1"
+	jobv1 "github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

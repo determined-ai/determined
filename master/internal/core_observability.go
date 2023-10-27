@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/prom"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 func (m *Master) getPrometheusTargets(c echo.Context) (interface{}, error) {

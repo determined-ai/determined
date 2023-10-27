@@ -33,9 +33,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/notebookv1"
-	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/notebookv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 )
 
 const (

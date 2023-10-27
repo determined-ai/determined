@@ -7,7 +7,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"

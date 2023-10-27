@@ -15,9 +15,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasklog"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
-	"github.com/determined-ai/determined/proto/pkg/taskv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
 )
 
 // TaskID is the unique ID of a task among all tasks.

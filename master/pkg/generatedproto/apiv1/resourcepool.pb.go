@@ -5,7 +5,7 @@
 package apiv1
 
 import (
-	resourcepoolv1 "github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+	resourcepoolv1 "github.com/determined-ai/determined/master/pkg/generatedproto/resourcepoolv1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

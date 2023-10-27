@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/proto/pkg/containerv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
 )
 
 // State represents the current state of the container.

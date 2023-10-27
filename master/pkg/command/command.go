@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 // LaunchWarning represents warnings related to launching commands.

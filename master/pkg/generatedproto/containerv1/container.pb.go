@@ -5,7 +5,7 @@
 package containerv1
 
 import (
-	devicev1 "github.com/determined-ai/determined/proto/pkg/devicev1"
+	devicev1 "github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

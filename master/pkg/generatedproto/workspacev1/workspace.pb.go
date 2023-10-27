@@ -5,7 +5,7 @@
 package workspacev1
 
 import (
-	userv1 "github.com/determined-ai/determined/proto/pkg/userv1"
+	userv1 "github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"

@@ -23,7 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
+	proto "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 const jsonPretty = "application/json+pretty"

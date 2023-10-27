@@ -4,10 +4,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/proto/pkg/agentv1"
-	"github.com/determined-ai/determined/proto/pkg/containerv1"
-	"github.com/determined-ai/determined/proto/pkg/devicev1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/agentv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
 )
 
 const (

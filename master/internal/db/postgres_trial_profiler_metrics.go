@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 // InsertTrialProfilerMetricsBatch inserts a batch of metrics into the database.

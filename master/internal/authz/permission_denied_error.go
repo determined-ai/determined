@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/determined-ai/determined/proto/pkg/rbacv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
 )
 
 // PermissionDeniedError represents an error that arises when a user does not have sufficient

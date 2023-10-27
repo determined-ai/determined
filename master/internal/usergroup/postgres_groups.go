@@ -12,7 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/groupv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/groupv1"
 )
 
 // addGroup adds a group to the database. Returns ErrDuplicateRow if a

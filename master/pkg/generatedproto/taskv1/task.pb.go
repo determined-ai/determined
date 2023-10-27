@@ -5,8 +5,8 @@
 package taskv1
 
 import (
-	devicev1 "github.com/determined-ai/determined/proto/pkg/devicev1"
-	logv1 "github.com/determined-ai/determined/proto/pkg/logv1"
+	devicev1 "github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
+	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

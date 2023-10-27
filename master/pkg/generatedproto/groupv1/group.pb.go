@@ -5,7 +5,7 @@
 package groupv1
 
 import (
-	userv1 "github.com/determined-ai/determined/proto/pkg/userv1"
+	userv1 "github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

@@ -5,8 +5,8 @@
 package apiv1
 
 import (
-	logv1 "github.com/determined-ai/determined/proto/pkg/logv1"
-	masterv1 "github.com/determined-ai/determined/proto/pkg/masterv1"
+	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
+	masterv1 "github.com/determined-ai/determined/master/pkg/generatedproto/masterv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"

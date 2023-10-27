@@ -5,8 +5,8 @@
 package projectv1
 
 import (
-	checkpointv1 "github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	workspacev1 "github.com/determined-ai/determined/proto/pkg/workspacev1"
+	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	workspacev1 "github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"

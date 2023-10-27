@@ -3,7 +3,7 @@ package cproto
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/proto/pkg/taskv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
 )
 
 // Address represents an exposed port on a container.

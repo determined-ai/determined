@@ -39,7 +39,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 
 	// Used to load all auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

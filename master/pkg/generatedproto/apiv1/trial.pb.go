@@ -5,11 +5,11 @@
 package apiv1
 
 import (
-	checkpointv1 "github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	commonv1 "github.com/determined-ai/determined/proto/pkg/commonv1"
-	experimentv1 "github.com/determined-ai/determined/proto/pkg/experimentv1"
-	logv1 "github.com/determined-ai/determined/proto/pkg/logv1"
-	trialv1 "github.com/determined-ai/determined/proto/pkg/trialv1"
+	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	commonv1 "github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
+	experimentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
+	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
+	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"

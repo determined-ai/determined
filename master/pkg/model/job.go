@@ -5,7 +5,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
 )
 
 // JobID is the unique ID of a job among all jobs.

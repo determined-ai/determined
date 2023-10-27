@@ -26,12 +26,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/commandv1"
-	"github.com/determined-ai/determined/proto/pkg/notebookv1"
-	"github.com/determined-ai/determined/proto/pkg/shellv1"
-	"github.com/determined-ai/determined/proto/pkg/taskv1"
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commandv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/notebookv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/shellv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/tensorboardv1"
 )
 
 // terminatedDuration defines the amount of time the command stays in a

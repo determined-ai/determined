@@ -5,8 +5,8 @@
 package apiv1
 
 import (
-	checkpointv1 "github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	trialv1 "github.com/determined-ai/determined/proto/pkg/trialv1"
+	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"

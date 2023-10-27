@@ -7,7 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/proto/pkg/taskv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
 )
 
 // All the From... methods expose the more abstract representation returned by resource managers

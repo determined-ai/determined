@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 
 	"golang.org/x/exp/maps"
 

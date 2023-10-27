@@ -5,9 +5,9 @@
 package apiv1
 
 import (
-	groupv1 "github.com/determined-ai/determined/proto/pkg/groupv1"
-	rbacv1 "github.com/determined-ai/determined/proto/pkg/rbacv1"
-	userv1 "github.com/determined-ai/determined/proto/pkg/userv1"
+	groupv1 "github.com/determined-ai/determined/master/pkg/generatedproto/groupv1"
+	rbacv1 "github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
+	userv1 "github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

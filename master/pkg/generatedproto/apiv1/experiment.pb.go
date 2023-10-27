@@ -5,13 +5,13 @@
 package apiv1
 
 import (
-	checkpointv1 "github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	commonv1 "github.com/determined-ai/determined/proto/pkg/commonv1"
-	experimentv1 "github.com/determined-ai/determined/proto/pkg/experimentv1"
-	jobv1 "github.com/determined-ai/determined/proto/pkg/jobv1"
-	metricv1 "github.com/determined-ai/determined/proto/pkg/metricv1"
-	trialv1 "github.com/determined-ai/determined/proto/pkg/trialv1"
-	utilv1 "github.com/determined-ai/determined/proto/pkg/utilv1"
+	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	commonv1 "github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
+	experimentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
+	jobv1 "github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	metricv1 "github.com/determined-ai/determined/master/pkg/generatedproto/metricv1"
+	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
+	utilv1 "github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"

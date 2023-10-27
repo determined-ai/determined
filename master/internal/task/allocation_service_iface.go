@@ -3,7 +3,7 @@ package task
 import (
 	"context"
 
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 
 	"github.com/google/uuid"
 

@@ -2,7 +2,7 @@ package rmutils
 
 import (
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/resourcepoolv1"
 )
 
 // ResourcePoolsToConfig converts proto objects to an internal resource pool config object.

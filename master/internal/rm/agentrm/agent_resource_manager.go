@@ -20,9 +20,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/resourcepoolv1"
 )
 
 const (

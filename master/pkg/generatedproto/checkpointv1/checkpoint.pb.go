@@ -5,7 +5,7 @@
 package checkpointv1
 
 import (
-	commonv1 "github.com/determined-ai/determined/proto/pkg/commonv1"
+	commonv1 "github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"

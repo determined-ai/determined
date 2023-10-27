@@ -6,7 +6,7 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 )
 
 // Project is the bun model of a project.

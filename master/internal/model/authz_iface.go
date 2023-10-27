@@ -7,7 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/modelv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/modelv1"
 )
 
 // ModelAuthZ describes authz methods for experiments.

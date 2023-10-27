@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"

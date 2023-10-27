@@ -3,7 +3,7 @@ package model
 import (
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/proto/pkg/groupv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/groupv1"
 )
 
 // Group represents a user group as it's stored in the database.
