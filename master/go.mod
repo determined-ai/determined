@@ -185,4 +185,4 @@ require (
 	golang.org/x/sync v0.1.0
 )
 
-replace github.com/determined-ai/determined/proto => ../proto
+replace github.com/determined-ai/determined/proto => ./pkg/generatedproto

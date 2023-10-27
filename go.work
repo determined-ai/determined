@@ -3,5 +3,4 @@ go 1.21
 use (
 	./agent
 	./master
-	./proto
 )

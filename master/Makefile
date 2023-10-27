@@ -33,7 +33,7 @@ NVCR_TAGS = \
 
 .PHONY: clean
 clean: ungen
-    rm -rf build pkg # TODO
+	rm -rf build pkg # TODO
 	rm -rf dist
 	rm -rf build
 
@@ -88,6 +88,7 @@ get-deps:
 	./get-deps.sh
 
 .PHONY: build
+build: build-proto
 build: export DET_SEGMENT_MASTER_KEY ?=
 build: export DET_SEGMENT_WEBUI_KEY ?=
 build: gen
@@ -241,8 +242,8 @@ publish-nvcr:
 
 
 # String constants.
-build_path := build/proto/github.com/determined-ai/determined/proto/pkg
-src_path := src/determined
+build_path := build/build-proto/github.com/determined-ai/determined/proto/pkg
+src_path := proto/determined
 
 # Pre-defined list of all source files.
 source_files := $(shell find $(src_path) -type f -name '*.proto')
@@ -263,22 +264,22 @@ echo_swagger_patch := $(echo_swagger_patch_dir)/swagger.json
 buf_image := buf.image.bin
 
 .PHONY: build-proto
-build-proto: build-proto/proto.stamp $(swagger_out)
+build-proto: build/build-proto.stamp $(swagger_out)
 
-build-proto/proto.stamp: $(source_files)
+build/build-proto.stamp: $(source_files)
 	protoc --version |perl -ne '/.*(\d+)\.(\d+)\.(\d+)/&&(($$1==3&&$$2<15)||$$1<3)&&print("\nERROR: \
 		Detected protoc version: $$1.$$2.$$3. Please upgrade protoc to version 3.15.0 or above\n\n.")&&exit 1;'
-	rm -rf build/proto pkg
-	mkdir -p build/proto
+	rm -rf build/proto pkg/generatedproto
+	mkdir -p build/build-proto
 	# Protobuf generation.
-	for source in $(source_files) ; do protoc -I src "$$source" --go_out=plugins=grpc:build/proto || exit 1; done
+	for source in $(source_files) ; do protoc -I proto "$$source" --go_out=plugins=grpc:build/build-proto || exit 1; done
 	# GRPC generation.
-	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto --grpc-gateway_opt allow_delete_body=true
-	mv $(build_path) pkg
+	protoc -I proto $(grpc_in) --grpc-gateway_out=logtostderr=true:build/build-proto --grpc-gateway_opt allow_delete_body=true
+	mv $(build_path) pkg/generatedproto
 ifeq "$(shell uname)" "Darwin"
-	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
+	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
 else
-	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
+	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
 endif
 	touch $@
 
@@ -299,7 +300,7 @@ build/swagger:
 	mkdir -p build/swagger
 
 $(swagger_out): $(source_files) build/swagger $(swagger_patch) $(echo_swagger_patch)
-	protoc -I src $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
+	protoc -I proto $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
 	python3 scripts/swagger.py $@ $(echo_swagger_patch)
 
