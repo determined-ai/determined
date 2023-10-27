@@ -186,6 +186,9 @@ const userManagementSettings = userSettings.get(UserManagementSettings, 'user-ma
 const UserManagement: React.FC = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const [refresh, setRefresh] = useState<Record<string, never>>({});
+  const [nameFilter, setNameFilter] = useState<string | undefined>();
+  const [roleFilter, setRoleFilter] = useState<UserRole | number[] | undefined>();
+  const [statusFilter, setStatusFilter] = useState<UserStatus | undefined>();
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
@@ -203,30 +206,32 @@ const UserManagement: React.FC = () => {
 
   const userResponse = useAsync(async () => {
     try {
-      return await getUsers({
-        active: settings.statusFilter && settings.statusFilter === UserStatus.ACTIVE,
-        admin: settings.roleFilter && settings.roleFilter === UserRole.ADMIN,
+      const params = {
+        active: statusFilter && statusFilter === UserStatus.ACTIVE,
+        admin: roleFilter && roleFilter === UserRole.ADMIN,
         limit: settings.tableLimit,
-        name: settings.name,
+        name: nameFilter,
         offset: settings.tableOffset,
         orderBy: settings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC,
         sortBy: settings.sortKey,
+      };
+      const roleParams = Array.isArray(roleFilter)
+        ? {
+            roleIdAssignedDirectlyToUser: roleFilter,
+          }
+        : {
+            admin: roleFilter && roleFilter === UserRole.ADMIN,
+          };
+      return await getUsers({
+        ...params,
+        ...roleParams,
       });
     } catch (e) {
       handleError(e, { publicSubject: 'Could not fetch user search results' });
       return NotLoaded;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    settings.name,
-    settings.roleFilter,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.statusFilter,
-    settings.tableLimit,
-    settings.tableOffset,
-    refresh,
-  ]);
+  }, [nameFilter, roleFilter, statusFilter, settings, refresh]);
 
   const users = useMemo(
     () =>
@@ -278,23 +283,26 @@ const UserManagement: React.FC = () => {
 
   const handleNameSearchApply = useMemo(
     () =>
-      debounce(
-        (e: React.ChangeEvent<HTMLInputElement>) =>
-          updateSettings({ name: e.target.value || undefined, row: undefined, tableOffset: 0 }),
-        500,
-      ),
+      debounce((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNameFilter(e.target.value);
+        updateSettings({ row: undefined, tableOffset: 0 });
+      }, 500),
     [updateSettings],
   );
 
   const handleStatusFilterApply = useCallback(
-    (statusFilter?: SelectValue) =>
-      updateSettings({ row: undefined, statusFilter: statusFilter as UserStatus, tableOffset: 0 }),
+    (statusFilter?: SelectValue) => {
+      setStatusFilter(statusFilter as UserStatus);
+      updateSettings({ row: undefined, tableOffset: 0 });
+    },
     [updateSettings],
   );
 
   const handleRoleFilterApply = useCallback(
-    (roleFilter?: SelectValue) =>
-      updateSettings({ roleFilter: roleFilter as UserRole, row: undefined, tableOffset: 0 }),
+    (roleFilter?: SelectValue) => {
+      setRoleFilter(roleFilter as UserRole | number[]);
+      updateSettings({ row: undefined, tableOffset: 0 });
+    },
     [updateSettings],
   );
 
@@ -359,7 +367,6 @@ const UserManagement: React.FC = () => {
         dataIndex: 'displayName',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.NAME ? defaultSortOrder : undefined,
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
@@ -372,7 +379,6 @@ const UserManagement: React.FC = () => {
         dataIndex: 'isActive',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.ACTIVE ? defaultSortOrder : undefined,
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['isActive'],
         key: V1GetUsersRequestSortBy.ACTIVE,
         onCell: onRightClickableCell,
         render: (isActive: boolean) => <>{isActive ? 'Active' : 'Inactive'}</>,
@@ -383,7 +389,6 @@ const UserManagement: React.FC = () => {
         dataIndex: 'isAdmin',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.ADMIN ? defaultSortOrder : undefined,
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['isAdmin'],
         key: V1GetUsersRequestSortBy.ADMIN,
         onCell: onRightClickableCell,
         render: (isAdmin: boolean) => <>{isAdmin ? 'Admin' : 'Member'}</>,
@@ -394,18 +399,16 @@ const UserManagement: React.FC = () => {
         dataIndex: 'modifiedAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['modifiedAt'],
         key: V1GetUsersRequestSortBy.MODIFIEDTIME,
         onCell: onRightClickableCell,
         render: (value: number): React.ReactNode => relativeTimeRenderer(new Date(value)),
         sorter: (a: DetailedUser, b: DetailedUser) => numericSorter(a.modifiedAt, b.modifiedAt),
-        title: 'Modified Time',
+        title: 'Modified',
       },
       {
         dataIndex: 'lastAuthAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.LASTAUTHTIME ? defaultSortOrder : undefined,
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastAuthAt'],
         key: V1GetUsersRequestSortBy.LASTAUTHTIME,
         onCell: onRightClickableCell,
         render: (value: number | undefined): React.ReactNode => {
@@ -421,12 +424,10 @@ const UserManagement: React.FC = () => {
       {
         className: 'fullCell',
         dataIndex: 'action',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         key: 'action',
         onCell: onRightClickableCell,
         render: actionRenderer,
         title: '',
-        width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
@@ -439,10 +440,10 @@ const UserManagement: React.FC = () => {
           <Columns>
             <Column>
               <Columns>
-                {/* input is uncontrolled to prevent settings overwriting during composition */}
+                {/* input is uncontrolled */}
                 <Input
                   allowClear
-                  defaultValue={settings.name}
+                  defaultValue={nameFilter}
                   placeholder="Find user"
                   prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
                   onChange={handleNameSearchApply}
@@ -452,7 +453,7 @@ const UserManagement: React.FC = () => {
                   options={roleOptions}
                   placeholder="All Roles"
                   searchable={false}
-                  value={settings.roleFilter}
+                  value={roleFilter}
                   width={110}
                   onChange={handleRoleFilterApply}
                 />
@@ -461,24 +462,26 @@ const UserManagement: React.FC = () => {
                   options={statusOptions}
                   placeholder="All Users"
                   searchable={false}
-                  value={settings.statusFilter}
+                  value={statusFilter}
                   width={160}
                   onChange={handleStatusFilterApply}
                 />
               </Columns>
             </Column>
             <Column align="right">
-              {selectedUserIds.length > 0 && (
-                <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                  <Button>Actions</Button>
-                </Dropdown>
-              )}
-              <Button
-                aria-label={CREATE_USER_LABEL}
-                disabled={!info.userManagementEnabled || !canModifyUsers}
-                onClick={CreateUserModal.open}>
-                {CREATE_USER}
-              </Button>
+              <Columns>
+                {selectedUserIds.length > 0 && (
+                  <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
+                    <Button>Actions</Button>
+                  </Dropdown>
+                )}
+                <Button
+                  aria-label={CREATE_USER_LABEL}
+                  disabled={!info.userManagementEnabled || !canModifyUsers}
+                  onClick={CreateUserModal.open}>
+                  {CREATE_USER}
+                </Button>
+              </Columns>
             </Column>
           </Columns>
         </div>

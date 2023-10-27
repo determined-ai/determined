@@ -4,13 +4,15 @@ import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 import { ValueOf } from 'types';
 
-export type UserColumnName =
-  | 'action'
-  | 'displayName'
-  | 'isActive'
-  | 'isAdmin'
-  | 'modifiedAt'
-  | 'lastAuthAt';
+export const DEFAULT_COLUMN_WIDTHS = {
+  displayName: 170,
+  isActive: 20,
+  isAdmin: 20,
+  lastAuthAt: 30,
+  modifiedAt: 30,
+} as const satisfies Record<string, number>;
+
+export type UserColumnName = keyof typeof DEFAULT_COLUMN_WIDTHS;
 
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
@@ -19,15 +21,6 @@ export const DEFAULT_COLUMNS: UserColumnName[] = [
   'modifiedAt',
   'lastAuthAt',
 ];
-
-export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
-  action: 20,
-  displayName: 60,
-  isActive: 40,
-  isAdmin: 40,
-  lastAuthAt: 80,
-  modifiedAt: 80,
-};
 
 export const UserStatus = {
   ACTIVE: 'active',
@@ -48,11 +41,6 @@ export const UserManagementSettings = t.intersection([
     tableOffset: t.number,
   }),
   t.partial({
-    name: t.string,
-    roleFilter: t.keyof({
-      [UserRole.ADMIN]: null,
-      [UserRole.MEMBER]: null,
-    }),
     row: t.union([t.array(t.number), t.array(t.string)]),
     sortKey: t.keyof({
       [V1GetUsersRequestSortBy.ACTIVE]: null,
@@ -63,10 +51,6 @@ export const UserManagementSettings = t.intersection([
       [V1GetUsersRequestSortBy.USERNAME]: null,
       [V1GetUsersRequestSortBy.NAME]: null,
       [V1GetUsersRequestSortBy.LASTAUTHTIME]: null,
-    }),
-    statusFilter: t.keyof({
-      [UserStatus.ACTIVE]: null,
-      [UserStatus.INACTIVE]: null,
     }),
   }),
 ]);
