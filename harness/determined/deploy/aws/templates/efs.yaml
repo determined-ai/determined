@@ -527,6 +527,15 @@ Resources:
       ToPort: 2049
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
+  MasterEFSIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateEFS
+    Properties:
+      GroupId: !GetAtt EFSSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 2049
+      ToPort: 2049
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
 
   MasterSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -807,6 +816,9 @@ Resources:
 
             #!/bin/bash
             mkdir -p /usr/local/determined/etc
+
+            mkdir -p /mnt/efs
+            mount -t efs ${EFSVal}:/ /mnt/efs
 
             scheme=http
             port=8080
