@@ -51,8 +51,8 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         options={
           <RadioGroup
             options={options}
-            value={String(viewDays)}
-            onChange={(value) => setViewDays(Number(value))}
+            value={viewDays}
+            onChange={(value) => setViewDays(value as number)}
           />
         }
         title="Avg Queue Time">
