@@ -26,7 +26,6 @@ jobs:
           cache-dependency-path: |
             agent/go.sum
             master/go.sum
-            proto/go.sum
       - name: Setup Protoc
         uses: arduino/setup-protoc@v2
         with:
@@ -34,15 +33,14 @@ jobs:
           repo-token: ${{ secrets.DETERMINED_TOKEN }}
       - name: Install dependencies
         run: |
-          make -C proto get-deps
           make -C master get-deps
           make -C agent get-deps
       - name: Build
-        run: make -C proto build
+        run: make -C master build-proto
       - uses: actions/upload-artifact@v3
         with:
-          name: proto
-          path: proto/build/
+          name: master
+          path: master/build/
           retention-days: 1
 
   lint-py-bindings:
@@ -54,7 +52,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: proto
-          path: proto/build/
+          path: master/build/
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -73,7 +71,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: proto
-          path: proto/build/
+          path: master/build/
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:

@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        service: [agent, master, proto]
+        service: [agent, master]
     runs-on: ubuntu-latest
     env:
       GO111MODULE: "on"
@@ -36,10 +36,9 @@ jobs:
           repo-token: ${{ secrets.DETERMINED_TOKEN }}
       - name: Install dependencies
         run: |
-          make -C proto get-deps
           sudo apt-get update && sudo apt-get install -y clang-format
           make -C ${{ matrix.service }} get-deps
       - name: Run checks
         run: |
-          make -C proto build
+          make -C master build-proto
           make -C ${{ matrix.service }} check

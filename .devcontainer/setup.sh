@@ -14,7 +14,7 @@ fi
 
 make get-deps
 
-make -C proto build
+make -C master build-proto
 make -C harness build
 make -C webui build
 make -C docs build

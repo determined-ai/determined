@@ -1663,7 +1663,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - "proto/build/**/*"
+            - "master/build/**/*"
 
   test-unit-go:
     docker:
