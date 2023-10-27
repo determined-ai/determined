@@ -115,16 +115,13 @@ build-race: gen
 .PHONY: check
 check: check-gen
 	go mod tidy
-	git diff --quiet go.mod go.sum
+	git diff --quiet go.mod go.sum pkg/generatedproto/
 	golangci-lint --build-tags integration run --timeout 10m
 
 	git ls-files -z 'proto/determined/**/*.proto' | xargs -0 -P8 clang-format --dry-run --Werror
 
 	buf lint
 	buf breaking --against $(buf_image)
-	go mod tidy
-	git diff --quiet go.mod go.sum pkg/
-
 
 .PHONY: check-all
 check-all: check check-sql
@@ -234,10 +231,7 @@ publish-nvcr:
 		docker push $$image; \
 	done
 
-# ==============================================================================
 # Proto stuff
-
-
 # String constants.
 build_path := build/build-proto/github.com/determined-ai/determined/master/pkg/generatedproto/
 src_path := proto/determined
@@ -283,7 +277,6 @@ endif
 
 	touch $@
 
-
 # Update buf image for breaking change check.
 .PHONY: gen-buf-image
 gen-buf-image:
@@ -304,6 +297,3 @@ $(swagger_out): $(source_files) build/swagger $(swagger_patch) $(echo_swagger_pa
 	protoc -I proto $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
 	python3 scripts/swagger.py $@ $(echo_swagger_patch)
-
-
-# ==============================================================================

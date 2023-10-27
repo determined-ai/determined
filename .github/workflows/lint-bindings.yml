@@ -39,7 +39,7 @@ jobs:
         run: make -C master build-proto
       - uses: actions/upload-artifact@v3
         with:
-          name: master
+          name: proto
           path: master/build/
           retention-days: 1
 
