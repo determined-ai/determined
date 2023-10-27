@@ -149,7 +149,7 @@ fmt:
 	goimports -l -local github.com/determined-ai -w .
 	gofumpt -l -w .
 	swag fmt
-	git ls-files -z 'proto/determined/**/*.proto' | xargs -0 -P8 clang-format -i # TODO
+	git ls-files -z 'proto/determined/**/*.proto' | xargs -0 -P8 clang-format -i
 
 
 .PHONY: test
@@ -278,8 +278,9 @@ ifeq "$(shell uname)" "Darwin"
 else
 	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
 endif
-    # TODO avoid this rewrite
-    #find . -type f -name "*.go" -exec sed -i 's|"github.com/determined-ai/determined/proto/pkg/\(.*\)"|"github.com/determined-ai/determined/master/pkg/generatedproto/\1"|g' {} +
+	goimports -l -local github.com/determined-ai -w -w ./pkg/generatedproto
+	gofumpt -l -w ./pkg/generatedproto
+
 	touch $@
 
 
