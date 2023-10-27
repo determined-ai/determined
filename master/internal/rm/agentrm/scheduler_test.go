@@ -14,8 +14,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func newMaxSlot(maxSlot int) *int {

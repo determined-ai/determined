@@ -6,9 +6,9 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ExperimentAuthZ describes authz methods for experiments.

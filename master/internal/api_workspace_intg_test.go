@@ -24,10 +24,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func newProtoStruct(t *testing.T, in map[string]any) *structpb.Struct {

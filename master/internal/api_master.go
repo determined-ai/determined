@@ -18,10 +18,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
-	"github.com/determined-ai/determined/master/pkg/logger"
-	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
+	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/version"
 )
 
 var masterLogsBatchMissWaitTime = time.Second

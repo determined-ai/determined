@@ -4,7 +4,7 @@ import typing
 import swagger_parser
 from typing_extensions import assert_never
 
-SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
+SWAGGER = "master/build/swagger/determined/api/v1/api.swagger.json"
 SWAGGER = os.path.join(os.path.dirname(__file__), "..", SWAGGER)
 TAB = "    "
 

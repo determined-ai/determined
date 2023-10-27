@@ -5,15 +5,17 @@
 package apiv1
 
 import (
-	groupv1 "github.com/determined-ai/determined/master/pkg/generatedproto/groupv1"
-	rbacv1 "github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
-	userv1 "github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
+	reflect "reflect"
+	sync "sync"
+
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	groupv1 "github.com/determined-ai/determined/master/pkg/generatedproto/groupv1"
+	rbacv1 "github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
+	userv1 "github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
 )
 
 const (

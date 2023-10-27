@@ -5,6 +5,16 @@
 package apiv1
 
 import (
+	reflect "reflect"
+	sync "sync"
+
+	_struct "github.com/golang/protobuf/ptypes/struct"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
+	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+
 	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
 	commonv1 "github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
 	experimentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
@@ -12,14 +22,6 @@ import (
 	metricv1 "github.com/determined-ai/determined/master/pkg/generatedproto/metricv1"
 	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 	utilv1 "github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
-	_struct "github.com/golang/protobuf/ptypes/struct"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
-	wrappers "github.com/golang/protobuf/ptypes/wrappers"
-	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (

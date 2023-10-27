@@ -3,9 +3,9 @@ package rm
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/command"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.

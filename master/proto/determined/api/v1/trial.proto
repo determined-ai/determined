@@ -19,13 +19,13 @@ import "protoc-gen-swagger/options/annotations.proto";
 // DownsampledMetrics captures a metric's name and downsampled data points.
 message DownsampledMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data", "type", "group" ] }
+    json_schema : {required : [ "data", "type", "group" ]}
   };
   // A possibly down-sampled series of metrics' readings through the progress of
   // the trial.
   repeated DataPoint data = 1;
   // Metric group (training, validation, or unset).
-  MetricType type = 3 [deprecated = true];
+  MetricType type = 3 [ deprecated = true ];
   // Metric group (training, validation, etc).
   string group = 4;
 }
@@ -57,7 +57,7 @@ message ColumnFilter {
 // evolvability into/coexistence with key/values tags
 message TrialTag {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "key" ] }
+    json_schema : {required : [ "key" ]}
   };
   // The actual tag.
   string key = 1;
@@ -68,7 +68,7 @@ message TrialTag {
 // sorter
 message TrialSorter {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "namespace", "field" ] }
+    json_schema : {required : [ "namespace", "field" ]}
   };
   // Namespace for the sort field. corresponds to the different ways
   // to access in the db
@@ -93,7 +93,7 @@ message TrialSorter {
 // Stream trial logs.
 message TrialLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
   // The id of the trial.
   int32 trial_id = 1;
@@ -126,8 +126,8 @@ message TrialLogsRequest {
 // Response to TrialLogsRequest.
 message TrialLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "id", "level", "message", "timestamp", "trial_id" ]
+    json_schema : {
+      required : [ "id", "level", "message", "timestamp", "trial_id" ]
     }
   };
   // The ID of the trial log.
@@ -135,7 +135,7 @@ message TrialLogsResponse {
   // The timestamp of the log.
   google.protobuf.Timestamp timestamp = 2;
   // The flat version of the log that UIs have shown historically.
-  string message = 3 [deprecated = true];
+  string message = 3 [ deprecated = true ];
   // The level of the log.
   determined.log.v1.LogLevel level = 4;
   // The ID of the trial associated with this log entry.
@@ -157,7 +157,7 @@ message TrialLogsResponse {
 // Stream distinct trial log fields.
 message TrialLogsFieldsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
   // The ID of the trial.
   int32 trial_id = 1;
@@ -168,7 +168,7 @@ message TrialLogsFieldsRequest {
 // Response to TrialLogFieldsRequest.
 message TrialLogsFieldsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "message" ] }
+    json_schema : {required : [ "id", "message" ]}
   };
   // The distinct agent IDs present in the logs.
   repeated string agent_ids = 1;
@@ -207,7 +207,7 @@ message GetTrialCheckpointsRequest {
 // Response to GetTrialCheckpointsRequest.
 message GetTrialCheckpointsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "checkpoints", "pagination" ] }
+    json_schema : {required : [ "checkpoints", "pagination" ]}
   };
   // The list of returned checkpoints.
   repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
@@ -226,7 +226,7 @@ message KillTrialResponse {}
 // Get the list of trials for an experiment.
 message GetExperimentTrialsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_id" ] }
+    json_schema : {required : [ "experiment_id" ]}
   };
   // Sorts trials by the given field.
   enum SortBy {
@@ -273,7 +273,7 @@ message GetExperimentTrialsRequest {
 // Response to GetExperimentTrialsRequest.
 message GetExperimentTrialsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trials", "pagination" ] }
+    json_schema : {required : [ "trials", "pagination" ]}
   };
   // The list of returned trials.
   repeated determined.trial.v1.Trial trials = 1;
@@ -289,7 +289,7 @@ message GetTrialRequest {
 // Response to GetTrialRequest.
 message GetTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial" ] }
+    json_schema : {required : [ "trial" ]}
   };
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
@@ -298,7 +298,7 @@ message GetTrialResponse {
 // Get the list of workloads for a trial.
 message GetTrialWorkloadsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
 
   // Filter workloads with training, validation, and checkpoint information.
@@ -330,7 +330,7 @@ message GetTrialWorkloadsRequest {
   bool include_batch_metrics = 7;
   // When sorting workloads by sort_key, specify training or validation form of
   // a metric.
-  MetricType metric_type = 8 [deprecated = true];
+  MetricType metric_type = 8 [ deprecated = true ];
   // Metric group (training, validation, etc).
   string group = 9;
   // Remove deleted checkpoints.
@@ -339,7 +339,7 @@ message GetTrialWorkloadsRequest {
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workloads", "pagination" ] }
+    json_schema : {required : [ "workloads", "pagination" ]}
   };
   // The list of returned workloads.
   repeated WorkloadContainer workloads = 1;
@@ -350,7 +350,7 @@ message GetTrialWorkloadsResponse {
 // Stream trial profiler metrics.
 message GetTrialProfilerMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "labels" ] }
+    json_schema : {required : [ "labels" ]}
   };
   // The labels for the series requested.
   determined.trial.v1.TrialProfilerMetricLabels labels = 1;
@@ -360,7 +360,7 @@ message GetTrialProfilerMetricsRequest {
 // Response to TrialProfilerMetricsResponse
 message GetTrialProfilerMetricsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "batch" ] }
+    json_schema : {required : [ "batch" ]}
   };
   // A batch matching the series requested.
   determined.trial.v1.TrialProfilerMetricsBatch batch = 1;
@@ -369,7 +369,7 @@ message GetTrialProfilerMetricsResponse {
 // Stream distinct available profiler metric label sets.
 message GetTrialProfilerAvailableSeriesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
   // The requested trial's id.
   int32 trial_id = 1;
@@ -379,7 +379,7 @@ message GetTrialProfilerAvailableSeriesRequest {
 // Response to TrialProfilerAvailableSeriesRequest.
 message GetTrialProfilerAvailableSeriesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "labels" ] }
+    json_schema : {required : [ "labels" ]}
   };
   // The labels for the series.
   repeated determined.trial.v1.TrialProfilerMetricLabels labels = 1;
@@ -388,7 +388,7 @@ message GetTrialProfilerAvailableSeriesResponse {
 // Create a batch of trial profiler metrics.
 message PostTrialProfilerMetricsBatchRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "batch" ] }
+    json_schema : {required : [ "batch" ]}
   };
   // The batches to create.
   repeated determined.trial.v1.TrialProfilerMetricsBatch batches = 1;
@@ -399,7 +399,7 @@ message PostTrialProfilerMetricsBatchResponse {}
 // Container for a requested trial and its metrics.
 message ComparableTrial {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics", "trial" ] }
+    json_schema : {required : [ "metrics", "trial" ]}
   };
 
   // The requested trial.
@@ -411,7 +411,7 @@ message ComparableTrial {
 // Get time-series downsampled metrics from multiple trials.
 message CompareTrialsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "max_datapoints", "trial_ids" ] }
+    json_schema : {required : [ "max_datapoints", "trial_ids" ]}
   };
   // The requested trial ids.
   repeated int32 trial_ids = 1;
@@ -424,7 +424,7 @@ message CompareTrialsRequest {
   // Sample from metrics before this batch number.
   int32 end_batches = 5;
   // Metric group.
-  MetricType metric_type = 6 [deprecated = true];
+  MetricType metric_type = 6 [ deprecated = true ];
   // Metric group (training, validation, etc).
   string group = 11;
   // metric ids for the query. must be in the form group.metric_name.
@@ -436,7 +436,7 @@ message CompareTrialsRequest {
 // Response to CompareTrialsRequest.
 message CompareTrialsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trials" ] }
+    json_schema : {required : [ "trials" ]}
   };
   // A list of objects containing trial and metrics information.
   repeated ComparableTrial trials = 1;
@@ -445,7 +445,7 @@ message CompareTrialsResponse {
 // Long poll for updates to the preemption status for an allocation.
 message AllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id" ] }
+    json_schema : {required : [ "allocation_id" ]}
   };
   // The id of the allocation.
   string allocation_id = 1;
@@ -460,7 +460,7 @@ message AllocationPreemptionSignalResponse {
 // Acknowledge the receipt of some stop signal.
 message AckAllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id" ] }
+    json_schema : {required : [ "allocation_id" ]}
   };
   // The allocation that is acknowledging the request.
   string allocation_id = 1;
@@ -468,7 +468,7 @@ message AckAllocationPreemptionSignalRequest {
 // Allocation has been notified of a pending preemption
 message AllocationPendingPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id" ] }
+    json_schema : {required : [ "allocation_id" ]}
   };
   // The id of the allocation.
   string allocation_id = 1;
@@ -483,7 +483,7 @@ message AckAllocationPreemptionSignalResponse {}
 // Mark some reservation as a daemon.
 message MarkAllocationResourcesDaemonRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id", "container_id" ] }
+    json_schema : {required : [ "allocation_id", "container_id" ]}
   };
   // The id of the allocation.
   string allocation_id = 1;
@@ -496,7 +496,7 @@ message MarkAllocationResourcesDaemonResponse {}
 // Gathers the rendezvous info for an allocation.
 message AllocationRendezvousInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id", "resources_id" ] }
+    json_schema : {required : [ "allocation_id", "resources_id" ]}
   };
   // The id of the allocation.
   string allocation_id = 1;
@@ -506,7 +506,7 @@ message AllocationRendezvousInfoRequest {
 // Response to AllocationRendezvousInfoRequest
 message AllocationRendezvousInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "rendezvous_info" ] }
+    json_schema : {required : [ "rendezvous_info" ]}
   };
   // The rendezvous information.
   determined.trial.v1.RendezvousInfo rendezvous_info = 1;
@@ -525,7 +525,7 @@ message PostAllocationProxyAddressResponse {}
 // Set the accelerator data for some allocation.
 message PostAllocationAcceleratorDataRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id", "accelerator_data" ] }
+    json_schema : {required : [ "allocation_id", "accelerator_data" ]}
   };
   // The id of the allocation.
   string allocation_id = 1;
@@ -554,7 +554,7 @@ message AcceleratorData {
 // Arguments to an all gather.
 message AllocationAllGatherRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id", "global_recv_count", "data" ] }
+    json_schema : {required : [ "allocation_id", "global_recv_count", "data" ]}
   };
   // The ID of the allocation.
   string allocation_id = 1;
@@ -568,7 +568,7 @@ message AllocationAllGatherRequest {
 // Response to AllocationAllGatherResponse
 message AllocationAllGatherResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data" ] }
+    json_schema : {required : [ "data" ]}
   };
   // The data for all the processes.
   repeated google.protobuf.Struct data = 1;
@@ -577,7 +577,7 @@ message AllocationAllGatherResponse {
 // Arguments to a notify container running.
 message NotifyContainerRunningRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id", "global_recv_count", "data" ] }
+    json_schema : {required : [ "allocation_id", "global_recv_count", "data" ]}
   };
   // The ID of the allocation.
   string allocation_id = 1;
@@ -595,7 +595,7 @@ message NotifyContainerRunningRequest {
 // Response to NotifyContainerRunningResponse
 message NotifyContainerRunningResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data" ] }
+    json_schema : {required : [ "data" ]}
   };
   // The data for all the processes.
   repeated google.protobuf.Struct data = 1;
@@ -604,7 +604,7 @@ message NotifyContainerRunningResponse {
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
   // The id of the trial.
   int32 trial_id = 1;
@@ -621,7 +621,7 @@ message GetCurrentTrialSearcherOperationResponse {
 // amount of training.
 message CompleteTrialSearcherValidationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "searcher_metric" ] }
+    json_schema : {required : [ "trial_id", "searcher_metric" ]}
   };
   // The id of the trial.
   int32 trial_id = 1;
@@ -635,7 +635,7 @@ message CompleteTrialSearcherValidationResponse {}
 // Report a voluntary, permanent early exit to the searcher.
 message ReportTrialSearcherEarlyExitRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "reason" ] }
+    json_schema : {required : [ "trial_id", "reason" ]}
   };
   // The id of the trial.
   int32 trial_id = 1;
@@ -649,7 +649,7 @@ message ReportTrialSearcherEarlyExitResponse {}
 // the training length requested of it by the searcher.
 message ReportTrialProgressRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "progress" ] }
+    json_schema : {required : [ "trial_id", "progress" ]}
   };
   // The id of the trial.
   int32 trial_id = 1;
@@ -663,7 +663,7 @@ message ReportTrialProgressResponse {}
 // Persist the given metrics for the trial.
 message ReportTrialMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics", "group" ] }
+    json_schema : {required : [ "metrics", "group" ]}
   };
   // The metrics to persist.
   determined.trial.v1.TrialMetrics metrics = 1;
@@ -676,7 +676,7 @@ message ReportTrialMetricsResponse {}
 // Persist the given training metrics for the trial.
 message ReportTrialTrainingMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "training_metrics" ] }
+    json_schema : {required : [ "training_metrics" ]}
   };
   // The training metrics to persist.
   determined.trial.v1.TrialMetrics training_metrics = 1;
@@ -687,7 +687,7 @@ message ReportTrialTrainingMetricsResponse {}
 // Persist the given validation metrics for the trial.
 message ReportTrialValidationMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "validation_metrics" ] }
+    json_schema : {required : [ "validation_metrics" ]}
   };
   // The training metrics to persist.
   determined.trial.v1.TrialMetrics validation_metrics = 1;
@@ -698,7 +698,7 @@ message ReportTrialValidationMetricsResponse {}
 // Partially update the trial metadata.
 message PostTrialRunnerMetadataRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "metadata" ] }
+    json_schema : {required : [ "trial_id", "metadata" ]}
   };
   // The id of the trial.
   int32 trial_id = 1;
@@ -711,25 +711,25 @@ message PostTrialRunnerMetadataResponse {}
 // Stream training metrics.
 message GetMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_ids", "group" ] }
+    json_schema : {required : [ "trial_ids", "group" ]}
   };
   // Trial IDs to get metrics for.
   repeated int32 trial_ids = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["trial_ids"];
-      }];
+      } ];
   // The group of metrics to get eg 'training', 'validation', etc.
   string group = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["group"];
-      }];
+      } ];
 }
 // Response to GetMetricsRequest.
 message GetMetricsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics" ] }
+    json_schema : {required : [ "metrics" ]}
   };
   // Metric response.
   repeated determined.trial.v1.MetricsReport metrics = 1;
@@ -738,7 +738,7 @@ message GetMetricsResponse {
 // Stream training metrics.
 message GetTrainingMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_ids" ] }
+    json_schema : {required : [ "trial_ids" ]}
   };
   // Trial IDs to get metrics for.
   repeated int32 trial_ids = 1;
@@ -746,7 +746,7 @@ message GetTrainingMetricsRequest {
 // Response to GetTrainingMetricsRequest.
 message GetTrainingMetricsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics" ] }
+    json_schema : {required : [ "metrics" ]}
   };
   // Metric response.
   repeated determined.trial.v1.MetricsReport metrics = 1;
@@ -755,7 +755,7 @@ message GetTrainingMetricsResponse {
 // Stream validation metrics.
 message GetValidationMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_ids" ] }
+    json_schema : {required : [ "trial_ids" ]}
   };
   // Trial IDs to get metrics for.
   repeated int32 trial_ids = 1;
@@ -763,7 +763,7 @@ message GetValidationMetricsRequest {
 // Response to GetTrainingMetricsRequest.
 message GetValidationMetricsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics" ] }
+    json_schema : {required : [ "metrics" ]}
   };
   // Metric response.
   repeated determined.trial.v1.MetricsReport metrics = 1;
@@ -782,7 +782,7 @@ message CreateTrialRequest {
 // Response to CreateTrialRequest.
 message CreateTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial" ] }
+    json_schema : {required : [ "trial" ]}
   };
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
@@ -800,7 +800,7 @@ message PutTrialRequest {
 // Response to PutTrialRequest.
 message PutTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial" ] }
+    json_schema : {required : [ "trial" ]}
   };
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
@@ -809,7 +809,7 @@ message PutTrialResponse {
 // Patch a trial.
 message PatchTrialRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
   // Trial id.
   int32 trial_id = 1;
@@ -820,7 +820,7 @@ message PatchTrialRequest {
 // Response to PatchTrialRequest.
 message PatchTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial" ] }
+    json_schema : {required : [ "trial" ]}
   };
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
@@ -829,7 +829,7 @@ message PatchTrialResponse {
 // Start a trial.
 message StartTrialRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema : {required : [ "trial_id" ]}
   };
   // Trial id.
   int32 trial_id = 1;
@@ -840,7 +840,7 @@ message StartTrialRequest {
 // Response to StartTrialRequest.
 message StartTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_run_id", "steps_completed" ] }
+    json_schema : {required : [ "trial_run_id", "steps_completed" ]}
   };
   // Trial run id.
   int32 trial_run_id = 1;
@@ -853,7 +853,7 @@ message StartTrialResponse {
 // Create a TrialSourceInfo
 message ReportTrialSourceInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_source_info" ] }
+    json_schema : {required : [ "trial_source_info" ]}
   };
   // Type of the TrialSourceInfo
   determined.trial.v1.TrialSourceInfo trial_source_info = 1;
@@ -862,7 +862,7 @@ message ReportTrialSourceInfoRequest {
 // Response to making a TrialSourceInfo
 message ReportTrialSourceInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "checkpoint_uuid" ] }
+    json_schema : {required : [ "trial_id", "checkpoint_uuid" ]}
   };
   // Trial ID of the created
   int32 trial_id = 1;

@@ -12,8 +12,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // RPWorkspaceBinding is a struct reflecting the db table rp_workspace_bindings.

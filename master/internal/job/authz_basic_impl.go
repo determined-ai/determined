@@ -3,8 +3,8 @@ package job
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // JobAuthZBasic is basic OSS controls.

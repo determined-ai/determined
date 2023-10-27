@@ -13,9 +13,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/resourcepoolv1"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 func (a *apiServer) getUnboundResourcePools(ctx context.Context,

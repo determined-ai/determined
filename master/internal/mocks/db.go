@@ -3,10 +3,10 @@
 package mocks
 
 import (
+	bun "github.com/uptrace/bun"
+
 	api "github.com/determined-ai/determined/master/internal/api"
 	apiv1 "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
-
-	bun "github.com/uptrace/bun"
 
 	context "context"
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/agentv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 )
 
 // AgentSummary summarizes the state on an agent.

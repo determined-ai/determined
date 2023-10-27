@@ -5,12 +5,14 @@
 package apiv1
 
 import (
-	agentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/agentv1"
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	agentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/agentv1"
 )
 
 const (

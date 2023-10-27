@@ -8,7 +8,7 @@ import swagger_parser
 from typing_extensions import Literal, assert_never
 
 DIRNAME = os.path.dirname(__file__)
-SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
+SWAGGER = "master/build/swagger/determined/api/v1/api.swagger.json"
 SWAGGER = os.path.join(DIRNAME, "..", SWAGGER)
 STATIC_FOLDER = os.path.join(DIRNAME, "static_ts_files")
 

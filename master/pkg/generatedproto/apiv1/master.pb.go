@@ -5,16 +5,18 @@
 package apiv1
 
 import (
-	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
-	masterv1 "github.com/determined-ai/determined/master/pkg/generatedproto/masterv1"
+	reflect "reflect"
+	sync "sync"
+
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	field_mask "google.golang.org/genproto/protobuf/field_mask"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
+	masterv1 "github.com/determined-ai/determined/master/pkg/generatedproto/masterv1"
 )
 
 const (

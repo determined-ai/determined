@@ -17,14 +17,14 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/modelv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
 func TestPgDB_ExperimentCheckpointsToGCRawModelRegistry(t *testing.T) {

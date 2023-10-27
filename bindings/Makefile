@@ -1,4 +1,4 @@
-SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
+SWAGGER_SPEC := ../master/build/swagger/determined/api/v1/api.swagger.json
 py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
 py_generator := generate_bindings_py.py

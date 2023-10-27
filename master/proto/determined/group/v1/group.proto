@@ -9,7 +9,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Group contains information about a specific Group
 message Group {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [] }
+    json_schema : {required : []}
   };
   // The id of the group being detailed
   int32 group_id = 1;
@@ -21,7 +21,7 @@ message Group {
 // including which users belong to the group.
 message GroupDetails {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [] }
+    json_schema : {required : []}
   };
   // The id of the group being detailed
   int32 group_id = 1;
@@ -35,7 +35,7 @@ message GroupDetails {
 // by the search endpoint.
 message GroupSearchResult {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "group", "num_members" ] }
+    json_schema : {required : [ "group", "num_members" ]}
   };
   // A group matching the search criteria
   Group group = 1;

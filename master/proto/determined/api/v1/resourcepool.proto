@@ -31,7 +31,7 @@ message GetResourcePoolsResponse {
 // Bind a resource pool to workspaces
 message BindRPToWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool_name" ] }
+    json_schema : {required : [ "resource_pool_name" ]}
   };
 
   // The resource pool name.
@@ -48,7 +48,7 @@ message BindRPToWorkspaceResponse {}
 // Unbind a resource pool to workspaces.
 message UnbindRPFromWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool_name" ] }
+    json_schema : {required : [ "resource_pool_name" ]}
   };
 
   // The resource pool name.
@@ -65,7 +65,7 @@ message UnbindRPFromWorkspaceResponse {}
 // Overwrite and replace the workspaces bound to an RP request.
 message OverwriteRPWorkspaceBindingsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool_name" ] }
+    json_schema : {required : [ "resource_pool_name" ]}
   };
 
   // The resource pool name.
@@ -82,7 +82,7 @@ message OverwriteRPWorkspaceBindingsResponse {}
 // List all the workspaces bound to the RP.
 message ListWorkspacesBoundToRPRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool_name", "limit" ] }
+    json_schema : {required : [ "resource_pool_name", "limit" ]}
   };
 
   // Resource pool name.
@@ -96,7 +96,7 @@ message ListWorkspacesBoundToRPRequest {
 // Response to ListWorkspacesBoundToRPRequest.
 message ListWorkspacesBoundToRPResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workspace_id", "limit" ] }
+    json_schema : {required : [ "workspace_id", "limit" ]}
   };
   // List of workspace IDs.
   repeated int32 workspace_ids = 1;

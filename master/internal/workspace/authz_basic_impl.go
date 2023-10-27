@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // WorkspaceAuthZBasic is classic OSS Determined authentication for workspaces.

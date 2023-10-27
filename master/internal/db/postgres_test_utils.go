@@ -28,12 +28,12 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 const (

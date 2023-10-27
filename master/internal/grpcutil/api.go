@@ -21,9 +21,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	proto "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	proto "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 )
 
 const jsonPretty = "application/json+pretty"

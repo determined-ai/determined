@@ -14,13 +14,13 @@ import (
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
 )
 
 const (

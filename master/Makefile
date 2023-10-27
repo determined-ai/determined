@@ -151,7 +151,7 @@ fmt:
 	goimports -l -local github.com/determined-ai -w .
 	gofumpt -l -w .
 	swag fmt
-	git ls-files -z 'src/determined/**/*.proto' | xargs -0 -P8 clang-format -i # TODO
+	git ls-files -z 'proto/determined/**/*.proto' | xargs -0 -P8 clang-format -i # TODO
 
 
 .PHONY: test

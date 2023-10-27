@@ -36,14 +36,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/tensorboardv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/tensorboardv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
 )
 
 const (

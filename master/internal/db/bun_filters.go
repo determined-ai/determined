@@ -8,9 +8,9 @@ import (
 	"github.com/uptrace/bun/schema"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
 )
 
 // FilterComparison makes you wish for properties in generic structs/interfaces.

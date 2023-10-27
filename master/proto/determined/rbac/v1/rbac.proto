@@ -25,7 +25,7 @@ message ScopeTypeMask {
 // Role contains information about a specific Role
 message Role {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "role_id" ] }
+    json_schema : {required : [ "role_id" ]}
   };
   // The id of the role being detailed
   int32 role_id = 1;
@@ -40,7 +40,7 @@ message Role {
 // Permission represents an action a user can take in the system
 message Permission {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
+    json_schema : {required : [ "id" ]}
   };
   // The id of the permission
   PermissionType id = 1;
@@ -172,7 +172,7 @@ enum PermissionType {
 // RoleAssignmentSummary is used to describe permissions a user has.
 message RoleAssignmentSummary {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "role_id" ] }
+    json_schema : {required : [ "role_id" ]}
   };
   // The id of the role being detailed
   int32 role_id = 1;
@@ -186,7 +186,7 @@ message RoleAssignmentSummary {
 // of the role.
 message RoleAssignment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "role" ] }
+    json_schema : {required : [ "role" ]}
   };
   // The role of the assignment.
   Role role = 1;
@@ -200,7 +200,7 @@ message RoleAssignment {
 // belonging to a role.
 message GroupRoleAssignment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "group_id", "role_assignment" ] }
+    json_schema : {required : [ "group_id", "role_assignment" ]}
   };
   // The group id of the role assignment
   int32 group_id = 1;
@@ -212,7 +212,7 @@ message GroupRoleAssignment {
 // belonging to a role.
 message UserRoleAssignment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "user_id", "role_assignment" ] }
+    json_schema : {required : [ "user_id", "role_assignment" ]}
   };
   // the user id of the role assignment
   int32 user_id = 1;

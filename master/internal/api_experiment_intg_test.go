@@ -40,17 +40,17 @@ import (
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/userv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/utilv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/test/olddata"
 )
 
 type mockStream[T any] struct {

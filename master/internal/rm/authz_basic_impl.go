@@ -3,8 +3,8 @@ package rm
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/resourcepoolv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ResourceManagerAuthZBasic is classic OSS Determined authentication for resource managers.

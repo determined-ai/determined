@@ -5,13 +5,15 @@
 package apiv1
 
 import (
-	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
-	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 const (

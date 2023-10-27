@@ -5,13 +5,15 @@
 package resourcepoolv1
 
 import (
-	devicev1 "github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
-	jobv1 "github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	devicev1 "github.com/determined-ai/determined/master/pkg/generatedproto/devicev1"
+	jobv1 "github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
 )
 
 const (

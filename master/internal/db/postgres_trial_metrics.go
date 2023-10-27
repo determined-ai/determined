@@ -13,8 +13,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // MetricPartitionType denotes what type the metric is. This is planned to be deprecated

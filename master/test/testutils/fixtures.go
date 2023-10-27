@@ -27,8 +27,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 const (

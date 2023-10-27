@@ -5,8 +5,8 @@ import (
 
 	"github.com/shopspring/decimal"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/jobv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.

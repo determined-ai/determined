@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/modelv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func sortUUIDSlice(uuids []uuid.UUID) {

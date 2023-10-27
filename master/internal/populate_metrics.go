@@ -14,14 +14,14 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
+	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 const trainingToValidationRatio = 10

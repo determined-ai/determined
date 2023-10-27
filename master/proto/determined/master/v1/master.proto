@@ -62,8 +62,8 @@ enum ResourceAllocationAggregationType {
 // period (aggregated).
 message ResourceAllocationAggregatedEntry {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
+    json_schema : {
+      required : [
         "periodStart",
         "period",
         "seconds",
@@ -94,7 +94,7 @@ message ResourceAllocationAggregatedEntry {
 // The log config for Master Config
 message LogConfig {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [] }
+    json_schema : {required : []}
   };
   // The log level for Master Config.
   string level = 1;

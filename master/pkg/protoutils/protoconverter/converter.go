@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ProtoConverter just holds errors, allowing you to convert a large number of fields on a protobuf

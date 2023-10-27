@@ -6,9 +6,9 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/projectv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/rbacv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ExperimentAuthZBasic is basic OSS controls.

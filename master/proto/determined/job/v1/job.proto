@@ -41,7 +41,7 @@ enum State {
 // Job summary.
 message JobSummary {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "state", "jobs_ahead" ] }
+    json_schema : {required : [ "state", "jobs_ahead" ]}
   };
   // The scheduling state of the job.
   State state = 1;
@@ -52,8 +52,8 @@ message JobSummary {
 // LimitedJob is a Job with omitted fields.
 message LimitedJob {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
+    json_schema : {
+      required : [
         "type",
         "resource_pool",
         "is_preemptible",
@@ -92,8 +92,8 @@ message LimitedJob {
 // state.
 message Job {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
+    json_schema : {
+      required : [
         "type",
         "submission_time",
         "username",
@@ -157,7 +157,7 @@ message RBACJob {
 // Describes a message to control jobs in a queue.
 message QueueControl {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "job_id", "action" ] }
+    json_schema : {required : [ "job_id", "action" ]}
   };
   // Job id.
   string job_id = 1;
@@ -179,7 +179,7 @@ message QueueControl {
 // Statistics for a queue.
 message QueueStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "queued_count", "scheduled_count" ] }
+    json_schema : {required : [ "queued_count", "scheduled_count" ]}
   };
   // Number of queued jobs in the queue.
   int32 queued_count = 1;
@@ -190,7 +190,7 @@ message QueueStats {
 // Aggregate statistics for a queue.
 message AggregateQueueStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "period_start", "seconds" ] }
+    json_schema : {required : [ "period_start", "seconds" ]}
   };
   // The date of this entry.
   string period_start = 1;

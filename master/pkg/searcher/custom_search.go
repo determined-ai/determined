@@ -6,9 +6,9 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
 )
 
 type (

@@ -15,8 +15,8 @@ SPHINXWRAPPER = ./sphinx-wrapper.py
 ../examples/build/stamp:
 	$(MAKE) -C ../examples build/stamp
 
-../proto/build/swagger/determined/api/v1/api.swagger.json:
-	$(MAKE) -C ../proto build
+../master/build/swagger/determined/api/v1/api.swagger.json:
+	$(MAKE) -C ../master build-proto
 
 build/helm.stamp: ../helm/build/stamp
 	rm -rf site/downloads/helm
@@ -40,7 +40,7 @@ build/sp-%.stamp: $(SPHINXWRAPPER) conf.py attributions.rst $(shell find . -name
 	mkdir -p build
 	touch $@
 
-build/swagger.stamp: ../proto/build/swagger/determined/api/v1/api.swagger.json swagger-ui/*
+build/swagger.stamp: ../master/build/swagger/determined/api/v1/api.swagger.json swagger-ui/*
 	rm -rf site/html/rest-api
 	mkdir -p site/html
 	cp -r ./swagger-ui site/html/rest-api

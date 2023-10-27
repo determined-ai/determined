@@ -5,18 +5,20 @@
 package apiv1
 
 import (
-	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
-	commonv1 "github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
-	experimentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
-	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
-	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
+	reflect "reflect"
+	sync "sync"
+
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	checkpointv1 "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
+	commonv1 "github.com/determined-ai/determined/master/pkg/generatedproto/commonv1"
+	experimentv1 "github.com/determined-ai/determined/master/pkg/generatedproto/experimentv1"
+	logv1 "github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
+	trialv1 "github.com/determined-ai/determined/master/pkg/generatedproto/trialv1"
 )
 
 const (

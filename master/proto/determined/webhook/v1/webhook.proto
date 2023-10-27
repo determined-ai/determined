@@ -28,7 +28,7 @@ enum TriggerType {
 // Representation of a Webhook
 message Webhook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "url", "webhook_type" ] }
+    json_schema : {required : [ "url", "webhook_type" ]}
   };
   // The id of the webhook.
   int32 id = 1;
@@ -43,9 +43,9 @@ message Webhook {
 // Representation for a Trigger for a Webhook
 message Trigger {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trigger_type"
-                  "condition" ]
+    json_schema : {
+      required : [ "trigger_type"
+                   "condition" ]
     }
   };
   // The id of the trigger.

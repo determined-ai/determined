@@ -42,7 +42,7 @@ enum ColumnType {
 // project.
 message ProjectColumn {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "column", "location", "type" ] }
+    json_schema : {required : [ "column", "location", "type" ]}
   };
   // Raw column name.
   string column = 1;
@@ -56,7 +56,7 @@ message ProjectColumn {
 // Note is a user comment connected to a project.
 message Note {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "contents" ] }
+    json_schema : {required : [ "name", "contents" ]}
   };
   // The name or title of the note.
   string name = 1;
@@ -67,8 +67,8 @@ message Note {
 // Project is a named collection of experiments.
 message Project {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
+    json_schema : {
+      required : [
         "archived",
         "error_message",
         "id",
@@ -87,9 +87,9 @@ message Project {
   // The unique id of the project.
   int32 id = 1;
   // The unique name of the project.
-  string name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-    min_length: 1
-  }];
+  string name = 2 [
+    (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {min_length : 1}
+  ];
   // The id of the associated workspace.
   int32 workspace_id = 3;
   // The description of the project.
@@ -121,7 +121,7 @@ message Project {
 // ProjectModel is a checkpoint associated with a project.
 message ProjectModel {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "checkpoint" ] }
+    json_schema : {required : [ "name", "checkpoint" ]}
   };
   // Name of the saved checkpoint.
   string name = 1;
@@ -141,7 +141,7 @@ message PatchProject {
 // [min, max].
 message MetricsRange {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "metrics_name", "min", "max" ] }
+    json_schema : {required : [ "metrics_name", "min", "max" ]}
   };
   // The name of metrics formatted as <type>.<name>.
   string metrics_name = 1;

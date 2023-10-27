@@ -25,12 +25,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/apiv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/logv1"
 	"github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 func TestPostTaskLogs(t *testing.T) {

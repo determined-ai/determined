@@ -22,7 +22,7 @@ import "determined/trial/v1/trial.proto";
 // One datapoint in a series of metrics from a trial in batch.
 message DataPoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "batches", "value", "time" ] }
+    json_schema : {required : [ "batches", "value", "time" ]}
   };
   // Total batches processed by the time this measurement is taken.
   int32 batches = 1;
@@ -42,7 +42,7 @@ message GetExperimentRequest {
 // Response to GetExperimentRequest.
 message GetExperimentResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment" ] }
+    json_schema : {required : [ "experiment" ]}
   };
   // The requested experiment.
   determined.experiment.v1.Experiment experiment = 1;
@@ -127,7 +127,7 @@ message GetExperimentsRequest {
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiments", "pagination" ] }
+    json_schema : {required : [ "experiments", "pagination" ]}
   };
   // The list of returned experiments.
   repeated determined.experiment.v1.Experiment experiments = 1;
@@ -149,7 +149,7 @@ message GetExperimentLabelsResponse {
 // Request for adding a new experiment label.
 message PutExperimentLabelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_id", "label" ] }
+    json_schema : {required : [ "experiment_id", "label" ]}
   };
 
   // The ID of the experiment.
@@ -162,7 +162,7 @@ message PutExperimentLabelRequest {
 // Response to PutExperimentLabelRequest.
 message PutExperimentLabelResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "labels" ] }
+    json_schema : {required : [ "labels" ]}
   };
 
   // The complete list of labels associated with the experiment.
@@ -172,7 +172,7 @@ message PutExperimentLabelResponse {
 // Request for deleting an experiment label.
 message DeleteExperimentLabelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_id", "label" ] }
+    json_schema : {required : [ "experiment_id", "label" ]}
   };
 
   // The ID of the experiment.
@@ -185,7 +185,7 @@ message DeleteExperimentLabelRequest {
 // Response to DeleteExperimentLabelRequest.
 message DeleteExperimentLabelResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "labels" ] }
+    json_schema : {required : [ "labels" ]}
   };
 
   // The complete list of labels associated with the experiment.
@@ -203,7 +203,7 @@ message DeleteExperimentResponse {}
 // Delete multiple experiments.
 message DeleteExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Selecting experiments by id.
@@ -215,7 +215,7 @@ message DeleteExperimentsRequest {
 // Response to DeleteExperimentsRequest.
 message DeleteExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -257,7 +257,7 @@ message ActivateExperimentResponse {}
 // Message for results of individual experiments in a multi-experiment action.
 message ExperimentActionResult {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "error", "id" ] }
+    json_schema : {required : [ "error", "id" ]}
   };
   // Optional error message.
   string error = 1;
@@ -268,7 +268,7 @@ message ExperimentActionResult {
 // Activate multiple experiments.
 message ActivateExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Select experiments by id.
@@ -279,7 +279,7 @@ message ActivateExperimentsRequest {
 // Response to ActivateExperimentsRequest.
 message ActivateExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -319,7 +319,7 @@ message BulkExperimentFilters {
 // Pause multiple experiments.
 message PauseExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Selecting experiments by id.
@@ -331,7 +331,7 @@ message PauseExperimentsRequest {
 // Response to PauseExperimentsRequest.
 message PauseExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -349,7 +349,7 @@ message CancelExperimentResponse {}
 // Cancel multiple experiments.
 message CancelExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Selecting experiments by id.
@@ -360,7 +360,7 @@ message CancelExperimentsRequest {
 // Response to CancelExperimentsRequest.
 message CancelExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -378,7 +378,7 @@ message KillExperimentResponse {}
 // Kill multiple experiments.
 message KillExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Selecting experiments by id.
@@ -389,7 +389,7 @@ message KillExperimentsRequest {
 // Response to KillExperimentsRequest.
 message KillExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -407,7 +407,7 @@ message ArchiveExperimentResponse {}
 // Archive multiple experiments.
 message ArchiveExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Selecting experiments by id.
@@ -418,7 +418,7 @@ message ArchiveExperimentsRequest {
 // Response to ArchiveExperimentsRequest.
 message ArchiveExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -436,7 +436,7 @@ message UnarchiveExperimentResponse {}
 // Unarchive multiple experiments.
 message UnarchiveExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema : {required : [ "experiment_ids" ]}
   };
 
   // Selecting experiments by id.
@@ -447,7 +447,7 @@ message UnarchiveExperimentsRequest {
 // Response to UnarchiveExperimentsRequest.
 message UnarchiveExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -494,7 +494,7 @@ message GetExperimentCheckpointsRequest {
 // Response to GetExperimentCheckpointsRequest.
 message GetExperimentCheckpointsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "checkpoints", "pagination" ] }
+    json_schema : {required : [ "checkpoints", "pagination" ]}
   };
 
   // The list of returned checkpoints.
@@ -551,7 +551,7 @@ message CreateExperimentRequest {
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment", "config" ] }
+    json_schema : {required : [ "experiment", "config" ]}
   };
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
@@ -574,7 +574,7 @@ message PutExperimentRequest {
 // Response to PutExperimentRequest.
 message PutExperimentResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment", "config" ] }
+    json_schema : {required : [ "experiment", "config" ]}
   };
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
@@ -586,7 +586,7 @@ message PutExperimentResponse {
 // Request to continue an experiment.
 message ContinueExperimentRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
+    json_schema : {required : [ "id" ]}
   };
   // Experiment ID to continue.
   int32 id = 1;
@@ -597,7 +597,7 @@ message ContinueExperimentRequest {
 // Request to continue an experiment.
 message ContinueExperimentResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment", "config" ] }
+    json_schema : {required : [ "experiment", "config" ]}
   };
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
@@ -609,10 +609,10 @@ message ContinueExperimentResponse {
 message ExpMetricNamesRequest {
   // The ids for the experiments.
   repeated int32 ids = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["ids"];
-      }];
+      } ];
   // Seconds to wait when polling for updates.
   int32 period_seconds = 2;
 }
@@ -622,9 +622,9 @@ message ExpMetricNamesResponse {
   // The names of the searcher metrics.
   repeated string searcher_metrics = 1;
   // List of training metric names.
-  repeated string training_metrics = 2 [deprecated = true];
+  repeated string training_metrics = 2 [ deprecated = true ];
   // List of validation metric names.
-  repeated string validation_metrics = 3 [deprecated = true];
+  repeated string validation_metrics = 3 [ deprecated = true ];
   // List of metric group-name pairs.
   repeated determined.metric.v1.MetricIdentifier metric_names = 4;
 }
@@ -644,18 +644,18 @@ enum MetricType {
 message MetricBatchesRequest {
   // The id of the experiment.
   int32 experiment_id = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["experiment_id"];
-      }];
+      } ];
   // A metric name.
   string metric_name = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_name"];
-      }];
+      } ];
   // The type of metric.
-  MetricType metric_type = 3 [deprecated = true];
+  MetricType metric_type = 3 [ deprecated = true ];
   // Metric group (training, validation, etc).
   string group = 5;
   // Seconds to wait when polling for updates.
@@ -673,26 +673,26 @@ message MetricBatchesResponse {
 message TrialsSnapshotRequest {
   // The id of the experiment.
   int32 experiment_id = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["experiment_id"];
-      }];
+      } ];
   // A metric name.
   string metric_name = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_name"];
-      }];
+      } ];
   // The type of metric.
-  MetricType metric_type = 3 [deprecated = true];
+  MetricType metric_type = 3 [ deprecated = true ];
   // Metric group (training, validation, etc).
   string group = 7;
   // The point of progress at which to query metrics.
   int32 batches_processed = 4
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["batches_processed"];
-      }];
+      } ];
   // A range either side of batches_processed to include near-misses.
   int32 batches_margin = 5;
   // Seconds to wait when polling for updates.
@@ -702,13 +702,13 @@ message TrialsSnapshotRequest {
 // Response to TrialsSnapshotRequest
 message TrialsSnapshotResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trials" ] }
+    json_schema : {required : [ "trials" ]}
   };
   // Metric value and metadata for a trial that has progress this far.
   message Trial {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-        required: [ "trial_id", "hparams", "metric", "batches_processed" ]
+      json_schema : {
+        required : [ "trial_id", "hparams", "metric", "batches_processed" ]
       }
     };
     // The id of the trial.
@@ -728,18 +728,18 @@ message TrialsSnapshotResponse {
 message TrialsSampleRequest {
   // The id of the experiment.
   int32 experiment_id = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["experiment_id"];
-      }];
+      } ];
   // A metric name.
   string metric_name = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+      [ (grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_name"];
-      }];
+      } ];
   // The type of metric.
-  MetricType metric_type = 3 [deprecated = true];
+  MetricType metric_type = 3 [ deprecated = true ];
   // Metric group (training, validation, etc).
   string group = 9;
   // Maximum number of trials to fetch data for.
@@ -757,12 +757,12 @@ message TrialsSampleRequest {
 // Response to TrialsSampleRequest
 message TrialsSampleResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trials", "promoted_trials", "demoted_trials" ] }
+    json_schema : {required : [ "trials", "promoted_trials", "demoted_trials" ]}
   };
   // Metadata and metrics stream from a trial.
   message Trial {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: { required: [ "trial_id", "hparams", "data" ] }
+      json_schema : {required : [ "trial_id", "hparams", "data" ]}
     };
     // The id of the trial.
     int32 trial_id = 1;
@@ -789,7 +789,7 @@ message GetModelDefRequest {
 // Response to GetModelDefRequest.
 message GetModelDefResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "b64_tgz" ] }
+    json_schema : {required : [ "b64_tgz" ]}
   };
   // The base64-encoded, gzipped, tarball.
   string b64_tgz = 1;
@@ -798,7 +798,7 @@ message GetModelDefResponse {
 // Request to move an experiment into a project.
 message MoveExperimentRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "destination_project_id", "experiment_id" ] }
+    json_schema : {required : [ "destination_project_id", "experiment_id" ]}
   };
 
   // The id of the experiment being moved.
@@ -813,7 +813,7 @@ message MoveExperimentResponse {}
 // Request to move an experiment into a project.
 message MoveExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "destination_project_id", "experiment_ids" ] }
+    json_schema : {required : [ "destination_project_id", "experiment_ids" ]}
   };
 
   // The ids of the experiments being moved.
@@ -827,7 +827,7 @@ message MoveExperimentsRequest {
 // Response to MoveExperimentsRequest.
 message MoveExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "results" ] }
+    json_schema : {required : [ "results" ]}
   };
 
   // Details on success or error for each experiment.
@@ -902,7 +902,7 @@ message SearchExperimentsRequest {
 // combination of experiment and best trial with metrics
 message SearchExperimentExperiment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment" ] }
+    json_schema : {required : [ "experiment" ]}
   };
   // The experiment in question
   determined.experiment.v1.Experiment experiment = 1;
@@ -913,7 +913,7 @@ message SearchExperimentExperiment {
 // Response for searching experiments
 message SearchExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiments", "pagination" ] }
+    json_schema : {required : [ "experiments", "pagination" ]}
   };
   // The list of returned experiments.
   repeated SearchExperimentExperiment experiments = 1;

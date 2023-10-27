@@ -5,15 +5,17 @@
 package shellv1
 
 import (
-	containerv1 "github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
-	taskv1 "github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
+	reflect "reflect"
+	sync "sync"
+
 	_struct "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
+
+	containerv1 "github.com/determined-ai/determined/master/pkg/generatedproto/containerv1"
+	taskv1 "github.com/determined-ai/determined/master/pkg/generatedproto/taskv1"
 )
 
 const (
