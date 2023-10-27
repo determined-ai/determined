@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -293,12 +292,12 @@ func (k *kubernetesResourcePool) ValidateCommandResources(
 	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
 }
 
-func (k *kubernetesResourcePool) Schedule(system *actor.System) {
+func (k *kubernetesResourcePool) Schedule() {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
 	if k.reschedule {
-		k.schedulePendingTasks(system)
+		k.schedulePendingTasks()
 	}
 	k.reschedule = false
 }
@@ -474,7 +473,7 @@ func (k *kubernetesResourcePool) receiveSetAllocationName(
 }
 
 func (k *kubernetesResourcePool) assignResources(
-	system *actor.System, req *sproto.AllocateRequest,
+	req *sproto.AllocateRequest,
 ) {
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
@@ -512,7 +511,7 @@ func (k *kubernetesResourcePool) assignResources(
 	var resources []*k8sPodResources
 	if req.Restore {
 		var err error
-		resources, err = k.restoreResources(system, req, slotsPerPod, numPods)
+		resources, err = k.restoreResources(req, slotsPerPod, numPods)
 		if err != nil {
 			k.syslog.
 				WithField("allocation-id", req.AllocationID).
@@ -526,7 +525,7 @@ func (k *kubernetesResourcePool) assignResources(
 			return
 		}
 	} else {
-		resources = k.createResources(system, req, slotsPerPod, numPods)
+		resources = k.createResources(req, slotsPerPod, numPods)
 	}
 
 	allocations := sproto.ResourceList{}
@@ -556,7 +555,7 @@ func (k *kubernetesResourcePool) assignResources(
 		// This call must happen after we publish ResourcesAllocated, otherwise the allocation will
 		// receive an update for resources it does not know about, ignore it, then hang if it missed
 		// the termination.
-		err := k.podsService.RefreshPodStates(system, refreshPodStates{allocationID: req.AllocationID})
+		err := k.podsService.RefreshPodStates(refreshPodStates{allocationID: req.AllocationID})
 		if err != nil {
 			k.syslog.WithError(err).Error("failed to refresh pod states after reattach")
 		}
@@ -564,12 +563,11 @@ func (k *kubernetesResourcePool) assignResources(
 }
 
 func (k *kubernetesResourcePool) createResources(
-	system *actor.System, req *sproto.AllocateRequest, slotsPerPod, numPods int,
+	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) []*k8sPodResources {
 	var resources []*k8sPodResources
 	for pod := 0; pod < numPods; pod++ {
 		resources = append(resources, &k8sPodResources{
-			system:          system,
 			req:             req,
 			podsService:     k.podsService,
 			containerID:     cproto.NewID(),
@@ -583,7 +581,7 @@ func (k *kubernetesResourcePool) createResources(
 }
 
 func (k *kubernetesResourcePool) restoreResources(
-	system *actor.System, req *sproto.AllocateRequest, slotsPerPod, numPods int,
+	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) ([]*k8sPodResources, error) {
 	restoreResponses, err := k.podsService.ReattachAllocationPods(reattachAllocationPods{
 		allocationID: req.AllocationID,
@@ -598,7 +596,6 @@ func (k *kubernetesResourcePool) restoreResources(
 	var resources []*k8sPodResources
 	for _, restoreResponse := range restoreResponses {
 		resources = append(resources, &k8sPodResources{
-			system:          system,
 			req:             req,
 			podsService:     k.podsService,
 			containerID:     cproto.ID(restoreResponse.containerID),
@@ -663,7 +660,7 @@ func (k *kubernetesResourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.G
 	return g
 }
 
-func (k *kubernetesResourcePool) schedulePendingTasks(system *actor.System) {
+func (k *kubernetesResourcePool) schedulePendingTasks() {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		group := k.groups[req.JobID]
@@ -677,14 +674,12 @@ func (k *kubernetesResourcePool) schedulePendingTasks(system *actor.System) {
 					continue
 				}
 			}
-			k.assignResources(system, req)
+			k.assignResources(req)
 		}
 	}
 }
 
 type k8sPodResources struct {
-	system *actor.System
-
 	req             *sproto.AllocateRequest
 	podsService     *pods
 	group           *tasklist.Group
