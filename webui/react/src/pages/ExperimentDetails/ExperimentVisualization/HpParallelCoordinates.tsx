@@ -1,5 +1,4 @@
 import Message from 'determined-ui/Message';
-import ParallelCoordinates from 'determined-ui/ParallelCoordinates';
 import Spinner from 'determined-ui/Spinner';
 import useUI from 'determined-ui/Theme';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
