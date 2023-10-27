@@ -86,6 +86,9 @@ model_hub/examples/mmdetection/hydra/outputs
 # junit test results
 *.junit.xml
 
+# go mock files
+master/internal/mocks
+
 # go workspace sum file
 go.work.sum
 
