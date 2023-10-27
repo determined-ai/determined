@@ -6,8 +6,6 @@ import ClusterHistoricalUsageChart from 'pages/Cluster/ClusterHistoricalUsageCha
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
 
-import css from './ClusterQueuedChart.module.scss';
-
 interface Props {
   poolStats: V1RPQueueStat | undefined;
 }
