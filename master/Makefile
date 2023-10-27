@@ -100,6 +100,7 @@ build: gen
 		./cmd/determined-master
 
 .PHONY: build-race
+build-race: build-proto
 build-race: export DET_SEGMENT_MASTER_KEY ?=
 build-race: export DET_SEGMENT_WEBUI_KEY ?=
 build-race: gen
@@ -117,11 +118,8 @@ check: check-gen
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run --timeout 10m
 
-    # TODO
-	git ls-files -z 'src/determined/**/*.proto' | xargs -0 -P8 clang-format --dry-run --Werror
+	git ls-files -z 'proto/determined/**/*.proto' | xargs -0 -P8 clang-format --dry-run --Werror
 
-
-    # TODO
 	buf lint
 	buf breaking --against $(buf_image)
 	go mod tidy

@@ -267,10 +267,9 @@ commands:
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C master build-proto
       - install-devcluster
       - start-devcluster:
           target-stage: elastic
@@ -281,12 +280,11 @@ commands:
       - install-protoc
       - restore_cache:
           keys:
-            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
-      - run: make -C proto get-deps
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
@@ -1086,7 +1084,7 @@ commands:
         default: true
     steps:
       - go-get-deps
-      - run: make -C proto build
+      - run: make -C master build-proto
       - when:
           condition: <<parameters.check>>
           steps:
@@ -1628,8 +1626,7 @@ jobs:
       - reinstall-go
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
-      - run: make -C proto build
-      - run: make -C proto check
+      - run: make -C master build-proto
       - run: make -C master check
       - run: make -C agent check
 
@@ -1645,7 +1642,6 @@ jobs:
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
-      - run: make -C proto build
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -1663,7 +1659,7 @@ jobs:
       - checkout
       - reinstall-go
       - go-get-deps
-      - run: make -C proto build
+      - run: make -C master build-proto
       - persist_to_workspace:
           root: .
           paths:
@@ -1681,7 +1677,7 @@ jobs:
       - skip-if-webui-only
       - reinstall-go
       - go-get-deps
-      - run: make -C proto build
+      - run: make -C master build-proto
       - run: make -C master test
       - run: make -C agent test
       - codecov/upload:
