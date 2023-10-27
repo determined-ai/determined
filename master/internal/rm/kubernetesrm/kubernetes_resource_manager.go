@@ -7,7 +7,6 @@ import (
 	"maps"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -38,7 +37,107 @@ type SchedulerTick struct{}
 
 // ResourceManager is a resource manager that manages k8s resources.
 type ResourceManager struct {
-	*kubernetesResourceManager
+	syslog *logrus.Entry
+
+	config                *config.KubernetesResourceManagerConfig
+	poolsConfig           []config.ResourcePoolConfig
+	taskContainerDefaults *model.TaskContainerDefaultsConfig
+
+	podsService *pods
+	pools       map[string]*kubernetesResourcePool // immutable after initialization in new.
+
+	masterTLSConfig model.TLSClientConfig
+	loggingConfig   model.LoggingConfig
+
+	db *db.PgDB
+}
+
+// New returns a new ResourceManager, which communicates with
+// and submits work to a Kubernetes apiserver.
+func New(
+	system *actor.System,
+	db *db.PgDB,
+	rmConfigs *config.ResourceConfig,
+	taskContainerDefaults *model.TaskContainerDefaultsConfig,
+	opts *aproto.MasterSetAgentOptions,
+	cert *tls.Certificate,
+) *ResourceManager {
+	tlsConfig, err := model.MakeTLSConfig(cert)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to set up TLS config"))
+	}
+
+	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
+	clusterID, err := db.GetOrCreateClusterID("")
+	if err != nil {
+		panic(fmt.Errorf("getting clusterID: %w", err))
+	}
+	setClusterID(clusterID)
+
+	k := &ResourceManager{
+		syslog: logrus.WithField("component", "k8srm"),
+
+		config:                rmConfigs.ResourceManager.KubernetesRM,
+		poolsConfig:           rmConfigs.ResourcePools,
+		taskContainerDefaults: taskContainerDefaults,
+
+		pools: make(map[string]*kubernetesResourcePool),
+
+		masterTLSConfig: tlsConfig,
+		loggingConfig:   opts.LoggingOptions,
+
+		db: db,
+	}
+
+	poolNamespaces := make(map[string]string)
+	for i := range k.poolsConfig {
+		if k.poolsConfig[i].KubernetesNamespace == "" {
+			k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
+		}
+
+		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
+	}
+
+	k.podsService = newPodsService(
+		k.config.Namespace,
+		poolNamespaces,
+		k.config.MasterServiceName,
+		k.masterTLSConfig,
+		k.loggingConfig,
+		k.config.DefaultScheduler,
+		k.config.SlotType,
+		config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
+		k.poolsConfig,
+		k.taskContainerDefaults,
+		k.config.CredsDir,
+		k.config.MasterIP,
+		k.config.MasterPort,
+		k.podStatusUpdateCallback,
+	)
+
+	for _, poolConfig := range k.poolsConfig {
+		maxSlotsPerPod := 0
+		if k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
+			maxSlotsPerPod = *k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+		}
+		if poolConfig.TaskContainerDefaults != nil &&
+			poolConfig.TaskContainerDefaults.Kubernetes != nil &&
+			poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
+			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+		}
+
+		poolConfig := poolConfig
+		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db)
+		go func() {
+			t := time.NewTicker(ActionCoolDown)
+			defer t.Stop()
+			for range t.C {
+				rp.Schedule()
+			}
+		}()
+		k.pools[poolConfig.PoolName] = rp
+	}
+	return k
 }
 
 // Allocate implements rm.ResourceManager.
@@ -291,41 +390,6 @@ func (k *ResourceManager) ValidateCommandResources(
 	return rp.ValidateCommandResources(msg), nil
 }
 
-// New returns a new ResourceManager, which communicates with
-// and submits work to a Kubernetes apiserver.
-func New(
-	system *actor.System,
-	db *db.PgDB,
-	echo *echo.Echo,
-	config *config.ResourceConfig,
-	taskContainerDefaults *model.TaskContainerDefaultsConfig,
-	opts *aproto.MasterSetAgentOptions,
-	cert *tls.Certificate,
-) *ResourceManager {
-	tlsConfig, err := model.MakeTLSConfig(cert)
-	if err != nil {
-		panic(errors.Wrap(err, "failed to set up TLS config"))
-	}
-
-	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
-	clusterID, err := db.GetOrCreateClusterID("")
-	if err != nil {
-		panic(fmt.Errorf("getting clusterID: %w", err))
-	}
-	setClusterID(clusterID)
-
-	rm := newKubernetesResourceManager(
-		config.ResourceManager.KubernetesRM,
-		config.ResourcePools,
-		taskContainerDefaults,
-		echo,
-		tlsConfig,
-		opts.LoggingOptions,
-		db,
-	)
-	return &ResourceManager{kubernetesResourceManager: rm}
-}
-
 // getResourcePoolRef gets an actor ref to a resource pool by name.
 func (k ResourceManager) resourcePoolExists(
 	name string,
@@ -457,108 +521,13 @@ func (k ResourceManager) TaskContainerDefaults(
 	return k.getTaskContainerDefaults(taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}), nil
 }
 
-// kubernetesResourceProvider manages the lifecycle of k8s resources.
-type kubernetesResourceManager struct {
-	syslog *logrus.Entry
-
-	config                *config.KubernetesResourceManagerConfig
-	poolsConfig           []config.ResourcePoolConfig
-	taskContainerDefaults *model.TaskContainerDefaultsConfig
-
-	podsService *pods
-	pools       map[string]*kubernetesResourcePool // immutable after initialization in new.
-
-	echoRef         *echo.Echo
-	masterTLSConfig model.TLSClientConfig
-	loggingConfig   model.LoggingConfig
-
-	db *db.PgDB
-}
-
-func newKubernetesResourceManager(
-	rmConfig *config.KubernetesResourceManagerConfig,
-	poolsConfig []config.ResourcePoolConfig,
-	taskContainerDefaults *model.TaskContainerDefaultsConfig,
-	echoRef *echo.Echo,
-	masterTLSConfig model.TLSClientConfig,
-	loggingConfig model.LoggingConfig,
-	db *db.PgDB,
-) *kubernetesResourceManager {
-	k := &kubernetesResourceManager{
-		syslog: logrus.WithField("component", "k8srm"),
-
-		config:                rmConfig,
-		poolsConfig:           poolsConfig,
-		taskContainerDefaults: taskContainerDefaults,
-
-		pools: make(map[string]*kubernetesResourcePool),
-
-		echoRef:         echoRef,
-		masterTLSConfig: masterTLSConfig,
-		loggingConfig:   loggingConfig,
-
-		db: db,
-	}
-
-	poolNamespaces := make(map[string]string)
-	for i := range k.poolsConfig {
-		if k.poolsConfig[i].KubernetesNamespace == "" {
-			k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
-		}
-
-		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
-	}
-
-	k.podsService = newPodsService(
-		k.config.Namespace,
-		poolNamespaces,
-		k.config.MasterServiceName,
-		k.masterTLSConfig,
-		k.loggingConfig,
-		k.config.DefaultScheduler,
-		k.config.SlotType,
-		config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
-		k.poolsConfig,
-		k.taskContainerDefaults,
-		k.config.CredsDir,
-		k.config.MasterIP,
-		k.config.MasterPort,
-		k.podStatusUpdateCallback,
-	)
-
-	for _, poolConfig := range k.poolsConfig {
-		maxSlotsPerPod := 0
-		if k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
-			maxSlotsPerPod = *k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
-		}
-		if poolConfig.TaskContainerDefaults != nil &&
-			poolConfig.TaskContainerDefaults.Kubernetes != nil &&
-			poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
-			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
-		}
-
-		poolConfig := poolConfig
-		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db)
-		go func() {
-			t := time.NewTicker(ActionCoolDown)
-			defer t.Stop()
-			for range t.C {
-				rp.Schedule()
-			}
-		}()
-		k.pools[poolConfig.PoolName] = rp
-	}
-
-	return k
-}
-
-func (k *kubernetesResourceManager) podStatusUpdateCallback(msg sproto.UpdatePodStatus) {
+func (k *ResourceManager) podStatusUpdateCallback(msg sproto.UpdatePodStatus) {
 	for _, rp := range k.pools {
 		rp.UpdatePodStatus(msg)
 	}
 }
 
-func (k *kubernetesResourceManager) poolByName(resourcePool string) (*kubernetesResourcePool, error) {
+func (k *ResourceManager) poolByName(resourcePool string) (*kubernetesResourcePool, error) {
 	rp, ok := k.pools[resourcePool]
 	if !ok {
 		return nil, fmt.Errorf("cannot find resource pool %s", resourcePool)
@@ -571,7 +540,7 @@ type taskContainerDefaults struct {
 	resourcePool    string
 }
 
-func (k *kubernetesResourceManager) createResourcePoolSummary(
+func (k *ResourceManager) createResourcePoolSummary(
 	poolName string,
 ) (*resourcepoolv1.ResourcePool, error) {
 	pool, err := k.getResourcePoolConfig(poolName)
@@ -639,7 +608,7 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 	return resp, nil
 }
 
-func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
+func (k *ResourceManager) fetchAvgQueuedTime(pool string) (
 	[]*jobv1.AggregateQueueStats, error,
 ) {
 	aggregates := []model.ResourceAggregates{}
@@ -677,7 +646,7 @@ func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
 	return res, nil
 }
 
-func (k *kubernetesResourceManager) getPoolJobStats(
+func (k *ResourceManager) getPoolJobStats(
 	pool config.ResourcePoolConfig,
 ) (*jobv1.QueueStats, error) {
 	rp, err := k.poolByName(pool.PoolName)
@@ -689,7 +658,7 @@ func (k *kubernetesResourceManager) getPoolJobStats(
 	return jobStats, nil
 }
 
-func (k *kubernetesResourceManager) getResourcePoolConfig(poolName string) (
+func (k *ResourceManager) getResourcePoolConfig(poolName string) (
 	config.ResourcePoolConfig, error,
 ) {
 	for i := range k.poolsConfig {
@@ -700,7 +669,7 @@ func (k *kubernetesResourceManager) getResourcePoolConfig(poolName string) (
 	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
 }
 
-func (k *kubernetesResourceManager) getTaskContainerDefaults(
+func (k *ResourceManager) getTaskContainerDefaults(
 	msg taskContainerDefaults,
 ) model.TaskContainerDefaultsConfig {
 	result := msg.fallbackDefault
