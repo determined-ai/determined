@@ -28,12 +28,9 @@ import (
 const (
 	// KubernetesScheduler is the "name" of the kubernetes scheduler, for informational reasons.
 	kubernetesScheduler = "kubernetes"
-	// ActionCoolDown is the rate limit for job submission.
-	ActionCoolDown = 500 * time.Millisecond
+	// podSubmissionInterval is the rate limit for job submission.
+	podSubmissionInterval = 500 * time.Millisecond
 )
-
-// SchedulerTick notifies the Resource Manager to submit pending jobs.
-type SchedulerTick struct{}
 
 // ResourceManager is a resource manager that manages k8s resources.
 type ResourceManager struct {
@@ -129,7 +126,7 @@ func New(
 		poolConfig := poolConfig
 		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db)
 		go func() {
-			t := time.NewTicker(ActionCoolDown)
+			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()
 			for range t.C {
 				rp.Schedule()
@@ -535,11 +532,6 @@ func (k *ResourceManager) poolByName(resourcePool string) (*kubernetesResourcePo
 	return rp, nil
 }
 
-type taskContainerDefaults struct {
-	fallbackDefault model.TaskContainerDefaultsConfig
-	resourcePool    string
-}
-
 func (k *ResourceManager) createResourcePoolSummary(
 	poolName string,
 ) (*resourcepoolv1.ResourcePool, error) {
@@ -667,6 +659,11 @@ func (k *ResourceManager) getResourcePoolConfig(poolName string) (
 		}
 	}
 	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
+}
+
+type taskContainerDefaults struct {
+	fallbackDefault model.TaskContainerDefaultsConfig
+	resourcePool    string
 }
 
 func (k *ResourceManager) getTaskContainerDefaults(
