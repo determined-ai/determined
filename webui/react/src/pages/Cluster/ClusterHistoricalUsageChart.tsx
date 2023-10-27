@@ -60,7 +60,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         handleError={handleError}
         height={height}
         series={data}
-        showLegend
         xAxis={XAxisDomain.Time}
         xLabel={capitalizeWord(groupBy || '')}
         xRange={{
