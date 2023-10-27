@@ -23,6 +23,7 @@ var ErrMock = errors.New("mock error")
 type MockTask struct {
 	RMRef *actor.Ref
 
+	TaskID         model.TaskID
 	ID             model.AllocationID
 	JobID          string
 	Group          *MockGroup
@@ -33,6 +34,8 @@ type MockTask struct {
 	// Any test that set this to false is half wrong. It is used as a proxy to oversubscribe agents.
 	ContainerStarted  bool
 	JobSubmissionTime time.Time
+
+	BlockedNodes []string
 }
 
 func (t *MockTask) Receive(ctx *actor.Context) error {
@@ -54,6 +57,7 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			SlotsNeeded:       t.SlotsNeeded,
 			Preemptible:       !t.NonPreemptible,
 			ResourcePool:      t.ResourcePool,
+			BlockedNodes:      t.BlockedNodes,
 		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
@@ -132,12 +136,14 @@ func MockTaskToAllocateRequest(
 	}
 
 	req := &sproto.AllocateRequest{
+		TaskID:            mockTask.TaskID,
 		AllocationID:      mockTask.ID,
 		JobID:             model.JobID(jobID),
 		SlotsNeeded:       mockTask.SlotsNeeded,
 		IsUserVisible:     true,
 		Preemptible:       !mockTask.NonPreemptible,
 		JobSubmissionTime: jobSubmissionTime,
+		BlockedNodes:      mockTask.BlockedNodes,
 	}
 	return req
 }

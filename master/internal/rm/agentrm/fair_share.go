@@ -117,7 +117,9 @@ func fairshareSchedule(
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
 	capacity := totalCapacity(agents)
-	groupStates := calculateGroupStates(taskList, groups, capacity)
+	groupStates := calculateGroupStates(
+		taskList, groups, capacity, agents, fittingMethod, allowHeterogeneousAgentFits,
+	)
 
 	allocateSlotOffers(groupStates, capacity)
 	toAllocate, toRelease := assignTasks(
@@ -143,7 +145,12 @@ func totalCapacity(agents map[*actor.Ref]*agentState) int {
 }
 
 func calculateGroupStates(
-	taskList *tasklist.TaskList, groups map[model.JobID]*tasklist.Group, capacity int,
+	taskList *tasklist.TaskList,
+	groups map[model.JobID]*tasklist.Group,
+	capacity int,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+	allowHeterogeneousAgentFits bool,
 ) []*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
@@ -154,6 +161,22 @@ func calculateGroupStates(
 		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacity {
 			continue
 		}
+
+		// Remove any tasks that cannot be scheduled from consideration.
+		// This is more than a performance optimization. This is needed to
+		// prevent tasks that will fail a hard constraint from "wasting" offered slots
+		// and potentially preventing progress from being made.
+		if taskList.Allocation(req.AllocationID) == nil {
+			if fits := findFits(
+				req,
+				agents,
+				fittingMethod,
+				allowHeterogeneousAgentFits,
+			); len(fits) == 0 {
+				continue
+			}
+		}
+
 		group := groups[req.JobID]
 		state, ok := groupMapping[group]
 		if !ok {
