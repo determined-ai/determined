@@ -242,7 +242,7 @@ publish-nvcr:
 
 
 # String constants.
-build_path := build/build-proto/github.com/determined-ai/determined/proto/pkg
+build_path := build/build-proto/github.com/determined-ai/determined/master/pkg/generatedproto/
 src_path := proto/determined
 
 # Pre-defined list of all source files.

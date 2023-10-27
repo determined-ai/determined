@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package determined.checkpoint.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/checkpointv1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/checkpointv1";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";

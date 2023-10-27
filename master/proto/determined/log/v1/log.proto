@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package determined.log.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/logv1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/logv1";
 
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/timestamp.proto";

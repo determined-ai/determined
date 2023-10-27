@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package determined.device.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/devicev1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/devicev1";
 
 // The type of the Device.
 enum Type {

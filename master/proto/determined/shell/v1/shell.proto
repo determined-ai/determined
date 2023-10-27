@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package determined.shell.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/shellv1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/shellv1";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";

@@ -4,7 +4,7 @@ import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 package determined.user.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/userv1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/userv1";
 
 // User is an account in the determined cluster.
 message User {

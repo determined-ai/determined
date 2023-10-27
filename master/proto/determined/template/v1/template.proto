@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package determined.template.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/templatev1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/templatev1";
 
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";

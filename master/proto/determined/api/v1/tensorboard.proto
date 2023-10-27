@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package determined.api.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+option go_package = "github.com/determined-ai/determined/master/pkg/generatedproto/apiv1";
 
 import "google/protobuf/struct.proto";
 
