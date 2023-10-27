@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
 
-from determined.common import api, yaml
+from determined.common import api, util
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import experimentv1State, trialv1State
 from tests import api_utils
@@ -619,6 +619,24 @@ def assert_performed_final_checkpoint(exp_id: int) -> None:
     last_workload_matches_last_checkpoint(trials[0].workloads)
 
 
+def run_cmd_and_print_on_error(cmd: List[str]) -> None:
+    """
+    We run some commands to make sure they work, but we don't need their output polluting the logs.
+    """
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    ret = p.wait()
+    if ret != 0:
+        print(f"cmd failed: {cmd} exited {ret}", file=sys.stderr)
+        print("====== stdout from failed command ======", file=sys.stderr)
+        print(out.decode("utf8"), file=sys.stderr)
+        print("====== end of stdout ======", file=sys.stderr)
+        print("====== stderr from failed command ======", file=sys.stderr)
+        print(err.decode("utf8"), file=sys.stderr)
+        print("====== end of stderr ======", file=sys.stderr)
+        raise ValueError(f"cmd failed: {cmd} exited {ret}")
+
+
 def run_describe_cli_tests(experiment_id: int) -> None:
     """
     Runs `det experiment describe` CLI command on a finished
@@ -627,7 +645,7 @@ def run_describe_cli_tests(experiment_id: int) -> None:
     """
     # "det experiment describe" without metrics.
     with tempfile.TemporaryDirectory() as tmpdir:
-        subprocess.check_call(
+        run_cmd_and_print_on_error(
             [
                 "det",
                 "-m",
@@ -646,7 +664,7 @@ def run_describe_cli_tests(experiment_id: int) -> None:
 
     # "det experiment describe" with metrics.
     with tempfile.TemporaryDirectory() as tmpdir:
-        subprocess.check_call(
+        run_cmd_and_print_on_error(
             [
                 "det",
                 "-m",
@@ -671,14 +689,13 @@ def run_list_cli_tests(experiment_id: int) -> None:
     exception if the CLI command encounters a traceback failure.
     """
 
-    subprocess.check_call(
+    run_cmd_and_print_on_error(
         ["det", "-m", conf.make_master_url(), "experiment", "list-trials", str(experiment_id)]
     )
-
-    subprocess.check_call(
+    run_cmd_and_print_on_error(
         ["det", "-m", conf.make_master_url(), "experiment", "list-checkpoints", str(experiment_id)]
     )
-    subprocess.check_call(
+    run_cmd_and_print_on_error(
         [
             "det",
             "-m",
@@ -954,7 +971,7 @@ def run_basic_test_with_temp_config(
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         experiment_id = run_basic_test(
             tf.name,
             model_def_path,
@@ -972,7 +989,7 @@ def run_failure_test_with_temp_config(
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         return run_failure_test(tf.name, model_def_path, error_str=error_str)
 
 

@@ -246,7 +246,7 @@ const WorkspaceMembers: React.FC<Props> = ({
             canAssignRoles({ workspace }) &&
             !workspace.immutable &&
             !workspace.archived && (
-              <Button onClick={WorkspaceMemberAddModal.open}> Add Member</Button>
+              <Button onClick={WorkspaceMemberAddModal.open}> Add Members</Button>
             )}
           {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
         </Space>
@@ -274,7 +274,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           addableUsersAndGroups,
           onClose: fetchMembers,
           rolesAssignableToScope,
-          workspaceId: workspace.id,
+          workspace: workspace,
         }}
       />
     </>

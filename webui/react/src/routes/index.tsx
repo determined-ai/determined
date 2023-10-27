@@ -1,8 +1,8 @@
 import React from 'react';
 
 import Admin from 'pages/Admin';
+import Cluster from 'pages/Cluster';
 import ClusterLogs from 'pages/ClusterLogs';
-import Clusters from 'pages/Clusters';
 import Dashboard from 'pages/Dashboard';
 import DefaultRoute from 'pages/DefaultRoute';
 import Deprecated from 'pages/Deprecated';
@@ -32,7 +32,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   cluster: <Deprecated />,
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,
-  clusters: <Clusters />,
+  clusters: <Cluster />,
   dashboard: <Dashboard />,
   default: <DefaultRoute />,
   experimentDetails: <ExperimentDetails />,

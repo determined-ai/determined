@@ -10,7 +10,6 @@ For example, the following two lines of pseudocode return similar objects:
 * bindings.v1Model.to_json()
 * _render.model_to_json(model.Model)
 """
-import base64
 import csv
 import inspect
 import json
@@ -25,7 +24,7 @@ import tabulate
 import termcolor
 
 from determined import util as det_util
-from determined.common import util, yaml
+from determined.common import util
 from determined.experimental import Model, Project
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
@@ -114,16 +113,8 @@ def render_objects(
     print(tabulate.tabulate(values, headers, tablefmt=table_fmt), flush=False)
 
 
-def format_base64_as_yaml(source: str) -> str:
-    s = yaml.safe_dump(yaml.safe_load(base64.b64decode(source)), default_flow_style=False)
-
-    if not isinstance(s, str):
-        raise AssertionError("cannot format base64 string to yaml")
-    return s
-
-
 def format_object_as_yaml(source: Dict[str, Any]) -> str:
-    s = yaml.safe_dump(source, default_flow_style=False)
+    s = util.yaml_safe_dump(source, default_flow_style=False)
     if not isinstance(s, str):
         raise AssertionError("cannot format object to yaml")
     return s

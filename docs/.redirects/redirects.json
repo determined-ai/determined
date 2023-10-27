@@ -1,4 +1,8 @@
 {
+    "setup-cluster/internet-access": "checklists/adv-requirements.html",
+    "setup-cluster/deploy-cluster/internet-access": "../checklists/adv-requirements.html",
+    "setup-cluster/firewall-rules": "checklists/adv-requirements.html",
+    "setup-cluster/deploy-cluster/firewall-rules": "../checklists/adv-requirements.html",
     "articles/index": "../tutorials/_index.html",
     "example-solutions/examples": "../get-started/example-solutions/_index.html",
     "setup-cluster/basic": "../get-started/basic.html",

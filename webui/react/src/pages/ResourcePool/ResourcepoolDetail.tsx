@@ -23,7 +23,7 @@ import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import ClustersQueuedChart from 'pages/Clusters/ClustersQueuedChart';
+import ClusterQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
@@ -182,7 +182,7 @@ const ResourcepoolDetailInner: React.FC = () => {
         label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
       },
       {
-        children: <ClustersQueuedChart poolStats={poolStats} />,
+        children: <ClusterQueuedChart poolStats={poolStats} />,
         key: TabType.Stats,
         label: 'Stats',
       },

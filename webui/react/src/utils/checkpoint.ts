@@ -7,9 +7,6 @@ import {
 
 type CheckpointChecker = (checkpoint: CoreApiGenericCheckpoint) => boolean;
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export const alwaysTrueCheckpointChecker = (checkpoint: CoreApiGenericCheckpoint): boolean => true;
-
 const CheckpointCheckers: Record<CheckpointAction, CheckpointChecker> = {
   /**
    * for internal use: the typing ensures that checkers
@@ -17,7 +14,7 @@ const CheckpointCheckers: Record<CheckpointAction, CheckpointChecker> = {
    * we expose the functions below as convenient wrappers
    */
 
-  [checkpointAction.Delete]: alwaysTrueCheckpointChecker,
+  [checkpointAction.Delete]: (checkpoint) => checkpoint.state !== CheckpointState.Deleted,
 
   [checkpointAction.Register]: (checkpoint) => checkpoint.state === CheckpointState.Completed,
 };

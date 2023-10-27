@@ -14,7 +14,6 @@ import CreateGroupModalComponent, {
   GROUP_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE,
   MODAL_HEADER_LABEL_EDIT,
-  USERS_LABEL,
 } from './CreateGroupModal';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
@@ -60,7 +59,7 @@ const Container: React.FC<Props> = ({ group }) => {
   return (
     <div>
       <Button onClick={CreateGroupModal.open}>{OPEN_MODAL_TEXT}</Button>
-      <CreateGroupModal.Component group={group} users={users} />
+      <CreateGroupModal.Component group={group} />
     </div>
   );
 };
@@ -79,7 +78,6 @@ describe('Create Group Modal', () => {
     await setup();
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USERS_LABEL)).toBeInTheDocument();
   });
 
   it('should submit a valid create group request', async () => {
@@ -110,6 +108,5 @@ describe('Create Group Modal', () => {
     await setup(group);
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USERS_LABEL)).toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List, Tuple
 
 import boto3
 
-from determined.common import yaml
+from determined.common import util
 
 
 def _fetch_vcpu_mapping() -> Iterable[Tuple[str, Dict]]:
@@ -36,7 +36,7 @@ def fetch_vcpu_mapping() -> List[Dict]:
 def main(args: argparse.Namespace) -> None:
     data = fetch_vcpu_mapping()
     with args.output_fn.open("w") as fout:
-        yaml.safe_dump(data, fout)
+        util.yaml_safe_dump(data, fout)
 
 
 if __name__ == "__main__":

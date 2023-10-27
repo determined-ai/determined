@@ -149,7 +149,7 @@ The default list of devices to pass to the Docker daemon. Ignored by resource ma
 ===============
 
 The default bind mounts to pass to the Docker container. Ignored by resource managers of type
-``kubernetes``. See :ref:`resources.devices <exp-bind-mounts>` for more details.
+``kubernetes``. See :ref:`bind_mounts <exp-bind-mounts>` for more details.
 
 ``kubernetes``
 ==============

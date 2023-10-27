@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from determined.common import check, yaml
+from determined.common import check, util
 from determined.common.api import bindings
 from determined.experimental import Determined
 from tests import config as conf
@@ -93,7 +93,7 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     config_obj["resources"] = {"slots_per_trial": impossibly_large}
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config_obj, f)
+            util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiment(experiment_id)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
@@ -120,7 +120,7 @@ def test_noop_pause_with_multiexperiment() -> None:
     config_obj["resources"] = {"slots_per_trial": impossibly_large}
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config_obj, f)
+            util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([experiment_id])
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
@@ -143,7 +143,7 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
     with tempfile.NamedTemporaryFile() as tf:
         config_obj["name"] = tf.name
         with open(tf.name, "w") as f:
-            yaml.dump(config_obj, f)
+            util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([], name=tf.name)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
@@ -203,7 +203,7 @@ def test_noop_single_warm_start() -> None:
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config_obj, f)
+            util.yaml_safe_dump(config_obj, f)
 
         experiment_id3 = exp.run_basic_test(tf.name, conf.fixtures_path("no_op"), 1)
 
@@ -326,7 +326,7 @@ def test_noop_experiment_config_override() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config_obj, f)
+            util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(
             tf.name,
             conf.fixtures_path("no_op"),

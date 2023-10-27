@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
+import ClusterOverview from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
@@ -13,7 +14,6 @@ import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
-import ClustersOverview from './Clusters/ClustersOverview';
 
 const TabType = {
   HistoricalUsage: 'historical-usage',
@@ -29,7 +29,7 @@ type Params = {
 
 const DEFAULT_TAB_KEY = TabType.Overview;
 
-const Clusters: React.FC = () => {
+const Cluster: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canAdministrateUsers } = usePermissions();
   const { tab } = useParams<Params>();
@@ -52,8 +52,8 @@ const Clusters: React.FC = () => {
     type Unboxed<T> = T extends (infer U)[] ? U : T;
     type TabType = Unboxed<TabsProps['items']>;
 
-    const clustersOverview: Readonly<TabType> = {
-      children: <ClustersOverview />,
+    const clusterOverview: Readonly<TabType> = {
+      children: <ClusterOverview />,
       key: TabType.Overview,
       label: 'Overview',
     };
@@ -70,13 +70,13 @@ const Clusters: React.FC = () => {
     const tabs: TabsProps['items'] = [];
 
     if (rbacEnabled) {
-      tabs.push(clustersOverview);
+      tabs.push(clusterOverview);
       if (canAdministrateUsers) {
         tabs.push(historicalUsage, masterLogs);
       }
     } else {
       // if RBAC is not enabled, show all tabs
-      tabs.push(clustersOverview, historicalUsage, masterLogs);
+      tabs.push(clusterOverview, historicalUsage, masterLogs);
     }
 
     return tabs;
@@ -97,4 +97,4 @@ const Clusters: React.FC = () => {
   );
 };
 
-export default Clusters;
+export default Cluster;

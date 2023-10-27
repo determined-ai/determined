@@ -391,12 +391,12 @@ commands:
                 command: |
                   sudo bash /tmp/install_python.sh <<parameters.python-version>>
 
-            - run:
-                name: Setup venv
-                command: |
-                  python3 -m venv /tmp/venv
-                  echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
-                  /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
+      - run:
+          name: Setup venv
+          command: |
+            python3 -m venv /tmp/venv
+            echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
+            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
       # Either of make -C {harness,model_hub} build require pypa's build module.
       - when:
