@@ -974,6 +974,7 @@ Resources:
                 --env DB_PASSWORD=${DBPassword} \
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
+                -v /mnt/efs/:/mnt/efs/ \
                 --network determined \
                 "${SidecarImage}"
             fi
