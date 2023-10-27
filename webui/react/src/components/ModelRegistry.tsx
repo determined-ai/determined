@@ -70,6 +70,7 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
+  const containerRef = useRef(null);
   const canceler = useRef(new AbortController());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -94,7 +95,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     settings,
     updateSettings,
     resetSettings,
-  } = useSettings<Settings>(settingConfig);
+  } = useSettings<Settings>(settingConfig, containerRef);
 
   const [permissionsByModel, setPermissionsByModel] = useState<
     Record<number, { canDelete: boolean; canModify: boolean }>
@@ -142,7 +143,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         return response.models;
       });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,
         type: ErrorType.Api,
@@ -161,7 +162,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     }
   }, [workspace?.id]);
 
@@ -191,7 +192,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         }
         await fetchModels();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: `Unable to switch model ${model.id} archive status.`,
           silent: true,
           type: ErrorType.Api,
@@ -209,7 +210,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         await patchModel({ body: { labels: tags, name: modelName }, modelName });
         await fetchModels();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: `Unable to update model ${modelName} tags.`,
           silent: true,
           type: ErrorType.Api,
@@ -382,7 +383,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         modelName,
       });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to save model description.',
         silent: false,
         type: ErrorType.Api,
@@ -672,7 +673,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   return (
     <>
-      <div className={css.options}>
+      <div className={css.options} ref={containerRef}>
         <Space>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (

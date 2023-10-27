@@ -1,4 +1,5 @@
 import { Modal } from 'determined-ui/Modal';
+import { useRef } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteModel } from 'services/api';
@@ -11,12 +12,13 @@ interface Props {
 }
 
 const DeleteModelModal = ({ model }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const handleOk = async () => {
     try {
       await deleteModel({ modelName: model.name });
       routeToReactUrl(paths.modelList());
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to delete model.',
@@ -36,7 +38,7 @@ const DeleteModelModal = ({ model }: Props): JSX.Element => {
         text: 'Delete Model',
       }}
       title="Confirm Delete Model">
-      <div>
+      <div ref={containerRef}>
         Are you sure you want to delete this model &quot;{model?.name}&quot; and all of its versions
         from the model registry?
       </div>

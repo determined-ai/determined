@@ -5,7 +5,7 @@ import { Columns } from 'determined-ui/Columns';
 import Icon from 'determined-ui/Icon';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import UserAvatar from 'components/UserAvatar';
 import { handlePath, paths } from 'routes/utils';
@@ -24,7 +24,9 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
+  const containerRef = useRef(null);
   const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    containerRef,
     onComplete: fetchWorkspaces,
     workspace,
   });
@@ -32,7 +34,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   const user = Loadable.getOrElse(undefined, loadableUser);
 
   return (
-    <>
+    <div ref={containerRef}>
       <Card
         actionMenu={!workspace.immutable ? menu : undefined}
         size="medium"
@@ -71,7 +73,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
         </div>
       </Card>
       {contextHolders}
-    </>
+    </div>
   );
 };
 

@@ -1,9 +1,10 @@
 import Spinner from 'determined-ui/Spinner';
-import useUI, { UIProvider } from 'determined-ui/Theme';
+import UIProvider from 'determined-ui/Theme';
 import { Loadable, NotLoaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import { useTheme } from 'hooks/useTheme';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
@@ -46,7 +47,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   }, []);
 
   return (
-    <UIProvider darkMode={isDarkMode} theme={theme}>
+    <UIProvider theme={theme} themeIsDark={isDarkMode}>
       <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
         <UserSettings.Provider
           value={{

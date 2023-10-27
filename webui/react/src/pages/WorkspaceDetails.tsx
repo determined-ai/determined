@@ -87,7 +87,7 @@ const WorkspaceDetails: React.FC = () => {
         return response.groups ?? [];
       });
     } catch (e) {
-      handleError(e);
+      handleError(pageRef, e);
     }
   }, [canceler.signal]);
 
@@ -123,7 +123,7 @@ const WorkspaceDetails: React.FC = () => {
         return response.roles || [];
       });
     } catch (e) {
-      handleError(e, { silent: true });
+      handleError(pageRef, e, { silent: true });
     }
   }, [canceler.signal, id, rbacEnabled]);
 
@@ -150,6 +150,7 @@ const WorkspaceDetails: React.FC = () => {
   );
 
   const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    containerRef: pageRef,
     onComplete: () => workspaceStore.fetch(undefined, true),
     workspace: workspace || undefined,
   });

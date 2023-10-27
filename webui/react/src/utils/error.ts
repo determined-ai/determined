@@ -1,4 +1,5 @@
 import { makeToast, Severity } from 'determined-ui/Toast';
+import { createRef, RefObject } from 'react';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
@@ -140,8 +141,9 @@ const toastSeverityMap: Record<ErrorLevel, Severity> = {
   [ErrorLevel.Warn]: 'Warning',
 };
 
-const openNotification = (e: DetError) => {
+const openNotification = (containerRef: RefObject<HTMLElement>, e: DetError) => {
   makeToast({
+    containerRef,
     description: e.publicMessage || '',
     severity: toastSeverityMap[e.level],
     title: e.publicSubject || listToStr([e.type, e.level]),
@@ -156,16 +158,23 @@ const log = (e: DetError) => {
 };
 
 // Handle a warning to the user in the UI
-export const handleWarning = (warningOptions: DetErrorOptions): void => {
+export const handleWarning = (
+  containerRef: RefObject<HTMLElement>,
+  warningOptions: DetErrorOptions,
+): void => {
   // Error object is null because this is just a warning
   const detWarning = new DetError(null, warningOptions);
 
-  openNotification(detWarning);
+  openNotification(containerRef, detWarning);
 };
 
 // Handle an error at the point that you'd want to stop bubbling it up. Avoid handling
 // and re-throwing.
-const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetError | void => {
+const handleError = (
+  containerRef: RefObject<HTMLElement>,
+  error: DetError | unknown,
+  options?: DetErrorOptions,
+): DetError | void => {
   // Ignore request cancellation errors.
   if (isAborted(error)) return;
 
@@ -199,7 +208,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
   // TODO add support for checking, saving, and dismissing class of errors as a user preference
   // using id.
   const skipNotification = e.silent || (e.level === ErrorLevel.Warn && !e.publicMessage);
-  if (!skipNotification) openNotification(e);
+  if (!skipNotification) openNotification(containerRef ? containerRef : createRef(), e);
 
   // TODO generate stack trace if error is missing? http://www.stacktracejs.com/
 

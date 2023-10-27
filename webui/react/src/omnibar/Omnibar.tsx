@@ -1,6 +1,6 @@
 import { matchesShortcut } from 'determined-ui/InputShortcut';
 import OmnibarNpm from 'omnibar';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
@@ -24,10 +24,11 @@ const omnibarInput = () =>
   document.querySelector('#omnibar input[type="text"]') as HTMLInputElement | null;
 
 const Omnibar: React.FC = () => {
+  const containerRef = useRef(null);
   const [showing, setShowing] = useState(false);
   const {
     settings: { omnibar: omnibarShortcut },
-  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig, containerRef);
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
@@ -61,7 +62,7 @@ const Omnibar: React.FC = () => {
             hideBar();
           }
         } catch (e) {
-          handleError(e);
+          handleError(containerRef, e);
         }
       }
     },
@@ -79,7 +80,7 @@ const Omnibar: React.FC = () => {
   }, [showing]);
 
   return (
-    <div className={css.base} style={{ display: showing ? 'unset' : 'none' }}>
+    <div className={css.base} ref={containerRef} style={{ display: showing ? 'unset' : 'none' }}>
       <div className={css.backdrop} onClick={hideBar} />
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>

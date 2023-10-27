@@ -1,9 +1,9 @@
-import useUI from 'determined-ui/Theme';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
+import useUI from 'components/ThemeProvider';
 import { getTask } from 'services/api';
 import { CommandState, CommandType, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType, handleWarning } from 'utils/error';
@@ -61,7 +61,7 @@ export const InteractiveTask: React.FC = () => {
   const [searchParams] = useSearchParams();
   const currentSlotsExceeded = searchParams.get('currentSlotsExceeded');
   const { actions: uiActions, ui } = useUI();
-
+  const containerRef = useRef(null);
   const slotsExceeded = currentSlotsExceeded ? currentSlotsExceeded === 'true' : false;
 
   const taskId = tId ?? '';
@@ -77,7 +77,7 @@ export const InteractiveTask: React.FC = () => {
 
   useEffect(() => {
     if (slotsExceeded) {
-      handleWarning({
+      handleWarning(containerRef, {
         level: ErrorLevel.Warn,
         publicMessage:
           'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
@@ -100,7 +100,7 @@ export const InteractiveTask: React.FC = () => {
           }
         }
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicMessage: 'failed querying for command state',
           silent: true,
         });
@@ -116,7 +116,7 @@ export const InteractiveTask: React.FC = () => {
       <Helmet defer={false}>
         <title>{title}</title>
       </Helmet>
-      <div className={css.base}>
+      <div className={css.base} ref={containerRef}>
         <div className={css.barContainer}>
           <TaskBar
             handleViewLogsClick={() => setPageView(PageView.TASK_LOGS)}

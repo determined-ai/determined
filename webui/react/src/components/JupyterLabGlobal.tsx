@@ -1,6 +1,6 @@
 import { matchesShortcut } from 'determined-ui/InputShortcut';
 import { useModal } from 'determined-ui/Modal';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import shortCutSettingsConfig, {
@@ -16,10 +16,11 @@ interface Props {
 }
 
 const JupyterLabGlobal: React.FC<Props> = ({ enabled, workspace }) => {
+  const containerRef = useRef(null);
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const {
     settings: { jupyterLab: jupyterLabShortcut },
-  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig, containerRef);
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
@@ -35,7 +36,11 @@ const JupyterLabGlobal: React.FC<Props> = ({ enabled, workspace }) => {
     };
   }, [JupyterLabModal, jupyterLabShortcut, enabled]);
 
-  return <JupyterLabModal.Component workspace={workspace} />;
+  return (
+    <div ref={containerRef}>
+      <JupyterLabModal.Component workspace={workspace} />
+    </div>
+  );
 };
 
 export default JupyterLabGlobal;

@@ -20,12 +20,6 @@ import InputNumber from 'determined-ui/InputNumber';
 import InputSearch from 'determined-ui/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'determined-ui/InputShortcut';
 import { TypographySize } from 'determined-ui/internal/fonts';
-import {
-  Theme,
-  themeBase,
-  themeDarkDetermined,
-  themeLightDetermined,
-} from 'determined-ui/internal/theme';
 import { MetricType, Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
 import { LineChart } from 'determined-ui/LineChart';
 import { useChartGrid } from 'determined-ui/LineChart/useChartGrid';
@@ -38,7 +32,8 @@ import Pagination from 'determined-ui/Pagination';
 import Pivot from 'determined-ui/Pivot';
 import Select, { Option } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
-import useUI, { Mode, UIProvider } from 'determined-ui/Theme';
+import UIProvider, { Theme } from 'determined-ui/Theme';
+import { DefaultTheme } from 'determined-ui/Theme/themes';
 import { makeToast } from 'determined-ui/Toast';
 import Toggle from 'determined-ui/Toggle';
 import Tooltip from 'determined-ui/Tooltip';
@@ -48,7 +43,7 @@ import useConfirm, { voidPromiseFn } from 'determined-ui/useConfirm';
 import { useTags } from 'determined-ui/useTags';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { ValueOf } from 'determined-ui/utils/types';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
@@ -57,6 +52,7 @@ import KitLink from 'components/Link';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
+import useUI, { Mode } from 'components/ThemeProvider';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
@@ -524,11 +520,120 @@ const SelectSection: React.FC = () => {
   );
 };
 
+const UIProviderVariation: React.FC<{
+  setOpenIndex: (index: number | undefined) => void;
+  openIndex: number | undefined;
+  isDarkMode: boolean;
+  index: number;
+  themeVariation: { theme: Theme; variation: { color: string; name: string } };
+}> = ({ isDarkMode, index, themeVariation, openIndex, setOpenIndex }) => {
+  const ref = useRef(null);
+  const innerHtml = (
+    <>
+      <br />
+      <strong>
+        <p>Spinner</p>
+      </strong>
+      <br />
+      <div style={{ height: '24px' }}>
+        <Spinner />
+      </div>
+      <br />
+      <strong>
+        <p>Card</p>
+      </strong>
+      <br />
+      <Card />
+      <br />
+      <strong>
+        <p>Icon with color success</p>
+      </strong>
+      <br />
+      <Icon color="success" name="star" showTooltip title="success" />
+      <br />
+    </>
+  );
+  return (
+    <UIProvider
+      key={themeVariation.variation.name}
+      theme={themeVariation.theme}
+      themeIsDark={isDarkMode}>
+      <hr />
+      <div ref={ref} style={{ margin: '15px 0 45px 0' }}>
+        {
+          <div
+            style={{
+              marginBottom: '20px',
+              width: '250px',
+            }}>
+            <strong>
+              <p>Variation</p>
+            </strong>
+            <br />
+            <strong>
+              <p>Color</p>
+            </strong>{' '}
+            <br />
+            {themeVariation.variation.name.replace(/(var\(|\))/g, '')}
+            <div
+              style={{
+                backgroundColor: themeVariation.variation.color,
+                border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
+                borderRadius: 'var(--theme-border-radius)',
+                height: '40px',
+                width: '100%',
+              }}
+            />
+            {innerHtml}
+          </div>
+        }
+        <strong>
+          <p>Drawer</p>
+        </strong>
+        <br />
+        <Space>
+          <Button onClick={() => setOpenIndex(index)}>Open Drawer</Button>
+        </Space>
+        <Drawer
+          open={openIndex === index}
+          placement="left"
+          title="Left Drawer"
+          onClose={() => setOpenIndex(undefined)}>
+          {innerHtml}
+        </Drawer>
+      </div>
+      <strong>
+        <p>Toast</p>
+      </strong>
+      <br />
+      <Button
+        onClick={() =>
+          makeToast({
+            containerRef: ref,
+            description: 'See the themed components',
+            link: (
+              <>
+                <Icon color="success" name="star" showTooltip title="success" />
+                <div style={{ height: '24px' }}>
+                  <Spinner />
+                </div>
+              </>
+            ),
+            severity: 'Error',
+            title: 'Themed Components',
+          })
+        }>
+        Open Toast
+      </Button>
+    </UIProvider>
+  );
+};
+
 const ThemeSection: React.FC = () => {
   const { ui } = useUI();
-  const { isDarkMode } = useTheme(ui.mode, ui.theme);
-  const baseTheme: Theme = isDarkMode ? themeDarkDetermined : themeLightDetermined;
-
+  const isDarkMode = ui.mode === Mode.Dark;
+  const baseTheme: Theme = isDarkMode ? DefaultTheme.Dark : DefaultTheme.Light;
+  const [openIndex, setOpenIndex] = useState<number>();
   const colorVariations = [
     { color: baseTheme.statusActive, name: Status.Active },
     { color: baseTheme.statusCritical, name: Status.Critical },
@@ -539,7 +644,7 @@ const ThemeSection: React.FC = () => {
 
   const themes = colorVariations.map((variation) => ({
     theme: {
-      ...themeLightDetermined,
+      ...DefaultTheme.Light,
       backgroundOnStrong: variation.color,
       brand: variation.color,
       stageBorder: variation.color,
@@ -549,129 +654,65 @@ const ThemeSection: React.FC = () => {
     variation,
   }));
 
-  const themeVariations = themes.map((themeVariation) => {
+  const themeVariations = themes.map((themeVariation, index) => {
     return (
-      <UIProvider
-        darkMode={isDarkMode}
-        key={themeVariation.variation.name}
-        theme={themeVariation.theme}>
-        <hr />
-        <div style={{ margin: '15px 0 45px 0' }}>
-          {
-            <div
-              style={{
-                marginBottom: '20px',
-                width: '250px',
-              }}>
-              <strong>
-                <p>Variation</p>
-              </strong>
-              <br />
-              <strong>
-                <p>Color</p>
-              </strong>{' '}
-              <br />
-              {themeVariation.variation.name.replace(/(var\(|\))/g, '')}
-              <div
-                style={{
-                  backgroundColor: themeVariation.variation.color,
-                  border: 'var(--theme-stroke-width) solid var(--theme-surface-border)',
-                  borderRadius: 'var(--theme-border-radius)',
-                  height: '40px',
-                  width: '100%',
-                }}
-              />
-            </div>
-          }
-          <br />
-          <strong>
-            <p>Spinner</p>
-          </strong>
-          <br />
-          <Spinner />
-          <br />
-          <strong>
-            <p>Card</p>
-          </strong>
-          <br />
-          <Card />
-          <br />
-          <strong>
-            <p>Icon with color success</p>
-          </strong>
-          <br />
-          <Icon color="success" name="star" showTooltip title="success" />
-        </div>
-      </UIProvider>
+      <UIProviderVariation
+        index={index}
+        isDarkMode={isDarkMode}
+        key={index}
+        openIndex={openIndex}
+        setOpenIndex={setOpenIndex}
+        themeVariation={themeVariation}
+      />
     );
   });
+
   return (
     <ComponentSection id="Theme" title="Theme">
       <AntDCard>
-        <p>
-          A <code>{'<ThemeProvider>'}</code> is included in the UI kit, it is responsible for
-          providing the necessary context for the <code>{'useUI'}</code> hook described further
-          below.
-        </p>
         <p>
           A <code>{'<UIProvider>'}</code> is also included in the UI kit, it is responsible for
           providing styling to children components. It requires a <code>{'theme'}</code> prop that
           is a <code>{'Theme'}</code>
           configuration with the custom theme options shown below. Additionally, it takes an
-          optional <code>{'darkMode'}</code> prop to switch the supplied theme between light and
+          optional <code>{'themeIsDark'}</code> prop to switch the supplied theme between light and
           dark mode.
         </p>
-        <p>There are several additional helpers that can be used from within the UI kit.</p>
+        <p>
+          There is also a <code>{'GetCssVar'}</code> helper function that can be used from within
+          the UI kit. Additionally, default themes are provided.
+        </p>
+      </AntDCard>
+      <AntDCard title="Default Themes">
+        <p>
+          Several default themes are provided within the UI Kit via <code>{'DefaultTheme'}</code>{' '}
+          the options are:
+        </p>
+        <Grid>
+          <ul>
+            {Object.keys(DefaultTheme).map((property) => (
+              <li key={property}>{property}</li>
+            ))}
+          </ul>
+        </Grid>
       </AntDCard>
       <AntDCard title="Helper Functions">
-        <p>
-          <strong>UseUI</strong>
-        </p>
-        A custom hook that can be used for setting and retrieving the global state for the theme,
-        mode and other UI-related functionalities.
-        <br />
         <p>
           <strong>GetCssVar</strong>
         </p>
         Enables retrieving a value for a specified theme option.
         <br />
-        <p>
-          <strong>getSystemMode</strong>
-        </p>
-        Returns the current mode for the users device. The Mode options are shown below.
-      </AntDCard>
-      <AntDCard title="Mode">
-        The {'mode'} can be of the following types:
-        {Object.keys(Mode).map((mode) => (
-          <p key={mode}>{mode}</p>
-        ))}
       </AntDCard>
       <AntDCard title="Theme Options">
         <p>The UIProvider takes a Theme prop with the following properties:</p>
         <br />
         <Grid>
-          {Object.keys(themeBase).map((property) => (
+          {Object.keys(DefaultTheme.Light).map((property) => (
             <p key={property}>{property}</p>
           ))}
         </Grid>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>ThemeProvider</strong>
-        <code>{`
-      const AppWrapper: React.FC = () => {
-        return (
-          <ThemeProvider>
-            <App />
-          </ThemeProvider>
-        )
-      }
-
-      // The wrapped component can now call useUI() 
-
-      const App: React.FC = () => {
-        const { actions , ui } = useUI();
-      }
-      `}</code>
         <strong>UIProvider</strong>
         <strong>Variations</strong>
         Each variation displays a custom Theme with the following theme options set to the specified
@@ -2624,91 +2665,103 @@ const IconsSection: React.FC = () => {
 };
 
 const ToastSection: React.FC = () => {
+  const containerRef = useRef(null);
   return (
-    <ComponentSection id="Toast" title="Toast">
-      <AntDCard>
-        <p>
-          A <code>{'<Toast>'}</code> component is used to display a notification message at the
-          viewport. Typically it&apos;s a notification providing a feedback based on the user
-          interaction.
-        </p>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <strong>Default toast</strong>
-        <Space>
-          <Button
-            onClick={() =>
-              makeToast({
-                description: 'Some informative content.',
-                severity: 'Info',
-                title: 'Default notification',
-              })
-            }>
-            Open a default toast
-          </Button>
-        </Space>
-        <strong>Variations</strong>
-        <Space>
-          <Button
-            onClick={() =>
-              makeToast({
-                description: "You've triggered an error.",
-                severity: 'Error',
-                title: 'Error notification',
-              })
-            }>
-            Open an error toast
-          </Button>
-          <Button
-            onClick={() =>
-              makeToast({
-                description: "You've triggered an warning.",
-                severity: 'Warning',
-                title: 'Warning notification',
-              })
-            }>
-            Open an warning toast
-          </Button>
-          <Button
-            onClick={() =>
-              makeToast({
-                description: 'Action succed.',
-                severity: 'Confirm',
-                title: 'Success notification',
-              })
-            }>
-            Open an success toast
-          </Button>
-        </Space>
-        <Space>
-          <Button
-            onClick={() =>
-              makeToast({
-                closeable: false,
-                description: "You've triggered an error.",
-                severity: 'Error',
-                title: 'Error notification',
-              })
-            }>
-            Open a non-closable toast
-          </Button>
-          <Button
-            onClick={() =>
-              makeToast({
-                description: 'Click below to design kit page.',
-                link: <KitLink>View Design Kit</KitLink>,
-                severity: 'Info',
-                title: 'Welcome to design kit',
-              })
-            }>
-            Open a toast with link
-          </Button>
-          <Button onClick={() => makeToast({ severity: 'Info', title: 'Compact notification' })}>
-            Open a toast without description
-          </Button>
-        </Space>
-      </AntDCard>
-    </ComponentSection>
+    <div ref={containerRef}>
+      <ComponentSection id="Toast" title="Toast">
+        <AntDCard>
+          <p>
+            A <code>{'<Toast>'}</code> component is used to display a notification message at the
+            viewport. Typically it&apos;s a notification providing a feedback based on the user
+            interaction.
+          </p>
+        </AntDCard>
+        <AntDCard title="Usage">
+          <strong>Default toast</strong>
+          <Space>
+            <Button
+              onClick={() =>
+                makeToast({
+                  containerRef,
+                  description: 'Some informative content.',
+                  severity: 'Info',
+                  title: 'Default notification',
+                })
+              }>
+              Open a default toast
+            </Button>
+          </Space>
+          <strong>Variations</strong>
+          <Space>
+            <Button
+              onClick={() =>
+                makeToast({
+                  containerRef,
+                  description: "You've triggered an error.",
+                  severity: 'Error',
+                  title: 'Error notification',
+                })
+              }>
+              Open an error toast
+            </Button>
+            <Button
+              onClick={() =>
+                makeToast({
+                  containerRef,
+                  description: "You've triggered an warning.",
+                  severity: 'Warning',
+                  title: 'Warning notification',
+                })
+              }>
+              Open an warning toast
+            </Button>
+            <Button
+              onClick={() =>
+                makeToast({
+                  containerRef,
+                  description: 'Action succed.',
+                  severity: 'Confirm',
+                  title: 'Success notification',
+                })
+              }>
+              Open an success toast
+            </Button>
+          </Space>
+          <Space>
+            <Button
+              onClick={() =>
+                makeToast({
+                  closeable: false,
+                  containerRef,
+                  description: "You've triggered an error.",
+                  severity: 'Error',
+                  title: 'Error notification',
+                })
+              }>
+              Open a non-closable toast
+            </Button>
+            <Button
+              onClick={() =>
+                makeToast({
+                  containerRef,
+                  description: 'Click below to design kit page.',
+                  link: <KitLink>View Design Kit</KitLink>,
+                  severity: 'Info',
+                  title: 'Welcome to design kit',
+                })
+              }>
+              Open a toast with link
+            </Button>
+            <Button
+              onClick={() =>
+                makeToast({ containerRef, severity: 'Info', title: 'Compact notification' })
+              }>
+              Open a toast without description
+            </Button>
+          </Space>
+        </AntDCard>
+      </ComponentSection>
+    </div>
   );
 };
 
@@ -3279,7 +3332,7 @@ export const DesignKitContainer: React.FC<{ children: React.ReactNode }> = ({ ch
   const { ui } = useUI();
   const { isDarkMode, theme } = useTheme(ui.mode, ui.theme);
   return (
-    <UIProvider darkMode={isDarkMode} theme={theme}>
+    <UIProvider theme={theme} themeIsDark={isDarkMode}>
       {children}
     </UIProvider>
   );

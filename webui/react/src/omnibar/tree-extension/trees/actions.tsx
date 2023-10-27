@@ -1,5 +1,6 @@
 import { Modal as AntdModal } from 'antd';
 import { makeToast } from 'determined-ui/Toast';
+import { createRef } from 'react';
 
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
@@ -9,7 +10,7 @@ import { routeToReactUrl } from 'utils/routes';
 export const alertAction =
   (msg: string): FinalAction =>
   () => {
-    makeToast({ title: msg });
+    makeToast({ containerRef: createRef(), title: msg });
   };
 export const visitAction = (url: string) => (): void => routeToReactUrl(url);
 export const noOp = (): void => undefined;

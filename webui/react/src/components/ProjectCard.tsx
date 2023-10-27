@@ -3,7 +3,7 @@ import Avatar, { Size } from 'determined-ui/Avatar';
 import Card from 'determined-ui/Card';
 import Icon from 'determined-ui/Icon';
 import Tooltip from 'determined-ui/Tooltip';
-import React from 'react';
+import React, { RefObject, useRef } from 'react';
 
 import TimeAgo from 'components/TimeAgo';
 import { handlePath, paths } from 'routes/utils';
@@ -15,6 +15,7 @@ import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
 
 interface Props {
+  containerRef: RefObject<HTMLElement>;
   hideActionMenu?: boolean;
   onEdit?: (name: string, archived: boolean) => void;
   onRemove?: () => void;
@@ -31,7 +32,9 @@ const ProjectCard: React.FC<Props> = ({
   showWorkspace,
   workspaceArchived,
 }: Props) => {
+  const containerRef = useRef(null);
   const { contextHolders, menu, onClick } = useProjectActionMenu({
+    containerRef,
     onDelete: onRemove,
     onEdit,
     onMove: onRemove,
@@ -43,7 +46,7 @@ const ProjectCard: React.FC<Props> = ({
   if (project.archived) classnames.push(css.archived);
 
   return (
-    <>
+    <div ref={containerRef}>
       <Card
         actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
         onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
@@ -93,7 +96,7 @@ const ProjectCard: React.FC<Props> = ({
         for more info, refer PR #6185
       */}
       {contextHolders}
-    </>
+    </div>
   );
 };
 

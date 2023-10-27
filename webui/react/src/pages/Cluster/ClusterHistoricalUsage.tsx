@@ -2,7 +2,7 @@ import { Space } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'determined-ui/Button';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
@@ -28,9 +28,10 @@ export const MAX_RANGE_DAY = 31;
 export const MAX_RANGE_MONTH = 36;
 
 const ClusterHistoricalUsage: React.FC = () => {
+  const containerRef = useRef(null);
   const [aggRes, setAggRes] = useState<Loadable<V1ResourceAllocationAggregatedResponse>>(NotLoaded);
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, containerRef);
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
 
@@ -102,7 +103,7 @@ const ClusterHistoricalUsage: React.FC = () => {
       });
       setAggRes(Loaded(response));
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     }
   }, [filters.afterDate, filters.beforeDate, filters.groupBy]);
 
@@ -121,7 +122,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   }, [fetchResourceAllocationAggregated]);
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       <SyncProvider>
         <Space align="end" className={css.filters}>
           <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />

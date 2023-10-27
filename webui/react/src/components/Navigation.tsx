@@ -1,8 +1,8 @@
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useEffect } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';

@@ -2,11 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'determined-ui/Button';
 import { useModal } from 'determined-ui/Modal';
-import { ThemeProvider } from 'determined-ui/Theme';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';

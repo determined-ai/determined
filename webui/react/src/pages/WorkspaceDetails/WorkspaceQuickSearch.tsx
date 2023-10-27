@@ -5,7 +5,7 @@ import Message from 'determined-ui/Message';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
@@ -23,6 +23,7 @@ interface Props {
 }
 
 const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
+  const containerRef = useRef(null);
   const [searchText, setSearchText] = useState<string>('');
   const [workspaceMap, setWorkspaceMap] = useState<Map<Workspace, Project[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +51,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       }
       setWorkspaceMap(tempWorkspaceMap);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to fetch data.',
@@ -136,7 +137,9 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
 
   return (
     <>
-      <div onClick={onShowModal}>{children}</div>
+      <div ref={containerRef} onClick={onShowModal}>
+        {children}
+      </div>
       <Modal
         closable={false}
         footer={null}

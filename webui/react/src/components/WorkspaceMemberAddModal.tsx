@@ -4,7 +4,7 @@ import Icon from 'determined-ui/Icon';
 import { Modal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
 import { makeToast } from 'determined-ui/Toast';
-import React, { useCallback, useId, useState } from 'react';
+import React, { useCallback, useId, useRef, useState } from 'react';
 
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
@@ -41,6 +41,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   onClose,
   workspaceId,
 }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
@@ -95,13 +96,14 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         setSelectedOption(undefined);
         onClose?.();
         makeToast({
+          containerRef,
           severity: 'Confirm',
           title: `${getName(selectedOption)} added to workspace.`,
         });
       }
     } catch (e) {
       if (e instanceof DetError) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: e.level,
           publicMessage: e.publicMessage,
           publicSubject: 'Unable to add user or group to workspace.',
@@ -109,7 +111,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
           type: e.type,
         });
       } else {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject: 'Unable to add user or group to workspace.',

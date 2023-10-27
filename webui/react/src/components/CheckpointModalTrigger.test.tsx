@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider } from 'determined-ui/Theme';
 import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 

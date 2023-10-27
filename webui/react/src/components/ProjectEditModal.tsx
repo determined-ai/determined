@@ -1,7 +1,7 @@
 import Form from 'determined-ui/Form';
 import Input from 'determined-ui/Input';
 import { Modal } from 'determined-ui/Modal';
-import React, { useCallback, useId } from 'react';
+import React, { useCallback, useId, useRef } from 'react';
 
 import { patchProject } from 'services/api';
 import { Project } from 'types';
@@ -20,6 +20,7 @@ interface Props {
 }
 
 const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const projectName = Form.useWatch('projectName', form);
@@ -33,7 +34,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
       await patchProject({ description, id: project.id, name });
       onEdit?.(name, project.archived);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to edit project.',
@@ -44,33 +45,35 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
   }, [onEdit, form, project.id, project.archived]);
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled: !projectName,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: 'Save Changes',
-      }}
-      title="Edit Project"
-      onClose={() => {
-        form.resetFields();
-      }}>
-      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
-        <Form.Item
-          initialValue={project.name}
-          label="Project Name"
-          name="projectName"
-          rules={[{ message: 'Project name is required', required: true }]}>
-          <Input maxLength={80} />
-        </Form.Item>
-        <Form.Item initialValue={project.description} label="Description" name="description">
-          <Input />
-        </Form.Item>
-      </Form>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled: !projectName,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: 'Save Changes',
+        }}
+        title="Edit Project"
+        onClose={() => {
+          form.resetFields();
+        }}>
+        <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
+          <Form.Item
+            initialValue={project.name}
+            label="Project Name"
+            name="projectName"
+            rules={[{ message: 'Project name is required', required: true }]}>
+            <Input maxLength={80} />
+          </Form.Item>
+          <Form.Item initialValue={project.description} label="Description" name="description">
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

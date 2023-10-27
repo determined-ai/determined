@@ -2,7 +2,7 @@ import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import useConfirm from 'determined-ui/useConfirm';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import usePermissions from 'hooks/usePermissions';
@@ -24,6 +24,7 @@ interface Props {
 }
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Props) => {
+  const containerRef = useRef(null);
   const { canModifyWorkspaceNSC } = usePermissions();
   const isKillable = isTaskKillable(
     task,
@@ -61,7 +62,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
           break;
       }
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: `Unable to ${key} task ${task.id}.`,
         publicSubject: `${capitalize(key)} failed.`,

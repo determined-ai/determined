@@ -159,7 +159,7 @@ class ClusterStore extends PollingStore {
       .then((response) => {
         updateIfChanged(this.#agents, Loaded(response));
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }
@@ -171,7 +171,7 @@ class ClusterStore extends PollingStore {
       .then((response) => {
         updateIfChanged(this.#resourcePools, Loaded(response));
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }
@@ -183,7 +183,7 @@ class ClusterStore extends PollingStore {
       .then((response) => {
         updateIfChanged(this.#unboundResourcePools, Loaded(response));
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }
@@ -208,7 +208,7 @@ class ClusterStore extends PollingStore {
           map.set(resourcePoolName, response.workspaceIds ?? []),
         );
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }
@@ -231,7 +231,7 @@ class ClusterStore extends PollingStore {
           ),
         );
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }
@@ -254,7 +254,7 @@ class ClusterStore extends PollingStore {
           ),
         );
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }
@@ -273,7 +273,7 @@ class ClusterStore extends PollingStore {
       .then(() => {
         this.#resourcePoolBindings.update((map) => map.set(resourcePool, workspaceIds));
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }

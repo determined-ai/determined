@@ -1,7 +1,7 @@
 import Message from 'determined-ui/Message';
 import Spinner from 'determined-ui/Spinner';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
@@ -49,7 +49,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const [chartData, setChartData] = useState<HpTrialData | undefined>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
-
+  const containerRef = useRef(null);
   const fullHParams: string[] = useMemo(() => {
     const hpParams = new Set<string>();
     trials.forEach((trial) => Object.keys(trial.hyperparameters).forEach((hp) => hpParams.add(hp)));
@@ -62,7 +62,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   );
 
   const { settings, updateSettings, resetSettings } =
-    useSettings<ExperimentHyperparametersSettings>(settingsConfig);
+    useSettings<ExperimentHyperparametersSettings>(settingsConfig, containerRef);
 
   const { metrics, data, isLoaded, setScale } = metricData;
 
@@ -285,7 +285,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   return (
     <Section bodyBorder bodyScroll filters={visualizationFilters}>
-      <div className={css.container}>
+      <div className={css.container} ref={containerRef}>
         <div className={css.chart}>
           {selectedExperiments.length > 0 && (
             <ParallelCoordinates

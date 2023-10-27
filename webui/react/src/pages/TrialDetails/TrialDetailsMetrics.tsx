@@ -1,7 +1,7 @@
 import { ChartGrid, ChartsProps } from 'determined-ui/LineChart';
 import Spinner from 'determined-ui/Spinner';
 import { Loaded, NotLoaded } from 'determined-ui/utils/loadable';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
@@ -38,7 +38,7 @@ const stripPrefix = (metricName: string): string => {
 
 const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-
+  const containerRef = useRef(null);
   const checkpoint: CheckpointWorkloadExtended | undefined = useMemo(
     () =>
       trial?.bestAvailableCheckpoint
@@ -51,6 +51,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     useCheckpointFlow({
       checkpoint,
       config: experiment.config,
+      containerRef,
       title: `Best checkpoint for Trial ${trial?.id}`,
     });
 
@@ -62,7 +63,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     data: allData,
     scale,
     setScale,
-  } = useTrialMetrics(trials);
+  } = useTrialMetrics(trials, containerRef);
   const data = useMemo(() => allData?.[trial?.id || 0], [allData, trial?.id]);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
@@ -159,7 +160,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [groupedMetrics, isMetricsLoaded, data, xAxis, checkpointsDict, openCheckpoint]);
 
   return (
-    <>
+    <div ref={containerRef}>
       {isMetricsLoaded ? (
         <ChartGrid
           chartsProps={chartsProps}
@@ -177,7 +178,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       ))}
       {modelCreateModalComponent}
       {checkpointModalComponent}
-    </>
+    </div>
   );
 };
 

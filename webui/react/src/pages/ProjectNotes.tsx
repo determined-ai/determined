@@ -1,6 +1,6 @@
 import { useModal } from 'determined-ui/Modal';
 import Notes from 'determined-ui/Notes';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { unstable_useBlocker } from 'react-router-dom';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
@@ -16,6 +16,7 @@ interface Props {
 }
 
 const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
+  const containerRef = useRef(null);
   const [pageNumber, setPageNumber] = useState<number>(0);
   const handleNewNotesPage = useCallback(async () => {
     if (!project?.id) return;
@@ -23,7 +24,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
       await addProjectNote({ contents: '', id: project.id, name: 'Untitled' });
       await fetchProject();
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     }
   }, [fetchProject, project?.id]);
 
@@ -37,7 +38,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
         await setProjectNotes({ notes, projectId: project.id });
         await fetchProject();
       } catch (e) {
-        handleError(e);
+        handleError(containerRef, e);
       }
     },
     [fetchProject, project?.id],
@@ -52,7 +53,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
         setPageNumber(pageNumber);
         ProjectNoteDeleteModal.open();
       } catch (e) {
-        handleError(e);
+        handleError(containerRef, e);
       }
     },
     [ProjectNoteDeleteModal, project?.id],
@@ -61,7 +62,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
   useSetDynamicTabBar(<></>);
 
   return (
-    <>
+    <div ref={containerRef}>
       <Notes
         disabled={project?.archived || !editPermission}
         multiple
@@ -77,7 +78,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
         project={project}
         onClose={fetchProject}
       />
-    </>
+    </div>
   );
 };
 

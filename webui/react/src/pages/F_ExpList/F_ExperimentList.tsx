@@ -4,7 +4,6 @@ import { Column, Columns } from 'determined-ui/Columns';
 import Message from 'determined-ui/Message';
 import Pagination from 'determined-ui/Pagination';
 import { getCssVar } from 'determined-ui/Theme';
-import { notification } from 'determined-ui/Toast';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { isLeft } from 'fp-ts/lib/Either';
 import { observable, useObservable } from 'micro-observables';
@@ -102,9 +101,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     isLoading: isLoadingSettings,
     settings,
     updateSettings,
-  } = useSettings<F_ExperimentListSettings>(settingsConfig);
+  } = useSettings<F_ExperimentListSettings>(settingsConfig, contentRef);
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
-    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
+    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal, contentRef);
   const isPagedView = globalSettings.tableViewMode === 'paged';
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
@@ -176,7 +175,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     if (isLoadingSettings) return;
     const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
     if (isLeft(formSetValidation)) {
-      handleError(formSetValidation.left, {
+      handleError(contentRef, formSetValidation.left, {
         publicSubject: 'Unable to initialize filterset from settings',
       });
     } else {
@@ -334,7 +333,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+      handleError(contentRef, e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
@@ -361,7 +360,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           setProjectHeatmap(heatMap);
         }
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
+        handleError(contentRef, e, { publicSubject: 'Unable to fetch project heatmap' });
       }
     })();
     return () => {
@@ -386,7 +385,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           setProjectColumns(Loaded(columns));
         }
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project columns' });
+        handleError(contentRef, e, { publicSubject: 'Unable to fetch project columns' });
       }
     })();
     return () => {
@@ -551,7 +550,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           break;
         case ExperimentAction.Edit:
           if (data) updateExperiment(data);
-          notification.success({ message: 'Experiment updated successfully' });
+          // notification.success({ message: 'Experiment updated successfully' });
           break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:

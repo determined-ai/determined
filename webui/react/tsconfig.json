@@ -16,7 +16,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "preserveSymlinks": true
   },
   "include": ["src/**/*", "typings/**/*.ts", "design/**/*", "*.ts", "__mocks__/**/*"]
 }

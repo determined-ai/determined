@@ -3,7 +3,7 @@ import Notes from 'determined-ui/Notes';
 import Pivot from 'determined-ui/Pivot';
 import Spinner from 'determined-ui/Spinner';
 import { string } from 'io-ts';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import usePermissions from 'hooks/usePermissions';
@@ -52,7 +52,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   const location = useLocation();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [tabKey, setTabKey] = useState(defaultTabKey);
-
+  const containerRef = useRef(null);
   const basePath = paths.experimentDetails(experiment.id);
 
   const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
@@ -68,7 +68,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   const config: SettingsConfig<{ filePath: string }> = useMemo(() => {
     return configForExperiment(experiment.id);
   }, [experiment.id]);
-  const { settings, updateSettings } = useSettings<{ filePath: string }>(config);
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(config, containerRef);
   const handleSelectFile = useCallback(
     (filePath: string) => {
       updateSettings({ filePath });
@@ -102,7 +102,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
         await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
         await fetchExperimentDetails();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject: 'Unable to update experiment notes.',
@@ -185,7 +185,11 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     viz,
   ]);
 
-  return <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />;
+  return (
+    <div ref={containerRef}>
+      <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />
+    </div>
+  );
 };
 
 export default ExperimentMultiTrialTabs;

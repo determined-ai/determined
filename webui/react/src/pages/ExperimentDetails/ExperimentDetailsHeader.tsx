@@ -5,7 +5,7 @@ import Spinner from 'determined-ui/Spinner';
 import Tags from 'determined-ui/Tags';
 import { getStateColorCssVar } from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge from 'components/Badge';
 import ExperimentCreateModalComponent, {
@@ -126,6 +126,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
+  const containerRef = useRef(null);
   const [isChangingState, setIsChangingState] = useState(false);
   const [isRunningArchive, setIsRunningArchive] = useState<boolean>(false);
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
@@ -169,7 +170,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
+  } = useModalHyperparameterSearch({ containerRef, experiment });
 
   const stateStyle = useMemo(
     () => ({
@@ -190,7 +191,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       await pauseExperiment({ experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to pause experiment.',
@@ -208,7 +209,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       await activateExperiment({ experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to activate experiment.',
@@ -471,7 +472,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   }, [autoRestarts, disabled, experiment, experimentTags, jobInfoLinkText, maxRestarts]);
 
   return (
-    <>
+    <div ref={containerRef}>
       <PageHeaderFoldable
         foldableContent={<InfoBox rows={foldableRows} />}
         leftContent={
@@ -566,7 +567,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onEditComplete={fetchExperimentDetails}
       />
       {modalHyperparameterSearchContextHolder}
-    </>
+    </div>
   );
 };
 

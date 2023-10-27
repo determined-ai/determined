@@ -1,6 +1,6 @@
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
@@ -21,10 +21,12 @@ export interface Props {
 }
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
+  const containerRef = useRef(null);
   const storagePath = `trial-detail/experiment/${experiment.id}`;
   const settingsConfig = useMemo(() => settingsConfigForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(
     Object.assign(settingsConfig, { storagePath }),
+    containerRef,
   );
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
@@ -33,7 +35,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
@@ -77,7 +79,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   );
 
   return (
-    <>
+    <div ref={containerRef}>
       <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
         <>
@@ -104,7 +106,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           )}
         </>
       ) : null}
-    </>
+    </div>
   );
 };
 

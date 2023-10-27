@@ -4,6 +4,7 @@ import Select, { Option } from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
+import { useRef } from 'react';
 
 import { assignRolesToUser } from 'services/api';
 import roleStore from 'stores/roles';
@@ -28,6 +29,7 @@ const SetUserRolesModalComponent = ({
   clearTableSelection,
   fetchUsers,
 }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const [form] = Form.useForm<FormInputs>();
   const knownRoles = useObservable(roleStore.roles);
 
@@ -39,49 +41,52 @@ const SetUserRolesModalComponent = ({
       const params = userIds.map((userId) => ({ roleIds, userId }));
       await assignRolesToUser(params);
       makeToast({
+        containerRef,
         title: 'Successfully set roles',
       });
       clearTableSelection();
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     } finally {
       fetchUsers();
     }
   };
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        form: 'SetUserRolesModalComponent',
-        handleError,
-        handler: onSubmit,
-        text: 'Submit',
-      }}
-      title="Set Selected Users' Roles">
-      <Form form={form} layout="vertical">
-        <Form.Item
-          label={ROLE_LABEL}
-          name={ROLE_NAME}
-          rules={[{ message: 'This field is required', required: true }]}>
-          <Select
-            loading={Loadable.isNotLoaded(knownRoles)}
-            mode="multiple"
-            placeholder="Select Roles">
-            {Loadable.isLoaded(knownRoles) ? (
-              <>
-                {knownRoles.data.map((r: UserRole) => (
-                  <Option key={r.id} value={r.id}>
-                    {r.name}
-                  </Option>
-                ))}
-              </>
-            ) : undefined}
-          </Select>
-        </Form.Item>
-      </Form>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          form: 'SetUserRolesModalComponent',
+          handleError,
+          handler: onSubmit,
+          text: 'Submit',
+        }}
+        title="Set Selected Users' Roles">
+        <Form form={form} layout="vertical">
+          <Form.Item
+            label={ROLE_LABEL}
+            name={ROLE_NAME}
+            rules={[{ message: 'This field is required', required: true }]}>
+            <Select
+              loading={Loadable.isNotLoaded(knownRoles)}
+              mode="multiple"
+              placeholder="Select Roles">
+              {Loadable.isLoaded(knownRoles) ? (
+                <>
+                  {knownRoles.data.map((r: UserRole) => (
+                    <Option key={r.id} value={r.id}>
+                      {r.name}
+                    </Option>
+                  ))}
+                </>
+              ) : undefined}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

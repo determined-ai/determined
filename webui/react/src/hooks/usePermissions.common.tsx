@@ -1,7 +1,7 @@
 import { render, RenderResult } from '@testing-library/react';
-import { ThemeProvider } from 'determined-ui/Theme';
 import React from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import usePermissions from 'hooks/usePermissions';
 import { ActionWorkspaceParams } from 'services/types';
 

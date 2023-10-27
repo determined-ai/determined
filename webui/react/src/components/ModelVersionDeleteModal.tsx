@@ -1,4 +1,5 @@
 import { Modal } from 'determined-ui/Modal';
+import { useRef } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const ModelVersionDeleteModal = ({ modelVersion }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const handleOk = async () => {
     if (!modelVersion) return Promise.reject();
 
@@ -21,7 +23,7 @@ const ModelVersionDeleteModal = ({ modelVersion }: Props): JSX.Element => {
       });
       routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: `Unable to delete model version ${modelVersion.version}.`,

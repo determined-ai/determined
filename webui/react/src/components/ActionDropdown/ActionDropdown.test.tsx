@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { useRef } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'types';
@@ -21,6 +22,7 @@ const handleActionOne = vi.fn();
 const handleActionTwo = vi.fn();
 
 const DropDownContainer = () => {
+  const containerRef = useRef(null);
   const dropDownOnTrigger = () => {
     return {
       [TestAction.ActionOne]: () => handleActionOne(),
@@ -31,6 +33,7 @@ const DropDownContainer = () => {
   return (
     <ActionDropdown<TestAction>
       actionOrder={[TestAction.ActionOne, TestAction.ActionTwo]}
+      containerRef={containerRef}
       id={'test-id'}
       kind="test"
       onError={() => {

@@ -2,7 +2,7 @@ import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'determined-ui/Li
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
@@ -99,7 +99,10 @@ const summarizedMetricToSeries = (
   return { data: trialData, metricHasData, selectedMetrics };
 };
 
-export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetricData => {
+export const useTrialMetrics = (
+  trials: (TrialDetails | undefined)[],
+  containerRef: RefObject<HTMLElement>,
+): TrialMetricData => {
   const trialsAllTerminated = trials?.every((trial) =>
     terminalRunStates.has(trial?.state ?? RunState.Active),
   );
@@ -112,7 +115,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   );
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicMessage: `Failed to load metric names for trials ${trials?.map(
           (t) => `[${t?.id}]`,
         )}.`,
@@ -120,7 +123,7 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         type: ErrorType.Api,
       });
     },
-    [trials],
+    [containerRef, trials],
   );
 
   const loadableMetrics = useMetricNames(
@@ -183,10 +186,10 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
           setMetricHasData(metricsHaveData);
         }
       } catch (e) {
-        makeToast({ severity: 'Error', title: 'Error fetching metrics' });
+        makeToast({ containerRef, severity: 'Error', title: 'Error fetching metrics' });
       }
     }
-  }, [loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);
+  }, [containerRef, loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);

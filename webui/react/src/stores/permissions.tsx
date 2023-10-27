@@ -27,7 +27,7 @@ class PermissionStore extends PollingStore {
         this.#myAssignments.set(Loaded(assignments));
         this.#myRoles.set(Loaded(roles));
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }

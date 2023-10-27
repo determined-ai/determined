@@ -1,31 +1,36 @@
-import {
-  themeDarkDetermined,
-  themeDarkHpe,
-  themeLightDetermined,
-  themeLightHpe,
-} from 'determined-ui/internal/theme';
-import { DarkLight } from 'determined-ui/internal/types';
+import { DefaultTheme, Theme } from 'determined-ui/Theme';
+import _ from 'lodash';
+import { useObservable } from 'micro-observables';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import {
   getSystemMode,
   MATCH_MEDIA_SCHEME_DARK,
   MATCH_MEDIA_SCHEME_LIGHT,
   Mode,
-  Theme,
-} from 'determined-ui/Theme/themeUtils';
-import _ from 'lodash';
-import { useObservable } from 'micro-observables';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
+} from 'components/ThemeProvider';
 import determinedInfo, { BrandingType } from 'stores/determinedInfo';
+import { ValueOf } from 'types';
+
+/**
+ * DarkLight is a resolved form of `Mode` where we figure out
+ * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
+ */
+export const DarkLight = {
+  Dark: 'dark',
+  Light: 'light',
+} as const;
+
+export type DarkLight = ValueOf<typeof DarkLight>;
 
 const themes = {
   [BrandingType.Determined]: {
-    [DarkLight.Dark]: themeDarkDetermined,
-    [DarkLight.Light]: themeLightDetermined,
+    [DarkLight.Dark]: DefaultTheme.Dark,
+    [DarkLight.Light]: DefaultTheme.Light,
   },
   [BrandingType.HPE]: {
-    [DarkLight.Dark]: themeDarkHpe,
-    [DarkLight.Light]: themeLightHpe,
+    [DarkLight.Dark]: DefaultTheme.HPEDark,
+    [DarkLight.Light]: DefaultTheme.HPELight,
   },
 };
 

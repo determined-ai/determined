@@ -3,7 +3,7 @@ import { Map } from 'immutable';
 import * as t from 'io-ts';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { RefObject, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import userStore from 'stores/users';
@@ -103,7 +103,11 @@ const queryParamToType = <T>(
   return undefined;
 };
 
-const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) => {
+const queryToSettings = <T>(
+  config: SettingsConfig<T>,
+  params: URLSearchParams,
+  containerRef: RefObject<HTMLElement>,
+) => {
   return (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).reduce<Settings>(
     (acc, setting) => {
       /*
@@ -159,7 +163,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) 
           }
         }
       } catch (e) {
-        handleError(e, { silent: true, type: ErrorType.Ui });
+        handleError(containerRef, e, { silent: true, type: ErrorType.Ui });
       }
 
       return acc;
@@ -168,7 +172,10 @@ const queryToSettings = <T>(config: SettingsConfig<T>, params: URLSearchParams) 
   );
 };
 
-const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
+const useSettings = <T>(
+  config: SettingsConfig<T>,
+  containerRef: RefObject<HTMLElement>,
+): UseSettingsReturn<T> => {
   const { isLoading, querySettings, state: rawState } = useContext(UserSettings);
   const derivedOb = useMemo(
     () =>
@@ -298,9 +305,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   useEffect(() => {
     if (!querySettings) return;
 
-    const parsedSettings = queryToSettings<T>(config, querySettings);
+    const parsedSettings = queryToSettings<T>(config, querySettings, containerRef);
     updateSettings(parsedSettings);
-  }, [config, querySettings, updateSettings]);
+  }, [config, containerRef, querySettings, updateSettings]);
 
   return {
     activeSettings,

@@ -1,7 +1,7 @@
 import Form from 'determined-ui/Form';
 import Input from 'determined-ui/Input';
 import { Modal } from 'determined-ui/Modal';
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 
 import { patchModel } from 'services/api';
 import { ModelItem } from 'types';
@@ -20,6 +20,7 @@ interface Props {
 const FORM_ID = 'edit-model-form';
 
 const ModelEditModal = ({ model, fetchModel }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
 
@@ -32,7 +33,7 @@ const ModelEditModal = ({ model, fetchModel }: Props): JSX.Element => {
       });
       await fetchModel();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to edit model',
         silent: false,
       });

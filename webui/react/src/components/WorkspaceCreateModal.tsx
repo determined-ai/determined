@@ -6,7 +6,7 @@ import { Modal } from 'determined-ui/Modal';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useId, useMemo } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -40,6 +40,7 @@ interface Props {
 const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
     usePermissions();
@@ -96,7 +97,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         form={form}
         id={idPrefix + FORM_ID}
         labelCol={{ span: 10 }}
-        layout="vertical">
+        layout="vertical"
+        ref={containerRef}>
         <Form.Item
           label="Workspace Name"
           name="workspaceName"
@@ -260,7 +262,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       }
     } catch (e) {
       if (e instanceof DetError) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: e.level,
           publicMessage: e.publicMessage,
           publicSubject: 'Unable to save workspace.',
@@ -268,7 +270,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           type: e.type,
         });
       } else {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject: 'Unable to create workspace.',

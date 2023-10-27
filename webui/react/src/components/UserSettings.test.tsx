@@ -1,10 +1,10 @@
 import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider } from 'determined-ui/Theme';
 import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import React, { useCallback, useEffect } from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import authStore from 'stores/auth';

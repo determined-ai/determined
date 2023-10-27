@@ -1,5 +1,6 @@
 import { makeToast } from 'determined-ui/Toast';
 import Fuse from 'fuse.js';
+import { createRef } from 'react';
 
 import root from 'omnibar/tree-extension/trees/index';
 import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';
@@ -68,7 +69,7 @@ export const extension = async (input: string): Promise<Children> => {
     // query the default tree.
     return await queryTree(input, root);
   } catch (e) {
-    handleError(e, {
+    handleError(createRef(), e, {
       publicSubject: 'Failed to query omnibar.',
       type: ErrorType.Ui,
     });
@@ -89,7 +90,7 @@ export const onAction = async (
     await item.onAction(item);
     // if we opt to auto close the bar for user in some scenarios this
     // would be the place to check for it.
-    makeToast({ title: 'Action executed.' });
+    makeToast({ containerRef: createRef(), title: 'Action executed.' });
   } else {
     // trigger the query.
     inputEl.value = inputEl.value + SEPARATOR;

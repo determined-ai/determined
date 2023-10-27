@@ -3,10 +3,10 @@ import Button from 'determined-ui/Button';
 import Form from 'determined-ui/Form';
 import Icon from 'determined-ui/Icon';
 import Input from 'determined-ui/Input';
-import useUI from 'determined-ui/Theme';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import Link from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
@@ -45,6 +45,7 @@ const buttonTheme = {
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
+  const containerRef = useRef(null);
   const { rbacEnabled } = useObservable(determinedStore.info);
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
@@ -77,7 +78,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         uiActions.hideSpinner();
         const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
         if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
-        handleError(e, {
+        handleError(containerRef, e, {
           isUserTriggered: true,
           publicMessage: `Failed to login. Please ${actionMsg}`,
           publicSubject: 'Login failed',
@@ -138,7 +139,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   );
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;

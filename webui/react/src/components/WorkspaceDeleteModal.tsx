@@ -1,7 +1,7 @@
 import Form from 'determined-ui/Form';
 import Input from 'determined-ui/Input';
 import { Modal } from 'determined-ui/Modal';
-import React, { useCallback, useId } from 'react';
+import React, { useCallback, useId, useRef } from 'react';
 
 import { paths } from 'routes/utils';
 import workspaceStore from 'stores/workspaces';
@@ -28,6 +28,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
   returnIndexOnDelete,
   workspace,
 }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const workspaceNameValue = Form.useWatch('workspaceName', form);
@@ -39,7 +40,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
         routeToReactUrl(paths.workspaceList());
       }
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to delete workspace.',
@@ -50,46 +51,48 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
   }, [workspace.id, returnIndexOnDelete]);
 
   return (
-    <Modal
-      cancel
-      danger
-      size="small"
-      submit={{
-        disabled: workspaceNameValue !== workspace.name,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: 'Delete Workspace',
-      }}
-      title="Delete Workspace"
-      onClose={onClose}>
-      <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
-        <p>
-          Are you sure you want to delete{' '}
-          <strong className={css.workspaceName}>&quot;{workspace.name}&quot;</strong>?
-        </p>
-        <p>
-          All projects, experiments, and notes within it will also be deleted. This cannot be
-          undone.
-        </p>
-        <Form.Item
-          label={
-            <div>
-              Please type <mark className={css.workspaceName}>{workspace.name}</mark> to confirm
-            </div>
-          }
-          name="workspaceName"
-          rules={[
-            {
-              message: 'Please type the workspace name to confirm',
-              pattern: new RegExp(`^${workspace.name}$`),
-              required: true,
-            },
-          ]}>
-          <Input autoComplete="off" />
-        </Form.Item>
-      </Form>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        danger
+        size="small"
+        submit={{
+          disabled: workspaceNameValue !== workspace.name,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: 'Delete Workspace',
+        }}
+        title="Delete Workspace"
+        onClose={onClose}>
+        <Form autoComplete="off" form={form} id={idPrefix + FORM_ID} layout="vertical">
+          <p>
+            Are you sure you want to delete{' '}
+            <strong className={css.workspaceName}>&quot;{workspace.name}&quot;</strong>?
+          </p>
+          <p>
+            All projects, experiments, and notes within it will also be deleted. This cannot be
+            undone.
+          </p>
+          <Form.Item
+            label={
+              <div>
+                Please type <mark className={css.workspaceName}>{workspace.name}</mark> to confirm
+              </div>
+            }
+            name="workspaceName"
+            rules={[
+              {
+                message: 'Please type the workspace name to confirm',
+                pattern: new RegExp(`^${workspace.name}$`),
+                required: true,
+              },
+            ]}>
+            <Input autoComplete="off" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

@@ -2,7 +2,7 @@ import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/
 import Select, { Option, SelectValue } from 'determined-ui/Select';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -52,6 +52,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   trial,
   updateSettings,
 }: Props) => {
+  const containerRef = useRef(null);
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !_.isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
@@ -143,7 +144,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         setWorkloadCount(0);
       }
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicMessage: 'Failed to load recent trial workloads.',
         publicSubject: 'Unable to fetch Trial Workloads.',
         silent: false,
@@ -228,26 +229,28 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [stopPolling]);
 
   return (
-    <Section options={options} title="Workloads">
-      <ResponsiveTable<Step>
-        columns={columns}
-        dataSource={workloadSteps}
-        loading={Loadable.isNotLoaded(workloads)}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          workloadCount,
-        )}
-        rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey="batchNum"
-        scroll={{ x: 1000 }}
-        showSorterTooltip={false}
-        size="small"
-        onChange={handleTableChange}
-      />
-    </Section>
+    <div ref={containerRef}>
+      <Section options={options} title="Workloads">
+        <ResponsiveTable<Step>
+          columns={columns}
+          dataSource={workloadSteps}
+          loading={Loadable.isNotLoaded(workloads)}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            workloadCount,
+          )}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey="batchNum"
+          scroll={{ x: 1000 }}
+          showSorterTooltip={false}
+          size="small"
+          onChange={handleTableChange}
+        />
+      </Section>
+    </div>
   );
 };
 

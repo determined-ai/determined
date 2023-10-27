@@ -87,7 +87,7 @@ const TrialDetailsComp: React.FC = () => {
         navigate(paths.trialDetails(trial.id, trial.experimentId), { replace: true });
       }
     } catch (e) {
-      handleError(e, {
+      handleError(pageRef, e, {
         publicMessage: 'Failed to load experiment details.',
         publicSubject: 'Unable to fetch Trial Experiment Detail',
         silent: false,

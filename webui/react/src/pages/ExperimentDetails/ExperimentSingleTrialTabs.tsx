@@ -6,7 +6,7 @@ import Pivot from 'determined-ui/Pivot';
 import Spinner from 'determined-ui/Spinner';
 import Tooltip from 'determined-ui/Tooltip';
 import { string } from 'io-ts';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -67,6 +67,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   onTrialUpdate,
   pageRef,
 }: Props) => {
+  const containerRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [trialId, setFirstTrialId] = useState<number>();
@@ -79,7 +80,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
-  } = useModalHyperparameterSearch({ experiment });
+  } = useModalHyperparameterSearch({ containerRef, experiment });
 
   const waitingForTrials = !trialId && !wontHaveTrials;
 
@@ -99,7 +100,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const config: SettingsConfig<{ filePath: string }> = useMemo(() => {
     return configForExperiment(experiment.id);
   }, [experiment.id]);
-  const { settings, updateSettings } = useSettings<{ filePath: string }>(config);
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(config, containerRef);
   const handleSelectFile = useCallback(
     (filePath: string) => {
       updateSettings({ filePath });
@@ -123,7 +124,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         setWontHaveTrials(true);
       }
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Failed to fetch experiment trials.',
         silent: true,
@@ -139,7 +140,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       onTrialUpdate?.(response);
       setTrialDetails(response);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Failed to fetch experiment trials.',
         silent: true,
@@ -210,7 +211,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
         await fetchExperimentDetails();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject: 'Unable to update experiment notes.',
@@ -350,7 +351,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <div className={css.pivoter}>
+      <div className={css.pivoter} ref={containerRef}>
         <Pivot
           activeKey={tabKey}
           items={tabItems}

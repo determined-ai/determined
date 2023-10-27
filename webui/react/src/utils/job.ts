@@ -1,4 +1,5 @@
 import { IconName } from 'determined-ui/Icon';
+import { createRef } from 'react';
 
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
@@ -112,7 +113,9 @@ export const moveJobToTop = async (curTopJob: Job, targetJob: Job): Promise<void
     };
     await updateJobQueue({ updates: [update] });
   } catch (e) {
-    handleError(e, { publicMessage: wrapPublicMessage(e, 'Failed to move job to top') });
+    handleError(createRef(), e, {
+      publicMessage: wrapPublicMessage(e, 'Failed to move job to top'),
+    });
   }
 };
 

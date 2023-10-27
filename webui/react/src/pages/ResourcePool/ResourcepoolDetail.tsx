@@ -4,7 +4,15 @@ import Pivot from 'determined-ui/Pivot';
 import Spinner from 'determined-ui/Spinner';
 import { ShirtSize } from 'determined-ui/Theme';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Fragment,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
@@ -77,7 +85,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const navigate = useNavigate();
   const [canceler] = useState(new AbortController());
-
+  const containerRef = useRef(null);
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
   const [poolStats, setPoolStats] = useState<V1RPQueueStat>();
 
@@ -90,7 +98,7 @@ const ResourcepoolDetailInner: React.FC = () => {
       const pool = stats.results.find((p) => p.resourcePool === poolname);
       setPoolStats(pool);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicSubject: 'Unable to fetch job queue stats.',
         silent: false,
@@ -218,7 +226,7 @@ const ResourcepoolDetailInner: React.FC = () => {
           ? 'Job Queue by Resource Pool'
           : undefined
       }>
-      <div className={css.poolDetailPage}>
+      <div className={css.poolDetailPage} ref={containerRef}>
         <Section>
           <RenderAllocationBarResourcePool
             poolStats={poolStats}

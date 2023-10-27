@@ -2,7 +2,7 @@ import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
-import React, { useCallback, useMemo } from 'react';
+import React, { RefObject, useCallback, useMemo, useRef } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import usePermissions from 'hooks/usePermissions';
@@ -28,6 +28,7 @@ interface Props {
 }
 
 interface ProjectMenuPropsIn {
+  containerRef: RefObject<HTMLElement>;
   onDelete?: () => void;
   onEdit?: (name: string, archived: boolean) => void;
   onMove?: () => void;
@@ -47,6 +48,7 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
   onMove,
   project,
   workspaceArchived = false,
+  containerRef,
 }: ProjectMenuPropsIn) => {
   const ProjectMoveModal = useModal(ProjectMoveModalComponent);
   const ProjectDeleteModal = useModal(ProjectDeleteModalComponent);
@@ -76,17 +78,17 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
         await unarchiveProject({ id: project.id });
         onEdit?.(project.name, false);
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive project.' });
+        handleError(containerRef, e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         await archiveProject({ id: project.id });
         onEdit?.(project.name, true);
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive project.' });
+        handleError(containerRef, e, { publicSubject: 'Unable to archive project.' });
       }
     }
-  }, [onEdit, project]);
+  }, [containerRef, onEdit, project]);
 
   const MenuKey = {
     Delete: 'delete',
@@ -154,7 +156,9 @@ const ProjectActionDropdown: React.FC<Props> = ({
   onMove,
   workspaceArchived = false,
 }: Props) => {
+  const containerRef = useRef(null);
   const { contextHolders, menu, onClick } = useProjectActionMenu({
+    containerRef,
     onDelete,
     onEdit,
     onMove,
@@ -166,23 +170,31 @@ const ProjectActionDropdown: React.FC<Props> = ({
     return null;
   }
 
-  return children ? (
-    <>
-      <Dropdown
-        disabled={menu?.length === 0}
-        isContextMenu={isContextMenu}
-        menu={menu}
-        onClick={onClick}>
-        {children}
-      </Dropdown>
-      {contextHolders}
-    </>
-  ) : (
-    <div className={[css.base, className].join(' ')} title="Open actions menu">
-      <Dropdown disabled={menu?.length === 0} menu={menu} placement="bottomRight" onClick={onClick}>
-        <Button icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
-      </Dropdown>
-      {contextHolders}
+  return (
+    <div ref={containerRef}>
+      children ? (
+      <>
+        <Dropdown
+          disabled={menu?.length === 0}
+          isContextMenu={isContextMenu}
+          menu={menu}
+          onClick={onClick}>
+          {children}
+        </Dropdown>
+        {contextHolders}
+      </>
+      ) : (
+      <div className={[css.base, className].join(' ')} title="Open actions menu">
+        <Dropdown
+          disabled={menu?.length === 0}
+          menu={menu}
+          placement="bottomRight"
+          onClick={onClick}>
+          <Button icon={<Icon name={`overflow-${direction}`} title="Action menu" />} />
+        </Dropdown>
+        {contextHolders}
+      </div>
+      )
     </div>
   );
 };

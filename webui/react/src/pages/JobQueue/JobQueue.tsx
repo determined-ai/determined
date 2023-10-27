@@ -80,6 +80,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   const { settings, updateSettings } = useSettings<Settings>(
     useMemo(() => settingsConfig(jobState), [jobState]),
+    pageRef,
   );
   const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
@@ -126,7 +127,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
         updateSettings({ tableOffset: 0 });
         return;
       }
-      handleError(e, {
+      handleError(pageRef, e, {
         level: ErrorLevel.Error,
         publicSubject: 'Unable to fetch job queue and stats.',
         silent: false,
@@ -253,9 +254,10 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
                         [JobAction.Kill]: { danger: true, onError: handleError },
                         [JobAction.MoveToTop]: { onError: handleError },
                       }}
+                      containerRef={pageRef}
                       id={record.name}
                       kind="job"
-                      onError={handleError}
+                      onError={() => handleError}
                       onTrigger={dropDownOnTrigger(record)}
                     />
                   </div>

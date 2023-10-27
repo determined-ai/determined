@@ -1,5 +1,6 @@
-import useUI from 'determined-ui/Theme';
 import { useCallback, useEffect, useMemo } from 'react';
+
+import useUI from 'components/ThemeProvider';
 
 interface DocumentHidden {
   hidden?: unknown;

@@ -1,12 +1,12 @@
 import Message from 'determined-ui/Message';
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
+import useUI from 'components/ThemeProvider';
 import { terminalRunStates } from 'constants/states';
 import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';
@@ -65,6 +65,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const trialIdRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef(null);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [chartData, setChartData] = useState<HpTrialData>();
   const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
@@ -338,7 +339,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           action === Action.OpenTensorBoard
             ? 'Unable to View TensorBoard for Selected Trials'
             : `Unable to ${action} Selected Trials`;
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject,
@@ -381,7 +382,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>

@@ -159,7 +159,7 @@ class WorkspaceStore extends PollingStore {
             this.#loadableWorkspaces.set(Loaded(newWorkspaces));
           }
         })
-        .catch(handleError);
+        .catch(() => handleError);
     }
 
     return () => canceler.abort();

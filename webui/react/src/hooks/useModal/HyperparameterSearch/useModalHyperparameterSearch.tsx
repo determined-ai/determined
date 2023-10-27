@@ -10,7 +10,7 @@ import Message from 'determined-ui/Message';
 import Select, { Option, SelectValue } from 'determined-ui/Select';
 import { Loadable } from 'determined-ui/utils/loadable';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
@@ -44,6 +44,7 @@ interface Props {
   experiment: ExperimentItem;
   onClose?: () => void;
   trial?: TrialDetails | TrialItem;
+  containerRef: RefObject<HTMLElement>;
 }
 
 export interface ShowModalProps {
@@ -93,6 +94,7 @@ const useModalHyperparameterSearch = ({
   experiment,
   onClose,
   trial: trialIn,
+  containerRef,
 }: Props): ModalHooks => {
   const idPrefix = useId();
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
@@ -223,7 +225,7 @@ const useModalHyperparameterSearch = ({
         ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
         : false;
       if (currentSlotsExceeded) {
-        handleWarning({
+        handleWarning(containerRef, {
           level: ErrorLevel.Warn,
           publicMessage:
             'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
@@ -247,7 +249,7 @@ const useModalHyperparameterSearch = ({
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [experiment.configRaw, experiment.id, experiment.projectId, form]);
+  }, [containerRef, experiment.configRaw, experiment.id, experiment.projectId, form]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {

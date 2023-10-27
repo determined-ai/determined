@@ -7,7 +7,7 @@ import { useModal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
 import Tooltip from 'determined-ui/Tooltip';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
@@ -133,6 +133,7 @@ const TableActionBar: React.FC<Props> = ({
   tableViewMode,
   total,
 }) => {
+  const containerRef = useRef(null);
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
@@ -244,17 +245,20 @@ const TableActionBar: React.FC<Props> = ({
 
         if (numSuccesses === 0 && numFailures === 0) {
           makeToast({
+            containerRef,
             description: `No selected experiments were eligible for ${action.toLowerCase()}`,
             title: 'No eligible experiments',
           });
         } else if (numFailures === 0) {
           makeToast({
             closeable: true,
+            containerRef,
             description: `${action} succeeded for ${results.successful.length} experiments`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
           makeToast({
+            containerRef,
             description: `Unable to ${action.toLowerCase()} ${numFailures} experiments`,
             severity: 'Warning',
             title: `${action} Failure`,
@@ -262,6 +266,7 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           makeToast({
             closeable: true,
+            containerRef,
             description: `${action} succeeded for ${numSuccesses} out of ${
               numFailures + numSuccesses
             } eligible
@@ -275,7 +280,7 @@ const TableActionBar: React.FC<Props> = ({
           action === ExperimentAction.OpenTensorBoard
             ? 'Unable to View TensorBoard for Selected Experiments'
             : `Unable to ${action} Selected Experiments`;
-        handleError(e, {
+        handleError(containerRef, e, {
           isUserTriggered: true,
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
@@ -353,89 +358,91 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <Columns>
-      <Column>
-        <Space className={css.base}>
-          <TableFilter
-            formStore={formStore}
-            isMobile={isMobile}
-            isOpenFilter={isOpenFilter}
-            loadableColumns={projectColumns}
-            onIsOpenFilterChange={onIsOpenFilterChange}
-          />
-          <MultiSortMenu
-            columns={projectColumns}
-            isMobile={isMobile}
-            sorts={sorts}
-            onChange={onSortChange}
-          />
-          <ColumnPickerMenu
-            initialVisibleColumns={initialVisibleColumns}
-            isMobile={isMobile}
-            projectColumns={projectColumns}
-            projectId={project.id}
-            onVisibleColumnChange={onVisibleColumnChange}
-          />
-          <OptionsMenu
-            rowHeight={rowHeight}
-            tableViewMode={tableViewMode}
-            onRowHeightChange={onRowHeightChange}
-            onTableViewModeChange={onTableViewModeChange}
-          />
-          {(selectAll || selectedExperimentIds.size > 0) && (
-            <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button hideChildren={isMobile}>Actions</Button>
-            </Dropdown>
-          )}
-          {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
-        </Space>
-      </Column>
-      <Column align="right">
-        <Columns>
-          {heatmapBtnVisible && (
-            <Tooltip content={'Toggle Metric Heatmap'}>
+    <div ref={containerRef}>
+      <Columns>
+        <Column>
+          <Space className={css.base}>
+            <TableFilter
+              formStore={formStore}
+              isMobile={isMobile}
+              isOpenFilter={isOpenFilter}
+              loadableColumns={projectColumns}
+              onIsOpenFilterChange={onIsOpenFilterChange}
+            />
+            <MultiSortMenu
+              columns={projectColumns}
+              isMobile={isMobile}
+              sorts={sorts}
+              onChange={onSortChange}
+            />
+            <ColumnPickerMenu
+              initialVisibleColumns={initialVisibleColumns}
+              isMobile={isMobile}
+              projectColumns={projectColumns}
+              projectId={project.id}
+              onVisibleColumnChange={onVisibleColumnChange}
+            />
+            <OptionsMenu
+              rowHeight={rowHeight}
+              tableViewMode={tableViewMode}
+              onRowHeightChange={onRowHeightChange}
+              onTableViewModeChange={onTableViewModeChange}
+            />
+            {(selectAll || selectedExperimentIds.size > 0) && (
+              <Dropdown menu={editMenuItems} onClick={handleAction}>
+                <Button hideChildren={isMobile}>Actions</Button>
+              </Dropdown>
+            )}
+            {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
+          </Space>
+        </Column>
+        <Column align="right">
+          <Columns>
+            {heatmapBtnVisible && (
+              <Tooltip content={'Toggle Metric Heatmap'}>
+                <Button
+                  icon={<Icon name="heatmap" title="heatmap" />}
+                  type={heatmapOn ? 'primary' : 'default'}
+                  onClick={() => onHeatmapToggle?.(heatmapOn)}
+                />
+              </Tooltip>
+            )}
+            {!!onComparisonViewToggle && (
               <Button
-                icon={<Icon name="heatmap" title="heatmap" />}
-                type={heatmapOn ? 'primary' : 'default'}
-                onClick={() => onHeatmapToggle?.(heatmapOn)}
-              />
-            </Tooltip>
-          )}
-          {!!onComparisonViewToggle && (
-            <Button
-              hideChildren={isMobile}
-              icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
-              onClick={onComparisonViewToggle}>
-              Compare
-            </Button>
-          )}
-        </Columns>
-      </Column>
-      {batchAction && (
-        <BatchActionConfirmModal.Component
-          batchAction={batchAction}
-          isUnmanagedIncluded={selectedExperiments.some((exp) => exp.unmanaged)}
-          onConfirm={() => submitBatchAction(batchAction)}
-        />
-      )}
-      <ExperimentMoveModal.Component
-        excludedExperimentIds={excludedExperimentIds}
-        experimentIds={experimentIds.filter(
-          (id) =>
-            canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
-            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+                hideChildren={isMobile}
+                icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
+                onClick={onComparisonViewToggle}>
+                Compare
+              </Button>
+            )}
+          </Columns>
+        </Column>
+        {batchAction && (
+          <BatchActionConfirmModal.Component
+            batchAction={batchAction}
+            isUnmanagedIncluded={selectedExperiments.some((exp) => exp.unmanaged)}
+            onConfirm={() => submitBatchAction(batchAction)}
+          />
         )}
-        filters={selectAll ? filters : undefined}
-        sourceProjectId={project.id}
-        sourceWorkspaceId={project.workspaceId}
-        onSubmit={handleSubmitMove}
-      />
-      <ExperimentTensorBoardModalComponent
-        filters={selectAll ? filters : undefined}
-        selectedExperiments={selectedExperiments}
-        workspaceId={project?.workspaceId}
-      />
-    </Columns>
+        <ExperimentMoveModal.Component
+          excludedExperimentIds={excludedExperimentIds}
+          experimentIds={experimentIds.filter(
+            (id) =>
+              canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
+              permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+          )}
+          filters={selectAll ? filters : undefined}
+          sourceProjectId={project.id}
+          sourceWorkspaceId={project.workspaceId}
+          onSubmit={handleSubmitMove}
+        />
+        <ExperimentTensorBoardModalComponent
+          filters={selectAll ? filters : undefined}
+          selectedExperiments={selectedExperiments}
+          workspaceId={project?.workspaceId}
+        />
+      </Columns>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 import Message from 'determined-ui/Message';
 import Pivot, { TabItem } from 'determined-ui/Pivot';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
@@ -32,7 +32,7 @@ const ComparisonView: React.FC<Props> = ({
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
-
+  const containerRef = useRef(null);
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
   }, [fixedColumnsCount, scrollbarWidth]);
@@ -48,7 +48,7 @@ const ComparisonView: React.FC<Props> = ({
     [selectedExperiments],
   );
 
-  const metricData = useTrialMetrics(trials);
+  const metricData = useTrialMetrics(trials, containerRef);
 
   const tabs: TabItem[] = useMemo(() => {
     return [
@@ -84,26 +84,28 @@ const ComparisonView: React.FC<Props> = ({
   }, [selectedExperiments, projectId, experiments, trials, metricData]);
 
   return (
-    <SplitPane
-      initialWidth={initialWidth}
-      minimumWidths={minWidths}
-      open={open}
-      onChange={onWidthChange}>
-      {open && !hasPinnedColumns ? (
-        <Message icon="info" title='Pin columns to see them in "Compare View"' />
-      ) : (
-        children
-      )}
-      {selectedExperiments.length === 0 ? (
-        <Message
-          description="Select experiments you would like to compare."
-          icon="warning"
-          title="No experiments selected."
-        />
-      ) : (
-        <Pivot items={tabs} />
-      )}
-    </SplitPane>
+    <div ref={containerRef}>
+      <SplitPane
+        initialWidth={initialWidth}
+        minimumWidths={minWidths}
+        open={open}
+        onChange={onWidthChange}>
+        {open && !hasPinnedColumns ? (
+          <Message icon="info" title='Pin columns to see them in "Compare View"' />
+        ) : (
+          children
+        )}
+        {selectedExperiments.length === 0 ? (
+          <Message
+            description="Select experiments you would like to compare."
+            icon="warning"
+            title="No experiments selected."
+          />
+        ) : (
+          <Pivot items={tabs} />
+        )}
+      </SplitPane>
+    </div>
   );
 };
 

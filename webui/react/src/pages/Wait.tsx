@@ -1,10 +1,10 @@
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
+import useUI from 'components/ThemeProvider';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
@@ -28,7 +28,7 @@ const Wait: React.FC = () => {
   const { taskType } = useParams<Params>();
   const [waitStatus, setWaitStatus] = useState<WaitStatus>();
   const serviceAddr = searchParams.get('serviceAddr');
-
+  const containerRef = useRef(null);
   const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
@@ -51,7 +51,7 @@ const Wait: React.FC = () => {
   }, [hideChrome, showChrome]);
 
   const handleTaskError = (e: Error) => {
-    handleError(e, {
+    handleError(containerRef, e, {
       publicMessage:
         'Failed while waiting for command to be ready. This may be caused by not having related permissions',
       silent: false,
@@ -88,7 +88,7 @@ const Wait: React.FC = () => {
 
   return (
     <PageMessage title={capitalizedTaskType}>
-      <div className={css.base}>
+      <div className={css.base} ref={containerRef}>
         <div className={css.message}>{message}</div>
         {waitStatus && (
           <div className={css.state}>

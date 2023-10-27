@@ -7,7 +7,7 @@ import Spinner from 'determined-ui/Spinner';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -44,6 +44,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   sourceProjectId,
   sourceWorkspaceId,
 }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [disabled, setDisabled] = useState<boolean>(true);
   const [form] = Form.useForm<FormInputs>();
@@ -72,7 +73,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
   const handleSubmit = async () => {
     if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
-      makeToast({ title: 'No changes to save.' });
+      makeToast({ containerRef, title: 'No changes to save.' });
       return;
     }
     const values = await form.validateFields();
@@ -98,18 +99,21 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     if (numSuccesses === 0 && numFailures === 0) {
       makeToast({
+        containerRef,
         description: 'No selected experiments were eligible for moving',
         title: 'No eligible experiments',
       });
     } else if (numFailures === 0) {
       makeToast({
         closeable: true,
+        containerRef,
         description: `${results.successful.length} experiments moved to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         title: 'Move Success',
       });
     } else if (numSuccesses === 0) {
       makeToast({
+        containerRef,
         description: `Unable to move ${numFailures} experiments`,
         severity: 'Warning',
         title: 'Move Failure',
@@ -117,6 +121,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     } else {
       makeToast({
         closeable: true,
+        containerRef,
         description: `${numFailures} out of ${
           numFailures + numSuccesses
         } eligible experiments failed to move
@@ -135,85 +140,87 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   }, [form, sourceProjectId, sourceWorkspaceId]);
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text:
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text:
+            filters !== undefined
+              ? 'Move Experiments'
+              : `Move ${pluralizer(experimentIds.length, 'Experiment')}`,
+        }}
+        title={
           filters !== undefined
             ? 'Move Experiments'
-            : `Move ${pluralizer(experimentIds.length, 'Experiment')}`,
-      }}
-      title={
-        filters !== undefined
-          ? 'Move Experiments'
-          : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
-      }>
-      <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
-        <Form.Item
-          label="Workspace"
-          name="workspaceId"
-          rules={[{ message: 'Workspace is required', required: true }]}>
-          <Select
-            filterOption={(input, option) =>
-              (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            id="workspace"
-            placeholder="Select a destination workspace."
-            onChange={() => form.resetFields(['projectId'])}>
-            {workspaces.map((workspace) => {
-              return (
-                <Option
-                  disabled={workspace.archived}
-                  key={workspace.id}
-                  title={workspace.name}
-                  value={workspace.id}>
-                  <div>
-                    <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                    {workspace.archived && <Icon name="archive" title="Archived" />}
-                  </div>
-                </Option>
-              );
-            })}
-          </Select>
-        </Form.Item>
-        {workspaceId && workspaceId !== 1 && (
+            : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
+        }>
+        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
           <Form.Item
-            label="Project"
-            name="projectId"
-            rules={[{ message: 'Project is required', required: true }]}>
-            {Loadable.match(loadableProjects, {
-              Failed: () => null, // Inform the user if this fails to load
-              Loaded: (loadableProjects) => (
-                <Select
-                  filterOption={(input, option) =>
-                    (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                  placeholder="Select a destination project.">
-                  {loadableProjects.map((project) => (
-                    <Option
-                      disabled={project.archived}
-                      key={project.id}
-                      title={project.name}
-                      value={project.id}>
-                      <div>
-                        <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
-                        {project.archived && <Icon name="archive" title="Archived" />}
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              ),
-              NotLoaded: () => <Spinner center spinning />,
-            })}
+            label="Workspace"
+            name="workspaceId"
+            rules={[{ message: 'Workspace is required', required: true }]}>
+            <Select
+              filterOption={(input, option) =>
+                (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              id="workspace"
+              placeholder="Select a destination workspace."
+              onChange={() => form.resetFields(['projectId'])}>
+              {workspaces.map((workspace) => {
+                return (
+                  <Option
+                    disabled={workspace.archived}
+                    key={workspace.id}
+                    title={workspace.name}
+                    value={workspace.id}>
+                    <div>
+                      <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                      {workspace.archived && <Icon name="archive" title="Archived" />}
+                    </div>
+                  </Option>
+                );
+              })}
+            </Select>
           </Form.Item>
-        )}
-      </Form>
-    </Modal>
+          {workspaceId && workspaceId !== 1 && (
+            <Form.Item
+              label="Project"
+              name="projectId"
+              rules={[{ message: 'Project is required', required: true }]}>
+              {Loadable.match(loadableProjects, {
+                Failed: () => null, // Inform the user if this fails to load
+                Loaded: (loadableProjects) => (
+                  <Select
+                    filterOption={(input, option) =>
+                      (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    placeholder="Select a destination project.">
+                    {loadableProjects.map((project) => (
+                      <Option
+                        disabled={project.archived}
+                        key={project.id}
+                        title={project.name}
+                        value={project.id}>
+                        <div>
+                          <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
+                          {project.archived && <Icon name="archive" title="Archived" />}
+                        </div>
+                      </Option>
+                    ))}
+                  </Select>
+                ),
+                NotLoaded: () => <Spinner center spinning />,
+              })}
+            </Form.Item>
+          )}
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

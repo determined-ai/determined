@@ -6,7 +6,7 @@ import { useModal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
 import useConfirm from 'determined-ui/useConfirm';
 import { copyToClipboard } from 'determined-ui/utils/functions';
-import React, { MouseEvent, useCallback, useMemo } from 'react';
+import React, { MouseEvent, useCallback, useMemo, useRef } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
@@ -82,6 +82,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
+  const containerRef = useRef(null);
   const id = experiment.id;
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
@@ -90,6 +91,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
   } = useModalHyperparameterSearch({
+    containerRef,
     experiment,
     onClose: () => onComplete?.(ExperimentAction.HyperparameterSearch, id),
   });
@@ -231,13 +233,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             await copyToClipboard((cell as any).displayData || cell?.copyData);
             makeToast({
+              containerRef,
               severity: 'Confirm',
               title: 'Value has been copied to clipboard.',
             });
             break;
         }
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: `Unable to ${action} experiment ${id}.`,
           publicSubject: `${capitalize(action)} failed.`,

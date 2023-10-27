@@ -2,7 +2,7 @@ import { Card, Space } from 'antd';
 import Button from 'determined-ui/Button';
 import Icon from 'determined-ui/Icon';
 import Spinner from 'determined-ui/Spinner';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Metadata } from 'types';
 import handleError, { ErrorType } from 'utils/error';
@@ -16,6 +16,7 @@ interface Props {
 }
 
 const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave }: Props) => {
+  const containerRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editedMetadata, setEditedMetadata] = useState<Metadata>(metadata ?? {});
@@ -37,7 +38,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
       await onSave?.(editedMetadata);
       setIsEditing(false);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to update metadata.',
         silent: true,
         type: ErrorType.Api,
@@ -56,46 +57,48 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
   }, [isEditing, metadataArray.length]);
 
   return (
-    <Card
-      bodyStyle={{ padding: '16px' }}
-      extra={
-        isEditing ? (
-          <Space size="small">
-            <Button size="small" onClick={cancelEditMetadata}>
-              Cancel
-            </Button>
-            <Button size="small" type="primary" onClick={saveMetadata}>
-              Save
-            </Button>
-          </Space>
-        ) : (
-          disabled || (
-            <Button
-              icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
-              type="text"
-              onClick={editMetadata}
-            />
+    <div ref={containerRef}>
+      <Card
+        bodyStyle={{ padding: '16px' }}
+        extra={
+          isEditing ? (
+            <Space size="small">
+              <Button size="small" onClick={cancelEditMetadata}>
+                Cancel
+              </Button>
+              <Button size="small" type="primary" onClick={saveMetadata}>
+                Save
+              </Button>
+            </Space>
+          ) : (
+            disabled || (
+              <Button
+                icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
+                type="text"
+                onClick={editMetadata}
+              />
+            )
           )
-        )
-      }
-      headStyle={{ paddingInline: '16px' }}
-      title={'Metadata'}>
-      {showPlaceholder ? (
-        <div
-          style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
-          onClick={editMetadata}>
-          {disabled ? 'No metadata present.' : 'Add Metadata...'}
-        </div>
-      ) : (
-        <Spinner spinning={isLoading}>
-          <EditableMetadata
-            editing={isEditing}
-            metadata={editedMetadata}
-            updateMetadata={setEditedMetadata}
-          />
-        </Spinner>
-      )}
-    </Card>
+        }
+        headStyle={{ paddingInline: '16px' }}
+        title={'Metadata'}>
+        {showPlaceholder ? (
+          <div
+            style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
+            onClick={editMetadata}>
+            {disabled ? 'No metadata present.' : 'Add Metadata...'}
+          </div>
+        ) : (
+          <Spinner spinning={isLoading}>
+            <EditableMetadata
+              editing={isEditing}
+              metadata={editedMetadata}
+              updateMetadata={setEditedMetadata}
+            />
+          </Spinner>
+        )}
+      </Card>
+    </div>
   );
 };
 

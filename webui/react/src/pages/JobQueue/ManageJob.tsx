@@ -2,7 +2,7 @@ import { List, Modal, Select, Typography } from 'antd';
 import Form from 'determined-ui/Form';
 import Input from 'determined-ui/Input';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { columns } from 'pages/JobQueue/JobQueue.table';
@@ -85,7 +85,7 @@ const ManageJob: React.FC<Props> = ({
   const isOrderedQ = orderedSchedulers.has(schedulerType);
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools)); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
-
+  const containerRef = useRef(null);
   const details = useMemo(() => {
     interface Item {
       label: ReactNode;
@@ -160,7 +160,7 @@ const ManageJob: React.FC<Props> = ({
       const update = form && (await formValuesToUpdate(form.getFieldsValue(), job));
       if (update) await updateJobQueue({ updates: [update] });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         isUserTriggered: true,
         publicSubject: 'Failed to update the job.',
         silent: false,
@@ -173,83 +173,85 @@ const ManageJob: React.FC<Props> = ({
   const isSingular = job.summary && job.summary.jobsAhead === 1;
 
   return (
-    <Modal
-      mask
-      open={true}
-      title={'Manage Job ' + truncate(job.jobId, 6, '')}
-      onCancel={onFinish}
-      onOk={onOk}>
-      {isOrderedQ && (
-        <p>
-          There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
-          {isSingular ? '' : 's'} ahead of this job.
-        </p>
-      )}
-      <h6>Queue Settings</h6>
-      <Form
-        form={form}
-        initialValues={{
-          position: job.summary.jobsAhead + 1,
-          priority: job.priority,
-          resourcePool: initialPool,
-          weight: job.weight,
-        }}
-        labelCol={{ span: 6 }}
-        name="form basic"
-        onValuesChange={handleUpdateResourcePool}>
-        <Form.Item
-          extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
-          hidden={schedulerType !== api.V1SchedulerType.PRIORITY}
-          label="Priority"
-          name="priority">
-          <Input addonAfter="out of 99" max={99} min={1} type="number" />
-        </Form.Item>
-        <Form.Item
-          extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority.
-          Adjusting the priority will cancel and resubmit the job to update its priority."
-          hidden={schedulerType !== api.V1SchedulerType.KUBERNETES}
-          label="Priority"
-          name="priority">
-          <Input max={99} min={1} type="number" />
-        </Form.Item>
-        <Form.Item
-          hidden={unsupportedQPosSchedulers.has(schedulerType)}
-          label="Position in Queue"
-          name="position">
-          <Input addonAfter={`out of ${jobCount}`} max={jobCount} min={1} type="number" />
-        </Form.Item>
-        <Form.Item
-          hidden={schedulerType !== api.V1SchedulerType.FAIRSHARE}
-          label="Weight"
-          name="weight">
-          <Input min={0} type="number" />
-        </Form.Item>
-        <Form.Item
-          extra={poolDetails}
-          hidden={schedulerType === api.V1SchedulerType.KUBERNETES}
-          label="Resource Pool"
-          name="resourcePool">
-          <Select disabled={job.type !== JobType.EXPERIMENT}>
-            {resourcePools.map((rp) => (
-              <Option key={rp.name} value={rp.name}>
-                {rp.name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </Form>
-      <h6>Job Details</h6>
-      <List
-        dataSource={details}
-        renderItem={(item) => (
-          <List.Item className={css.item}>
-            <Typography.Text className={css.key}>{item.label}</Typography.Text>
-            <div className={css.value}>{item.value}</div>
-          </List.Item>
+    <div ref={containerRef}>
+      <Modal
+        mask
+        open={true}
+        title={'Manage Job ' + truncate(job.jobId, 6, '')}
+        onCancel={onFinish}
+        onOk={onOk}>
+        {isOrderedQ && (
+          <p>
+            There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
+            {isSingular ? '' : 's'} ahead of this job.
+          </p>
         )}
-        size="small"
-      />
-    </Modal>
+        <h6>Queue Settings</h6>
+        <Form
+          form={form}
+          initialValues={{
+            position: job.summary.jobsAhead + 1,
+            priority: job.priority,
+            resourcePool: initialPool,
+            weight: job.weight,
+          }}
+          labelCol={{ span: 6 }}
+          name="form basic"
+          onValuesChange={handleUpdateResourcePool}>
+          <Form.Item
+            extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
+            hidden={schedulerType !== api.V1SchedulerType.PRIORITY}
+            label="Priority"
+            name="priority">
+            <Input addonAfter="out of 99" max={99} min={1} type="number" />
+          </Form.Item>
+          <Form.Item
+            extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority.
+          Adjusting the priority will cancel and resubmit the job to update its priority."
+            hidden={schedulerType !== api.V1SchedulerType.KUBERNETES}
+            label="Priority"
+            name="priority">
+            <Input max={99} min={1} type="number" />
+          </Form.Item>
+          <Form.Item
+            hidden={unsupportedQPosSchedulers.has(schedulerType)}
+            label="Position in Queue"
+            name="position">
+            <Input addonAfter={`out of ${jobCount}`} max={jobCount} min={1} type="number" />
+          </Form.Item>
+          <Form.Item
+            hidden={schedulerType !== api.V1SchedulerType.FAIRSHARE}
+            label="Weight"
+            name="weight">
+            <Input min={0} type="number" />
+          </Form.Item>
+          <Form.Item
+            extra={poolDetails}
+            hidden={schedulerType === api.V1SchedulerType.KUBERNETES}
+            label="Resource Pool"
+            name="resourcePool">
+            <Select disabled={job.type !== JobType.EXPERIMENT}>
+              {resourcePools.map((rp) => (
+                <Option key={rp.name} value={rp.name}>
+                  {rp.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+        <h6>Job Details</h6>
+        <List
+          dataSource={details}
+          renderItem={(item) => (
+            <List.Item className={css.item}>
+              <Typography.Text className={css.key}>{item.label}</Typography.Text>
+              <div className={css.value}>{item.value}</div>
+            </List.Item>
+          )}
+          size="small"
+        />
+      </Modal>
+    </div>
   );
 };
 

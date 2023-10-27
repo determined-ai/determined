@@ -1,3 +1,5 @@
+import { createRef, RefObject } from 'react';
+
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
@@ -25,11 +27,10 @@ export const isLoginFailure = (e: unknown): boolean => {
 export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
   onEvent?: (event: T) => void,
-  onError?: (e?: Error) => void,
+  onError?: (containerRef: RefObject<HTMLElement>, e?: Error) => void,
 ): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
-
     /*
      * Default fetch credentials is set to `same-origin`, but we need to change it
      * to `include` for local dev because the ports do not match up (3000 vs 8080).
@@ -62,7 +63,7 @@ export const readStream = async <T = unknown>(
       signal.addEventListener('abort', abortHandler);
     }
 
-    const handleStreamError = (e: unknown) => handleError(e, { silent: true });
+    const handleStreamError = (e: unknown) => handleError(createRef(), e, { silent: true });
     const handleStreamLine = (line: string) => {
       if (isCancelled) return;
       try {
@@ -105,6 +106,6 @@ export const readStream = async <T = unknown>(
 
     return reader.read().then(handleStreamRead).catch(handleStreamError);
   } catch (e) {
-    handleError(await processApiError(fetchArgs.url, e));
+    handleError(createRef(), await processApiError(fetchArgs.url, e));
   }
 };

@@ -57,12 +57,15 @@ const WorkspaceList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
   const [canceler] = useState(new AbortController());
-
+  const containerRef = useRef(null);
   const { canCreateWorkspace } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
-  const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<WorkspaceListSettings>(
+    settingsConfig,
+    containerRef,
+  );
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
@@ -155,7 +158,11 @@ const WorkspaceList: React.FC = () => {
     );
 
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
-      <WorkspaceActionDropdown workspace={record} onComplete={fetchWorkspaces} />
+      <WorkspaceActionDropdown
+        containerRef={containerRef}
+        workspace={record}
+        onComplete={fetchWorkspaces}
+      />
     );
 
     return [
@@ -257,7 +264,11 @@ const WorkspaceList: React.FC = () => {
       onVisibleChange?: (visible: boolean) => void;
       record: Workspace;
     }) => (
-      <WorkspaceActionDropdown isContextMenu workspace={record} onComplete={fetchWorkspaces}>
+      <WorkspaceActionDropdown
+        containerRef={containerRef}
+        isContextMenu
+        workspace={record}
+        onComplete={fetchWorkspaces}>
         {children}
       </WorkspaceActionDropdown>
     ),

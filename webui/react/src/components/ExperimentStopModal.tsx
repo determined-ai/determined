@@ -2,7 +2,7 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import Checkbox from 'determined-ui/Checkbox';
 import Message from 'determined-ui/Message';
 import { Modal } from 'determined-ui/Modal';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { cancelExperiment, killExperiment } from 'services/api';
 import { ExperimentAction, ValueOf } from 'types';
@@ -24,6 +24,7 @@ interface Props {
 }
 
 const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }: Props) => {
+  const containerRef = useRef(null);
   const [type, setType] = useState<AvalableActions>(ActionType.Cancel);
 
   const handleCheckBoxChange = (event: CheckboxChangeEvent) => {
@@ -38,7 +39,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
         await killExperiment({ experimentId });
       }
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to stop experiment.',
@@ -49,26 +50,28 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
   };
 
   return (
-    <Modal
-      size="small"
-      submit={{
-        handleError,
-        handler: handleSubmit,
-        text: BUTTON_TEXT,
-      }}
-      title="Confirm Stop"
-      onClose={onClose}>
-      <div>Are you sure you want to stop experiment {experimentId}?</div>
-      <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>
-        {CHECKBOX_TEXT}
-      </Checkbox>
-      {type !== ActionType.Cancel && (
-        <Message
-          icon="warning"
-          title={'Note: Any progress/data on incomplete workflows will be lost.'}
-        />
-      )}
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        size="small"
+        submit={{
+          handleError,
+          handler: handleSubmit,
+          text: BUTTON_TEXT,
+        }}
+        title="Confirm Stop"
+        onClose={onClose}>
+        <div>Are you sure you want to stop experiment {experimentId}?</div>
+        <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>
+          {CHECKBOX_TEXT}
+        </Checkbox>
+        {type !== ActionType.Cancel && (
+          <Message
+            icon="warning"
+            title={'Note: Any progress/data on incomplete workflows will be lost.'}
+          />
+        )}
+      </Modal>
+    </div>
   );
 };
 

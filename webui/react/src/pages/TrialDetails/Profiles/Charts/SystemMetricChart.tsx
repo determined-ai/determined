@@ -1,6 +1,6 @@
 import { LineChart } from 'determined-ui/LineChart';
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -45,11 +45,13 @@ const config = (trialId: number): SettingsConfig<Settings> => ({
 });
 
 const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
+  const containerRef = useRef(null);
+
   const useSettingsConfig = useMemo(() => {
     return config(trial.id);
   }, [trial.id]);
 
-  const { settings, updateSettings } = useSettings<Settings>(useSettingsConfig);
+  const { settings, updateSettings } = useSettings<Settings>(useSettingsConfig, containerRef);
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
 
@@ -83,29 +85,31 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
   }, [settings.agentId, settings.name, systemSeries, updateSettings]);
 
   return (
-    <Section
-      bodyBorder
-      bodyNoPadding
-      filters={
-        settings && (
-          <SystemMetricFilter
-            settings={settings}
-            systemSeries={systemSeries}
-            updateSettings={updateSettings}
-          />
-        )
-      }
-      title="System Metrics">
-      <LineChart
-        experimentId={trial.id}
-        handleError={handleError}
-        series={systemMetrics.data}
-        xAxis={XAxisDomain.Time}
-        xLabel="Time"
-        yLabel={yLabel}
-        yTickValues={/^bytes/i.test(yLabel) ? getByteTickValues : getScientificNotationTickValues}
-      />
-    </Section>
+    <div ref={containerRef}>
+      <Section
+        bodyBorder
+        bodyNoPadding
+        filters={
+          settings && (
+            <SystemMetricFilter
+              settings={settings}
+              systemSeries={systemSeries}
+              updateSettings={updateSettings}
+            />
+          )
+        }
+        title="System Metrics">
+        <LineChart
+          experimentId={trial.id}
+          handleError={handleError}
+          series={systemMetrics.data}
+          xAxis={XAxisDomain.Time}
+          xLabel="Time"
+          yLabel={yLabel}
+          yTickValues={/^bytes/i.test(yLabel) ? getByteTickValues : getScientificNotationTickValues}
+        />
+      </Section>
+    </div>
   );
 };
 

@@ -1,7 +1,8 @@
-import useUI, { getCssVar, getStateColorCssVar, StateOfUnion } from 'determined-ui/Theme';
+import { getCssVar, getStateColorCssVar, StateOfUnion } from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
 import React, { CSSProperties, useMemo, useRef } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import { stateToLabel } from 'constants/states';
 import { useTheme } from 'hooks/useTheme';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';

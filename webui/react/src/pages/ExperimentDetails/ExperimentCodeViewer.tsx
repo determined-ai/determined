@@ -3,7 +3,7 @@ import Spinner from 'determined-ui/Spinner';
 import { Failed, Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { TreeNode } from 'determined-ui/utils/types';
 import yaml from 'js-yaml';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
@@ -29,6 +29,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   onSelectFile,
   selectedFilePath,
 }: Props) => {
+  const containerRef = useRef(null);
   const [expFiles, setExpFiles] = useState<Loadable<TreeNode[]>>(NotLoaded);
   const [fileContent, setFileContent] = useState<Loadable<string>>(NotLoaded);
 
@@ -96,7 +97,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
           setFileContent(Loaded(file));
         }
       } catch (error) {
-        handleError(error, {
+        handleError(containerRef, error, {
           publicMessage: 'Failed to load selected file.',
           publicSubject: 'Unable to fetch the selected file.',
           silent: false,
@@ -140,7 +141,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   return (
     <React.Suspense fallback={<Spinner spinning tip="Loading code viewer..." />}>
       <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
-        <div className={cssClasses.join(' ')}>
+        <div className={cssClasses.join(' ')} ref={containerRef}>
           <CodeEditor
             file={fileContent}
             files={fileOpts}

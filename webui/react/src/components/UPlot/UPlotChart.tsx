@@ -1,11 +1,11 @@
 import Button from 'determined-ui/Button';
 import Icon from 'determined-ui/Icon';
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
+import useUI from 'components/ThemeProvider';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import { useTheme } from 'hooks/useTheme';
@@ -173,7 +173,7 @@ const UPlotChart: React.FC<Props> = ({
       } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
-        handleError(e, {
+        handleError(chartDivRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Unable to Load data for chart',
           publicSubject: 'Bad Data',
@@ -187,7 +187,7 @@ const UPlotChart: React.FC<Props> = ({
       } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
-        handleError(e, {
+        handleError(chartDivRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Unable to Load data for chart',
           publicSubject: 'Bad Data',

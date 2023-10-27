@@ -1,7 +1,6 @@
 import { Divider } from 'antd';
 import Button from 'determined-ui/Button';
 import Form from 'determined-ui/Form';
-import useUI from 'determined-ui/Theme';
 import { notification } from 'determined-ui/Toast';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -14,6 +13,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
+import useUI from 'components/ThemeProvider';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';

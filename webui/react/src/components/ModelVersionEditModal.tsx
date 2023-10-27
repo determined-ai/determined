@@ -1,7 +1,7 @@
 import Form from 'determined-ui/Form';
 import Input from 'determined-ui/Input';
 import { Modal } from 'determined-ui/Modal';
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 
 import { patchModelVersion } from 'services/api';
 import { ModelVersion } from 'types';
@@ -20,6 +20,7 @@ interface Props {
 }
 
 const ModelVersionEditModal = ({ modelVersion, fetchModelVersion }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
 
@@ -38,7 +39,7 @@ const ModelVersionEditModal = ({ modelVersion, fetchModelVersion }: Props): JSX.
 
       await fetchModelVersion();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to edit model version',
         silent: false,
       });

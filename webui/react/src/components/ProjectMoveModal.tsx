@@ -4,7 +4,7 @@ import Icon from 'determined-ui/Icon';
 import { Modal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -25,6 +25,7 @@ interface Props {
 }
 
 const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) => {
+  const containerRef = useRef(null);
   const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
   const { canMoveProjectsTo } = usePermissions();
   const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
@@ -40,13 +41,14 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
       const destinationWorkspaceName: string =
         workspaces.find((w) => w.id === destinationWorkspaceId)?.name ?? '';
       makeToast({
+        containerRef,
         description: `${project.name} moved to workspace ${destinationWorkspaceName}`,
         link: <Link path={paths.workspaceDetails(destinationWorkspaceId)}>View Workspace</Link>,
         title: 'Move Success',
       });
       onMove?.();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to move project.',
@@ -69,39 +71,41 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
   );
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled: !destinationWorkspaceId,
-        handleError,
-        handler: handleSubmit,
-        text: 'Move Project',
-      }}
-      title="Move Project">
-      <label htmlFor="workspace">Workspace</label>
-      <Select
-        id="workspace"
-        placeholder="Select a destination workspace."
-        style={{ width: '100%' }}
-        value={destinationWorkspaceId}
-        onSelect={handleWorkspaceSelect}>
-        {workspaces.map((workspace) => {
-          const disabled = workspace.archived || workspace.id === project.workspaceId;
-          return (
-            <Option disabled={disabled} key={workspace.id} value={workspace.id}>
-              <div className={disabled ? css.workspaceOptionDisabled : ''}>
-                <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                {workspace.archived && <Icon name="archive" title="Archived" />}
-                {workspace.id === project.workspaceId && (
-                  <Icon name="checkmark" title="Project's current workspace" />
-                )}
-              </div>
-            </Option>
-          );
-        })}
-      </Select>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled: !destinationWorkspaceId,
+          handleError,
+          handler: handleSubmit,
+          text: 'Move Project',
+        }}
+        title="Move Project">
+        <label htmlFor="workspace">Workspace</label>
+        <Select
+          id="workspace"
+          placeholder="Select a destination workspace."
+          style={{ width: '100%' }}
+          value={destinationWorkspaceId}
+          onSelect={handleWorkspaceSelect}>
+          {workspaces.map((workspace) => {
+            const disabled = workspace.archived || workspace.id === project.workspaceId;
+            return (
+              <Option disabled={disabled} key={workspace.id} value={workspace.id}>
+                <div className={disabled ? css.workspaceOptionDisabled : ''}>
+                  <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                  {workspace.archived && <Icon name="archive" title="Archived" />}
+                  {workspace.id === project.workspaceId && (
+                    <Icon name="checkmark" title="Project's current workspace" />
+                  )}
+                </div>
+              </Option>
+            );
+          })}
+        </Select>
+      </Modal>
+    </div>
   );
 };
 

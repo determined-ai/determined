@@ -3,7 +3,7 @@ import Form from 'determined-ui/Form';
 import { Modal } from 'determined-ui/Modal';
 import Spinner from 'determined-ui/Spinner';
 import { makeToast } from 'determined-ui/Toast';
-import React, { useEffect, useId } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 
 import { updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -26,6 +26,7 @@ interface FormInputs {
 }
 
 const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userGroups }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
 
@@ -62,8 +63,8 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
         }
       }
     } catch (e) {
-      makeToast({ severity: 'Error', title: 'Error adding user to groups' });
-      handleError(e, { silent: true, type: ErrorType.Input });
+      makeToast({ containerRef, severity: 'Error', title: 'Error adding user to groups' });
+      handleError(containerRef, e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
@@ -75,35 +76,37 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
   }
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled: !groupsValue?.length,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: 'Save',
-      }}
-      title="Manage Groups">
-      <Spinner spinning={!groupOptions}>
-        <Form form={form} id={idPrefix + FORM_ID}>
-          <Form.Item name={GROUPS_NAME}>
-            <Select
-              mode="multiple"
-              optionFilterProp="children"
-              placeholder="Select Groups"
-              showSearch>
-              {groupOptions.map((go) => (
-                <Select.Option key={go.group.groupId} value={go.group.groupId}>
-                  {go.group.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-      </Spinner>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled: !groupsValue?.length,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: 'Save',
+        }}
+        title="Manage Groups">
+        <Spinner spinning={!groupOptions}>
+          <Form form={form} id={idPrefix + FORM_ID}>
+            <Form.Item name={GROUPS_NAME}>
+              <Select
+                mode="multiple"
+                optionFilterProp="children"
+                placeholder="Select Groups"
+                showSearch>
+                {groupOptions.map((go) => (
+                  <Select.Option key={go.group.groupId} value={go.group.groupId}>
+                    {go.group.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
+        </Spinner>
+      </Modal>
+    </div>
   );
 };
 

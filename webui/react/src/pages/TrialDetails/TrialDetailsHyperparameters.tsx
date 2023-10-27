@@ -1,5 +1,5 @@
 import Spinner from 'determined-ui/Spinner';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -22,8 +22,9 @@ interface HyperParameter {
 }
 
 const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props) => {
+  const containerRef = useRef(null);
   const config = useMemo(() => configForTrial(trial?.id), [trial?.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(config, containerRef);
 
   const columns: ColumnDef<HyperParameter>[] = useMemo(
     () => [
@@ -58,24 +59,26 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
   }, [trial?.hyperparameters]);
 
   return (
-    <Spinner spinning={!trial}>
-      {trial ? (
-        <InteractiveTable<HyperParameter, Settings>
-          columns={columns}
-          containerRef={pageRef}
-          dataSource={dataSource}
-          pagination={false}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="hyperparameter"
-          settings={settings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings}
-        />
-      ) : (
-        <SkeletonTable columns={columns.length} />
-      )}
-    </Spinner>
+    <div ref={containerRef}>
+      <Spinner spinning={!trial}>
+        {trial ? (
+          <InteractiveTable<HyperParameter, Settings>
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={dataSource}
+            pagination={false}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="hyperparameter"
+            settings={settings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings}
+          />
+        ) : (
+          <SkeletonTable columns={columns.length} />
+        )}
+      </Spinner>
+    </div>
   );
 };
 

@@ -1,10 +1,10 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
-import { ThemeProvider } from 'determined-ui/Theme';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -125,15 +125,20 @@ const setup = (
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => {
     return (
       <ThemeProvider>
-        <Container>{children}</Container>
+        <div ref={React.createRef()}>
+          <Container>{children}</Container>
+        </div>
       </ThemeProvider>
     );
   };
-  const hookResult = renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
-    wrapper: RouterWrapper,
-  });
+  const hookResult = renderHook(
+    () => hook.useSettings<Settings>(newSettings ?? config, React.createRef()),
+    {
+      wrapper: RouterWrapper,
+    },
+  );
   const extraHookResult = renderHook(
-    () => hook.useSettings<ExtraSettings>(newExtraSettings ?? extraConfig),
+    () => hook.useSettings<ExtraSettings>(newExtraSettings ?? extraConfig, React.createRef()),
     {
       wrapper: RouterWrapper,
     },

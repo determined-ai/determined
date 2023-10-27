@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useRef } from 'react';
+import { createRef, useRef } from 'react';
 
 import { getTelemetry } from 'services/api';
 import { DeterminedInfo } from 'stores/determinedInfo';
@@ -60,7 +60,7 @@ class Telemetry {
         this.isLoaded = true;
       }
     } catch (e) {
-      handleError(e, {
+      handleError(createRef(), e, {
         level: ErrorLevel.Error,
         publicMessage: 'Failed to load telemetry.',
         silent: true,
@@ -92,7 +92,7 @@ class Telemetry {
         this.isIdentified = false;
       }
     } catch (e) {
-      handleError(e, {
+      handleError(createRef(), e, {
         level: ErrorLevel.Error,
         publicMessage: 'Failed to set telemetry identity.',
         silent: true,

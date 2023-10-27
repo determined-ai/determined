@@ -5,7 +5,7 @@ import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
 import usePrevious from 'determined-ui/utils/usePrevious';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -82,7 +82,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
   const colSpan = Array.isArray(experiment) ? experiment.length + 1 : 1;
-
+  const containerRef = useRef(null);
   useEffect(() => {
     if (trialIds === undefined) return;
     const canceler = new AbortController();
@@ -92,7 +92,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
         const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
         setTrialsDetails((prev) => [...prev, response]);
       } catch (e) {
-        handleError(e);
+        handleError(containerRef, e);
       }
     };
 
@@ -142,7 +142,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicMessage: `Failed to load metric names for ${pluralizer(
           experimentIds.length,
           'experiment',
@@ -216,7 +216,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   );
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       {!(
         (trialIds === undefined || trialIds.length === 0) &&
         (trials === undefined || trials.length === 0)

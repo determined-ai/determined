@@ -3,7 +3,7 @@ import Input from 'determined-ui/Input';
 import { Modal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { useId, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 
 import { login, setUserPassword } from 'services/api';
 import userStore from 'stores/users';
@@ -37,6 +37,7 @@ interface Props {
 }
 
 const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
@@ -63,12 +64,12 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
     try {
       const password = newPassword;
       await setUserPassword({ password, userId: currentUser?.id ?? 0 });
-      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
+      makeToast({ containerRef, severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       form.resetFields();
       onSubmit?.();
     } catch (e) {
-      makeToast({ severity: 'Error', title: API_ERROR_MESSAGE });
-      handleError(e, { silent: true, type: ErrorType.Input });
+      makeToast({ containerRef, severity: 'Error', title: API_ERROR_MESSAGE });
+      handleError(containerRef, e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
@@ -80,50 +81,52 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
   };
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: OK_BUTTON_LABEL,
-      }}
-      title={MODAL_HEADER_LABEL}
-      onClose={handleClose}>
-      <p>Please confirm your password change</p>
-      <Form form={form} id={idPrefix + FORM_ID} onFieldsChange={handleFieldsChange}>
-        <Form.Item
-          label={OLD_PASSWORD_LABEL}
-          name={OLD_PASSWORD_NAME}
-          rules={[
-            {
-              message: INCORRECT_PASSWORD_MESSAGE,
-              validator: async (rule, value) => {
-                await login({ password: value ?? '', username: currentUser?.username ?? '' });
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: OK_BUTTON_LABEL,
+        }}
+        title={MODAL_HEADER_LABEL}
+        onClose={handleClose}>
+        <p>Please confirm your password change</p>
+        <Form form={form} id={idPrefix + FORM_ID} onFieldsChange={handleFieldsChange}>
+          <Form.Item
+            label={OLD_PASSWORD_LABEL}
+            name={OLD_PASSWORD_NAME}
+            rules={[
+              {
+                message: INCORRECT_PASSWORD_MESSAGE,
+                validator: async (rule, value) => {
+                  await login({ password: value ?? '', username: currentUser?.username ?? '' });
+                },
               },
-            },
-          ]}
-          validateTrigger={['onSubmit']}>
-          <Input.Password />
-        </Form.Item>
-        <Form.Item
-          label={CONFIRM_PASSWORD_LABEL}
-          name={CONFIRM_PASSWORD_NAME}
-          rules={[
-            { message: CONFIRM_PASSWORD_REQUIRED_MESSAGE, required: true },
-            {
-              message: PASSWORDS_NOT_MATCHING_MESSAGE,
-              validator: (rule, value) => {
-                return value === newPassword ? Promise.resolve() : Promise.reject();
+            ]}
+            validateTrigger={['onSubmit']}>
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            label={CONFIRM_PASSWORD_LABEL}
+            name={CONFIRM_PASSWORD_NAME}
+            rules={[
+              { message: CONFIRM_PASSWORD_REQUIRED_MESSAGE, required: true },
+              {
+                message: PASSWORDS_NOT_MATCHING_MESSAGE,
+                validator: (rule, value) => {
+                  return value === newPassword ? Promise.resolve() : Promise.reject();
+                },
               },
-            },
-          ]}>
-          <Input.Password />
-        </Form.Item>
-      </Form>
-    </Modal>
+            ]}>
+            <Input.Password />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

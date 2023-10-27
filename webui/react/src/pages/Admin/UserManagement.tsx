@@ -79,7 +79,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const ManageGroupsModal = useModal(ManageGroupsModalComponent);
   const ConfigureAgentModal = useModal(ConfigureAgentModalComponent);
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
-
+  const containerRef = useRef(null);
   const { canModifyUsers } = usePermissions();
   const { rbacEnabled } = useObservable(determinedStore.info);
 
@@ -87,12 +87,13 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     try {
       await patchUsers({ activate: !user.isActive, userIds: [user.id] });
       makeToast({
+        containerRef,
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
       });
       fetchUsers();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         isUserTriggered: true,
         publicSubject: `Unable to ${user.isActive ? 'deactivate' : 'activate'} user.`,
         silent: false,
@@ -144,7 +145,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   );
 
   return (
-    <div className={dropdownCss.base}>
+    <div className={dropdownCss.base} ref={containerRef}>
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
@@ -164,7 +165,7 @@ const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const pageRef = useRef<HTMLElement>(null);
-  const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig, pageRef);
 
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], loadableUsers);
@@ -200,7 +201,7 @@ const UserManagement: React.FC = () => {
         return response.groups || [];
       });
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch groups.' });
+      handleError(pageRef, e, { publicSubject: 'Unable to fetch groups.' });
     }
   }, []);
 

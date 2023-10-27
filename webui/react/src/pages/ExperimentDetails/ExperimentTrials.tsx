@@ -1,7 +1,7 @@
 import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import Dropdown from 'determined-ui/Dropdown';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
@@ -62,9 +62,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
-
+  const containerRef = useRef(null);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(config, containerRef);
 
   const workspace = { id: experiment.workspaceId };
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
@@ -73,7 +73,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
+  } = useModalHyperparameterSearch({ containerRef, experiment });
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -201,9 +201,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           TrialAction.HyperparameterSearch,
           TrialAction.ViewLogs,
         ]}
+        containerRef={containerRef}
         id={experiment.id + ''}
         kind="experiment"
-        onError={handleError}
+        onError={() => handleError}
         onTrigger={dropDownOnTrigger(record)}
       />
     );
@@ -291,7 +292,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       setTrials(experimentTrials);
       setIsLoading(false);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: `Unable to fetch experiments ${experiment.id} trials.`,
         silent: true,
         type: ErrorType.Api,
@@ -328,7 +329,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           action === Action.OpenTensorBoard
             ? 'Unable to View TensorBoard for Selected Trials'
             : `Unable to ${action} Selected Trials`;
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject,
@@ -421,7 +422,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   );
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       <Section>
         <TableBatch
           actions={[

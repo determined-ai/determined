@@ -1,6 +1,6 @@
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
@@ -30,7 +30,7 @@ interface Props {
 const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, trial }: Props) => {
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
   const [trialNeverData, setTrialNeverData] = useState<boolean>(false);
-
+  const containerRef = useRef(null);
   const handleModalClose = useCallback(() => fetchTrialDetails(), [fetchTrialDetails]);
 
   const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
@@ -38,7 +38,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, trial });
+  } = useModalHyperparameterSearch({ containerRef, experiment, trial });
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
@@ -120,7 +120,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
   ]);
 
   return (
-    <>
+    <div ref={containerRef}>
       <PageHeaderFoldable
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}
@@ -132,7 +132,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         onClose={handleModalClose}
       />
       {modalHyperparameterSearchContextHolder}
-    </>
+    </div>
   );
 };
 

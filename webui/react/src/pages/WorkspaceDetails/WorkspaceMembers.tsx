@@ -5,7 +5,7 @@ import Dropdown from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -109,9 +109,10 @@ const WorkspaceMembers: React.FC<Props> = ({
   workspace,
   fetchMembers,
 }: Props) => {
+  const containerRef = useRef(null);
   const { canAssignRoles } = usePermissions();
   const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
-  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
+  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config, containerRef);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
   const userOrGroupWithRoles = getUserOrGroupWithRoleInfo(

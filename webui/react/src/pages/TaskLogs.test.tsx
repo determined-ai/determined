@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as src from 'determined-ui/LogViewer/LogViewer';
-import { ThemeProvider } from 'determined-ui/Theme';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';

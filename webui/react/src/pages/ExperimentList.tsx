@@ -140,7 +140,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     updateSettings,
     resetSettings,
     activeSettings,
-  } = useSettings<ExperimentListSettings>(settingsConfig);
+  } = useSettings<ExperimentListSettings>(settingsConfig, pageRef);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -212,7 +212,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setTotal(imaginaryTotalItems);
       setExperiments([...pinnedExpResponse.experiments, ...otherExpResponse.experiments]);
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+      handleError(pageRef, e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
@@ -228,7 +228,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) {
-      handleError(e);
+      handleError(pageRef, e);
     }
   }, [id]);
 
@@ -357,7 +357,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         experimentId: id,
       });
     } catch (e) {
-      handleError(e, {
+      handleError(pageRef, e, {
         isUserTriggered: true,
         publicMessage: 'Unable to save experiment description.',
         silent: false,
@@ -751,7 +751,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           action === Action.OpenTensorBoard
             ? 'Unable to View TensorBoard for Selected Experiments'
             : `Unable to ${action} Selected Experiments`;
-        handleError(e, {
+        handleError(pageRef, e, {
           isUserTriggered: true,
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',

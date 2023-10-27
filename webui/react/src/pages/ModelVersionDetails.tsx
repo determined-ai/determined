@@ -7,7 +7,7 @@ import Spinner from 'determined-ui/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
@@ -45,6 +45,7 @@ const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
+  const containerRef = useRef(null);
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
   const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
   const workspace = Loadable.getOrElse(
@@ -117,7 +118,7 @@ const ModelVersionDetails: React.FC = () => {
         });
         await fetchModelVersion();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: 'Unable to save metadata.',
           silent: false,
           type: ErrorType.Api,
@@ -138,7 +139,7 @@ const ModelVersionDetails: React.FC = () => {
         });
         await fetchModelVersion();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: 'Unable to update notes.',
           silent: true,
           type: ErrorType.Api,
@@ -158,7 +159,7 @@ const ModelVersionDetails: React.FC = () => {
         });
         fetchModelVersion();
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: 'Unable to save tags.',
           silent: false,
           type: ErrorType.Api,
@@ -345,7 +346,7 @@ const ModelVersionDetails: React.FC = () => {
       id="modelDetails"
       notFound={pageError && isNotFound(pageError)}>
       {/* TODO: Clean up once we standardize page layouts */}
-      <div style={{ padding: 16 }}>
+      <div ref={containerRef} style={{ padding: 16 }}>
         <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />
       </div>
     </Page>

@@ -1,7 +1,7 @@
 import Button from 'determined-ui/Button';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import ModelCreateModal from 'components/ModelCreateModal';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
@@ -23,6 +23,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   title,
   children,
 }: Props) => {
+  const containerRef = useRef(null);
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
 
@@ -30,6 +31,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
+    containerRef,
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
       // TODO: fix the behavior along with checkpoint modal migration
       // It used to open checkpoint modal again after creating a model,
@@ -60,7 +62,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   }, [checkpointModal]);
 
   return (
-    <>
+    <div ref={containerRef}>
       <span onClick={handleModalCheckpointClick}>
         {children !== undefined ? (
           children
@@ -79,7 +81,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
         title={title}
         onClose={handleOnCloseCheckpoint}
       />
-    </>
+    </div>
   );
 };
 

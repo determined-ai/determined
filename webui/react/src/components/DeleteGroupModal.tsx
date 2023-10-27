@@ -1,6 +1,6 @@
 import { Modal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -15,15 +15,16 @@ interface Props {
 }
 
 const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
+  const containerRef = useRef(null);
   const handleSubmit = async () => {
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
-      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
+      makeToast({ containerRef, severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       onClose?.();
     } catch (e) {
-      makeToast({ severity: 'Error', title: 'error deleting group' });
-      handleError(e, { silent: true, type: ErrorType.Input });
+      makeToast({ containerRef, severity: 'Error', title: 'error deleting group' });
+      handleError(containerRef, e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
@@ -31,18 +32,20 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
   };
 
   return (
-    <Modal
-      cancel
-      danger
-      size="small"
-      submit={{
-        handleError,
-        handler: handleSubmit,
-        text: 'Delete',
-      }}
-      title={MODAL_HEADER}>
-      Are you sure you want to delete group {group.group?.name} (ID: {group.group?.groupId}).
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        danger
+        size="small"
+        submit={{
+          handleError,
+          handler: handleSubmit,
+          text: 'Delete',
+        }}
+        title={MODAL_HEADER}>
+        Are you sure you want to delete group {group.group?.name} (ID: {group.group?.groupId}).
+      </Modal>
+    </div>
   );
 };
 

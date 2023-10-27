@@ -1,6 +1,6 @@
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
-import { useEffect, useState } from 'react';
+import { RefObject, useEffect, useState } from 'react';
 
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -12,7 +12,7 @@ import usePrevious from './usePrevious';
 
 const useMetricNames = (
   experimentIds: number[],
-  errorHandler?: (e: unknown) => void,
+  errorHandler?: (containerRef: RefObject<HTMLElement>, e: unknown) => void,
   quickPoll?: boolean,
 ): Loadable<Metric[]> => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);

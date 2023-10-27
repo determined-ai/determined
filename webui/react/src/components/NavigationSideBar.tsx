@@ -6,7 +6,6 @@ import { matchesShortcut, shortcutToString } from 'determined-ui/InputShortcut';
 import { useModal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { boolean } from 'io-ts';
@@ -15,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import Link, { Props as LinkProps } from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
@@ -125,10 +125,10 @@ const NavigationSideBar: React.FC = () => {
   const info = useObservable(determinedStore.info);
   const { ui } = useUI();
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, nodeRef);
   const {
     settings: { navbarCollapsed: navbarCollapsedShortcut },
-  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig, nodeRef);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -305,6 +305,7 @@ const NavigationSideBar: React.FC = () => {
                       .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
                       .map((workspace) => (
                         <WorkspaceActionDropdown
+                          containerRef={nodeRef}
                           isContextMenu
                           key={workspace.id}
                           returnIndexOnDelete={false}

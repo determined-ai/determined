@@ -3,7 +3,7 @@ import Input from 'determined-ui/Input';
 import Tags, { tagsActionHelper } from 'determined-ui/Tags';
 import { makeToast } from 'determined-ui/Toast';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
@@ -22,6 +22,7 @@ import css from './useModalCheckpointRegister.module.scss';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[]) => void;
+  containerRef: RefObject<HTMLElement>;
 }
 
 interface ModalOpenProps {
@@ -55,7 +56,7 @@ const INITIAL_MODAL_STATE = {
   visible: false,
 };
 
-const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
+const useModalCheckpointRegister = ({ onClose, containerRef }: Props): ModalHooks => {
   const [canceler] = useState(new AbortController());
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
@@ -108,6 +109,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
 
           modalClose(ModalCloseReason.Ok);
           makeToast({
+            containerRef,
             description: `"${versionName || `Version ${selectedModelNumVersions + 1}`} registered"`,
             link: (
               <Link path={paths.modelVersionDetails(selectedModelName, response.version)}>
@@ -131,20 +133,21 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           }
           modalClose(ModalCloseReason.Ok);
           makeToast({
+            containerRef,
             description: `${checkpoints.length} versions registered`,
             link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
             title: 'Versions Registered',
           });
         }
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: `Unable to register ${pluralizer(checkpoints.length, 'checkpoint')}.`,
           silent: true,
           type: ErrorType.Api,
         });
       }
     },
-    [modalClose, selectedModelNumVersions],
+    [containerRef, modalClose, selectedModelNumVersions],
   );
 
   const handleOk = useCallback(
@@ -205,13 +208,13 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         return { ...prev, models: response.models };
       });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,
         type: ErrorType.Api,
       });
     }
-  }, [canceler.signal, modalState.visible]);
+  }, [canceler.signal, containerRef, modalState.visible]);
 
   const modalOpen = useCallback(
     async ({ checkpoints, selectedModelName }: ModalOpenProps) => {

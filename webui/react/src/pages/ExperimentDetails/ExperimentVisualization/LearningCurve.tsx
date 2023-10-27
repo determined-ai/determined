@@ -1,13 +1,13 @@
 import { LineChart } from 'determined-ui/LineChart';
 import Message from 'determined-ui/Message';
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
+import useUI from 'components/ThemeProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
 import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
@@ -118,7 +118,7 @@ const LearningCurve: React.FC<Props> = ({
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-
+  const containerRef = useRef(null);
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -284,7 +284,7 @@ const LearningCurve: React.FC<Props> = ({
           action === Action.OpenTensorBoard
             ? 'Unable to View TensorBoard for Selected Trials'
             : `Unable to ${action} Selected Trials`;
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject,
@@ -323,7 +323,7 @@ const LearningCurve: React.FC<Props> = ({
   }
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>

@@ -1,3 +1,5 @@
+import { createRef } from 'react';
+
 import {
   launchJupyterLab as apiLaunchJupyterLab,
   previewJupyterLab as apiPreviewJupyterLab,
@@ -33,7 +35,7 @@ export const launchJupyterLab = async (options: JupyterLabLaunchOptions = {}): P
     });
     openCommandResponse(commandResponse);
   } catch (e) {
-    handleError(e, {
+    handleError(createRef(), e, {
       level: ErrorLevel.Error,
       silent: false,
       type: ErrorType.Server,

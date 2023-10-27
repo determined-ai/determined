@@ -1,10 +1,10 @@
 import { findAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider } from 'determined-ui/Theme';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';

@@ -9,7 +9,7 @@ import Message from 'determined-ui/Message';
 import Pivot from 'determined-ui/Pivot';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import React, { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useSettings } from 'hooks/useSettings';
 import {
@@ -66,8 +66,11 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   onVisibleColumnChange,
 }) => {
   const settingsConfig = useMemo(() => settingsConfigForProject(projectId), [projectId]);
-
-  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
+  const containerRef = useRef(null);
+  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(
+    settingsConfig,
+    containerRef,
+  );
 
   const checkedColumn = useMemo(
     () =>

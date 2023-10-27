@@ -1,5 +1,5 @@
 import { Modal } from 'determined-ui/Modal';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
@@ -14,12 +14,13 @@ interface Props {
 }
 
 const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) => {
+  const containerRef = useRef(null);
   const handleSubmit = async () => {
     try {
       await deleteExperiment({ experimentId: experiment.id });
       routeToReactUrl(paths.projectDetails(experiment.projectId));
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to delete experiment.',
@@ -30,18 +31,20 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
   };
 
   return (
-    <Modal
-      cancel
-      danger
-      size="small"
-      submit={{
-        handleError,
-        handler: handleSubmit,
-        text: BUTTON_TEXT,
-      }}
-      title="Confirm Experiment Deletion">
-      Are you sure you want to delete experiment {experiment.id}?
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        danger
+        size="small"
+        submit={{
+          handleError,
+          handler: handleSubmit,
+          text: BUTTON_TEXT,
+        }}
+        title="Confirm Experiment Deletion">
+        Are you sure you want to delete experiment {experiment.id}?
+      </Modal>
+    </div>
   );
 };
 

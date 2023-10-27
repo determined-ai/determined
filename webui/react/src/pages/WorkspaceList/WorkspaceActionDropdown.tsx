@@ -2,7 +2,7 @@ import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
-import React, { useCallback, useMemo } from 'react';
+import React, { RefObject, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
@@ -15,6 +15,7 @@ import handleError from 'utils/error';
 interface Props {
   children?: React.ReactNode;
   className?: string;
+  containerRef: RefObject<HTMLElement>;
   direction?: 'vertical' | 'horizontal';
   isContextMenu?: boolean;
   onComplete?: () => void;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 interface WorkspaceMenuPropsIn {
+  containerRef: RefObject<HTMLElement>;
   onComplete?: () => void;
   returnIndexOnDelete?: boolean;
   workspace?: Workspace;
@@ -35,6 +37,7 @@ interface WorkspaceMenuPropsOut {
 }
 
 export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceMenuPropsOut = ({
+  containerRef,
   onComplete,
   returnIndexOnDelete = true,
   workspace,
@@ -67,14 +70,18 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
       workspaceStore
         .unarchiveWorkspace(workspace.id)
         .then(() => onComplete?.())
-        .catch((e) => handleError(e, { publicSubject: 'Unable to unarchive workspace.' }));
+        .catch((e) =>
+          handleError(containerRef, e, { publicSubject: 'Unable to unarchive workspace.' }),
+        );
     } else {
       workspaceStore
         .archiveWorkspace(workspace.id)
         .then(() => onComplete?.())
-        .catch((e) => handleError(e, { publicSubject: 'Unable to archive workspace.' }));
+        .catch((e) =>
+          handleError(containerRef, e, { publicSubject: 'Unable to archive workspace.' }),
+        );
     }
-  }, [onComplete, workspace]);
+  }, [containerRef, onComplete, workspace]);
 
   const handlePinClick = useCallback(() => {
     if (!workspace) return;
@@ -83,14 +90,16 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
       workspaceStore
         .unpinWorkspace(workspace.id)
         .then(() => onComplete?.())
-        .catch((e) => handleError(e, { publicSubject: 'Unable to unpin workspace.' }));
+        .catch((e) =>
+          handleError(containerRef, e, { publicSubject: 'Unable to unpin workspace.' }),
+        );
     } else {
       workspaceStore
         .pinWorkspace(workspace.id)
         .then(() => onComplete?.())
-        .catch((e) => handleError(e, { publicSubject: 'Unable to pin workspace.' }));
+        .catch((e) => handleError(containerRef, e, { publicSubject: 'Unable to pin workspace.' }));
     }
-  }, [onComplete, workspace]);
+  }, [containerRef, onComplete, workspace]);
 
   const MenuKey = {
     Delete: 'delete',
@@ -143,6 +152,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
 };
 
 const WorkspaceActionDropdown: React.FC<Props> = ({
+  containerRef,
   children,
   className,
   direction = 'vertical',
@@ -152,6 +162,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   onComplete,
 }: Props) => {
   const { contextHolders, menu, onClick } = useWorkspaceActionMenu({
+    containerRef,
     onComplete,
     returnIndexOnDelete,
     workspace,

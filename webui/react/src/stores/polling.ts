@@ -1,5 +1,6 @@
-import handleError from 'utils/error';
+import { createRef } from 'react';
 
+import handleError from 'utils/error';
 const POLLING_DELAY_MS = 10_000;
 const RETRY_DELAY_MS = 1000;
 const MAX_RETRY_DELAY_MS = 600_000;
@@ -75,7 +76,7 @@ abstract class PollingStore {
         );
         this.pollingRetry++;
       }
-      handleError(e);
+      handleError(createRef(), e);
     }
   }
 

@@ -19,7 +19,7 @@ class RoleStore {
         this.#roles.set(Loaded(response));
         return response;
       })
-      .catch(handleError);
+      .catch(() => handleError);
 
     return () => canceler.abort();
   }

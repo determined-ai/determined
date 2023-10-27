@@ -1,4 +1,3 @@
-import useUI from 'determined-ui/Theme';
 import React, { useMemo } from 'react';
 
 import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg?url';
@@ -7,6 +6,7 @@ import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-li
 import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg?url';
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
+import useUI from 'components/ThemeProvider';
 import { useTheme } from 'hooks/useTheme';
 import { serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';

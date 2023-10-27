@@ -4,6 +4,7 @@ import { pipe } from 'fp-ts/function';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 import { isEqual } from 'lodash';
+import { createRef } from 'react';
 
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
@@ -81,7 +82,7 @@ export class UserSettingsStore extends PollingStore {
       await updateUserSetting({ settings: settingsArray });
       this.#settings.set(Loaded(settings));
     } catch (error) {
-      handleError(error, {
+      handleError(createRef(), error, {
         isUserTriggered: false,
         publicMessage: 'Unable to update user settings, try again later.',
         type: ErrorType.Api,
@@ -94,7 +95,7 @@ export class UserSettingsStore extends PollingStore {
       await resetUserSetting({});
       this.#settings.set(Loaded(Map()));
     } catch (error) {
-      handleError(error, {
+      handleError(createRef(), error, {
         isUserTriggered: false,
         publicMessage: 'Unable to reset user settings, try again later.',
         type: ErrorType.Api,
@@ -242,7 +243,7 @@ export class UserSettingsStore extends PollingStore {
       const response = await getUserSetting({ signal: this.canceler?.signal });
       this.updateSettingsFromResponse(response);
     } catch (error) {
-      handleError(error, {
+      handleError(createRef(), error, {
         isUserTriggered: false,
         publicMessage: 'Unable to fetch user settings, try refreshing.',
         type: ErrorType.Api,
@@ -315,7 +316,7 @@ export class UserSettingsStore extends PollingStore {
         this.#updates = this.#updates.filter((p) => p !== promise);
       })
       .catch((e) =>
-        handleError(e, {
+        handleError(createRef(), e, {
           isUserTriggered: false,
           publicMessage: `Unable to update user settings for key: ${key}.`,
           publicSubject: 'Some POST user settings failed.',

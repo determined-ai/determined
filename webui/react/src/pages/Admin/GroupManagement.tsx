@@ -101,7 +101,7 @@ const GroupManagement: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef(new AbortController());
 
-  const { settings, updateSettings } = useSettings(settingsConfig);
+  const { settings, updateSettings } = useSettings(settingsConfig, pageRef);
 
   const { canModifyGroups, canViewGroups } = usePermissions();
   const RemoveUserFromGroupModal = useModal(RemoveUserFromGroupModalComponent);
@@ -123,7 +123,7 @@ const GroupManagement: React.FC = () => {
         return response.groups || [];
       });
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch groups.' });
+      handleError(pageRef, e, { publicSubject: 'Unable to fetch groups.' });
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +147,7 @@ const GroupManagement: React.FC = () => {
         return response.users;
       });
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch users.' });
+      handleError(pageRef, e, { publicSubject: 'Unable to fetch users.' });
     }
   }, []);
 

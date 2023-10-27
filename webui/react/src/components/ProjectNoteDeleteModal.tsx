@@ -1,5 +1,5 @@
 import { Modal } from 'determined-ui/Modal';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { setProjectNotes } from 'services/api';
 import { Project } from 'types';
@@ -16,6 +16,7 @@ const ProjectNoteDeleteModalComponent: React.FC<Props> = ({
   pageNumber = 0,
   project,
 }: Props) => {
+  const containerRef = useRef(null);
   const handleSubmit = useCallback(async () => {
     if (!project?.id) return;
     try {
@@ -24,7 +25,7 @@ const ProjectNoteDeleteModalComponent: React.FC<Props> = ({
         projectId: project.id,
       });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to delete notes page.',
@@ -35,23 +36,25 @@ const ProjectNoteDeleteModalComponent: React.FC<Props> = ({
   }, [pageNumber, project?.id, project?.notes]);
 
   return (
-    <Modal
-      cancel
-      danger
-      size="small"
-      submit={{
-        handleError,
-        handler: handleSubmit,
-        text: 'Delete Page',
-      }}
-      title="Delete Page"
-      onClose={onClose}>
-      <p>
-        Are you sure you want to delete&nbsp;
-        <strong>&quot;{project?.notes?.[pageNumber]?.name ?? 'Untitled'}&quot;</strong>?
-      </p>
-      <p>This cannot be undone.</p>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        danger
+        size="small"
+        submit={{
+          handleError,
+          handler: handleSubmit,
+          text: 'Delete Page',
+        }}
+        title="Delete Page"
+        onClose={onClose}>
+        <p>
+          Are you sure you want to delete&nbsp;
+          <strong>&quot;{project?.notes?.[pageNumber]?.name ?? 'Untitled'}&quot;</strong>?
+        </p>
+        <p>This cannot be undone.</p>
+      </Modal>
+    </div>
   );
 };
 

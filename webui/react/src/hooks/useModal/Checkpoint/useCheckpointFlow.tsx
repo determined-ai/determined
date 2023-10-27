@@ -1,5 +1,5 @@
 import { useModal } from 'determined-ui/Modal';
-import { ReactElement, useCallback, useMemo } from 'react';
+import { ReactElement, RefObject, useCallback, useMemo } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
 import ModelCreateModal from 'components/ModelCreateModal';
@@ -19,10 +19,12 @@ export const useCheckpointFlow = ({
   checkpoint,
   config,
   title,
+  containerRef,
 }: {
   checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   config: ExperimentConfig;
   title: string;
+  containerRef: RefObject<HTMLElement>;
 }): Return => {
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
@@ -30,6 +32,7 @@ export const useCheckpointFlow = ({
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
+    containerRef,
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
       // TODO: fix the behavior along with checkpoint modal migration
       // It used to open checkpoint modal again after creating a model,

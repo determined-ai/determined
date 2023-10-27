@@ -1,6 +1,6 @@
 import { Modal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { updateGroup } from 'services/api';
 import { V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
@@ -19,6 +19,7 @@ const RemoveUserFromGroupModalComponent = ({
   fetchGroups,
   onExpand,
 }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const onRemoveUser = useCallback(
     async (record: V1GroupSearchResult, userId?: number) => {
       const {
@@ -28,14 +29,15 @@ const RemoveUserFromGroupModalComponent = ({
       try {
         await updateGroup({ groupId, removeUsers: [userId] });
         makeToast({
+          containerRef,
           severity: 'Confirm',
           title: 'User has been removed from group.',
         });
         onExpand(true, record);
         fetchGroups();
       } catch (e) {
-        makeToast({ severity: 'Error', title: 'Error deleting group.' });
-        handleError(e, { silent: true, type: ErrorType.Input });
+        makeToast({ containerRef, severity: 'Error', title: 'Error deleting group.' });
+        handleError(containerRef, e, { silent: true, type: ErrorType.Input });
       }
     },
     [onExpand, fetchGroups],
@@ -46,20 +48,22 @@ const RemoveUserFromGroupModalComponent = ({
   }, [groupResult, onRemoveUser, user]);
 
   return (
-    <Modal
-      danger
-      size="small"
-      submit={{
-        handleError,
-        handler: handleOk,
-        text: 'Remove User',
-      }}
-      title="Confirm Removing User from Group">
-      <div>
-        Are you sure you want to remove {user?.username ?? 'this user'} from{' '}
-        {groupResult.group.name ?? 'this group'}?
-      </div>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        danger
+        size="small"
+        submit={{
+          handleError,
+          handler: handleOk,
+          text: 'Remove User',
+        }}
+        title="Confirm Removing User from Group">
+        <div>
+          Are you sure you want to remove {user?.username ?? 'this user'} from{' '}
+          {groupResult.group.name ?? 'this group'}?
+        </div>
+      </Modal>
+    </div>
   );
 };
 

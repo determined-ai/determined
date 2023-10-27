@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider } from 'determined-ui/Theme';
 
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -14,11 +13,9 @@ vi.mock('determined-ui/Tooltip');
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
-    <ThemeProvider>
-      <BadgeTag tooltip={tooltip} {...props}>
-        {children}
-      </BadgeTag>
-    </ThemeProvider>,
+    <BadgeTag tooltip={tooltip} {...props}>
+      {children}
+    </BadgeTag>,
   );
   return { view };
 };

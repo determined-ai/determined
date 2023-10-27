@@ -1,7 +1,7 @@
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import useConfirm from 'determined-ui/useConfirm';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -32,6 +32,7 @@ export const TaskBar: React.FC<Props> = ({
   resourcePool,
   type,
 }: Props) => {
+  const containerRef = useRef(null);
   const { canModifyWorkspaceNSC } = usePermissions();
   const confirm = useConfirm();
   const task = useMemo(() => {
@@ -49,7 +50,7 @@ export const TaskBar: React.FC<Props> = ({
             await killTask(task);
             routeToReactUrl(paths.taskList());
           } catch (e) {
-            handleError(e, {
+            handleError(containerRef, e, {
               publicMessage: `Unable to kill task ${task.id}.`,
               publicSubject: 'Kill failed.',
               silent: false,

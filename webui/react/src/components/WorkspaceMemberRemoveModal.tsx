@@ -1,6 +1,6 @@
 import { Modal } from 'determined-ui/Modal';
 import { makeToast } from 'determined-ui/Toast';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
 import { UserOrGroupWithRoleInfo } from 'types';
@@ -24,6 +24,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
   scopeWorkspaceId,
   userOrGroupId,
 }: Props) => {
+  const containerRef = useRef(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const handleSubmit = useCallback(async () => {
@@ -33,11 +34,11 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
         ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       onClose?.();
-      makeToast({ severity: 'Confirm', title: `${name} removed from workspace` });
+      makeToast({ containerRef, severity: 'Confirm', title: `${name} removed from workspace` });
     } catch (e) {
       setIsDeleting(false);
       if (e instanceof DetError) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: e.level,
           publicMessage: e.publicMessage,
           publicSubject: 'Unable to remove user or group from workspace.',
@@ -45,7 +46,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
           type: e.type,
         });
       } else {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject: 'Unable to remove user or group.',
@@ -57,22 +58,24 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
   }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId, onClose]);
 
   return (
-    <Modal
-      cancel
-      danger
-      size="small"
-      submit={{
-        disabled: isDeleting,
-        handleError,
-        handler: handleSubmit,
-        text: 'Remove',
-      }}
-      title={`Remove ${name}`}>
-      <p>
-        Are you sure you want to remove {name} from this workspace? They will no longer be able to
-        access the contents of this workspace. Nothing will be deleted.
-      </p>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        danger
+        size="small"
+        submit={{
+          disabled: isDeleting,
+          handleError,
+          handler: handleSubmit,
+          text: 'Remove',
+        }}
+        title={`Remove ${name}`}>
+        <p>
+          Are you sure you want to remove {name} from this workspace? They will no longer be able to
+          access the contents of this workspace. Nothing will be deleted.
+        </p>
+      </Modal>
+    </div>
   );
 };
 

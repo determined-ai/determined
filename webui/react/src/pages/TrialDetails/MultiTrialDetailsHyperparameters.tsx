@@ -52,7 +52,7 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   );
 
   const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ExperimentHyperparametersSettings>(settingsConfig);
+    useSettings<ExperimentHyperparametersSettings>(settingsConfig, pageRef);
 
   const [batches, setBatches] = useState<number[]>();
 

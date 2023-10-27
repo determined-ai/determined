@@ -75,6 +75,7 @@ const ProjectDetails: React.FC = () => {
   }, [id]);
 
   const { contextHolders, menu, onClick } = useProjectActionMenu({
+    containerRef: pageRef,
     onDelete: onProjectDelete,
     onEdit: fetchProject,
     onMove: fetchProject,

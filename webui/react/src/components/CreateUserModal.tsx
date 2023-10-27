@@ -6,7 +6,7 @@ import Spinner from 'determined-ui/Spinner';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { filter } from 'fp-ts/lib/Set';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -58,6 +58,7 @@ interface FormInputs {
 }
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -75,7 +76,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         const roles = await getUserRoles({ userId: user.id });
         setUserRoles(roles?.filter((r) => r.fromUser));
       } catch (e) {
-        handleError(e, { publicSubject: "Unable to fetch this user's roles." });
+        handleError(containerRef, e, { publicSubject: "Unable to fetch this user's roles." });
       }
     }
   }, [user, canAssignRolesFlag, rbacEnabled]);
@@ -108,7 +109,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         }
         fetchUserRoles();
         if (currentUser?.id === user.id) checkAuth();
-        makeToast({ severity: 'Confirm', title: 'User has been updated' });
+        makeToast({ containerRef, severity: 'Confirm', title: 'User has been updated' });
       } else {
         formData[ACTIVE_NAME] = true;
         const u = await postUser({ user: formData });
@@ -116,16 +117,17 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: uid }]);
         }
-        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
+        makeToast({ containerRef, severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
         form.resetFields();
       }
       onClose?.();
     } catch (e) {
       makeToast({
+        containerRef,
         severity: 'Error',
         title: user ? 'Error updating user' : 'Error creating new user',
       });
-      handleError(e, { silent: true, type: ErrorType.Input });
+      handleError(containerRef, e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
@@ -141,77 +143,82 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
   }, [form, user, userRoles]);
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled: hasErrors(form),
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: viewOnly ? 'Close' : BUTTON_NAME,
-      }}
-      title={
-        user
-          ? viewOnly
-            ? MODAL_HEADER_LABEL_VIEW
-            : MODAL_HEADER_LABEL_EDIT
-          : MODAL_HEADER_LABEL_CREATE
-      }
-      onClose={form.resetFields}>
-      <Spinner
-        spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
-        tip="Loading roles...">
-        <Form form={form} id={idPrefix + FORM_ID}>
-          <Form.Item
-            initialValue={user?.username}
-            label={USER_NAME_LABEL}
-            name={USER_NAME_NAME}
-            required
-            validateTrigger={['onSubmit']}>
-            <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
-          </Form.Item>
-          <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
-            <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
-          </Form.Item>
-          {!rbacEnabled && (
-            <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
-              <Switch disabled={viewOnly} />
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled: hasErrors(form),
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: viewOnly ? 'Close' : BUTTON_NAME,
+        }}
+        title={
+          user
+            ? viewOnly
+              ? MODAL_HEADER_LABEL_VIEW
+              : MODAL_HEADER_LABEL_EDIT
+            : MODAL_HEADER_LABEL_CREATE
+        }
+        onClose={form.resetFields}>
+        <Spinner
+          spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
+          tip="Loading roles...">
+          <Form form={form} id={idPrefix + FORM_ID}>
+            <Form.Item
+              initialValue={user?.username}
+              label={USER_NAME_LABEL}
+              name={USER_NAME_NAME}
+              required
+              validateTrigger={['onSubmit']}>
+              <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
             </Form.Item>
-          )}
-          {rbacEnabled && canModifyPermissions && (
-            <>
-              <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
-                <Select
-                  disabled={(user !== undefined && userRoles === null) || viewOnly}
-                  loading={Loadable.isNotLoaded(knownRoles)}
-                  mode="multiple"
-                  optionFilterProp="children"
-                  placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
-                  showSearch>
-                  {Loadable.isLoaded(knownRoles) ? (
-                    <>
-                      {knownRoles.data.map((r: UserRole) => (
-                        <Select.Option key={r.id} value={r.id}>
-                          {r.name}
-                        </Select.Option>
-                      ))}
-                    </>
-                  ) : undefined}
-                </Select>
+            <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
+              <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
+            </Form.Item>
+            {!rbacEnabled && (
+              <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+                <Switch disabled={viewOnly} />
               </Form.Item>
-              <Typography.Text type="secondary">
-                Users may have additional inherited global or workspace roles not reflected here.
-                &nbsp;
-                <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
-                  Learn more
-                </Link>
-              </Typography.Text>
-            </>
-          )}
-        </Form>
-      </Spinner>
-    </Modal>
+            )}
+            {rbacEnabled && canModifyPermissions && (
+              <>
+                <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+                  <Select
+                    disabled={(user !== undefined && userRoles === null) || viewOnly}
+                    loading={Loadable.isNotLoaded(knownRoles)}
+                    mode="multiple"
+                    optionFilterProp="children"
+                    placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+                    showSearch>
+                    {Loadable.isLoaded(knownRoles) ? (
+                      <>
+                        {knownRoles.data.map((r: UserRole) => (
+                          <Select.Option key={r.id} value={r.id}>
+                            {r.name}
+                          </Select.Option>
+                        ))}
+                      </>
+                    ) : undefined}
+                  </Select>
+                </Form.Item>
+                <Typography.Text type="secondary">
+                  Users may have additional inherited global or workspace roles not reflected here.
+                  &nbsp;
+                  <Link
+                    external
+                    path={paths.docs('/cluster-setup-guide/security/rbac.html')}
+                    popout>
+                    Learn more
+                  </Link>
+                </Typography.Text>
+              </>
+            )}
+          </Form>
+        </Spinner>
+      </Modal>
+    </div>
   );
 };
 

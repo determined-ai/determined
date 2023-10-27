@@ -26,7 +26,7 @@ class ProjectStore {
           );
           this.#projectsByWorkspace.update((prev) => prev.set(workspaceKey, response.projects));
         })
-        .catch(handleError);
+        .catch(() => handleError);
     }
 
     return () => canceler.abort();

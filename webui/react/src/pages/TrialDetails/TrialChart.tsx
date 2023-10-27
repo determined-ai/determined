@@ -1,5 +1,5 @@
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import MetricSelect from 'components/MetricSelect';
@@ -35,6 +35,7 @@ const TrialChart: React.FC<Props> = ({
   trialId,
   trialTerminated,
 }: Props) => {
+  const containerRef = useRef(null);
   const [scale, setScale] = useState<Scale>(Scale.Linear);
   const [trialSummary, setTrialSummary] = useState<Loadable<MetricContainer[]>>(NotLoaded);
 
@@ -49,7 +50,7 @@ const TrialChart: React.FC<Props> = ({
         });
         setTrialSummary(Loaded(summary[0].metrics));
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicMessage: `Failed to load trial summary for trial ${trialId}.`,
           publicSubject: 'Trial summary fail to load.',
           type: ErrorType.Api,
@@ -152,7 +153,7 @@ const TrialChart: React.FC<Props> = ({
 
   return (
     <Section bodyBorder options={options} title="Metrics">
-      <div className={css.base}>
+      <div className={css.base} ref={containerRef}>
         <UPlotChart
           data={chartData}
           isLoading={!trialId || Loadable.isNotLoaded(trialSummary)}

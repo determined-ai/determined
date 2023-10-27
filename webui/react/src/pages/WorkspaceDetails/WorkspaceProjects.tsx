@@ -10,7 +10,7 @@ import Spinner from 'determined-ui/Spinner';
 import Toggle from 'determined-ui/Toggle';
 import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Link from 'components/Link';
@@ -57,6 +57,7 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
+  const containerRef = useRef(null);
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
@@ -67,7 +68,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { canCreateProject } = usePermissions();
   const ProjectCreateModal = useModal(ProjectCreateModalComponent);
   const config = useMemo(() => configForWorkspace(id), [id]);
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config, containerRef);
 
   const fetchProjects = useCallback(async () => {
     if (!settings) return;
@@ -92,7 +93,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         return response.projects;
       });
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch projects.' });
+      handleError(containerRef, e, { publicSubject: 'Unable to fetch projects.' });
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +162,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     try {
       await patchProject({ description: newDescription, id: projectId });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to edit project.',
@@ -345,6 +346,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <Card.Group size="small">
             {projects.map((project) => (
               <ProjectCard
+                containerRef={containerRef}
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}

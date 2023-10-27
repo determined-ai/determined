@@ -1,7 +1,7 @@
 import Form, { hasErrors } from 'determined-ui/Form';
 import Input from 'determined-ui/Input';
 import { Modal } from 'determined-ui/Modal';
-import React, { useId, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 
 import { patchExperiment } from 'services/api';
 import { ExperimentItem } from 'types';
@@ -31,6 +31,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   description,
   onEditComplete,
 }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -44,7 +45,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       });
       onEditComplete({ description: formData.description, name: formData.experimentName });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicMessage: 'Unable to update experiment',
         silent: false,
       });

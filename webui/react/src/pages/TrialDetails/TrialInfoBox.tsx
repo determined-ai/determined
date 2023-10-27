@@ -1,6 +1,6 @@
 import Card from 'determined-ui/Card';
 import { useModal } from 'determined-ui/Modal';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
 import ModelCreateModal from 'components/ModelCreateModal';
@@ -18,6 +18,7 @@ interface Props {
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
+  const containerRef = useRef(null);
   const bestCheckpoint: CheckpointWorkloadExtended | undefined = useMemo(() => {
     if (!trial) return;
     const cp = trial.bestAvailableCheckpoint;
@@ -43,6 +44,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
+    containerRef,
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
       // TODO: fix the behavior along with checkpoint modal migration
       // It used to open checkpoint modal again after creating a model,
@@ -73,36 +75,38 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [checkpointModal]);
 
   return (
-    <Section>
-      <Card.Group size="small">
-        {trial?.runnerState && (
-          <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
-        )}
-        {trial?.startTime && (
-          <OverviewStats title="Started">
-            <TimeAgo datetime={trial.startTime} />
-          </OverviewStats>
-        )}
-        {totalCheckpointsSize && (
-          <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
-        )}
-        {bestCheckpoint && (
-          <>
-            <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
-              Batch {bestCheckpoint.totalBatches}
+    <div ref={containerRef}>
+      <Section>
+        <Card.Group size="small">
+          {trial?.runnerState && (
+            <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
+          )}
+          {trial?.startTime && (
+            <OverviewStats title="Started">
+              <TimeAgo datetime={trial.startTime} />
             </OverviewStats>
-            {modalCheckpointRegisterContextHolder}
-            <checkpointModal.Component
-              checkpoint={bestCheckpoint}
-              config={experiment.config}
-              title="Best Checkpoint"
-              onClose={handleOnCloseCheckpoint}
-            />
-            <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-          </>
-        )}
-      </Card.Group>
-    </Section>
+          )}
+          {totalCheckpointsSize && (
+            <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
+          )}
+          {bestCheckpoint && (
+            <>
+              <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
+                Batch {bestCheckpoint.totalBatches}
+              </OverviewStats>
+              {modalCheckpointRegisterContextHolder}
+              <checkpointModal.Component
+                checkpoint={bestCheckpoint}
+                config={experiment.config}
+                title="Best Checkpoint"
+                onClose={handleOnCloseCheckpoint}
+              />
+              <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
+            </>
+          )}
+        </Card.Group>
+      </Section>
+    </div>
   );
 };
 

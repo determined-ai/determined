@@ -4,7 +4,7 @@ import Select from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -26,6 +26,7 @@ interface Props {
 }
 
 const ModelMoveModal = ({ model }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { canMoveModel } = usePermissions();
@@ -41,13 +42,17 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
           ? paths.modelList()
           : paths.workspaceDetails(values.workspaceId, WorkspaceDetailsTab.ModelRegistry);
       makeToast({
+        containerRef,
         description: `${model.name} moved to workspace ${workspaceName}`,
         link: <Link path={path}>View Workspace</Link>,
         severity: 'Confirm',
         title: 'Successfully Moved',
       });
     } catch (e) {
-      handleError(e, { publicSubject: `Unable to move model ${model.id}.`, silent: false });
+      handleError(containerRef, e, {
+        publicSubject: `Unable to move model ${model.id}.`,
+        silent: false,
+      });
     } finally {
       form.resetFields();
     }

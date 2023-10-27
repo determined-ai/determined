@@ -16,7 +16,7 @@ import DataEditor, {
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import { DropdownEvent, MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
-import useUI, { getCssVar } from 'determined-ui/Theme';
+import { getCssVar } from 'determined-ui/Theme';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { literal, union } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +29,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import useUI from 'components/ThemeProvider';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { useTheme as useThemeHook } from 'hooks/useTheme';

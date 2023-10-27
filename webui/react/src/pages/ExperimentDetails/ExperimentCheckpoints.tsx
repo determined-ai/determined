@@ -1,7 +1,7 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import { useModal } from 'determined-ui/Modal';
 import useConfirm from 'determined-ui/useConfirm';
-import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Key, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
@@ -56,9 +56,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [isLoading, setIsLoading] = useState(true);
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
   const [canceler] = useState(new AbortController());
-
+  const containerRef = useRef(null);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(config, pageRef);
 
   const modelCreateModal = useModal(ModelCreateModal);
 
@@ -66,6 +66,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
+    containerRef: pageRef,
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
       // TODO: fix the behavior along with checkpoint modal migration
       // It used to open checkpoint modal again after creating a model,
@@ -169,6 +170,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         return (
           <ActionDropdown<CheckpointAction>
             actionOrder={batchActions}
+            containerRef={containerRef}
             danger={{ [checkpointAction.Delete]: true }}
             disabled={{
               [checkpointAction.Register]: !canActionCheckpoint(checkpointAction.Register, record),
@@ -177,7 +179,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             id={record.uuid}
             isContextMenu
             kind="checkpoint"
-            onError={handleError}
+            onError={() => handleError}
             onTrigger={dropDownOnTrigger(record.uuid)}>
             {children}
           </ActionDropdown>
@@ -190,6 +192,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
         actionOrder={batchActions}
+        containerRef={containerRef}
         danger={{ [checkpointAction.Delete]: true }}
         disabled={{
           [checkpointAction.Register]: !canActionCheckpoint(checkpointAction.Register, record),
@@ -197,7 +200,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         }}
         id={record.uuid}
         kind="checkpoint"
-        onError={handleError}
+        onError={() => handleError}
         onTrigger={dropDownOnTrigger(record.uuid)}
       />
     );
@@ -261,7 +264,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       setTotal(response.pagination.total ?? 0);
       setCheckpoints(response.checkpoints);
     } catch (e) {
-      handleError(e, {
+      handleError(pageRef, e, {
         publicSubject: `Unable to fetch experiment ${experiment.id} checkpoints.`,
         silent: true,
         type: ErrorType.Api,
@@ -269,7 +272,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [experiment.id, canceler, pageRef, settings, stateString]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
@@ -281,7 +284,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         await fetchExperimentCheckpoints();
       } catch (e) {
         const publicSubject = `Unable to ${action} Selected Checkpoints`;
-        handleError(e, {
+        handleError(pageRef, e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
           publicSubject,
@@ -290,7 +293,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         });
       }
     },
-    [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
+    [dropDownOnTrigger, fetchExperimentCheckpoints, pageRef, settings.row],
   );
 
   const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
@@ -329,7 +332,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [checkpointMap, settings.row]);
 
   return (
-    <>
+    <div ref={containerRef}>
       <Section>
         <TableBatch
           actions={batchActions.map((action) => ({
@@ -373,7 +376,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
       {modalCheckpointRegisterContextHolder}
-    </>
+    </div>
   );
 };
 

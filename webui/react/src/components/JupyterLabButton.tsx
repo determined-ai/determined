@@ -2,7 +2,7 @@ import Button from 'determined-ui/Button';
 import { shortcutToString } from 'determined-ui/InputShortcut';
 import { useModal } from 'determined-ui/Modal';
 import Tooltip from 'determined-ui/Tooltip';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
 import shortCutSettingsConfig, {
@@ -16,13 +16,14 @@ interface Props {
 }
 
 const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
+  const containerRef = useRef(null);
   const JupyterLabModal = useModal(JupyterLabModalComponent);
   const {
     settings: { jupyterLab: jupyterLabShortcut },
-  } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+  } = useSettings<ShortcutSettings>(shortCutSettingsConfig, containerRef);
 
   return (
-    <>
+    <div ref={containerRef}>
       {enabled ? (
         <Tooltip content={shortcutToString(jupyterLabShortcut)}>
           <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
@@ -35,7 +36,7 @@ const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
         </Tooltip>
       )}
       <JupyterLabModal.Component workspace={workspace} />
-    </>
+    </div>
   );
 };
 

@@ -7,7 +7,7 @@ import Select from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
@@ -39,6 +39,7 @@ interface Props {
 }
 
 const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const { canCreateModelWorkspace } = usePermissions();
   const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
@@ -73,6 +74,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
       });
       if (!response?.id) return;
       makeToast({
+        containerRef,
         description: `${modelName} has been created`,
         link: <Link path={paths.modelDetails(response.name)}>View Model</Link>,
         severity: 'Info',
@@ -80,7 +82,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
       });
     } catch (e) {
       if (e instanceof DetError) {
-        handleError(e, {
+        handleError(containerRef, e, {
           level: e.level,
           publicMessage: e.publicMessage,
           publicSubject: 'Unable to create model.',
@@ -88,7 +90,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
           type: e.type,
         });
       } else {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicMessage: 'Please try again later.',
           publicSubject: 'Unable to create model.',
           silent: false,

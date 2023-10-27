@@ -1,6 +1,7 @@
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import _ from 'lodash';
+import { createRef } from 'react';
 
 import { getCurrentUser, getUsers, patchUser } from 'services/api';
 import type { GetUsersParams, PatchUserParams } from 'services/types';
@@ -63,7 +64,9 @@ class UserStore extends PollingStore {
         this.#currentUser.set(Loaded(response));
         this.#usersById.update((map) => map.set(response.id, response));
       })
-      .catch((e) => handleError(e, { publicSubject: 'Unable to fetch current user.' }));
+      .catch((e) =>
+        handleError(createRef(), e, { publicSubject: 'Unable to fetch current user.' }),
+      );
 
     return () => canceler.abort();
   }
@@ -75,7 +78,7 @@ class UserStore extends PollingStore {
       .then((response) => {
         this.updateUsersFromResponse(response);
       })
-      .catch((e) => handleError(e, { publicSubject: 'Unable to fetch users.' }));
+      .catch((e) => handleError(createRef(), e, { publicSubject: 'Unable to fetch users.' }));
 
     return () => canceler.abort();
   }

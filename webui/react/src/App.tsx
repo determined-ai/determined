@@ -1,12 +1,11 @@
-import { App as AntdApp } from 'antd';
+import { App as AntdApp, notification } from 'antd';
 import Button from 'determined-ui/Button';
 import Spinner from 'determined-ui/Spinner';
-import useUI, { ThemeProvider, UIProvider } from 'determined-ui/Theme';
-import { notification } from 'determined-ui/Toast';
+import UIProvider from 'determined-ui/Theme';
 import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -17,6 +16,7 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
+import useUI, { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -46,7 +46,7 @@ import '@hpe.com/glide-data-grid/dist/index.css';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-
+  const containerRef = useRef(null);
   const loadableAuth = useObservable(authStore.auth);
   const isAuthChecked = useObservable(authStore.isChecked);
   const isAuthenticated = useObservable(authStore.isAuthenticated);
@@ -59,8 +59,9 @@ const AppView: React.FC = () => {
     settings,
     isLoading: isSettingsLoading,
     updateSettings,
-  } = useSettings<themeSettings>(themeConfig);
+  } = useSettings<themeSettings>(themeConfig, containerRef);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
+
   const { ui, actions: uiActions } = useUI();
 
   const { theme, isDarkMode } = useTheme(ui.mode, ui.theme);
@@ -160,8 +161,8 @@ const AppView: React.FC = () => {
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <UIProvider darkMode={isDarkMode} theme={theme}>
-        <div className={css.base}>
+      <UIProvider theme={theme} themeIsDark={isDarkMode}>
+        <div className={css.base} ref={containerRef}>
           {isAuthChecked ? (
             <>
               {isServerReachable ? (

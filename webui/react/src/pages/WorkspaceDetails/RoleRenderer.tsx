@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import {
   assignRolesToGroup,
@@ -31,6 +31,7 @@ const RoleRenderer: React.FC<Props> = ({
   userCanAssignRoles,
   workspaceId,
 }) => {
+  const containerRef = useRef(null);
   const [memberRoleId, setMemberRole] = useState(
     userOrGroupWithRoleInfo.roleAssignment?.role?.roleId,
   );
@@ -39,6 +40,7 @@ const RoleRenderer: React.FC<Props> = ({
     <Select
       className={css.base}
       disabled={!userCanAssignRoles || !userOrGroupWithRoleInfo.roleAssignment.scopeWorkspaceId}
+      ref={containerRef}
       value={memberRoleId}
       onSelect={async (value: RawValueType | LabelInValueType) => {
         const roleIdValue = value as number;
@@ -77,13 +79,13 @@ const RoleRenderer: React.FC<Props> = ({
                 });
             setMemberRole(roleIdValue);
           } catch (addRoleError) {
-            handleError(addRoleError, {
+            handleError(containerRef, addRoleError, {
               publicSubject: 'Unable to update role for user or group unable to remove new role.',
               silent: false,
             });
           }
         } catch (removeRoleError) {
-          handleError(removeRoleError, {
+          handleError(containerRef, removeRoleError, {
             publicSubject:
               'Unable to update role for user or group could unable to add current role.',
             silent: false,

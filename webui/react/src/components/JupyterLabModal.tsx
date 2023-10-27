@@ -9,7 +9,7 @@ import Spinner from 'determined-ui/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -84,6 +84,7 @@ interface Props {
 const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
+  const containerRef = useRef(null);
   const idPrefix = useId();
   const [showFullConfig, setShowFullConfig] = useState(false);
   const [config, setConfig] = useState<Loadable<string>>(NotLoaded);
@@ -103,8 +104,10 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     setFullConfigFormInvalid(hasError);
   }, [currentWorkspace, fullConfigForm]);
 
-  const { settings: defaults, updateSettings: updateDefaults } =
-    useSettings<JupyterLabOptions>(settingsConfig);
+  const { settings: defaults, updateSettings: updateDefaults } = useSettings<JupyterLabOptions>(
+    settingsConfig,
+    containerRef,
+  );
 
   const handleModalClose = useCallback(() => {
     const fields: JupyterLabOptions = form.getFieldsValue(true);
@@ -182,57 +185,59 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   }, [fetchConfig, showFullConfig]);
 
   return (
-    <Modal
-      cancel
-      footerLink={
-        showFullConfig ? (
-          <Link
-            external
-            path={paths.docs('/architecture/introduction.html#interactive-job-configuration')}
-            popout>
-            Read about JupyterLab settings
-          </Link>
-        ) : undefined
-      }
-      size={showFullConfig ? 'large' : 'small'}
-      submit={{
-        disabled: showFullConfig ? fullConfigFormInvalid : !currentWorkspace?.id,
-        form: idPrefix + (showFullConfig ? '-full-' : '-simple-') + BASE_FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: 'Launch',
-      }}
-      title="Launch JupyterLab"
-      onClose={handleModalClose}>
-      {showFullConfig ? (
-        <JupyterLabFullConfig
-          config={config}
-          configError={configError}
-          currentWorkspace={currentWorkspace}
-          form={fullConfigForm}
-          formId={idPrefix + '-full-' + BASE_FORM_ID}
-          lockedWorkspace={!!workspace}
-          setWorkspace={setCurrentWorkspace}
-          workspaces={workspaces}
-          onChange={handleConfigChange}
-        />
-      ) : (
-        <JupyterLabForm
-          currentWorkspace={currentWorkspace}
-          defaults={defaults}
-          form={form}
-          formId={idPrefix + '-simple-' + BASE_FORM_ID}
-          lockedWorkspace={!!workspace}
-          setWorkspace={setCurrentWorkspace}
-          workspaces={workspaces}
-        />
-      )}
-      <div>
-        <Button onClick={handleSecondary}>
-          {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
-        </Button>
-      </div>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        footerLink={
+          showFullConfig ? (
+            <Link
+              external
+              path={paths.docs('/architecture/introduction.html#interactive-job-configuration')}
+              popout>
+              Read about JupyterLab settings
+            </Link>
+          ) : undefined
+        }
+        size={showFullConfig ? 'large' : 'small'}
+        submit={{
+          disabled: showFullConfig ? fullConfigFormInvalid : !currentWorkspace?.id,
+          form: idPrefix + (showFullConfig ? '-full-' : '-simple-') + BASE_FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: 'Launch',
+        }}
+        title="Launch JupyterLab"
+        onClose={handleModalClose}>
+        {showFullConfig ? (
+          <JupyterLabFullConfig
+            config={config}
+            configError={configError}
+            currentWorkspace={currentWorkspace}
+            form={fullConfigForm}
+            formId={idPrefix + '-full-' + BASE_FORM_ID}
+            lockedWorkspace={!!workspace}
+            setWorkspace={setCurrentWorkspace}
+            workspaces={workspaces}
+            onChange={handleConfigChange}
+          />
+        ) : (
+          <JupyterLabForm
+            currentWorkspace={currentWorkspace}
+            defaults={defaults}
+            form={form}
+            formId={idPrefix + '-simple-' + BASE_FORM_ID}
+            lockedWorkspace={!!workspace}
+            setWorkspace={setCurrentWorkspace}
+            workspaces={workspaces}
+          />
+        )}
+        <div>
+          <Button onClick={handleSecondary}>
+            {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
+          </Button>
+        </div>
+      </Modal>
+    </div>
   );
 };
 
@@ -249,6 +254,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   setWorkspace,
   workspaces,
 }: FullConfigProps) => {
+  const containerRef = useRef(null);
   const usableConfig = useMemo(() => (Loadable.isLoaded(config) ? config.data : ''), [config]);
   const [field, setField] = useState([
     { name: 'config', value: usableConfig },
@@ -262,7 +268,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
         const configString = allFields.find((field) => field.name[0] === 'config').value;
         onChange?.(configString);
       } catch (e) {
-        handleError(e);
+        handleError(containerRef, e);
       }
     },
     [onChange],
@@ -349,6 +355,7 @@ const JupyterLabForm: React.FC<{
   setWorkspace: (arg0: Workspace | undefined) => void;
   workspaces: Workspace[];
 }> = ({ form, formId, currentWorkspace, defaults, lockedWorkspace, setWorkspace, workspaces }) => {
+  const containerRef = useRef(null);
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -388,7 +395,7 @@ const JupyterLabForm: React.FC<{
     try {
       setTemplates(await getTaskTemplates({}));
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     }
   }, []);
 
@@ -414,7 +421,7 @@ const JupyterLabForm: React.FC<{
   };
 
   return (
-    <Form form={form} id={formId}>
+    <Form form={form} id={formId} ref={containerRef}>
       <Form.Item
         initialValue={currentWorkspace?.id}
         label="Workspace"

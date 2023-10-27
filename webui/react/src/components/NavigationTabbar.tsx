@@ -2,13 +2,13 @@ import Avatar from 'determined-ui/Avatar';
 import Icon, { IconName } from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import Link, { Props as LinkProps } from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';

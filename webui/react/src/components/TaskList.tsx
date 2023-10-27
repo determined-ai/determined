@@ -100,10 +100,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
+  const containerRef = useRef(null);
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
-  const { activeSettings, resetSettings, settings, updateSettings } =
-    useSettings<Settings>(stgsConfig);
+  const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
+    stgsConfig,
+    containerRef,
+  );
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
   const canceler = useRef(new AbortController());
@@ -171,7 +174,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         return newTasks;
       });
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Unable to fetch tasks.',
         silent: true,
         type: ErrorType.Api,
@@ -521,7 +524,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       // Refetch task list to get updates based on batch action.
       fetchTasks();
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to Kill Selected Tasks',
@@ -596,7 +599,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   return (
     <>
-      <div className={css.options}>
+      <div className={css.options} ref={containerRef}>
         <Space>
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />

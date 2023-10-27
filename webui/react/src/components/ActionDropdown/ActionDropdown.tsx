@@ -2,7 +2,7 @@ import Button from 'determined-ui/Button';
 import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import useConfirm, { ConfirmModalProps } from 'determined-ui/useConfirm';
-import React, { JSXElementConstructor, useCallback } from 'react';
+import React, { JSXElementConstructor, RefObject, useCallback } from 'react';
 
 import { Eventually } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'utils/error';
@@ -23,6 +23,7 @@ interface Props<T extends string> {
    * define the order of actions to show up in the dropdown menu.
    */
   actionOrder: T[];
+  containerRef: RefObject<HTMLElement>;
   children?: React.ReactNode;
   /**
    * whether to prompt the user to confirm the action before executing it
@@ -54,7 +55,7 @@ interface Props<T extends string> {
   /**
    * how to handle errors.
    */
-  onError: (error: DetError) => void;
+  onError: (error: DetError, containerRef?: RefObject<HTMLElement>) => void;
   /**
    * what to do when an action is selected.
    */
@@ -70,6 +71,7 @@ const ActionDropdown = <T extends string>({
   onComplete,
   onTrigger,
   confirmations,
+  containerRef,
   danger,
   disabled,
   actionOrder,
@@ -88,9 +90,10 @@ const ActionDropdown = <T extends string>({
           silent: false,
           type: ErrorType.Server,
         }),
+        containerRef,
       );
     },
-    [onError],
+    [containerRef, onError],
   );
 
   const menuItems: MenuItem[] = actionOrder

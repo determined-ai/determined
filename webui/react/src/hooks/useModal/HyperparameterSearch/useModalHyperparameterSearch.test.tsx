@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import Button from 'determined-ui/Button';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
@@ -75,13 +75,17 @@ vi.mock('services/api', () => ({
 const { experiment } = generateTestExperimentData();
 
 const ModalTrigger: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalHyperparameterSearch({ experiment: experiment });
+  const containerRef = useRef(null);
+  const { contextHolder, modalOpen } = useModalHyperparameterSearch({
+    containerRef,
+    experiment: experiment,
+  });
 
   return (
-    <>
+    <div ref={containerRef}>
       <Button onClick={() => modalOpen()}>Open Modal</Button>
       {contextHolder}
-    </>
+    </div>
   );
 };
 

@@ -7,7 +7,7 @@ import Spinner from 'determined-ui/Spinner';
 import { Loaded } from 'determined-ui/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -116,7 +116,7 @@ const ExperimentCreateModalComponent = ({
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
-
+  const containerRef = useRef(null);
   const isFork = type === CreateExperimentType.Fork;
 
   const titleLabel = isFork ? `Fork Experiment ${experiment.id}` : `Continue Trial ${trial?.id}`;
@@ -202,7 +202,7 @@ const ExperimentCreateModalComponent = ({
           },
         ]);
       } catch (e) {
-        handleError(e, { publicMessage: 'failed to load previous yaml config' });
+        handleError(containerRef, e, { publicMessage: 'failed to load previous yaml config' });
       }
     }
     await form.validateFields();
@@ -245,7 +245,7 @@ const ExperimentCreateModalComponent = ({
           ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
           : false;
         if (currentSlotsExceeded) {
-          handleWarning({
+          handleWarning(containerRef, {
             level: ErrorLevel.Warn,
             publicMessage:
               'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
@@ -352,75 +352,77 @@ const ExperimentCreateModalComponent = ({
   if (!experiment || (!isFork && !trial)) return <></>;
 
   return (
-    <Modal
-      cancel
-      icon="fork"
-      size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
-      submit={{
-        disabled,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: type,
-      }}
-      title={titleLabel}
-      onClose={handleModalClose}>
-      <>
-        {modalState.error && <Message icon="error" title={modalState.error} />}
-        {modalState.configError && modalState.isAdvancedMode && (
-          <Message icon="error" title={modalState.configError} />
-        )}
-        {modalState.isAdvancedMode && (
-          <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
-            <CodeEditor
-              file={Loaded(modalState.configString)}
-              files={[{ key: 'config.yaml' }]}
-              height="40vh"
-              onChange={handleEditorChange}
-              onError={handleError}
-            />
-          </React.Suspense>
-        )}
-        <Form
-          form={form}
-          hidden={modalState.isAdvancedMode}
-          id={idPrefix + FORM_ID}
-          labelCol={{ span: 8 }}
-          name="basic"
-          onFieldsChange={handleFieldsChange}>
-          <Form.Item
-            initialValue={experiment.name}
-            label="Experiment name"
-            name={EXPERIMENT_NAME}
-            rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
-            <Input />
-          </Form.Item>
-          {!isFork && (
-            <Form.Item
-              label={`Max ${getMaxLengthType(modalState.config) || 'length'}`}
-              name={MAX_LENGTH}
-              rules={[
-                {
-                  required: true,
-                  validator: (rule, value) => {
-                    let errorMessage = '';
-                    if (!value) errorMessage = 'Please provide a max length.';
-                    if (value < 1) errorMessage = 'Max length must be at least 1.';
-                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
-                  },
-                },
-              ]}>
-              <Input type="number" />
-            </Form.Item>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        icon="fork"
+        size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
+        submit={{
+          disabled,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: type,
+        }}
+        title={titleLabel}
+        onClose={handleModalClose}>
+        <>
+          {modalState.error && <Message icon="error" title={modalState.error} />}
+          {modalState.configError && modalState.isAdvancedMode && (
+            <Message icon="error" title={modalState.configError} />
           )}
-        </Form>
-        <div>
-          <Button onClick={toggleMode}>
-            {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
-          </Button>
-        </div>
-      </>
-    </Modal>
+          {modalState.isAdvancedMode && (
+            <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
+              <CodeEditor
+                file={Loaded(modalState.configString)}
+                files={[{ key: 'config.yaml' }]}
+                height="40vh"
+                onChange={handleEditorChange}
+                onError={handleError}
+              />
+            </React.Suspense>
+          )}
+          <Form
+            form={form}
+            hidden={modalState.isAdvancedMode}
+            id={idPrefix + FORM_ID}
+            labelCol={{ span: 8 }}
+            name="basic"
+            onFieldsChange={handleFieldsChange}>
+            <Form.Item
+              initialValue={experiment.name}
+              label="Experiment name"
+              name={EXPERIMENT_NAME}
+              rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
+              <Input />
+            </Form.Item>
+            {!isFork && (
+              <Form.Item
+                label={`Max ${getMaxLengthType(modalState.config) || 'length'}`}
+                name={MAX_LENGTH}
+                rules={[
+                  {
+                    required: true,
+                    validator: (rule, value) => {
+                      let errorMessage = '';
+                      if (!value) errorMessage = 'Please provide a max length.';
+                      if (value < 1) errorMessage = 'Max length must be at least 1.';
+                      return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
+                    },
+                  },
+                ]}>
+                <Input type="number" />
+              </Form.Item>
+            )}
+          </Form>
+          <div>
+            <Button onClick={toggleMode}>
+              {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
+            </Button>
+          </div>
+        </>
+      </Modal>
+    </div>
   );
 };
 

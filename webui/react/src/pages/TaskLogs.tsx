@@ -5,7 +5,7 @@ import LogViewer, {
 } from 'determined-ui/LogViewer/LogViewer';
 import LogViewerSelect, { Filters } from 'determined-ui/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTask } from 'determined-ui/LogViewer/LogViewerSelect.settings';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -40,12 +40,15 @@ export const TaskLogsWrapper: React.FC = () => {
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const [searchParams] = useSearchParams();
-
+  const containerRef = useRef(null);
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
   const title = `${searchParams.has('id') ? `${searchParams.get('id')} ` : ''}Logs`;
 
   const taskSettingsConfig = useMemo(() => settingsConfigForTask(taskId), [taskId]);
-  const { resetSettings, settings, updateSettings } = useSettings<Settings>(taskSettingsConfig);
+  const { resetSettings, settings, updateSettings } = useSettings<Settings>(
+    taskSettingsConfig,
+    containerRef,
+  );
 
   const filterValues: Filters = useMemo(
     () => ({
@@ -157,6 +160,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
           } as CommandTask),
         },
       ]}
+      containerRef={containerRef}
       headerComponent={headerComponent}
       id="task-logs"
       title={title}>

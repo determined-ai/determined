@@ -7,10 +7,10 @@ import LogViewer, {
 import LogViewerSelect, { Filters } from 'determined-ui/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'determined-ui/LogViewer/LogViewerSelect.settings';
 import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
 import useConfirm from 'determined-ui/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -31,12 +31,16 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
+  const containerRef = useRef(null);
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
-  const { resetSettings, settings, updateSettings } = useSettings<Settings>(trialSettingsConfig);
+  const { resetSettings, settings, updateSettings } = useSettings<Settings>(
+    trialSettingsConfig,
+    containerRef,
+  );
 
   const filterValues: Filters = useMemo(
     () => ({
@@ -74,7 +78,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     try {
       await downloadTrialLogs(trial.id);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicMessage: `
           Failed to download trial ${trial.id} logs.
           If the problem persists please try our CLI "det trial logs ${trial.id}"
@@ -188,7 +192,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   );
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={containerRef}>
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}

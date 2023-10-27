@@ -1,12 +1,12 @@
 import { Alert } from 'antd';
 import CodeEditor from 'determined-ui/CodeEditor';
 import { Modal } from 'determined-ui/Modal';
-import useUI, { Mode } from 'determined-ui/Theme';
 import { Loadable, Loaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import useUI, { Mode } from 'components/ThemeProvider';
 import userSettings from 'stores/userSettings';
 import { Json } from 'types';
 import { isJsonObject, isObject } from 'utils/data';

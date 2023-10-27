@@ -89,7 +89,11 @@ const ModelDetails: React.FC = () => {
     return settingsConfig(modelId);
   }, [modelId]);
 
-  const { settings, isLoading: isLoadingSettings, updateSettings } = useSettings<Settings>(config);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+  } = useSettings<Settings>(config, pageRef);
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;
@@ -133,7 +137,7 @@ const ModelDetails: React.FC = () => {
         });
         await fetchModel();
       } catch (e) {
-        handleError(e, {
+        handleError(pageRef, e, {
           publicSubject: `Unable to update model version ${versionNum} tags.`,
           silent: true,
           type: ErrorType.Api,
@@ -155,7 +159,7 @@ const ModelDetails: React.FC = () => {
           });
         }
       } catch (e) {
-        handleError(e, {
+        handleError(pageRef, e, {
           publicSubject: 'Unable to save version description.',
           silent: false,
           type: ErrorType.Api,
@@ -298,7 +302,7 @@ const ModelDetails: React.FC = () => {
         }
         await fetchModel();
       } catch (e) {
-        handleError(e, {
+        handleError(pageRef, e, {
           publicSubject: 'Unable to save metadata.',
           silent: false,
           type: ErrorType.Api,
@@ -321,7 +325,7 @@ const ModelDetails: React.FC = () => {
         }
         await fetchModel();
       } catch (e) {
-        handleError(e, {
+        handleError(pageRef, e, {
           publicSubject: 'Unable to update notes.',
           silent: true,
           type: ErrorType.Api,
@@ -343,7 +347,7 @@ const ModelDetails: React.FC = () => {
           await fetchModel();
         }
       } catch (e) {
-        handleError(e, {
+        handleError(pageRef, e, {
           publicSubject: 'Unable to update model tags.',
           silent: true,
           type: ErrorType.Api,

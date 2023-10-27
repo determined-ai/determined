@@ -51,7 +51,7 @@ const WebhooksView: React.FC = () => {
   const WebhookCreateModal = useModal(WebhookCreateModalComponent);
   const WebhookDeleteModal = useModal(WebhookDeleteModalComponent);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, pageRef);
 
   const fetchWebhooks = useCallback(async () => {
     try {
@@ -61,7 +61,7 @@ const WebhooksView: React.FC = () => {
         return webhooks;
       });
     } catch (e) {
-      handleError(e, {
+      handleError(pageRef, e, {
         publicSubject: 'Unable to fetch webhooks.',
         silent: true,
         type: ErrorType.Api,
@@ -96,7 +96,7 @@ const WebhooksView: React.FC = () => {
           try {
             await testWebhook({ id: record.id });
           } catch (e) {
-            handleError(e, {
+            handleError(pageRef, e, {
               publicSubject: 'Webhook Request Failed',
               silent: false,
             });

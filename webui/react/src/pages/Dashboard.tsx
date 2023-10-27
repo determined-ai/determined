@@ -4,7 +4,7 @@ import Icon from 'determined-ui/Icon';
 import Message from 'determined-ui/Message';
 import Spinner from 'determined-ui/Spinner';
 import { Loadable } from 'determined-ui/utils/loadable';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
@@ -44,6 +44,7 @@ const PROJECTS_FETCH_LIMIT = 5;
 const DISPLAY_LIMIT = 25;
 
 const Dashboard: React.FC = () => {
+  const containerRef = useRef(null);
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -113,7 +114,7 @@ const Dashboard: React.FC = () => {
         );
         setExperiments(response.experiments);
       } catch (e) {
-        handleError(e, {
+        handleError(containerRef, e, {
           publicSubject: 'Error fetching experiments for dashboard',
           silent: false,
           type: ErrorType.Api,
@@ -134,7 +135,7 @@ const Dashboard: React.FC = () => {
       setProjects(projects);
       setProjectsLoading(false);
     } catch (e) {
-      handleError(e, {
+      handleError(containerRef, e, {
         publicSubject: 'Error fetching projects for dashboard',
         silent: false,
         type: ErrorType.Api,
@@ -197,7 +198,13 @@ const Dashboard: React.FC = () => {
         <Section title="Recently Viewed Projects">
           <Card.Group size="small" wrap={false}>
             {projects.map((project) => (
-              <ProjectCard hideActionMenu key={project.id} project={project} showWorkspace />
+              <ProjectCard
+                containerRef={containerRef}
+                hideActionMenu
+                key={project.id}
+                project={project}
+                showWorkspace
+              />
             ))}
           </Card.Group>
         </Section>

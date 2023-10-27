@@ -1,9 +1,10 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { themeLightDetermined } from 'determined-ui/internal/theme';
-import { ThemeProvider, UIProvider } from 'determined-ui/Theme';
+import UIProvider from 'determined-ui/Theme';
+import { DefaultTheme } from 'determined-ui/Theme/themes';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { User } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
@@ -26,7 +27,7 @@ const setup = (testUser: User) => {
   const user = userEvent.setup();
   const view = render(
     <ThemeProvider>
-      <UIProvider theme={themeLightDetermined}>
+      <UIProvider theme={DefaultTheme.Light} themeIsDark={false}>
         <Component user={testUser} />
       </UIProvider>
     </ThemeProvider>,

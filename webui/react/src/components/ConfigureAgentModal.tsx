@@ -4,7 +4,7 @@ import InputNumber from 'determined-ui/InputNumber';
 import { Modal } from 'determined-ui/Modal';
 import Spinner from 'determined-ui/Spinner';
 import { makeToast } from 'determined-ui/Toast';
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
@@ -24,7 +24,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   const idPrefix = useId();
   const [form] = Form.useForm();
   const [disabled, setDisabled] = useState<boolean>(true);
-
+  const containerRef = useRef(null);
   const handleFieldsChange = () => {
     const values = form.getFieldsValue();
     const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => v == null);
@@ -41,8 +41,8 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       await patchUser({ userId: user.id, userParams: formData });
       onClose?.();
     } catch (e) {
-      makeToast({ severity: 'Error', title: 'Error configuring agent' });
-      handleError(e, { silent: true, type: ErrorType.Input });
+      makeToast({ containerRef, severity: 'Error', title: 'Error configuring agent' });
+      handleError(containerRef, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
@@ -60,65 +60,67 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   }, [user]);
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        disabled,
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: 'Save',
-      }}
-      title="Configure Agent"
-      onClose={form.resetFields}>
-      <Spinner spinning={!user}>
-        <Form
-          form={form}
-          id={idPrefix + FORM_ID}
-          initialValues={
-            user?.agentUserGroup
-              ? {
-                  agentGid: user?.agentUserGroup.agentGid,
-                  agentGroup: user?.agentUserGroup.agentGroup,
-                  agentUid: user?.agentUserGroup.agentUid,
-                  agentUser: user?.agentUserGroup.agentUser,
-                }
-              : {
-                  agentGid: undefined,
-                  agentGroup: undefined,
-                  agentUid: undefined,
-                  agentUser: undefined,
-                }
-          }
-          onFieldsChange={handleFieldsChange}>
-          <Form.Item
-            label="Agent User ID"
-            name="agentUid"
-            rules={[{ message: 'Agent User ID is required ', required: true }]}>
-            <InputNumber min={0} />
-          </Form.Item>
-          <Form.Item
-            label="Agent User Name"
-            name="agentUser"
-            rules={[{ message: 'Agent User Name is required ', required: true }]}>
-            <Input maxLength={100} />
-          </Form.Item>
-          <Form.Item
-            label="Agent User Group ID"
-            name="agentGid"
-            rules={[{ message: 'Agent User Group ID is required ', required: true }]}>
-            <InputNumber min={0} />
-          </Form.Item>
-          <Form.Item
-            label="Agent Group Name"
-            name="agentGroup"
-            rules={[{ message: 'Agent Group Name is required ', required: true }]}>
-            <Input maxLength={100} />
-          </Form.Item>
-        </Form>
-      </Spinner>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          disabled,
+          form: idPrefix + FORM_ID,
+          handleError,
+          handler: handleSubmit,
+          text: 'Save',
+        }}
+        title="Configure Agent"
+        onClose={form.resetFields}>
+        <Spinner spinning={!user}>
+          <Form
+            form={form}
+            id={idPrefix + FORM_ID}
+            initialValues={
+              user?.agentUserGroup
+                ? {
+                    agentGid: user?.agentUserGroup.agentGid,
+                    agentGroup: user?.agentUserGroup.agentGroup,
+                    agentUid: user?.agentUserGroup.agentUid,
+                    agentUser: user?.agentUserGroup.agentUser,
+                  }
+                : {
+                    agentGid: undefined,
+                    agentGroup: undefined,
+                    agentUid: undefined,
+                    agentUser: undefined,
+                  }
+            }
+            onFieldsChange={handleFieldsChange}>
+            <Form.Item
+              label="Agent User ID"
+              name="agentUid"
+              rules={[{ message: 'Agent User ID is required ', required: true }]}>
+              <InputNumber min={0} />
+            </Form.Item>
+            <Form.Item
+              label="Agent User Name"
+              name="agentUser"
+              rules={[{ message: 'Agent User Name is required ', required: true }]}>
+              <Input maxLength={100} />
+            </Form.Item>
+            <Form.Item
+              label="Agent User Group ID"
+              name="agentGid"
+              rules={[{ message: 'Agent User Group ID is required ', required: true }]}>
+              <InputNumber min={0} />
+            </Form.Item>
+            <Form.Item
+              label="Agent Group Name"
+              name="agentGroup"
+              rules={[{ message: 'Agent Group Name is required ', required: true }]}>
+              <Input maxLength={100} />
+            </Form.Item>
+          </Form>
+        </Spinner>
+      </Modal>
+    </div>
   );
 };
 

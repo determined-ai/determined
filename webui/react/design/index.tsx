@@ -1,4 +1,3 @@
-import { ThemeProvider } from 'determined-ui/Theme';
 import { ConfirmationProvider } from 'determined-ui/useConfirm';
 import { Loaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
@@ -9,6 +8,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import 'uplot/dist/uPlot.min.css';
 import css from 'App.module.scss';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
 import DesignKit, { DesignKitContainer } from 'pages/DesignKit';
 

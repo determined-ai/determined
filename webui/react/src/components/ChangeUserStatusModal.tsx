@@ -3,6 +3,7 @@ import { Modal } from 'determined-ui/Modal';
 import Select, { Option } from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
 import { ValueOf } from 'determined-ui/utils/types';
+import { useRef } from 'react';
 
 import { patchUsers } from 'services/api';
 import handleError from 'utils/error';
@@ -32,44 +33,46 @@ const ChangeUserStatusModalComponent = ({
   fetchUsers,
 }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
-
+  const containerRef = useRef(null);
   const onSubmit = async () => {
     const values = await form.validateFields();
 
     try {
       await patchUsers({ activate: values[STATUS_NAME] === StatusType.Activate, userIds });
-      makeToast({ title: 'Successfully changed status' });
+      makeToast({ containerRef, title: 'Successfully changed status' });
       clearTableSelection();
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     } finally {
       fetchUsers();
     }
   };
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        form: 'ChangeUserStatusModalComponent',
-        handleError,
-        handler: onSubmit,
-        text: 'Submit',
-      }}
-      title="Change Selected Users' Status">
-      <Form form={form} layout="vertical">
-        <Form.Item
-          label="Status"
-          name={STATUS_NAME}
-          rules={[{ message: 'This field is required', required: true }]}>
-          <Select allowClear placeholder="Select Status">
-            <Option value={StatusType.Activate}>Activate</Option>
-            <Option value={StatusType.Deactivate}>Deactivate</Option>
-          </Select>
-        </Form.Item>
-      </Form>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          form: 'ChangeUserStatusModalComponent',
+          handleError,
+          handler: onSubmit,
+          text: 'Submit',
+        }}
+        title="Change Selected Users' Status">
+        <Form form={form} layout="vertical">
+          <Form.Item
+            label="Status"
+            name={STATUS_NAME}
+            rules={[{ message: 'This field is required', required: true }]}>
+            <Select allowClear placeholder="Select Status">
+              <Option value={StatusType.Activate}>Activate</Option>
+              <Option value={StatusType.Deactivate}>Deactivate</Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

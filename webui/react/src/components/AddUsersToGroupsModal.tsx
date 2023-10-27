@@ -2,6 +2,7 @@ import Form from 'determined-ui/Form';
 import { Modal } from 'determined-ui/Modal';
 import Select, { Option } from 'determined-ui/Select';
 import { makeToast } from 'determined-ui/Toast';
+import { useRef } from 'react';
 
 import { assignMultipleGroups } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -27,7 +28,7 @@ const AddUsersToGroupsModalComponent = ({
   fetchUsers,
 }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
-
+  const containerRef = useRef(null);
   const onSubmit = async () => {
     const values = await form.validateFields();
 
@@ -37,42 +38,45 @@ const AddUsersToGroupsModalComponent = ({
       );
       await assignMultipleGroups({ addGroups: groupIds, removeGroups: [], userIds });
       makeToast({
+        containerRef,
         title: 'Successfully added to groups',
       });
       clearTableSelection();
     } catch (e) {
-      handleError(e);
+      handleError(containerRef, e);
     } finally {
       fetchUsers();
     }
   };
 
   return (
-    <Modal
-      cancel
-      size="small"
-      submit={{
-        form: 'AddUsersToGroupsModalComponent',
-        handleError,
-        handler: onSubmit,
-        text: 'Submit',
-      }}
-      title="Add Selected to Groups">
-      <Form form={form} layout="vertical">
-        <Form.Item
-          label="Groups"
-          name={GROUPS_NAME}
-          rules={[{ message: 'This field is required', required: true }]}>
-          <Select mode="multiple" placeholder="Select Groups">
-            {groupOptions.map((go) => (
-              <Option key={go.group.groupId} value={go.group.groupId}>
-                {go.group.name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </Form>
-    </Modal>
+    <div ref={containerRef}>
+      <Modal
+        cancel
+        size="small"
+        submit={{
+          form: 'AddUsersToGroupsModalComponent',
+          handleError,
+          handler: onSubmit,
+          text: 'Submit',
+        }}
+        title="Add Selected to Groups">
+        <Form form={form} layout="vertical">
+          <Form.Item
+            label="Groups"
+            name={GROUPS_NAME}
+            rules={[{ message: 'This field is required', required: true }]}>
+            <Select mode="multiple" placeholder="Select Groups">
+              {groupOptions.map((go) => (
+                <Option key={go.group.groupId} value={go.group.groupId}>
+                  {go.group.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 

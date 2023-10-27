@@ -1,5 +1,5 @@
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -22,7 +22,7 @@ const SignOut: React.FC = () => {
   const info = useObservable(determinedStore.info);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const checkAuth = useAuthCheck();
-
+  const containerRef = useRef(null);
   useEffect(() => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
@@ -35,7 +35,7 @@ const SignOut: React.FC = () => {
         await logout({});
       } catch (e) {
         if (!isAuthFailure(e)) {
-          handleError(e, {
+          handleError(containerRef, e, {
             isUserTriggered: false,
             level: ErrorLevel.Warn,
             silent: true,
