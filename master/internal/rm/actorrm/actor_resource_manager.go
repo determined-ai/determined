@@ -50,7 +50,7 @@ func (r *ResourceManager) ValidateResources(
 }
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
-func (r *ResourceManager) ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityParam) (
+func (r *ResourceManager) ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityRequest) (
 	[]command.LaunchWarning,
 	error,
 ) {

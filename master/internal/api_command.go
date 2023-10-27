@@ -113,10 +113,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 
 	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
-		sproto.NewValidateResourcePoolAvailabilityParam(
-			poolName,
-			resources.Slots,
-		),
+		&sproto.ValidateResourcePoolAvailabilityRequest{
+			Name:  poolName,
+			Slots: resources.Slots,
+		},
 	)
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())

@@ -57,11 +57,12 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 		if log.AgentID == nil {
 			return fmt.Errorf("agentID must be non nil to monitor logs")
 		}
+		// The first line of trial logs is printing expconf which has the regex pattern.
+		// We skip monitoring this line.
+		regex := "(.*)(\\\"log_pattern_policies\\\":)(.*)"
+		compiledRegex, err := l.getCompiledRegex(regex)
+
 		for _, policy := range policies {
-			// The first line of trial logs is printing expconf which has the regex pattern.
-			// We skip monitoring this line.
-			regex := "(.*)(\\\"log_pattern_policies\\\":)(.*)"
-			compiledRegex, err := l.getCompiledRegex(regex)
 			if err != nil {
 				return err
 			}

@@ -36,7 +36,7 @@ type ResourceManager interface {
 	GetDefaultAuxResourcePool(sproto.GetDefaultAuxResourcePoolRequest) (sproto.GetDefaultAuxResourcePoolResponse, error)
 	ValidateResourcePool(name string) error
 	ResolveResourcePool(name string, workspace, slots int) (string, error)
-	ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityParam) ([]command.LaunchWarning, error)
+	ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityRequest) ([]command.LaunchWarning, error)
 	TaskContainerDefaults(
 		resourcePoolName string,
 		fallbackConfig model.TaskContainerDefaultsConfig,

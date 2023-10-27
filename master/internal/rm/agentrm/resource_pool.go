@@ -475,17 +475,20 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 	case sproto.CapacityCheck:
 		reschedule = false
 		var totalSlots int
+
+		disallowedNodes := set.New[string]()
+		if msg.TaskID != nil {
+			disallowedNodes = *logpattern.DisallowedNodes(*msg.TaskID)
+		}
+		rp.agentStatesCache = rp.fetchAgentStates(ctx)
+
 		switch {
 		case rp.config.Provider == nil:
-			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+
 			defer func() {
 				rp.agentStatesCache = nil
 			}()
 
-			disallowedNodes := set.New[string]()
-			if msg.TaskID != nil {
-				disallowedNodes = *logpattern.DisallowedNodes(*msg.TaskID)
-			}
 			// check task speicifc slots here
 			for _, a := range rp.agentStatesCache {
 				if !disallowedNodes.Contains(a.Handler.Address().Local()) {
@@ -494,8 +497,20 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			}
 		case rp.config.Provider.AWS != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.AWS.SlotsPerInstance()
+
+			for _, a := range rp.agentStatesCache {
+				if disallowedNodes.Contains(a.Handler.Address().Local()) {
+					totalSlots -= len(a.slotStates)
+				}
+			}
 		case rp.config.Provider.GCP != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.GCP.SlotsPerInstance()
+
+			for _, a := range rp.agentStatesCache {
+				if disallowedNodes.Contains(a.Handler.Address().Local()) {
+					totalSlots -= len(a.slotStates)
+				}
+			}
 		default:
 			panic("Invalid provider")
 		}

@@ -113,36 +113,11 @@ func (t TerminateDecision) String() string {
 	return strings.Join(item, ",")
 }
 
-// ValidateResourcePoolAvailabilityParam contains the params for ValidateResourcePoolAvailability().
-type ValidateResourcePoolAvailabilityParam struct {
-	Name   string
-	Slots  int
+// ValidateResourcePoolAvailabilityRequest contains the params for ValidateResourcePoolAvailability().
+type ValidateResourcePoolAvailabilityRequest struct {
+	Name  string
+	Slots int
+	// Optional. If it is provided, ValidateResourcePoolAvailability() validates resource pool
+	// availability for a specific task.
 	TaskID *model.TaskID
-}
-
-// ValidateResourcePoolAvailabilityParamOption accepts functions that may modify the
-// *ValidateResourcePoolAvailabilityParam instance.
-type ValidateResourcePoolAvailabilityParamOption func(v *ValidateResourcePoolAvailabilityParam)
-
-// WithTaskID add task ID to ValidateResourcePoolAvailabilityParam.
-func WithTaskID(taskID *model.TaskID) ValidateResourcePoolAvailabilityParamOption {
-	return func(v *ValidateResourcePoolAvailabilityParam) {
-		v.TaskID = taskID
-	}
-}
-
-// NewValidateResourcePoolAvailabilityParam is a constructor accepts optional params.
-func NewValidateResourcePoolAvailabilityParam(
-	name string,
-	slots int,
-	options ...ValidateResourcePoolAvailabilityParamOption,
-) *ValidateResourcePoolAvailabilityParam {
-	v := &ValidateResourcePoolAvailabilityParam{
-		Name:  name,
-		Slots: slots,
-	}
-	for _, o := range options {
-		o(v)
-	}
-	return v
 }
