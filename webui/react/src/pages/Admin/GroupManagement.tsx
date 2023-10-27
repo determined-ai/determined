@@ -5,6 +5,7 @@ import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -19,10 +20,11 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/T
 import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import { getGroup, getGroups, getUsers } from 'services/api';
+import { getGroup, getGroups } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
+import userStore from 'stores/users';
 import { DetailedUser, User } from 'types';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -101,7 +103,6 @@ const GroupManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
   const [groupResult, setGroupResult] = useState<V1GroupSearchResult | undefined>(undefined);
-  const [users, setUsers] = useState<DetailedUser[]>([]);
   const [user, setUser] = useState<V1User | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -112,19 +113,8 @@ const GroupManagement: React.FC = () => {
   const { settings, updateSettings } = useSettings(settingsConfig);
 
   const { canModifyGroups, canViewGroups } = usePermissions();
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const RemoveUserFromGroupModal = useModal(RemoveUserFromGroupModalComponent);
-
-  const fetchUsers = useCallback(async (): Promise<void> => {
-    try {
-      const response = await getUsers({}, { signal: canceler.current.signal });
-      setUsers((prev) => {
-        if (_.isEqual(prev, response.users)) return prev;
-        return response.users;
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch users.' });
-    }
-  }, []);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     if (!('tableLimit' in settings) || !('tableOffset' in settings)) return;
@@ -166,8 +156,7 @@ const GroupManagement: React.FC = () => {
 
   useEffect(() => {
     fetchGroups();
-    fetchUsers();
-  }, [fetchGroups, fetchUsers]);
+  }, [fetchGroups]);
 
   useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
