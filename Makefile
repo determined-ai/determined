@@ -19,7 +19,6 @@ get-deps-go:
 	$(MAKE) go-version-check
 	$(MAKE) get-deps-master
 	$(MAKE) get-deps-agent
-	$(MAKE) get-deps-proto
 
 # Go versions may look like goM, goM.N, or goM.N.P. Only 1.21.* is supported.
 supported_go_minor_version = go1.21
@@ -45,11 +44,12 @@ build-%:
 	$(MAKE) -C $(subst -,/,$*) build
 
 .PHONY: build-docs
-build-docs: build-harness build-model_hub build-examples build-helm build-proto
+build-docs: build-harness build-model_hub build-examples build-helm
+	$(MAKE) -C master proto-build
 	$(MAKE) -C docs build
 
 .PHONY: build-bindings
-build-bindings: build-proto
+build-bindings: $(MAKE) -C master proto-build
 	$(MAKE) -C bindings build
 
 .PHONY: build-webui
@@ -57,12 +57,10 @@ build-webui: build-bindings
 	$(MAKE) -C webui build
 
 .PHONY: build-agent
-build-agent: build-proto
-	$(MAKE) -C agent build
+build-agent: $(MAKE) -C agent build
 
 .PHONY: build-master
-build-master: build-proto
-	$(MAKE) -C master build
+build-master: $(MAKE) -C master build
 
 .PHONY: build
 build: build-master build-agent build-webui build-docs
@@ -71,20 +69,20 @@ build: build-master build-agent build-webui build-docs
 clean-%:
 	$(MAKE) -C $(subst -,/,$*) clean
 .PHONY: clean
-clean: clean-tools clean-proto clean-harness clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
+clean: clean-tools clean-harness clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
 
 .PHONY: check-%
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 .PHONY: check
-check: check-proto check-harness check-model_hub check-e2e_tests check-tools check-master check-webui check-examples check-docs check-schemas
+check: check-harness check-model_hub check-e2e_tests check-tools check-master check-webui check-examples check-docs check-schemas
 	$(MAKE) check-agent
 
 .PHONY: fmt-%
 fmt-%:
 	$(MAKE) -C $(subst -,/,$*) fmt
 .PHONY: fmt
-fmt: fmt-harness fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas fmt-proto
+fmt: fmt-harness fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas
 
 .PHONY: test-%
 test-%:
