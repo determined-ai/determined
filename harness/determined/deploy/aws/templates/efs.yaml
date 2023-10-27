@@ -817,8 +817,6 @@ Resources:
             #!/bin/bash
             mkdir -p /usr/local/determined/etc
 
-            mkdir -p /mnt/efs
-            mount -t efs ${EFSVal}:/ /mnt/efs
 
             scheme=http
             port=8080
@@ -930,6 +928,23 @@ Resources:
 
             docker stop $(docker ps -a -q)
             docker rm $(docker ps -a -q)
+
+            mkdir -p /mnt/efs
+
+            date >> /tmp/cloud-init-log
+
+            apt-get install -y binutils git
+            if [ ! -d "efs-utils" ]; then
+              git clone https://github.com/aws/efs-utils
+              cd efs-utils
+              ./build-deb.sh
+              chown _apt:root ./build/amazon-efs-utils*deb
+              apt-get install -y ./build/amazon-efs-utils*deb
+              cd ..
+              rm -r efs-utils
+            fi
+
+            mount -t efs ${EFSVal}:/ /mnt/efs
 
             touch /usr/local/determined/etc/master.yaml
             docker run \
