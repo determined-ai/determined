@@ -175,7 +175,7 @@ func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error
 
 // GetAgent implements rm.ResourceManager.
 func (ResourceManager) GetAgent(*apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	// TODO(!!!): Ticket or add this, was missing previously.
+	// TODO(DET-9921): Ticket or add this, was missing previously.
 	return nil, rmerrors.ErrNotSupported
 }
 
@@ -295,19 +295,19 @@ func (k *ResourceManager) GetResourcePools(*apiv1.GetResourcePoolsRequest) (*api
 }
 
 // GetSlot implements rm.ResourceManager.
-// TODO(!!!): Implement GetSlot for Kubernetes RM.
+// TODO(DET-9919): Implement GetSlot for Kubernetes RM.
 func (ResourceManager) GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
 	return nil, rmerrors.ErrNotSupported
 }
 
 // GetSlots implements rm.ResourceManager.
-// TODO(!!!): Implement GetSlots for Kubernetes RM.
+// TODO(DET-9919): Implement GetSlots for Kubernetes RM.
 func (ResourceManager) GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
 	return nil, rmerrors.ErrNotSupported
 }
 
 // MoveJob implements rm.ResourceManager.
-// TODO(!!!): This should know which pool it wants.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) MoveJob(msg sproto.MoveJob) error {
 	for _, rp := range k.pools {
 		err := rp.MoveJob(msg)
@@ -329,7 +329,7 @@ func (k *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 }
 
 // Release implements rm.ResourceManager.
-// TODO(!!!): This should know which pool it wants.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) Release(msg sproto.ResourcesReleased) {
 	for _, rp := range k.pools {
 		rp.ResourcesReleased(msg)
@@ -337,7 +337,7 @@ func (k *ResourceManager) Release(msg sproto.ResourcesReleased) {
 }
 
 // SetAllocationName implements rm.ResourceManager.
-// TODO(!!!): This should know which pool it wants.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
 	for _, rp := range k.pools {
 		rp.SetAllocationName(msg)
@@ -345,7 +345,7 @@ func (k *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
 }
 
 // SetGroupMaxSlots implements rm.ResourceManager.
-// TODO(!!!): This should know which pool it wants.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	for _, rp := range k.pools {
 		rp.SetGroupMaxSlots(msg)
@@ -353,7 +353,7 @@ func (k *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 }
 
 // SetGroupPriority implements rm.ResourceManager.
-// TODO(!!!): This should know which pool it wants.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
 	for _, rp := range k.pools {
 		err := rp.SetGroupPriority(msg)
@@ -365,7 +365,7 @@ func (k *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
 }
 
 // SetGroupWeight implements rm.ResourceManager.
-// TODO(!!!): This should know which pool it wants.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 	for _, rp := range k.pools {
 		err := rp.SetGroupWeight(msg)
