@@ -33,6 +33,7 @@ import { useObservable } from 'utils/observable';
 import { camelCaseToSentence, floatToPercent } from 'utils/string';
 
 import css from './ResourcepoolDetail.module.scss';
+import Topology from './Topology';
 
 type Params = {
   poolname?: string;
