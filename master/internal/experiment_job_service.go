@@ -74,3 +74,11 @@ func (e *experiment) SetWeight(weight float64) error {
 	}
 	return err
 }
+
+// SetResourcePool sets the experiment's resource pool.
+func (e *experiment) SetResourcePool(resourcePool string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.setRP(resourcePool)
+}
