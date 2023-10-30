@@ -321,6 +321,16 @@ users. To find out more, visit :ref:`run-as-user` and :ref:`run-unprivileged-tas
 
    Red Hat OpenShift users should not configure non-root containers.
 
+To run containers as non-root users:
+
+-  Create a non-root user in Dockerfile.
+-  Ensure that the non-root user has the permissions to access and write to required directories and
+   files.
+-  Modify your application's configuration to not require root permissions.
+-  If deploying on Kubernetes, set the security context to run containers as a non-root user.
+
+Test your containers to ensure they function correctly as non-root.
+
 Configure Role-Based Access Control (RBAC)
 ==========================================
 
