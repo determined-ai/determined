@@ -70,7 +70,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
         handler: handleSubmit,
         text: 'Save',
       }}
-      title="Configure Agent"
+      title="Link with Agent UID/GID"
       onClose={form.resetFields}>
       <Spinner spinning={!user}>
         <Form
