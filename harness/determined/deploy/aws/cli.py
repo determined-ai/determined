@@ -69,6 +69,7 @@ def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
         constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
+        constants.deployment_types.LORE: vpc.Lore,
     }  # type: Dict[str, Type[base.DeterminedDeployment]]
     return deployment_type_map[deployment_type]
 
@@ -173,7 +174,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         if args.db_size is not None and args.db_size < 20:
             raise ValueError("--db-size must be greater than or equal to 20 GB")
 
-    if args.deployment_type != constants.deployment_types.EFS:
+    if args.deployment_type not in {
+        constants.deployment_types.EFS,
+        constants.deployment_types.LORE,
+    }:
         if args.efs_id is not None:
             raise ValueError("--efs-id can only be specified for 'efs' deployments")
 

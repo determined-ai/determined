@@ -38,3 +38,8 @@ class FSx(VPCBase):
 class EFS(VPCBase):
     template = "efs.yaml"
     deployment_type = constants.deployment_types.EFS
+
+
+class Lore(VPCBase):
+    template = "lore.yaml"
+    deployment_type = constants.deployment_types.LORE
