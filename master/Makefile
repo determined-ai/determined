@@ -31,6 +31,74 @@ NVCR_TAGS = \
 	$(NVCR_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(NVCR_REPO)/$(PROJECT_NAME):$(VERSION)
 
+# Proto stuff.
+# String constants.
+build_path := build/build-proto/github.com/determined-ai/determined/master/pkg/generatedproto/
+src_path := proto/determined
+
+# Pre-defined list of all source files.
+source_files := $(shell find $(src_path) -type f -name '*.proto')
+
+grpc_in := $(src_path)/api/v1/api.proto
+
+# Currently only one file needs Swagger treatment.
+swagger_in := $(src_path)/api/v1/api.proto
+swagger_out := build/swagger/determined/api/v1/api.swagger.json
+swagger_patch := patches/api.json
+
+go_src_path := ../master/internal
+echo_swagger_source_files := $(shell find $(go_src_path) -type f -name 'core*.go')
+echo_swagger_patch_dir := build/echo-swagger
+echo_swagger_patch := $(echo_swagger_patch_dir)/swagger.json
+
+# Buf image binary
+buf_image := buf.image.bin
+
+.PHONY: build-proto
+build-proto: build/build-proto.stamp $(swagger_out)
+
+build/build-proto.stamp: $(source_files)
+	protoc --version |perl -ne '/.*(\d+)\.(\d+)\.(\d+)/&&(($$1==3&&$$2<15)||$$1<3)&&print("\nERROR: \
+		Detected protoc version: $$1.$$2.$$3. Please upgrade protoc to version 3.15.0 or above\n\n.")&&exit 1;'
+	rm -rf build/proto pkg/generatedproto
+	mkdir -p build/build-proto
+	# Protobuf generation.
+	for source in $(source_files) ; do protoc -I proto "$$source" --go_out=plugins=grpc:build/build-proto || exit 1; done
+	# GRPC generation.
+	protoc -I proto $(grpc_in) --grpc-gateway_out=logtostderr=true:build/build-proto --grpc-gateway_opt allow_delete_body=true
+	mv $(build_path) pkg/generatedproto
+ifeq "$(shell uname)" "Darwin"
+	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
+else
+	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
+endif
+	goimports -l -local github.com/determined-ai -w -w ./pkg/generatedproto
+	gofumpt -l -w ./pkg/generatedproto
+
+	touch $@
+
+# Update buf image for breaking change check.
+.PHONY: gen-buf-image
+gen-buf-image:
+	buf build -o $(buf_image)
+
+$(echo_swagger_patch_dir):
+	mkdir -p $(echo_swagger_patch_dir)
+
+$(echo_swagger_patch): $(echo_swagger_patch_dir) $(echo_swagger_source_files)
+	swag init -g ../master/cmd/determined-master/main.go -d ../master/. -o $(echo_swagger_patch_dir) -ot json
+	jq 'del(.swagger, .info)' $(echo_swagger_patch) > $(echo_swagger_patch).tmp
+	mv $(echo_swagger_patch).tmp $(echo_swagger_patch)
+
+build/swagger:
+	mkdir -p build/swagger
+
+$(swagger_out): $(source_files) build/swagger $(swagger_patch) $(echo_swagger_patch)
+	protoc -I proto $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
+	python3 scripts/swagger.py $@ $(swagger_patch)
+	python3 scripts/swagger.py $@ $(echo_swagger_patch)
+
+# Master stuff.
 .PHONY: clean
 clean: ungen
 	rm -rf build pkg/generatedproto
@@ -88,10 +156,9 @@ get-deps:
 	./get-deps.sh
 
 .PHONY: build
-build: build-proto
 build: export DET_SEGMENT_MASTER_KEY ?=
 build: export DET_SEGMENT_WEBUI_KEY ?=
-build: gen
+build: gen build-proto
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
@@ -100,10 +167,9 @@ build: gen
 		./cmd/determined-master
 
 .PHONY: build-race
-build-race: build-proto
 build-race: export DET_SEGMENT_MASTER_KEY ?=
 build-race: export DET_SEGMENT_WEBUI_KEY ?=
-build-race: gen
+build-race: gen build-proto
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
@@ -230,70 +296,3 @@ publish-nvcr:
 		docker tag $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-amd64 $$image; \
 		docker push $$image; \
 	done
-
-# Proto stuff
-# String constants.
-build_path := build/build-proto/github.com/determined-ai/determined/master/pkg/generatedproto/
-src_path := proto/determined
-
-# Pre-defined list of all source files.
-source_files := $(shell find $(src_path) -type f -name '*.proto')
-
-grpc_in := $(src_path)/api/v1/api.proto
-
-# Currently only one file needs Swagger treatment.
-swagger_in := $(src_path)/api/v1/api.proto
-swagger_out := build/swagger/determined/api/v1/api.swagger.json
-swagger_patch := patches/api.json
-
-go_src_path := ../master/internal
-echo_swagger_source_files := $(shell find $(go_src_path) -type f -name 'core*.go')
-echo_swagger_patch_dir := build/echo-swagger
-echo_swagger_patch := $(echo_swagger_patch_dir)/swagger.json
-
-# Buf image binary
-buf_image := buf.image.bin
-
-.PHONY: build-proto
-build-proto: build/build-proto.stamp $(swagger_out)
-
-build/build-proto.stamp: $(source_files)
-	protoc --version |perl -ne '/.*(\d+)\.(\d+)\.(\d+)/&&(($$1==3&&$$2<15)||$$1<3)&&print("\nERROR: \
-		Detected protoc version: $$1.$$2.$$3. Please upgrade protoc to version 3.15.0 or above\n\n.")&&exit 1;'
-	rm -rf build/proto pkg/generatedproto
-	mkdir -p build/build-proto
-	# Protobuf generation.
-	for source in $(source_files) ; do protoc -I proto "$$source" --go_out=plugins=grpc:build/build-proto || exit 1; done
-	# GRPC generation.
-	protoc -I proto $(grpc_in) --grpc-gateway_out=logtostderr=true:build/build-proto --grpc-gateway_opt allow_delete_body=true
-	mv $(build_path) pkg/generatedproto
-ifeq "$(shell uname)" "Darwin"
-	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
-else
-	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/generatedproto/*/*.pb.go
-endif
-	goimports -l -local github.com/determined-ai -w -w ./pkg/generatedproto
-	gofumpt -l -w ./pkg/generatedproto
-
-	touch $@
-
-# Update buf image for breaking change check.
-.PHONY: gen-buf-image
-gen-buf-image:
-	buf build -o $(buf_image)
-
-$(echo_swagger_patch_dir):
-	mkdir -p $(echo_swagger_patch_dir)
-
-$(echo_swagger_patch): $(echo_swagger_patch_dir) $(echo_swagger_source_files)
-	swag init -g ../master/cmd/determined-master/main.go -d ../master/. -o $(echo_swagger_patch_dir) -ot json
-	jq 'del(.swagger, .info)' $(echo_swagger_patch) > $(echo_swagger_patch).tmp
-	mv $(echo_swagger_patch).tmp $(echo_swagger_patch)
-
-build/swagger:
-	mkdir -p build/swagger
-
-$(swagger_out): $(source_files) build/swagger $(swagger_patch) $(echo_swagger_patch)
-	protoc -I proto $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
-	python3 scripts/swagger.py $@ $(swagger_patch)
-	python3 scripts/swagger.py $@ $(echo_swagger_patch)
