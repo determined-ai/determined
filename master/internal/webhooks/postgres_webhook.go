@@ -94,7 +94,7 @@ func (l *webhookManager) removeTriggers(triggers []*Trigger) error {
 
 		regex, ok := t.Condition[regexConditionKey].(string)
 		if !ok {
-			log.Error(
+			log.Errorf(
 				"expected webhook trigger to have regex in condition instead got %v deleting anyway",
 				t.Condition)
 			return nil
@@ -171,7 +171,7 @@ func (l *webhookManager) deleteWebhook(ctx context.Context, id WebhookID) error 
 	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
 		if err != nil {
-			return fmt.Errorf("deletng webhook id %s: %w", id, err)
+			return fmt.Errorf("deletng webhook id %d: %w", id, err)
 		}
 
 		if err := l.removeTriggers(ts); err != nil {

@@ -122,7 +122,11 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
-    time.sleep(10)  # Not ideal but give us a buffer for webhooks arriving.
+    for _ in range(10):
+        responses = server.return_responses()
+        if default_path in responses and slack_path in responses:
+            break
+        time.sleep(1)
 
     responses = server.close_and_return_responses()
     if should_match:

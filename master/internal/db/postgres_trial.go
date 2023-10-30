@@ -107,14 +107,14 @@ func TrialByExperimentAndRequestID(
 // TrialByTaskID looks up a trial by taskID, returning an error if none exists.
 // This errors if you called it with a non trial taskID.
 func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, error) {
-	t := &model.Trial{}
-	if err := Bun().NewSelect().Model(t).
+	var t model.Trial
+	if err := Bun().NewSelect().Model(&t).
 		Where("tt.task_id = ?", taskID).
 		Join("JOIN trial_id_task_id tt ON trial.id = tt.trial_id").
-		Scan(ctx); err != nil {
+		Scan(ctx, &t); err != nil {
 		return nil, fmt.Errorf("error querying for trial taskID %s: %w", taskID, err)
 	}
-	return t, nil
+	return &t, nil
 }
 
 // UpdateTrial updates an existing trial. Fields that are nil or zero are not

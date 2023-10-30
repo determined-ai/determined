@@ -217,95 +217,101 @@ func TestGenerateTaskLogPayload(t *testing.T) {
 					config.GetMasterConfig().Webhooks.BaseURL = ""
 				}
 
-				t.Run(fmt.Sprintf("webhookType=%v baseURLIsSet=%v taskIsExp=%v",
-					webhookType, baseURLIsSet, taskIsExp), func(t *testing.T) {
-					var task *model.Task
-					var trial *model.Trial
-					if taskIsExp {
-						user := db.RequireMockUser(t, pgDB)
-						exp := db.RequireMockExperiment(t, pgDB, user)
-
-						trial, task = db.RequireMockTrial(t, pgDB, exp)
-					} else {
-						task = &model.Task{
-							TaskID:    model.NewTaskID(),
-							JobID:     nil,
-							TaskType:  model.TaskTypeNotebook,
-							StartTime: time.Now().UTC().Truncate(time.Millisecond),
-						}
-						require.NoError(t, db.AddTask(ctx, task))
-					}
-
-					payload, err := generateTaskLogPayload(
-						ctx, task.TaskID, "nodeA", "regexa", "trigA", webhookType)
-					require.NoError(t, err)
-
-					if webhookType == WebhookTypeDefault {
-						expected := EventPayload{
-							Type: TriggerTypeTaskLog,
-							Condition: Condition{
-								Regex: "regexa",
-							},
-							Data: EventData{
-								TaskLog: &TaskLogPayload{
-									TaskID:        task.TaskID,
-									NodeName:      "nodeA",
-									TriggeringLog: "trigA",
-								},
-							},
-						}
-
-						var actual EventPayload
-						require.NoError(t, json.Unmarshal(payload, &actual))
-
-						actual.ID = expected.ID
-						actual.Timestamp = expected.Timestamp
-						require.Equal(t, expected, actual)
-						return
-					}
-
-					var actual SlackMessageBody
-					require.NoError(t, json.Unmarshal(payload, &actual))
-
-					msg := ""
-					if taskIsExp {
-						msg = fmt.Sprintf(
-							"Experiment ID `%d`, Trial ID `%d`, running on node `nodeA`, reported a log\n",
-							trial.ExperimentID, trial.ID) +
-							"```trigA```\n" +
-							"This log matched the regex\n" +
-							"```regexa```\n"
-
-						path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
-						if baseURLIsSet {
-							msg += fmt.Sprintf("<http://determined.ai%s | View full logs here>", path)
-						} else {
-							msg += fmt.Sprintf("View full logs at %s", path)
-						}
-					} else {
-						msg = fmt.Sprintf(
-							"Task ID `%s`, task type `%s`, running on node `nodeA`, reported a log\n",
-							task.TaskID, model.TaskTypeNotebook) +
-							"```trigA```\n" +
-							"This log matched the regex\n" +
-							"```regexa```\n"
-					}
-
-					require.Equal(t, SlackMessageBody{
-						Blocks: []SlackBlock{
-							{
-								Type: "section",
-								Text: SlackField{
-									Type: "mrkdwn",
-									Text: msg,
-								},
-							},
-						},
-					}, actual)
-				})
+				testGenerateTaskLogPayloadTest(ctx, t, webhookType, baseURLIsSet, taskIsExp)
 			}
 		}
 	}
+}
+
+func testGenerateTaskLogPayloadTest(
+	ctx context.Context, t *testing.T, webhookType WebhookType, baseURLIsSet bool, taskIsExp bool,
+) {
+	t.Run(fmt.Sprintf("webhookType=%v baseURLIsSet=%v taskIsExp=%v",
+		webhookType, baseURLIsSet, taskIsExp), func(t *testing.T) {
+		var task *model.Task
+		var trial *model.Trial
+		if taskIsExp {
+			user := db.RequireMockUser(t, pgDB)
+			exp := db.RequireMockExperiment(t, pgDB, user)
+
+			trial, task = db.RequireMockTrial(t, pgDB, exp)
+		} else {
+			task = &model.Task{
+				TaskID:    model.NewTaskID(),
+				JobID:     nil,
+				TaskType:  model.TaskTypeNotebook,
+				StartTime: time.Now().UTC().Truncate(time.Millisecond),
+			}
+			require.NoError(t, db.AddTask(ctx, task))
+		}
+
+		payload, err := generateTaskLogPayload(
+			ctx, task.TaskID, "nodeA", "regexa", "trigA", webhookType)
+		require.NoError(t, err)
+
+		if webhookType == WebhookTypeDefault {
+			expected := EventPayload{
+				Type: TriggerTypeTaskLog,
+				Condition: Condition{
+					Regex: "regexa",
+				},
+				Data: EventData{
+					TaskLog: &TaskLogPayload{
+						TaskID:        task.TaskID,
+						NodeName:      "nodeA",
+						TriggeringLog: "trigA",
+					},
+				},
+			}
+
+			var actual EventPayload
+			require.NoError(t, json.Unmarshal(payload, &actual))
+
+			actual.ID = expected.ID
+			actual.Timestamp = expected.Timestamp
+			require.Equal(t, expected, actual)
+			return
+		}
+
+		var actual SlackMessageBody
+		require.NoError(t, json.Unmarshal(payload, &actual))
+
+		msg := ""
+		if taskIsExp {
+			msg = fmt.Sprintf(
+				"Experiment ID `%d`, Trial ID `%d`, running on node `nodeA`, reported a log\n",
+				trial.ExperimentID, trial.ID) +
+				"```trigA```\n" +
+				"This log matched the regex\n" +
+				"```regexa```\n"
+
+			path := fmt.Sprintf("/det/experiments/%d/trials/%d/logs", trial.ExperimentID, trial.ID)
+			if baseURLIsSet {
+				msg += fmt.Sprintf("<http://determined.ai%s | View full logs here>", path)
+			} else {
+				msg += fmt.Sprintf("View full logs at %s", path)
+			}
+		} else {
+			msg = fmt.Sprintf(
+				"Task ID `%s`, task type `%s`, running on node `nodeA`, reported a log\n",
+				task.TaskID, model.TaskTypeNotebook) +
+				"```trigA```\n" +
+				"This log matched the regex\n" +
+				"```regexa```\n"
+		}
+
+		require.Equal(t, SlackMessageBody{
+			Blocks: []SlackBlock{
+				{
+					Type: "section",
+					Text: SlackField{
+						Type: "mrkdwn",
+						Text: msg,
+					},
+				},
+			},
+		}, actual)
+	})
 }
 
 func TestReportExperimentStateChanged(t *testing.T) {

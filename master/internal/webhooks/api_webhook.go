@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -78,12 +77,21 @@ func (a *WebhooksAPIServer) PostWebhook(
 	for _, t := range req.Webhook.Triggers {
 		if t.TriggerType == webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG {
 			m := t.Condition.AsMap()
+			if len(m) != 1 {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"webhook task log condition must have one key got %v", m)
+			}
+
 			v, ok := m[regexConditionKey]
-			_, typeOK := v.(string)
-			if len(m) != 1 || !ok || !typeOK {
-				return nil, fmt.Errorf(
-					`condition for %s should be in form {"regex": "a|[bc]"} instead got %+v`,
-					t.TriggerType, m)
+			if !ok {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"webhook task log condition must have key '%s' got %v", regexConditionKey, m)
+			}
+
+			if _, typeOK := v.(string); !typeOK {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"webhook task log condition must have key '%s' as string got %v",
+					regexConditionKey, m)
 			}
 		}
 	}

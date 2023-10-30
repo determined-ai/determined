@@ -79,12 +79,12 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 
 // TaskByID returns a task by its ID.
 func TaskByID(ctx context.Context, tID model.TaskID) (*model.Task, error) {
-	t := &model.Task{}
-	if err := Bun().NewSelect().Model(t).Where("task_id = ?", tID).Scan(ctx, t); err != nil {
+	var t model.Task
+	if err := Bun().NewSelect().Model(&t).Where("task_id = ?", tID).Scan(ctx, &t); err != nil {
 		return nil, fmt.Errorf("querying task ID %s: %w", tID, err)
 	}
 
-	return t, nil
+	return &t, nil
 }
 
 // NonExperimentTasksContextDirectory returns a non experiment's context directory.
