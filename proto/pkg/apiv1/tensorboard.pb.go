@@ -731,6 +731,94 @@ func (x *LaunchTensorboardResponse) GetWarnings() []LaunchWarning {
 	return nil
 }
 
+// Request to delete a tensorboard.
+type DeleteTensorboardRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// ID of experiment that the tensorboard is linked to.
+	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
+}
+
+func (x *DeleteTensorboardRequest) Reset() {
+	*x = DeleteTensorboardRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_tensorboard_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteTensorboardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTensorboardRequest) ProtoMessage() {}
+
+func (x *DeleteTensorboardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_tensorboard_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTensorboardRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTensorboardRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_tensorboard_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DeleteTensorboardRequest) GetExperimentId() int32 {
+	if x != nil {
+		return x.ExperimentId
+	}
+	return 0
+}
+
+// Response to DeleteTensorboardRequest.
+type DeleteTensorboardResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeleteTensorboardResponse) Reset() {
+	*x = DeleteTensorboardResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_tensorboard_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteTensorboardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTensorboardResponse) ProtoMessage() {}
+
+func (x *DeleteTensorboardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_tensorboard_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTensorboardResponse.ProtoReflect.Descriptor instead.
+func (*DeleteTensorboardResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_tensorboard_proto_rawDescGZIP(), []int{11}
+}
+
 var File_determined_api_v1_tensorboard_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_tensorboard_proto_rawDesc = []byte{
@@ -866,10 +954,16 @@ var file_determined_api_v1_tensorboard_proto_rawDesc = []byte{
 	0x68, 0x57, 0x61, 0x72, 0x6e, 0x69, 0x6e, 0x67, 0x52, 0x08, 0x77, 0x61, 0x72, 0x6e, 0x69, 0x6e,
 	0x67, 0x73, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0xd2, 0x01, 0x0b, 0x74, 0x65, 0x6e, 0x73,
 	0x6f, 0x72, 0x62, 0x6f, 0x61, 0x72, 0x64, 0xd2, 0x01, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64,
-	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b,
-	0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x3f, 0x0a, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6e, 0x73, 0x6f, 0x72,
+	0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d,
+	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49,
+	0x64, 0x22, 0x1b, 0x0a, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6e, 0x73, 0x6f,
+	0x72, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35,
+	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -885,7 +979,7 @@ func file_determined_api_v1_tensorboard_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_tensorboard_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_tensorboard_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_determined_api_v1_tensorboard_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_determined_api_v1_tensorboard_proto_goTypes = []interface{}{
 	(GetTensorboardsRequest_SortBy)(0),     // 0: determined.api.v1.GetTensorboardsRequest.SortBy
 	(*GetTensorboardsRequest)(nil),         // 1: determined.api.v1.GetTensorboardsRequest
@@ -898,29 +992,31 @@ var file_determined_api_v1_tensorboard_proto_goTypes = []interface{}{
 	(*SetTensorboardPriorityResponse)(nil), // 8: determined.api.v1.SetTensorboardPriorityResponse
 	(*LaunchTensorboardRequest)(nil),       // 9: determined.api.v1.LaunchTensorboardRequest
 	(*LaunchTensorboardResponse)(nil),      // 10: determined.api.v1.LaunchTensorboardResponse
-	(OrderBy)(0),                           // 11: determined.api.v1.OrderBy
-	(*tensorboardv1.Tensorboard)(nil),      // 12: determined.tensorboard.v1.Tensorboard
-	(*Pagination)(nil),                     // 13: determined.api.v1.Pagination
-	(*_struct.Struct)(nil),                 // 14: google.protobuf.Struct
-	(*utilv1.File)(nil),                    // 15: determined.util.v1.File
-	(*BulkExperimentFilters)(nil),          // 16: determined.api.v1.BulkExperimentFilters
-	(LaunchWarning)(0),                     // 17: determined.api.v1.LaunchWarning
+	(*DeleteTensorboardRequest)(nil),       // 11: determined.api.v1.DeleteTensorboardRequest
+	(*DeleteTensorboardResponse)(nil),      // 12: determined.api.v1.DeleteTensorboardResponse
+	(OrderBy)(0),                           // 13: determined.api.v1.OrderBy
+	(*tensorboardv1.Tensorboard)(nil),      // 14: determined.tensorboard.v1.Tensorboard
+	(*Pagination)(nil),                     // 15: determined.api.v1.Pagination
+	(*_struct.Struct)(nil),                 // 16: google.protobuf.Struct
+	(*utilv1.File)(nil),                    // 17: determined.util.v1.File
+	(*BulkExperimentFilters)(nil),          // 18: determined.api.v1.BulkExperimentFilters
+	(LaunchWarning)(0),                     // 19: determined.api.v1.LaunchWarning
 }
 var file_determined_api_v1_tensorboard_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetTensorboardsRequest.sort_by:type_name -> determined.api.v1.GetTensorboardsRequest.SortBy
-	11, // 1: determined.api.v1.GetTensorboardsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	12, // 2: determined.api.v1.GetTensorboardsResponse.tensorboards:type_name -> determined.tensorboard.v1.Tensorboard
-	13, // 3: determined.api.v1.GetTensorboardsResponse.pagination:type_name -> determined.api.v1.Pagination
-	12, // 4: determined.api.v1.GetTensorboardResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
-	14, // 5: determined.api.v1.GetTensorboardResponse.config:type_name -> google.protobuf.Struct
-	12, // 6: determined.api.v1.KillTensorboardResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
-	12, // 7: determined.api.v1.SetTensorboardPriorityResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
-	14, // 8: determined.api.v1.LaunchTensorboardRequest.config:type_name -> google.protobuf.Struct
-	15, // 9: determined.api.v1.LaunchTensorboardRequest.files:type_name -> determined.util.v1.File
-	16, // 10: determined.api.v1.LaunchTensorboardRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	12, // 11: determined.api.v1.LaunchTensorboardResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
-	14, // 12: determined.api.v1.LaunchTensorboardResponse.config:type_name -> google.protobuf.Struct
-	17, // 13: determined.api.v1.LaunchTensorboardResponse.warnings:type_name -> determined.api.v1.LaunchWarning
+	13, // 1: determined.api.v1.GetTensorboardsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	14, // 2: determined.api.v1.GetTensorboardsResponse.tensorboards:type_name -> determined.tensorboard.v1.Tensorboard
+	15, // 3: determined.api.v1.GetTensorboardsResponse.pagination:type_name -> determined.api.v1.Pagination
+	14, // 4: determined.api.v1.GetTensorboardResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
+	16, // 5: determined.api.v1.GetTensorboardResponse.config:type_name -> google.protobuf.Struct
+	14, // 6: determined.api.v1.KillTensorboardResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
+	14, // 7: determined.api.v1.SetTensorboardPriorityResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
+	16, // 8: determined.api.v1.LaunchTensorboardRequest.config:type_name -> google.protobuf.Struct
+	17, // 9: determined.api.v1.LaunchTensorboardRequest.files:type_name -> determined.util.v1.File
+	18, // 10: determined.api.v1.LaunchTensorboardRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	14, // 11: determined.api.v1.LaunchTensorboardResponse.tensorboard:type_name -> determined.tensorboard.v1.Tensorboard
+	16, // 12: determined.api.v1.LaunchTensorboardResponse.config:type_name -> google.protobuf.Struct
+	19, // 13: determined.api.v1.LaunchTensorboardResponse.warnings:type_name -> determined.api.v1.LaunchWarning
 	14, // [14:14] is the sub-list for method output_type
 	14, // [14:14] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
@@ -1057,6 +1153,30 @@ func file_determined_api_v1_tensorboard_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_tensorboard_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteTensorboardRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_tensorboard_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteTensorboardResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1064,7 +1184,7 @@ func file_determined_api_v1_tensorboard_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_tensorboard_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
