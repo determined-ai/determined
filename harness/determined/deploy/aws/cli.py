@@ -245,8 +245,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.DOCKER_USER: args.docker_user,
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
         constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
-        constants.cloudformation.SIDECAR_IMAGE: args.sidecar_image,
-        constants.cloudformation.SIDECAR_PORT: args.sidecar_port,
+        constants.cloudformation.LORE_VERSION: args.lore_version,
     }
 
     if args.master_config_template_path:
@@ -637,14 +636,9 @@ args_description = Cmd(
                     "are automatically terminated",
                 ),
                 Arg(
-                    "--sidecar-image",
+                    "--lore-version",
                     type=str,
-                    help="Docker image for the sidecar container",
-                ),
-                Arg(
-                    "--sidecar-port",
-                    type=int,
-                    help="Port for the sidecar container",
+                    help="Lore version to deploy",
                 ),
             ],
         ),

@@ -75,8 +75,7 @@ class cloudformation:
     DOCKER_USER = "DockerUser"
     DOCKER_PASS = "DockerPass"
     NOTEBOOK_TIMEOUT = "NotebookTimeout"
-    SIDECAR_IMAGE = "SidecarImage"
-    SIDECAR_PORT = "SidecarPort"
+    LORE_VERSION = "LoreVersion"
 
 
 class misc:

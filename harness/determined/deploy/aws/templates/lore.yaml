@@ -216,15 +216,10 @@ Parameters:
     Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
     Default: 0
 
-  SidecarImage:
+  LoreVersion:
     Type: String
-    Description: Docker image for sidecar service.
-    Default: ''
-
-  SidecarPort:
-    Type: Number
-    Description: Internal container port for sidecar service.
-    Default: 0
+    Description: Lore version to deploy
+    Default: latest
 
   MountEFSId:
     Type: String
@@ -296,10 +291,10 @@ Parameters:
           key: /etc/determined/master.key
       {{ end }}
 
-      {{ if ne .sidecar1_port 0.0 }}
+      {{ if ne .lore_version "" }}
       __internal:
         proxied_servers:
-          - destination: "http://sidecar1:{{ .sidecar1_port }}/lore"
+          - destination: "http://lore-backend:9011/lore"
             path_prefix: /lore
       {{ end }}
 
@@ -912,7 +907,7 @@ Resources:
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
             notebook_timeout: ${NotebookTimeout}
-            sidecar1_port: ${SidecarPort}
+            lore_version: ${LoreVersion}
 
             bind_mounts:
               - host_path: /mnt/efs
@@ -964,10 +959,9 @@ Resources:
 
             mount -t efs ${EFSVal}:/ /mnt/efs
 
-            if [ ! -z "${SidecarImage}" ] && [ ! -z "${SidecarPort}" ]; then
-              # TODO: pick up from $port and $scheme?
+            if [ ! -z "${LoreVersion}" ]; then
               docker run -d \
-                --name sidecar1 \
+                --name lore-backend \
                 --env DET_MASTER=http://determined-master:8080 \
                 --env DB_NAME=lore \
                 --env DB_USER=postgres \
@@ -976,7 +970,7 @@ Resources:
                 --env DB_PORT=5432 \
                 -v /mnt/efs/:/mnt/efs/ \
                 --network determined \
-                "${SidecarImage}"
+                "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
             fi
 
             touch /usr/local/determined/etc/master.yaml
