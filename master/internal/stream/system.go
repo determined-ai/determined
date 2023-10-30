@@ -104,20 +104,20 @@ type SyncMsg struct {
 	SyncID string `json:"sync_id"`
 }
 
-// toPreparedMessage converts as SyncMsg to a PreparedMessage.
-func (sm SyncMsg) toPreparedMessage() *websocket.PreparedMessage {
-	jbytes, err := json.Marshal(sm)
-	if err != nil {
-		log.Errorf("error marshaling sync message for streaming: %v", err.Error())
-		return nil
-	}
-	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
-	if err != nil {
-		log.Errorf("error preparing sync message for streaming: %v", err.Error())
-		return nil
-	}
-	return msg
-}
+// // toPreparedMessage converts as SyncMsg to a PreparedMessage.
+// func (sm SyncMsg) toPreparedMessage() *websocket.PreparedMessage {
+// 	jbytes, err := json.Marshal(sm)
+// 	if err != nil {
+// 		log.Errorf("error marshaling sync message for streaming: %v", err.Error())
+// 		return nil
+// 	}
+// 	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
+// 	if err != nil {
+// 		log.Errorf("error preparing sync message for streaming: %v", err.Error())
+// 		return nil
+// 	}
+// 	return msg
+// }
 
 // StartupMsg is the first message a streaming client sends.
 //
@@ -193,6 +193,7 @@ func (ps *PublisherSet) processStream(
 	user model.User,
 	startupMsg StartupMsg,
 	startups *[]StartupMsg,
+	prepare func(message stream.PreparableMessage) interface{},
 	socket WebsocketLike,
 ) (
 	nextStartup *StartupMsg, err error,
@@ -213,8 +214,8 @@ func (ps *PublisherSet) processStream(
 	msgs = append(msgs, offlineMsgs...)
 
 	// always include a sync message
-	syncMsg := SyncMsg{SyncID: startupMsg.SyncID}.toPreparedMessage()
-	msgs = append(msgs, syncMsg)
+	syncMsg := SyncMsg{SyncID: startupMsg.SyncID}
+	msgs = append(msgs, prepare(syncMsg))
 
 	// write offline msgs to the websocket
 	err = writeAll(socket, msgs)
@@ -240,7 +241,7 @@ func (ps *PublisherSet) processStream(
 		streamer.Cond.L.Lock()
 		defer streamer.Cond.L.Unlock()
 
-		if len(*startups) == 0 && len(streamer.Msgs) == 0 && streamer.Closed {
+		for len(*startups) == 0 && len(streamer.Msgs) == 0 && streamer.Closed {
 			streamer.Cond.Wait()
 		}
 		// steal outputs
@@ -319,7 +320,7 @@ func (ps *PublisherSet) entrypoint(
 				}
 				break
 			}
-			// wake up streamer goroutine with thew newly-read StartupMsg
+			// wake up streamer goroutine with the newly-read StartupMsg
 			func() {
 				streamer.Cond.L.Lock()
 				defer streamer.Cond.L.Unlock()
@@ -344,7 +345,15 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	for {
-		nextStartupMsg, err := ps.processStream(ctx, streamer, user, startupMsg, &startups, socket)
+		nextStartupMsg, err := ps.processStream(
+			ctx,
+			streamer,
+			user,
+			startupMsg,
+			&startups,
+			prepareFunc,
+			socket,
+		)
 		if err != nil {
 			// stream failed
 			return err
