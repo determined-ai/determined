@@ -10,7 +10,7 @@ import (
 )
 
 // SetDefault sets the package level default for log pattern policies.
-func SetDefault(p *logPatternPolicies) {
+func SetDefault(p *LogPatternPolicies) {
 	defaultSingleton = p
 }
 

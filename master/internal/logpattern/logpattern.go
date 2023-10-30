@@ -17,25 +17,26 @@ import (
 
 const regexCacheSize = 256
 
-var defaultSingleton *logPatternPolicies
+var defaultSingleton *LogPatternPolicies
 
-type logPatternPolicies struct {
+// LogPatternPolicies performs log pattern checks.
+type LogPatternPolicies struct {
 	regexCache *lru.Cache[string, *regexp.Regexp]
 }
 
 // New create the log pattern policies singleton.
-func New(ctx context.Context) (*logPatternPolicies, error) { //nolint: revive
+func New(ctx context.Context) (*LogPatternPolicies, error) {
 	regexCache, err := lru.New[string, *regexp.Regexp](regexCacheSize)
 	if err != nil {
 		return nil, fmt.Errorf("creating LRU cache: %w", err)
 	}
 
-	return &logPatternPolicies{
+	return &LogPatternPolicies{
 		regexCache: regexCache,
 	}, nil
 }
 
-func (l *logPatternPolicies) getCompiledRegex(regex string) (*regexp.Regexp, error) {
+func (l *LogPatternPolicies) getCompiledRegex(regex string) (*regexp.Regexp, error) {
 	if compiledRegex, ok := l.regexCache.Get(regex); ok {
 		return compiledRegex, nil
 	}
@@ -49,23 +50,19 @@ func (l *logPatternPolicies) getCompiledRegex(regex string) (*regexp.Regexp, err
 	return compiledRegex, nil
 }
 
-func (l *logPatternPolicies) monitor(ctx context.Context,
+func (l *LogPatternPolicies) monitor(ctx context.Context,
 	taskID model.TaskID, logs []*model.TaskLog, policies expconf.LogPoliciesConfig,
 ) error {
-	if len(policies) == 0 {
-		return nil
-	}
-
 	// TODO when we add rm specific log grabbing we will need to also monitor them.
-	for _, log := range logs {
-		if log.AgentID == nil {
-			return fmt.Errorf("agentID must be non nil to monitor logs")
+	for _, policy := range policies {
+		compiledRegex, err := l.getCompiledRegex(policy.Pattern())
+		if err != nil {
+			return err
 		}
 
-		for _, policy := range policies {
-			compiledRegex, err := l.getCompiledRegex(policy.Pattern())
-			if err != nil {
-				return err
+		for _, log := range logs {
+			if log.AgentID == nil {
+				return fmt.Errorf("agentID must be non nil to monitor logs")
 			}
 
 			if compiledRegex.MatchString(log.Log) {

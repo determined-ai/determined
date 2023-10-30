@@ -214,8 +214,10 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 
 	v, err := json.Marshal(activeConfig)
 	require.NoError(t, err)
+
 	var m map[string]any
 	require.NoError(t, json.Unmarshal(v, &m))
+
 	_, err = db.Bun().NewUpdate().Table("experiments").
 		Where("id = ?", trial.ExperimentID).
 		Set("config = ?", m).
