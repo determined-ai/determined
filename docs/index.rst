@@ -36,7 +36,7 @@ almost any deep learning model using Determined.
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-            <a class="tile" href="architecture/_index.html">
+            <a class="tile" href="get-started/architecture/_index.html">
                <img class="tile-icon" src="_static/images/tools.png" alt="tools icon">
                <h2 class="tile-title">How It Works</h2>
                <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
