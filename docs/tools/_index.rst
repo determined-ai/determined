@@ -56,5 +56,5 @@
    Commands and Shells <cli/commands-and-shells>
    Notebooks <notebooks>
    Proxy Ports <proxy-ports>
-   Tensorboard <tensorboard>
+   TensorBoard <tensorboard>
    WebUI <webui-if>

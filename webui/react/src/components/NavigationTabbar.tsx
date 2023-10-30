@@ -1,3 +1,4 @@
+import Avatar from 'determined-ui/Avatar';
 import Icon, { IconName } from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Spinner from 'determined-ui/Spinner';
@@ -7,7 +8,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
-import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
@@ -100,7 +100,7 @@ const NavigationTabbar: React.FC = () => {
       workspaces.map(
         (workspace) =>
           ({
-            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+            icon: <Avatar palette="muted" square text={workspace.name} />,
             label: workspace.name,
             onClick: (e: AnyMouseEvent) =>
               handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
@@ -110,7 +110,11 @@ const NavigationTabbar: React.FC = () => {
 
   if (canCreateWorkspace) {
     workspaceActions.push({
-      icon: <Icon name="add" size="large" title="Create Workspace" />,
+      icon: (
+        <div className={css.newWorkspaceIcon}>
+          <Icon decorative name="add" size="tiny" />
+        </div>
+      ),
       label: 'New Workspace',
       onClick: WorkspaceCreateModal.open,
     });

@@ -14,6 +14,7 @@ import time
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+sys.path.append(os.path.abspath('./_extensions'))
 
 project = "Determined"
 html_title = "Determined AI Documentation"
@@ -100,6 +101,7 @@ html_use_index = True
 html_domain_indices = True
 
 extensions = [
+    "_extensions.sort_by_weight",
     "sphinx_ext_downloads",
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
@@ -112,6 +114,11 @@ extensions = [
     "sphinx_tabs.tabs",
     "myst_parser",
 ]
+
+# To disable the default sphinx tabs CSS from loading,
+# set the following value to True.
+# Note this may impact users ability to see tab content in dark mode.
+sphinx_tabs_disable_css_loading = False
 
 myst_extensions = [
     "colon_fence",

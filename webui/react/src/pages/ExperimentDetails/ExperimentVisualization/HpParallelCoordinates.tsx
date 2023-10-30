@@ -22,7 +22,6 @@ import {
   HyperparameterType,
   Metric,
   MetricType,
-  metricTypeParamMap,
   Primitive,
   Range,
   Scale,
@@ -235,8 +234,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         selectedBatch,
-        metricTypeParamMap[selectedMetric.group],
-        undefined, // custom metric group
+        undefined,
+        selectedMetric.group,
         selectedBatchMargin,
         undefined,
         { signal: canceler.signal },

@@ -1170,12 +1170,12 @@ For each bind mount, the following optional fields may also be specified:
 ``read_only``
 =============
 
-Required. Whether the bind-mount should be a read-only mount. Defaults to ``false``.
+Optional. Whether the bind-mount should be a read-only mount. Defaults to ``false``.
 
 ``propagation``
 ===============
 
-Required. `Propagation behavior
+Optional. `Propagation behavior
 <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
 bind-mount. Defaults to ``rprivate``.
 

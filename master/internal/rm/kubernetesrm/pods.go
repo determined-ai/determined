@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
@@ -30,7 +29,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -53,6 +51,8 @@ type podMetadata struct {
 	containerID string
 }
 
+type podStatusUpdateCallback func(sproto.UpdatePodStatus)
+
 // High lever overview of the actors within the kubernetes package:
 //
 //	pods
@@ -66,7 +66,6 @@ type pods struct {
 	mu sync.RWMutex
 	wg waitgroupx.Group
 
-	cluster               *actor.Ref
 	namespace             string
 	namespaceToPoolName   map[string]string
 	masterServiceName     string
@@ -103,6 +102,8 @@ type pods struct {
 	summarizeCacheTime time.Time
 
 	syslog *logrus.Entry
+
+	podStatusUpdateCallback podStatusUpdateCallback
 }
 
 type summarizeResult struct {
@@ -139,9 +140,6 @@ type refreshPodStates struct {
 
 // newPodsService creates a new pod service for launching, querying and interacting with k8s pods.
 func newPodsService(
-	s *actor.System,
-	e *echo.Echo,
-	c *actor.Ref,
 	namespace string,
 	namespaceToPoolName map[string]string,
 	masterServiceName string,
@@ -155,6 +153,7 @@ func newPodsService(
 	credsDir string,
 	masterIP string,
 	masterPort int32,
+	podStatusUpdateCallback podStatusUpdateCallback,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -163,7 +162,6 @@ func newPodsService(
 	p := &pods{
 		wg: waitgroupx.WithContext(context.Background()),
 
-		cluster:                      c,
 		namespace:                    namespace,
 		namespaceToPoolName:          namespaceToPoolName,
 		masterServiceName:            masterServiceName,
@@ -188,7 +186,8 @@ func newPodsService(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
-		syslog:                       logrus.WithField("pod-name", namespace),
+		syslog:                       logrus.WithField("namespace", namespace),
+		podStatusUpdateCallback:      podStatusUpdateCallback,
 	}
 
 	if err := p.startClientSet(); err != nil {
@@ -207,7 +206,7 @@ func newPodsService(
 		panic(err)
 	}
 
-	err := p.startPodInformer(s)
+	err := p.startPodInformer()
 	if err != nil {
 		panic(err)
 	}
@@ -222,12 +221,12 @@ func newPodsService(
 		panic(err)
 	}
 
-	err = p.startEventListeners(s)
+	err = p.startEventListeners()
 	if err != nil {
 		panic(err)
 	}
 
-	err = p.startPreemptionListeners(s)
+	err = p.startPreemptionListeners()
 	if err != nil {
 		panic(err)
 	}
@@ -271,10 +270,10 @@ func (p *pods) ReattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 	return p.reattachAllocationPods(msg)
 }
 
-func (p *pods) RefreshPodStates(system *actor.System, msg refreshPodStates) error {
+func (p *pods) RefreshPodStates(msg refreshPodStates) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.refreshPodStates(system, msg.allocationID)
+	return p.refreshPodStates(msg.allocationID)
 }
 
 func (p *pods) GetAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
@@ -585,7 +584,7 @@ func (p *pods) reattachPod(
 	return reattachPodResponse{containerID: containerID, started: started}, nil
 }
 
-func (p *pods) refreshPodStates(system *actor.System, allocationID model.AllocationID) error {
+func (p *pods) refreshPodStates(allocationID model.AllocationID) error {
 	if allocationID == "" {
 		return fmt.Errorf("invalid call: allocationID missing")
 	}
@@ -602,7 +601,7 @@ func (p *pods) refreshPodStates(system *actor.System, allocationID model.Allocat
 			continue
 		}
 		pod := pod
-		p.podStatusCallback(system, watch.Event{Object: &pod})
+		p.podStatusCallback(watch.Event{Object: &pod})
 	}
 	return nil
 }
@@ -693,7 +692,7 @@ func (p *pods) deleteDoomedKubernetesResources() error {
 	return nil
 }
 
-func (p *pods) startPodInformer(s *actor.System) error {
+func (p *pods) startPodInformer() error {
 	for namespace := range p.namespaceToPoolName {
 		i, err := newPodInformer(
 			context.TODO(),
@@ -704,7 +703,7 @@ func (p *pods) startPodInformer(s *actor.System) error {
 			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.podStatusCallback(s, event)
+				p.podStatusCallback(event)
 			},
 		)
 		if err != nil {
@@ -733,7 +732,7 @@ func (p *pods) startNodeInformer() error {
 	return nil
 }
 
-func (p *pods) startEventListeners(s *actor.System) error {
+func (p *pods) startEventListeners() error {
 	for namespace := range p.namespaceToPoolName {
 		l, err := newEventInformer(
 			context.TODO(),
@@ -742,7 +741,7 @@ func (p *pods) startEventListeners(s *actor.System) error {
 			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.eventStatusCallback(s, event)
+				p.eventStatusCallback(event)
 			})
 		if err != nil {
 			return err
@@ -752,7 +751,7 @@ func (p *pods) startEventListeners(s *actor.System) error {
 	return nil
 }
 
-func (p *pods) startPreemptionListeners(s *actor.System) error {
+func (p *pods) startPreemptionListeners() error {
 	for namespace := range p.namespaceToPoolName {
 		l, err := newPodInformer(
 			context.TODO(),
@@ -763,7 +762,7 @@ func (p *pods) startPreemptionListeners(s *actor.System) error {
 			func(event watch.Event) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.preemptionCallback(s, event)
+				p.preemptionCallback(event)
 			})
 		if err != nil {
 			return err
@@ -858,7 +857,7 @@ func (p *pods) receiveStartTaskPod(msg StartTaskPod) error {
 	return nil
 }
 
-func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
+func (p *pods) podStatusCallback(event watch.Event) {
 	pod, ok := event.Object.(*k8sV1.Pod)
 	if !ok {
 		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
@@ -897,7 +896,7 @@ func (p *pods) podStatusCallback(s *actor.System, event watch.Event) {
 			}
 			if currState != state {
 				p.containerIDToSchedulingState[containerID] = currState
-				s.Tell(p.cluster, sproto.UpdatePodStatus{
+				go p.podStatusUpdateCallback(sproto.UpdatePodStatus{
 					ContainerID: containerID,
 					State:       currState,
 				})
@@ -1078,19 +1077,24 @@ func (p *pods) nodeStatusCallback(event watch.Event) {
 	}
 }
 
-func (p *pods) eventStatusCallback(s *actor.System, event watch.Event) {
+func (p *pods) eventStatusCallback(event watch.Event) {
 	newEvent, ok := event.Object.(*k8sV1.Event)
 	if !ok {
 		p.syslog.Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
 		return
 	}
 
-	p.syslog.Debugf("listener got new event: %s", newEvent.Message)
+	syslog := p.syslog.WithFields(logrus.Fields{
+		"name": newEvent.InvolvedObject.Name,
+		"kind": newEvent.InvolvedObject.Kind,
+	})
+
+	syslog.Debugf("listener got new event: %s", newEvent.Message)
 	ref, ok := p.podNameToPodHandler[newEvent.InvolvedObject.Name]
 	if !ok {
 		// We log at the debug level because we are unable to filter
 		// pods based on their labels the way we do with pod status updates.
-		p.syslog.Debug("received pod event for an un-registered pod")
+		syslog.Debug("received pod event for an un-registered pod")
 		return
 	}
 
@@ -1114,7 +1118,7 @@ func (p *pods) receiveResourceSummarize(msg SummarizeResources) (*PodsInfo, erro
 	return &PodsInfo{NumAgents: len(summary), SlotsAvailable: slots}, nil
 }
 
-func (p *pods) preemptionCallback(s *actor.System, event watch.Event) {
+func (p *pods) preemptionCallback(event watch.Event) {
 	pod, ok := event.Object.(*k8sV1.Pod)
 	if !ok {
 		p.syslog.Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
@@ -1301,6 +1305,8 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 	return poolsToNodes, nodesToPools
 }
 
+var programStartTime = time.Now()
+
 func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 	nodeSummaries := p.summarizeClusterByNodes()
 
@@ -1344,7 +1350,7 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 
 		summaries[poolName] = model.AgentSummary{
 			ID:             poolName,
-			RegisteredTime: p.cluster.RegisteredTime(),
+			RegisteredTime: programStartTime,
 			NumContainers:  numContainersInPool,
 			ResourcePool:   []string{poolName},
 			Slots:          slots,

@@ -1,8 +1,8 @@
 .. _coreapi-epoch-metrics-howto:
 
-##############################################
- How to View Epoch-Based Metrics in the WebUI
-##############################################
+#################################
+ How to View Epoch-Based Metrics
+#################################
 
 .. meta::
    :description: Learn how to analyze and visualize training progress and validation performance over multiple epochs using the Core API.

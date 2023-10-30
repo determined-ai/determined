@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -14,8 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -24,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 const resourcePoolEnvVar = "DET_K8S_RESOURCE_POOL"
@@ -54,6 +54,8 @@ type kubernetesResourcePool struct {
 	reschedule     bool
 
 	db *db.PgDB
+
+	syslog *logrus.Entry
 }
 
 func newResourcePool(
@@ -76,143 +78,236 @@ func newResourcePool(
 		podsService:               podsService,
 		queuePositions:            tasklist.InitializeJobSortState(true),
 		db:                        db,
+		syslog:                    logrus.WithField("component", "k8s-rp"),
 	}
 }
 
-func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
+func (k *kubernetesResourcePool) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+	k.reschedule = true
 
-	reschedule := true
-	defer func() {
-		// Default to scheduling every 500ms if a message was received, but allow messages
-		// that don't affect the cluster to be skipped.
-		k.reschedule = k.reschedule || reschedule
-	}()
+	k.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
+}
 
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		actors.NotifyAfter(ctx, ActionCoolDown, SchedulerTick{})
+func (k *kubernetesResourcePool) SetAllocationName(msg sproto.SetAllocationName) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
 
-	case
-		sproto.SetGroupMaxSlots,
-		sproto.SetAllocationName,
-		sproto.AllocateRequest,
-		sproto.ResourcesReleased,
-		sproto.UpdatePodStatus,
-		sproto.PendingPreemption:
-		return k.receiveRequestMsg(ctx)
+	k.receiveSetAllocationName(msg)
+}
 
-	case
-		sproto.GetJobQ,
-		sproto.GetJobQStats,
-		sproto.SetGroupWeight,
-		sproto.SetGroupPriority,
-		sproto.MoveJob,
-		sproto.DeleteJob,
-		sproto.RecoverJobPosition,
-		*apiv1.GetJobQueueStatsRequest:
-		return k.receiveJobQueueMsg(ctx)
+func (k *kubernetesResourcePool) AllocateRequest(msg sproto.AllocateRequest) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
 
-	case sproto.GetAllocationSummary:
-		if resp := k.reqList.TaskSummary(
-			msg.ID, k.groups, kubernetesScheduler); resp != nil {
-			ctx.Respond(*resp)
-		}
-		reschedule = false
+	k.addTask(msg)
+}
 
-	case sproto.GetAllocationSummaries:
-		reschedule = false
-		ctx.Respond(k.reqList.TaskSummaries(k.groups, kubernetesScheduler))
+func (k *kubernetesResourcePool) ResourcesReleased(msg sproto.ResourcesReleased) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
 
-	case getResourceSummary:
-		slotsUsed := 0
-		for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
-			slotsUsed += slotsUsedByGroup
-		}
-		pods, err := k.summarizePods(ctx)
-		if err != nil {
-			return err
-		}
+	k.resourcesReleased(msg)
+}
 
-		ctx.Respond(resourceSummary{
-			numAgents:              pods.NumAgents,
-			numTotalSlots:          pods.SlotsAvailable,
-			numActiveSlots:         slotsUsed,
-			maxNumAuxContainers:    1,
-			numActiveAuxContainers: 0,
-			slotType:               "",
-		})
+func (k *kubernetesResourcePool) UpdatePodStatus(msg sproto.UpdatePodStatus) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
 
-	case SchedulerTick:
-		if k.reschedule {
-			k.schedulePendingTasks(ctx)
-		}
-		k.reschedule = false
-		reschedule = false
-		actors.NotifyAfter(ctx, ActionCoolDown, SchedulerTick{})
-
-	case sproto.ValidateCommandResourcesRequest:
-		fulfillable := k.maxSlotsPerPod >= msg.Slots
-		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
-
-	default:
-		reschedule = false
-		ctx.Log().Errorf("unexpected message %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
+	id, ok := k.containerIDtoAllocationID[msg.ContainerID]
+	if !ok {
+		return
 	}
 
+	for it := k.reqList.Iterator(); it.Next(); {
+		req := it.Value()
+		if req.AllocationID == id {
+			req.State = msg.State
+			if sproto.ScheduledStates[req.State] {
+				k.allocationIDToRunningPods[id]++
+			}
+		}
+	}
+}
+
+func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption) error {
+	return rmerrors.ErrNotSupported
+}
+
+func (k *kubernetesResourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJobInfo {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	return k.jobQInfo()
+}
+
+func (k *kubernetesResourcePool) GetJobQStats(msg sproto.GetJobQStats) *jobv1.QueueStats {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	return tasklist.JobStats(k.reqList)
+}
+
+func (k *kubernetesResourcePool) GetJobQStatsAPI(msg *apiv1.GetJobQueueStatsRequest) *apiv1.GetJobQueueStatsResponse {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	resp := &apiv1.GetJobQueueStatsResponse{
+		Results: make([]*apiv1.RPQueueStat, 0),
+	}
+	resp.Results = append(resp.Results, &apiv1.RPQueueStat{
+		Stats:        tasklist.JobStats(k.reqList),
+		ResourcePool: k.poolConfig.PoolName,
+	})
+	return resp
+}
+
+func (k *kubernetesResourcePool) SetGroupWeight(msg sproto.SetGroupWeight) error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	return rmerrors.ErrUnsupported("set group weight is unsupported in k8s")
+}
+
+func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	group := k.getOrCreateGroup(msg.JobID)
+	// Check if there is already a submitted task in this group for which
+	// priority is immutable. If so, respond with an error.
+	for it := k.reqList.Iterator(); it.Next(); {
+		if it.Value().JobID == msg.JobID {
+			if req := it.Value(); !req.Preemptible {
+				return rmerrors.ErrUnsupported(fmt.Sprintf(
+					"priority is immutable for %s in k8s because it may be destructive",
+					req.Name,
+				))
+			}
+		}
+	}
+
+	group.Priority = &msg.Priority
+	// Do the destructive thing if the group has a submitted task, since it is only allowed
+	// for trials and trials take checkpoints.
+	for it := k.reqList.Iterator(); it.Next(); {
+		if it.Value().JobID == msg.JobID {
+			req := it.Value()
+			if id, ok := k.allocationIDToContainerID[req.AllocationID]; ok {
+				k.podsService.ChangePriority(ChangePriority{PodID: id})
+				delete(k.allocationIDToContainerID, req.AllocationID)
+			}
+		}
+	}
 	return nil
 }
 
-func (k *kubernetesResourcePool) summarizePods(
-	ctx *actor.Context,
-) (*PodsInfo, error) {
+func (k *kubernetesResourcePool) MoveJob(msg sproto.MoveJob) error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	return k.moveJob(msg.ID, msg.Anchor, msg.Ahead)
+}
+
+func (k *kubernetesResourcePool) DeleteJob(msg sproto.DeleteJob) sproto.DeleteJobResponse {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	// For now, there is nothing to cleanup in k8s.
+	return sproto.EmptyDeleteJobResponse()
+}
+
+func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
+}
+
+func (k *kubernetesResourcePool) GetAllocationSummary(msg sproto.GetAllocationSummary) *sproto.AllocationSummary {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if resp := k.reqList.TaskSummary(
+		msg.ID, k.groups, kubernetesScheduler); resp != nil {
+		return resp
+	}
+	return nil
+}
+
+func (k *kubernetesResourcePool) GetAllocationSummaries(
+	msg sproto.GetAllocationSummaries,
+) map[model.AllocationID]sproto.AllocationSummary {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.reqList.TaskSummaries(k.groups, kubernetesScheduler)
+}
+
+func (k *kubernetesResourcePool) getResourceSummary(msg getResourceSummary) (*resourceSummary, error) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	slotsUsed := 0
+	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
+		slotsUsed += slotsUsedByGroup
+	}
+	pods, err := k.summarizePods()
+	if err != nil {
+		return nil, err
+	}
+
+	return &resourceSummary{
+		numAgents:              pods.NumAgents,
+		numTotalSlots:          pods.SlotsAvailable,
+		numActiveSlots:         slotsUsed,
+		maxNumAuxContainers:    1,
+		numActiveAuxContainers: 0,
+		slotType:               "",
+	}, nil
+}
+
+func (k *kubernetesResourcePool) ValidateCommandResources(
+	msg sproto.ValidateCommandResourcesRequest,
+) sproto.ValidateCommandResourcesResponse {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	fulfillable := k.maxSlotsPerPod >= msg.Slots
+	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
+}
+
+func (k *kubernetesResourcePool) Schedule() {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if k.reschedule {
+		k.schedulePendingTasks()
+	}
+	k.reschedule = false
+}
+
+func (k *kubernetesResourcePool) summarizePods() (*PodsInfo, error) {
 	resp, err := k.podsService.SummarizeResources(SummarizeResources{PoolName: k.poolConfig.PoolName})
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
-}
-
-func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case sproto.SetGroupMaxSlots:
-		k.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
-
-	case sproto.SetAllocationName:
-		k.receiveSetAllocationName(ctx, msg)
-
-	case sproto.AllocateRequest:
-		k.addTask(ctx, msg)
-
-	case sproto.ResourcesReleased:
-		k.resourcesReleased(ctx, msg)
-
-	case sproto.UpdatePodStatus:
-		id, ok := k.containerIDtoAllocationID[msg.ContainerID]
-		if !ok {
-			return nil
-		}
-
-		for it := k.reqList.Iterator(); it.Next(); {
-			req := it.Value()
-			if req.AllocationID == id {
-				req.State = msg.State
-				if sproto.ScheduledStates[req.State] {
-					k.allocationIDToRunningPods[id]++
-				}
-			}
-		}
-
-	case sproto.PendingPreemption:
-		ctx.Respond(actor.ErrUnexpectedMessage(ctx))
-		return nil
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
 }
 
 func (k *kubernetesResourcePool) JobStopped(jobID model.JobID) {
@@ -226,7 +321,7 @@ func (k *kubernetesResourcePool) JobStopped(jobID model.JobID) {
 	delete(k.jobIDToAllocationID, jobID)
 }
 
-func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
+func (k *kubernetesResourcePool) addTask(msg sproto.AllocateRequest) {
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
@@ -235,7 +330,7 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 		msg.Name = "Unnamed-k8-Task"
 	}
 
-	ctx.Log().WithField("restore", msg.Restore).Infof(
+	k.syslog.WithField("restore", msg.Restore).Infof(
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.Name, msg.AllocationID,
 	)
@@ -253,83 +348,7 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 	k.reqList.AddTask(&msg)
 }
 
-func (k *kubernetesResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case sproto.GetJobQ:
-		ctx.Respond(k.jobQInfo())
-
-	case *apiv1.GetJobQueueStatsRequest:
-		resp := &apiv1.GetJobQueueStatsResponse{
-			Results: make([]*apiv1.RPQueueStat, 0),
-		}
-		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
-			Stats:        tasklist.JobStats(k.reqList),
-			ResourcePool: k.poolConfig.PoolName,
-		},
-		)
-		ctx.Respond(resp)
-
-	case sproto.GetJobQStats:
-		ctx.Respond(tasklist.JobStats(k.reqList))
-
-	case sproto.MoveJob:
-		err := k.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
-		if ctx.ExpectingResponse() {
-			ctx.Respond(err)
-		}
-
-	case sproto.SetGroupWeight:
-		// setting weights in kubernetes is not supported
-		if ctx.ExpectingResponse() {
-			ctx.Respond(rmerrors.ErrUnsupported("set group weight is unsupported in k8s"))
-		}
-
-	case sproto.SetGroupPriority:
-		group := k.getOrCreateGroup(msg.JobID)
-		// Check if there is already a submitted task in this group for which
-		// priority is immutable. If so, respond with an error.
-		for it := k.reqList.Iterator(); it.Next(); {
-			if it.Value().JobID == msg.JobID {
-				if req := it.Value(); !req.Preemptible {
-					if ctx.ExpectingResponse() {
-						ctx.Respond(rmerrors.ErrUnsupported(fmt.Sprintf(
-							"priority is immutable for %s in k8s because it may be destructive",
-							req.Name,
-						)))
-					}
-					return nil
-				}
-			}
-		}
-
-		group.Priority = &msg.Priority
-		// Do the destructive thing if the group has a submitted task, since it is only allowed
-		// for trials and trials take checkpoints.
-		for it := k.reqList.Iterator(); it.Next(); {
-			if it.Value().JobID == msg.JobID {
-				req := it.Value()
-				if id, ok := k.allocationIDToContainerID[req.AllocationID]; ok {
-					k.podsService.ChangePriority(ChangePriority{PodID: id})
-					delete(k.allocationIDToContainerID, req.AllocationID)
-				}
-			}
-		}
-
-	case sproto.RecoverJobPosition:
-		k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
-
-	case sproto.DeleteJob:
-		// For now, there is nothing to cleanup in k8s.
-		ctx.Respond(sproto.EmptyDeleteJobResponse())
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
 func (k *kubernetesResourcePool) moveJob(
-	ctx *actor.Context,
 	jobID model.JobID,
 	anchorID model.JobID,
 	aheadOf bool,
@@ -337,11 +356,10 @@ func (k *kubernetesResourcePool) moveJob(
 	for it := k.reqList.Iterator(); it.Next(); {
 		if it.Value().JobID == jobID {
 			if req := it.Value(); !req.Preemptible {
-				ctx.Respond(fmt.Errorf(
+				return fmt.Errorf(
 					"move job for %s unsupported in k8s because it may be destructive",
 					req.Name,
-				))
-				return nil
+				)
 			}
 		}
 	}
@@ -447,7 +465,6 @@ func (k *kubernetesResourcePool) jobQInfo() map[model.JobID]*sproto.RMJobInfo {
 }
 
 func (k *kubernetesResourcePool) receiveSetAllocationName(
-	ctx *actor.Context,
 	msg sproto.SetAllocationName,
 ) {
 	if task, found := k.reqList.TaskByID(msg.AllocationID); found {
@@ -456,13 +473,13 @@ func (k *kubernetesResourcePool) receiveSetAllocationName(
 }
 
 func (k *kubernetesResourcePool) assignResources(
-	ctx *actor.Context, req *sproto.AllocateRequest,
+	req *sproto.AllocateRequest,
 ) {
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
 	if req.SlotsNeeded > 1 {
 		if k.maxSlotsPerPod == 0 {
-			ctx.Log().WithField("allocation-id", req.AllocationID).Error(
+			k.syslog.WithField("allocation-id", req.AllocationID).Error(
 				"set max_slots_per_pod > 0 to schedule tasks with slots")
 			return
 		}
@@ -472,7 +489,7 @@ func (k *kubernetesResourcePool) assignResources(
 			slotsPerPod = req.SlotsNeeded
 		} else {
 			if req.SlotsNeeded%k.maxSlotsPerPod != 0 {
-				ctx.Log().WithField("allocation-id", req.AllocationID).Errorf(
+				k.syslog.WithField("allocation-id", req.AllocationID).Errorf(
 					"task number of slots (%d) is not schedulable on the configured "+
 						"max_slots_per_pod (%d)", req.SlotsNeeded, k.maxSlotsPerPod)
 				return
@@ -485,7 +502,7 @@ func (k *kubernetesResourcePool) assignResources(
 
 	group := k.groups[req.JobID]
 	if group == nil {
-		ctx.Log().WithField("allocation-id", req.AllocationID).Errorf(
+		k.syslog.WithField("allocation-id", req.AllocationID).Errorf(
 			"cannot find group for job %s", req.JobID)
 		return
 	}
@@ -494,9 +511,9 @@ func (k *kubernetesResourcePool) assignResources(
 	var resources []*k8sPodResources
 	if req.Restore {
 		var err error
-		resources, err = k.restoreResources(ctx, req, slotsPerPod, numPods)
+		resources, err = k.restoreResources(req, slotsPerPod, numPods)
 		if err != nil {
-			ctx.Log().
+			k.syslog.
 				WithField("allocation-id", req.AllocationID).
 				WithError(err).Error("unable to restore allocation")
 			unknownExit := sproto.ExitCode(-1)
@@ -508,7 +525,7 @@ func (k *kubernetesResourcePool) assignResources(
 			return
 		}
 	} else {
-		resources = k.createResources(ctx, req, slotsPerPod, numPods)
+		resources = k.createResources(req, slotsPerPod, numPods)
 	}
 
 	allocations := sproto.ResourceList{}
@@ -523,12 +540,12 @@ func (k *kubernetesResourcePool) assignResources(
 	rmevents.Publish(req.AllocationID, assigned.Clone())
 
 	if req.Restore {
-		ctx.Log().
+		k.syslog.
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
 			Infof("resources restored with %d pods", numPods)
 	} else {
-		ctx.Log().
+		k.syslog.
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
 			Infof("resources assigned with %d pods", numPods)
@@ -538,20 +555,19 @@ func (k *kubernetesResourcePool) assignResources(
 		// This call must happen after we publish ResourcesAllocated, otherwise the allocation will
 		// receive an update for resources it does not know about, ignore it, then hang if it missed
 		// the termination.
-		err := k.podsService.RefreshPodStates(ctx.Self().System(), refreshPodStates{allocationID: req.AllocationID})
+		err := k.podsService.RefreshPodStates(refreshPodStates{allocationID: req.AllocationID})
 		if err != nil {
-			ctx.Log().WithError(err).Error("failed to refresh pod states after reattach")
+			k.syslog.WithError(err).Error("failed to refresh pod states after reattach")
 		}
 	}
 }
 
 func (k *kubernetesResourcePool) createResources(
-	ctx *actor.Context, req *sproto.AllocateRequest, slotsPerPod, numPods int,
+	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) []*k8sPodResources {
 	var resources []*k8sPodResources
 	for pod := 0; pod < numPods; pod++ {
 		resources = append(resources, &k8sPodResources{
-			system:          ctx.Self().System(),
 			req:             req,
 			podsService:     k.podsService,
 			containerID:     cproto.NewID(),
@@ -565,7 +581,7 @@ func (k *kubernetesResourcePool) createResources(
 }
 
 func (k *kubernetesResourcePool) restoreResources(
-	ctx *actor.Context, req *sproto.AllocateRequest, slotsPerPod, numPods int,
+	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) ([]*k8sPodResources, error) {
 	restoreResponses, err := k.podsService.ReattachAllocationPods(reattachAllocationPods{
 		allocationID: req.AllocationID,
@@ -580,7 +596,6 @@ func (k *kubernetesResourcePool) restoreResources(
 	var resources []*k8sPodResources
 	for _, restoreResponse := range restoreResponses {
 		resources = append(resources, &k8sPodResources{
-			system:          ctx.Self().System(),
 			req:             req,
 			podsService:     k.podsService,
 			containerID:     cproto.ID(restoreResponse.containerID),
@@ -597,12 +612,11 @@ func (k *kubernetesResourcePool) restoreResources(
 }
 
 func (k *kubernetesResourcePool) resourcesReleased(
-	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
 	req, ok := k.reqList.TaskByID(msg.AllocationID)
 	if !ok {
-		ctx.Log().Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
+		k.syslog.Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
 		return
 	}
 
@@ -611,7 +625,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 		return
 	}
 
-	ctx.Log().Infof("resources are released for %s", msg.AllocationID)
+	k.syslog.Infof("resources are released for %s", msg.AllocationID)
 	group := k.groups[req.JobID]
 	if group != nil {
 		k.slotsUsedPerGroup[group] -= req.SlotsNeeded
@@ -646,12 +660,12 @@ func (k *kubernetesResourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.G
 	return g
 }
 
-func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
+func (k *kubernetesResourcePool) schedulePendingTasks() {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		group := k.groups[req.JobID]
 		if group == nil {
-			ctx.Log().Warnf("schedulePendingTasks cannot find group for job %s", req.JobID)
+			k.syslog.Warnf("schedulePendingTasks cannot find group for job %s", req.JobID)
 			continue
 		}
 		if !k.reqList.IsScheduled(req.AllocationID) {
@@ -660,14 +674,12 @@ func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 					continue
 				}
 			}
-			k.assignResources(ctx, req)
+			k.assignResources(req)
 		}
 	}
 }
 
 type k8sPodResources struct {
-	system *actor.System
-
 	req             *sproto.AllocateRequest
 	podsService     *pods
 	group           *tasklist.Group

@@ -1,10 +1,10 @@
+import Avatar, { Size } from 'determined-ui/Avatar';
 import Button from 'determined-ui/Button';
 import { useModal } from 'determined-ui/Modal';
 import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
 import Link from 'components/Link';
 import ResourcePoolBindingModalComponent from 'components/ResourcePoolBindingModal';
 import { ColumnDef } from 'components/Table/InteractiveTable';
@@ -39,7 +39,7 @@ const ResourcePoolBindings = ({ pool }: Props): JSX.Element => {
         key: 'workspace',
         render: (_, record) => (
           <div className={css.tableRow}>
-            <DynamicIcon name={record.name} size={40} style={{ borderRadius: '100%' }} />
+            <Avatar palette="muted" size={Size.Medium} square text={record.name} />
             <div>
               <div>
                 <Link path={paths.workspaceDetails(record.id)}>{record.name}</Link>

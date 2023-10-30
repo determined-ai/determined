@@ -92,10 +92,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             output = aws.list_stacks(boto3_session)
         except NoCredentialsError:
             error_no_credentials()
-        except Exception as e:
+        except Exception:
             raise CliError(
                 "Listing stacks failed. Check the AWS CloudFormation Console for details.",
-                e_stack=e,
             )
         for item in output:
             print(item["StackName"])
@@ -127,10 +126,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             aws.delete(args.cluster_id, boto3_session)
         except NoCredentialsError:
             error_no_credentials()
-        except Exception as e:
+        except Exception:
             raise CliError(
                 "Stack Deletion Failed. Check the AWS CloudFormation Console for details.",
-                e_stack=e,
             )
 
         print("Delete Successful")
@@ -273,7 +271,6 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     except Exception as e:
         raise CliError(
             f"Stack Deployment Failed: {e}\nCheck the AWS CloudFormation Console for details.",
-            e_stack=e,
         )
 
     if not args.no_wait_for_master:

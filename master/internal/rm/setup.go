@@ -28,7 +28,7 @@ func New(
 	case config.ResourceManager.AgentRM != nil:
 		return agentrm.New(system, db, echo, config, opts, cert)
 	case config.ResourceManager.KubernetesRM != nil:
-		return kubernetesrm.New(system, db, echo, config, taskContainerDefaults, opts, cert)
+		return kubernetesrm.New(system, db, config, taskContainerDefaults, opts, cert)
 	default:
 		panic("no expected resource manager config is defined")
 	}

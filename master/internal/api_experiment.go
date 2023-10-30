@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -336,7 +337,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-	jobSummary, err := jobservice.Default.GetJobSummary(jobID, exp.ResourcePool)
+	jobSummary, err := jobservice.DefaultService.GetJobSummary(jobID, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't
@@ -1920,11 +1921,21 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
+
+	var metricGroup model.MetricGroup
 	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricType
-	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricGroup = model.TrainingMetricGroup //nolint:goconst
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricGroup = model.ValidationMetricGroup //nolint:goconst
+	default:
+		metricGroup = model.MetricGroup(req.Group)
+	}
+	if metricGroup == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
+
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
@@ -1956,19 +1967,8 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		}
 
 		var response apiv1.TrialsSnapshotResponse
-		var newTrials []*apiv1.TrialsSnapshotResponse_Trial
-		var endTime time.Time
-		var err error
-		switch metricGroup {
-		case apiv1.MetricType_METRIC_TYPE_TRAINING:
-			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
-				minBatches, maxBatches, metricName, startTime)
-		default:
-			panic("Invalid metric type")
-		}
+		newTrials, endTime, err := a.m.db.TrialsSnapshot(experimentID,
+			minBatches, maxBatches, metricName, startTime, metricGroup)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
@@ -2043,7 +2043,7 @@ func (a *apiServer) topTrials(
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup apiv1.MetricType,
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGroup model.MetricGroup,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
@@ -2051,7 +2051,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricID model.MetricGroup
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -2070,18 +2069,10 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricGro
 	if !seenBefore {
 		startTime = zeroTime
 	}
-	switch metricGroup {
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricID = model.TrainingMetricGroup //nolint:goconst
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricID = model.ValidationMetricGroup //nolint:goconst
-	default:
-		panic("Invalid metric type")
-	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
 		[]string{metricName},
 		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
-		"batches", nil, metricID)
+		"batches", nil, metricGroup)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
@@ -2132,13 +2123,22 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	metricName := req.MetricName
-	//nolint:staticcheck // SA1019: backward compatibility
-	metricGroup := req.MetricType
-	if metricGroup == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric group")
-	}
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
+
+	var metricGroup model.MetricGroup
+	//nolint:staticcheck // SA1019: backward compatibility
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricGroup = model.TrainingMetricGroup
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricGroup = model.ValidationMetricGroup
+	default:
+		metricGroup = model.MetricGroup(req.Group)
+	}
+	if metricGroup == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric group")
 	}
 
 	var timeSinceLastAuth time.Time
@@ -2851,4 +2851,121 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 	}
 
 	return resp, nil
+}
+
+func (a *apiServer) PutExperimentLabel(ctx context.Context,
+	req *apiv1.PutExperimentLabelRequest,
+) (*apiv1.PutExperimentLabelResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.ExperimentId)
+	if err = query.Scan(ctx); err != nil {
+		return nil, err
+	}
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	if slices.Contains(exp.Labels, req.Label) {
+		return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+	}
+	exp.Labels = append(exp.Labels, req.Label)
+
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error updating experiment %v in database %w", exp.Id, err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not commit patch experiment labels transaction %w", err)
+	}
+
+	return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+}
+
+func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
+	req *apiv1.DeleteExperimentLabelRequest,
+) (*apiv1.DeleteExperimentLabelResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.ExperimentId).
+		For("UPDATE")
+	if err = query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	i := slices.Index(exp.Labels, req.Label)
+	if i == -1 {
+		return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
+	}
+	exp.Labels = slices.Delete(exp.Labels, i, i+1)
+
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not commit delete experiment labels transaction: %w", err)
+	}
+
+	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
 }

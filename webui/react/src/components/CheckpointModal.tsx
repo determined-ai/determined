@@ -188,6 +188,7 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
     <Modal
       cancel
       submit={{
+        disabled: checkpoint?.state === CheckpointState.Deleted,
         handleError,
         handler: handleOk,
         text: 'Register Checkpoint',
