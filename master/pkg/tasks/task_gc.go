@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/docker/docker/api/types/mount"
+
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/docker/docker/api/types/mount"
 )
 
 // GCCkptSpec is a description of a task for running checkpoint GC.
