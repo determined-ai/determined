@@ -34,9 +34,6 @@ type RMJobInfo struct { // rename ?
 	AllocatedSlots int
 }
 
-// GetJob requests a job representation from a job.
-type GetJob struct{}
-
 // GetJobQ is used to get all job information in one go to avoid any inconsistencies.
 type GetJobQ struct {
 	ResourcePool string
@@ -81,11 +78,6 @@ type (
 	// SetGroupPriority sets the priority of the group in the priority scheduler.
 	SetGroupPriority struct {
 		Priority     int
-		ResourcePool string
-		JobID        model.JobID
-	}
-	// SetResourcePool switches the resource pool that the job belongs to.
-	SetResourcePool struct {
 		ResourcePool string
 		JobID        model.JobID
 	}

@@ -312,8 +312,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
 		}
-	case sproto.GetJob:
-		ctx.Respond(c.ToV1Job())
 
 	case actor.PostStop:
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
@@ -479,9 +477,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}
-
-	case sproto.SetResourcePool:
-		ctx.Respond(fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

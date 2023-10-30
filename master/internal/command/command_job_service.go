@@ -74,3 +74,8 @@ func (c *command) SetWeight(weight float64) error {
 	c.Config.Resources.Weight = weight
 	return nil
 }
+
+// SetResourcePool is not implemented for commands.
+func (c *command) SetResourcePool(resourcePool string) error {
+	return fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType)
+}

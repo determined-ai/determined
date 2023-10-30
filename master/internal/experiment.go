@@ -427,13 +427,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}
-	case sproto.GetJob:
-		ctx.Respond(e.ToV1Job())
-
-	case sproto.SetResourcePool:
-		if err := e.setRP(msg); err != nil {
-			ctx.Respond(err)
-		}
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -1059,7 +1052,7 @@ func (e *experiment) setWeight(weight float64) error {
 	return nil
 }
 
-func (e *experiment) setRP(msg sproto.SetResourcePool) error {
+func (e *experiment) setRP(resourcePool string) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
@@ -1068,11 +1061,11 @@ func (e *experiment) setRP(msg sproto.SetResourcePool) error {
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		msg.ResourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+		resourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
-		return fmt.Errorf("invalid resource pool name %s", msg.ResourcePool)
+		return fmt.Errorf("invalid resource pool name %s", resourcePool)
 	case oldRP == rp:
 		return fmt.Errorf("resource pool is unchanged (%s == %s)", oldRP, rp)
 	}

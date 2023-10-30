@@ -22,6 +22,7 @@ type Job interface {
 	ToV1Job() *jobv1.Job
 	SetJobPriority(priority int) error
 	SetWeight(weight float64) error
+	SetResourcePool(resourcePool string) error
 }
 
 // Service manages the job service.
@@ -191,7 +192,7 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 		if action.ResourcePool == "" {
 			s.syslog.Error("resource pool must be set")
 		}
-		return fmt.Errorf("setting resource pool for job type %s is not supported", action)
+		return j.SetResourcePool(action.ResourcePool)
 	case *jobv1.QueueControl_AheadOf:
 		return s.rm.MoveJob(sproto.MoveJob{
 			ID:     jobID,
