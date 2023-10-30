@@ -290,13 +290,28 @@ if __name__ == "__main__":
         exit(1)
 
     if sys.argv[1] == "check":
+        return_code = 0
+
+        #check for broken links
         errors = check_links(links)
         if errors:
             print("check failed, errors detected!", file=sys.stderr)
             for e in errors:
                 print(e, file=sys.stderr)
-            exit(1)
-        exit(0)
+            return_code = 1
+
+        #check for dropped urls
+        all_urls = set(l.src for l in links).union(all_urls_from_files())
+        dropped = published.difference(all_urls)
+        if dropped:
+            print(
+                "check failed; the following previously-published urls seem to have been "
+                "dropped and should be assigned redirects:\n    " + "\n    ".join(dropped),
+                file=sys.stderr,
+            )
+            return_code = 1
+
+        exit(return_code)
 
     if sys.argv[1] == "publish":
         """

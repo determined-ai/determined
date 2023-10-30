@@ -1,14 +1,14 @@
 import type { TabsProps } from 'antd';
+import Button from 'determined-ui/Button';
+import Message from 'determined-ui/Message';
+import Notes from 'determined-ui/Notes';
+import Pivot from 'determined-ui/Pivot';
+import Spinner from 'determined-ui/Spinner';
+import Tooltip from 'determined-ui/Tooltip';
 import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import Button from 'components/kit/Button';
-import Message from 'components/kit/Message';
-import Notes from 'components/kit/Notes';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import Tooltip from 'components/kit/Tooltip';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
@@ -298,6 +298,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           disableTitle
           notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
           onError={handleError}
+          onPageUnloadHook={unstable_useBlocker}
           onSave={handleNotesUpdate}
         />
       ),

@@ -1,7 +1,7 @@
+import Message from 'determined-ui/Message';
 import { useObservable } from 'micro-observables';
 import React from 'react';
 
-import Message from 'components/kit/Message';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
 import determinedStore from 'stores/determinedInfo';

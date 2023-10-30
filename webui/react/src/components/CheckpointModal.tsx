@@ -1,6 +1,8 @@
+import Button from 'determined-ui/Button';
+import { Modal } from 'determined-ui/Modal';
+import useConfirm from 'determined-ui/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
-import { Modal } from 'components/kit/Modal';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -20,8 +22,6 @@ import { checkpointSize } from 'utils/workload';
 import Badge, { BadgeType } from './Badge';
 import css from './CheckpointModal.module.scss';
 import HumanReadableNumber from './HumanReadableNumber';
-import Button from './kit/Button';
-import useConfirm from './kit/useConfirm';
 import Link from './Link';
 
 export interface Props {
@@ -188,6 +188,7 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
     <Modal
       cancel
       submit={{
+        disabled: checkpoint?.state === CheckpointState.Deleted,
         handleError,
         handler: handleOk,
         text: 'Register Checkpoint',

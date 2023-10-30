@@ -1,10 +1,10 @@
-import React, { useCallback } from 'react';
-
 import LogViewer, {
   FetchConfig,
   FetchDirection,
   FetchType,
-} from 'components/kit/LogViewer/LogViewer';
+} from 'determined-ui/LogViewer/LogViewer';
+import React, { useCallback } from 'react';
+
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';

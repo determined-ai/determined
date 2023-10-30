@@ -1,10 +1,10 @@
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import Select from 'determined-ui/Select';
+import { Loadable } from 'determined-ui/utils/loadable';
 import * as io from 'io-ts';
 
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import Select from 'components/kit/Select';
-import { Loadable } from 'components/kit/utils/loadable';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 

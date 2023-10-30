@@ -1,12 +1,12 @@
 import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import Button from 'determined-ui/Button';
+import Dropdown from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import Button from 'components/kit/Button';
-import Dropdown from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
-import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
@@ -245,7 +245,7 @@ const WorkspaceMembers: React.FC<Props> = ({
             canAssignRoles({ workspace }) &&
             !workspace.immutable &&
             !workspace.archived && (
-              <Button onClick={WorkspaceMemberAddModal.open}> Add Member</Button>
+              <Button onClick={WorkspaceMemberAddModal.open}> Add Members</Button>
             )}
           {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
         </Space>
@@ -273,7 +273,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           addableUsersAndGroups,
           onClose: fetchMembers,
           rolesAssignableToScope,
-          workspaceId: workspace.id,
+          workspace: workspace,
         }}
       />
     </>

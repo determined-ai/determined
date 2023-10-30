@@ -1,11 +1,11 @@
+import { LineChart } from 'determined-ui/LineChart';
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { LineChart } from 'components/kit/LineChart';
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { UPlotPoint } from 'components/UPlot/types';
@@ -24,7 +24,6 @@ import {
   Hyperparameter,
   HyperparameterType,
   Metric,
-  metricTypeParamMap,
   RunState,
   Scale,
   Serie,
@@ -189,8 +188,8 @@ const LearningCurve: React.FC<Props> = ({
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
-        metricTypeParamMap[selectedMetric.group],
         undefined,
+        selectedMetric.group,
         selectedMaxTrial,
         MAX_DATAPOINTS,
         undefined,

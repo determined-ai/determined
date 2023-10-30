@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonProps } from 'antd';
+import Message, { Props as MessageProps } from 'determined-ui/Message';
 import React, { useMemo } from 'react';
 
-import Message, { Props as MessageProps } from 'components/kit/Message';
 import { ValueOf } from 'types';
 import { isObject, validateEnum } from 'utils/data';
 

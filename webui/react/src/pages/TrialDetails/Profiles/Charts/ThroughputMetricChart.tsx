@@ -1,6 +1,6 @@
+import { LineChart } from 'determined-ui/LineChart';
 import React from 'react';
 
-import { LineChart } from 'components/kit/LineChart';
 import Section from 'components/Section';
 import { ChartProps, MetricType } from 'pages/TrialDetails/Profiles/types';
 import { useFetchProfilerMetrics } from 'pages/TrialDetails/Profiles/useFetchProfilerMetrics';

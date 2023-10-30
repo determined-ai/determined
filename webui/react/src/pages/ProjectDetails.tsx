@@ -1,12 +1,12 @@
 import type { TabsProps } from 'antd';
+import Message from 'determined-ui/Message';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import DynamicTabs from 'components/DynamicTabs';
-import Message from 'components/kit/Message';
-import Spinner from 'components/kit/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useProjectActionMenu } from 'components/ProjectActionDropdown';

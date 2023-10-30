@@ -5,7 +5,7 @@ import warnings
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 import determined as det
-from determined.common import api, context, util, yaml
+from determined.common import api, context, util
 from determined.common.api import authentication, bindings, certs, errors
 from determined.common.experimental import (
     checkpoint,
@@ -164,7 +164,7 @@ class Determined:
                 config_text = f.read()
             _ = util.safe_load_yaml_with_exceptions(config_text)
         elif isinstance(config, Dict):
-            yaml_dump = yaml.dump(config)
+            yaml_dump = util.yaml_safe_dump(config)
             assert yaml_dump is not None
             config_text = yaml_dump
         else:
@@ -486,12 +486,27 @@ class Determined:
     def stream_trials_metrics(
         self, trial_ids: List[int], group: str
     ) -> Iterable[metrics.TrialMetrics]:
-        """Get a stream of metrics for this trial.
+        warnings.warn(
+            "Determined.stream_training_metrics is deprecated."
+            "Use Determined.iter_trials_metrics instead",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return self.iter_trials_metrics(trial_ids=trial_ids, group=group)
+
+    def iter_trials_metrics(
+        self, trial_ids: List[int], group: str
+    ) -> Iterable[metrics.TrialMetrics]:
+        """Generate an iterator of metrics for the passed trials.
+
+        This function opens up a persistent connection to the Determined master to receive trial
+        metrics. For as long as the connection remains open, the generator it returns yields the
+        TrialMetrics it receives.
 
         Arguments:
-            trial_ids: The trial IDs to stream metrics for.
-            group: The metric group to stream.  Common values are "validation" and "training", but
-                group can be any value passed to master when reporting metrics during training
+            trial_ids: The trial IDs to iterate over metrics for.
+            group: The metric group to iterate over.  Common values are "validation" and "training",
+                but group can be any value passed to master when reporting metrics during training
                 (usually via a context's `report_metrics`).
 
         Returns:
@@ -504,11 +519,11 @@ class Determined:
     ) -> Iterable[metrics.TrainingMetrics]:
         """Streams training metrics for this trial.
 
-        DEPRECATED: Use stream_metrics instead with `group` set to "training"
+        DEPRECATED: Use iter_trials_metrics instead with `group` set to "training"
         """
         warnings.warn(
-            "Trial.stream_training_metrics is deprecated."
-            "Use Trial.stream_metrics instead with `group` set to 'training'",
+            "Determined.stream_trials_training_metrics is deprecated."
+            "Use Determined.iter_trials_metrics instead with `group` set to 'training'",
             FutureWarning,
             stacklevel=2,
         )
@@ -519,11 +534,11 @@ class Determined:
     ) -> Iterable[metrics.ValidationMetrics]:
         """Streams validation metrics for this trial.
 
-        DEPRECATED: Use stream_metrics instead with `group` set to "validation"
+        DEPRECATED: Use iter_trials_metrics instead with `group` set to "validation"
         """
         warnings.warn(
-            "Trial.stream_validation_metrics is deprecated."
-            "Use Trial.stream_metrics instead with `group` set to 'validation'",
+            "Determined.stream_trials_validation_metrics is deprecated."
+            "Use Determined.iter_trials_metrics instead with `group` set to 'validation'",
             FutureWarning,
             stacklevel=2,
         )

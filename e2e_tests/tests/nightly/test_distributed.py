@@ -4,8 +4,8 @@ import tempfile
 import warnings
 
 import pytest
-import yaml
 
+from determined.common import util
 from tests import config as conf
 from tests import experiment as exp
 
@@ -152,7 +152,7 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.hf_trainer_examples_path(test_dir),
@@ -169,7 +169,7 @@ def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.hf_trainer_examples_path(test_dir),
@@ -186,7 +186,7 @@ def test_torchvision_core_api_deepspeed_autotuning() -> None:
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.deepspeed_autotune_examples_path(test_dir),
@@ -203,7 +203,7 @@ def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
     config = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            yaml.dump(config, f)
+            util.yaml_safe_dump(config, f)
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.deepspeed_autotune_examples_path(test_dir),

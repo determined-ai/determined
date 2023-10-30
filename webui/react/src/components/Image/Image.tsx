@@ -1,6 +1,5 @@
+import { DarkLight } from 'determined-ui/Theme';
 import React from 'react';
-
-import { DarkLight } from 'components/kit/Theme';
 
 import css from './Image.module.scss';
 

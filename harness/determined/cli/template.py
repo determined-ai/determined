@@ -7,7 +7,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import render
 from determined.cli.workspace import get_workspace_id_from_args, workspace_arg
-from determined.common import api, util, yaml
+from determined.common import api, util
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
@@ -17,7 +17,7 @@ TemplateAll = namedtuple("TemplateAll", ["name", "workspace", "config"])
 
 def _parse_config(data: Dict[str, Any]) -> Any:
     # Pretty print the config field.
-    return yaml.safe_dump(data, default_flow_style=False)
+    return util.yaml_safe_dump(data, default_flow_style=False)
 
 
 @authentication.required

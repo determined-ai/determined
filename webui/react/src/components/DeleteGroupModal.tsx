@@ -1,7 +1,7 @@
+import { Modal } from 'determined-ui/Modal';
+import { makeToast } from 'determined-ui/Toast';
 import React from 'react';
 
-import { Modal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import handleError, { ErrorType } from 'utils/error';

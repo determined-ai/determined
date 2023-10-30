@@ -149,7 +149,7 @@ The default list of devices to pass to the Docker daemon. Ignored by resource ma
 ===============
 
 The default bind mounts to pass to the Docker container. Ignored by resource managers of type
-``kubernetes``. See :ref:`resources.devices <exp-bind-mounts>` for more details.
+``kubernetes``. See :ref:`bind_mounts <exp-bind-mounts>` for more details.
 
 ``kubernetes``
 ==============
@@ -215,8 +215,8 @@ timeout is ``300`` (5 minutes).
  ``notebook_timeout``
 **********************
 
-Specifies the duration in seconds before idle Notebook instances are automatically terminated. A
-Notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not
+Specifies the duration in seconds before idle notebook instances are automatically terminated. A
+notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not
 otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`task configuration
 <command-notebook-configuration>`). Defaults to ``null``, i.e. disabled.
 

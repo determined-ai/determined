@@ -1,3 +1,5 @@
+.. _k8s-helm-reference:
+
 ###################################
  Helm and Kubectl Command Examples
 ###################################

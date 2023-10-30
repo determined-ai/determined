@@ -1,13 +1,13 @@
 import { Divider, type TabsProps } from 'antd';
+import Message from 'determined-ui/Message';
+import Pivot from 'determined-ui/Pivot';
+import Spinner from 'determined-ui/Spinner';
+import { ShirtSize } from 'determined-ui/Theme';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
-import Message from 'components/kit/Message';
-import Pivot from 'components/kit/Pivot';
-import Spinner from 'components/kit/Spinner';
-import { ShirtSize } from 'components/kit/Theme';
-import { Loadable } from 'components/kit/utils/loadable';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -15,9 +15,8 @@ import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import ClustersQueuedChart from 'pages/Clusters/ClustersQueuedChart';
+import ClusterQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
-import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import {
@@ -174,7 +173,7 @@ const ResourcepoolDetailInner: React.FC = () => {
         label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
       },
       {
-        children: <ClustersQueuedChart poolStats={poolStats} />,
+        children: <ClusterQueuedChart poolStats={poolStats} />,
         key: TabType.Stats,
         label: 'Stats',
       },

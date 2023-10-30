@@ -1,50 +1,51 @@
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
+import Accordion from 'determined-ui/Accordion';
+import Avatar, { AvatarGroup, Size as AvatarSize } from 'determined-ui/Avatar';
+import Breadcrumb from 'determined-ui/Breadcrumb';
+import Button from 'determined-ui/Button';
+import Card from 'determined-ui/Card';
+import Checkbox from 'determined-ui/Checkbox';
+import ClipboardButton from 'determined-ui/ClipboardButton';
+import CodeEditor from 'determined-ui/CodeEditor';
+import { Column, Columns } from 'determined-ui/Columns';
+import DatePicker from 'determined-ui/DatePicker';
+import Drawer from 'determined-ui/Drawer';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Form from 'determined-ui/Form';
+import Icon, { IconNameArray, IconSizeArray } from 'determined-ui/Icon';
+import InlineForm from 'determined-ui/InlineForm';
+import Input from 'determined-ui/Input';
+import InputNumber from 'determined-ui/InputNumber';
+import InputSearch from 'determined-ui/InputSearch';
+import InputShortcut, { KeyboardShortcut } from 'determined-ui/InputShortcut';
+import { TypographySize } from 'determined-ui/internal/fonts';
+import { MetricType, Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
+import { LineChart } from 'determined-ui/LineChart';
+import { useChartGrid } from 'determined-ui/LineChart/useChartGrid';
+import LogViewer from 'determined-ui/LogViewer/LogViewer';
+import Message from 'determined-ui/Message';
+import { Modal, useModal } from 'determined-ui/Modal';
+import Nameplate from 'determined-ui/Nameplate';
+import Notes, { Props as NotesProps } from 'determined-ui/Notes';
+import Pagination from 'determined-ui/Pagination';
+import Pivot from 'determined-ui/Pivot';
+import Select, { Option } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import useUI from 'determined-ui/Theme';
+import { makeToast } from 'determined-ui/Toast';
+import Toggle from 'determined-ui/Toggle';
+import Tooltip from 'determined-ui/Tooltip';
+import Header from 'determined-ui/Typography/Header';
+import Paragraph from 'determined-ui/Typography/Paragraph';
+import useConfirm, { voidPromiseFn } from 'determined-ui/useConfirm';
+import { useTags } from 'determined-ui/useTags';
+import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { ValueOf } from 'determined-ui/utils/types';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
-import Accordion from 'components/kit/Accordion';
-import Avatar from 'components/kit/Avatar';
-import Breadcrumb from 'components/kit/Breadcrumb';
-import Button from 'components/kit/Button';
-import Card from 'components/kit/Card';
-import Checkbox from 'components/kit/Checkbox';
-import ClipboardButton from 'components/kit/ClipboardButton';
-import CodeEditor from 'components/kit/CodeEditor';
-import { Column, Columns } from 'components/kit/Columns';
-import DatePicker from 'components/kit/DatePicker';
-import Drawer from 'components/kit/Drawer';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Form from 'components/kit/Form';
-import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
-import InlineForm from 'components/kit/InlineForm';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import InputSearch from 'components/kit/InputSearch';
-import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
-import { TypographySize } from 'components/kit/internal/fonts';
-import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
-import { LineChart } from 'components/kit/LineChart';
-import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
-import LogViewer from 'components/kit/LogViewer/LogViewer';
-import Message from 'components/kit/Message';
-import { Modal, useModal } from 'components/kit/Modal';
-import Nameplate from 'components/kit/Nameplate';
-import Notes, { Props as NotesProps } from 'components/kit/Notes';
-import Pagination from 'components/kit/Pagination';
-import Pivot from 'components/kit/Pivot';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { makeToast } from 'components/kit/Toast';
-import Toggle from 'components/kit/Toggle';
-import Tooltip from 'components/kit/Tooltip';
-import Header from 'components/kit/Typography/Header';
-import Paragraph from 'components/kit/Typography/Paragraph';
-import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
-import { useTags } from 'components/kit/useTags';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -1556,8 +1557,36 @@ const AvatarSection: React.FC = () => {
           abbreviated with an option to hover for an unabbreviated view.
         </p>
       </AntDCard>
-      <AntDCard title="Usage">
-        <Avatar displayName="Test User" />
+      <AntDCard title="Variations">
+        <strong>Sizes</strong>
+        ExtraSmall
+        <Avatar size={AvatarSize.ExtraSmall} text="Test User" />
+        Small (Default Size)
+        <Avatar size={AvatarSize.Small} text="Test User" />
+        Medium
+        <Avatar size={AvatarSize.Medium} text="Test User" />
+        Large
+        <Avatar size={AvatarSize.Large} text="Test User" />
+        ExtraLarge
+        <Avatar size={AvatarSize.ExtraLarge} text="Test User" />
+        <strong>Shape</strong>
+        Square
+        <Avatar square text="Test User" />
+        <strong>Color</strong>
+        Muted palette
+        <Avatar palette="muted" text="Test User" />
+        No Color
+        <Avatar noColor text="Test User" />
+        Inactive
+        <Avatar inactive text="Test User" />
+        <strong>Tooltip</strong>
+        Custom tooltip text
+        <Avatar text="Test User" tooltipText="Custom tooltip text" />
+        Hide tooltip
+        <Avatar hideTooltip text="Test User" />
+      </AntDCard>
+      <AntDCard title="Group">
+        <AvatarGroup items={['Test User', 'Sample Person', 'Example Individual']} />
       </AntDCard>
     </ComponentSection>
   );
@@ -1580,20 +1609,20 @@ const NameplateSection: React.FC = () => {
         <li>With name and alias</li>
         <Nameplate
           alias={testUser.displayName}
-          icon={<Avatar displayName={testUser.displayName} />}
+          icon={<Avatar text={testUser.displayName} />}
           name={testUser.username}
         />
         <li>Compact format</li>
         <Nameplate
           alias={testUser.displayName}
           compact
-          icon={<Avatar displayName={testUser.displayName} />}
+          icon={<Avatar text={testUser.displayName} />}
           name={testUser.username}
         />
         <li>No alias</li>
-        <Nameplate icon={<Icon name="group" title="Group" />} name="testGroup123" />
+        <Nameplate icon="group" name="testGroup123" />
         <li>Compact, no alias</li>
-        <Nameplate compact icon={<Icon name="group" title="Group" />} name="testGroup123" />
+        <Nameplate compact icon="group" name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );

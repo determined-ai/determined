@@ -6,8 +6,9 @@ from typing import Any, List
 from determined.cli import errors, login_sdk_client, render, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, string_to_bool
 from determined.experimental import client
+from determined.experimental.client import Determined
 
 FullUser = namedtuple(
     "FullUser",
@@ -155,6 +156,40 @@ def whoami(parsed_args: Namespace) -> None:
     print("You are logged in as user '{}'".format(user.username))
 
 
+@authentication.required
+def edit(parsed_args: Namespace) -> None:
+    session = setup_session(parsed_args)
+    det = Determined._from_session(session)
+    user_obj = det.get_user_by_name(parsed_args.target_user)
+    changes = []
+    patch_user = bindings.v1PatchUser()
+    if parsed_args.display_name is not None:
+        patch_user.displayName = parsed_args.display_name
+        changes.append("Display Name")
+
+    if parsed_args.remote is not None:
+        patch_user.remote = parsed_args.remote
+        changes.append("Remote")
+
+    if parsed_args.activate is not None:
+        patch_user.active = parsed_args.activate
+        changes.append("Active")
+
+    if parsed_args.username is not None:
+        patch_user.username = parsed_args.username
+        changes.append("Username")
+
+    if parsed_args.admin is not None:
+        patch_user.admin = parsed_args.admin
+        changes.append("Admin")
+
+    if len(changes) > 0:
+        bindings.patch_PatchUser(session=session, body=patch_user, userId=user_obj.user_id)
+        print("Changes made to the following fields: " + ", ".join(changes))
+    else:
+        raise errors.CliError("No field provided. Use 'det user edit -h' for usage.")
+
+
 AGENT_USER_GROUP_ARGS = [
     Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
     Arg("--agent-user", help="user on the agent to run tasks as"),
@@ -173,7 +208,7 @@ args_description = [
         Cmd("rename", rename, "change username for user", [
             Arg("target_user", default=None, help="name of user whose username should be changed"),
             Arg("new_username", default=None, help="new username for target_user"),
-        ]),
+        ], deprecation_message="Please use 'det user edit <target_user> --username <username>'"),
         Cmd("change-password", change_password, "change password for user", [
             Arg("target_user", nargs="?", default=None, help="name of user to change password of")
         ]),
@@ -187,10 +222,10 @@ args_description = [
         ]),
         Cmd("activate", activate_user, "activate user", [
             Arg("username", help="name of user to activate")
-        ]),
+        ], deprecation_message="Please use 'det user edit <target_user> --activate'"),
         Cmd("deactivate", deactivate_user, "deactivate user", [
             Arg("username", help="name of user to deactivate")
-        ]),
+        ], deprecation_message="Please use 'det user edit <target_user> --deactivate'"),
         Cmd("create", create_user, "create user", [
             Arg("username", help="name of new user"),
             Arg("--admin", action="store_true", help="give new user admin rights"),
@@ -205,6 +240,36 @@ args_description = [
             *AGENT_USER_GROUP_ARGS,
         ]),
         Cmd("whoami", whoami, "print the active user", []),
+        Cmd("edit", edit, "edit user fields", [
+            Arg(
+                "target_user",
+                default=None,
+                help="name of user that should be edited"
+            ),
+            Arg("--display-name", default=None, help="new display name for target_user"),
+            Arg("--username", default=None, help="new username for target_user"),
+            Arg(
+                "--remote",
+                dest="remote",
+                type=string_to_bool,
+                default=None,
+                help="set user as remote",
+            ),
+            Arg(
+                "--active",
+                dest="activate",
+                type=string_to_bool,
+                default=None,
+                help="set user as active/inactive",
+            ),
+            Arg(
+                "--admin",
+                dest="admin",
+                type=string_to_bool,
+                default=None,
+                help="grant/remove user admin permissions",
+            ),
+        ]),
     ])
 ]  # type: List[Any]
 

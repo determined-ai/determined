@@ -1,14 +1,14 @@
 import { Typography } from 'antd';
+import Form from 'determined-ui/Form';
+import Icon from 'determined-ui/Icon';
+import { Modal } from 'determined-ui/Modal';
+import Select, { Option } from 'determined-ui/Select';
+import Spinner from 'determined-ui/Spinner';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
 
-import Form from 'components/kit/Form';
-import Icon from 'components/kit/Icon';
-import { Modal } from 'components/kit/Modal';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';

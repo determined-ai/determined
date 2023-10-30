@@ -51,7 +51,7 @@ def replace_tags(path: str, old_tag: str, new_tag: str) -> None:
 
 def main(config_file: str) -> None:
     with open(config_file) as f:
-        config = yaml.safe_load(f)
+        config = yaml.YAML(typ="safe", pure=True).load(f)
 
     for image_type, tag_pair in config.items():
         if "old" not in tag_pair:

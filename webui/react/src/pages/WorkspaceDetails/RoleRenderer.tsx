@@ -57,11 +57,13 @@ const RoleRenderer: React.FC<Props> = ({
                   userId: userOrGroupId,
                 },
               ])
-            : await assignRolesToGroup({
-                groupId: userOrGroupId,
-                roleIds: [roleIdValue],
-                scopeWorkspaceId: workspaceId,
-              });
+            : await assignRolesToGroup([
+                {
+                  groupId: userOrGroupId,
+                  roleIds: [roleIdValue],
+                  scopeWorkspaceId: workspaceId,
+                },
+              ]);
 
           try {
             isUserWithRoleInfo(userOrGroupWithRoleInfo)

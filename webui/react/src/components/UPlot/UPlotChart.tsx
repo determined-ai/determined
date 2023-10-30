@@ -1,11 +1,11 @@
+import Button from 'determined-ui/Button';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import useUI, { DarkLight } from 'determined-ui/Theme';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import Button from 'components/kit/Button';
-import Icon from 'components/kit/Icon';
-import Spinner from 'components/kit/Spinner';
-import useUI, { DarkLight } from 'components/kit/Theme';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';

@@ -1,5 +1,6 @@
-import ClipboardButton from 'components/kit/ClipboardButton';
-import { Modal } from 'components/kit/Modal';
+import ClipboardButton from 'determined-ui/ClipboardButton';
+import { Modal } from 'determined-ui/Modal';
+
 import { ModelVersion } from 'types';
 
 import css from './ModelDownloadModal.module.scss';

@@ -1,11 +1,11 @@
 import { Select, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
+import Icon from 'determined-ui/Icon';
+import { Modal } from 'determined-ui/Modal';
+import { makeToast } from 'determined-ui/Toast';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
-import Icon from 'components/kit/Icon';
-import { Modal } from 'components/kit/Modal';
-import { makeToast } from 'components/kit/Toast';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';

@@ -43,8 +43,7 @@ setuptools.setup(
         "python-dateutil",
         "pytz",
         "tabulate>=0.8.3",
-        # det preview-search "pretty-dumps" a sub-yaml with an API added in 0.15.29
-        "ruamel.yaml>=0.15.29",
+        "ruamel.yaml",
         # Deploy
         "docker[ssh]>=3.7.3",
         "google-api-python-client>=1.12.1",

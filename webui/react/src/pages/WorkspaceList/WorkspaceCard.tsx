@@ -1,13 +1,13 @@
 import { Typography } from 'antd';
+import Avatar, { Size } from 'determined-ui/Avatar';
+import Card from 'determined-ui/Card';
+import { Columns } from 'determined-ui/Columns';
+import Icon from 'determined-ui/Icon';
+import Spinner from 'determined-ui/Spinner';
+import { Loadable } from 'determined-ui/utils/loadable';
 import React from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
-import Card from 'components/kit/Card';
-import { Columns } from 'components/kit/Columns';
-import Icon from 'components/kit/Icon';
-import Spinner from 'components/kit/Spinner';
-import { Loadable } from 'components/kit/utils/loadable';
-import Avatar from 'components/UserAvatar';
+import UserAvatar from 'components/UserAvatar';
 import { handlePath, paths } from 'routes/utils';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
@@ -43,7 +43,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
         <div className={workspace.archived ? css.archived : ''}>
           <Columns gap={8}>
             <div className={css.icon}>
-              <DynamicIcon name={workspace.name} size={78} />
+              <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
             </div>
             <div className={css.info}>
               <div className={css.nameRow}>
@@ -61,7 +61,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
               <div className={css.avatarRow}>
                 <div className={css.avatar}>
                   <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUser)}>
-                    {Loadable.isLoaded(loadableUser) && <Avatar user={user} />}
+                    {Loadable.isLoaded(loadableUser) && <UserAvatar user={user} />}
                   </Spinner>
                 </div>
                 {workspace.archived && <div className={css.archivedBadge}>Archived</div>}

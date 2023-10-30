@@ -1,4 +1,10 @@
 import { App as AntdApp } from 'antd';
+import Button from 'determined-ui/Button';
+import Spinner from 'determined-ui/Spinner';
+import useUI, { UIProvider } from 'determined-ui/Theme';
+import { notification } from 'determined-ui/Toast';
+import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { Loadable } from 'determined-ui/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -7,12 +13,6 @@ import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
-import Button from 'components/kit/Button';
-import Spinner from 'components/kit/Spinner';
-import useUI, { UIProvider } from 'components/kit/Theme';
-import { notification } from 'components/kit/Toast';
-import { ConfirmationProvider } from 'components/kit/useConfirm';
-import { Loadable } from 'components/kit/utils/loadable';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';

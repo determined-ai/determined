@@ -1,10 +1,10 @@
+import Button from 'determined-ui/Button';
+import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
+import Icon from 'determined-ui/Icon';
+import { useModal } from 'determined-ui/Modal';
 import React, { useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
-import Button from 'components/kit/Button';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Icon from 'components/kit/Icon';
-import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import { Project } from 'types';
