@@ -144,15 +144,14 @@ func (a *apiServer) canGetTaskAcceleration(ctx context.Context, taskID string) e
 	return nil
 }
 
-func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
+func (a *apiServer) canGetAllocation(ctx context.Context, allocationID string) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
 	}
 
 	if !strings.Contains(allocationID, ".") {
-		return status.Errorf(codes.InvalidArgument,
-			"allocationID %s does not  contain at least '.'", allocationID)
+		return status.Errorf(codes.InvalidArgument, "allocationID %s does not contain at least ','", allocationID)
 	}
 
 	taskID := model.AllocationID(allocationID).ToTaskID()
@@ -170,7 +169,40 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 		return nil
 	}
 
-	if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanGetExperimentArtifacts(ctx, *curUser, exp); err != nil {
+		return authz.SubIfUnauthorized(err, api.NotFoundErrs("allocation", allocationID, true))
+	}
+
+	return nil
+}
+
+func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !strings.Contains(allocationID, ".") {
+		return status.Errorf(codes.InvalidArgument,
+			"allocationID %s does not contain at least '.'", allocationID)
+	}
+
+	taskID := model.AllocationID(allocationID).ToTaskID()
+	isExp, exp, err := expFromTaskID(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		var ok bool
+		if ok, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+			return err
+		} else if !ok {
+			return api.NotFoundErrs("allocation", allocationID, true)
+		}
+		return nil
+	}
+
+	if err = expauth.AuthZProvider.Get().CanGetExperimentArtifacts(ctx, *curUser, exp); err != nil {
 		return authz.SubIfUnauthorized(err, api.NotFoundErrs("allocation", allocationID, true))
 	}
 	if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
@@ -248,6 +280,11 @@ func (a *apiServer) GetAllocation(
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
+
+	if err := a.canGetAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	allocation, err := task.DefaultService.GetAllocation(ctx, req.AllocationId)
 	if err != nil {
 		return nil, fmt.Errorf("querying allocation %s: %w", req.AllocationId, err)
