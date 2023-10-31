@@ -303,18 +303,18 @@ interleaving micro batches:
        loss = self.model_engine.eval_batch()
        return {"loss": loss}
 
-********************
- Step 4 - Profiling
-********************
+***********
+ Profiling
+***********
 
 Deepspeed experiments can be profiled using PyTorch Profiler and results will automatically be
-uploaded to Tensorboard (accessible via the Determined UI). To configure profiling, call
+uploaded to TensorBoard (accessible via the Determined UI). To configure profiling, call
 :meth:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.set_profiler` on the
 :class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext` class in the trial's ``__init__``
 method.
 
 ``set_profiler()`` is a thin wrapper around PyTorch profiler, torch-tb-profiler. It overrides the
-``on_trace_ready`` parameter to the Determined Tensorboard path, while all other arguments are
+``on_trace_ready`` parameter to the Determined TensorBoard path, while all other arguments are
 passed directly into ``torch.profiler.profile``. Stepping the profiler will be handled automatically
 during the training loop.
 
@@ -345,8 +345,8 @@ profiling batches 3 and 4.
 .. note::
 
    Though configuring a profiling schedule ``torch.profiler.schedule`` is optional, profiling every
-   batch may cause a large amount of data to be uploaded to Tensorboard. This may result in long
-   rendering times for Tensorboard and memory issues. For long-running experiments, it is
+   batch may cause a large amount of data to be uploaded to TensorBoard. This may result in long
+   rendering times for TensorBoard and memory issues. For long-running experiments, it is
    recommended to configure a profiling schedule.
 
 *****************************
