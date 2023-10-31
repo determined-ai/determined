@@ -55,6 +55,8 @@ type podStatusUpdate struct {
 type pod struct {
 	mu sync.Mutex
 
+	req *sproto.AllocateRequest
+
 	clusterID    string
 	allocationID model.AllocationID
 	clientSet    *k8sClient.Clientset
@@ -126,6 +128,7 @@ func newPod(
 	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
 
 	p := &pod{
+		req: msg.Req,
 		submissionInfo: &podSubmissionInfo{
 			taskSpec: msg.Spec,
 		},

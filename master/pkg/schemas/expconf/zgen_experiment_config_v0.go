@@ -100,6 +100,14 @@ func (e *ExperimentConfigV0) SetLabels(val LabelsV0) {
 	e.RawLabels = val
 }
 
+func (e ExperimentConfigV0) LogPolicies() LogPoliciesConfigV0 {
+	return e.RawLogPolicies
+}
+
+func (e *ExperimentConfigV0) SetLogPolicies(val LogPoliciesConfigV0) {
+	e.RawLogPolicies = val
+}
+
 func (e ExperimentConfigV0) MaxRestarts() int {
 	if e.RawMaxRestarts == nil {
 		panic("You must call WithDefaults on ExperimentConfigV0 before .MaxRestarts")

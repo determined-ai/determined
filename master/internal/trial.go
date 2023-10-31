@@ -13,10 +13,13 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+
+	"github.com/determined-ai/determined/master/internal/task/tasklogger"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -372,6 +375,11 @@ func (t *trial) maybeAllocateTask() error {
 	name := fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID)
 	t.syslog.Info("decided to allocate trial")
 
+	blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), t.taskID)
+	if err != nil {
+		return err
+	}
+
 	restoredAllocation, err := t.maybeRestoreAllocation()
 	if err != nil {
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
@@ -399,6 +407,8 @@ func (t *trial) maybeAllocateTask() error {
 			Restore:     true,
 			ProxyPorts: sproto.NewProxyPortConfig(
 				tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
+
+			BlockedNodes: blockedNodes,
 		}
 		t.syslog.
 			WithField("allocation-id", ar.AllocationID).
@@ -440,6 +450,8 @@ func (t *trial) maybeAllocateTask() error {
 
 		Preemptible: true,
 		ProxyPorts:  sproto.NewProxyPortConfig(tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
+
+		BlockedNodes: blockedNodes,
 	}
 
 	t.syslog.
@@ -568,6 +580,30 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			WithError(exit.Err).
 			Errorf("trial encountered transient system error")
 	case exit.Err != nil && !sproto.IsTransientSystemError(exit.Err):
+		// First check against log_pattern_policies retries.
+		notRetries, err := logpattern.ShouldRetry(context.TODO(), t.taskID)
+		if err != nil {
+			return fmt.Errorf("getting if the trial should retry due to log_pattern_policies: %w", err)
+		}
+
+		if len(notRetries) > 0 {
+			for _, l := range logpattern.TaskLogsFromDontRetryTriggers(t.taskID, notRetries) {
+				tasklogger.Insert(l)
+			}
+
+			exitReason := "trial failed and not retrying due to logs matching a don't retry policy" +
+				" check trial logs for more info"
+			t.syslog.
+				WithError(exit.Err).
+				Errorf(exitReason)
+
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: exitReason,
+			})
+		}
+
+		// If we don't have a log_pattern_policy preventing us from retrying go to normal max_restarts.
 		t.syslog.
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
@@ -581,6 +617,10 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				InformationalReason: "trial exceeded max restarts",
 			})
 		}
+
+		// TODO(DET-9897) redo capacity check when we decide to allocate again.
+		// Since we could have excluded nodes.
+
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
