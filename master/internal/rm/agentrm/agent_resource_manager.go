@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -44,7 +45,7 @@ func New(
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) ResourceManager {
+) *ResourceManager {
 	ref, _ := system.ActorOf(
 		sproto.AgentRMAddr,
 		newAgentResourceManager(db, config, cert),
@@ -52,7 +53,74 @@ func New(
 	system.Ask(ref, actor.Ping{}).Get()
 	rm := ResourceManager{ResourceManager: actorrm.Wrap(ref)}
 	initializeAgents(system, rm, echo, opts)
-	return rm
+	return &rm
+}
+
+func agentAddr(agentID string) actor.Address {
+	return sproto.AgentsAddr.Child(agentID)
+}
+
+// GetSlot implements rm.ResourceManager.
+func (a *ResourceManager) GetSlot(
+	req *apiv1.GetSlotRequest,
+) (resp *apiv1.GetSlotResponse, err error) {
+	deviceIDStr, err := strconv.Atoi(req.SlotId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
+	}
+	deviceID := device.ID(deviceIDStr)
+
+	result, err := a.handlePatchSlotState(req.AgentId, patchSlotState{id: deviceID})
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.GetSlotResponse{Slot: result.ToProto()}, nil
+}
+
+// EnableSlot implements 'det slot enable...' functionality.
+func (a ResourceManager) EnableSlot(
+	req *apiv1.EnableSlotRequest,
+) (resp *apiv1.EnableSlotResponse, err error) {
+	deviceIDStr, err := strconv.Atoi(req.SlotId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
+	}
+	deviceID := device.ID(deviceIDStr)
+
+	enabled := true
+	result, err := a.handlePatchSlotState(req.AgentId, patchSlotState{id: deviceID, enabled: &enabled})
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.EnableSlotResponse{Slot: result.ToProto()}, nil
+}
+
+// DisableSlot implements 'det slot disable...' functionality.
+func (a ResourceManager) DisableSlot(
+	req *apiv1.DisableSlotRequest,
+) (resp *apiv1.DisableSlotResponse, err error) {
+	deviceIDStr, err := strconv.Atoi(req.SlotId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
+	}
+	deviceID := device.ID(deviceIDStr)
+
+	enabled := false
+	result, err := a.handlePatchSlotState(req.AgentId, patchSlotState{id: deviceID, enabled: &enabled, drain: &req.Drain})
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.DisableSlotResponse{Slot: result.ToProto()}, nil
+}
+
+func (a ResourceManager) handlePatchSlotState(
+	agentID string, msg patchSlotState,
+) (*model.SlotSummary, error) {
+	var resp model.SlotSummary
+	if err := a.AskAt(agentAddr(agentID), msg, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
