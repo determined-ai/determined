@@ -153,9 +153,9 @@ def download(args: Namespace) -> None:
     if [args.latest, args.best, args.uuid].count(True) != 1:
         raise ValueError("exactly one of --latest, --best, or --uuid must be set")
     if args.sort_by is not None and not args.best:
-        raise ValueError("--sort-by and smaller-is-better flags can only be used with --best")
+        raise ValueError("--sort-by and --smaller-is-better flags can only be used with --best")
     if (args.sort_by is None) != (args.smaller_is_better is None):
-        raise ValueError("sort-by and smaller-is-better must be set together")
+        raise ValueError("--sort-by and --smaller-is-better must be set together")
 
     if args.uuid:
         checkpoint = det.get_checkpoint(args.uuid)
