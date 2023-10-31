@@ -21,18 +21,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type cacheItem struct {
+type regexTriggers struct {
 	re                 *regexp.Regexp
 	triggerIDToTrigger map[TriggerID]*Trigger
 }
 
-type webhookManager struct {
-	mu    sync.RWMutex
-	items map[string]cacheItem
+// WebhookManager manages webhooks.
+type WebhookManager struct {
+	mu              sync.RWMutex
+	regexToTriggers map[string]regexTriggers
 }
 
 // New creates a new webhook manager.
-func New(ctx context.Context) (*webhookManager, error) { //nolint: revive
+func New(ctx context.Context) (*WebhookManager, error) {
 	var triggers []*Trigger
 	if err := db.Bun().NewSelect().Model(&triggers).Relation("Webhook").
 		Where("trigger_type = ?", TriggerTypeTaskLog).
@@ -40,8 +41,8 @@ func New(ctx context.Context) (*webhookManager, error) { //nolint: revive
 		return nil, fmt.Errorf("querying task logs triggers: %w", err)
 	}
 
-	m := &webhookManager{
-		items: make(map[string]cacheItem),
+	m := &WebhookManager{
+		regexToTriggers: make(map[string]regexTriggers),
 	}
 	if err := m.addTriggers(triggers); err != nil {
 		return nil, fmt.Errorf("adding each trigger: %w", err)
@@ -50,7 +51,7 @@ func New(ctx context.Context) (*webhookManager, error) { //nolint: revive
 	return m, nil
 }
 
-func (l *webhookManager) addTriggers(triggers []*Trigger) error {
+func (l *WebhookManager) addTriggers(triggers []*Trigger) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -65,25 +66,25 @@ func (l *webhookManager) addTriggers(triggers []*Trigger) error {
 				"expected webhook trigger to have regex in condition instead got %v", t.Condition)
 		}
 
-		if _, ok := l.items[regex]; !ok {
+		if _, ok := l.regexToTriggers[regex]; !ok {
 			compiled, err := regexp.Compile(regex)
 			if err != nil {
 				return fmt.Errorf("compiling regex %s: %w", regex, err)
 			}
 
-			l.items[regex] = cacheItem{
+			l.regexToTriggers[regex] = regexTriggers{
 				re:                 compiled,
 				triggerIDToTrigger: make(map[TriggerID]*Trigger),
 			}
 		}
 
-		l.items[regex].triggerIDToTrigger[t.ID] = t
+		l.regexToTriggers[regex].triggerIDToTrigger[t.ID] = t
 	}
 
 	return nil
 }
 
-func (l *webhookManager) removeTriggers(triggers []*Trigger) error {
+func (l *WebhookManager) removeTriggers(triggers []*Trigger) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -100,12 +101,12 @@ func (l *webhookManager) removeTriggers(triggers []*Trigger) error {
 			return nil
 		}
 
-		delete(l.items[regex].triggerIDToTrigger, t.ID)
+		delete(l.regexToTriggers[regex].triggerIDToTrigger, t.ID)
 	}
 	return nil
 }
 
-func (l *webhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) error {
+func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) error {
 	if len(logs) == 0 {
 		return nil
 	}
@@ -118,7 +119,7 @@ func (l *webhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) er
 			return fmt.Errorf("AgentID must be non nil to trigger webhooks in logs")
 		}
 
-		for _, cacheItem := range l.items {
+		for _, cacheItem := range l.regexToTriggers {
 			if cacheItem.re.MatchString(log.Log) {
 				for _, t := range cacheItem.triggerIDToTrigger {
 					if err := addTaskLogEvent(ctx,
@@ -133,7 +134,7 @@ func (l *webhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) er
 	return nil
 }
 
-func (l *webhookManager) addWebhook(ctx context.Context, w *Webhook) error {
+func (l *WebhookManager) addWebhook(ctx context.Context, w *Webhook) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().Model(w).Exec(ctx)
 		if err != nil {
@@ -160,7 +161,7 @@ func (l *webhookManager) addWebhook(ctx context.Context, w *Webhook) error {
 	})
 }
 
-func (l *webhookManager) deleteWebhook(ctx context.Context, id WebhookID) error {
+func (l *WebhookManager) deleteWebhook(ctx context.Context, id WebhookID) error {
 	var ts []*Trigger
 	if err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
 		Where("webhook_id = ?", id).
@@ -171,7 +172,7 @@ func (l *webhookManager) deleteWebhook(ctx context.Context, id WebhookID) error 
 	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
 		if err != nil {
-			return fmt.Errorf("deletng webhook id %d: %w", id, err)
+			return fmt.Errorf("deleting webhook id %d: %w", id, err)
 		}
 
 		if err := l.removeTriggers(ts); err != nil {

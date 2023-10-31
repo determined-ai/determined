@@ -8,10 +8,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-var defaultManager *webhookManager
+var defaultManager *WebhookManager
 
 // SetDefault sets the default webhook manager singleton.
-func SetDefault(w *webhookManager) {
+func SetDefault(w *WebhookManager) {
 	defaultManager = w
 }
 
