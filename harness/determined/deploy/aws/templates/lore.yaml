@@ -979,7 +979,7 @@ Resources:
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
                 -p 9012:9012 \
-                -v /mnt/efs/:/mnt/efs/ \
+                -v /mnt/efs:/run/determined/workdir/shared_fs \
                 --network determined \
                 "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
             fi
