@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/webhookv1"
 )
 
 // WebhooksAPIServer is an embedded api server struct.
@@ -72,6 +73,29 @@ func (a *WebhooksAPIServer) PostWebhook(
 			"valid url required",
 		)
 	}
+
+	for _, t := range req.Webhook.Triggers {
+		if t.TriggerType == webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG {
+			m := t.Condition.AsMap()
+			if len(m) != 1 {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"webhook task log condition must have one key got %v", m)
+			}
+
+			v, ok := m[regexConditionKey]
+			if !ok {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"webhook task log condition must have key '%s' got %v", regexConditionKey, m)
+			}
+
+			if _, typeOK := v.(string); !typeOK {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"webhook task log condition must have key '%s' as string got %v",
+					regexConditionKey, m)
+			}
+		}
+	}
+
 	w := WebhookFromProto(req.Webhook)
 	if err := AddWebhook(ctx, &w); err != nil {
 		return nil, err

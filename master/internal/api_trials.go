@@ -147,7 +147,7 @@ func (a *apiServer) TrialLogs(
 	}
 	var tasks []*model.Task
 	for _, t := range trialTaskIDs {
-		task, err := a.m.db.TaskByID(t.TaskID)
+		task, err := db.TaskByID(resp.Context(), t.TaskID)
 		if err != nil {
 			return fmt.Errorf("getting task version for trial logs for task ID %s: %w", t.TaskID, err)
 		}

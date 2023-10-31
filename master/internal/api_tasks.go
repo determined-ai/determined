@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -23,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -76,7 +78,7 @@ func (a *apiServer) canDoActionsOnTask(
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	errTaskNotFound := api.NotFoundErrs("task", fmt.Sprint(taskID), true)
-	t, err := a.m.db.TaskByID(taskID)
+	t, err := db.TaskByID(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		return errTaskNotFound
 	} else if err != nil {
@@ -414,6 +416,10 @@ func (a *apiServer) PostTaskLogs(
 		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
 	}
 
+	if err := webhooks.ScanLogs(ctx, logs); err != nil {
+		log.Errorf("scanning logs for webhook triggers: %v", err)
+	}
+
 	return &apiv1.PostTaskLogsResponse{}, nil
 }
 
@@ -691,7 +697,7 @@ func (a *apiServer) isTaskTerminalFunc(
 	taskID model.TaskID, buffer time.Duration,
 ) api.TerminationCheckFn {
 	return func() (bool, error) {
-		switch task, err := a.m.db.TaskByID(taskID); {
+		switch task, err := db.TaskByID(context.TODO(), taskID); {
 		case err != nil:
 			return true, err
 		case task.EndTime != nil && task.EndTime.UTC().Add(buffer).Before(time.Now().UTC()):

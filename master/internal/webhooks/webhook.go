@@ -94,6 +94,14 @@ type Trigger struct {
 	Webhook *Webhook `bun:"rel:belongs-to,join:webhook_id=id"`
 }
 
+// Used for deduping webhook events.
+type webhookTaskLogTrigger struct {
+	bun.BaseModel `bun:"table:webhook_task_log_triggers"`
+
+	TaskID    model.TaskID `bun:"task_id"`
+	TriggerID TriggerID    `bun:"trigger_id"`
+}
+
 // TriggerFromProto returns a Trigger from a proto definition.
 func TriggerFromProto(t *webhookv1.Trigger) *Trigger {
 	return &Trigger{
@@ -124,6 +132,9 @@ const (
 
 	// TriggerTypeMetricThresholdExceeded represents a threshold for a training metric value.
 	TriggerTypeMetricThresholdExceeded TriggerType = "METRIC_THRESHOLD_EXCEEDED"
+
+	// TriggerTypeTaskLog represents a trigger for a task logs.
+	TriggerTypeTaskLog TriggerType = "TASK_LOG"
 )
 
 const (
@@ -154,6 +165,8 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 		return TriggerTypeMetricThresholdExceeded
 	case webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE:
 		return TriggerTypeStateChange
+	case webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG:
+		return TriggerTypeTaskLog
 	default:
 		// TODO(???): prob don't panic
 		panic(fmt.Errorf("missing mapping for trigger %s to SQL", t))
@@ -179,6 +192,8 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE
 	case TriggerTypeMetricThresholdExceeded:
 		return webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED
+	case TriggerTypeTaskLog:
+		return webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
 	}
@@ -251,15 +266,19 @@ type EventPayload struct {
 	Data      EventData   `json:"event_data"`
 }
 
+const regexConditionKey = "regex"
+
 // Condition represents a trigger condition.
 type Condition struct {
 	State model.State `json:"state,omitempty"`
+	Regex string      `json:"regex,omitempty"`
 }
 
 // EventData represents the event_data for a webhook event.
 type EventData struct {
 	TestData   *string            `json:"data,omitempty"`
 	Experiment *ExperimentPayload `json:"experiment,omitempty"`
+	TaskLog    *TaskLogPayload    `json:"task_log,omitempty"`
 }
 
 // ExperimentPayload is the webhook request representation of an experiment.
@@ -272,4 +291,11 @@ type ExperimentPayload struct {
 	SlotsPerTrial int          `json:"slots_per_trial"`
 	WorkspaceName string       `json:"workspace"`
 	ProjectName   string       `json:"project"`
+}
+
+// TaskLogPayload is the webhook request representation of a trigger of a task log.
+type TaskLogPayload struct {
+	TaskID        model.TaskID `json:"task_id"`
+	NodeName      string       `json:"node_name"`
+	TriggeringLog string       `json:"triggering_log"`
 }

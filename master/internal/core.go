@@ -886,6 +886,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
+	webhookManager, err := webhooks.New(ctx)
+	if err != nil {
+		return fmt.Errorf("initializing webhooks: %w", err)
+	}
+	webhooks.SetDefault(webhookManager)
+
 	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
 	if err != nil {
 		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())

@@ -78,15 +78,15 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 }
 
 // TaskByID returns a task by its ID.
-func (db *PgDB) TaskByID(tID model.TaskID) (*model.Task, error) {
+func TaskByID(ctx context.Context, tID model.TaskID) (*model.Task, error) {
 	var t model.Task
-	if err := db.query(`
-SELECT *
-FROM tasks
-WHERE task_id = $1
-`, &t, tID); err != nil {
-		return nil, errors.Wrap(err, "querying task")
+	if err := Bun().NewSelect().Model(&t).Where("task_id = ?", tID).Scan(ctx, &t); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = ErrNotFound
+		}
+		return nil, fmt.Errorf("querying task ID %s: %w", tID, err)
 	}
+
 	return &t, nil
 }
 
