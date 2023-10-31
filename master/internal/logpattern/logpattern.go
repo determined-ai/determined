@@ -17,7 +17,10 @@ import (
 
 const regexCacheSize = 256
 
-var defaultSingleton *LogPatternPolicies
+var (
+	defaultSingleton       *LogPatternPolicies
+	expconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_pattern_policies\\\":)(.*)")
+)
 
 // LogPatternPolicies performs log pattern checks.
 type LogPatternPolicies struct {
@@ -53,27 +56,22 @@ func (l *LogPatternPolicies) getCompiledRegex(regex string) (*regexp.Regexp, err
 func (l *LogPatternPolicies) monitor(ctx context.Context,
 	taskID model.TaskID, logs []*model.TaskLog, policies expconf.LogPoliciesConfig,
 ) error {
-	for _, log := range logs {
-		if log.AgentID == nil {
-			return fmt.Errorf("agentID must be non nil to monitor logs")
+	// TODO when we add rm specific log grabbing we will need to also monitor them.
+	for _, policy := range policies {
+		compiledRegex, err := l.getCompiledRegex(policy.Pattern())
+		if err != nil {
+			return err
 		}
-		// The first line of trial logs is printing expconf which has the regex pattern.
-		// We skip monitoring this line.
-		regex := "(.*)(\\\"log_pattern_policies\\\":)(.*)"
-		compiledRegex, err := l.getCompiledRegex(regex)
 
-		for _, policy := range policies {
-			if err != nil {
-				return err
+		for _, log := range logs {
+			if log.AgentID == nil {
+				return fmt.Errorf("agentID must be non nil to monitor logs")
 			}
-			if compiledRegex.MatchString(log.Log) {
+
+			// One of the trial logs prints expconf which has the regex pattern.
+			// We skip monitoring this line.
+			if expconfigCompiledRegex.MatchString(log.Log) {
 				continue
-			}
-
-			regex = fmt.Sprintf("(.*)%s(.*)", policy.Pattern())
-			compiledRegex, err = l.getCompiledRegex(regex)
-			if err != nil {
-				return err
 			}
 
 			if compiledRegex.MatchString(log.Log) {

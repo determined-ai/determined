@@ -47,10 +47,9 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
         assert "trial failed and matched logs to a don't retry policy" not in trial_logs
 
 
-@pytest.mark.e2e_cpu
 @pytest.mark.e2e_k8s
 @pytest.mark.parametrize("should_match", [True, False])
-def test_log_policy_exclude_node(should_match: bool) -> None:
+def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
         regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
@@ -103,6 +102,49 @@ def test_log_policy_exclude_node(should_match: bool) -> None:
         assert len(experiment_trials) == 1
         assert experiment_trials[0].trial.restarts == 1
         trial_logs = "\n".join(exp.trial_logs(experiment_trials[0].trial.id))
+        assert "therefore will not schedule on" not in trial_logs
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize("should_match", [True, False])
+def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
+    regex = r"assert 0 <= self\.metrics_sigma"
+    if not should_match:
+        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+
+    config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
+    config["log_policies"] = [
+        {
+            "pattern": regex,
+            "action": {
+                "type": "exclude_node",
+            },
+        },
+    ]
+    config["hyperparameters"]["metrics_sigma"] = -1
+    config["max_restarts"] = 1
+
+    agents = bindings.get_GetAgents(api_utils.determined_test_session()).agents
+    assert len(agents) == 1
+    assert agents[0].slots is not None
+    config["resources"] = {"slots_per_trial": len(agents[0].slots)}
+
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        exp_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
+
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
+
+    experiment_trials = exp.experiment_trials(exp_id)
+    assert len(experiment_trials) == 1
+    assert experiment_trials[0].trial.restarts == 1
+    trial_logs = "\n".join(exp.trial_logs(experiment_trials[0].trial.id))
+
+    if should_match:
+        assert "therefore will not schedule on" in trial_logs
+    else:
         assert "therefore will not schedule on" not in trial_logs
 
 

@@ -489,7 +489,8 @@ func (k ResourceManager) ValidateResourcePool(name string) error {
 func (k ResourceManager) ValidateResourcePoolAvailability(
 	v *sproto.ValidateResourcePoolAvailabilityRequest,
 ) ([]command.LaunchWarning, error) {
-	if _, err := k.getResourcePoolRef(v.Name); err != nil {
+
+	if err := k.resourcePoolExists(v.Name); err != nil {
 		return nil, fmt.Errorf("%s is an invalid resource pool", v.Name)
 	}
 

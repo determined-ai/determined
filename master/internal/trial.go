@@ -391,11 +391,21 @@ func (t *trial) maybeAllocateTask() error {
 				TaskID: &t.taskID,
 			},
 		)
-		if len(launchWarnings) > 0 {
-			logrus.Warnf("task ID %v slots requested exceeds cluster capacity", t.taskID)
-		}
 		if err != nil {
 			return fmt.Errorf("checking resource availability: %v", err.Error())
+		}
+		if len(launchWarnings) > 0 {
+			exitReason := fmt.Sprintf(
+				"task ID %v slots requested exceeds %v resource pool capacity",
+				t.taskID,
+				t.config.Resources().ResourcePool(),
+			)
+			logrus.Error(exitReason)
+
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: exitReason,
+			})
 		}
 	}
 
@@ -477,7 +487,6 @@ func (t *trial) maybeAllocateTask() error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
-
 	err = task.DefaultService.StartAllocation(
 		t.logCtx, ar, t.db, t.rm, specifier,
 		t.AllocationExitedCallback,
