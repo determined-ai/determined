@@ -133,7 +133,7 @@
       ``pod_spec`` configuration.
 
       -  ``containerPath``: The file system path inside the task pods to use. The checkpoints and
-         tensorboard data will be stored under this path.
+         TensorBoard data will be stored under this path.
 
    -  When an experiment finishes, the system will optionally delete some checkpoints to reclaim
       space. The ``saveExperimentBest``, ``saveTrialBest`` and ``saveTrialLatest`` parameters

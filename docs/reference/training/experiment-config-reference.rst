@@ -641,8 +641,8 @@ when the container exits.
 
 .. warning::
 
-   When downloading checkpoints (e.g., using ``det checkpoint download``), we assume the same
-   directory is present locally at the same ``container_path``.
+   When downloading checkpoints (e.g., using ``det checkpoint download``), Determined assumes the
+   same directory is present locally at the same ``container_path``.
 
 ``container_path``
 ------------------
