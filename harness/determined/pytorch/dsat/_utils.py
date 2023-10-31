@@ -9,9 +9,9 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 import filelock
 import torch
-from ruamel import yaml
 
 import determined as det
+from determined.common import util
 from determined.pytorch.dsat import _defaults
 from determined.util import merge_dicts
 
@@ -281,7 +281,7 @@ def get_dict_from_yaml_or_json_path(
             return {}
     else:
         with open(p, "r") as f:
-            yaml_dict: Dict[Any, Any] = yaml.YAML(typ="safe").load(f)
+            yaml_dict: Dict[Any, Any] = util.yaml_safe_load(f)
         return yaml_dict
 
 
