@@ -524,7 +524,8 @@ func TestDeleteExperiments(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveNewPostgresDatabase(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
