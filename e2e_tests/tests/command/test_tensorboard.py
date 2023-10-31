@@ -242,6 +242,7 @@ def test_delete_tensorboard_for_experiment(tmp_path: Path) -> None:
     command = ["det", "tensorboard", "delete", str(experiment_id)]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
+
 @pytest.mark.e2e_cpu
 def test_tensorboard_directory_storage(tmp_path: pathlib.Path) -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
