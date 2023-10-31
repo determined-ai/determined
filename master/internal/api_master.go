@@ -108,10 +108,6 @@ func (a *apiServer) PatchMasterConfig(
 
 	for _, path := range paths {
 		switch path {
-		case "log":
-			a.m.config.Log.Level = logger.ProtoToLogrusLevel(req.Config.Log.Level).String()
-			a.m.config.Log.Color = req.Config.Log.Color
-			logger.SetLogrus(a.m.config.Log)
 		case "log.level":
 			a.m.config.Log.Level = logger.ProtoToLogrusLevel(req.Config.Log.Level).String()
 			logger.SetLogrus(a.m.config.Log)
