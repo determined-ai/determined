@@ -429,7 +429,9 @@ class DeepSpeedTrialController(det.TrialController):
             self.context._loss_ids = {}
             for _ in range(num_train_batch_calls):
                 with contextlib.ExitStack() as exit_stack:
-                    exit_stack.enter_context(self.prof.record_timing("train_batch", requires_sync=False, accumulate=True))
+                    exit_stack.enter_context(
+                        self.prof.record_timing("train_batch", requires_sync=False, accumulate=True)
+                    )
                     if self.context.profiler:
                         exit_stack.enter_context(self.context.profiler)
 
