@@ -1250,6 +1250,16 @@ class TestPyTorchTrial:
         got_prog = [x.args[0] for x in mock_report_progress.call_args_list]
         assert exp_prog == got_prog
 
+    def test_test_mode(self):
+        trial, trial_controller = pytorch_utils.create_trial_and_trial_controller(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            trial_seed=self.trial_seed,
+            test_mode=True,
+        )
+        trial_controller.run()
+        assert trial_controller.state.batches_trained == 1
+
     @pytest.mark.parametrize(
         "ckpt",
         [
