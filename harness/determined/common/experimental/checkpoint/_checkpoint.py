@@ -275,20 +275,32 @@ class Checkpoint:
                     "but they both failed."
                 ) from e
 
+    def _shutil_copytree(self, src: str, dst: str) -> None:
+        # TODO: remove version check once we drop support for Python 3.7
+        if sys.version_info.minor >= 8:
+            shutil.copytree(
+                src,
+                dst,
+                dirs_exist_ok=True,
+            )  # type: ignore
+        else:
+            shutil.copytree(src, dst)
+
     def _download_direct(
         self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path
     ) -> None:
         if checkpoint_storage["type"] == "shared_fs":
             src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-            # TODO: remove version check once we drop support for Python 3.7
-            if sys.version_info.minor >= 8:
-                shutil.copytree(
-                    str(src_ckpt_dir),
-                    str(local_ckpt_dir),
-                    dirs_exist_ok=True,
-                )  # type: ignore
-            else:
-                shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+            self._shutil_copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+        elif checkpoint_storage["type"] == "directory":
+            src_ckpt_dir = pathlib.Path(checkpoint_storage["container_path"], self.uuid)
+            if not src_ckpt_dir.exists():
+                raise FileNotFoundError(
+                    "Checkpoint {} not found in {}. This error could be caused by not having "
+                    "the same checkpoint storage directory present on the local machine as the "
+                    "task runtime storage configuration.".format(self.uuid, src_ckpt_dir)
+                )
+            self._shutil_copytree(str(src_ckpt_dir), str(local_ckpt_dir))
         else:
             local_ckpt_dir.mkdir(parents=True, exist_ok=True)
             manager = storage.build(

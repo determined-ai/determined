@@ -54,6 +54,9 @@ func (c CheckpointStorageConfigV0) GetUnionMember() interface{} {
 	if c.RawAzureConfig != nil {
 		return *c.RawAzureConfig
 	}
+	if c.RawDirectoryConfig != nil {
+		return *c.RawDirectoryConfig
+	}
 	panic("no union member defined")
 }
 

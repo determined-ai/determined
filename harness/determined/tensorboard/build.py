@@ -4,7 +4,7 @@ import urllib
 from typing import Any, Dict, Optional, Union
 
 from determined.common.storage.shared import _full_storage_path
-from determined.tensorboard import azure, base, gcs, s3, shared
+from determined.tensorboard import azure, base, directory, gcs, s3, shared
 
 
 def get_sync_path(cluster_id: str, experiment_id: str, trial_id: str) -> pathlib.Path:
@@ -111,6 +111,15 @@ def build(
         storage_path = checkpoint_config.get("storage_path")
         return shared.SharedFSTensorboardManager(
             _full_storage_path(host_path, storage_path, container_path),
+            base_path,
+            sync_path,
+            async_upload=async_upload,
+            sync_on_close=sync_on_close,
+        )
+
+    elif type_name == "directory":
+        return directory.DirectoryTensorboardManager(
+            checkpoint_config["container_path"],
             base_path,
             sync_path,
             async_upload=async_upload,

@@ -16,6 +16,8 @@ stringData:
       type: {{ required "A valid Values.checkpointStorage.type entry is required!" .Values.checkpointStorage.type | quote}}
       {{- if eq .Values.checkpointStorage.type "shared_fs" }}
       host_path: {{ required "A valid Values.checkpointStorage.hostPath entry is required!" .Values.checkpointStorage.hostPath | quote }}
+      {{- else if eq .Values.checkpointStorage.type "directory" }}
+      container_path: {{ required "A valid Values.checkpointStorage.containerPath entry is required!" .Values.checkpointStorage.containerPath | quote }}
       {{- else if eq .Values.checkpointStorage.type "gcs" }}
       bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
       prefix: {{ .Values.checkpointStorage.prefix | quote }}

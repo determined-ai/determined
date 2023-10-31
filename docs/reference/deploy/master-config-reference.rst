@@ -1164,7 +1164,7 @@ those partitions/queues.
 Specifies where model checkpoints will be stored. This can be overridden on a per-experiment basis
 in the :ref:`experiment-configuration`. A checkpoint contains the architecture and weights of the
 model being trained. Determined currently supports several kinds of checkpoint storage, ``gcs``,
-``s3``, ``azure``, and ``shared_fs``, identified by the ``type`` subfield.
+``s3``, ``azure``, ``shared_fs``, and ``directory``, identified by the ``type`` subfield.
 
 ``type: gcs``
 =============
@@ -1285,6 +1285,35 @@ bind-mount. Defaults to ``rprivate``.
 When an experiment finishes, the system will optionally delete some checkpoints to reclaim space.
 The ``save_experiment_best``, ``save_trial_best`` and ``save_trial_latest`` parameters specify which
 checkpoints to save. See :ref:`checkpoint-garbage-collection` for more details.
+
+``type: directory``
+===================
+
+Checkpoints are written to a local directory. For tasks running on Determined platform, it's a path
+within the container. For detached mode, it's simply a local path.
+
+The assumption is that a persistent storage will be mounted at the path parametrized by
+``container_path`` option using ``bind_mounts``, ``pod_spec``, or other mechanisms. Otherwise, this
+path will usually end up being ephemeral storage within the container, and the data will be lost
+when the container exits.
+
+.. warning::
+
+   TensorBoards currently do not inherit ``bind_mounts`` or ``pod_specs`` from their parent
+   experiments. Therefore, if an experiment is using ``type: directory`` storage, and mounts the
+   storage separately, a launched TensorBoard will need the same mount configuration provided
+   explicitly using ``det tensorboard start <experiment_id> --config-file <CONFIG FILE>`` or
+   similar.
+
+.. warning::
+
+   When downloading checkpoints (e.g., using ``det checkpoint download``), Determined assumes the
+   same directory is present locally at the same ``container_path``.
+
+``container_path``
+------------------
+
+Required. The file system path to use.
 
 ********
  ``db``
