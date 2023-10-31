@@ -14,7 +14,7 @@ from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group, string_to_bool
-from determined.experimental.client import CheckpointSortBy, Determined, OrderBy
+from determined.experimental import client
 
 from .checkpoint import render_checkpoint
 
@@ -148,7 +148,7 @@ def describe_trial(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    det = Determined(args.master, args.user)
+    det = client.Determined(args.master, args.user)
 
     if [args.latest, args.best, args.uuid].count(True) != 1:
         raise ValueError("exactly one of --latest, --best, or --uuid must be set")
@@ -161,16 +161,16 @@ def download(args: Namespace) -> None:
         checkpoint = det.get_checkpoint(args.uuid)
     else:  # Downloaded checkpoint is selected from a trial
         if args.latest:
-            sort_by = CheckpointSortBy.BATCH_NUMBER
-            order_by = OrderBy.DESC
+            sort_by = client.CheckpointSortBy.BATCH_NUMBER
+            order_by = client.OrderBy.DESC
         else:  # mode is "best"
             sort_by = args.sort_by
             if sort_by is None:
                 order_by = None
             elif args.smaller_is_better:
-                order_by = OrderBy.ASC
+                order_by = client.OrderBy.ASC
             else:
-                order_by = OrderBy.DESC
+                order_by = client.OrderBy.DESC
 
         checkpoints = det.get_trial(args.trial_id).list_checkpoints(
             sort_by=sort_by,
