@@ -382,33 +382,6 @@ func (t *trial) maybeAllocateTask() error {
 	}
 
 	restoredAllocation, err := t.maybeRestoreAllocation()
-
-	if restoredAllocation == nil {
-		launchWarnings, err := t.rm.ValidateResourcePoolAvailability(
-			&sproto.ValidateResourcePoolAvailabilityRequest{
-				Name:   t.config.Resources().ResourcePool(),
-				Slots:  t.config.Resources().SlotsPerTrial(),
-				TaskID: &t.taskID,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("checking resource availability: %v", err.Error())
-		}
-		if len(launchWarnings) > 0 {
-			exitReason := fmt.Sprintf(
-				"task ID %v slots requested exceeds %v resource pool capacity",
-				t.taskID,
-				t.config.Resources().ResourcePool(),
-			)
-			logrus.Error(exitReason)
-
-			return t.transition(model.StateWithReason{
-				State:               model.ErrorState,
-				InformationalReason: exitReason,
-			})
-		}
-	}
-
 	if err != nil {
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
 	} else if restoredAllocation != nil {
@@ -450,6 +423,10 @@ func (t *trial) maybeAllocateTask() error {
 		}
 		t.allocationID = &ar.AllocationID
 		return nil
+	} else if restoredAllocation == nil && len(blockedNodes) > 0 {
+		if err := t.checkResourcePoolRemainingCapacity(); err != nil {
+			return err
+		}
 	}
 
 	t.runID++
@@ -797,4 +774,32 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 			len(allocations),
 		)
 	}
+}
+
+func (t *trial) checkResourcePoolRemainingCapacity() error {
+	launchWarnings, err := t.rm.ValidateResourcePoolAvailability(
+		&sproto.ValidateResourcePoolAvailabilityRequest{
+			Name:   t.config.Resources().ResourcePool(),
+			Slots:  t.config.Resources().SlotsPerTrial(),
+			TaskID: &t.taskID,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("checking resource availability: %v", err.Error())
+	}
+	if len(launchWarnings) > 0 {
+		exitReason := fmt.Sprintf(
+			"task ID %v slots requested exceeds %v resource pool capacity",
+			t.taskID,
+			t.config.Resources().ResourcePool(),
+		)
+		logrus.Error(exitReason)
+
+		return t.transition(model.StateWithReason{
+			State:               model.ErrorState,
+			InformationalReason: exitReason,
+		})
+	}
+
+	return nil
 }
