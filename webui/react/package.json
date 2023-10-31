@@ -42,7 +42,7 @@
     "core-js": "3.32",
     "dayjs": "^1.11.7",
     "debug": "^4.3.4",
-    "determined-ui": "git+https://git@github.com/determined-ai/determined-ui.git#v0.5.4",
+    "determined-ui": "git+https://git@github.com/determined-ai/determined-ui.git#v0.5.8",
     "events": "^3.3.0",
     "fp-ts": "^2.13.1",
     "fuse.js": "^6.6.2",

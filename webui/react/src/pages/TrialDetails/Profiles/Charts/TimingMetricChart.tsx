@@ -19,7 +19,6 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
   return (
     <Section bodyBorder bodyNoPadding title="Timing Metrics">
       <LineChart
-        experimentId={trial.id}
         handleError={handleError}
         series={timingMetrics.data}
         xAxis={XAxisDomain.Time}
