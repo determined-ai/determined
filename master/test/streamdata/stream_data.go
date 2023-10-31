@@ -70,25 +70,8 @@ type Trial struct {
 func ModTrial(
 	ctx context.Context, newTrial Trial,
 ) error {
-	trials, err := queryTrials(ctx)
-	if err != nil {
-		return err
-	}
-	maxSeq := int64(0)
-	for _, t := range trials {
-		if t.Seq > maxSeq {
-			maxSeq = t.Seq
-		}
-	}
-
-	newTrial.Seq = maxSeq + 1
-
-	_, err = db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID).Exec(ctx)
+	return err
 }
 
 func queryTrials(ctx context.Context) ([]Trial, error) {
@@ -104,10 +87,7 @@ func queryTrials(ctx context.Context) ([]Trial, error) {
 
 // AddTrial adds everything necessary to create a new trial under the given experimentID.
 func AddTrial(ctx context.Context, experimentID int) error {
-	var trials []Trial
-	err := db.Bun().NewSelect().
-		Model(&trials).
-		Scan(ctx, &trials)
+	trials, err := queryTrials(ctx)
 	if err != nil {
 		return err
 	}
