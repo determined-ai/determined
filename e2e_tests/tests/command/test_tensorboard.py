@@ -225,7 +225,7 @@ def test_tensorboard_inherit_image_pull_secrets() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_delete_tensorboard_for_experiment(tmp_path: Path) -> None:
+def test_delete_tensorboard_for_experiment() -> None:
     """
     Start a random experiment, start a TensorBoard instance pointed to
     the experiment, delete tensorboard and verify deletion.
