@@ -273,11 +273,15 @@ var (
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 's3', 'gcs' or 'azure'",
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'directory', 's3', 'gcs', or 'azure'",
             "items": [
                 {
                     "unionKey": "const:type=shared_fs",
                     "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
+                },
+                {
+                    "unionKey": "const:type=directory",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/directory.json"
                 },
                 {
                     "unionKey": "const:type=s3",
@@ -390,6 +394,56 @@ var (
                     "pattern": "^/[^:]*:/[^:]*(:[rwm]*)?"
                 }
             ]
+        }
+    }
+}
+`)
+	textDirectoryConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/directory.json",
+    "title": "DirectoryConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [
+        "container_path"
+    ],
+    "properties": {
+        "type": {
+            "const": "directory"
+        },
+        "container_path": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
         }
     }
 }
@@ -769,6 +823,16 @@ var (
             "default": [],
             "items": {
                 "type": "string"
+            }
+        },
+        "log_policies": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/log-policy.json"
             }
         },
         "max_restarts": {
@@ -1370,6 +1434,99 @@ var (
                 }
             }
         ]
+    }
+}
+`)
+	textLogActionCancelRetriesV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json",
+    "title": "LogActionCancelRetries",
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [],
+    "properties": {
+        "type": {
+            "const": "cancel_retries"
+        }
+    }
+}
+`)
+	textLogActionExcludeNodeV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json",
+    "title": "LogActionExcludeNode",
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [],
+    "properties": {
+        "type": {
+            "const": "exclude_node"
+        }
+    }
+}
+`)
+	textLogActionV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-action.json",
+    "title": "LogAction",
+    "$comment": "this is a union of all possible properties, with validation for the common properties",
+    "if": {
+        "required": [
+            "type"
+        ]
+    },
+    "then": {
+        "union": {
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'cancel_retries' or 'exclude_node'",
+            "items": [
+                {
+                    "unionKey": "const:type=cancel_retries",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json"
+                },
+                {
+                    "unionKey": "const:type=exclude_node",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json"
+                }
+            ]
+        }
+    },
+    "additionalProperties": false,
+    "eventuallyRequired": [
+        "type"
+    ],
+    "properties": {
+        "type": true
+    }
+}
+`)
+	textLogPolicyV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/log-policy.json",
+    "title": "LogPolicy",
+    "additionalProperties": false,
+    "required": [
+        "pattern",
+        "action"
+    ],
+    "type": "object",
+    "properties": {
+        "pattern": {
+            "type": [
+                "string"
+            ]
+        },
+        "action": {
+            "type": [
+                "object"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+        }
     }
 }
 `)
@@ -3001,6 +3158,8 @@ var (
 
 	schemaDevicesConfigV0 interface{}
 
+	schemaDirectoryConfigV0 interface{}
+
 	schemaEnvironmentImageMapV0 interface{}
 
 	schemaEnvironmentImageV0 interface{}
@@ -3036,6 +3195,14 @@ var (
 	schemaKerberosConfigV0 interface{}
 
 	schemaLengthV0 interface{}
+
+	schemaLogActionCancelRetriesV0 interface{}
+
+	schemaLogActionExcludeNodeV0 interface{}
+
+	schemaLogActionV0 interface{}
+
+	schemaLogPolicyV0 interface{}
 
 	schemaOptimizationsConfigV0 interface{}
 
@@ -3256,6 +3423,26 @@ func ParsedDevicesConfigV0() interface{} {
 		panic("invalid embedded json for DevicesConfigV0")
 	}
 	return schemaDevicesConfigV0
+}
+
+func ParsedDirectoryConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaDirectoryConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaDirectoryConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaDirectoryConfigV0 != nil {
+		return schemaDirectoryConfigV0
+	}
+	err := json.Unmarshal(textDirectoryConfigV0, &schemaDirectoryConfigV0)
+	if err != nil {
+		panic("invalid embedded json for DirectoryConfigV0")
+	}
+	return schemaDirectoryConfigV0
 }
 
 func ParsedEnvironmentImageMapV0() interface{} {
@@ -3616,6 +3803,86 @@ func ParsedLengthV0() interface{} {
 		panic("invalid embedded json for LengthV0")
 	}
 	return schemaLengthV0
+}
+
+func ParsedLogActionCancelRetriesV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogActionCancelRetriesV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogActionCancelRetriesV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogActionCancelRetriesV0 != nil {
+		return schemaLogActionCancelRetriesV0
+	}
+	err := json.Unmarshal(textLogActionCancelRetriesV0, &schemaLogActionCancelRetriesV0)
+	if err != nil {
+		panic("invalid embedded json for LogActionCancelRetriesV0")
+	}
+	return schemaLogActionCancelRetriesV0
+}
+
+func ParsedLogActionExcludeNodeV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogActionExcludeNodeV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogActionExcludeNodeV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogActionExcludeNodeV0 != nil {
+		return schemaLogActionExcludeNodeV0
+	}
+	err := json.Unmarshal(textLogActionExcludeNodeV0, &schemaLogActionExcludeNodeV0)
+	if err != nil {
+		panic("invalid embedded json for LogActionExcludeNodeV0")
+	}
+	return schemaLogActionExcludeNodeV0
+}
+
+func ParsedLogActionV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogActionV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogActionV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogActionV0 != nil {
+		return schemaLogActionV0
+	}
+	err := json.Unmarshal(textLogActionV0, &schemaLogActionV0)
+	if err != nil {
+		panic("invalid embedded json for LogActionV0")
+	}
+	return schemaLogActionV0
+}
+
+func ParsedLogPolicyV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogPolicyV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogPolicyV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaLogPolicyV0 != nil {
+		return schemaLogPolicyV0
+	}
+	err := json.Unmarshal(textLogPolicyV0, &schemaLogPolicyV0)
+	if err != nil {
+		panic("invalid embedded json for LogPolicyV0")
+	}
+	return schemaLogPolicyV0
 }
 
 func ParsedOptimizationsConfigV0() interface{} {
@@ -4189,6 +4456,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textDeviceV0
 	url = "http://determined.ai/schemas/expconf/v0/devices.json"
 	cachedSchemaBytesMap[url] = textDevicesConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/directory.json"
+	cachedSchemaBytesMap[url] = textDirectoryConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image-map.json"
 	cachedSchemaBytesMap[url] = textEnvironmentImageMapV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image.json"
@@ -4225,6 +4494,14 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"
 	cachedSchemaBytesMap[url] = textLengthV0
+	url = "http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json"
+	cachedSchemaBytesMap[url] = textLogActionCancelRetriesV0
+	url = "http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json"
+	cachedSchemaBytesMap[url] = textLogActionExcludeNodeV0
+	url = "http://determined.ai/schemas/expconf/v0/log-action.json"
+	cachedSchemaBytesMap[url] = textLogActionV0
+	url = "http://determined.ai/schemas/expconf/v0/log-policy.json"
+	cachedSchemaBytesMap[url] = textLogPolicyV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/profiling.json"

@@ -5,10 +5,12 @@ import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
 import Icon from 'determined-ui/Icon';
 import { useModal } from 'determined-ui/Modal';
 import Nameplate from 'determined-ui/Nameplate';
+import { Loadable } from 'determined-ui/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import dropdownCss from 'components/ActionDropdown/ActionDropdown.module.scss';
+import AddUsersToGroupModalComponent from 'components/AddUsersToGroupModal';
 import CreateGroupModalComponent from 'components/CreateGroupModal';
 import DeleteGroupModalComponent from 'components/DeleteGroupModal';
 import Section from 'components/Section';
@@ -22,7 +24,8 @@ import { getGroup, getGroups } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
-import { User } from 'types';
+import userStore from 'stores/users';
+import { DetailedUser, User } from 'types';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter } from 'utils/sort';
@@ -36,29 +39,42 @@ interface DropdownProps {
   fetchGroup: (groupId: number) => void;
   fetchGroups: () => void;
   group: V1GroupSearchResult;
+  availabeUsers: DetailedUser[];
 }
 
 const MenuKey = {
+  AddMembers: 'add-members',
   Delete: 'delete',
   Edit: 'edit',
 } as const;
 
 const DROPDOWN_MENU: MenuItem[] = [
+  { key: MenuKey.AddMembers, label: 'Add Members to Group' },
   { key: MenuKey.Edit, label: 'Edit Group' },
   { danger: true, key: MenuKey.Delete, label: 'Delete Group' },
 ];
 
-const GroupActionDropdown = ({ expanded, fetchGroups, fetchGroup, group }: DropdownProps) => {
+const GroupActionDropdown = ({
+  expanded,
+  fetchGroups,
+  fetchGroup,
+  group,
+  availabeUsers,
+}: DropdownProps) => {
   const onFinishEdit = () => {
     fetchGroups();
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
   };
   const EditGroupModal = useModal(CreateGroupModalComponent);
+  const AddUsersToGroupModal = useModal(AddUsersToGroupModalComponent);
   const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
   const handleDropdown = useCallback(
     (key: string) => {
       switch (key) {
+        case MenuKey.AddMembers:
+          AddUsersToGroupModal.open();
+          break;
         case MenuKey.Delete:
           DeleteGroupModal.open();
           break;
@@ -67,7 +83,7 @@ const GroupActionDropdown = ({ expanded, fetchGroups, fetchGroup, group }: Dropd
           break;
       }
     },
-    [DeleteGroupModal, EditGroupModal],
+    [AddUsersToGroupModal, DeleteGroupModal, EditGroupModal],
   );
 
   return (
@@ -75,6 +91,7 @@ const GroupActionDropdown = ({ expanded, fetchGroups, fetchGroup, group }: Dropd
       <Dropdown menu={DROPDOWN_MENU} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
+      <AddUsersToGroupModal.Component group={group} users={availabeUsers} onClose={onFinishEdit} />
       <EditGroupModal.Component group={group} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
     </div>
@@ -96,6 +113,7 @@ const GroupManagement: React.FC = () => {
   const { settings, updateSettings } = useSettings(settingsConfig);
 
   const { canModifyGroups, canViewGroups } = usePermissions();
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const RemoveUserFromGroupModal = useModal(RemoveUserFromGroupModalComponent);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
@@ -218,8 +236,16 @@ const GroupManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: V1GroupSearchResult) => {
+      const userGroup = groupUsers.find((gr) => gr.groupId === record.group.groupId);
+      const usernameSet = new Set((userGroup?.users ?? []).map((u) => u.username));
+      const availabeUsers = users.filter((user) => {
+        // only active and unassigned to the group users are available
+        return user.isActive && !usernameSet.has(user.username);
+      });
+
       return canModifyGroups ? (
         <GroupActionDropdown
+          availabeUsers={availabeUsers}
           expanded={!!(record.group.groupId && expandedKeys.includes(record.group.groupId))}
           fetchGroup={fetchGroup}
           fetchGroups={fetchGroups}
@@ -258,7 +284,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
+  }, [canModifyGroups, expandedKeys, fetchGroup, fetchGroups, groupUsers, users]);
 
   const table = useMemo(() => {
     return settings ? (

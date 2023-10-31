@@ -9,6 +9,7 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -21,8 +22,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -76,7 +79,7 @@ func (a *apiServer) canDoActionsOnTask(
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	errTaskNotFound := api.NotFoundErrs("task", fmt.Sprint(taskID), true)
-	t, err := a.m.db.TaskByID(taskID)
+	t, err := db.TaskByID(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		return errTaskNotFound
 	} else if err != nil {
@@ -380,6 +383,27 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func (a *apiServer) monitor(ctx context.Context, taskID model.TaskID, logs []*model.TaskLog) error {
+	isExp, exp, err := expFromTaskID(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		return nil
+	}
+
+	policies, err := db.ActiveLogPolicies(ctx, exp.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := logpattern.Monitor(ctx, taskID, logs, policies); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *apiServer) PostTaskLogs(
 	ctx context.Context, req *apiv1.PostTaskLogsRequest,
 ) (*apiv1.PostTaskLogsResponse, error) {
@@ -412,6 +436,14 @@ func (a *apiServer) PostTaskLogs(
 
 	if err := a.m.taskLogBackend.AddTaskLogs(logs); err != nil {
 		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
+	}
+
+	if err := webhooks.ScanLogs(ctx, logs); err != nil {
+		log.Errorf("scanning logs for webhook triggers: %v", err)
+	}
+
+	if err := a.monitor(ctx, model.TaskID(taskID), logs); err != nil {
+		log.Errorf("moniter logs against log pattern policies: %s", err)
 	}
 
 	return &apiv1.PostTaskLogsResponse{}, nil
@@ -691,7 +723,7 @@ func (a *apiServer) isTaskTerminalFunc(
 	taskID model.TaskID, buffer time.Duration,
 ) api.TerminationCheckFn {
 	return func() (bool, error) {
-		switch task, err := a.m.db.TaskByID(taskID); {
+		switch task, err := db.TaskByID(context.TODO(), taskID); {
 		case err != nil:
 			return true, err
 		case task.EndTime != nil && task.EndTime.UTC().Add(buffer).Before(time.Now().UTC()):

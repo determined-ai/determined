@@ -5,6 +5,8 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
@@ -373,6 +375,49 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
 }
 
+func TestActiveLogPatternPolicies(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	_, err := ActiveLogPolicies(ctx, -1)
+	require.ErrorIs(t, err, sql.ErrNoRows)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+
+	policies, err := ActiveLogPolicies(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Len(t, policies, 0)
+
+	activeConfig, err := db.ActiveExperimentConfig(exp.ID)
+	require.NoError(t, err)
+	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "sub", RawAction: expconf.LogAction{
+			RawCancelRetries: &expconf.LogActionCancelRetries{},
+		}},
+		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: expconf.LogAction{
+			RawExcludeNode: &expconf.LogActionExcludeNode{},
+		}},
+	}
+
+	v, err := json.Marshal(activeConfig)
+	require.NoError(t, err)
+	var m map[string]any
+	require.NoError(t, json.Unmarshal(v, &m))
+	_, err = Bun().NewUpdate().Table("experiments").
+		Where("id = ?", exp.ID).
+		Set("config = ?", m).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	policies, err = ActiveLogPolicies(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, activeConfig.RawLogPolicies, policies)
+}
+
 func TestMetricBatchesMilestones(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -524,7 +569,8 @@ func TestDeleteExperiments(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveNewPostgresDatabase(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 

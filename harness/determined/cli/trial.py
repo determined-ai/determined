@@ -1,4 +1,3 @@
-import distutils.util
 import json
 import os
 import tarfile
@@ -14,8 +13,8 @@ from determined.cli import render
 from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
-from determined.experimental import Determined
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group, string_to_bool
+from determined.experimental import client
 
 from .checkpoint import render_checkpoint
 
@@ -149,17 +148,38 @@ def describe_trial(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    checkpoint = (
-        Determined(args.master, args.user)
-        .get_trial(args.trial_id)
-        .select_checkpoint(
-            latest=args.latest,
-            best=args.best,
-            uuid=args.uuid,
-            sort_by=args.sort_by,
-            smaller_is_better=args.smaller_is_better,
+    det = client.Determined(args.master, args.user)
+
+    if [args.latest, args.best, args.uuid].count(True) != 1:
+        raise ValueError("exactly one of --latest, --best, or --uuid must be set")
+    if args.sort_by is not None and not args.best:
+        raise ValueError("--sort-by and --smaller-is-better flags can only be used with --best")
+    if (args.sort_by is None) != (args.smaller_is_better is None):
+        raise ValueError("--sort-by and --smaller-is-better must be set together")
+
+    if args.uuid:
+        checkpoint = det.get_checkpoint(args.uuid)
+    else:  # Downloaded checkpoint is selected from a trial
+        if args.latest:
+            sort_by = client.CheckpointSortBy.BATCH_NUMBER
+            order_by = client.OrderBy.DESC
+        else:  # mode is "best"
+            sort_by = args.sort_by
+            if sort_by is None:
+                order_by = None
+            elif args.smaller_is_better:
+                order_by = client.OrderBy.ASC
+            else:
+                order_by = client.OrderBy.DESC
+
+        checkpoints = det.get_trial(args.trial_id).list_checkpoints(
+            sort_by=sort_by,
+            order_by=order_by,
+            max_results=1,
         )
-    )
+        if not checkpoints:
+            raise ValueError(f"No checkpoints found for trial {args.trial_id}")
+        checkpoint = checkpoints[0]
 
     path = checkpoint.download(path=args.output_dir)
 
@@ -426,7 +446,7 @@ args_description: ArgsDescription = [
                     ),
                     Arg(
                         "--smaller-is-better",
-                        type=lambda s: bool(distutils.util.strtobool(s)),
+                        type=string_to_bool,
                         default=None,
                         help="The sort order for metrics when using --best with --sort-by. For "
                         "example, 'accuracy' would require passing '--smaller-is-better false'. If "

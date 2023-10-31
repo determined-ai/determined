@@ -1,21 +1,22 @@
 import copy
-import os
 import uuid
 from typing import Any, Dict, Optional, Type
 
-from .base import StorageManager, Paths, Selector, from_string
-from .cloud import CloudStorageManager
-from .azure import AzureStorageManager
-from .gcs import GCSStorageManager
-from .s3 import S3StorageManager
-from .shared import SharedFSStorageManager
+from determined.common.storage.base import StorageManager, Paths, Selector, from_string
+from determined.common.storage.cloud import CloudStorageManager
+from determined.common.storage.azure import AzureStorageManager
+from determined.common.storage.gcs import GCSStorageManager
+from determined.common.storage.s3 import S3StorageManager
+from determined.common.storage.shared import SharedFSStorageManager
+from determined.common.storage.directory import DirectoryStorageManager
 
 __all__ = [
     "AzureStorageManager",
+    "DirectoryStorageManager",
     "GCSStorageManager",
-    "StorageManager",
     "S3StorageManager",
     "SharedFSStorageManager",
+    "StorageManager",
 ]
 
 
@@ -24,6 +25,7 @@ _STORAGE_MANAGERS = {
     "gcs": GCSStorageManager,
     "s3": S3StorageManager,
     "shared_fs": SharedFSStorageManager,
+    "directory": DirectoryStorageManager,
 }  # type: Dict[str, Type[StorageManager]]
 
 

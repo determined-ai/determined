@@ -35,7 +35,6 @@ type (
 		address          string
 		resourcePool     *actor.Ref
 		socket           *ws.WebSocket[*aproto.MasterMessage, aproto.AgentMessage]
-		slots            *actor.Ref
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
 		started bool
@@ -129,7 +128,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self()}).Get()
 			a.socketDisconnected(ctx)
 		}
-		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
 		ctx.Respond(a.summarize(ctx))
 	case actorapi.WebSocketRequest:
@@ -609,9 +607,6 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		Agent: ctx.Self(),
 		Slots: a.agentState.numSlots(),
 	})
-
-	// TODO(ilia): Deprecate together with the old slots API.
-	ctx.Tell(a.slots, *agentStarted)
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {

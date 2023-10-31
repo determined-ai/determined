@@ -47,6 +47,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -886,6 +887,18 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
+	webhookManager, err := webhooks.New(ctx)
+	if err != nil {
+		return fmt.Errorf("initializing webhooks: %w", err)
+	}
+	webhooks.SetDefault(webhookManager)
+
+	l, err := logpattern.New(ctx)
+	if err != nil {
+		return fmt.Errorf("initializing log pattern policies: %w", err)
+	}
+	logpattern.SetDefault(l)
+
 	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
 	if err != nil {
 		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
@@ -958,7 +971,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	proxy.InitProxy(processProxyAuthentication)
 	portregistry.InitPortRegistry(config.GetMasterConfig().ReservedPorts)
-	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
+
+	go periodicallyAggregateResourceAllocation(m.db)
 
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()

@@ -29,6 +29,7 @@ def create_trial_and_trial_controller(
     min_checkpoint_batches: int = sys.maxsize,
     min_validation_batches: int = sys.maxsize,
     aggregation_frequency: int = 1,
+    test_mode: bool = False,
 ) -> typing.Tuple[pytorch.PyTorchTrial, pytorch._PyTorchTrialController]:
     assert issubclass(
         trial_class, pytorch.PyTorchTrial
@@ -101,7 +102,7 @@ def create_trial_and_trial_controller(
         latest_checkpoint=latest_checkpoint,
         steps_completed=steps_completed,
         smaller_is_better=bool(exp_config["searcher"]["smaller_is_better"]),
-        test_mode=False,
+        test_mode=test_mode,
         checkpoint_policy=exp_config["checkpoint_policy"],
         step_zero_validation=bool(exp_config["perform_initial_validation"]),
         det_profiler=None,

@@ -12,8 +12,9 @@ type (
 	CheckpointStorageConfig   = CheckpointStorageConfigV0
 	ConstHyperparameter       = ConstHyperparameterV0
 	CustomConfig              = CustomConfigV0
-	DevicesConfig             = DevicesConfigV0
 	Device                    = DeviceV0
+	DevicesConfig             = DevicesConfigV0
+	DirectoryConfig           = DirectoryConfigV0
 	DoubleHyperparameter      = DoubleHyperparameterV0
 	Entrypoint                = EntrypointV0
 	EnvironmentConfig         = EnvironmentConfigV0
@@ -27,9 +28,17 @@ type (
 	IntHyperparameter         = IntHyperparameterV0
 	Labels                    = LabelsV0
 	Length                    = LengthV0
+	LogPoliciesConfig         = LogPoliciesConfigV0
+	LogPolicy                 = LogPolicyV0
+	LogAction                 = LogActionV0
+	LogActionCancelRetries    = LogActionCancelRetriesV0
+	LogActionExcludeNode      = LogActionExcludeNodeV0
 	LogHyperparameter         = LogHyperparameterV0
 	OptimizationsConfig       = OptimizationsConfigV0
+	PbsConfig                 = PbsConfigV0
 	ProfilingConfig           = ProfilingConfigV0
+	ProxyPort                 = ProxyPortV0
+	ProxyPortsConfig          = ProxyPortsConfigV0
 	RandomConfig              = RandomConfigV0
 	ReproducibilityConfig     = ReproducibilityConfigV0
 	ResourcesConfig           = ResourcesConfigV0
@@ -38,9 +47,6 @@ type (
 	SharedFSConfig            = SharedFSConfigV0
 	SingleConfig              = SingleConfigV0
 	SlurmConfig               = SlurmConfigV0
-	PbsConfig                 = PbsConfigV0
-	ProxyPort                 = ProxyPortV0
-	ProxyPortsConfig          = ProxyPortsConfigV0
 )
 
 // These are EOL searchers, not to be used in new experiments.

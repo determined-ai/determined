@@ -10398,7 +10398,7 @@ export interface V1Trigger {
      */
     triggerType?: V1TriggerType;
     /**
-     * The trigger condition.
+     * The trigger condition. For TRIGGER_TYPE_TASK_LOG needs {"regex": "abcd"}
      * @type {any}
      * @memberof V1Trigger
      */
@@ -10411,7 +10411,7 @@ export interface V1Trigger {
     webhookId?: number;
 }
 /**
- * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+ * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.  - TRIGGER_TYPE_TASK_LOG: For task logs.
  * @export
  * @enum {string}
  */
@@ -10419,6 +10419,7 @@ export const V1TriggerType = {
     UNSPECIFIED: 'TRIGGER_TYPE_UNSPECIFIED',
     EXPERIMENTSTATECHANGE: 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE',
     METRICTHRESHOLDEXCEEDED: 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED',
+    TASKLOG: 'TRIGGER_TYPE_TASK_LOG',
 } as const
 export type V1TriggerType = ValueOf<typeof V1TriggerType>
 /**

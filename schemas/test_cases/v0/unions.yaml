@@ -42,6 +42,39 @@
     save_trial_best: 1
     save_trial_latest: 1
 
+- name: directory checkpoint storage (valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/directory.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: directory
+    container_path: /path/on/disk
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: directory checkpoint storage minimal (valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/directory.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: directory
+    container_path: /path/on/disk
+
+- name: log action cancel_retries
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-action-cancel-retries.json
+    - http://determined.ai/schemas/expconf/v0/log-action.json
+  case:
+    type: cancel_retries
+
+- name: log action exclude_node
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/log-action-exclude-node.json
+    - http://determined.ai/schemas/expconf/v0/log-action.json
+  case:
+    type: exclude_node
+
 - name: records length (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/length.json

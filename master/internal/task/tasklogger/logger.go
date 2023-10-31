@@ -1,9 +1,11 @@
 package tasklogger
 
 import (
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 var (
@@ -71,5 +73,21 @@ func (l *Logger) flush(pending []*model.TaskLog) {
 	err := l.backend.AddTaskLogs(pending)
 	if err != nil {
 		syslog.WithError(err).Errorf("failed to save task logs")
+	}
+}
+
+// CreateLogFromMaster creates a tasklog of the format that we expect when it comes from master.
+func CreateLogFromMaster(taskID model.TaskID, level, log string) *model.TaskLog {
+	if !strings.HasSuffix(log, "\n") {
+		log += "\n"
+	}
+
+	return &model.TaskLog{
+		TaskID:    string(taskID),
+		Timestamp: ptrs.Ptr(time.Now().UTC()),
+		Level:     &level,
+		Source:    ptrs.Ptr("master"),
+		StdType:   ptrs.Ptr("stdout"),
+		Log:       log,
 	}
 }

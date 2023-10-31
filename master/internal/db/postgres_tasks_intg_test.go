@@ -30,6 +30,7 @@ import (
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
+	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -65,7 +66,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.NoError(t, err, "failed to add task")
 
 	// Retrieve it back and make sure the mapping is exhaustive.
-	tOut, err := db.TaskByID(tID)
+	tOut, err := TaskByID(ctx, tID)
 	require.NoError(t, err, "failed to retrieve task")
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
@@ -75,7 +76,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.NoError(t, err, "failed to mark task completed")
 
 	// Re-retrieve it back and make sure the mapping is still exhaustive.
-	tOut, err = db.TaskByID(tID)
+	tOut, err = TaskByID(ctx, tID)
 	require.NoError(t, err, "failed to re-retrieve task")
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
