@@ -75,7 +75,6 @@ linters-settings:
     forbid:
       - 'fmt\.Print.*'
       - 'metaV1.NamespaceAll' # Will error if someone has namespace restricted permissions.
-      - 'bundebug.WithVerbose'
   staticcheck:
     go: "1.20"
 
