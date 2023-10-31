@@ -428,6 +428,16 @@ Resources:
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
+  # for redis
+  MasterSecurityGroupIngressRedis:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 9012
+      ToPort: 9012
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
   MasterSecurityGroupIngressUI:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -968,6 +978,7 @@ Resources:
                 --env DB_PASSWORD=${DBPassword} \
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
+                -p 9012:9012 \
                 -v /mnt/efs/:/mnt/efs/ \
                 --network determined \
                 "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
