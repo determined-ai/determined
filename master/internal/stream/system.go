@@ -104,21 +104,6 @@ type SyncMsg struct {
 	SyncID string `json:"sync_id"`
 }
 
-// // toPreparedMessage converts as SyncMsg to a PreparedMessage.
-// func (sm SyncMsg) toPreparedMessage() *websocket.PreparedMessage {
-// 	jbytes, err := json.Marshal(sm)
-// 	if err != nil {
-// 		log.Errorf("error marshaling sync message for streaming: %v", err.Error())
-// 		return nil
-// 	}
-// 	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
-// 	if err != nil {
-// 		log.Errorf("error preparing sync message for streaming: %v", err.Error())
-// 		return nil
-// 	}
-// 	return msg
-// }
-
 // StartupMsg is the first message a streaming client sends.
 //
 // It declares initially known keys and also configures the initial subscriptions for the stream.
