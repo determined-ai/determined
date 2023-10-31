@@ -5,6 +5,7 @@ from typing import Dict, Optional
 import pytest
 
 from determined.common import api, util
+from determined.common.api import bindings
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
@@ -219,3 +220,27 @@ def test_tensorboard_inherit_image_pull_secrets(tmp_path: Path) -> None:
     ips = config["environment"]["pod_spec"]["spec"]["imagePullSecrets"]
 
     assert ips == exp_secrets, (ips, exp_secrets)
+
+@pytest.mark.e2e_cpu
+def test_delete_tensorboard_for_experiment(tmp_path: Path) -> None:
+    """
+    Start a random experiment, start a TensorBoard instance pointed to 
+    the experiment, delete tensorboard and verify deletion.
+    """
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
+
+    body = bindings.v1LaunchTensorboardRequest(
+        experimentIds=[str(experiment_id)],
+    )
+
+    res = bindings.post_LaunchTensorboard(session=determined_test_session(), body=body)
+    t_id = res.tensorboard.id
+
+    command = [
+        "det",
+        "tensorboard",
+        "delete",
+        str(experiment_id)
+    ]
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
