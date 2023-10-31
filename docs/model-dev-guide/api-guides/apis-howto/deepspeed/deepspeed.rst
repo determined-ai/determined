@@ -303,6 +303,52 @@ interleaving micro batches:
        loss = self.model_engine.eval_batch()
        return {"loss": loss}
 
+***********
+ Profiling
+***********
+
+Deepspeed experiments can be profiled using PyTorch Profiler and results will automatically be
+uploaded to TensorBoard (accessible via the Determined UI). To configure profiling, call
+:meth:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.set_profiler` on the
+:class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext` class in the trial's ``__init__``
+method.
+
+``set_profiler()`` is a thin wrapper around PyTorch profiler, torch-tb-profiler. It overrides the
+``on_trace_ready`` parameter to the Determined TensorBoard path, while all other arguments are
+passed directly into ``torch.profiler.profile``. Stepping the profiler will be handled automatically
+during the training loop.
+
+See the `PyTorch profiler plugin <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ for
+details.
+
+The snippet below will profile GPU and CPU usage, skipping batch 1, warming up on batch 2, and
+profiling batches 3 and 4.
+
+.. code:: python
+
+   class MyTrial(DeepSpeedTrial):
+       def __init__(self, context: DeepSpeedTrialContext) -> None:
+           self.context = context
+           ...
+           self.context.set_profiler(
+                activities=[
+                    torch.profiler.ProfilerActivity.CPU,
+                    torch.profiler.ProfilerActivity.CUDA,
+                ],
+                schedule=torch.profiler.schedule(
+                    wait=1,
+                    warmup=1,
+                    active=2
+                ),
+            )
+
+.. note::
+
+   Though configuring a profiling schedule ``torch.profiler.schedule`` is optional, profiling every
+   batch may cause a large amount of data to be uploaded to TensorBoard. This may result in long
+   rendering times for TensorBoard and memory issues. For long-running experiments, it is
+   recommended to configure a profiling schedule.
+
 *****************************
  Known DeepSpeed Constraints
 *****************************
