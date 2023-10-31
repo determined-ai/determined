@@ -750,15 +750,17 @@ class _PyTorchTrialController:
     def _train_for_op(
         self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
     ) -> None:
-        if self.local_training:
-            searcher_length = self.max_length
+        if self.test_mode:
+            train_length = Batch(1)
+        elif self.local_training:
+            train_length = self.max_length  # type: ignore
         else:
-            searcher_length = TrainUnit._from_searcher_unit(
+            train_length = TrainUnit._from_searcher_unit(
                 op.length, self.searcher_unit, self.global_batch_size
-            )
-        assert searcher_length
+            )  # type: ignore
+        assert train_length
 
-        while self._steps_until_complete(searcher_length) > 0:
+        while self._steps_until_complete(train_length) > 0:
             train_boundaries, training_metrics = self._train_with_boundaries(
                 self.training_enumerator, train_boundaries
             )
