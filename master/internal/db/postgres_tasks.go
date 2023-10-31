@@ -2,21 +2,19 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/o1egl/paseto"
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
-	"github.com/jmoiron/sqlx"
-
-	"github.com/o1egl/paseto"
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // initAllocationSessions purges sessions of all closed allocations.
