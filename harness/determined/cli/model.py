@@ -63,7 +63,7 @@ def list_models(args: Namespace) -> None:
     workspace_names = None
     if args.workspace_names is not None:
         workspace_names = args.workspace_names.split(",")
-    models = Determined(args.master, args.user).get_models(
+    models = Determined(args.master, args.user).list_models(
         sort_by=ModelSortBy[args.sort_by.upper()],
         order_by=OrderBy[args.order_by.upper()],
         workspace_names=workspace_names,
@@ -103,7 +103,7 @@ def list_versions(args: Namespace) -> None:
     else:
         render_model(model)
         print("\n")
-        _render_model_versions(model.get_versions())
+        _render_model_versions(model.list_versions())
 
 
 def create(args: Namespace) -> None:
