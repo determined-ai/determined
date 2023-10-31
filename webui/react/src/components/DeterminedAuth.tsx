@@ -75,11 +75,9 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         const isBadCredentialsSync = isLoginFailure(e);
         setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
         uiActions.hideSpinner();
-        const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
         if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
         handleError(e, {
           isUserTriggered: true,
-          publicMessage: `Failed to login. Please ${actionMsg}`,
           publicSubject: 'Login failed',
           silent: false,
           type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
