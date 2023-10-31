@@ -165,7 +165,12 @@ def download(args: Namespace) -> None:
             order_by = OrderBy.DESC
         else:  # mode is "best"
             sort_by = args.sort_by
-            order_by = OrderBy.ASC if args.smaller_is_better else OrderBy.DESC
+            if sort_by is None:
+                order_by = None
+            elif args.smaller_is_better:
+                order_by = OrderBy.ASC
+            else:
+                order_by = OrderBy.DESC
 
         checkpoints = det.get_trial(args.trial_id).list_checkpoints(
             sort_by=sort_by,
