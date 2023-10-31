@@ -81,6 +81,9 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 func TaskByID(ctx context.Context, tID model.TaskID) (*model.Task, error) {
 	var t model.Task
 	if err := Bun().NewSelect().Model(&t).Where("task_id = ?", tID).Scan(ctx, &t); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = ErrNotFound
+		}
 		return nil, fmt.Errorf("querying task ID %s: %w", tID, err)
 	}
 
