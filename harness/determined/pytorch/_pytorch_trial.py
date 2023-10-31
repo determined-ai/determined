@@ -751,11 +751,13 @@ class _PyTorchTrialController:
         self, op: core.SearcherOperation, train_boundaries: List[_TrainBoundary]
     ) -> None:
         if self.local_training:
-            train_length = Batch(1) if self.test_mode else self.max_length
+            train_length = self.max_length
         else:
             train_length = TrainUnit._from_searcher_unit(
                 op.length, self.searcher_unit, self.global_batch_size
             )
+        if self.test_mode:
+            train_length = Batch(1)
         assert train_length
 
         while self._steps_until_complete(train_length) > 0:
