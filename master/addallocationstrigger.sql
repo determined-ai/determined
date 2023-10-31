@@ -16,7 +16,7 @@ CREATE TRIGGER stream_allocation_trigger_seq
 BEFORE INSERT OR UPDATE
 ON allocations
 FOR EACH ROW EXECUTE PROCEDURE stream_allocation_seq_modify();
-
+---
 -- helper function to create allocation jsonb object for streaming 
 CREATE OR REPLACE FUNCTION stream_allocation_notify(
     before jsonb, beforework integer, after jsonb, afterwork integer, eid integer
@@ -54,21 +54,33 @@ DECLARE
 BEGIN
     IF (TG_OP = 'INSERT') THEN 
         tid = trial_id from trial_id_task_id WHERE trial_id_task_id.task_id = NEW.task_id;
-        eid = experiment_id FROM trials WHERE trials.id = tid;
-        proj = project_id from experiments where experiments.id = eid;
-        work = workspace_id from projects where projects.id = proj;
+        IF tid IS NULL THEN
+            work = generic_command_spec->'Metadata'->'workspace_id' from command_state where task_id = NEW.task_id;
+        ELSE 
+            eid = experiment_id FROM trials WHERE trials.id = tid;
+            proj = project_id from experiments where experiments.id = eid;
+            work = workspace_id from projects where projects.id = proj;
+        END IF;
         PERFORM stream_allocation_notify(NULL, NULL, to_jsonb(NEW), work, eid);
     ELSEIF (TG_OP = 'UPDATE') THEN
         tid = trial_id from trial_id_task_id WHERE trial_id_task_id.task_id = NEW.task_id;
-        eid = experiment_id FROM trials WHERE trials.id = tid;
-        proj = project_id from experiments where experiments.id = eid;
-        work = workspace_id from projects where projects.id = proj;
+        IF tid IS NULL THEN
+            work = generic_command_spec->'Metadata'->'workspace_id' from command_state where task_id = NEW.task_id;
+        ELSE 
+            eid = experiment_id FROM trials WHERE trials.id = tid;
+            proj = project_id from experiments where experiments.id = eid;
+            work = workspace_id from projects where projects.id = proj;
+        END IF;
         PERFORM stream_allocation_notify(to_jsonb(OLD), work, to_jsonb(NEW), work, eid);
     ELSEIF (TG_OP = 'DELETE') THEN
         tid = trial_id from trial_id_task_id WHERE trial_id_task_id.task_id = OLD.task_id;
-        eid = experiment_id FROM trials WHERE trials.id = tid;
-        proj = project_id from experiments where experiments.id = eid;
-        work = workspace_id from projects where projects.id = proj;
+        IF tid IS NULL THEN 
+            work = generic_command_spec->'Metadata'->'workspace_id' from command_state where task_id = OLD.task_id;
+        ELSE 
+            eid = experiment_id FROM trials WHERE trials.id = tid;
+            proj = project_id from experiments where experiments.id = eid;
+            work = workspace_id from projects where projects.id = proj;
+        END IF;
         PERFORM stream_allocation_notify(to_jsonb(OLD), work, NULL, NULL, eid);
         -- DELETE trigger BEFORE, and must return a non-NULL value.
         return OLD;
@@ -139,7 +151,7 @@ DECLARE
 BEGIN
     FOR allocation IN
         SELECT
-            m.*
+            a.*
         FROM
             experiments e 
             INNER JOIN
