@@ -164,11 +164,13 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 };
 
 const roleOptions = [
+  { label: 'All Roles', value: '' },
   { label: 'Admin', value: UserRole.ADMIN },
   { label: 'Non-Admin', value: UserRole.MEMBER },
 ];
 
 const statusOptions = [
+  { label: 'All Statuses', value: '' },
   { label: 'Active Users', value: UserStatus.ACTIVE },
   { label: 'Deactivated Users', value: UserStatus.INACTIVE },
 ];
@@ -186,9 +188,9 @@ const userManagementSettings = userSettings.get(UserManagementSettings, 'user-ma
 const UserManagement: React.FC = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const [refresh, setRefresh] = useState<Record<string, never>>({});
-  const [nameFilter, setNameFilter] = useState<string | undefined>();
-  const [roleFilter, setRoleFilter] = useState<UserRole | number[] | undefined>();
-  const [statusFilter, setStatusFilter] = useState<UserStatus | undefined>();
+  const [nameFilter, setNameFilter] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | number[] | ''>('');
+  const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('');
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
@@ -207,8 +209,7 @@ const UserManagement: React.FC = () => {
   const userResponse = useAsync(async () => {
     try {
       const params = {
-        active: statusFilter && statusFilter === UserStatus.ACTIVE,
-        admin: roleFilter && roleFilter === UserRole.ADMIN,
+        active: (statusFilter || undefined) && statusFilter === UserStatus.ACTIVE,
         limit: settings.tableLimit,
         name: nameFilter,
         offset: settings.tableOffset,
@@ -220,7 +221,7 @@ const UserManagement: React.FC = () => {
             roleIdAssignedDirectlyToUser: roleFilter,
           }
         : {
-            admin: roleFilter && roleFilter === UserRole.ADMIN,
+            admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
           };
       return await getUsers({
         ...params,
@@ -417,11 +418,7 @@ const UserManagement: React.FC = () => {
         key: V1GetUsersRequestSortBy.LASTAUTHTIME,
         onCell: onRightClickableCell,
         render: (value: number | undefined): React.ReactNode => {
-          return value ? (
-            relativeTimeRenderer(new Date(value))
-          ) : (
-            <div className={css.rightAligned}>N/A</div>
-          );
+          return value ? relativeTimeRenderer(new Date(value)) : 'N/A';
         },
         sorter: (a: DetailedUser, b: DetailedUser) => numericSorter(a.lastAuthAt, b.lastAuthAt),
         title: 'Last Seen',
@@ -455,21 +452,17 @@ const UserManagement: React.FC = () => {
                   onChange={handleNameSearchApply}
                 />
                 <Select
-                  allowClear
                   options={roleOptions}
-                  placeholder="All Roles"
                   searchable={false}
                   value={roleFilter}
-                  width={110}
+                  width={120}
                   onChange={handleRoleFilterApply}
                 />
                 <Select
-                  allowClear
                   options={statusOptions}
-                  placeholder="All Users"
                   searchable={false}
                   value={statusFilter}
-                  width={160}
+                  width={170}
                   onChange={handleStatusFilterApply}
                 />
               </Columns>
