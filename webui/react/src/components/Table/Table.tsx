@@ -110,7 +110,7 @@ export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
 };
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => {
-  return <TimeAgo className={css.timeAgo} datetime={date} />;
+  return <TimeAgo datetime={date} />;
 };
 
 export const stateRenderer: Renderer<{ state: StateOfUnion }> = (_, record) => (
