@@ -36,10 +36,12 @@ def test_create_scim_user() -> None:
 
     user_resp = r.json()
 
+    user_id = user_resp["id"]
+    user_loc = make_scim_url(f"/Users/{user_id}")
+
     assert user_resp.get("userName") == username
     assert user_resp.get("active")
-
-    user_id = user_resp["id"]
+    assert user_resp["meta"]["location"] == user_loc
 
     patch_req = {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -69,6 +71,16 @@ def test_create_scim_user() -> None:
     assert search_resp["startIndex"] == 1
     assert len(search_resp["Resources"]) == 1
     assert search_resp["Resources"][0]["userName"] == username
+    assert search_resp["Resources"][0]["meta"]["location"] == user_loc
+
+    indiv_user = requests.get(
+        make_scim_url(f"/Users/{user_id}"), auth=(conf.SCIM_USERNAME, conf.SCIM_PASSWORD)
+    )
+    indiv_user.raise_for_status()
+    indiv_user_resp = indiv_user.json()
+
+    assert indiv_user_resp.get("id") == user_id
+    assert indiv_user_resp["meta"]["location"] == user_loc
 
 
 @pytest.mark.e2e_cpu
@@ -174,6 +186,7 @@ def test_okta_create_user() -> None:
     resp = r.json()
 
     user_id = resp["id"]
+    user_loc = make_scim_url(f"/Users/{user_id}")
 
     assert resp["active"] is True
     assert len(user_id) > 0
@@ -181,6 +194,7 @@ def test_okta_create_user() -> None:
     assert resp["name"]["givenName"] == given_name
     assert resp["userName"] == username
     assert "urn:ietf:params:scim:schemas:core:2.0:User" in resp["schemas"]
+    assert resp["meta"]["location"] == user_loc
 
     r = requests.get(
         make_scim_url(f"/Users/{user_id}"),
@@ -194,6 +208,7 @@ def test_okta_create_user() -> None:
     assert resp["name"]["familyName"] == family_name
     assert resp["name"]["givenName"] == given_name
     assert resp["userName"] == username
+    assert resp["meta"]["location"] == user_loc
 
     patch_req = {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
