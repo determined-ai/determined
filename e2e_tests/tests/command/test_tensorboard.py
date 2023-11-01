@@ -242,12 +242,13 @@ def test_delete_tensorboard_for_experiment() -> None:
     command = ["det", "tensorboard", "delete", str(experiment_id)]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
+    # Check if Tensorboard files are deleted
     command = ["find", "-P", "/tmp/determined-cp/", "-name", "tensorboard*", "-type", "d"]
     res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
     path = res.stdout[res.stdout.find("//") + 2 :].strip("\n")
     command = ["ls", "/tmp/determined-cp/" + path + "/experiment"]
-    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
     assert len(res.stdout) == 0
 
