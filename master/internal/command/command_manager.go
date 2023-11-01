@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
 
+// LaunchCommand launches *commandv1.Command.
 func (cs *commandService) LaunchCommand(req *CreateGeneric) (*commandv1.Command, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -23,6 +24,7 @@ func (cs *commandService) LaunchCommand(req *CreateGeneric) (*commandv1.Command,
 	return cmd.toCommand(), nil
 }
 
+// GetCommands returns all commands in the command service registry matching the workspace ID.
 func (cs *commandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.GetCommandsResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -42,6 +44,7 @@ func (cs *commandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.Get
 	return resp, nil
 }
 
+// GetCommand returns the command matching the commandID.
 func (cs *commandService) GetCommand(req *apiv1.GetCommandRequest) (*apiv1.GetCommandResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -57,6 +60,7 @@ func (cs *commandService) GetCommand(req *apiv1.GetCommandRequest) (*apiv1.GetCo
 	}, nil
 }
 
+// KillCommand marks the command's allocation as killed.
 func (cs *commandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.KillCommandResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -73,6 +77,7 @@ func (cs *commandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.Kil
 	return &apiv1.KillCommandResponse{Command: c.toCommand()}, nil
 }
 
+// SetCommandPriority sets the command's resource manager group priority.
 func (cs *commandService) SetCommandPriority(
 	req *apiv1.SetCommandPriorityRequest,
 ) (*apiv1.SetCommandPriorityResponse, error) {
@@ -91,6 +96,7 @@ func (cs *commandService) SetCommandPriority(
 	return &apiv1.SetCommandPriorityResponse{Command: c.toCommand()}, nil
 }
 
+// toCommand() takes a *command from the command service registry & returns a *commandv1.Command.
 func (c *command) toCommand() *commandv1.Command {
 	c.mu.Lock()
 	defer c.mu.Unlock()

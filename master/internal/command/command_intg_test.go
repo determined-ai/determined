@@ -167,7 +167,7 @@ func setupTest(t *testing.T) *db.PgDB {
 	mockRM.On("Release", mock.Anything, mock.Anything).Return(nil)
 	mockRM.On("SetGroupPriority", mock.Anything, mock.Anything).Return(nil)
 
-	DefaultCmdService.InitCommandService(context.TODO(), pgDB, &mockRM)
+	SetDefaultCmdService(pgDB, &mockRM)
 	jobservice.SetDefaultService(&mockRM)
 
 	require.NotNil(t, DefaultCmdService)

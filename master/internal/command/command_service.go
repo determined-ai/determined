@@ -15,7 +15,7 @@ import (
 )
 
 // DefaultCmdService is the global command service singleton.
-var DefaultCmdService = newCommandService()
+var DefaultCmdService *commandService
 
 // commandService tracks the different NTSC commands in the system.
 // Locking in: restoreAllCommands, launchNTSC, Get/Kill/LaunchNTSC(s), SetNTSCPriority, DeleteWorkspace.
@@ -27,22 +27,20 @@ type commandService struct {
 	syslog   *logrus.Entry
 }
 
-// newCommandService creates a new commandService.
-func newCommandService() *commandService {
-	return &commandService{
+// SetDefaultCmdService initializes & returns a new commandService.
+func SetDefaultCmdService(db *db.PgDB, rm rm.ResourceManager) {
+	if DefaultCmdService != nil {
+		logrus.Warn(
+			"detected re-initialization of Command Service that should never occur outside of tests",
+		)
+	}
+
+	DefaultCmdService = &commandService{
+		db:       db,
+		rm:       rm,
 		commands: make(map[model.TaskID]*command),
 		syslog:   logrus.WithField("component", "command-service"),
 	}
-}
-
-// TODO CAROLINA: pass in the CommandService, and export the struct.
-// InitCommandService starts the global command service singleton.
-func (cs *commandService) InitCommandService(ctx context.Context, db *db.PgDB, rm rm.ResourceManager) {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-
-	cs.db = db
-	cs.rm = rm
 }
 
 // RestoreAllCommands restores all terminated commands whose end time isn't set.

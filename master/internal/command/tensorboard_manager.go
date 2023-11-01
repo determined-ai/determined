@@ -43,6 +43,7 @@ func (cs *commandService) GetTensorboards(req *apiv1.GetTensorboardsRequest) (*a
 	return resp, nil
 }
 
+// GetTensorboard returns the tb matching the tbID.
 func (cs *commandService) GetTensorboard(req *apiv1.GetTensorboardRequest) (*apiv1.GetTensorboardResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -58,6 +59,7 @@ func (cs *commandService) GetTensorboard(req *apiv1.GetTensorboardRequest) (*api
 	}, nil
 }
 
+// KillTensorboard marks the tb's allocation as killed..
 func (cs *commandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*apiv1.KillTensorboardResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -74,6 +76,7 @@ func (cs *commandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*a
 	return &apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard()}, nil
 }
 
+// SetTensorboardPriority sets the tb's resource manager group priority.
 func (cs *commandService) SetTensorboardPriority(
 	req *apiv1.SetTensorboardPriorityRequest,
 ) (*apiv1.SetTensorboardPriorityResponse, error) {
@@ -92,6 +95,7 @@ func (cs *commandService) SetTensorboardPriority(
 	return &apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard()}, nil
 }
 
+// toTensorboard() takes a *command from the command service registry & returns a *tensorboardv1.Tensorboard.
 func (c *command) toTensorboard() *tensorboardv1.Tensorboard {
 	c.mu.Lock()
 	defer c.mu.Unlock()

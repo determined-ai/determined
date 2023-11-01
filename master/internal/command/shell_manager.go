@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
 
+// LaunchShell launches a *shellv1.Shell.
 func (cs *commandService) LaunchShell(req *CreateGeneric) (*shellv1.Shell, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -23,6 +24,7 @@ func (cs *commandService) LaunchShell(req *CreateGeneric) (*shellv1.Shell, error
 	return cmd.toShell(), nil
 }
 
+// GetShells returns all shells in the command service registry matching the workspace ID.
 func (cs *commandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShellsResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -42,6 +44,7 @@ func (cs *commandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShel
 	return resp, nil
 }
 
+// GetShell returns the shell matching the shellID.
 func (cs *commandService) GetShell(req *apiv1.GetShellRequest) (*apiv1.GetShellResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -57,6 +60,7 @@ func (cs *commandService) GetShell(req *apiv1.GetShellRequest) (*apiv1.GetShellR
 	}, nil
 }
 
+// KillShell marks the shell's allocation as killed..
 func (cs *commandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShellResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -73,6 +77,7 @@ func (cs *commandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShe
 	return &apiv1.KillShellResponse{Shell: c.toShell()}, nil
 }
 
+// SetShellPriority sets the shell's resource manager group priority.
 func (cs *commandService) SetShellPriority(
 	req *apiv1.SetShellPriorityRequest,
 ) (*apiv1.SetShellPriorityResponse, error) {
@@ -91,6 +96,7 @@ func (cs *commandService) SetShellPriority(
 	return &apiv1.SetShellPriorityResponse{Shell: c.toShell()}, nil
 }
 
+// toShell() takes a *command from the command service registry & returns a *shellv1.Shell.
 func (c *command) toShell() *shellv1.Shell {
 	c.mu.Lock()
 	defer c.mu.Unlock()

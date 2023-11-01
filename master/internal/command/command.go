@@ -113,7 +113,6 @@ func (c *command) startCmd(ctx context.Context) error {
 	if err := tasklist.GroupPriorityChangeRegistry.Add(c.jobID, priorityChange); err != nil {
 		return err
 	}
-
 	c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 
 	if !c.restored {
@@ -143,8 +142,8 @@ func (c *command) startCmd(ctx context.Context) error {
 		}
 	}
 
-	err := task.DefaultService.StartAllocation(
-		c.logCtx, sproto.AllocateRequest{
+	err := task.DefaultService.StartAllocation(c.logCtx,
+		sproto.AllocateRequest{
 			AllocationID:        c.allocationID,
 			TaskID:              c.taskID,
 			JobID:               c.jobID,
@@ -158,7 +157,7 @@ func (c *command) startCmd(ctx context.Context) error {
 			IdleTimeout:         idleWatcherConfig,
 			Restore:             c.restored,
 			ProxyTLS:            c.TaskType == model.TaskTypeNotebook,
-		}, c.db, c.rm, c.GenericCommandSpec, func(ae *task.AllocationExited) { c.onExit(context.TODO(), ae) })
+		}, c.db, c.rm, c.GenericCommandSpec, c.onExit)
 	if err != nil {
 		return err
 	}
@@ -226,7 +225,7 @@ func (c *command) persist() error {
 
 // onExit runs when an command's allocation exits. It marks the command task as complete, and unregisters where needed.
 // onExit locks ahead of gc -> unregisterCommand.
-func (c *command) onExit(ctx context.Context, ae *task.AllocationExited) {
+func (c *command) onExit(ae *task.AllocationExited) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -235,34 +234,39 @@ func (c *command) onExit(ctx context.Context, ae *task.AllocationExited) {
 	if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
 	}
-
-	if err := user.DeleteSessionByToken(ctx, c.GenericCommandSpec.Base.UserSessionToken); err != nil {
-		c.syslog.WithError(err).Errorf("failure to delete user session for task: %v", c.taskID)
+	if err := user.DeleteSessionByToken(context.TODO(), c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+		c.syslog.WithError(err).Errorf(
+			"failure to delete user session for task: %v", c.taskID)
 	}
 
 	go func() {
 		time.Sleep(terminatedDuration)
-		c.garbageCollect(ctx)
+		c.garbageCollect()
 	}()
 }
 
 // gc garbage collects the exited command.
-func (c *command) garbageCollect(ctx context.Context) {
+func (c *command) garbageCollect() {
 	if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
 		c.syslog.WithError(err).Error("deleting command from GroupPriorityChangeRegistry")
 	}
+
 	if c.exitStatus == nil {
 		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			c.syslog.WithError(err).Error("marking task complete")
 		}
 	}
 
-	if err := user.DeleteSessionByToken(ctx, c.GenericCommandSpec.Base.UserSessionToken); err != nil {
-		c.syslog.WithError(err).Errorf("failure to delete user session for task: %v", c.taskID)
-	}
-
 	jobservice.DefaultService.UnregisterJob(c.jobID)
 	DefaultCmdService.unregisterCommand(c.taskID)
+
+	if err := user.DeleteSessionByToken(
+		context.TODO(),
+		c.GenericCommandSpec.Base.UserSessionToken,
+	); err != nil {
+		c.syslog.WithError(err).Errorf(
+			"failure to delete user session for task: %v", c.taskID)
+	}
 }
 
 // command NTSC methods: setNTSCPriority, deleteIfInWorkspace.

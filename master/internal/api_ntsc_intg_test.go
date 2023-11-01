@@ -39,7 +39,7 @@ func setupNTSCAuthzTest(t *testing.T) (
 	api, curUser, ctx := setupAPITest(t, nil)
 	master := api.m
 
-	command.DefaultCmdService.InitCommandService(ctx, master.db, master.rm)
+	command.SetDefaultCmdService(master.db, master.rm)
 	jobservice.SetDefaultService(master.rm)
 
 	authZNSC = &mocks.NSCAuthZ{}
