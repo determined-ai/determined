@@ -5,11 +5,12 @@ import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 import { ValueOf } from 'types';
 
 export const DEFAULT_COLUMN_WIDTHS = {
-  displayName: 170,
-  isActive: 20,
-  isAdmin: 20,
-  lastAuthAt: 30,
-  modifiedAt: 30,
+  action: 20,
+  displayName: 120,
+  isActive: 40,
+  isAdmin: 40,
+  lastAuthAt: 50,
+  modifiedAt: 50,
 } as const satisfies Record<string, number>;
 
 export type UserColumnName = keyof typeof DEFAULT_COLUMN_WIDTHS;
@@ -17,9 +18,9 @@ export type UserColumnName = keyof typeof DEFAULT_COLUMN_WIDTHS;
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
   'isActive',
+  'lastAuthAt',
   'isAdmin',
   'modifiedAt',
-  'lastAuthAt',
 ];
 
 export const UserStatus = {
