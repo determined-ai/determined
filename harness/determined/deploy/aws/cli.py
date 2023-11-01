@@ -320,7 +320,7 @@ args_description = Cmd(
     "AWS help",
     [
         Cmd(
-            "list",
+            "list ls",
             handle_list,
             "list CloudFormation stacks",
             [

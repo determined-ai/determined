@@ -258,7 +258,7 @@ args_description = Cmd(
     "GCP help",
     [
         Cmd(
-            "list",
+            "list ls",
             handle_list,
             "list gcp cluster",
             [
