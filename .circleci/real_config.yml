@@ -2911,6 +2911,10 @@ workflows:
           requires:
             - build-react
             - build-docs
+      - package-and-push-system-dev:
+          requires:
+            - build-react
+            - build-docs
 
       - test-stress:
           name: test-stress
@@ -2923,16 +2927,14 @@ workflows:
               mark: ["stress_test"]
               det-version: [$CIRCLE_SHA1]
 
-      # test-e2e-aws requires "package-and-push-system-dev"
-      # But that job is executed in a different workflow, and we don't want to do it twice.
-      # Without the requirement the job might fail, but since this is the quarantine suite
-      # and this is just best effort anyway, good enough.
       - test-e2e-aws:
           name: test-e2e-gpu-single-quarantined
           context: aws
           filters:
             branches:
               only: main
+          requires:
+            - package-and-push-system-dev
           matrix:
             parameters:
               parallelism: [2]
