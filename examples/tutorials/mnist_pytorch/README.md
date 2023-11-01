@@ -46,7 +46,8 @@ configuration file in place of `const.yaml`.
 #### Distributed Training
 To train on-cluster across multiple nodes, `slots_per_trial` and `entrypoint`must be configured in the experiment configuration. 
 `entrypoint` should wrap `train.py` with a Determined launch layer module, which will launch the training script across 
-the slots specified.
+the slots specified. The launch layer module can be used in single-slot trials as well, to avoid configuration changes 
+between iterations.
 
 ```yaml
 ...
