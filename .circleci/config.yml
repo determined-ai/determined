@@ -15,13 +15,23 @@ parameters:
     type: string
     default: params.json
 
+all-filters: &all-filters
+  branches:
+    only:
+      - /.*/
+  tags:
+    only:
+      - /.*/
+
 workflows:
   determined_ai:
     jobs:
       - set_up_param_file:
+          filters: *all-filters
           context:
             - github-read
       - exec_config:
+          filters: *all-filters
           requires:
             - set_up_param_file
 
