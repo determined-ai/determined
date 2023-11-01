@@ -639,7 +639,7 @@ args_description = Cmd(
                 Arg(
                     "--lore-version",
                     type=str,
-                    help="Lore version to deploy",
+                    help=argparse.SUPPRESS,
                 ),
             ],
         ),
