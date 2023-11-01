@@ -133,7 +133,13 @@ def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
         exp_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
+
+    master_config = bindings.get_GetMasterConfig(api_utils.determined_test_session(admin=True)).config
+    if master_config.get("launch_error"):
+        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
+    else:
+        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.QUEUED)
+        exp.kill_experiments([exp_id])
 
     experiment_trials = exp.experiment_trials(exp_id)
     assert len(experiment_trials) == 1

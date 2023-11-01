@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/logpattern"
@@ -788,17 +789,20 @@ func (t *trial) checkResourcePoolRemainingCapacity() error {
 		return fmt.Errorf("checking resource availability: %v", err.Error())
 	}
 	if len(launchWarnings) > 0 {
-		exitReason := fmt.Sprintf(
+		msg := fmt.Sprintf(
 			"task ID %v slots requested exceeds %v resource pool capacity",
 			t.taskID,
 			t.config.Resources().ResourcePool(),
 		)
-		logrus.Error(exitReason)
-
-		return t.transition(model.StateWithReason{
-			State:               model.ErrorState,
-			InformationalReason: exitReason,
-		})
+		if config.GetMasterConfig().LaunchError {
+			logrus.Error(msg)
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: msg,
+			})
+		} else {
+			logrus.Warn(msg)
+		}
 	}
 
 	return nil
