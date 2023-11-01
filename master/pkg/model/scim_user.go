@@ -12,6 +12,10 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+const (
+	scimUserPathRoot = "/scim/v2/Users/"
+)
+
 // SCIMName is a name in SCIM.
 type SCIMName struct {
 	GivenName  string `json:"givenName"`
@@ -140,8 +144,7 @@ func (u SCIMUser) ValidateChanges() error {
 // and makes other changes, such as removing password fields from the model.
 func (u *SCIMUser) SetSCIMFields(serverRoot *url.URL) error {
 	l := *serverRoot
-	l.Path = path.Join(l.Path, u.ID.String())
-
+	l.Path = path.Join(l.Path, scimUserPathRoot, u.ID.String())
 	u.Meta = &SCIMUserMeta{
 		Location: l.String(),
 	}
