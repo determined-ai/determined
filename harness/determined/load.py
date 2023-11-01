@@ -5,6 +5,8 @@ from typing import Type, cast
 
 import determined as det
 
+logger = logging.getLogger("determined")
+
 
 def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.LegacyTrial]:
     """
@@ -36,7 +38,7 @@ def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.LegacyTrial]:
     [1] https://packaging.python.org/specifications/entry-points/
     """
 
-    logging.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
+    logger.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
     module, qualname_separator, qualname = entrypoint_spec.partition(":")
 
     # Exporting checkpoints reliably requires instantiating models from user

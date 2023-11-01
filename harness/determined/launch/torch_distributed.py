@@ -9,6 +9,8 @@ import determined as det
 
 C10D_PORT = int(str(os.getenv("C10D_PORT", "29400")))
 
+logger = logging.getLogger("determined.launch.torch_distributed")
+
 
 def create_launch_cmd(
     num_nodes: int, proc_per_node: int, node_rank: int, master_addr: str, override_args: List[str]
@@ -97,7 +99,7 @@ def main(override_args: List[str], script: List[str]) -> int:
 
     launch_cmd = pid_server_cmd + torch_distributed_cmd + pid_client_cmd + log_redirect_cmd + script
 
-    logging.debug(f"Torch distributed launching with: {launch_cmd}")
+    logger.debug(f"Torch distributed launching with: {launch_cmd}")
 
     p = subprocess.Popen(launch_cmd)
     with det.util.forward_signals(p):

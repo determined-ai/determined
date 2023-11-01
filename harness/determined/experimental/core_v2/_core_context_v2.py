@@ -9,7 +9,7 @@ from determined import core, experimental, tensorboard
 from determined.common import api, constants, storage, util
 from determined.common.api import certs
 
-logger = logging.getLogger("determined.experimental.core_v2")
+logger = logging.getLogger("determined.core")
 
 
 def _default_storage_manager() -> storage.SharedFSStorageManager:

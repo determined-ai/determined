@@ -40,6 +40,8 @@ import determined as det
 from determined import constants
 from determined.common import check, util
 
+logger = logging.getLogger("determined")
+
 
 def rmtree_nfs_safe(
     path: Union[str, os.PathLike],
@@ -58,7 +60,7 @@ def rmtree_nfs_safe(
             if e.errno != errno.ENOTEMPTY or tries == max_tries:
                 raise
             # This should not be possible, since rmtree empties directories before rmdir'ing them.
-            logging.debug(f"rmtree() failed ({e}), is this NFS?  Retrying (tries={tries})...")
+            logger.debug(f"rmtree() failed ({e}), is this NFS?  Retrying (tries={tries})...")
             # All 5 tries should take on the order of half a second.
             time.sleep(2**tries / 100)
 
@@ -331,7 +333,7 @@ def calculate_batch_sizes(
     per_gpu_batch_size = global_batch_size // slots_per_trial
     effective_batch_size = per_gpu_batch_size * slots_per_trial
     if effective_batch_size != global_batch_size:
-        logging.warning(
+        logger.warning(
             f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} "
             f"to divide equally across {slots_per_trial} slots."
         )
@@ -405,7 +407,7 @@ def force_create_symlink(src: str, dst: str) -> None:
                 pass
 
         except PermissionError as err:
-            logging.warning(f"{err} trying to remove {dst}")
+            logger.warning(f"{err} trying to remove {dst}")
 
 
 def signal_process_tree(p: subprocess.Popen, signum: Any) -> None:
@@ -420,7 +422,7 @@ def signal_process_tree(p: subprocess.Popen, signum: Any) -> None:
         for cp in children:
             cp.send_signal(signum)
     except Exception as err:
-        logging.error(f"{err} trying to forward signal {signum} to children")
+        logger.error(f"{err} trying to forward signal {signum} to children")
         pass
 
 

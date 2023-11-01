@@ -21,6 +21,8 @@ from determined.common.experimental import (
 # TODO (MLG-1087): move OrderBy to experimental.client namespace
 from determined.common.experimental._util import OrderBy  # noqa: I2041
 
+logger = logging.getLogger("determined.client")
+
 
 class Determined:
     """
@@ -190,7 +192,7 @@ class Determined:
 
         if resp.warnings:
             for w in resp.warnings:
-                logging.warning(api.WARNING_MESSAGE_MAP[w])
+                logger.warning(api.WARNING_MESSAGE_MAP[w])
 
         return experiment.Experiment._from_bindings(resp.experiment, self._session)
 

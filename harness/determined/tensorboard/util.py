@@ -3,6 +3,8 @@ import pathlib
 import re
 from typing import List, Optional
 
+logger = logging.getLogger("determined.tensorboard")
+
 tb_file_types = [
     "*tfevents*",
     "*.trace.json.gz",
@@ -47,7 +49,7 @@ def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
     """
 
     if not base_dir.exists():
-        logging.warning(f"{base_dir} directory does not exist.")
+        logger.warning(f"{base_dir} directory does not exist.")
         return []
 
     return [file for filetype in tb_file_types for file in base_dir.rglob(filetype)]

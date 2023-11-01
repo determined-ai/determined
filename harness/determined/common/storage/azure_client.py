@@ -8,6 +8,9 @@ from determined.common import util
 logging.getLogger("azure").setLevel(logging.ERROR)
 
 
+logger = logging.getLogger("determined.common.storage.azure")
+
+
 class AzureStorageClient(object):
     """Connects to an Azure Blob Storage service account."""
 
@@ -28,24 +31,24 @@ class AzureStorageClient(object):
         else:
             raise ValueError("Either 'connection_string' or 'account_url' must be specified.")
 
-        logging.info(f"Trying to create Azure Blob Storage Container: {container}.")
+        logger.info(f"Trying to create Azure Blob Storage Container: {container}.")
         try:
             self.client.create_container(container.split("/")[0])
-            logging.info(f"Successfully created container {container}.")
+            logger.info(f"Successfully created container {container}.")
         except azure.core.exceptions.ResourceExistsError:
-            logging.info(
+            logger.info(
                 f"Container {container} already exists, and will be used to store checkpoints."
             )
         except azure.core.exceptions.HttpResponseError as e:
             if e.error_code == blob.StorageErrorCode.invalid_uri:  # type: ignore
-                logging.warning(
+                logger.warning(
                     f"The storage client raised the following HttpResponseError:\n{e}\nPlease "
                     "ignore this warning if this is because the account url provided points to a "
                     "container instead of a storage account; otherwise, it may be necessary to fix "
                     "your config.yaml."
                 )
             else:
-                logging.error(f"Failed while trying to create container {container}.")
+                logger.error(f"Failed while trying to create container {container}.")
                 raise e
 
     @util.preserve_random_state

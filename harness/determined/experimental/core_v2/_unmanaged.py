@@ -6,7 +6,7 @@ from determined import core, experimental
 from determined.common import api, util
 from determined.common.api import bindings
 
-logger = logging.getLogger("determined.experimental.unmanaged")
+logger = logging.getLogger("determined.unmanaged")
 
 
 T = TypeVar("T")

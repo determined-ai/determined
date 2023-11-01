@@ -15,6 +15,8 @@ from determined.common.api import bindings
 from determined.common.experimental import metrics
 from determined.common.storage import shared
 
+logger = logging.getLogger("determined.client")
+
 
 class DownloadMode(enum.Enum):
     """
@@ -265,7 +267,7 @@ class Checkpoint:
             if checkpoint_storage["type"] != "s3" and checkpoint_storage["type"] != "gcs":
                 raise
 
-            logging.info("Unable to download directly, proxying download through master")
+            logger.info("Unable to download directly, proxying download through master")
             try:
                 self._download_via_master(self._session, self.uuid, local_ckpt_dir)
             except Exception as e:
@@ -415,7 +417,7 @@ class Checkpoint:
 
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[self.uuid])
         bindings.delete_DeleteCheckpoints(self._session, body=delete_body)
-        logging.info(f"Deletion of checkpoint {self.uuid} is in progress.")
+        logger.info(f"Deletion of checkpoint {self.uuid} is in progress.")
 
     def remove_files(self, globs: List[str]) -> None:
         """
@@ -434,9 +436,9 @@ class Checkpoint:
         bindings.post_CheckpointsRemoveFiles(self._session, body=remove_body)
 
         if len(globs) == 0:
-            logging.info(f"Refresh of checkpoint {self.uuid} is in progress.")
+            logger.info(f"Refresh of checkpoint {self.uuid} is in progress.")
         else:
-            logging.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
+            logger.info(f"Partial deletion of checkpoint {self.uuid} is in progress.")
 
     def get_metrics(self, group: Optional[str] = None) -> Iterable["metrics.TrialMetrics"]:
         """

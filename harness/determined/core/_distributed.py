@@ -6,6 +6,8 @@ from typing import Any, List, Optional
 
 from determined import constants, ipc, util
 
+logger = logging.getLogger("determined.core")
+
 
 class DistributedContext:
     """
@@ -89,7 +91,7 @@ class DistributedContext:
 
         # Global broadcast server.
         if self._is_chief:
-            logging.debug(f"Chief setting up server with ports {self._pub_port}/{self._pull_port}.")
+            logger.debug(f"Chief setting up server with ports {self._pub_port}/{self._pull_port}.")
             self._chief_zmq = ipc.ZMQBroadcastServer(
                 num_connections=self.size - 1,
                 pub_url=f"tcp://*:{self._pub_port}",
@@ -98,7 +100,7 @@ class DistributedContext:
             self._chief_zmq.safe_start()
 
         else:
-            logging.debug(
+            logger.debug(
                 f"Non-Chief {self.rank} setting up comm to "
                 f"{self._chief_ip} w/ ports "
                 f"{self._pub_port}/{self._pull_port}."
@@ -124,7 +126,7 @@ class DistributedContext:
                 pub_url = f"ipc://{self.tempdir}/pub.sock"
                 pull_url = f"ipc://{self.tempdir}/pull.sock"
 
-            logging.debug(f"Local Chief setting up server with urls {pub_url}/{pull_url}.")
+            logger.debug(f"Local Chief setting up server with urls {pub_url}/{pull_url}.")
             self._local_chief_zmq = ipc.ZMQBroadcastServer(
                 num_connections=self.local_size - 1,
                 pub_url=pub_url,
@@ -157,7 +159,7 @@ class DistributedContext:
             assert isinstance(pub_url, str), f"invalid pub_url: {pub_url}"
             assert isinstance(pull_url, str), f"invalid pub_url: {pull_url}"
 
-            logging.debug(f"Local Worker setting up server with urls {pub_url}/{pull_url}.")
+            logger.debug(f"Local Worker setting up server with urls {pub_url}/{pull_url}.")
             self._local_worker_zmq = ipc.ZMQBroadcastClient(pub_url, pull_url)
             self._local_worker_zmq.safe_start()
 
@@ -292,7 +294,7 @@ class DistributedContext:
         """
         if self.size < 2:
             return [stuff]
-        logging.debug(f"Worker {self.get_rank()} beginning zmq gather.")
+        logger.debug(f"Worker {self.get_rank()} beginning zmq gather.")
         if self._is_chief:
             worker_stuff_ranked = self._chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
@@ -304,7 +306,7 @@ class DistributedContext:
             # for a future gather before all workers have called send() on this gather.
             _ = self._worker_zmq.recv()
             out = None
-        logging.debug(f"Worker {self.get_rank()} finished zmq gather.")
+        logger.debug(f"Worker {self.get_rank()} finished zmq gather.")
         return out
 
     def gather_local(self, stuff: Any) -> Optional[List]:
@@ -317,7 +319,7 @@ class DistributedContext:
         """
         if self.local_size < 2:
             return [stuff]
-        logging.debug(f"Worker {self.get_rank()} beginning zmq gather local.")
+        logger.debug(f"Worker {self.get_rank()} beginning zmq gather local.")
         if self._is_local_chief:
             worker_stuff_ranked = self._local_chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
@@ -329,7 +331,7 @@ class DistributedContext:
             # for a future gather before all workers have called send() on this gather.
             _ = self._local_worker_zmq.recv()
             out = None
-        logging.debug(f"Worker {self.get_rank()} finished zmq gather local.")
+        logger.debug(f"Worker {self.get_rank()} finished zmq gather local.")
         return out
 
     def allgather(self, stuff: Any) -> List:
@@ -341,7 +343,7 @@ class DistributedContext:
         """
         if self.size < 2:
             return [stuff]
-        logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
+        logger.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
         if self._is_chief:
             worker_stuff_ranked = self._chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
@@ -350,7 +352,7 @@ class DistributedContext:
         else:
             self._worker_zmq.send((self.get_rank(), stuff))
             all_stuff = self._worker_zmq.recv()
-        logging.debug(f"Worker {self.get_rank()} finished zmq allgather.")
+        logger.debug(f"Worker {self.get_rank()} finished zmq allgather.")
         return all_stuff
 
     def allgather_local(self, stuff: Any) -> List:
@@ -362,7 +364,7 @@ class DistributedContext:
         """
         if self.local_size < 2:
             return [stuff]
-        logging.debug(f"Worker {self.get_rank()} beginning zmq local allgather.")
+        logger.debug(f"Worker {self.get_rank()} beginning zmq local allgather.")
         if self._is_local_chief:
             worker_stuff_ranked = self._local_chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
@@ -371,7 +373,7 @@ class DistributedContext:
         else:
             self._local_worker_zmq.send((self.get_local_rank(), stuff))
             all_stuff = self._local_worker_zmq.recv()
-        logging.debug(f"Worker {self.get_rank()} finished zmq local allgather.")
+        logger.debug(f"Worker {self.get_rank()} finished zmq local allgather.")
         return all_stuff
 
     def broadcast(self, stuff: Any) -> Any:

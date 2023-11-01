@@ -1,6 +1,5 @@
 import contextlib
 import getpass
-import logging
 import os
 import platform
 import shutil
@@ -122,7 +121,7 @@ def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], 
                 try:
                     os.remove(path)
                 except Exception as e:
-                    logging.warning(f"failed to cleanup {path}: {e}")
+                    print(colored(f"failed to cleanup {path}: {e}", "yellow"), file=sys.stderr)
 
         return file_closer(), path
 

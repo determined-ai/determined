@@ -19,6 +19,8 @@ from determined import layers, pytorch, util, workload
 from determined.pytorch import deepspeed as det_ds
 from determined.pytorch import dsat
 
+logger = logging.getLogger("determined.pytorch")
+
 
 # In most cases in which a user disables data reproducibility checks and chooses to return
 # their own data loader, it will most likely be one created as part of DeepSpeed model engine
@@ -139,7 +141,7 @@ class DeepSpeedTrialController(det.TrialController):
                         )
                     )
                 self.training_loader = train_data
-                logging.warning("Please make sure custom data loader repeats indefinitely.")
+                logger.warning("Please make sure custom data loader repeats indefinitely.")
 
             validation_data = self.trial.build_validation_data_loader()
             if isinstance(validation_data, pytorch.DataLoader):
@@ -161,7 +163,7 @@ class DeepSpeedTrialController(det.TrialController):
                         len(validation_data) % self.context.num_micro_batches_per_slot
                     )
                     if excluded_micro_batches:
-                        logging.warning(
+                        logger.warning(
                             "We will compute validation metrics over "
                             f"{excluded_micro_batches} fewer micro batches on rank "
                             f"{self.context.distributed.get_rank()}"
@@ -175,7 +177,7 @@ class DeepSpeedTrialController(det.TrialController):
                         )
                     )
                 if self.context.use_pipeline_parallel:
-                    logging.warning(
+                    logger.warning(
                         "Using custom data loader, please make sure len(validation loader) is "
                         "divisible by gradient accumulation steps."
                     )
@@ -201,7 +203,7 @@ class DeepSpeedTrialController(det.TrialController):
         if self.is_chief:
             all_epoch_lens = [le for le in all_epoch_lens if le is not None]
             if min(all_epoch_lens) < max(all_epoch_lens):
-                logging.warning(
+                logger.warning(
                     "Training data loader length inconsistent across ranks. "
                     "Using the minimum for epoch length."
                 )
@@ -215,14 +217,14 @@ class DeepSpeedTrialController(det.TrialController):
             all_num_validation_batches, all_validation_batch_size = zip(*all_tuples)
             all_num_validation_batches = [le for le in all_num_validation_batches if le is not None]
             if min(all_num_validation_batches) < max(all_num_validation_batches):
-                logging.warning(
+                logger.warning(
                     "Validation data loader length inconsistent across ranks. "
                     "Using the minimum for validation length."
                 )
             self.num_validation_batches = min(all_num_validation_batches)
             all_validation_batch_size = [le for le in all_validation_batch_size if le is not None]
             if min(all_validation_batch_size) < max(all_validation_batch_size):
-                logging.warning(
+                logger.warning(
                     "Validation batch size inconsistent across ranks. "
                     "Num inputs tracking for validation will be incorrect."
                 )
@@ -260,7 +262,7 @@ class DeepSpeedTrialController(det.TrialController):
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
 
-            logging.info(self.context._mpu)
+            logger.info(self.context._mpu)
 
             self._set_data_loaders()
 
@@ -283,7 +285,7 @@ class DeepSpeedTrialController(det.TrialController):
 
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
-                logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+                logger.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
                 with self.context._core.checkpoint.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
@@ -355,7 +357,7 @@ class DeepSpeedTrialController(det.TrialController):
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
 
             except det.InvalidHP as e:
-                logging.info(f"Invalid hyperparameter exception during {action}: {e}")
+                logger.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
             self.context._maybe_reset_tbd_writer()
@@ -499,9 +501,7 @@ class DeepSpeedTrialController(det.TrialController):
 
         if self.is_chief:
             step_duration = time.time() - step_start_time
-            logging.info(
-                det.util.make_timing_log("trained", step_duration, num_inputs, num_batches)
-            )
+            logger.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
             self.prof.set_training(False)
 
             if self.context.get_enable_tensorboard_logging():
@@ -591,7 +591,7 @@ class DeepSpeedTrialController(det.TrialController):
             util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
             for c in self.callbacks.values()
         ):
-            logging.debug(
+            logger.debug(
                 "Broadcasting metrics to all worker processes to execute a "
                 "validation step end callback"
             )
@@ -603,7 +603,7 @@ class DeepSpeedTrialController(det.TrialController):
         if self.is_chief:
             num_inputs *= self.context._mpu.data_parallel_world_size
             step_duration = time.time() - step_start_time
-            logging.info(
+            logger.info(
                 det.util.make_timing_log(
                     "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
                 )
@@ -663,23 +663,23 @@ class DeepSpeedTrialController(det.TrialController):
                         rng_state["gpu_rng_state"], device=self.context.distributed.get_local_rank()
                     )
                 else:
-                    logging.warning(
+                    logger.warning(
                         "The system has a gpu but no gpu_rng_state exists in the checkpoint."
                     )
             else:
                 if "gpu_rng_state" in rng_state:
-                    logging.warning(
+                    logger.warning(
                         "There exists gpu_rng_state in checkpoint but the system has no gpu."
                     )
         else:
-            logging.warning("The checkpoint has no random state to restore.")
+            logger.warning("The checkpoint has no random state to restore.")
 
         callback_state = checkpoint.get("callbacks", {})
         for name in self.callbacks:
             if name in callback_state:
                 self.callbacks[name].load_state_dict(callback_state[name])
             elif util.is_overridden(self.callbacks[name].load_state_dict, pytorch.PyTorchCallback):
-                logging.warning(
+                logger.warning(
                     "Callback '{}' implements load_state_dict(), but no callback state "
                     "was found for that name when restoring from checkpoint. This "
                     "callback will be initialized from scratch"

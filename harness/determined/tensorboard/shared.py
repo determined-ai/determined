@@ -7,7 +7,7 @@ from typing import Any, List
 from determined import util
 from determined.tensorboard import base
 
-logger = logging.getLogger("determined.tensorboard")
+logger = logging.getLogger("determined.tensorboard.shared")
 
 
 class SharedFSTensorboardManager(base.TensorboardManager):

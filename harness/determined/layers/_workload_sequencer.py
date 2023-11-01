@@ -10,6 +10,8 @@ WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
 
 WorkloadGenerator = Generator[WorkloadStreamElem, None, None]
 
+logger = logging.getLogger("determined")
+
 
 def yield_and_await_response(
     wkld: workload.Workload,
@@ -99,7 +101,7 @@ class WorkloadSequencer(workload.Source):
 
         unit = self.core_context.searcher.get_configured_units()
         if unit is None:
-            logging.warning(
+            logger.warning(
                 "The searcher configuration provided was configured without units, but the "
                 "training loop you are using (one of the Trial APIs) requires a searcher "
                 "configured with units.  Proceeding anyway, and assuming that the lengths "

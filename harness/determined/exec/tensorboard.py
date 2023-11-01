@@ -27,7 +27,7 @@ FULL_ITERATION_SLEEP_TIME = 20  # How long to wait between a full iteration run 
 NUM_FETCH_THREADS = 5  # Number of fetching threads to run concurrently
 READY_SIGNAL_DELAY = 7  # How many seconds to wait before sending the ready signal
 
-logger = logging.getLogger("determined.exec.tensorboard")
+logger = logging.getLogger("determined")
 
 
 def set_s3_region() -> None:
@@ -238,7 +238,7 @@ class TBFetchIterationThread(threading.Thread):
                 for filepath in self._fetcher.list_all_generator():
                     self._work_queue.put(filepath, block=True)
             except Exception as e:
-                logging.warning(
+                logger.warning(
                     f"Failure listing TensorBoard files from {self._fetcher}. Error: {e}"
                     f" (retrying in {FULL_ITERATION_SLEEP_TIME}s)...",
                     exc_info=True,
@@ -269,7 +269,7 @@ class TBFetchThread(threading.Thread):
                 filepath = self._work_queue.get(block=True)
                 self._fetcher._fetch(filepath, self._new_file_callback)
             except Exception as e:
-                logging.warning(
+                logger.warning(
                     f"Timeout fetching TensorBoard files from {self._fetcher}. Error: {e}"
                     f" (retrying)...",
                     exc_info=True,

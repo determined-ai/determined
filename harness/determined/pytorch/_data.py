@@ -28,6 +28,8 @@ from torch.utils.data import (
 
 from determined.pytorch import samplers
 
+logger = logging.getLogger("determined.pytorch")
+
 _Array = Union[np.ndarray, torch.Tensor]
 _Data = Union[Dict[str, _Array], Sequence[_Array], _Array]
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -377,8 +379,6 @@ def to_device(
 
     if type(data) not in warned_types:
         warned_types.add(type(data))
-        logging.warning(
-            f"Was not able to move data item of type '{type(data).__name__}' to device."
-        )
+        logger.warning(f"Was not able to move data item of type '{type(data).__name__}' to device.")
 
     return data  # type:ignore

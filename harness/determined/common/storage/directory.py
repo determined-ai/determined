@@ -7,6 +7,8 @@ from typing import Any, Dict, Iterator, Optional
 from determined import errors
 from determined.common import check, storage
 
+logger = logging.getLogger("determined.common.storage.directory")
+
 
 class DirectoryStorageManager(storage.SharedFSStorageManager):
     """
@@ -44,7 +46,7 @@ class DirectoryStorageManager(storage.SharedFSStorageManager):
         configuration seems reasonable.
         """
         if selector is not None:
-            logging.warning(
+            logger.warning(
                 "Ignoring partial checkpoint download from 'directory' checkpoint storage; "
                 "all files will be directly accessible."
             )

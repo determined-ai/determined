@@ -11,13 +11,15 @@ import determined.common
 from determined.common import api, constants, storage
 from determined.exec import prep_container
 
+logger = logging.getLogger("determined")
+
 
 # Signal handler to intercept SLURM SIGTERM notification of pending preemption
 def trigger_preemption(signum: int, frame: types.FrameType) -> None:
     info = det.get_cluster_info()
     if info and info.container_rank == 0:
         # Chief container, requests preemption, others ignore
-        logging.info("SIGTERM: Preemption imminent.")
+        logger.info("SIGTERM: Preemption imminent.")
         # Notify the master that we need to be preempted
         api.post(
             info.master_url, f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption"
@@ -52,7 +54,7 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
         # Drop SIGTERM from forwarding so that we handle it in trigger_preemption
         sig_names.remove("SIGTERM")
 
-    logging.info(f"Launching: {entrypoint}")
+    logger.info(f"Launching: {entrypoint}")
 
     p = subprocess.Popen(entrypoint)
     # Convert from signal names to Signal enums because SIGBREAK is windows-specific
@@ -75,20 +77,20 @@ if __name__ == "__main__":
 
     determined.common.set_logger(experiment_config.debug_enabled())
 
-    logging.info(
+    logger.info(
         f"New trial runner in (container {resources_id}) on agent {info.agent_id}: "
         + json.dumps(det.util.mask_config_dict(info.trial._config))
     )
 
     # Perform validations
     try:
-        logging.info("Validating checkpoint storage ...")
+        logger.info("Validating checkpoint storage ...")
         storage.validate_config(
             experiment_config.get_checkpoint_storage(),
             container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
     except Exception as e:
-        logging.error("Checkpoint storage validation failed: {}".format(e))
+        logger.error("Checkpoint storage validation failed: {}".format(e))
         sys.exit(1)
 
     sys.exit(launch(experiment_config))

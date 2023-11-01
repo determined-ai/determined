@@ -47,6 +47,8 @@ else:
     )
     from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
+logger = logging.getLogger("determined.keras")
+
 
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
@@ -79,7 +81,7 @@ def load_optimizer_weights(
             try:
                 optimizer._create_all_weights(model.trainable_variables)
             except (NotImplementedError, AttributeError):
-                logging.warning(
+                logger.warning(
                     "Error when creating the weights of optimizer, making it "
                     "impossible to restore the saved optimizer state. As a result, "
                     "your model is starting with a freshly initialized optimizer."
@@ -94,14 +96,14 @@ def load_optimizer_weights(
         try:
             optimizer.set_weights(optimizer_weight_values)
         except ValueError:
-            logging.warning(
+            logger.warning(
                 "Error in loading the saved optimizer "
                 "state. As a result, your model is "
                 "starting with a freshly initialized "
                 "optimizer."
             )
     else:
-        logging.warning(
+        logger.warning(
             "Sequential models without an `input_shape` "
             "passed to the first layer cannot reload their "
             "optimizer state. As a result, your model is "
@@ -253,7 +255,7 @@ class TFKerasTrialController(det.TrialController):
         if context.distributed.size > 1 and version.parse("2.0.0") <= version.parse(
             tf.__version__
         ) < version.parse("2.2.0"):
-            logging.info(
+            logger.info(
                 "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
                 "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
             )
@@ -379,7 +381,7 @@ class TFKerasTrialController(det.TrialController):
         # If a load path is provided, load weights and restore the data location.
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
-            logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+            logger.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
             with self.context._core.checkpoint.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
@@ -440,7 +442,7 @@ class TFKerasTrialController(det.TrialController):
                         )
                     else:
                         # Pre-existing callbacks only get a warning.
-                        logging.warning(
+                        logger.warning(
                             "It is unsupported to use a Callback that defines on_epoch_end "
                             f"({type(cb).__name__})without setting the records_per_epoch value in "
                             "the experiment config. Training will continue but on_epoch_end will "
@@ -571,11 +573,11 @@ class TFKerasTrialController(det.TrialController):
             )
 
     def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
-        logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
+        logger.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
         self.model.load_weights(str(model_weights_checkpoint_path))
 
     def _load_optimizers_weights(self, optimizer_weights_checkpoint_path: pathlib.Path) -> None:
-        logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
+        logger.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
         with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
             if "optimizer_weights" in h5file:
                 load_optimizer_weights(self.model, h5file, self.model.optimizer)
@@ -613,7 +615,7 @@ class TFKerasTrialController(det.TrialController):
 
             set_rng_state(rng_state)
         except IOError:
-            logging.warning("Checkpoint did not include RNG state.")
+            logger.warning("Checkpoint did not include RNG state.")
 
         # Load callbacks.
         cb_state_path = load_path.joinpath("determined-callbacks.v1.pkl")
@@ -660,7 +662,7 @@ class TFKerasTrialController(det.TrialController):
         if isinstance(training_data, tf.data.Dataset):
             training_data = training_data.repeat()
             if self.context._fit_shuffle:
-                logging.warning(
+                logger.warning(
                     "You set shuffle=True for a tf.data.Dataset, which will be ignored. "
                     "Please call .shuffle() on your dataset instead."
                 )
@@ -730,7 +732,7 @@ class TFKerasTrialController(det.TrialController):
             workers=0,
             **evaluate_kwargs,
         )
-        logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
+        logger.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
 
         # Clean up the enqueuer if we started one.
         if isinstance(self.validation_data, tf.keras.utils.Sequence):
@@ -759,7 +761,7 @@ class TFKerasTrialController(det.TrialController):
     def _control_loop(self) -> None:
         assert self.workloads is not None
         for wkld, response_func in self.workloads:
-            logging.debug(f"Received wkld {wkld.kind}.")
+            logger.debug(f"Received wkld {wkld.kind}.")
 
             try:
                 if wkld.kind == workload.Workload.Kind.RUN_STEP:
@@ -801,7 +803,7 @@ class TFKerasTrialController(det.TrialController):
                     raise AssertionError(f"Unknown workload kind {wkld.kind}.")
 
             except det.InvalidHP as e:
-                logging.info(f"Invalid hyperparameter exception during {action}: {e}")
+                logger.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
             self.upload_tb_files()
@@ -815,7 +817,7 @@ class TFKerasTrialController(det.TrialController):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
-        logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
+        logger.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
         return {
             key: np.array(self._hvd_allreduce(logs[key], average=True, name=key)) for key in keys
         }
@@ -887,7 +889,7 @@ class TFKerasTrialController(det.TrialController):
             if self.multiplexer.train_workload_begin_time is not None:
                 step_duration = time.time() - self.multiplexer.train_workload_begin_time
                 self.multiplexer.train_workload_begin_time = None
-                logging.info(
+                logger.info(
                     det.util.make_timing_log(
                         "trained",
                         step_duration,
@@ -949,7 +951,7 @@ class TFKerasTrialController(det.TrialController):
             return {}
 
         step_duration = time.time() - validation_start_time
-        logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
+        logger.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
         self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         self.upload_tb_files()
@@ -962,7 +964,7 @@ class TFKerasTrialController(det.TrialController):
                 self.multiplexer.model.stop_training = False
                 self.context.set_stop_requested(True)
             else:
-                logging.debug("cancelling model.stop_training on non-chief worker")
+                logger.debug("cancelling model.stop_training on non-chief worker")
                 self.multiplexer.model.stop_training = True
 
     def _stop_enqueuers(self) -> None:

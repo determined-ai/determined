@@ -9,6 +9,8 @@ from determined import errors, keras, util
 from determined.common import check
 from determined.horovod import hvd
 
+logger = logging.getLogger("determined.keras")
+
 
 class TFKerasTrainConfig(NamedTuple):
     training_data: Union[keras.SequenceAdapter, tf.data.Dataset]
@@ -291,12 +293,12 @@ class TFKerasTrialContext(det.TrialContext):
             or not shard_dataset
         ):
             if self.distributed.size > 1 and not shard_dataset:
-                logging.info("Dataset sharding skipped.")
+                logger.info("Dataset sharding skipped.")
             return dataset
 
         hvd.require_horovod_type("tensorflow.keras", "TFKerasTrialContext.wrap_dataset was called.")
         dataset = dataset.shard(hvd.size(), hvd.rank())
-        logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
+        logger.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
 
     def _get_horovod_optimizer_if_using_horovod(
@@ -336,7 +338,7 @@ class TFKerasTrialContext(det.TrialContext):
         if not self.env.managed_training:
             return optimizer
 
-        logging.debug(f"Processing wrapped optimizer {optimizer}.")
+        logger.debug(f"Processing wrapped optimizer {optimizer}.")
         if self.distributed.size == 1:
             self._wrapped_optimizers.append(optimizer)
             return optimizer
@@ -345,7 +347,7 @@ class TFKerasTrialContext(det.TrialContext):
             "tensorflow.keras", "TFKerasTrialContext.wrap_optimizer was called."
         )
         if optimizer == self._compiled_optimizer:
-            logging.debug(
+            logger.debug(
                 "Skipping wrapping optimizer as it was already wrapped during the compile call."
             )
             wrapped_optimizer = optimizer
@@ -360,13 +362,13 @@ class TFKerasTrialContext(det.TrialContext):
     def _process_optimizer_from_compile(
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
-        logging.debug(f"Processing compiled optimizer {optimizer}.")
+        logger.debug(f"Processing compiled optimizer {optimizer}.")
         if self.distributed.size == 1:
             self._compiled_optimizer = optimizer
             return optimizer
 
         if len(self._wrapped_optimizers) > 0:
-            logging.debug(
+            logger.debug(
                 "Skipping wrapping optimizer that is part of the compile "
                 "call as the user has already used the wrap_optimizer() API."
             )
@@ -393,7 +395,7 @@ class TFKerasTrialContext(det.TrialContext):
         )
 
         if len(self._wrapped_optimizers) > 0:
-            logging.debug(f"Using wrapped optimizers: {self._wrapped_optimizers}.")
+            logger.debug(f"Using wrapped optimizers: {self._wrapped_optimizers}.")
             self._optimizers = self._wrapped_optimizers
             return
 
@@ -405,8 +407,8 @@ class TFKerasTrialContext(det.TrialContext):
         )
 
         if self._compiled_optimizer:
-            logging.info("Please switch over to using `optimizer = self.context.wrap_optimizer()`.")
-            logging.debug(f"Using compiled optimizer: {self._compiled_optimizer}.")
+            logger.info("Please switch over to using `optimizer = self.context.wrap_optimizer()`.")
+            logger.debug(f"Using compiled optimizer: {self._compiled_optimizer}.")
             self._optimizers = [self._compiled_optimizer]
 
     def wrap_model(self, model: Any) -> Any:

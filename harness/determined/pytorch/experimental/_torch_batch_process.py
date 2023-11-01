@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     # cause a circular dependency issue. This bypasses it.
     from determined.experimental import checkpoint, model
 
+logger = logging.getLogger("determined.pytorch")
+
 common.set_logger(False)
 
 DEFAULT_BATCH_SIZE = 1
@@ -434,11 +436,11 @@ def torch_batch_process(
 
         # Get previous trial state from checkpoint if available
         if latest_checkpoint is not None:
-            logging.info("Checkpoint is not none")
+            logger.info("Checkpoint is not none")
             with core_context.checkpoint.restore_path(latest_checkpoint) as path:
                 metadata = _load_state(path)
                 skip = metadata["steps_completed"]
-                logging.info(f"Previous run completed {skip} steps")
+                logger.info(f"Previous run completed {skip} steps")
                 default_output_uuid = metadata["default_output_uuid"]
 
         output_uuid_with_rank = default_output_uuid + f"/rank_{rank}"
@@ -484,7 +486,7 @@ def torch_batch_process(
 
             # Checkpoint and check preemption
             if (batch_idx + 1) % checkpoint_interval == 0:
-                logging.info(f"Completed steps:  {steps_completed} and checkpointing")
+                logger.info(f"Completed steps:  {steps_completed} and checkpointing")
 
                 per_batch_processor.on_checkpoint_start()
                 if core_context._tensorboard_manager is not None:
@@ -511,7 +513,7 @@ def torch_batch_process(
         """
         if batch_idx > last_checkpoint_idx:
             per_batch_processor.on_checkpoint_start()
-            logging.info(f"Completed steps:  {steps_completed} and checkpointing")
+            logger.info(f"Completed steps:  {steps_completed} and checkpointing")
             _synchronize_and_checkpoint(core_context, iterate_length, default_output_uuid)
 
         _reduce_metrics(batch_processor_context, core_context, rank, steps_completed)
@@ -526,7 +528,7 @@ def torch_batch_process(
             default_storage_path = _get_storage_information(
                 info.trial._config["checkpoint_storage"], default_output_uuid, core_context
             )
-            logging.info(f"Files stored with default paths are at: {default_storage_path}")
+            logger.info(f"Files stored with default paths are at: {default_storage_path}")
 
         # Perform gather here to ensure we only report progress to master when all workers finish
         core_context.distributed.gather(None)

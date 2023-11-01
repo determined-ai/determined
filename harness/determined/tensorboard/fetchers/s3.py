@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Generator, List
 
 from .base import Fetcher
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("determined.tensorboard.s3")
 
 
 class S3Fetcher(Fetcher):

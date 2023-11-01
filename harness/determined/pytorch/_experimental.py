@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+logger = logging.getLogger("determined.pytorch")
+
 # AMP is only available in PyTorch 1.6+
 try:
     from torch.cuda import amp
@@ -56,7 +58,7 @@ class PyTorchExperimentalContext:
         """
 
         self._data_repro_checks_disabled = True
-        logging.info("disabled dataset reproducibility checks")
+        logger.info("disabled dataset reproducibility checks")
 
     def disable_auto_to_device(self) -> None:
         """
@@ -81,4 +83,4 @@ class PyTorchExperimentalContext:
                 ...
         """
         self._auto_to_device = False
-        logging.info("disabled automatically moving data to device")
+        logger.info("disabled automatically moving data to device")

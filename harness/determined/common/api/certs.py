@@ -12,6 +12,8 @@ import filelock
 
 from determined.common import api, util
 
+logger = logging.getLogger("determined.common")
+
 
 class Cert:
     def __init__(
@@ -203,7 +205,7 @@ def default_load(
             with open(env_path, "r") as f:
                 cert_pem = f.read()
         else:
-            logging.warning(
+            logger.warning(
                 f"DET_MASTER_CERT_FILE={env_path} path not found; continuing without cert"
             )
     else:

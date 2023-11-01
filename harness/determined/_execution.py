@@ -11,6 +11,8 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 import determined as det
 from determined import constants, core, gpu, load
 
+logger = logging.getLogger("determined")
+
 
 class InvalidHP(Exception):
     def __init__(self, msg: str = "...") -> None:
@@ -145,7 +147,7 @@ def _make_local_execution_exp_config(
         # This codepath is used by checkpoint loading, where we do not want to emit any warnings,
         # so only warn if we are explicitly in --local --test mode.
         if test_mode and not managed_training:
-            logging.info(
+            logger.info(
                 f"'{key}' configuration key is not supported by local test mode and will be ignored"
             )
         del input_config[key]

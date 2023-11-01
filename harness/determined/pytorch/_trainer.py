@@ -12,6 +12,8 @@ import determined as det
 from determined import core, gpu, horovod, profiler, pytorch
 from determined.horovod import hvd
 
+logger = logging.getLogger("determined.pytorch")
+
 
 class Trainer:
     """
@@ -124,7 +126,7 @@ class Trainer:
 
         if self._local_training:
             if checkpoint_policy == "best":
-                logging.warning(
+                logger.warning(
                     "checkpoint_policy='best' is not supported in local training mode. "
                     "Falling back to 'all'."
                 )
@@ -136,7 +138,7 @@ class Trainer:
                 raise TypeError("max_length must be configured in TrainUnit(int) types.")
 
             if self._det_profiler:
-                logging.warning("Determined profiler will be ignored in local training mode.")
+                logger.warning("Determined profiler will be ignored in local training mode.")
 
             smaller_is_better = True
             searcher_metric_name = None
@@ -147,14 +149,14 @@ class Trainer:
                 raise ValueError("test_mode is only supported in local training mode.")
 
             if max_length is not None:
-                logging.warning(
+                logger.warning(
                     "max_length is ignored when training on-cluster. Please configure the "
                     "searcher instead."
                 )
 
             assert self._info, "Unable to detect cluster info."
             if latest_checkpoint is None and self._info.latest_checkpoint is not None:
-                logging.warning(
+                logger.warning(
                     "latest_checkpoint has not been configured. Pause/resume training will not "
                     "be able to continue from latest checkpoint. Did you mean to set "
                     "`fit(latest_checkpoint=info.latest_checkpoint)'?"

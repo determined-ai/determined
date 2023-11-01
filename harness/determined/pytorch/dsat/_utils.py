@@ -15,6 +15,8 @@ from determined.common import util
 from determined.pytorch.dsat import _defaults
 from determined.util import merge_dicts
 
+logger = logging.getLogger("determined.pytorch")
+
 CURR_DIR = pathlib.Path(".")
 
 
@@ -277,7 +279,7 @@ def get_dict_from_yaml_or_json_path(
                 json_dict = {try_str_to_int(k): v for k, v in json_dict.items()}
             return json_dict
         except Exception as e:
-            logging.info(f"Exception {e} raised when loading {path} with json. Attempting yaml.")
+            logger.info(f"Exception {e} raised when loading {path} with json. Attempting yaml.")
             return {}
     else:
         with open(p, "r") as f:
@@ -458,7 +460,7 @@ def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]
             if not is_auto:
                 overwrite_value_str = str(overwrite_value)
                 if args[idx + 1] != overwrite_value_str:
-                    logging.warning(
+                    logger.warning(
                         f"Changing {args[idx]} from {args[idx +1]} to {overwrite_value_str}"
                         " to match the deespspeed config values."
                     )
@@ -473,7 +475,7 @@ def update_hf_args(args: List[str], ds_config_dict: Dict[str, Any]) -> List[str]
         if not is_auto:
             hf_flag_value_str = str(hf_flag_value)
             args.extend([hf_flag, hf_flag_value_str])
-            logging.warning(
+            logger.warning(
                 f"Adding {hf_flag} {hf_flag_value_str} to HF CLI args to reflect overwrite values."
             )
     return args
@@ -498,7 +500,7 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
         args: updated HF CLI arguments
     """
     if _defaults.OVERWRITE_KEY not in hparams:
-        logging.info(
+        logger.info(
             f"{_defaults.OVERWRITE_KEY} key not found in hparams, `get_hf_args_with_overwrites` "
             "is a no-op"
         )

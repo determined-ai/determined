@@ -10,6 +10,8 @@ from typing import Any, Callable, List
 from determined import tensorboard
 from determined.common import util
 
+logger = logging.getLogger("determined.tensorboard")
+
 
 @dataclass
 class PathUploadInfo:
@@ -134,7 +136,7 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
         writer: tensorboard.MetricWriter = tensorflow.TFWriter()
 
     except ModuleNotFoundError:
-        logging.warning("TensorFlow writer not found")
+        logger.warning("TensorFlow writer not found")
         from determined.tensorboard.metric_writers import pytorch
 
         writer = pytorch._TorchWriter()
@@ -168,7 +170,7 @@ class _TensorboardUploadThread(threading.Thread):
             try:
                 self._upload_function(path_info_list)
             except Exception as e:
-                logging.warning(f"Sync of Tensorboard files failed with error: {e}")
+                logger.warning(f"Sync of Tensorboard files failed with error: {e}")
 
     def upload(self, path_info_list: List[PathUploadInfo]) -> None:
         self._work_queue.put(path_info_list)
@@ -179,7 +181,7 @@ class _TensorboardUploadThread(threading.Thread):
         was_waiting = False
         while self.is_alive():
             was_waiting = True
-            logging.info("Waiting for Tensorboard files to finish uploading")
+            logger.info("Waiting for Tensorboard files to finish uploading")
             self.join(10)
         if was_waiting:
-            logging.info("Tensorboard upload completed")
+            logger.info("Tensorboard upload completed")

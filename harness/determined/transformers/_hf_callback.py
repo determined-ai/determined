@@ -8,7 +8,7 @@ from transformers.trainer_utils import get_last_checkpoint
 
 import determined as det
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("determined.transformers")
 
 
 class DetCallback(TrainerCallback):  # type: ignore
@@ -56,10 +56,10 @@ class DetCallback(TrainerCallback):  # type: ignore
         **kwargs: Any,
     ) -> None:
         if logs is None:
-            logging.warning("on_log called with empty logs")
+            logger.warning("on_log called with empty logs")
             return
         metrics, metric_type = self._get_metrics(logs)
-        logging.debug(f"on_log metrics, global_step {state.global_step}", metrics)
+        logger.debug(f"on_log metrics, global_step {state.global_step}", metrics)
         if metric_type == TRAIN:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
@@ -82,7 +82,7 @@ class DetCallback(TrainerCallback):  # type: ignore
                     )
                 metrics["eval_step"] = state.global_step
         else:
-            logging.warning(f"Metrics not reported: metric type = {metric_type}.")
+            logger.warning(f"Metrics not reported: metric type = {metric_type}.")
 
         self.last_metrics.update(metrics)
 
@@ -155,7 +155,7 @@ class DetCallback(TrainerCallback):  # type: ignore
         latest_checkpoint = info.latest_checkpoint
         if latest_checkpoint is not None:
             if args.overwrite_output_dir is True:
-                logging.info(
+                logger.info(
                     "Skip downloading last checkpoint from Determined due "
                     "to overwrite_output_dir=True."
                 )
@@ -168,7 +168,7 @@ class DetCallback(TrainerCallback):  # type: ignore
             checkpoint_path = get_last_checkpoint(args.output_dir)
             args.resume_from_checkpoint = checkpoint_path
 
-            logging.info(f"Latest checkpoint downloaded to {checkpoint_path}.")
+            logger.info(f"Latest checkpoint downloaded to {checkpoint_path}.")
 
     def on_step_end(
         self,
@@ -183,7 +183,7 @@ class DetCallback(TrainerCallback):  # type: ignore
                 self.current_op.report_progress(state.global_step)
 
             if state.global_step >= self.current_op.length:
-                logging.info(
+                logger.info(
                     f"Max length of {self.current_op.length} steps reached for current "
                     f"searcher operation. Updating searcher."
                 )
@@ -202,7 +202,7 @@ class DetCallback(TrainerCallback):  # type: ignore
                 self.current_op.report_progress(state.epoch)
 
             if state.epoch >= self.current_op.length:
-                logging.info(
+                logger.info(
                     f"Max length of {state.epoch} epochs reached for current "
                     f"searcher operation. Updating searcher."
                 )
@@ -215,7 +215,7 @@ class DetCallback(TrainerCallback):  # type: ignore
 
         if state.is_world_process_zero:
             if self.last_metrics is None:
-                logging.warning(
+                logger.warning(
                     "No training or evaluation metrics has been recorded. Please "
                     "check your settings for training metrics "
                     "(--logging_strategy and --logging_steps) or "
@@ -224,7 +224,7 @@ class DetCallback(TrainerCallback):  # type: ignore
                 )
                 searcher_metric = state.best_metric
             elif self.searcher_metric not in self.last_metrics:
-                logging.warning(
+                logger.warning(
                     f"Searcher metric {self.searcher_metric} from the yaml config file does "
                     "not match any of the recorded metrics "
                     f"in {self.last_metrics}. "
@@ -234,7 +234,7 @@ class DetCallback(TrainerCallback):  # type: ignore
             else:
                 searcher_metric = self.last_metrics[self.searcher_metric]
 
-            logging.info(f"Metric reported to searcher: {searcher_metric}")
+            logger.info(f"Metric reported to searcher: {searcher_metric}")
             self.current_op.report_completed(searcher_metric)
 
         self.updating_searcher = False
@@ -276,7 +276,7 @@ class DetCallback(TrainerCallback):  # type: ignore
         trainer_units: str,
         trainer_len: float,
     ) -> None:
-        logging.warning(
+        logger.warning(
             f"Searcher configuration does not match HF Trainer configuration. "
             f"Searcher uses {self.searcher_unit}={self.searcher_max_length}, "
             f"while HF Trainer uses {trainer_units}={trainer_len}. "
