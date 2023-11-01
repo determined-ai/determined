@@ -1,11 +1,11 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'hew/Button';
+import { SyncProvider } from 'hew/LineChart/SyncProvider';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/Section';
-import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
@@ -135,6 +135,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
                 hoursByLabel={series.hoursTotal}
                 time={series.time}
@@ -151,9 +152,12 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByUsername}
-                hoursTotal={series?.hoursTotal?.total}
+                hoursByLabel={{
+                  ...series.hoursByUsername,
+                  total: series?.hoursTotal?.total,
+                }}
                 time={series.time}
               />
             ),
@@ -168,9 +172,12 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByExperimentLabel}
-                hoursTotal={series?.hoursTotal?.total}
+                hoursByLabel={{
+                  ...series.hoursByExperimentLabel,
+                  total: series?.hoursTotal?.total,
+                }}
                 time={series.time}
               />
             ),
@@ -185,9 +192,12 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
-                hoursByLabel={series.hoursByResourcePool}
-                hoursTotal={series?.hoursTotal?.total}
+                hoursByLabel={{
+                  ...series.hoursByResourcePool,
+                  total: series?.hoursTotal?.total,
+                }}
                 time={series.time}
               />
             ),
