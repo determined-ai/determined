@@ -28,7 +28,7 @@ def test_pytorch_mnist_example(tmp_path: pathlib.Path) -> None:
     )
     exp_config.update(config)
 
-    example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
+    example_path = utils.tutorials_path("mnist_pytorch/train.py")
     trial_class = utils.import_class_from_module("MNistTrial", example_path)
     trial_class._searcher_metric = "validation_loss"
 
@@ -93,7 +93,7 @@ def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0)
     exp_config.update(config)
     exp_config["searcher"]["smaller_is_better"] = True
 
-    example_path = utils.tutorials_path("mnist_pytorch/model_def.py")
+    example_path = utils.tutorials_path("mnist_pytorch/train.py")
     trial_class = utils.import_class_from_module("MNistTrial", example_path)
     trial_class._searcher_metric = "validation_loss"
 
