@@ -3401,7 +3401,8 @@ type DeterminedClient interface {
 	GetMaster(ctx context.Context, in *GetMasterRequest, opts ...grpc.CallOption) (*GetMasterResponse, error)
 	// Get master config.
 	GetMasterConfig(ctx context.Context, in *GetMasterConfigRequest, opts ...grpc.CallOption) (*GetMasterConfigResponse, error)
-	// Patch master config.
+	// Patch master config temporarily while the cluster is running.
+	// These changes will be lost if the user restarts the cluster.
 	PatchMasterConfig(ctx context.Context, in *PatchMasterConfigRequest, opts ...grpc.CallOption) (*PatchMasterConfigResponse, error)
 	// Stream master logs.
 	MasterLogs(ctx context.Context, in *MasterLogsRequest, opts ...grpc.CallOption) (Determined_MasterLogsClient, error)
@@ -6171,7 +6172,8 @@ type DeterminedServer interface {
 	GetMaster(context.Context, *GetMasterRequest) (*GetMasterResponse, error)
 	// Get master config.
 	GetMasterConfig(context.Context, *GetMasterConfigRequest) (*GetMasterConfigResponse, error)
-	// Patch master config.
+	// Patch master config temporarily while the cluster is running.
+	// These changes will be lost if the user restarts the cluster.
 	PatchMasterConfig(context.Context, *PatchMasterConfigRequest) (*PatchMasterConfigResponse, error)
 	// Stream master logs.
 	MasterLogs(*MasterLogsRequest, Determined_MasterLogsServer) error

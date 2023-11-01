@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -93,6 +93,8 @@ func (a *apiServer) GetMasterConfig(
 	}, err
 }
 
+// This endpoint will only make ephermeral changes to the master config,
+// that will be lost if the user restarts the cluster.
 func (a *apiServer) PatchMasterConfig(
 	ctx context.Context, req *apiv1.PatchMasterConfigRequest,
 ) (*apiv1.PatchMasterConfigResponse, error) {
@@ -109,28 +111,38 @@ func (a *apiServer) PatchMasterConfig(
 	}
 
 	paths := req.FieldMask.GetPaths()
-
+	var ok bool
 	for _, path := range paths {
 		switch path {
 		case "log.level":
-			if !isValidLogLevel(req.Config.Log.Level.String()) {
-				panic(fmt.Sprintf("invalid log level: %s", req.Config.Log.Level))
+			if !isValidLogLevel(model.TaskLogLevelFromProto(req.Config.Log.Level)) {
+				panic(fmt.Sprintf("invalid log level: %s", model.TaskLogLevelFromProto(req.Config.Log.Level)))
 			}
-			oldConfig := a.m.config.Load()
-			newConfig := *oldConfig
-			newConfig.Log.Level = req.Config.Log.Level.String()
-			ok := a.m.config.CompareAndSwap(oldConfig, &newConfig)
-			if !ok {
-				return nil, status.Error(http.StatusConflict, "failed to update the master config")
+			for {
+				oldConfig := a.m.config.Load()
+				newConfig, err := config.DeepCopyConfig(*oldConfig)
+				if err != nil {
+					return nil, errors.Wrap(err, "error deepcopying master config")
+				}
+				newConfig.Log.Level = model.TaskLogLevelFromProto(req.Config.Log.Level)
+				ok = a.m.config.CompareAndSwap(oldConfig, newConfig)
+				if ok {
+					break
+				}
 			}
 			logger.SetLogrus(a.m.config.Load().Log)
 		case "log.color":
-			oldConfig := a.m.config.Load()
-			newConfig := *oldConfig
-			newConfig.Log.Color = req.Config.Log.Color
-			ok := a.m.config.CompareAndSwap(oldConfig, &newConfig)
-			if !ok {
-				return nil, status.Error(http.StatusConflict, "failed to update the master config")
+			for {
+				oldConfig := a.m.config.Load()
+				newConfig, err := config.DeepCopyConfig(*oldConfig)
+				if err != nil {
+					return nil, errors.Wrap(err, "error deepcopying master config")
+				}
+				newConfig.Log.Color = req.Config.Log.Color
+				ok = a.m.config.CompareAndSwap(oldConfig, newConfig)
+				if ok {
+					break
+				}
 			}
 			logger.SetLogrus(a.m.config.Load().Log)
 		default:
@@ -260,6 +272,7 @@ func (a *apiServer) ResourceAllocationAggregated(
 
 	return a.m.fetchAggregatedResourceAllocation(req)
 }
+
 func isValidLogLevel(lvl string) bool {
 	switch strings.ToLower(lvl) {
 	case "fatal", "error", "warn", "info", "debug", "trace":

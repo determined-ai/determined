@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
 	"github.com/stretchr/testify/require"
@@ -31,8 +32,8 @@ func TestPatchMasterConfig(t *testing.T) {
 			defer wg.Done()
 			_, err := api.PatchMasterConfig(ctx,
 				&apiv1.PatchMasterConfigRequest{
-					Config:    &masterv1.Config{Log: &masterv1.LogConfig{Level: "error", Color: true}},
-					FieldMask: &fieldmaskpb.FieldMask{Paths: []string{"log"}},
+					Config:    &masterv1.Config{Log: &masterv1.LogConfig{Level: logv1.LogLevel_LOG_LEVEL_ERROR, Color: true}},
+					FieldMask: &fieldmaskpb.FieldMask{Paths: []string{"log.level", "log.color"}},
 				})
 			require.NoError(t, err)
 		}()

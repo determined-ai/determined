@@ -19492,7 +19492,9 @@ def patch_PatchMasterConfig(
     *,
     body: "v1PatchMasterConfigRequest",
 ) -> "v1PatchMasterConfigResponse":
-    """Patch master config."""
+    """Patch master config temporarily while the cluster is running.
+    These changes will be lost if the user restarts the cluster.
+    """
     _params = None
     _resp = session._do_request(
         method="PATCH",

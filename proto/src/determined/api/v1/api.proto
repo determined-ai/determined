@@ -259,7 +259,8 @@ service Determined {
       tags: "Cluster"
     };
   }
-  // Patch master config.
+  // Patch master config temporarily while the cluster is running.
+  // These changes will be lost if the user restarts the cluster.
   rpc PatchMasterConfig(PatchMasterConfigRequest)
       returns (PatchMasterConfigResponse) {
     option (google.api.http) = {

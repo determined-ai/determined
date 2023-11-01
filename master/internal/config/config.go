@@ -155,6 +155,9 @@ type Config struct {
 }
 
 // GetMasterConfig returns reference to the master config singleton.
+// This will not reflect the ephimeral changes the user might make to
+// the config using PatchMasterConfig API endpoint.
+// TODO(DET-9963): Make GetMasterConfig reflect changes made by PatchMasterConfig.
 func GetMasterConfig() *Config {
 	once.Do(func() {
 		masterConfig = DefaultConfig()
@@ -172,6 +175,20 @@ func SetMasterConfig(aConfig *Config) {
 	}
 	config := GetMasterConfig()
 	*config = *aConfig
+}
+
+// DeepCopyConfig returns a deep copy of the provided config.
+func DeepCopyConfig(src Config) (*Config, error) {
+	var dst Config
+	b, err := json.Marshal(src)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to convert config struct to JSON")
+	}
+	err = json.Unmarshal(b, &dst)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to convert JSON to config struct")
+	}
+	return &dst, nil
 }
 
 // Printable returns a printable string.

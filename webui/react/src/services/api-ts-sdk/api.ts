@@ -12023,7 +12023,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Patch master config.
+         * @summary Patch master config temporarily while the cluster is running. These changes will be lost if the user restarts the cluster.
          * @param {V1PatchMasterConfigRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12393,7 +12393,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Patch master config.
+         * @summary Patch master config temporarily while the cluster is running. These changes will be lost if the user restarts the cluster.
          * @param {V1PatchMasterConfigRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12581,7 +12581,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         },
         /**
          * 
-         * @summary Patch master config.
+         * @summary Patch master config temporarily while the cluster is running. These changes will be lost if the user restarts the cluster.
          * @param {V1PatchMasterConfigRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12765,7 +12765,7 @@ export class ClusterApi extends BaseAPI {
     
     /**
      * 
-     * @summary Patch master config.
+     * @summary Patch master config temporarily while the cluster is running. These changes will be lost if the user restarts the cluster.
      * @param {V1PatchMasterConfigRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

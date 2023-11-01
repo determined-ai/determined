@@ -627,10 +627,18 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 			return pErr
 		}
 		log.Infof("found port %d for systemd listener", port)
-		oldConfig := m.config.Load()
-		newConfig := *oldConfig
-		newConfig.Port = int(port)
-		m.config.CompareAndSwap(oldConfig, &newConfig)
+		for {
+			oldConfig := m.config.Load()
+			newConfig, err := config.DeepCopyConfig(*oldConfig)
+			if err != nil {
+				return errors.Wrap(err, "error deepcopying master config")
+			}
+			newConfig.Port = int(port)
+			ok := m.config.CompareAndSwap(oldConfig, newConfig)
+			if ok {
+				break
+			}
+		}
 	default:
 		baseListener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.config.Load().Port))
 		if err != nil {
