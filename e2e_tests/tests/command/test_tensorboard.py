@@ -233,12 +233,6 @@ def test_delete_tensorboard_for_experiment() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
 
-    body = bindings.v1LaunchTensorboardRequest(
-        experimentIds=[experiment_id],
-    )
-
-    bindings.post_LaunchTensorboard(session=determined_test_session(), body=body)
-
     command = ["det", "tensorboard", "delete", str(experiment_id)]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
