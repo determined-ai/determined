@@ -1,12 +1,10 @@
+import Progress from 'determined-ui/Progress';
 import { getStateColorCssVar, ShirtSize } from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import Progress from 'components/kit/Progress';
-import { getStateColorCssVar } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
@@ -20,13 +18,13 @@ import css from './SlotAllocation.module.scss';
 export interface Props {
   className?: string;
   footer?: AllocationBarFooterProps;
-  height?: number;
   hideHeader?: boolean;
   isAux?: boolean;
   poolName?: string;
   poolType?: V1ResourcePoolType;
   resourceStates: ResourceState[];
   showLegends?: boolean;
+  size?: ShirtSize;
   slotsPotential?: number;
   title?: string;
   totalSlots: number;
@@ -72,8 +70,8 @@ const SlotAllocationBar: React.FC<Props> = ({
   className,
   hideHeader,
   footer,
-  height,
   isAux,
+  size,
   title,
   poolName,
   poolType,
@@ -263,7 +261,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           )
         }>
         <div className={css.bar}>
-          <Progress height={height} inline parts={barParts} />
+          <Progress flat parts={barParts} size={size} />
         </div>
       </ConditionalWrapper>
       {footer && (

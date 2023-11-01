@@ -1,8 +1,9 @@
 import { Space, Typography } from 'antd';
 import Avatar from 'determined-ui/Avatar';
 import Icon from 'determined-ui/Icon';
+import Progress from 'determined-ui/Progress';
 import Spinner from 'determined-ui/Spinner';
-import { StateOfUnion } from 'determined-ui/Theme';
+import { getStateColorCssVar, StateOfUnion } from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
@@ -10,11 +11,6 @@ import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/kit/Icon';
-import Progress from 'components/kit/Progress';
-import Spinner from 'components/kit/Spinner';
-import { getStateColorCssVar, StateOfUnion } from 'components/kit/Theme';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
@@ -230,6 +226,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   const color = getStateColorCssVar(record.state);
   return typeof record.progress !== 'undefined' ? (
     <Progress
+      flat
       parts={[
         {
           color,

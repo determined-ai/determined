@@ -46,48 +46,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Grid from 'components/Grid';
-import Accordion from 'components/kit/Accordion';
-import Avatar from 'components/kit/Avatar';
-import Breadcrumb from 'components/kit/Breadcrumb';
-import Button from 'components/kit/Button';
-import Card from 'components/kit/Card';
-import Checkbox from 'components/kit/Checkbox';
-import ClipboardButton from 'components/kit/ClipboardButton';
-import CodeEditor from 'components/kit/CodeEditor';
-import { Column, Columns } from 'components/kit/Columns';
-import DatePicker from 'components/kit/DatePicker';
-import Drawer from 'components/kit/Drawer';
-import Dropdown, { MenuItem } from 'components/kit/Dropdown';
-import Form from 'components/kit/Form';
-import Icon, { IconNameArray, IconSizeArray } from 'components/kit/Icon';
-import InlineForm from 'components/kit/InlineForm';
-import Input from 'components/kit/Input';
-import InputNumber from 'components/kit/InputNumber';
-import InputSearch from 'components/kit/InputSearch';
-import InputShortcut, { KeyboardShortcut } from 'components/kit/InputShortcut';
-import { TypographySize } from 'components/kit/internal/fonts';
-import { MetricType, Note, Serie, ValueOf, XAxisDomain } from 'components/kit/internal/types';
-import { LineChart } from 'components/kit/LineChart';
-import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
-import LogViewer from 'components/kit/LogViewer/LogViewer';
-import Message from 'components/kit/Message';
-import { Modal, useModal } from 'components/kit/Modal';
-import Nameplate from 'components/kit/Nameplate';
-import Notes, { Props as NotesProps } from 'components/kit/Notes';
-import Pagination from 'components/kit/Pagination';
-import Pivot from 'components/kit/Pivot';
-import Progress from 'components/kit/Progress';
-import Select, { Option } from 'components/kit/Select';
-import Spinner from 'components/kit/Spinner';
-import useUI from 'components/kit/Theme';
-import { makeToast } from 'components/kit/Toast';
-import Toggle from 'components/kit/Toggle';
-import Tooltip from 'components/kit/Tooltip';
-import Header from 'components/kit/Typography/Header';
-import Paragraph from 'components/kit/Typography/Paragraph';
-import useConfirm, { voidPromiseFn } from 'components/kit/useConfirm';
-import { useTags } from 'components/kit/useTags';
-import { Loadable, Loaded, NotLoaded } from 'components/kit/utils/loadable';
 import Label from 'components/Label';
 import KitLink from 'components/Link';
 import Logo from 'components/Logo';
@@ -146,7 +104,6 @@ const ComponentTitles = {
   Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
-  Progress: 'Progress',
   Select: 'Select',
   Spinner: 'Spinner',
   Tags: 'Tags',
@@ -1766,79 +1723,6 @@ const PivotSection: React.FC = () => {
   );
 };
 
-const ProgressSection: React.FC = () => {
-  return (
-    <ComponentSection id="Progress" title="Progress">
-      <AntDCard>
-        <p>
-          The Progress control (<code>{'<Progress>'}</code>) displays multiple colorful areas adding
-          up to 100% progress.
-        </p>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <p>
-          Each progress bar part has a required CSS <code>color</code> and a <code>percent</code>{' '}
-          value (from 0.0 to 1.0).
-        </p>
-        <strong>Single progress bar section up to 50%</strong>
-        <Progress parts={[{ color: '#009BDE', percent: 0.5 }]} />
-        <br />
-        <p>
-          Adding the <code>inline</code> prop displays the progress bar with square corners and no
-          drop shadow.
-        </p>
-        <strong>Inline variant</strong>
-        <Progress
-          inline
-          parts={[
-            { color: '#f00', percent: 0.5 },
-            { color: '#009BDE', percent: 0.25 },
-          ]}
-        />
-      </AntDCard>
-      <AntDCard title="Exterior components">
-        <p>
-          A <code>title</code> prop is displayed centered above the progress bar:
-        </p>
-        <strong>Progress bar with title</strong>
-        <Progress
-          parts={[
-            { color: '#009BDE', label: 'Plan A', percent: 0.5 },
-            { color: '#f00', label: 'Plan C', percent: 0.2 },
-          ]}
-          title="Shareholder Votes"
-        />
-        <br />
-        <p>
-          Each progress bar part can have an optional <code>label</code> value to display in a
-          tooltip:
-        </p>
-        <strong>Progress bar with tooltip labels</strong>
-        <Progress
-          inline
-          parts={[
-            { color: '#f00', label: 'Plan A', percent: 0.5 },
-            { color: '#009BDE', label: 'Plan C', percent: 0.25 },
-          ]}
-        />
-        <br />
-        <p>
-          With the <code>showLegend</code> prop, labels are displayed in a legend below the progress
-          bar instead of in tooltips:
-        </p>
-        <strong>Progress bar with legend</strong>
-        <Progress
-          parts={[
-            { color: '#009BDE', label: 'Apples', percent: 0.5 },
-            { color: 'orange', label: 'Oranges', percent: 0.2525252 },
-          ]}
-          showLegend
-        />
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
 const PaginationSection: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [currentPageSize, setCurrentPageSize] = useState<number>(1);
@@ -3269,7 +3153,6 @@ const Components = {
   Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
-  Progress: <ProgressSection />,
   Select: <SelectSection />,
   Spinner: <SpinnerSection />,
   Tags: <TagsSection />,

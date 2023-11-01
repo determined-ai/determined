@@ -48,27 +48,27 @@ export const ClusterOverallBar: React.FC = () => {
             ) : null}
             {overview.data.CUDA.total > 0 && (
               <SlotAllocationBar
-                height={24}
                 resourceStates={cudaSlotStates}
                 showLegends
+                size={ShirtSize.Large}
                 title={`Compute (${ResourceType.CUDA})`}
                 totalSlots={overview.data.CUDA.total}
               />
             )}
             {overview.data.ROCM.total > 0 && (
               <SlotAllocationBar
-                height={24}
                 resourceStates={rocmSlotStates}
                 showLegends
+                size={ShirtSize.Large}
                 title={`Compute (${ResourceType.ROCM})`}
                 totalSlots={overview.data.ROCM.total}
               />
             )}
             {overview.data.CPU.total > 0 && (
               <SlotAllocationBar
-                height={24}
                 resourceStates={cpuSlotStates}
                 showLegends
+                size={ShirtSize.Large}
                 title={`Compute (${ResourceType.CPU})`}
                 totalSlots={overview.data.CPU.total}
               />

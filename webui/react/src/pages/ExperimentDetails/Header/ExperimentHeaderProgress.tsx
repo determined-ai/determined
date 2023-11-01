@@ -1,7 +1,7 @@
+import Progress from 'determined-ui/Progress';
+import { getStateColorCssVar } from 'determined-ui/Theme';
 import React from 'react';
 
-import Progress from 'components/kit/Progress';
-import { getStateColorCssVar } from 'components/kit/Theme';
 import { ExperimentBase } from 'types';
 
 interface Props {
@@ -12,7 +12,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
   const progressPercent = (experiment.progress ?? 0) * 100;
   return experiment.progress === undefined ? null : (
     <Progress
-      inline
+      flat
       parts={[
         {
           color: getStateColorCssVar(experiment.state),
