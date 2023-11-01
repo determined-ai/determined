@@ -159,7 +159,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       } else {
         const newGroup = await createGroup(formData);
         if (canModifyPermissions && newGroup.group.groupId) {
-          const newRoles: Array<number> = formData.roles;
+          const newRoles: Array<number> = formData.roles ?? [];
 
           if (newRoles.length > 0) {
             await assignRolesToGroup([
