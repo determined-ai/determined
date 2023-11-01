@@ -229,21 +229,18 @@ def test_delete_tensorboard_for_experiment() -> None:
     Start a random experiment, start a TensorBoard instance pointed to
     the experiment, delete tensorboard and verify deletion.
     """
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
+    config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config_obj, conf.tutorials_path("mnist_pytorch"), 1
+    )
 
     command = ["det", "tensorboard", "delete", str(experiment_id)]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
     # Check if Tensorboard files are deleted
-    command = ["find", "-P", "/tmp/determined-cp/", "-name", "tensorboard*", "-type", "d"]
-    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
-
-    path = res.stdout[res.stdout.find("//") + 2 :].strip("\n")
-    command = ["ls", "/tmp/determined-cp/" + path + "/experiment"]
-    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
-
-    assert len(res.stdout) == 0
+    tb_path = sorted(pathlib.Path("/tmp/determined-cp/").glob("*/tensorboard"))[0]
+    tb_path = tb_path / "experiment" / str(experiment_id)
+    assert not pathlib.Path(tb_path).exists()
 
 
 @pytest.mark.e2e_cpu
