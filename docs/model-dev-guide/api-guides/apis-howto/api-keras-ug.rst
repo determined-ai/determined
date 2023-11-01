@@ -100,15 +100,14 @@ implement the :class:`determined.keras.callbacks.Callback` interface (an extensi
 ***********
 
 Determined supports integration with the native TF Keras profiler. Results will automatically be
-uploaded to Tensorboard, which is accessible from trial page on the Determined UI.
+uploaded to the trial's TensorBoard path and can be viewed in the Determined Web UI.
 
 The Keras profiler is configured as a callback in the :class:`~determined.keras.TFKerasTrial` class.
 The :class:`determined.keras.callbacks.TensorBoard` callback is a thin wrapper around the native
-Keras Tensorboard callback, ``tf.keras.callbacks.TensorBoard``. It overrides the ``log_dir``
-argument to the Determined Tenosrboard path, while other arguments are passed directly into
-``tf.keras.callbacks.TensorBoard``. See the `official Keras API documentation
-<https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`_ for a complete list of
-accepted arguments.
+Keras TensorBoard callback, ``tf.keras.callbacks.TensorBoard``. It overrides the ``log_dir``
+argument to set the Determined TensorBoard path, while other arguments are passed directly into
+``tf.keras.callbacks.TensorBoard``. For a list of accepted arguments, consult the `official Keras API documentation
+<https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`_.
 
 The following code snippet will configure profiling for batches 5 and 10, and will compute weight
 histograms every 1 epochs.
