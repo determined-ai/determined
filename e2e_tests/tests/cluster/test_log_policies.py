@@ -79,8 +79,6 @@ def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
 
     if should_match:
-        # TODO(DET-9897) this job should fail instead and not be stuck in queued.
-        # We can run another job to completion since our original should be stuck in queued.
         second_exp_id = exp.create_experiment(
             conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
         )
