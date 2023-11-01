@@ -529,7 +529,7 @@ Profiler" tab in the Determined Tensorboard UI.
 See `PyTorch Profiler <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ documentation for
 details.
 
-.. code-block:: python
+.. code:: python
 
    import torch
    import determined as det
@@ -545,11 +545,7 @@ details.
                torch.profiler.ProfilerActivity.CPU,
                torch.profiler.ProfilerActivity.CUDA,
            ],
-           schedule=torch.profiler.schedule(
-               wait=1,
-               warmup=1,
-               active=2
-           ),
+           schedule=torch.profiler.schedule(wait=1, warmup=1, active=2),
        )
 
    # Step the profiler on each train batch call.
