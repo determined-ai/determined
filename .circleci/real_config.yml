@@ -214,7 +214,7 @@ commands:
               echo "The 'ci-run-allgcp' label was not found in github pull request. Skipping job."
               circleci-agent step halt
             fi
-            
+
   set-slack-user-id:
     steps:
       - run:
@@ -4134,8 +4134,6 @@ workflows:
           deployment-type: fsx
           slack-mentions: "${SLACK_USER_ID}"
           slack-channel: <<pipeline.parameters.default-slack-channel>>
-          requires:
-            - check-if-nightly-tests-should-run
           
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -4146,27 +4144,16 @@ workflows:
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
           slack-channel: <<pipeline.parameters.default-slack-channel>>
-          requires:
-            - check-if-nightly-tests-should-run
-      
           
-      - build-proto:
-          requires:
-            - check-if-nightly-tests-should-run
-      - build-helm:
-          requires:
-            - check-if-nightly-tests-should-run
+      - build-proto
+      - build-helm
       - build-docs:
           requires:
-            - check-if-nightly-tests-should-run
             - build-proto
             - build-helm
-      - build-react:
-          requires:
-            - check-if-nightly-tests-should-run
+      - build-react
       - package-and-push-system-local:
           requires:
-            - check-if-nightly-tests-should-run
             - build-docs
             - build-react
       - test-e2e-slurm:
@@ -4174,7 +4161,6 @@ workflows:
           mark: "e2e_slurm_restart"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
@@ -4182,14 +4168,12 @@ workflows:
           mark: "e2e_slurm_preemption"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
@@ -4199,7 +4183,6 @@ workflows:
               mark: ["e2e_slurm and not deepspeed"]
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - check-if-nightly-tests-should-run
             - package-and-push-system-local
           master_config: |
             task_container_defaults:
@@ -4249,7 +4232,6 @@ workflows:
             name: test-e2e-slurm-agent-singularity-znode
             slack-mentions: "${SLACK_USER_ID}"
             requires:
-              - check-if-nightly-tests-should-run
               - package-and-push-system-local
             agent-use: "-A"
             extra-pytest-flags: "-k 'not node_not_available'"
