@@ -12,6 +12,7 @@ import {
   FormGroup,
   FormKind,
   Operator,
+  PatchFunc,
 } from 'components/FilterForm/components/type';
 import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 
@@ -40,6 +41,8 @@ export const getInitField = (): FormField => ({
   type: V1ColumnType.TEXT,
   value: null,
 });
+
+const isNotUndefined = <T>(arg: T): arg is Exclude<T, undefined> => arg !== undefined;
 
 export class FilterFormStore {
   #formset: WritableObservable<Loadable<FilterFormSet>> = observable(NotLoaded);
@@ -128,84 +131,98 @@ export class FilterFormStore {
     );
   }
 
-  #getFormById(filterGroup: FormGroup, id: string): FormField | FormGroup | undefined {
-    const traverse = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
-      if (form.id === id) {
-        return form;
-      }
-      if (form.kind === FormKind.Group && form.children.length === 0) {
-        return undefined;
-      }
-
-      if (form.kind === FormKind.Group) {
-        for (const child of form.children) {
-          const ans = traverse(child);
-          if (ans) {
-            return ans;
+  #updateForm(id: string, patch: PatchFunc<FormField | FormGroup>): void {
+    this.#formset.update((loadableFilterSet) => {
+      return Loadable.map(loadableFilterSet, (filterSet) => {
+        // keep updates to a minimum -- ids should be unique, so all following traversal should have no effect
+        let hit = false;
+        const traverse = (entity: FormGroup | FormField): FormGroup | FormField | undefined => {
+          if (hit) return entity;
+          if (entity.id === id) {
+            const retVal = patch(entity);
+            if (entity !== retVal) {
+              hit = true;
+              return retVal;
+            }
+            return entity;
           }
-        }
-      }
-      return undefined;
-    };
+          if (entity.kind === FormKind.Group) {
+            const children = entity.children.map(traverse).filter(isNotUndefined);
+            if (hit) {
+              return {
+                ...entity,
+                children,
+              };
+            }
+          }
+          return entity;
+        };
 
-    return traverse(filterGroup);
+        const filterGroup =
+          traverse(filterSet.filterGroup) || structuredClone(INIT_FORMSET).filterGroup;
+        if (!hit) {
+          return filterSet;
+        }
+        if (filterGroup.kind === FormKind.Field) {
+          throw new Error('patch changed base filter group to field');
+        }
+        return {
+          ...filterSet,
+          filterGroup,
+        };
+      });
+    });
+  }
+
+  #updateField(id: string, patch: PatchFunc<FormField>): void {
+    return this.#updateForm(id, (arg) => {
+      if (arg.kind === FormKind.Group) {
+        return arg;
+      }
+      return patch(arg);
+    });
+  }
+
+  #updateGroup(id: string, patch: PatchFunc<FormGroup>): void {
+    return this.#updateForm(id, (arg) => {
+      if (arg.kind === FormKind.Field) {
+        return arg;
+      }
+      return patch(arg);
+    });
   }
 
   public setFieldColumnName(
     id: string,
     col: Pick<V1ProjectColumn, 'location' | 'type' | 'column'>,
   ): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (filterSet) => {
-      const filterGroup = filterSet.filterGroup;
-      const ans = this.#getFormById(filterGroup, id);
-      if (ans && ans.kind === FormKind.Field) {
-        ans.columnName = col.column;
-        ans.location = col.location;
-        ans.type = col.type;
-        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
-        this.#formset.update((prev) => prev.map((i) => i));
+    return this.#updateField(id, (form) => {
+      if (form.columnName === col.column && form.location === col.location) {
+        return form;
       }
+      return {
+        ...form,
+        columnName: col.column,
+        location: col.location,
+        type: col.type,
+      };
     });
   }
 
   public setFieldOperator(id: string, operator: Operator): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (filterSet) => {
-      const filterGroup = filterSet.filterGroup;
-      const ans = this.#getFormById(filterGroup, id);
-      if (ans && ans.kind === FormKind.Field && Object.values(Operator).includes(operator)) {
-        ans.operator = operator;
-        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
-        this.#formset.update((prev) => prev.map((i) => i));
-      }
-    });
+    return this.#updateField(id, (form) =>
+      form.operator === operator ? form : { ...form, operator },
+    );
   }
 
   public setFieldConjunction(id: string, conjunction: Conjunction): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (filterSet) => {
-      const filterGroup = filterSet.filterGroup;
-      const ans = this.#getFormById(filterGroup, id);
-      if (ans && ans.kind === FormKind.Group && Object.values(Conjunction).includes(conjunction)) {
-        ans.conjunction = conjunction;
-        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
-        this.#formset.update((prev) => prev.map((i) => i));
-      }
-    });
+    return this.#updateGroup(id, (form) =>
+      form.conjunction === conjunction ? form : { ...form, conjunction },
+    );
   }
 
   public setFieldValue(id: string, value: FormFieldValue): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (filterSet) => {
-      const filterGroup = filterSet.filterGroup;
-      const ans = this.#getFormById(filterGroup, id);
-      if (ans && ans.kind === FormKind.Field) {
-        ans.value = value;
-        // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
-        this.#formset.update((prev) => prev.map((i) => i));
-      }
-    });
+    return this.#updateField(id, (form) => (form.value === value ? form : { ...form, value }));
   }
 
   public addChild(
@@ -213,67 +230,26 @@ export class FilterFormStore {
     addType: FormKind,
     obj?: { index: number; item: Readonly<FormGroup | FormField> },
   ): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (filterSet) => {
-      const filterGroup = filterSet.filterGroup;
-      const traverse = (form: FormGroup | FormField): void => {
-        if (form.id === id && form.kind === FormKind.Group) {
-          if (obj) {
-            form.children.splice(obj.index, 0, structuredClone(obj.item));
-          } else {
-            form.children.push(addType === FormKind.Group ? getInitGroup() : getInitField());
-          }
-          return;
-        }
-
-        if (form.kind === FormKind.Group) {
-          for (const child of form.children) {
-            traverse(child);
-          }
-        }
+    return this.#updateGroup(id, (form) => {
+      const children = obj
+        ? form.children
+            .slice(0, obj.index)
+            .concat([structuredClone(obj.item)], form.children.slice(obj.index))
+        : [...form.children, addType === FormKind.Group ? getInitGroup() : getInitField()];
+      return {
+        ...form,
+        children,
       };
-
-      traverse(filterGroup);
-      // TODO: The following line triggers a rerender, but the file should be refactored so it isn't required.
-      this.#formset.update((prev) => prev.map((i) => i));
     });
   }
 
   public removeChild(id: string): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (filterSet) => {
-      const filterGroup = filterSet.filterGroup;
-
-      if (filterGroup.id === id) {
-        // if remove top group
-        this.#formset.set(
-          Loaded({ ...structuredClone(INIT_FORMSET), showArchived: filterSet.showArchived }),
-        );
-        return;
-      }
-
-      const traverse = (form: FormGroup | FormField): void => {
-        if (form.kind === FormKind.Group) {
-          const prevLength = form.children.length;
-          form.children = form.children.filter((c) => c.id !== id);
-          if (prevLength === form.children.length) {
-            for (const child of form.children) {
-              traverse(child);
-            }
-          }
-        }
-      };
-      traverse(filterGroup);
-      this.#formset.update((loadablePrev) =>
-        Loadable.map(loadablePrev, (prev) => ({ ...prev, filterGroup })),
-      );
-    });
+    this.#updateForm(id, () => undefined);
   }
 
   public setArchivedValue(val: boolean): void {
-    const loadableFilterSet: Loadable<FilterFormSet> = this.#formset.get();
-    Loadable.forEach(loadableFilterSet, (fs) =>
-      this.#formset.set(Loaded({ ...fs, showArchived: val })),
-    );
+    this.#formset.update((loadableFilterSet) => {
+      return Loadable.map(loadableFilterSet, (fs) => ({ ...fs, showArchived: val }));
+    });
   }
 }
