@@ -172,6 +172,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         if args.db_size is not None and args.db_size < 20:
             raise ValueError("--db-size must be greater than or equal to 20 GB")
 
+    if args.deployment_type != constants.deployment_types.LORE:
+        if args.lore_version is not None:
+            raise ValueError("--lore-version can only be specified for 'lore' deployments")
+
     if args.deployment_type not in {
         constants.deployment_types.EFS,
         constants.deployment_types.LORE,
