@@ -94,3 +94,40 @@ implement the :class:`determined.keras.callbacks.Callback` interface (an extensi
 ``tf.keras.callbacks.Callbacks`` interface) and supply them to the
 :class:`~determined.keras.TFKerasTrial` by implementing
 :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
+
+***********
+ Profiling
+***********
+
+Determined supports integration with the native TF Keras profiler. Results will automatically be
+uploaded to the trial's TensorBoard path and can be viewed in the Determined Web UI.
+
+The Keras profiler is configured as a callback in the :class:`~determined.keras.TFKerasTrial` class.
+The :class:`determined.keras.callbacks.TensorBoard` callback is a thin wrapper around the native
+Keras TensorBoard callback, ``tf.keras.callbacks.TensorBoard``. It overrides the ``log_dir``
+argument to set the Determined TensorBoard path, while other arguments are passed directly into
+``tf.keras.callbacks.TensorBoard``. For a list of accepted arguments, consult the `official Keras API documentation
+<https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`_.
+
+The following code snippet will configure profiling for batches 5 and 10, and will compute weight
+histograms every 1 epochs.
+
+.. code:: python
+
+   from determined import keras
+
+   def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
+      return [
+          keras.callbacks.TensorBoard(
+              update_freq="batch",
+              profile_batch='5, 10',
+              histogram_freq=1,
+          )
+      ]
+
+.. note::
+
+   Though specifying batches to profile with ``profile_batch`` is optional, profiling every batch
+   may cause a large amount of data to be uploaded to Tensorboard. This may result in long rendering
+   times for Tensorboard and memory issues. For long-running experiments, it is recommended to
+   configure profiling only on desired batches.
