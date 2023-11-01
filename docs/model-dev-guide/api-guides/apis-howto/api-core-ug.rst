@@ -513,56 +513,6 @@ In the Determined WebUI, go to the **Cluster** pane.
 You should be able to see multiple slots active corresponding to the value you set for
 ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple ranks.
 
-***********
- Profiling
-***********
-
-Profiling with native profilers such as can be configured as usual. If running on a Determined
-cluster, the profiling log output path can be configured for automatic upload to the Determined
-Tensorboard UI.
-
-The following snippet initializes the PyTorch Profiler. It will profile GPU and CPU activities,
-skipping batch 1, warming up on batch 2, profiling batches 3 and 4, then repeating the cycle. Result
-files will be uploaded to the experiment's TensorBoard path and can be viewed under the "PyTorch
-Profiler" tab in the Determined Tensorboard UI.
-
-See `PyTorch Profiler <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ documentation for
-details.
-
-.. code-block:: python
-
-   import torch
-   import determined as det
-
-
-   with det.core.init() as core_context:
-       ...
-       profiler = torch.profiler.profile(
-           on_trace_ready=torch.profiler.tensorboard_trace_handler(
-               str(core_context.train.get_tensorboard_path())
-           ),
-           activities=[
-               torch.profiler.ProfilerActivity.CPU,
-               torch.profiler.ProfilerActivity.CUDA,
-           ],
-           schedule=torch.profiler.schedule(
-               wait=1,
-               warmup=1,
-               active=2
-           ),
-       )
-
-   # Step the profiler on each train batch call.
-   train_batch(...)
-   with profiler:
-       profiler.step()
-
-.. note::
-
-   While specifying batches to profile with profile_batch is optional, profiling every batch can
-   generate a large amount of data, causing long rendering times and potential memory issues in
-   TensorBoard. For long-running experiments, it's advised to profile only specific batches.
-
 ************
  Next Steps
 ************
