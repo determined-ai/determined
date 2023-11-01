@@ -2,6 +2,8 @@ import { Loadable, Loaded } from 'determined-ui/utils/loadable';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 
+import { getUserSetting } from 'services/api';
+import { V1UserWebSetting } from 'services/api-ts-sdk';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 
@@ -10,7 +12,7 @@ import { UserSettingsStore } from './userSettings';
 const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
 vi.mock('services/api', () => ({
-  getUserSetting: () => Promise.resolve({ settings: [] }),
+  getUserSetting: vi.fn(() => Promise.resolve({ settings: [] })),
   resetUserSetting: () => Promise.resolve(),
   updateUserSetting: () => Promise.resolve(),
 }));
@@ -117,6 +119,78 @@ describe('userSettings', () => {
       expect(Loadable.map(result, (r) => r?.stringArray)).toStrictEqual(
         Loaded(expectedSettings.stringArray),
       );
+    });
+  });
+
+  describe('polling', () => {
+    let store: UserSettingsStore;
+    const getSpy = vi.mocked(getUserSetting);
+    beforeEach(async () => {
+      store = await setup({ [configPath]: expectedSettings });
+      store.startPolling();
+      // userSettings sets up a timer that we want to skip here
+      await vi.advanceTimersToNextTimerAsync();
+    });
+    beforeAll(() => vi.useFakeTimers());
+
+    afterEach(() => store.stopPolling());
+    afterAll(() => vi.useRealTimers());
+
+    it('should call getUserSettings once before starting to poll', () => {
+      expect(getSpy).toBeCalledTimes(1);
+    });
+
+    it('should call getUserSettings after starting to poll', async () => {
+      getSpy.mockClear();
+      await vi.runOnlyPendingTimersAsync();
+      expect(getSpy).toBeCalledTimes(1);
+    });
+
+    const pollWithSettings = async (...settings: V1UserWebSetting[]) => {
+      getSpy.mockImplementationOnce(() => Promise.resolve({ settings }));
+      await vi.runOnlyPendingTimersAsync();
+    };
+    it('should overwrite existing settings', async () => {
+      // merge settings entries with existing settings
+      const settings = store.get(Config, configPath);
+      expect(Loadable.map(settings.get(), (o) => o?.boolean)).toStrictEqual(Loaded(false));
+
+      await pollWithSettings({ key: 'boolean', storagePath: configPath, value: 'true' });
+      expect(Loadable.map(settings.get(), (o) => o?.boolean)).toStrictEqual(Loaded(true));
+    });
+
+    it('should allow for flat settings values', async () => {
+      // root values
+      const settings = store.get(t.string, 'single_value');
+      expect(settings.get()).toStrictEqual(Loaded(null));
+
+      await pollWithSettings({ key: '_ROOT', storagePath: 'single_value', value: '"hello"' });
+      expect(settings.get()).toStrictEqual(Loaded('hello'));
+    });
+
+    it('should create new objects if necessary', async () => {
+      // create new objects
+      const settings = store.get(t.interface({ value: t.string }), 'new_object');
+      expect(settings.get()).toStrictEqual(Loaded(null));
+
+      await pollWithSettings({ key: 'value', storagePath: 'new_object', value: '"hello"' });
+      expect(Loadable.map(settings.get(), (s) => s?.value)).toStrictEqual(Loaded('hello'));
+    });
+
+    it('should keep object reference when poll returns same data', async () => {
+      const settings = store.get(Config, configPath);
+      const oldRef = settings.get();
+
+      await pollWithSettings({ key: 'boolean', storagePath: configPath, value: 'false' });
+      expect(settings.get()).toBe(oldRef);
+    });
+
+    it('should return new object reference when poll returns new data', async () => {
+      const settings = store.get(Config, configPath);
+      const oldRef = settings.get();
+
+      await pollWithSettings({ key: 'boolean', storagePath: configPath, value: 'true' });
+      expect(settings.get()).not.toBe(oldRef);
     });
   });
 });
