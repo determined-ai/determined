@@ -5,12 +5,11 @@ import filelock
 from torchvision import datasets, transforms
 
 
-def get_dataset(data_dir: str, train: bool) -> Any:
-    data_path = pathlib.Path(data_dir)
-    data_path.mkdir(parents=True, exist_ok=True)
+def get_dataset(data_dir: pathlib.Path, train: bool) -> Any:
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     # Use a file lock so that only one worker on each node downloads.
-    with filelock.FileLock(str(data_path / "lock")):
+    with filelock.FileLock(str(data_dir / "lock")):
         return datasets.MNIST(
             root=str(data_dir),
             train=train,

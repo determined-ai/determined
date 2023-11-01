@@ -43,6 +43,18 @@ Then the code can be submitted to Determined for on-cluster training by running 
 `det experiment create const.yaml .`. The other configurations can be run by specifying the desired 
 configuration file in place of `const.yaml`.
 
+#### Distributed Training
+To train on-cluster across multiple nodes, `slots_per_trial` and `entrypoint`must be configured in the experiment configuration. 
+`entrypoint` should wrap `train.py` with a Determined launch layer module, which will launch the training script across 
+the slots specified.
+
+```yaml
+...
+resources:
+  slots_per_trial: 2
+entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
+```
+
 ## Results
 Training the model with the hyperparameter settings in `const.yaml` should yield
 a validation accuracy of ~97%. 

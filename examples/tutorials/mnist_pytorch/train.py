@@ -31,7 +31,7 @@ class MNistTrial(pytorch.PyTorchTrial):
         self.context = context
 
         # Trial-level constants.
-        self.data_dir = "data"
+        self.data_dir = pathlib.Path("data")
         self.data_url = (
             "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
         )

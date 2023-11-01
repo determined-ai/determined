@@ -28,5 +28,5 @@ searcher:
   max_length:
     epochs: 1
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 1
 entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
