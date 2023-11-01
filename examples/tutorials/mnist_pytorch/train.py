@@ -91,7 +91,7 @@ def run(local: bool = False):
     on-cluster without any code changes.
 
     To run the training code solely locally or on-cluster, remove the conditional parameter logic
-    for the undesired training mode.
+    for the unneeded training mode.
 
     Arguments:
         local: Whether to run this script locally. Defaults to false (on-cluster training).

@@ -39,11 +39,8 @@ To run training on-cluster, configure the desired training arguments (checkpoint
 checkpoint to start from, etc.) in the `Trainer.fit()` call. An experiment configuration file is also required 
 for on-cluster experiments (several examples are included in the directory).
 
-Then the code can be submitted to Determined for on-cluster training:
-
-
-Run the following command: `det -m <master host:port> experiment create -f 
-const.yaml .`. The other configurations can be run by specifying the appropriate 
+Then the code can be submitted to Determined for on-cluster training by running this command from the current directory:
+`det experiment create const.yaml .`. The other configurations can be run by specifying the desired 
 configuration file in place of `const.yaml`.
 
 ## Results
