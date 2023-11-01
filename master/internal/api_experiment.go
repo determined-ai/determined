@@ -1417,9 +1417,24 @@ func (a *apiServer) createUnmanagedExperimentTx(
 	}, nil
 }
 
-func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string) ([]byte, error) {
+func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string) ([]byte, bool, error) {
 	if overrideConfig == "" {
-		overrideConfig = "{}"
+		overrideConfig = "{}" //nolint: goconst
+	}
+
+	activeConfig, err := a.m.db.ActiveExperimentConfig(expID)
+	if err != nil {
+		return nil, false, fmt.Errorf("loading active config for experiment %d: %w", expID, err)
+	}
+	name := activeConfig.Searcher().AsLegacy().Name
+	isSingle := name == "single"                           //nolint: goconst
+	if !isSingle && (name != "grid" && name != "random") { //nolint: goconst
+		return nil, false, status.Errorf(codes.InvalidArgument,
+			fmt.Sprintf("Unsupported searcher type provided: '%s'", name))
+	}
+	if !isSingle && strings.TrimSpace(overrideConfig) != "{}" { //nolint: goconst
+		return nil, false, status.Errorf(codes.InvalidArgument,
+			fmt.Sprintf("override config is provided and experiment is not single searcher, got '%s' instead", name))
 	}
 
 	providedConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(overrideConfig))
@@ -1428,46 +1443,34 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 		// searcher.max_length.batches = 2. They would also need
 		// searcher.name = "single", which all experiments will always be here.
 		if strings.Contains(err.Error(), `unknown field "max_length"`) {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, false, status.Errorf(codes.InvalidArgument,
 				`unknown field "max_length", you might also need to specify searcher.name=single`)
 		}
 
-		return nil, status.Errorf(codes.InvalidArgument,
+		return nil, false, status.Errorf(codes.InvalidArgument,
 			fmt.Errorf("parsing override config: %w", err).Error())
 	}
 
 	if providedConfig.RawProject != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "'project' in override config "+
+		return nil, false, status.Errorf(codes.InvalidArgument, "'project' in override config "+
 			"cannot be specified, use `det experiment move` first if you want to change the project")
 	}
 	if providedConfig.RawWorkspace != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "'workspace' in override config "+
+		return nil, false, status.Errorf(codes.InvalidArgument, "'workspace' in override config "+
 			"cannot be specified, use `det experiment move` first if you want to change the workspace")
 	}
-
-	activeConfig, err := a.m.db.ActiveExperimentConfig(expID)
-	if err != nil {
-		return nil, fmt.Errorf("loading active config for experiment %d: %w", expID, err)
-	}
-	if name := activeConfig.Searcher().AsLegacy().Name; name != "single" { //nolint: goconst
-		return nil, status.Errorf(codes.InvalidArgument,
-			fmt.Sprintf(
-				"cannot continue a '%s' searcher experiment, must be a single searcher experiment",
-				name))
-	}
-
 	mergedConfig := schemas.Merge(providedConfig, activeConfig)
-	if name := mergedConfig.Searcher().AsLegacy().Name; name != "single" { //nolint: goconst
-		return nil, status.Errorf(codes.InvalidArgument,
-			fmt.Sprintf("override config must have single searcher type got '%s' instead", name))
+	if overrideName := mergedConfig.Searcher().AsLegacy().Name; isSingle && overrideName != "single" {
+		return nil, false, status.Errorf(codes.InvalidArgument,
+			fmt.Sprintf("override config must have single searcher type got '%s' instead", overrideName))
 	}
 
 	bytes, err := mergedConfig.Value()
 	if err != nil {
-		return nil, fmt.Errorf("getting value of merged config: %w", err)
+		return nil, false, fmt.Errorf("getting value of merged config: %w", err)
 	}
 
-	return bytes.([]byte), nil
+	return bytes.([]byte), isSingle, nil
 }
 
 func (a *apiServer) ContinueExperiment(
@@ -1490,13 +1493,7 @@ func (a *apiServer) ContinueExperiment(
 	if err != nil {
 		return nil, fmt.Errorf("getting experiment trials: %w", err)
 	}
-	if len(trialsResp.Trials) != 1 {
-		return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf(
-			"experiment needs exactly one trial got %d instead", len(trialsResp.Trials)))
-	}
-	trialID := int(trialsResp.Trials[0].Id)
-
-	configBytes, err := a.parseAndMergeContinueConfig(int(req.Id), req.OverrideConfig)
+	configBytes, isSingle, err := a.parseAndMergeContinueConfig(int(req.Id), req.OverrideConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -1531,6 +1528,28 @@ func (a *apiServer) ContinueExperiment(
 			return status.Error(codes.FailedPrecondition, fmt.Sprintf(
 				"experiment in non terminal state '%s', try again later", expState))
 		}
+
+		if expState == model.CompletedState && !isSingle {
+			hasIncompleteTrials := false
+			for _, trial := range trialsResp.Trials {
+				if model.StateFromProto(experimentv1.State(trial.State)) != model.CompletedState {
+					hasIncompleteTrials = true
+					break
+				}
+			}
+			if !hasIncompleteTrials {
+				return status.Error(codes.FailedPrecondition, fmt.Sprint(
+					"experiment has been completed, cannot continue this experiment"))
+			}
+		} else if isSingle && len(trialsResp.Trials) > 0 {
+			if _, err := tx.NewUpdate().Model(&model.Trial{}).
+				Set("state = ?", model.PausedState).
+				Where("id = ?", trialsResp.Trials[0].Id).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("changing trial state to PAUSED: %w", err)
+			}
+		}
+
 		if _, err := tx.NewUpdate().Model(&model.Experiment{}).
 			Set("state = ?", model.PausedState). // Throw it in paused.
 			Set("progress = ?", 0.0).            // Reset progress.
@@ -1566,13 +1585,21 @@ func (a *apiServer) ContinueExperiment(
 		// TODO consider moving this to trial_id_task_id or some other level to preserve
 		// the history of what happened during the trial. We should also do this
 		// with submitted config yamls likely and display these in the webui.
-		if _, err := tx.NewUpdate().Model(&model.Trial{}).
-			Set("restarts = 0").
-			Set("end_time = null").
-			Where("id = ?", trialsResp.Trials[0].Id).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("zeroing out trial restarts: %w", err)
+		var trialIDs []int32
+		for _, t := range trialsResp.Trials {
+			trialIDs = append(trialIDs, t.Id)
 		}
+		if len(trialIDs) > 0 {
+			if _, err := tx.NewUpdate().Model(&model.Trial{}).
+				Set("restarts = 0").
+				Set("end_time = null").
+				Where("id IN (?)", bun.In(trialIDs)).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("zeroing out trial restarts: %w", err)
+			}
+		}
+
+		e.continueTrials = true
 
 		// Check at the end to minimize chance of actor already being created somehow.
 		if a.m.system.Get(actor.Addr("experiments", int(req.Id))) != nil {
@@ -1584,7 +1611,6 @@ func (a *apiServer) ContinueExperiment(
 		return nil, fmt.Errorf("experiment continue database updates: %w", err)
 	}
 
-	e.continueFromTrialID = ptrs.Ptr(trialID)
 	_, created := a.m.system.ActorOf(exputil.ExperimentsAddr.Child(e.ID), e)
 	if !created {
 		return nil, status.Errorf(codes.FailedPrecondition, "experiment actor still running")

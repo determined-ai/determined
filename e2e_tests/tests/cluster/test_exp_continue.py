@@ -328,3 +328,81 @@ def test_continue_pytorch_completed_searcher(continue_max_length: int) -> None:
         check=True,
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize("exp_config_path", ["no_op/random-short.yaml", "no_op/grid-short.yaml"])
+def test_continue_hp_search_cli(exp_config_path: str) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path(exp_config_path),
+        conf.fixtures_path("no_op"),
+        [],
+    )
+    trials = exp.experiment_trials(exp_id)
+    for t in trials:
+        if t.trial.id % 2 == 0:
+            exp.kill_trial(t.trial.id)
+
+    if exp_config_path == "no_op/random-short.yaml":
+        assert len(trials) == 3
+    else:
+        assert len(trials) == 6
+
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
+
+    det_cmd(["e", "continue", str(exp_id)], check=True)
+
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
+
+    trials = exp.experiment_trials(exp_id)
+    for t in trials:
+        assert t.trial.state == bindings.trialv1State.COMPLETED
+
+
+@pytest.mark.e2e_cpu
+def test_continue_hp_search_single_cli() -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        [],
+    )
+    trials = exp.experiment_trials(exp_id)
+    assert len(trials) == 1
+    exp.kill_trial(trials[0].trial.id)
+
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.CANCELED)
+
+    det_cmd(["e", "continue", str(exp_id)], check=True)
+
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
+
+    trials = exp.experiment_trials(exp_id)
+    assert trials[0].trial.state == bindings.trialv1State.COMPLETED
+
+
+@pytest.mark.e2e_cpu
+def test_continue_hp_search_completed_cli() -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/random-short.yaml"),
+        conf.fixtures_path("no_op"),
+        [],
+    )
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        det_cmd(["e", "continue", str(exp_id)], check=True)
+
+
+@pytest.mark.e2e_cpu
+def test_continue_hp_search_provided_config() -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/random-short.yaml"),
+        conf.fixtures_path("no_op"),
+    )
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        det_cmd(
+            ["e", "continue", str(exp_id), "--config", "hyperparameters.metrics_sigma=1.0"],
+            check=True,
+        )
