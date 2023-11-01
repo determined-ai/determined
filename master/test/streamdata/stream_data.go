@@ -189,7 +189,7 @@ func AddExperiment(pgDB *db.PgDB, experiment *Experiment) (int, error) {
 	experiment.JobID = newJobID
 
 	_, err = db.Bun().NewInsert().Model(experiment).Exec(ctx)
-	// example experiment:
+	// XXX (eliu): example experiment:
 	// Experiment{
 	//			ID:                   ids[0] + 1,
 	//			JobID:                newJobID,
