@@ -1,7 +1,6 @@
 package command
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -12,11 +11,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
 
-func (cs *commandService) LaunchShell(ctx context.Context, req *CreateGeneric) (*shellv1.Shell, error) {
+func (cs *commandService) LaunchShell(req *CreateGeneric) (*shellv1.Shell, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeShell, model.JobTypeShell, req)
+	cmd, err := cs.createGenericCommand(model.TaskTypeShell, model.JobTypeShell, req)
 	if err != nil {
 		return nil, err
 	}

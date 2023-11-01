@@ -7,6 +7,7 @@ import (
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
@@ -71,7 +72,6 @@ type CreateGeneric struct {
 }
 
 func commandFromSnapshot(
-	ctx context.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
 	snapshot *CommandSnapshot,
@@ -99,19 +99,13 @@ func commandFromSnapshot(
 			"taskID":    taskID,
 		}),
 	}
-	return cmd, cmd.startCmd(ctx)
+	return cmd, cmd.startCmd(context.TODO())
 }
 
 // start starts the command & its respective allocation. Once started, it persists to the db.
 func (c *command) startCmd(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
-	if !c.restored {
-		if err := db.Bun().RunInTx(ctx, nil, c.registerJobAndTask); err != nil {
-			return err
-		}
-	}
 
 	priorityChange := func(priority int) error {
 		return c.setNTSCPriority(priority, false)
@@ -122,10 +116,19 @@ func (c *command) startCmd(ctx context.Context) error {
 
 	c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 
+	if !c.restored {
+		if err := db.Bun().RunInTx(ctx, nil, c.registerJobAndTask); err != nil {
+			return err
+		}
+		if err := c.persistAndEvictContextDirectoryFromMemory(); err != nil {
+			return err
+		}
+	}
+
 	priority := c.Config.Resources.Priority
 	if priority != nil {
 		if err := c.setNTSCPriority(*priority, true); err != nil {
-			return fmt.Errorf("setting priority of task %v: %w", c.taskID, err)
+			return errors.Wrapf(err, "setting priority of task %v", c.taskID)
 		}
 	}
 
@@ -155,7 +158,7 @@ func (c *command) startCmd(ctx context.Context) error {
 			IdleTimeout:         idleWatcherConfig,
 			Restore:             c.restored,
 			ProxyTLS:            c.TaskType == model.TaskTypeNotebook,
-		}, c.db, c.rm, c.GenericCommandSpec, func(ae *task.AllocationExited) { c.onExit(ctx, ae) })
+		}, c.db, c.rm, c.GenericCommandSpec, func(ae *task.AllocationExited) { c.onExit(context.TODO(), ae) })
 	if err != nil {
 		return err
 	}
@@ -163,7 +166,7 @@ func (c *command) startCmd(ctx context.Context) error {
 	// Once the command is persisted to the dbs & allocation starts, register it with the local job service.
 	jobservice.DefaultService.RegisterJob(c.jobID, c)
 
-	if err := c.snapshotAndPersist(ctx); err != nil {
+	if err := c.persist(); err != nil {
 		c.syslog.WithError(err).Warnf("command persist failure")
 	}
 	return nil
@@ -189,23 +192,26 @@ func (c *command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 	}); err != nil {
 		return fmt.Errorf("persisting task %v: %w", c.taskID, err)
 	}
+	return nil
+}
 
+func (c *command) persistAndEvictContextDirectoryFromMemory() error {
 	if c.contextDirectory == nil {
 		c.contextDirectory = make([]byte, 0)
 	}
 
-	if _, err := tx.NewInsert().Model(&model.TaskContextDirectory{
+	if _, err := db.Bun().NewInsert().Model(&model.TaskContextDirectory{
 		TaskID:           c.taskID,
 		ContextDirectory: c.contextDirectory,
-	}).Exec(ctx); err != nil {
+	}).Exec(context.TODO()); err != nil {
 		return fmt.Errorf("persisting context directory files: %w", err)
 	}
+
 	c.contextDirectory = nil
 	return nil
 }
 
-// snapshotAndPersist turns the command into a CommandSnapshot (see command/models.go) & persists that to the db.
-func (c *command) snapshotAndPersist(ctx context.Context) error {
+func (c *command) persist() error {
 	snapshot := &CommandSnapshot{
 		TaskID:             c.taskID,
 		RegisteredTime:     c.registeredTime,
@@ -214,7 +220,7 @@ func (c *command) snapshotAndPersist(ctx context.Context) error {
 	}
 	_, err := db.Bun().NewInsert().Model(snapshot).
 		On("CONFLICT (task_id) DO UPDATE").
-		Exec(ctx)
+		Exec(context.TODO())
 	return err
 }
 
@@ -252,8 +258,7 @@ func (c *command) garbageCollect(ctx context.Context) {
 	}
 
 	if err := user.DeleteSessionByToken(ctx, c.GenericCommandSpec.Base.UserSessionToken); err != nil {
-		c.syslog.WithError(err).Errorf(
-			"failure to delete user session for task: %v", c.taskID)
+		c.syslog.WithError(err).Errorf("failure to delete user session for task: %v", c.taskID)
 	}
 
 	jobservice.DefaultService.UnregisterJob(c.jobID)

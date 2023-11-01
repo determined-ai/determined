@@ -189,7 +189,7 @@ func CreateMockGenericReq(t *testing.T, pgDB *db.PgDB) *CreateGeneric {
 }
 
 func launchCommand(ctx context.Context, t *testing.T, db *db.PgDB) *commandv1.Command {
-	cmd, err := DefaultCmdService.LaunchCommand(ctx, CreateMockGenericReq(t, db))
+	cmd, err := DefaultCmdService.LaunchCommand(CreateMockGenericReq(t, db))
 	require.NoError(t, err)
 	require.NotNil(t, cmd)
 	require.NotNil(t, DefaultCmdService.commands[model.TaskID(cmd.Id)])
@@ -197,7 +197,7 @@ func launchCommand(ctx context.Context, t *testing.T, db *db.PgDB) *commandv1.Co
 }
 
 func launchNotebook(ctx context.Context, t *testing.T, db *db.PgDB) *notebookv1.Notebook {
-	notebook, err := DefaultCmdService.LaunchNotebook(ctx, CreateMockGenericReq(t, db))
+	notebook, err := DefaultCmdService.LaunchNotebook(CreateMockGenericReq(t, db))
 	require.NoError(t, err)
 	require.NotNil(t, notebook)
 	require.NotNil(t, DefaultCmdService.commands[model.TaskID(notebook.Id)])
@@ -205,7 +205,7 @@ func launchNotebook(ctx context.Context, t *testing.T, db *db.PgDB) *notebookv1.
 }
 
 func launchShell(ctx context.Context, t *testing.T, db *db.PgDB) *shellv1.Shell {
-	shell, err := DefaultCmdService.LaunchShell(ctx, CreateMockGenericReq(t, db))
+	shell, err := DefaultCmdService.LaunchShell(CreateMockGenericReq(t, db))
 	require.NoError(t, err)
 	require.NotNil(t, shell)
 	require.NotNil(t, DefaultCmdService.commands[model.TaskID(shell.Id)])
@@ -213,7 +213,7 @@ func launchShell(ctx context.Context, t *testing.T, db *db.PgDB) *shellv1.Shell 
 }
 
 func launchTensorboard(ctx context.Context, t *testing.T, db *db.PgDB) *tensorboardv1.Tensorboard {
-	tensorboard, err := DefaultCmdService.LaunchTensorboard(ctx, CreateMockGenericReq(t, db))
+	tensorboard, err := DefaultCmdService.LaunchTensorboard(CreateMockGenericReq(t, db))
 	require.NoError(t, err)
 	require.NotNil(t, tensorboard)
 	require.NotNil(t, DefaultCmdService.commands[model.TaskID(tensorboard.Id)])

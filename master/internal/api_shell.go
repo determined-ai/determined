@@ -261,7 +261,7 @@ func (a *apiServer) LaunchShell(
 	launchReq.Spec.Keys = &keys
 
 	// Launch a Shell.
-	shell, err := command.DefaultCmdService.LaunchShell(ctx, launchReq)
+	shell, err := command.DefaultCmdService.LaunchShell(launchReq)
 	if err != nil {
 		return nil, err
 	}

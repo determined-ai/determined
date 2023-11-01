@@ -74,7 +74,7 @@ func TestCanGetNTSC(t *testing.T) {
 	invalidID := "non-existing"
 
 	// Notebooks.
-	nb, _ := command.DefaultCmdService.LaunchNotebook(ctx, mockGenericReq(t, api.m.db))
+	nb, _ := command.DefaultCmdService.LaunchNotebook(mockGenericReq(t, api.m.db))
 
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("notebook", invalidID, true), err)
@@ -83,7 +83,7 @@ func TestCanGetNTSC(t *testing.T) {
 	require.Equal(t, apiPkg.NotFoundErrs("notebook", nb.Id, true), err)
 
 	// Commands.
-	cmd, _ := command.DefaultCmdService.LaunchCommand(ctx, mockGenericReq(t, api.m.db))
+	cmd, _ := command.DefaultCmdService.LaunchCommand(mockGenericReq(t, api.m.db))
 
 	_, err = api.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("command", invalidID, true), err)
@@ -92,7 +92,7 @@ func TestCanGetNTSC(t *testing.T) {
 	require.Equal(t, apiPkg.NotFoundErrs("command", cmd.Id, true), err)
 
 	// Shells.
-	shell, _ := command.DefaultCmdService.LaunchShell(ctx, mockGenericReq(t, api.m.db))
+	shell, _ := command.DefaultCmdService.LaunchShell(mockGenericReq(t, api.m.db))
 
 	_, err = api.GetShell(ctx, &apiv1.GetShellRequest{ShellId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("shell", invalidID, true), err)
@@ -105,7 +105,7 @@ func TestCanGetNTSC(t *testing.T) {
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 
-	tb, _ := command.DefaultCmdService.LaunchTensorboard(ctx, mockGenericReq(t, api.m.db))
+	tb, _ := command.DefaultCmdService.LaunchTensorboard(mockGenericReq(t, api.m.db))
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("tensorboard", invalidID, true), err)
@@ -156,17 +156,17 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	).Times(3)
 
 	// Notebooks.
-	nb, _ := command.DefaultCmdService.LaunchNotebook(ctx, mockGenericReq(t, api.m.db))
+	nb, _ := command.DefaultCmdService.LaunchNotebook(mockGenericReq(t, api.m.db))
 	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: nb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Commands.
-	cmd, _ := command.DefaultCmdService.LaunchCommand(ctx, mockGenericReq(t, api.m.db))
+	cmd, _ := command.DefaultCmdService.LaunchCommand(mockGenericReq(t, api.m.db))
 	_, err = api.KillCommand(ctx, &apiv1.KillCommandRequest{CommandId: cmd.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Shells.
-	shell, _ := command.DefaultCmdService.LaunchShell(ctx, mockGenericReq(t, api.m.db))
+	shell, _ := command.DefaultCmdService.LaunchShell(mockGenericReq(t, api.m.db))
 	_, err = api.KillShell(ctx, &apiv1.KillShellRequest{ShellId: shell.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
@@ -174,7 +174,7 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Once()
-	tb, _ := command.DefaultCmdService.LaunchTensorboard(ctx, mockGenericReq(t, api.m.db))
+	tb, _ := command.DefaultCmdService.LaunchTensorboard(mockGenericReq(t, api.m.db))
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: tb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
@@ -218,22 +218,22 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	).Times(4)
 
 	// Notebooks.
-	nb, _ := command.DefaultCmdService.LaunchNotebook(ctx, mockGenericReq(t, api.m.db))
+	nb, _ := command.DefaultCmdService.LaunchNotebook(mockGenericReq(t, api.m.db))
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: nb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Commands.
-	cmd, _ := command.DefaultCmdService.LaunchCommand(ctx, mockGenericReq(t, api.m.db))
+	cmd, _ := command.DefaultCmdService.LaunchCommand(mockGenericReq(t, api.m.db))
 	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: cmd.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Shells.
-	shell, _ := command.DefaultCmdService.LaunchShell(ctx, mockGenericReq(t, api.m.db))
+	shell, _ := command.DefaultCmdService.LaunchShell(mockGenericReq(t, api.m.db))
 	_, err = api.SetShellPriority(ctx, &apiv1.SetShellPriorityRequest{ShellId: shell.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Tensorboards.
-	tb, _ := command.DefaultCmdService.LaunchTensorboard(ctx, mockGenericReq(t, api.m.db))
+	tb, _ := command.DefaultCmdService.LaunchTensorboard(mockGenericReq(t, api.m.db))
 	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{TensorboardId: tb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 

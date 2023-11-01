@@ -397,7 +397,7 @@ func (a *apiServer) LaunchCommand(
 	}
 
 	// Launch a command.
-	cmd, err := command.DefaultCmdService.LaunchCommand(ctx, launchReq)
+	cmd, err := command.DefaultCmdService.LaunchCommand(launchReq)
 	if err != nil {
 		return nil, err
 	}

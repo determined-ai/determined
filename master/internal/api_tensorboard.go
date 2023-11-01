@@ -432,7 +432,7 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	// Launch a TensorBoard.
-	tensorboard, err := command.DefaultCmdService.LaunchTensorboard(ctx, launchReq)
+	tensorboard, err := command.DefaultCmdService.LaunchTensorboard(launchReq)
 	if err != nil {
 		return nil, err
 	}

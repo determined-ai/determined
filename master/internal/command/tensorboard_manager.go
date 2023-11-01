@@ -2,7 +2,6 @@
 package command
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -13,14 +12,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
-func (cs *commandService) LaunchTensorboard(
-	ctx context.Context,
-	req *CreateGeneric,
-) (*tensorboardv1.Tensorboard, error) {
+func (cs *commandService) LaunchTensorboard(req *CreateGeneric) (*tensorboardv1.Tensorboard, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeTensorboard, model.JobTypeTensorboard, req)
+	cmd, err := cs.createGenericCommand(model.TaskTypeTensorboard, model.JobTypeTensorboard, req)
 	if err != nil {
 		return nil, err
 	}

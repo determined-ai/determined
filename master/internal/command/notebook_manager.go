@@ -1,7 +1,6 @@
 package command
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -12,11 +11,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
 
-func (cs *commandService) LaunchNotebook(ctx context.Context, req *CreateGeneric) (*notebookv1.Notebook, error) {
+func (cs *commandService) LaunchNotebook(req *CreateGeneric) (*notebookv1.Notebook, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	cmd, err := cs.createGenericCommand(ctx, model.TaskTypeNotebook, model.JobTypeNotebook, req)
+	cmd, err := cs.createGenericCommand(model.TaskTypeNotebook, model.JobTypeNotebook, req)
 	if err != nil {
 		return nil, err
 	}

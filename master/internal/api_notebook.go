@@ -330,7 +330,7 @@ func (a *apiServer) LaunchNotebook(
 	}
 
 	// Launch a Notebook.
-	notebook, err := command.DefaultCmdService.LaunchNotebook(ctx, launchReq)
+	notebook, err := command.DefaultCmdService.LaunchNotebook(launchReq)
 	if err != nil {
 		return nil, err
 	}

@@ -35,6 +35,7 @@ func newCommandService() *commandService {
 	}
 }
 
+// TODO CAROLINA: pass in the CommandService, and export the struct.
 // InitCommandService starts the global command service singleton.
 func (cs *commandService) InitCommandService(ctx context.Context, db *db.PgDB, rm rm.ResourceManager) {
 	cs.mu.Lock()
@@ -58,13 +59,13 @@ func (cs *commandService) RestoreAllCommands(
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").
 		Where("allocation.state != ?", model.AllocationStateTerminated).
-		Scan(context.TODO())
+		Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to remake commands: %w", err)
 	}
 
 	for i := range snapshots {
-		cmd, err := commandFromSnapshot(ctx, cs.db, cs.rm, &snapshots[i])
+		cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
 		if err == nil {
 			return err
 		}
@@ -77,7 +78,6 @@ func (cs *commandService) RestoreAllCommands(
 
 // createGenericCommand creates NTSC commands and persists them to the database.
 func (cs *commandService) createGenericCommand(
-	ctx context.Context,
 	taskType model.TaskType,
 	jobType model.JobType,
 	req *CreateGeneric,
@@ -111,7 +111,7 @@ func (cs *commandService) createGenericCommand(
 	// Add it to the registry.
 	cs.commands[cmd.taskID] = cmd
 
-	return cmd, cmd.startCmd(ctx)
+	return cmd, cmd.startCmd(context.TODO()) // TODO CAROLINA: feed in a TODO() into any start methods.
 }
 
 func (cs *commandService) unregisterCommand(id model.TaskID) {
