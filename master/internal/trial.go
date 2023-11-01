@@ -381,10 +381,10 @@ func (t *trial) maybeAllocateTask() error {
 		return err
 	}
 
-	restoredAllocation, err := t.maybeRestoreAllocation()
-	if err != nil {
+	switch restoredAllocation, err := t.maybeRestoreAllocation(); {
+	case err != nil:
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
-	} else if restoredAllocation != nil {
+	case restoredAllocation != nil:
 		specifier, err := t.buildTaskSpecifier()
 		if err != nil {
 			return err
@@ -423,7 +423,7 @@ func (t *trial) maybeAllocateTask() error {
 		}
 		t.allocationID = &ar.AllocationID
 		return nil
-	} else if restoredAllocation == nil && len(blockedNodes) > 0 {
+	case restoredAllocation == nil && len(blockedNodes) > 0:
 		if err := t.checkResourcePoolRemainingCapacity(); err != nil {
 			return err
 		}
