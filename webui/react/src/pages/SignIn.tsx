@@ -140,7 +140,11 @@ const SignIn: React.FC = () => {
                       <Button type="primary">
                         <a
                           className={css.ssoButton}
-                          href={samlUrl(ssoProvider.ssoUrl, ssoQueries.toString())}>
+                          href={
+                            ssoProvider.type === 'OIDC'
+                              ? ssoProvider.ssoUrl
+                              : samlUrl(ssoProvider.ssoUrl, ssoQueries.toString())
+                          }>
                           <div className={css.ssoProviderInfo}>
                             {logo}
                             <span>

@@ -9405,6 +9405,12 @@ export interface V1SSOProvider {
      * @memberof V1SSOProvider
      */
     ssoUrl: string;
+    /**
+     * The type of SSO (such as SAML, OIDC).
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    type: string;
 }
 /**
  * Start a trial.
