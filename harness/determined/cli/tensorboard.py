@@ -86,7 +86,7 @@ def open_tensorboard(args: Namespace) -> None:
 
 
 @authentication.required
-def delete_tensorboard(args: Namespace) -> None:
+def delete_tensorboard_files(args: Namespace) -> None:
     body = bindings.v1DeleteTensorboardRequest(
         experimentId=args.experiment_id,
     )
@@ -216,8 +216,8 @@ args_description: ArgsDescription = [
                 ],
             ),
             Cmd(
-                "delete",
-                delete_tensorboard,
+                "delete-files",
+                delete_tensorboard_files,
                 "delete TensorBoard files associate with the proived experiment ID",
                 [
                     Arg("experiment_id", type=int, help="Experiment ID"),
