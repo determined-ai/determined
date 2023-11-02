@@ -292,21 +292,22 @@ regex. The pattern regex is matched line by line against logs reported by the tr
 actions can be taken
 
 -  ``exclude_node``: When a trial fails and restarts according to its ``max_restarts`` policy, if
-   any nodes reported a log that matched the pattern then that node is excluded from scheduling.
-   Only the trial will be prevented from scheduling on a node. This is useful for allowing trials to
-   reschedule and avoid nodes that may be experiencing a certain hardware issues like uncorrectable
-   gpu ECC errors.
+   any nodes reported a log that matched the pattern then those nodes are excluded from scheduling
+   for all the restart attempts of that trial. Only the failed trial will be prevented from
+   scheduling on those nodes. This is useful for allowing trials to reschedule and avoid nodes that
+   may be experiencing a certain hardware issues like uncorrectable gpu ECC errors.
 
    This option is currently unsupported on pbs and will take no effect.
 
-   For the agent resource manager, if a trial has excluded nodes enough nodes to the point where it
-   is unschedulable the trial will fail if the master config option ``launch_error`` is set to true
-   (default is true).
+   For the agent resource manager, if a trial has excluded enough nodes to the point where it is
+   unschedulable, it will fail if the master config option ``launch_error`` is set to true (default
+   is true).
 
 -  ``cancel_retries``: If a trial reports a log that matches the pattern, then the trial will not
    restart even if it has ``max_restarts`` left. This is useful for avoiding using resources
    retrying a trial that encounters certain failures that won't be fixed by retrying the trial. One
-   example of this is a model too large causing a CUDA out of memory error.
+   example of this is a CUDA out-of-memory error caused by a model being too large to fit on
+   allocated hardware.
 
 An example of the configuration is shown below. This can also be specified on a cluster or resource
 pool level through task container defaults.
