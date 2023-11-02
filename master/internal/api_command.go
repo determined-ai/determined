@@ -193,7 +193,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
 	var token string
-	if extConfig.JwtKey != "" {
+	if extConfig.Enabled() {
 		token, err = grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
 			return nil, launchWarnings, status.Errorf(codes.Internal,

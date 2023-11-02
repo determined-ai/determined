@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -120,9 +121,10 @@ func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Ce
 	if err != nil {
 		return err
 	}
+	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
 	handler := func(c echo.Context) error {
 		request := c.Request()
-		if cookie, err := c.Cookie("det_jwt"); err == nil {
+		if cookie, err := c.Cookie("det_jwt"); extConfig.Enabled() && err == nil {
 			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
 		}
 		if c.Request().Header.Get("Authorization") == "" {
