@@ -54,7 +54,9 @@ func GenerateStreamTrials() StreamTrialsData {
 	}
 }
 
-type trial struct {
+// Trial contains a subset of actual determined trial fields and is used for testing purposes
+// without having to import anything from determined/internal.
+type Trial struct {
 	bun.BaseModel `bun:"table:trials"`
 	ID            int            `bun:"id,pk"`
 	ExperimentID  int            `bun:"experiment_id"`
@@ -66,55 +68,14 @@ type trial struct {
 
 // ModTrial is a convenience function for modifying rows of a trial.
 func ModTrial(
-	ctx context.Context, trialID, experimentID int, changeStart bool,
-	changeSeq bool, changeState string,
+	ctx context.Context, newTrial Trial,
 ) error {
-	trials, err := queryTrials(ctx)
-	if err != nil {
-		return err
-	}
-	startTime := time.Time{}
-	seq := int64(0)
-	maxSeq := int64(0)
-	state := model.State("")
-	for _, t := range trials {
-		if t.ID == trialID {
-			startTime = t.StartTime
-			seq = t.Seq
-			state = t.State
-		}
-		if t.Seq > maxSeq {
-			maxSeq = t.Seq
-		}
-	}
-
-	if changeStart {
-		startTime = time.Now()
-	}
-	if changeSeq {
-		seq = maxSeq + 1
-	}
-	if changeState != "" {
-		state = model.State(changeState)
-	}
-
-	_, err = db.Bun().NewUpdate().Model(&trial{
-		ID:           trialID,
-		ExperimentID: experimentID,
-		HParams:      nil,
-		State:        state,
-		StartTime:    startTime,
-		Seq:          seq,
-	}).Where("id = ?", trialID).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID).Exec(ctx)
+	return err
 }
 
-func queryTrials(ctx context.Context) ([]trial, error) {
-	var trials []trial
+func queryTrials(ctx context.Context) ([]Trial, error) {
+	var trials []Trial
 	err := db.Bun().NewSelect().
 		Model(&trials).
 		Scan(ctx, &trials)
@@ -126,10 +87,7 @@ func queryTrials(ctx context.Context) ([]trial, error) {
 
 // AddTrial adds everything necessary to create a new trial under the given experimentID.
 func AddTrial(ctx context.Context, experimentID int) error {
-	var trials []trial
-	err := db.Bun().NewSelect().
-		Model(&trials).
-		Scan(ctx, &trials)
+	trials, err := queryTrials(ctx)
 	if err != nil {
 		return err
 	}
@@ -162,7 +120,7 @@ func AddTrial(ctx context.Context, experimentID int) error {
 	startTime := time.Now()
 	// Insert into tasks, trials, and task id trial id
 	_, err = db.Bun().NewInsert().Model(
-		&trial{
+		&Trial{
 			ID:           int(nextSeq + 1),
 			ExperimentID: experimentID,
 			HParams:      map[string]any{},
@@ -186,20 +144,22 @@ func AddTrial(ctx context.Context, experimentID int) error {
 	return nil
 }
 
-// AddExperiment adds everything necessary to add an experiment to the db.
-func AddExperiment(pgDB *db.PgDB) (int, error) {
-	type experiment struct {
-		bun.BaseModel        `bun:"table:experiments"`
-		ID                   int                  `bun:"id, pk"`
-		JobID                string               `bun:"job_id"`
-		State                string               `bun:"state"`
-		Notes                string               `bun:"notes"`
-		Config               expconf.LegacyConfig `bun:"config"`
-		ModelDefinitionBytes []byte               `bun:"model_definition"`
-		StartTime            time.Time            `bun:"start_time"`
-		OwnerID              *model.UserID        `bun:"owner_id"`
-	}
+// Experiment contains a subset of actual determined experiment fields and is used to test
+// streaming code without importing anything from determined/internal.
+type Experiment struct {
+	bun.BaseModel        `bun:"table:experiments"`
+	ID                   int                  `bun:"id, pk"`
+	JobID                string               `bun:"job_id"`
+	State                string               `bun:"state"`
+	Notes                string               `bun:"notes"`
+	Config               expconf.LegacyConfig `bun:"config"`
+	ModelDefinitionBytes []byte               `bun:"model_definition"`
+	StartTime            time.Time            `bun:"start_time"`
+	OwnerID              *model.UserID        `bun:"owner_id"`
+}
 
+// AddExperiment adds everything necessary to add an experiment to the db.
+func AddExperiment(pgDB *db.PgDB, experiment *Experiment) (int, error) {
 	ctx := context.TODO()
 	var ids []int
 	err := db.Bun().NewSelect().
@@ -224,17 +184,22 @@ func AddExperiment(pgDB *db.PgDB) (int, error) {
 		return 0, err
 	}
 
-	_, err = db.Bun().NewInsert().Model(
-		&experiment{
-			ID:                   ids[0] + 1,
-			JobID:                newJobID,
-			State:                "ERROR",
-			Notes:                "",
-			Config:               expconf.LegacyConfig{},
-			ModelDefinitionBytes: nil,
-			StartTime:            time.Now(),
-			OwnerID:              &ownerID,
-		}).Exec(ctx)
+	// we have to control id and jobId generation
+	experiment.ID = ids[0] + 1
+	experiment.JobID = newJobID
+
+	_, err = db.Bun().NewInsert().Model(experiment).Exec(ctx)
+	// XXX (eliu): example experiment:
+	// Experiment{
+	//			ID:                   ids[0] + 1,
+	//			JobID:                newJobID,
+	//			State:                "ERROR",
+	//			Notes:                "",
+	//			Config:               expconf.LegacyConfig{},
+	//			ModelDefinitionBytes: nil,
+	//			StartTime:            time.Now(),
+	//			OwnerID:              &ownerID,
+	//		}
 
 	if err != nil {
 		return 0, err
