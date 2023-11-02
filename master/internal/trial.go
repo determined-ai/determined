@@ -623,10 +623,6 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				InformationalReason: "trial exceeded max restarts",
 			})
 		}
-
-		// TODO(DET-9897) redo capacity check when we decide to allocate again.
-		// Since we could have excluded nodes.
-
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
