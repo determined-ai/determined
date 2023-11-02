@@ -11,12 +11,14 @@ import determined as det
 from determined import profiler, pytorch, util
 from determined.horovod import hvd
 
+logger = logging.getLogger("determined.pytorch")
+
 # Apex is included only for GPU trials.
 try:
     import apex
 except ImportError:  # pragma: no cover
     if torch.cuda.is_available():
-        logging.warning("Failed to import apex.")
+        logger.warning("Failed to import apex.")
     pass
 
 # AMP is only available in PyTorch 1.6+
@@ -27,7 +29,7 @@ try:
 except ImportError:  # pragma: no cover
     HAVE_AMP = False
     if torch.cuda.is_available():
-        logging.warning("PyTorch AMP is unavailable.")
+        logger.warning("PyTorch AMP is unavailable.")
     pass
 
 
@@ -180,7 +182,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 "configuration 'hyperparameters' section.".format(name)
             )
         if name == "global_batch_size":
-            logging.warning(
+            logger.warning(
                 "Please use `context.get_per_slot_batch_size()` and "
                 "`context.get_global_batch_size()` instead of accessing "
                 "`global_batch_size` directly."
@@ -209,7 +211,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         if not isinstance(stop_requested, bool):
             raise AssertionError("stop_requested must be a boolean")
 
-        logging.info(
+        logger.info(
             "A trial stoppage has requested. The trial will be stopped "
             "at the end of the current step."
         )
@@ -269,7 +271,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             # should be manually wrapped in an autocast context.
             if type(output) not in warned_types:
                 warned_types.add(type(output))
-                logging.warn(
+                logger.warn(
                     f"Unexpected type '{type(output).__name__}' outputted by model in experimental "
                     "AMP mode."
                 )
@@ -362,7 +364,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                     backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
                     compression=hvd.Compression.fp16 if fp16_compression else hvd.Compression.none,
                 )
-                logging.debug(
+                logger.debug(
                     "Initialized optimizer for distributed and optimized parallel training."
                 )
 
@@ -667,7 +669,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             else:
                 models = self._wrapped_models[models]
 
-        logging.info(f"Enabling mixed precision training with opt_level: {opt_level}.")
+        logger.info(f"Enabling mixed precision training with opt_level: {opt_level}.")
         models, optimizers = apex.amp.initialize(
             models=models,
             optimizers=optimizers,

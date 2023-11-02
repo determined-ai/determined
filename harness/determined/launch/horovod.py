@@ -18,6 +18,8 @@ from determined.common import api
 from determined.common.api import certs
 from determined.constants import DTRAIN_SSH_PORT
 
+logger = logging.getLogger("determined.launch.horovod")
+
 
 def create_sshd_worker_cmd(
     allocation_id: str, num_slot_ids: int, debug: bool = False
@@ -140,7 +142,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
             info.allocation_id, len(info.slot_ids), debug=debug
         )
 
-        logging.debug(
+        logger.debug(
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
@@ -184,7 +186,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     worker_wrapper_cmd = create_worker_wrapper_cmd(info.allocation_id)
 
-    logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
+    logger.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
 
     os.environ["USE_HOROVOD"] = "1"
 

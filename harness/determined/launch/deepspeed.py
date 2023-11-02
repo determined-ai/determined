@@ -27,6 +27,8 @@ from determined.common.api import certs
 hostfile_path = None
 deepspeed_version = version.parse(deepspeed.__version__)
 
+logger = logging.getLogger("determined.launch.deepspeed")
+
 
 def is_using_cuda() -> bool:
     val = os.getenv("CUDA_VISIBLE_DEVICES")
@@ -157,7 +159,7 @@ def filter_env_vars(env: Mapping[str, str]) -> Dict[str, str]:
     def should_keep(k: str, v: str) -> bool:
         if not any(x.match(k) for x in excludes):
             return True
-        logging.debug(
+        logger.debug(
             f"Excluding environment variable {k}={v} from training script environment, "
             "since it is likely unsafe to share between workers."
         )
@@ -195,7 +197,7 @@ def create_deepspeed_env_file() -> None:
             if "\n" not in line:
                 f.write(f"{line}\n")
             else:
-                logging.warning(
+                logger.warning(
                     f"Excluding environment variable {k} because it contains a newline character."
                 )
 
@@ -299,7 +301,7 @@ def main(script: List[str]) -> int:
         # spun up by pdsh.
         pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
 
-        logging.debug(
+        logger.debug(
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
@@ -328,7 +330,7 @@ def main(script: List[str]) -> int:
 
     harness_cmd = script
 
-    logging.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
+    logger.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
 
     full_cmd = pid_server_cmd + cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 

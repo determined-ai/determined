@@ -9,6 +9,8 @@ import requests
 from determined import errors
 from determined.common import storage, util
 
+logger = logging.getLogger("determined.common.storage.s3")
+
 
 def normalize_prefix(prefix: Optional[str]) -> str:
     new_prefix = ""
@@ -62,7 +64,7 @@ class S3StorageManager(storage.CloudStorageManager):
             else:
                 if r.headers.get("Server", "").lower() == "minio":
                     self._use_minio_workaround = True
-                    logging.info(
+                    logger.info(
                         "MinIO backend detected.  To work around a boto3 bug, empty directories"
                         "will not be uploaded in checkpoints."
                     )
@@ -76,11 +78,11 @@ class S3StorageManager(storage.CloudStorageManager):
     ) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
-        logging.info(f"Uploading to s3: prefix={prefix}")
+        logger.info(f"Uploading to s3: prefix={prefix}")
         upload_paths = paths if paths is not None else self._list_directory(src)
         for rel_path in sorted(upload_paths):
             key_name = f"{prefix}/{rel_path}"
-            logging.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
+            logger.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
 
             if rel_path.endswith("/"):
                 # Create empty S3 keys for each subdirectory to mimic what the S3 console does to
@@ -109,7 +111,7 @@ class S3StorageManager(storage.CloudStorageManager):
 
         dst = os.fspath(dst)
         prefix = self.get_storage_prefix(src)
-        logging.info(f"Downloading {prefix} from S3")
+        logger.info(f"Downloading {prefix} from S3")
         found = False
 
         try:
@@ -125,7 +127,7 @@ class S3StorageManager(storage.CloudStorageManager):
                 dst_dir = os.path.dirname(_dst)
                 os.makedirs(dst_dir, exist_ok=True)
 
-                logging.debug(f"Downloading s3://{self.bucket_name}/{obj.key} to {_dst}")
+                logger.debug(f"Downloading s3://{self.bucket_name}/{obj.key} to {_dst}")
 
                 # Only create empty directory for keys that end with "/".
                 # See `upload` method for more context.
@@ -151,7 +153,7 @@ class S3StorageManager(storage.CloudStorageManager):
     @util.preserve_random_state
     def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         prefix = self.get_storage_prefix(tgt)
-        logging.info(f"Deleting {prefix} from S3")
+        logger.info(f"Deleting {prefix} from S3")
 
         objects = {obj.key: obj.size for obj in self.bucket.objects.filter(Prefix=prefix)}
 
@@ -165,7 +167,7 @@ class S3StorageManager(storage.CloudStorageManager):
 
         # S3 delete_objects has a limit of 1000 objects.
         for chunk in util.chunks([{"Key": o} for o in objects], 1000):
-            logging.debug(f"Deleting {len(chunk)} objects from S3")
+            logger.debug(f"Deleting {len(chunk)} objects from S3")
             self.bucket.delete_objects(Delete={"Objects": chunk})
 
         return resources

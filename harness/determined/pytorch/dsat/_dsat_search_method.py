@@ -18,6 +18,8 @@ from determined.experimental.client import create_experiment
 from determined.pytorch.dsat import _defaults, _utils
 from determined.util import merge_dicts
 
+logger = logging.getLogger("determined.pytorch")
+
 
 class DSATTrial:
     """Encapsulation of DeepSpeed Autotune Trials.
@@ -281,7 +283,7 @@ class DSATTrialTracker:
         # Verify that the given trial was not previously completed.
         for other_trial in self.completed_trials:
             if trial.hparams == other_trial.hparams:
-                logging.warning(
+                logger.warning(
                     f"Skipping attempt to queue Trial identical to {other_trial.request_id}"
                 )
         self._all_trials_dict[trial.request_id] = trial
@@ -604,13 +606,9 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
 
         if isinstance(last_trial, DSATModelProfileInfoTrial):
-            logging.info(
-                f"Approx. max mbs per stage: {self.trial_tracker.approx_max_mbs_per_stage}"
-            )
-            logging.info(
-                f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}"
-            )
-            logging.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
+            logger.info(f"Approx. max mbs per stage: {self.trial_tracker.approx_max_mbs_per_stage}")
+            logger.info(f"Approx. GPU memory per stage: {self.trial_tracker.mem_per_gpu_per_stage}")
+            logger.info(f"Total GPU memory: {self.trial_tracker.gpu_mem}")
 
         if not self.trial_tracker.max_trials_queued and not self.should_shutdown():
             new_trials = self.get_trials_after_validation_completed(
@@ -636,7 +634,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         new_ops_list: List["searcher.Operation"] = []
         if exited_reason != searcher.ExitedReason.ERRORED:
             # In case of INVALID_HP or USER_CANCELED, shut down the searcher.
-            logging.info(
+            logger.info(
                 f"Shutting down: unexpected early exit due to {exited_reason}"
                 f"\nLast trial: {last_trial}, request_id: {request_id}"
             )
@@ -699,7 +697,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 json.dump(self.trial_tracker.best_trial.metric, ds_metrics_f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
-        logging.info("Restoring searcher state from checkpoint.")
+        logger.info("Restoring searcher state from checkpoint.")
         with path.joinpath(self._tracker_ckpt_path).open("rb") as f:
             self.trial_tracker = cast(DSATTrialTracker, pickle.load(f))
         with path.joinpath(self._py_rand_ckpt_path).open("rb") as f:
@@ -716,17 +714,17 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
             self.trial_tracker.model_profile_info_trial is not None
             and self.trial_tracker.model_profile_info_trial.error
         ):
-            logging.info(
+            logger.info(
                 "Shutting down: error in model profile info Trial."
                 " You may need to specify a configuration which can successfully run with"
                 " `train_micro_batch_size_per_gpu = 1`."
             )
             return True
         if self.early_stopping_triggered():
-            logging.info("Shutting down: early stopping criteria met.")
+            logger.info("Shutting down: early stopping criteria met.")
             return True
         if self.trial_tracker.num_completed_trials >= self.trial_tracker.max_trials:
-            logging.info("Shutting down: all Trials completed.")
+            logger.info("Shutting down: all Trials completed.")
             return True
         return False
 
@@ -788,7 +786,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         new_trials = []
 
         if self.should_stop_lineage(last_trial):
-            logging.info(f"Killing trial {last_trial.request_id}")
+            logger.info(f"Killing trial {last_trial.request_id}")
             new_trials.append(self.get_random_trial())
         else:
             if last_trial.search_data is None:

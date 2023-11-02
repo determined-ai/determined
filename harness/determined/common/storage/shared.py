@@ -9,6 +9,9 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Union
 from determined import errors, util
 from determined.common import check, storage
 
+logger = logging.getLogger("determined.common.storage.shared")
+
+
 # Based on shutil.copytree and shutil._copytree (for Python 3.8). Compared to the original
 # implementation this code delays creating new directories during traversal, such that dir
 # is created only when (1) selector(dir)==True or (2) selector(dir/subdir/path)==True.
@@ -156,7 +159,7 @@ class SharedFSStorageManager(storage.StorageManager):
         configuration seems reasonable.
         """
         if selector is not None:
-            logging.warning(
+            logger.warning(
                 "Ignoring partial checkpoint download from shared_fs; all files will be directly "
                 "accessible from shared_fs."
             )
@@ -177,7 +180,7 @@ class SharedFSStorageManager(storage.StorageManager):
         storage_dir = os.path.join(self._base_path, tgt)
 
         if not os.path.exists(storage_dir):
-            logging.info(f"Storage directory does not exist: {storage_dir}")
+            logger.info(f"Storage directory does not exist: {storage_dir}")
             return {}
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
@@ -192,7 +195,7 @@ class SharedFSStorageManager(storage.StorageManager):
         for file_glob in globs:
             for path in glob.glob(f"{storage_dir}/{file_glob}", recursive=True):
                 if os.path.commonpath([storage_dir, os.path.normpath(path)]) != storage_dir:
-                    logging.warning(f"tried to delete path outside checkpoint dir {path}")
+                    logger.warning(f"tried to delete path outside checkpoint dir {path}")
                     continue
 
                 if os.path.isfile(path) or os.path.islink(path):

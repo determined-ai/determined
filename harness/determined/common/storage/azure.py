@@ -9,6 +9,9 @@ from determined.common import storage, util
 import posixpath  # isort:skip
 
 
+logger = logging.getLogger("determined.common.storage.azure")
+
+
 class AzureStorageManager(storage.CloudStorageManager):
     """
     Store and load checkpoints from Azure Blob Storage.
@@ -38,7 +41,7 @@ class AzureStorageManager(storage.CloudStorageManager):
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
     ) -> None:
         src = os.fspath(src)
-        logging.info(f"Uploading to Azure Blob Storage: {dst}")
+        logger.info(f"Uploading to Azure Blob Storage: {dst}")
         upload_paths = paths if paths is not None else self._list_directory(src)
         for rel_path in sorted(upload_paths):
             # Use posixpath so that we always use forward slashes, even on Windows.
@@ -48,11 +51,11 @@ class AzureStorageManager(storage.CloudStorageManager):
                 blob_dir, blob_base = posixpath.split(container_blob.rstrip("/"))
                 blob_base = f"{blob_base}/"
                 abs_path = "/dev/null"
-                logging.debug(f"Uploading blob empty {blob_base} to container {blob_dir}.")
+                logger.debug(f"Uploading blob empty {blob_base} to container {blob_dir}.")
             else:
                 blob_dir, blob_base = posixpath.split(container_blob)
                 abs_path = os.path.join(src, rel_path)
-                logging.debug(f"Uploading blob {blob_base} to container {blob_dir}.")
+                logger.debug(f"Uploading blob {blob_base} to container {blob_dir}.")
 
             self.client.put(blob_dir, blob_base, abs_path)
 
@@ -64,7 +67,7 @@ class AzureStorageManager(storage.CloudStorageManager):
         selector: Optional[storage.Selector] = None,
     ) -> None:
         dst = os.fspath(dst)
-        logging.info(f"Downloading {src} from Azure Blob Storage")
+        logger.info(f"Downloading {src} from Azure Blob Storage")
         found = False
         for blob in self.client.list_files(self.container, file_prefix=src):
             found = True
@@ -93,7 +96,7 @@ class AzureStorageManager(storage.CloudStorageManager):
     @util.preserve_random_state
     def delete(self, tgt: str, globs: List[str]) -> Dict[str, int]:
         storage_prefix = tgt
-        logging.info(f"Deleting {tgt} from Azure Blob Storage")
+        logger.info(f"Deleting {tgt} from Azure Blob Storage")
 
         objects = self.client.list_files(self.container, file_prefix=storage_prefix)
 

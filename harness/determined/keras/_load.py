@@ -8,6 +8,8 @@ from tensorflow.python.training.tracking.tracking import AutoTrackable
 import determined as det
 from determined import keras
 
+logger = logging.getLogger("determined.keras")
+
 
 def load_model_from_checkpoint_path(path: str, tags: Optional[List[str]] = None) -> AutoTrackable:
     """
@@ -32,7 +34,7 @@ def load_model_from_checkpoint_path(path: str, tags: Optional[List[str]] = None)
         with load_data_path.open() as f:
             load_data = json.load(f)
         if load_data["trial_type"] != "TFKerasTrial":
-            logging.warning(
+            logger.warning(
                 "Checkpoint does not appear to be a valid TFKerasTrial checkpoint, "
                 "continuing anyway..."
             )
@@ -50,7 +52,7 @@ def load_model_from_checkpoint_path(path: str, tags: Optional[List[str]] = None)
         save_format = metadata.get("format")
         is_keras = save_format not in ("saved_weights", "h5")
         if not is_tf or not is_keras:
-            logging.warning(
+            logger.warning(
                 "Checkpoint does not appear to be a valid TFKerasTrial checkpoint, "
                 "continuing anyway..."
             )

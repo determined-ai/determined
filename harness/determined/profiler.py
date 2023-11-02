@@ -15,7 +15,8 @@ from determined.common import api, check
 from determined.common.api import TrialProfilerMetricsBatch
 
 MAX_COLLECTION_SECONDS = 300
-LOG_NAMESPACE = "determined-profiler"
+
+logger = logging.getLogger("determined.profiler")
 
 
 class PynvmlWrapperError(Exception):
@@ -49,20 +50,18 @@ class PynvmlWrapper:
                 self._pynvml = pynvml
                 self._device_count = num_gpus
             except Exception as e:
-                logging.warning(
-                    f"{LOG_NAMESPACE}: pynvml is functional, but failed to pass functionality "
+                logger.warning(
+                    "pynvml is functional, but failed to pass functionality "
                     f"test due to exception. Not collecting GPU metrics. Exception details: {e}"
                 )
         except ModuleNotFoundError:
-            logging.info(f"{LOG_NAMESPACE}: pynvml not found. Not collecting GPU metrics")
+            logger.info("pynvml not found. Not collecting GPU metrics")
         except pynvml.NVMLError_LibraryNotFound:
-            logging.info(
-                f"{LOG_NAMESPACE}: pynvml LibraryNotFound error. Not collecting GPU metrics"
-            )
+            logger.info("pynvml LibraryNotFound error. Not collecting GPU metrics")
         except Exception as e:
-            logging.error(
-                f"{LOG_NAMESPACE}: unexpected error while trying to set up pynvml. Not "
-                f"collecting GPU metrics. Please report this error to "
+            logger.error(
+                "unexpected error while trying to set up pynvml. Not "
+                "collecting GPU metrics. Please report this error to "
                 f"https://github.com/determined-ai/determined as it should not be "
                 f"encountered by users. Error details: {e}"
             )
@@ -312,10 +311,10 @@ class ProfilerAgent:
                 self.master_url, self.trial_id
             )
             if self.disabled_due_to_preexisting_metrics and self.global_rank == 0:
-                logging.warning(
-                    f"{LOG_NAMESPACE}: ProfilerAgent is disabled because profiling data for "
-                    f"this trial already exists. No additional profiling data is generated "
-                    f"after a restart."
+                logger.warning(
+                    "ProfilerAgent is disabled because profiling data for "
+                    "this trial already exists. No additional profiling data is generated "
+                    "after a restart."
                 )
 
             # Set up timer thread to stop collecting after MAX_COLLECTION_SECONDS
@@ -790,11 +789,11 @@ class MetricsBatcherThread(threading.Thread):
                         self.metrics_batch.append(msr.metric_type, msr.metric_name, msr)
                     self.accumulating_measurements = {}
                 else:
-                    logging.fatal(
-                        f"ProfilerAgent.MetricsBatcherThread received a message "
+                    logger.fatal(
+                        "ProfilerAgent.MetricsBatcherThread received a message "
                         f"of unexpected type '{type(m)}' from the "
-                        f"inbound_queue. This should never happen - there must "
-                        f"be a bug in the code."
+                        "inbound_queue. This should never happen - there must "
+                        "be a bug in the code."
                     )
 
             # Timeout met.
@@ -1024,7 +1023,7 @@ class GpuUtilCollector:
             return measurements
 
         except Exception as e:
-            logging.warning(f"{LOG_NAMESPACE}: error while measuring GPU utilization: {e}")
+            logger.warning(f"error while measuring GPU utilization: {e}")
             return {}
 
 
@@ -1051,7 +1050,7 @@ class GpuMemoryCollector:
             return measurements
 
         except Exception as e:
-            logging.warning(f"{LOG_NAMESPACE}: error while measuring GPU memory: {e}")
+            logger.warning(f"error while measuring GPU memory: {e}")
             return {}
 
 

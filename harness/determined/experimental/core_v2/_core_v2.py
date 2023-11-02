@@ -11,7 +11,7 @@ from determined import core, experimental
 from determined.common import util
 from determined.experimental import core_v2
 
-logger = logging.getLogger("determined.experimental.core_v2")
+logger = logging.getLogger("determined.core")
 
 
 _context = None  # type: Optional[core.Context]

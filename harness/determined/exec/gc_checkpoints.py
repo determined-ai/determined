@@ -15,6 +15,8 @@ from determined import errors, tensorboard
 from determined.common import api, constants, storage, util
 from determined.common.api import bindings, certs
 
+logger = logging.getLogger("determined")
+
 
 def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> None:
     info = det.ClusterInfo._from_file()
@@ -56,18 +58,18 @@ def delete_checkpoints(
     """
     Delete some of the checkpoints associated with a single experiment.
     """
-    logging.info(f"Deleting {len(to_delete)} checkpoints")
+    logger.info(f"Deleting {len(to_delete)} checkpoints")
 
     storage_id_to_resources: Dict[str, Dict[str, int]] = {}
     for storage_id in to_delete:
         if not dry_run:
-            logging.info(f"Deleting checkpoint {storage_id}")
+            logger.info(f"Deleting checkpoint {storage_id}")
             try:
                 storage_id_to_resources[storage_id] = manager.delete(storage_id, globs)
             except errors.CheckpointNotFound as e:
-                logging.warn(e)
+                logger.warn(e)
         else:
-            logging.info(f"Dry run: deleting checkpoint {storage_id}")
+            logger.info(f"Dry run: deleting checkpoint {storage_id}")
 
     return storage_id_to_resources
 
@@ -77,14 +79,14 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
     Delete all Tensorboards associated with a single experiment.
     """
     if dry_run:
-        logging.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
+        logger.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
         return
 
     try:
         manager.delete()
     except errors.CheckpointNotFound as e:
-        logging.warn(e)
-    logging.info(f"Finished deleting Tensorboards for {manager.sync_path}")
+        logger.warn(e)
+    logger.info(f"Finished deleting Tensorboards for {manager.sync_path}")
 
 
 def json_file_arg(val: str) -> Any:
@@ -144,11 +146,11 @@ def main(argv: List[str]) -> None:
         level=args.log_level, format="%(asctime)s:%(module)s:%(levelname)s: %(message)s"
     )
 
-    logging.info(f"Determined checkpoint GC, version {det.__version__}")
+    logger.info(f"Determined checkpoint GC, version {det.__version__}")
 
     storage_config = args.storage_config
     masked_config = json.dumps(det.util.mask_checkpoint_storage(storage_config))
-    logging.info(f"Using checkpoint storage: {masked_config}")
+    logger.info(f"Using checkpoint storage: {masked_config}")
 
     storage_ids = [s.strip() for s in args.delete]
     globs = [s.strip() for s in args.globs]

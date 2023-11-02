@@ -68,12 +68,12 @@ class _PreemptionWatcher(threading.Thread):
             try:
                 self._should_preempt = self._get_preemption(0)
             except requests.Timeout:
-                logging.warning(
+                logger.warning(
                     "timeout during initial preemption API check (continuing):", exc_info=True
                 )
                 self._should_preempt = False
             except Exception:
-                logging.warning(
+                logger.warning(
                     "failure during initial preemption API check (continuing):", exc_info=True
                 )
                 self._should_preempt = False
@@ -88,11 +88,11 @@ class _PreemptionWatcher(threading.Thread):
             try:
                 self._should_preempt = self._get_preemption(60)
             except requests.Timeout:
-                logging.warning(
+                logger.warning(
                     "timeout communicating with preemption API (retrying):", exc_info=True
                 )
             except Exception:
-                logging.warning(
+                logger.warning(
                     "failure communicating with preemption API (retrying in 10s):", exc_info=True
                 )
                 time.sleep(10)

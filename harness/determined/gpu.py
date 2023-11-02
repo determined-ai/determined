@@ -4,6 +4,8 @@ import logging
 import subprocess
 from typing import List, NamedTuple, Tuple
 
+logger = logging.getLogger("determined")
+
 gpu_fields = [
     "index",
     "uuid",
@@ -29,7 +31,7 @@ def float_or_default(fields: dict, key: str, default: float) -> float:
     except ValueError:
         if key not in warned_fields:
             warned_fields.add(key)
-            logging.warning(f"Unable to get {key} from nvidia-smi")
+            logger.warning(f"Unable to get {key} from nvidia-smi")
         return default
 
 
@@ -41,18 +43,18 @@ def _get_nvidia_gpus() -> List[GPU]:
             universal_newlines=True,
         )
     except FileNotFoundError:
-        logging.info("detected 0 gpus (nvidia-smi not found)")
+        logger.info("detected 0 gpus (nvidia-smi not found)")
         # This case is expected if NVIDIA drivers are not available.
         return []
     except Exception as e:
-        logging.warning(f"detected 0 gpus (error with nvidia-smi: {e})")
+        logger.warning(f"detected 0 gpus (error with nvidia-smi: {e})")
         return []
 
     gpus = []
     with proc:
         for field_list in csv.reader(proc.stdout):  # type: ignore
             if len(field_list) != len(gpu_fields):
-                logging.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
+                logger.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
                 continue
             fields = dict(zip(gpu_fields, field_list))
             try:
@@ -66,11 +68,11 @@ def _get_nvidia_gpus() -> List[GPU]:
                     )
                 )
             except ValueError:
-                logging.warning(f"Ignoring GPU with unexpected nvidia-smi output: {fields}")
+                logger.warning(f"Ignoring GPU with unexpected nvidia-smi output: {fields}")
     if proc.returncode:
-        logging.warning(f"`nvidia-smi` exited with failure status code {proc.returncode}")
+        logger.warning(f"`nvidia-smi` exited with failure status code {proc.returncode}")
 
-    logging.info(f"detected {len(gpus)} gpus")
+    logger.info(f"detected {len(gpus)} gpus")
     return gpus
 
 
@@ -89,23 +91,23 @@ def _get_rocm_gpus() -> List[GPU]:
         ).stdout
 
     except FileNotFoundError:
-        logging.info("rocm-smi not found")
+        logger.info("rocm-smi not found")
         return []
     except Exception as e:
-        logging.warning(f"rocm-smi error: {e}")
+        logger.warning(f"rocm-smi error: {e}")
         return []
 
     try:
         output = json.loads(output_json)
     except Exception as e:
-        logging.warning(f"failed to parse rocm-smi json output: {e}, content: {str(output_json)}")
+        logger.warning(f"failed to parse rocm-smi json output: {e}, content: {str(output_json)}")
         return []
 
     gpus = []
     for k, v in output.items():
         gpus.append(GPU(id=int(k[len("card") :]), uuid=v["Unique ID"], load=0, memoryUtil=0))
 
-    logging.info(f"detected {len(gpus)} rocm gpus")
+    logger.info(f"detected {len(gpus)} rocm gpus")
     return gpus
 
 
@@ -147,18 +149,18 @@ def _get_nvidia_processes() -> List[GPUProcess]:
             universal_newlines=True,
         )
     except FileNotFoundError:
-        logging.info("detected 0 gpu processes (nvidia-smi not found)")
+        logger.info("detected 0 gpu processes (nvidia-smi not found)")
         # This case is expected if NVIDIA drivers are not available.
         return []
     except Exception as e:
-        logging.warning(f"detected 0 gpu processes (error with nvidia-smi: {e})")
+        logger.warning(f"detected 0 gpu processes (error with nvidia-smi: {e})")
         return []
 
     processes = []
     with proc:
         for field_list in csv.reader(proc.stdout):  # type: ignore
             if len(field_list) != len(GPUProcess._fields):
-                logging.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
+                logger.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
                 continue
             fields = dict(zip(GPUProcess._fields, field_list))
             try:
@@ -171,9 +173,9 @@ def _get_nvidia_processes() -> List[GPUProcess]:
                     )
                 )
             except ValueError:
-                logging.warning(f"Ignoring GPU process with unexpected nvidia-smi output: {fields}")
+                logger.warning(f"Ignoring GPU process with unexpected nvidia-smi output: {fields}")
     if proc.returncode:
-        logging.warning(f"nvidia-smi exited with failure status code {proc.returncode}")
+        logger.warning(f"nvidia-smi exited with failure status code {proc.returncode}")
     return processes
 
 

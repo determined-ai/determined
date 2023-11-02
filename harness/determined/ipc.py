@@ -9,6 +9,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import determined as det
 
+logger = logging.getLogger("determined")
+
 
 class _HelloMessage:
     pass
@@ -475,7 +477,7 @@ class PIDServer:
                         try:
                             return p.wait(timeout=10) or 78
                         except subprocess.TimeoutExpired:
-                            logging.error(f"killing worker which didn't exit after {on_fail.name}")
+                            logger.error(f"killing worker which didn't exit after {on_fail.name}")
                             p.send_signal(signal.SIGKILL)
                 return p.wait() or 79
 
@@ -487,7 +489,7 @@ class PIDServer:
                     try:
                         return p.wait(timeout=10)
                     except subprocess.TimeoutExpired:
-                        logging.error(f"killing worker which didn't exit after {on_exit.name}")
+                        logger.error(f"killing worker which didn't exit after {on_exit.name}")
                         p.send_signal(signal.SIGKILL)
             return p.wait()
 

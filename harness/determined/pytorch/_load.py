@@ -9,6 +9,8 @@ import torch
 import determined as det
 from determined import core, errors, load, pytorch, util
 
+logger = logging.getLogger("determined.pytorch")
+
 
 class CheckpointLoadContext(pytorch.PyTorchTrialContext):
     """
@@ -121,7 +123,7 @@ def load_trial_from_checkpoint_path(
         with load_data_path.open() as f:
             load_data = json.load(f)
         if load_data["trial_type"] != "PyTorchTrial":
-            logging.warning(
+            logger.warning(
                 "Checkpoint does not appear to be a valid PyTorchTrial checkpoint, "
                 "continuing anyway..."
             )
@@ -144,7 +146,7 @@ def load_trial_from_checkpoint_path(
         # Older metadata layout contained torch_version and tensorflow_version
         # as keys. Eventually, we should drop support for the older format.
         if not is_torch and not has_torch_version:
-            logging.warning(
+            logger.warning(
                 "Checkpoint does not appear to be a valid PyTorchTrial checkpoint, "
                 "continuing anyway..."
             )
@@ -171,7 +173,7 @@ def load_trial_from_checkpoint_path(
                 "script, but the entrypoint script did not appear to be an importable module. "
                 "Define your Trial class in an importable module instead."
             )
-        logging.warning(
+        logger.warning(
             f"Importing trial class {qualname}, which was defined in the entrypoint script. "
             f"Assuming that entrypoint is importable via `import {module}`.  Otherwise, define "
             "your Trial class in an importable file."

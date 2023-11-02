@@ -7,6 +7,8 @@ from tensorflow.python.keras.engine import sequential
 
 from determined import util
 
+logger = logging.getLogger("determined.keras")
+
 
 def _check_if_aggregation_frequency_will_work(
     model: tf.keras.Model,
@@ -23,7 +25,7 @@ def _check_if_aggregation_frequency_will_work(
         return
 
     if util.is_overridden(model.train_step, tf.keras.Model):
-        logging.warning(
+        logger.warning(
             "If you subclassing tf.keras.Model in TF 2.2 or TF 2.3 and defining "
             "a custom train_step() method, in order to use aggregation_frequency > 1 "
             "you need to include the following steps in your train_step(): "

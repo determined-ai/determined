@@ -7,6 +7,8 @@ import torch
 import determined as det
 from determined import pytorch, util
 
+logger = logging.getLogger("determined.pytorch")
+
 
 def _process_combined_metrics_and_batches(
     combined_metrics_and_batches: List[Any],
@@ -182,11 +184,11 @@ def _log_tb_metrics(
     batch_metrics: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
     if metric_type == "val":
-        logging.debug("Write validation metrics for TensorBoard")
+        logger.debug("Write validation metrics for TensorBoard")
     elif metric_type == "train":
-        logging.debug("Write training metrics for TensorBoard")
+        logger.debug("Write training metrics for TensorBoard")
     else:
-        logging.warning("Unrecognized tensorboard metric type: " + metric_type, stacklevel=2)
+        logger.warning("Unrecognized tensorboard metric type: " + metric_type, stacklevel=2)
 
     metrics_seen = set()
 

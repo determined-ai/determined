@@ -9,6 +9,8 @@ from tensorflow.python.keras.utils import tf_utils
 
 from determined import profiler, tensorboard
 
+logger = logging.getLogger("determined.keras")
+
 
 class Callback(tf.keras.callbacks.Callback):  # type: ignore
     """
@@ -674,7 +676,7 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
         self.workload_end_count = 0
         user_log_dir = kwargs.pop("log_dir", None)
         if user_log_dir is not None:
-            logging.warning(
+            logger.warning(
                 f"arg log_dir={user_log_dir} to det.keras.callbacks.TensorBoard will be ignored"
             )
         log_dir = str(tensorboard.get_base_path({}).resolve())

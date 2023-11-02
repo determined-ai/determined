@@ -3,7 +3,7 @@ from typing import Any, List, Optional
 
 from determined.tensorboard import base
 
-logger = logging.getLogger("determined.tensorboard")
+logger = logging.getLogger("determined.tensorboard.azure")
 
 
 class AzureTensorboardManager(base.TensorboardManager):

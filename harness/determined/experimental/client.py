@@ -73,6 +73,8 @@ from determined.common.experimental.trial import Trial, TrialOrderBy, TrialSortB
 from determined.common.experimental.user import User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
+logger = logging.getLogger("determined.client")
+
 _determined = None  # type: Optional[Determined]
 
 C = TypeVar("C", bound=Callable[..., Any])
@@ -235,7 +237,7 @@ def logout() -> None:
     if _determined is not None:
         return _determined.logout()
 
-    logging.warning(
+    logger.warning(
         "client has not been logged in, either explicitly by client.login() or implicitly by any "
         "other client.* function, so client.logout() has no session to log out of and is a no-op. "
         "If you would like to log out of the default active session, try "

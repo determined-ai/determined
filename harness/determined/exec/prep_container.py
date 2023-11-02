@@ -19,6 +19,8 @@ from determined import constants, gpu
 from determined.common import api, util
 from determined.common.api import bindings, certs
 
+logger = logging.getLogger("determined")
+
 
 def is_trial(info: det.ClusterInfo) -> bool:
     return info.task_type == "TRIAL"
@@ -82,7 +84,7 @@ def do_rendezvous_slurm(
             rendezvous_ip = get_ip_from_interface(rendezvous_iface)
             break
         except ValueError as e:
-            logging.warning(f"Unable to resolve ip for {rendezvous_iface}: {str(e)}")
+            logger.warning(f"Unable to resolve ip for {rendezvous_iface}: {str(e)}")
 
     # Note, rendezvous must be sorted in rank order.
     resp = bindings.post_AllocationAllGather(
@@ -236,7 +238,7 @@ def set_proxy_address(sess: api.Session, allocation_id: str) -> None:
         except ValueError as e:
             resolution_error = e
     else:
-        logging.warning(f"falling back to naive proxy ip resolution (error={resolution_error})")
+        logger.warning(f"falling back to naive proxy ip resolution (error={resolution_error})")
         proxy_ip = socket.gethostbyname(socket.gethostname())
 
     # Right now this is just used in 'singularity-over-slurm' mode when singularity is using the
@@ -298,7 +300,7 @@ if __name__ == "__main__":
         level=logging.DEBUG if debug else logging.INFO,
         format=det.LOG_FORMAT,
     )
-    logging.debug("running prep_container")
+    logger.debug("running prep_container")
 
     if args.trial:
         warnings.warn(
@@ -338,7 +340,7 @@ if __name__ == "__main__":
         agent_id = os.environ.get("DET_AGENT_ID", "")
         container_id = os.environ.get("DET_CONTAINER_ID", "")
         _, accelerator_type = gpu.get_gpus()
-        logging.info(
+        logger.info(
             f"Running task container on agent_id={agent_id}, hostname={hostname} "
             f"with visible GPUs {resources.gpu_uuids}"
         )
@@ -358,7 +360,7 @@ if __name__ == "__main__":
             ),
         )
         for process in gpu.get_gpu_processes():
-            logging.warning(
+            logger.warning(
                 f"process {process.process_name} "
                 f"with pid {process.pid} "
                 f"is using {process.used_memory} memory "

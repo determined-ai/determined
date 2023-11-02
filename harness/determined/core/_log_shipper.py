@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, TextIO, Union
 from determined import core
 from determined.common import api
 
-logger = logging.getLogger("determined.experimental.core_v2")
+logger = logging.getLogger("determined.core")
 
 
 class _LogShipper:

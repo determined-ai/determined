@@ -9,7 +9,7 @@ import urllib3.exceptions
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
-logger = logging.getLogger("determined.tensorboard")
+logger = logging.getLogger("determined.tensorboard.gcs")
 
 
 class GCSTensorboardManager(base.TensorboardManager):

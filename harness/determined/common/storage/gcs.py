@@ -10,6 +10,8 @@ from determined import errors
 from determined.common import storage, util
 from determined.common.storage.s3 import normalize_prefix
 
+logger = logging.getLogger("determined.common.storage.gcs")
+
 
 class GCSStorageManager(storage.CloudStorageManager):
     """
@@ -60,13 +62,13 @@ class GCSStorageManager(storage.CloudStorageManager):
     ) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
-        logging.info(f"Uploading to GCS: {prefix}")
+        logger.info(f"Uploading to GCS: {prefix}")
         upload_paths = paths if paths is not None else self._list_directory(src)
         for rel_path in sorted(upload_paths):
             blob_name = f"{prefix}/{rel_path}"
             blob = self.bucket.blob(blob_name)
 
-            logging.debug(f"Uploading to GCS: {blob_name}")
+            logger.debug(f"Uploading to GCS: {blob_name}")
 
             from google.api_core import exceptions, retry
 
@@ -99,7 +101,7 @@ class GCSStorageManager(storage.CloudStorageManager):
 
         dst = os.fspath(dst)
         path = self.get_storage_prefix(src)
-        logging.info(f"Downloading {path} from GCS")
+        logger.info(f"Downloading {path} from GCS")
         found = False
 
         # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
@@ -124,7 +126,7 @@ class GCSStorageManager(storage.CloudStorageManager):
                     os.makedirs(_dst, exist_ok=True)
                     continue
 
-                logging.debug(f"Downloading from GCS: {blob.name}")
+                logger.debug(f"Downloading from GCS: {blob.name}")
 
                 blob.download_to_filename(_dst)
 
@@ -141,7 +143,7 @@ class GCSStorageManager(storage.CloudStorageManager):
     @util.preserve_random_state
     def delete(self, storage_id: str, globs: List[str]) -> Dict[str, int]:
         prefix = self.get_storage_prefix(storage_id)
-        logging.info(f"Deleting checkpoint {prefix} from GCS")
+        logger.info(f"Deleting checkpoint {prefix} from GCS")
 
         blob_name_to_blob = {obj.name: obj for obj in self.bucket.list_blobs(prefix=prefix)}
         blob_name_to_size = {obj.name: obj.size for obj in blob_name_to_blob.values()}
@@ -155,7 +157,7 @@ class GCSStorageManager(storage.CloudStorageManager):
                     del blob_name_to_size[obj]
 
         for blob_name in blob_name_to_size:
-            logging.debug(f"Deleting {blob_name} from GCS")
+            logger.debug(f"Deleting {blob_name} from GCS")
             blob_name_to_blob[blob_name].delete()
 
         return resources

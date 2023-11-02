@@ -15,6 +15,8 @@ from botocore.credentials import (
 )
 from botocore.session import get_session
 
+logger = logging.getLogger("determined.common.storage.s3")
+
 
 class RefreshableCredentialProvider(CredentialProvider):  # type: ignore
     """
@@ -82,7 +84,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
                 return
             self._check_time = now + self._check_every
             if self._refresh_needed():
-                logging.info("credential file changes detected, refreshing credentials")
+                logger.info("credential file changes detected, refreshing credentials")
                 self._load_and_set_credentials()
 
     def get_frozen_credentials(self) -> ReadOnlyCredentials:

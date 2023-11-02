@@ -5,6 +5,8 @@ from typing import Any, Dict, Type
 
 import analytics
 
+logger = logging.getLogger("determined.common")
+
 enabled = os.environ.get("DET_SEGMENT_ENABLED") == "true"
 _cluster_id = os.environ.get("DET_CLUSTER_ID")
 
@@ -45,5 +47,5 @@ def get_trial_analytics(obj: Type) -> Dict[str, Any]:
 
 def send_analytics(event: str, properties: Dict) -> None:
     if enabled and _cluster_id is not None and analytics.write_key is not None:
-        logging.debug(f"Sending analytics event {event}: {properties}.")
+        logger.debug(f"Sending analytics event {event}: {properties}.")
         analytics.track(_cluster_id, event, properties)

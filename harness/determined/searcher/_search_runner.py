@@ -211,9 +211,9 @@ class SearchRunner:
                 experimentId=experiment_id,
             )
         except errors.APIException as e:
-            logging.warning(f"Catching errors.APIException: {str(e)}")
+            logger.warning(f"Catching errors.APIException: {str(e)}")
             close_op_in_operations = any((isinstance(o, searcher.Close) for o in operations))
-            logging.warning(f"operations: {operations}")
+            logger.warning(f"operations: {operations}")
             if close_op_in_operations and "could not be found" in str(e):
                 pass
             else:

@@ -9,6 +9,8 @@ import determined as det
 from determined import core, horovod, load
 from determined.common.api import analytics, certs
 
+logger = logging.getLogger("determined")
+
 
 @contextlib.contextmanager
 def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
@@ -35,7 +37,7 @@ def main(train_entrypoint: str) -> int:
         try:
             analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
         except Exception as e:
-            logging.debug(f"Cannot send analytics: {e}")
+            logger.debug(f"Cannot send analytics: {e}")
 
     # We can't import pytorch directly because if running TfKerasTrials with an image that contains
     # both torch and keras, keras will throw exceptions due to unexpected CUDNN library versions.
@@ -77,7 +79,7 @@ def main(train_entrypoint: str) -> int:
     )
 
     det.common.set_logger(env.debug)
-    logging.debug("Starting harness.")
+    logger.debug("Starting harness.")
 
     with maybe_periodic_stacktraces(env.debug):
         # Step 1: Load user code.
@@ -119,7 +121,7 @@ def main(train_entrypoint: str) -> int:
             trial_inst = trial_class(trial_context)
 
             # Step 5: Create a TrialController and execute training
-            logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
+            logger.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
             controller = controller_class.from_trial(
                 trial_inst=trial_inst,
                 context=trial_context,
@@ -139,7 +141,7 @@ def _run_pytorch_trial(
 
     det.common.set_logger(info.trial._debug)
 
-    logging.debug("Starting harness.")
+    logger.debug("Starting harness.")
 
     with maybe_periodic_stacktraces(info.trial._debug):
         with pytorch.init(
@@ -162,7 +164,7 @@ def _run_pytorch_trial(
                 log_level = logging.DEBUG if info.trial._debug else logging.WARNING
                 logging.getLogger().setLevel(log_level)
 
-            logging.info(
+            logger.info(
                 f"Creating {pytorch._PyTorchTrialController.__name__} with {trial_class.__name__}."
             )
 
