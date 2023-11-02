@@ -33,6 +33,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 	"github.com/determined-ai/determined/master/pkg/syncx/orderedmapx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -1399,6 +1400,8 @@ func (m *DispatcherResourceManager) startLauncherJob(
 		tresSupported = false
 	}
 
+	disabledAgents := set.FromSlice(append(m.dbState.DisabledAgents, req.BlockedNodes...)).ToSlice()
+
 	// Create the manifest that will be ultimately sent to the launcher.
 	manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
 		m.syslog, string(req.AllocationID),
@@ -1406,7 +1409,7 @@ func (m *DispatcherResourceManager) startLauncherJob(
 		m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 		req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
 		m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
-		m.rmConfig.JobProjectSource, m.dbState.DisabledAgents,
+		m.rmConfig.JobProjectSource, disabledAgents,
 	)
 	if err != nil {
 		m.sendResourceStateChangedErrorResponse(err, msg,
