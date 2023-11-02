@@ -154,7 +154,7 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second multi-trial experiment).
+        # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.hf_trainer_examples_path(test_dir),
@@ -173,7 +173,7 @@ def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second multi-trial experiment).
+        # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.hf_trainer_examples_path(test_dir),
@@ -192,7 +192,7 @@ def test_torchvision_core_api_deepspeed_autotuning() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second multi-trial experiment).
+        # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.deepspeed_autotune_examples_path(test_dir),
@@ -211,7 +211,7 @@ def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second multi-trial experiment).
+        # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
             tf.name,
             conf.deepspeed_autotune_examples_path(test_dir),
