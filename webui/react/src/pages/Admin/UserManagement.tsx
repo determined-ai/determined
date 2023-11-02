@@ -51,7 +51,6 @@ import {
   UserStatus,
 } from './UserManagement.settings';
 
-export const USER_TITLE = 'Users';
 export const CREATE_USER = 'Add User';
 export const CREATE_USER_LABEL = 'add_user';
 
