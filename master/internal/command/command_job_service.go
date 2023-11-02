@@ -15,7 +15,7 @@ import (
 // jobservice.Service methods
 
 // ToV1Job() takes a command and returns a job.
-func (c *command) ToV1Job() *jobv1.Job {
+func (c *command) ToV1Job() (*jobv1.Job, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -37,7 +37,7 @@ func (c *command) ToV1Job() *jobv1.Job {
 
 	j.ResourcePool = c.Config.Resources.ResourcePool
 
-	return &j
+	return &j, nil
 }
 
 // SetJobPriority sets a command's job priority.

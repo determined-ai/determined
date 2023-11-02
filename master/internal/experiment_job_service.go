@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -16,15 +15,13 @@ import (
 // jobservice.Service methods
 
 // ToV1Jobs() takes an experiment and returns a job.
-func (e *experiment) ToV1Job() *jobv1.Job {
+func (e *experiment) ToV1Job() (*jobv1.Job, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	workspace, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
-	if err != nil && err != sql.ErrNoRows {
-		// FIXME: DET-9563 workspace and/or project is deleted.
-		e.syslog.WithError(err)
-		return nil
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get workspace for project %d", e.ProjectID)
 	}
 
 	j := jobv1.Job{
@@ -45,7 +42,7 @@ func (e *experiment) ToV1Job() *jobv1.Job {
 
 	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
 
-	return &j
+	return &j, nil
 }
 
 // SetJobPriority sets an experiment's job priority.
