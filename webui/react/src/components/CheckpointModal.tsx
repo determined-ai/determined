@@ -57,6 +57,9 @@ const getStorageLocation = (
         location = `file://${hostPath}`;
       }
       break;
+    case CheckpointStorageType.DIRECTORY:
+      // unsupported, natch
+      break;
     case CheckpointStorageType.AZURE:
       // type from api doesn't have azure-specific props
       break;

@@ -286,6 +286,7 @@ export interface Command {
 export const CheckpointStorageType = {
   AWS: 'aws',
   AZURE: 'azure',
+  DIRECTORY: 'directory',
   GCS: 'gcs',
   S3: 's3',
   SharedFS: 'shared_fs',
