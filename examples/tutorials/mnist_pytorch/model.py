@@ -3,11 +3,11 @@ from typing import Any, Dict
 import torch
 from torch import nn
 
-from determined.pytorch import TorchData
+from determined import pytorch
 
 
 class Flatten(nn.Module):
-    def forward(self, *args: TorchData, **kwargs: Any) -> torch.Tensor:
+    def forward(self, *args: pytorch.TorchData, **kwargs: Any) -> torch.Tensor:
         assert len(args) == 1
         x = args[0]
         assert isinstance(x, torch.Tensor)
