@@ -297,8 +297,11 @@ actions can be taken
    reschedule and avoid nodes that may be experiencing a certain hardware issues like uncorrectable
    gpu ECC errors.
 
-   If a trial has excluded nodes enough nodes to the point where it is unschedulable the trial will
-   fail if the master config option ``launch_error`` is set to true (default is true).
+   This option is currently unsupported on pbs and will take no effect.
+
+   For the agent resource manager, if a trial has excluded nodes enough nodes to the point where it
+   is unschedulable the trial will fail if the master config option ``launch_error`` is set to true
+   (default is true).
 
 -  ``cancel_retries``: If a trial reports a log that matches the pattern, then the trial will not
    restart even if it has ``max_restarts`` left. This is useful for avoiding using resources
