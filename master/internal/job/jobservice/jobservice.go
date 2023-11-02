@@ -1,11 +1,13 @@
 package jobservice
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
 	"sync"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
@@ -75,6 +77,10 @@ func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) (map[model.Jo
 		if ok {
 			ref, err := jobRef.ToV1Job()
 			if err != nil {
+				// FIXME: DET-9563 workspace and/or project is deleted.
+				if errors.Is(err, sql.ErrNoRows) {
+					continue
+				}
 				return nil, err
 			}
 			jobRefs[jID] = ref
