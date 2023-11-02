@@ -255,7 +255,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         check_quotas(det_configs, deployment_object)
 
     if args.dry_run:
-        deployment_object.print()
+        print("Dry run complete. Exiting.")
         return
 
     print("Starting Determined Deployment")
@@ -518,7 +518,7 @@ args_description = Cmd(
                 Arg(
                     "--dry-run",
                     action="store_true",
-                    help="print deployment template",
+                    help="only validate flags and check quota. Do not deploy.",
                 ),
                 Arg(
                     "--cpu-env-image",

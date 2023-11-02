@@ -73,10 +73,6 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:
         pass
 
-    def print(self) -> None:
-        with open(self.template_path) as f:
-            print(f.read())
-
     def wait_for_master(self, timeout: int = 5 * 60) -> None:
         cert = None
         if self.parameters[constants.cloudformation.MASTER_TLS_CERT]:
