@@ -251,7 +251,7 @@ export interface CreateExperimentParams {
   activate?: boolean;
   experimentConfig: string;
   parentId: number;
-  projectId: number;
+  projectId?: number;
 }
 
 export interface PatchExperimentParams extends ExperimentIdParams {

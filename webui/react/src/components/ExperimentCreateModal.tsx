@@ -239,7 +239,6 @@ const ExperimentCreateModalComponent = ({
           activate: true,
           experimentConfig: newConfig,
           parentId: modalState.experiment.id,
-          projectId: modalState.experiment.projectId,
         });
         const currentSlotsExceeded = warnings
           ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
