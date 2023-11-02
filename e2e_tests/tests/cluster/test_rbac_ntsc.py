@@ -1,5 +1,5 @@
 import contextlib
-from typing import Generator, List, Optional, Sequence, Tuple
+from typing import Generator, List, Optional, Sequence
 
 import pytest
 
@@ -417,22 +417,9 @@ def test_tsb_launch_on_trials() -> None:
                 ["--project_id", str(pid)],
             )
 
-        def get_exp_trials() -> Tuple[bool, List[int]]:
-            trial_ids: List[int] = []
-            try:
-                trials = bindings.get_GetExperimentTrials(
-                    session,
-                    experimentId=experiment_id,
-                ).trials
-                trial_ids = [t.id for t in trials]
-            except errors.APIException:
-                return False, []
-            if len(trial_ids) > 0:
-                return True, trial_ids
-            return False, []
-
-        trial_ids: List[int] = utils.wait_for(get_exp_trials, conf.DEFAULT_MAX_WAIT_SECS)
-        assert len(trial_ids) == 1, f"we should get 1 trials {trial_ids}"
+        trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+        trial_ids = [t.id for t in trials]
+        assert len(trial_ids) == 1, f"we should have 1 trial, but got {trial_ids}"
 
         bindings.post_LaunchTensorboard(
             session,
