@@ -209,11 +209,11 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 
 			// Re-propagate our old state back on successful recovery.
 			if a.preDisconnectEnabled {
-				a.agentState.enable(ctx)
+				a.agentState.enable()
 			} else {
-				a.agentState.disable(ctx, a.preDisconnectDraining)
+				a.agentState.disable(a.preDisconnectDraining)
 			}
-			a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+			a.agentState.patchAllSlotsState(patchAllSlotsState{
 				enabled: &a.agentState.enabled,
 				drain:   &a.agentState.draining,
 			})
@@ -301,7 +301,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 
 		a.socket.Outbox <- aproto.AgentMessage{StartContainer: &msg.StartContainer}
 
-		if err := a.agentState.startContainer(ctx, msg); err != nil {
+		if err := a.agentState.startContainer(msg); err != nil {
 			log.WithError(err).Error("failed to update agent state")
 		}
 	case aproto.MasterMessage:
@@ -326,8 +326,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		a.agentState.enable(ctx)
-		a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+		a.agentState.enable()
+		a.agentState.patchAllSlotsState(patchAllSlotsState{
 			enabled: &a.agentState.enabled,
 			drain:   &a.agentState.draining,
 		})
@@ -345,9 +345,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		// Mark current agent as disabled with RP.
-		a.agentState.disable(ctx, msg.Drain)
+		a.agentState.disable(msg.Drain)
 		// Update individual slot state.
-		a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+		a.agentState.patchAllSlotsState(patchAllSlotsState{
 			enabled: &a.agentState.enabled,
 			drain:   &a.agentState.draining,
 		})
@@ -383,7 +383,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		result, err := a.agentState.patchSlotState(ctx, msg)
+		result, err := a.agentState.patchSlotState(msg)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
@@ -395,7 +395,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		ctx.Respond(a.agentState.patchAllSlotsState(ctx, msg))
+		ctx.Respond(a.agentState.patchAllSlotsState(msg))
 	case allocateFreeDevices:
 		if !a.started {
 			ctx.Log().Debugf("received allocateFreeDevices on non-started agent")
@@ -422,7 +422,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		ctx.Respond(a.agentState.getSlotsSummary(ctx))
+		ctx.Respond(a.agentState.getSlotsSummary(ctx.Self().Address().String()))
 	case actor.PostStop:
 		if a.started {
 			// This normally will run on agent WebSocketRequest to populate
@@ -531,7 +531,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
 
 		if a.started {
-			err := a.agentState.checkAgentStartedDevicesMatch(ctx, msg.AgentStarted)
+			err := a.agentState.checkAgentStartedDevicesMatch(msg.AgentStarted)
 			if err != nil {
 				log.WithError(err).
 					Error("change in agent devices was detected")
@@ -602,7 +602,7 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		sproto.AddAgent{Agent: ctx.Self()},
 		a.maxZeroSlotContainers)
 	a.agentState.resourcePoolName = a.resourcePoolName
-	a.agentState.agentStarted(ctx, agentStarted)
+	a.agentState.agentStarted(agentStarted)
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
 		Slots: a.agentState.numSlots(),
@@ -636,7 +636,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	}
 
 	rmevents.Publish(aID, sproto.FromContainerStateChanged(sc))
-	a.agentState.containerStateChanged(ctx, sc)
+	a.agentState.containerStateChanged(sc)
 }
 
 func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
@@ -655,7 +655,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 	}
 
 	if a.agentState != nil {
-		result.Slots = a.agentState.getSlotsSummary(ctx)
+		result.Slots = a.agentState.getSlotsSummary(ctx.Self().Address().String())
 		result.Enabled = a.agentState.enabled
 		result.Draining = a.agentState.draining
 		result.NumContainers = len(a.agentState.containerAllocation)
@@ -789,8 +789,8 @@ func (a *agent) socketDisconnected(ctx *actor.Context) {
 	// Mark ourselves as draining to avoid action on ourselves while we recover. While the
 	// system is technically correct without this, it's better because we avoid any waste
 	// effort scheduling things only to have them suffer AgentErrors later.
-	a.agentState.disable(ctx, true)
-	a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+	a.agentState.disable(true)
+	a.agentState.patchAllSlotsState(patchAllSlotsState{
 		enabled: &a.agentState.enabled,
 		drain:   &a.agentState.draining,
 	})
