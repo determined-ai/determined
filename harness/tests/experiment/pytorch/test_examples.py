@@ -38,7 +38,7 @@ def test_pytorch_mnist_example(tmp_path: pathlib.Path) -> None:
         tmp_path=tmp_path,
         exp_config=exp_config,
         steps=(1, 1),
-        trial_args={"hparams": hparams}
+        trial_args={"hparams": hparams},
     )
 
 
