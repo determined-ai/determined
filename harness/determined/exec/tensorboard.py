@@ -157,6 +157,8 @@ def start_tensorboard(
                     if time.time() > tb_unresponsive_stop_time:
                         raise RuntimeError("Tensorboard wasn't responsive before the timeout.")
 
+                    print(TRIGGER_WAITING_MSG, flush=True)
+
                     time.sleep(TICK_INTERVAL)
                     responsive = check_tensorboard_responsive()
 
@@ -172,8 +174,8 @@ def start_tensorboard(
                     if tb_fetch_manager.get_num_fetched_files() == 0:
                         if time.time() > stop_time:
                             raise RuntimeError("No new files were fetched before the timeout.")
-                        else:
-                            print(TRIGGER_WAITING_MSG, flush=True)
+
+                        print(TRIGGER_WAITING_MSG, flush=True)
 
                     time.sleep(TICK_INTERVAL)
 
