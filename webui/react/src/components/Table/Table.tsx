@@ -33,7 +33,6 @@ import {
   Workspace,
 } from 'types';
 import { getDuration } from 'utils/datetime';
-import { floatToPercent } from 'utils/string';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 
@@ -226,11 +225,9 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   const color = getStateColorCssVar(record.state);
   return typeof record.progress !== 'undefined' ? (
     <Progress
-      flat
       parts={[
         {
           color,
-          label: floatToPercent(record.progress, 0),
           percent: record.progress,
         },
       ]}

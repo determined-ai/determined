@@ -20,6 +20,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
           percent: progressPercent / 100,
         },
       ]}
+      showTooltips
     />
   );
 };
