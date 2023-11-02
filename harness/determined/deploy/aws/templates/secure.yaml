@@ -281,6 +281,13 @@ Parameters:
           key: /etc/determined/master.key
       {{ end }}
 
+      {{ if ne .lore_version "" }}
+      __internal:
+        proxied_servers:
+          - destination: "http://lore-backend:9011/lore"
+            path_prefix: /lore
+      {{ end }}
+
       {{ if or (or .cpu_env_image .gpu_env_image) .bind_mounts }}
       task_container_defaults:
         {{- if .bind_mounts }}

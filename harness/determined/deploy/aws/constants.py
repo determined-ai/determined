@@ -3,9 +3,10 @@ class deployment_types:
     SIMPLE_RDS = "simple-rds"
     SECURE = "secure"
     EFS = "efs"
+    LORE = "lore"
     FSX = "fsx"
     GOVCLOUD = "govcloud"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, EFS, FSX, GOVCLOUD, SIMPLE_RDS]
+    DEPLOYMENT_TYPES = [SIMPLE, SECURE, EFS, FSX, GOVCLOUD, SIMPLE_RDS, LORE]
     TYPE_TAG_KEY = "deployment-type"
 
 
@@ -74,6 +75,7 @@ class cloudformation:
     DOCKER_USER = "DockerUser"
     DOCKER_PASS = "DockerPass"
     NOTEBOOK_TIMEOUT = "NotebookTimeout"
+    LORE_VERSION = "LoreVersion"
 
 
 class misc:

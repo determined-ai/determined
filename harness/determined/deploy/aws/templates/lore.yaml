@@ -1,6 +1,4 @@
----
-AWSTemplateFormatVersion: 2010-09-09
-Description: Determined Template
+Description:  This template deploys a VPC, with a public and private subnet, and FSx filesystem.
 Mappings:
   RegionMap:
     ap-northeast-1:
@@ -36,9 +34,24 @@ Mappings:
       Agent: ami-02f28af4edaefa107
 
 Parameters:
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.192.0.0/16
+
+  Subnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.192.10.0/24
+
+  Subnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.192.11.0/24
+
   Keypair:
+    Description: Keypair for resources
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Keypair to SSH
 
   MasterInstanceType:
     Type: String
@@ -52,18 +65,13 @@ Parameters:
 
   ComputeAgentInstanceType:
     Type: String
-    Description: Instance Type of Agents in the compute resource pool
+    Description: Instance Type of agents in the compute resource pool
     Default: g4dn.metal
 
   InboundCIDRRange:
     Type: String
     Description: Ip range for Inbound
     Default: 0.0.0.0/0
-
-  SubnetId:
-    Type: String
-    Description: The subnet to deploy instances into. Optional.
-    Default: ''
 
   ImageRepoPrefix:
     Type: String
@@ -92,12 +100,12 @@ Parameters:
 
   Version:
     Type: String
-    Description: Determined version or commit for master docker image
-    Default: 0.26.3-dev0
+    Description: Determined version or commit for master image
+    Default: 0.26.2-dev0
 
   DBPassword:
     Type: String
-    Description: Password for database (eg. "postgres")
+    Description: Password for database
     NoEcho: true
 
   MaxAuxContainersPerAgent:
@@ -125,6 +133,18 @@ Parameters:
     Description: Maximum number of agents to launch simultaneously
     Default: 5
 
+  SpotEnabled:
+    Type: String
+    Description: Whether to use spot instances or not
+    Default: false
+
+  SpotMaxPrice:
+    Type: String
+    Description: |
+      The maximum hourly price you are willing to pay for the spot instance.
+      Should be a number without a currency option, e.g. "5.00"
+    Default: ''
+
   EnableCORS:
     Type: String
     Description: Whether to allow CORS requests or not
@@ -144,18 +164,6 @@ Parameters:
     Type: String
     Description: Hostname to verify the master's TLS certificate against
     Default: ""
-
-  SpotEnabled:
-    Type: String
-    Description: Whether to use spot instances or not
-    Default: false
-
-  SpotMaxPrice:
-    Type: String
-    Description: |
-                 The maximum hourly price you are willing to pay for the spot instance.
-                 Should be a number without a currency option, e.g. "5.00"
-    Default: ''
 
   SchedulerType:
     Type: String
@@ -187,6 +195,7 @@ Parameters:
     Description: Contents of the agent config file
     Default: ''
 
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -202,15 +211,20 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
-  RetainLogGroup:
-    Type: String
-    Description: Whether to retain CloudWatch log group after the stack is deleted
-    Default: false
-
   NotebookTimeout:
     Type: Number
     Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
     Default: 0
+
+  LoreVersion:
+    Type: String
+    Description: Lore version to deploy
+    Default: latest
+
+  MountEFSId:
+    Type: String
+    Description: preexisting EFS ID to mount
+    Default: ""
 
   MasterConfigTemplate:
     Type: String
@@ -303,13 +317,85 @@ Parameters:
 ### END INJECT CODE
 
 Conditions:
-  RetainLogGroup: !Equals [!Ref RetainLogGroup, true]
-  DeleteLogGroup: !Not [!Equals [!Ref RetainLogGroup, true]]
+  CreateEFS: !Equals [!Ref MountEFSId, ""]
   UseTLS: !And
     - !Not [!Equals [!Ref MasterTLSCert, ""]]
     - !Not [!Equals [!Ref MasterTLSKey, ""]]
 
 Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref Subnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet (AZ1)
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref Subnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet (AZ2)
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet1
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet2
+
   CheckpointBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -339,6 +425,16 @@ Resources:
       GroupId: !GetAtt MasterSecurityGroup.GroupId
       FromPort: 8080
       ToPort: 8080
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  # for redis
+  MasterSecurityGroupIngressRedis:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 9012
+      ToPort: 9012
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
@@ -405,6 +501,7 @@ Resources:
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
+
   AgentSSHIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -432,10 +529,41 @@ Resources:
       ToPort: 5432
       SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
 
+  EFSEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Condition: CreateEFS
+    Properties:
+      GroupId: !GetAtt EFSSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: -1
+
+  EFSIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateEFS
+    Properties:
+      GroupId: !GetAtt EFSSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 2049
+      ToPort: 2049
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  MasterEFSIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateEFS
+    Properties:
+      GroupId: !GetAtt EFSSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 2049
+      ToPort: 2049
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+
   MasterSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group For Master
+      VpcId: !Ref VPC
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
@@ -444,6 +572,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group For Agent
+      VpcId: !Ref VPC
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
@@ -452,6 +581,41 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group For Database
+      VpcId: !Ref VPC
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+
+  EFSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: CreateEFS
+    Properties:
+      GroupDescription: Security Group For EFS
+      VpcId: !Ref VPC
+      Tags:
+        - Key: user
+          Value: !Ref AWS::StackName
+
+  EFS:
+    Type: AWS::EFS::FileSystem
+    Condition: CreateEFS
+
+  EFSMountTarget:
+    Type: AWS::EFS::MountTarget
+    Condition: CreateEFS
+    Properties:
+      FileSystemId: !Ref EFS
+      SecurityGroups:
+        - !GetAtt EFSSecurityGroup.GroupId
+      SubnetId: !Ref Subnet1
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: determined-db-subnet-group
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
@@ -463,6 +627,7 @@ Resources:
       Engine: aurora-postgresql
       EngineMode: serverless
       DatabaseName: determined
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
       Tags:
@@ -475,17 +640,8 @@ Resources:
         MinCapacity: 2
         MaxCapacity: 32
 
-  RetainedLogGroup:
-    Type: AWS::Logs::LogGroup
-    Condition: RetainLogGroup
-    DeletionPolicy: Retain
-    Properties:
-      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
-
   LogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: DeleteLogGroup
-    DeletionPolicy: Delete
     Properties:
       LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
@@ -505,8 +661,8 @@ Resources:
               - logs:PutLogEvents
               - logs:DescribeLogStreams
             Resource:
-              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName},
-              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName}:log-stream:*
+              - !Sub arn:aws:logs:*:*:log-group:${LogGroup},
+              - !Sub arn:aws:logs:*:*:log-group:${LogGroup}:log-stream:*
 
   MetricPolicy:
     Type: AWS::IAM::Policy
@@ -592,6 +748,26 @@ Resources:
               - Effect: Allow
                 Action: iam:PassRole
                 Resource: !GetAtt AgentRole.Arn
+        - PolicyName: master-log-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource:
+                  - arn:aws:logs:*:*:log-group:/determined/determined/journald
+                  - arn:aws:logs:*:*:log-group:/determined/determined/journald:log-stream:*
+        - PolicyName: master-metric-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - cloudwatch:PutMetricData
+                Effect: Allow
+                Resource: "*"
         - PolicyName: master-s3-policy
           PolicyDocument:
             Version: 2012-10-17
@@ -620,6 +796,7 @@ Resources:
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
+      SubnetId: !Ref Subnet1
       InstanceType: !Ref MasterInstanceType
       ImageId: !FindInMap
         - RegionMap
@@ -661,6 +838,7 @@ Resources:
 
             #!/bin/bash
             mkdir -p /usr/local/determined/etc
+
 
             scheme=http
             port=8080
@@ -719,7 +897,7 @@ Resources:
                 network_interface:
                   public_ip: true
                   security_group_id: ${AgentSecurityGroup.GroupId}
-                  subnet_id: ${SubnetId}
+                  subnet_id: ${Subnet1}
                 type: aws
                 root_volume_size: 200
                 ssh_key_name: ${Keypair}
@@ -729,6 +907,8 @@ Resources:
                 agent_reconnect_backoff: ${AgentReconnectBackoff}
                 agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
+                  mkdir -p /mnt/efs
+                  mount -t efs ${EFSVal}:/ /mnt/efs
                   if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
                     echo "${DockerPass}" | docker login --username "${DockerUser}" --password-stdin
                   fi
@@ -737,6 +917,11 @@ Resources:
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
             notebook_timeout: ${NotebookTimeout}
+            lore_version: ${LoreVersion}
+
+            bind_mounts:
+              - host_path: /mnt/efs
+                container_path: /run/determined/workdir/shared_fs
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc
@@ -767,6 +952,38 @@ Resources:
             docker stop $(docker ps -a -q)
             docker rm $(docker ps -a -q)
 
+            mkdir -p /mnt/efs
+
+            date >> /tmp/cloud-init-log
+
+            apt-get install -y binutils git
+            if [ ! -d "efs-utils" ]; then
+              git clone https://github.com/aws/efs-utils
+              cd efs-utils
+              ./build-deb.sh
+              chown _apt:root ./build/amazon-efs-utils*deb
+              apt-get install -y ./build/amazon-efs-utils*deb
+              cd ..
+              rm -r efs-utils
+            fi
+
+            mount -t efs ${EFSVal}:/ /mnt/efs
+
+            if [ ! -z "${LoreVersion}" ]; then
+              docker run -d \
+                --name lore-backend \
+                --env DET_MASTER=http://determined-master:8080 \
+                --env DB_NAME=lore \
+                --env DB_USER=postgres \
+                --env DB_PASSWORD=${DBPassword} \
+                --env DB_HOST=${Database.Endpoint.Address} \
+                --env DB_PORT=5432 \
+                -p 9012:9012 \
+                -v /mnt/efs:/run/determined/workdir/shared_fs \
+                --network determined \
+                "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
+            fi
+
             touch /usr/local/determined/etc/master.yaml
             docker run \
                 --name determined-master-configurator \
@@ -782,13 +999,14 @@ Resources:
                 --network determined \
                 --restart unless-stopped \
                 --log-driver=awslogs \
-                --log-opt awslogs-group=/${LogGroupPrefix}/${AWS::StackName} \
+                --log-opt awslogs-group=${LogGroup} \
                 --log-opt awslogs-stream=determined-master \
                 -p "$port":"$port" \
                 -v /usr/local/determined/etc/:/etc/determined/ \
                 ${ImageRepoPrefix}/${MasterImageName}:${Version}
             --//
-          -  AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
+          - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
+            EFSVal: !If [CreateEFS, !Ref EFS, !Ref MountEFSId]
 
       Tags:
         - Key: user
@@ -802,13 +1020,24 @@ Resources:
       InstanceId: !Ref MasterInstance
       Domain: vpc
       Tags:
-          - Key: user
-            Value: !Ref AWS::StackName
-
+        - Key: user
+          Value: !Ref AWS::StackName
 Outputs:
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+
+  SubnetId:
+    Description: A list of the public subnets
+    Value: !Ref Subnet1
+
   MasterId:
     Description: Id of Master Agent
     Value: !Ref MasterInstance
+
+  EFSId:
+    Description: Id of EFS
+    Value: !If [CreateEFS, !Ref EFS, !Ref MountEFSId]
 
   MasterSecurityGroupId:
     Description: Id of Master Security Group
@@ -848,7 +1077,7 @@ Outputs:
 
   LogGroup:
     Description: The Log Group for Determined Logs
-    Value: !Sub /${LogGroupPrefix}/${AWS::StackName}
+    Value: !Ref LogGroup
 
   Region:
     Description: The AWS Region the stack is deployed in

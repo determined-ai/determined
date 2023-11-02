@@ -42,6 +42,7 @@ COMMON_TEMPLATE_PARAMETER_KEYS = [
     constants.cloudformation.DOCKER_USER,
     constants.cloudformation.DOCKER_PASS,
     constants.cloudformation.NOTEBOOK_TIMEOUT,
+    constants.cloudformation.LORE_VERSION,
 ]  # type: List[str]
 
 

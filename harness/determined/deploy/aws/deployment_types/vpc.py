@@ -38,3 +38,14 @@ class FSx(VPCBase):
 class EFS(VPCBase):
     template = "efs.yaml"
     deployment_type = constants.deployment_types.EFS
+
+
+class Lore(VPCBase):
+    template = "lore.yaml"
+    deployment_type = constants.deployment_types.LORE
+
+    def before_deploy_print(self) -> None:
+        super().before_deploy_print()
+        lore_tag = self.parameters[constants.cloudformation.LORE_VERSION] or "latest"
+        print(f"Lore Version: {lore_tag}")
+        print(f"Lore Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")

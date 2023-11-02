@@ -69,6 +69,7 @@ def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
         constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
+        constants.deployment_types.LORE: vpc.Lore,
     }  # type: Dict[str, Type[base.DeterminedDeployment]]
     return deployment_type_map[deployment_type]
 
@@ -171,7 +172,14 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         if args.db_size is not None and args.db_size < 20:
             raise ValueError("--db-size must be greater than or equal to 20 GB")
 
-    if args.deployment_type != constants.deployment_types.EFS:
+    if args.deployment_type != constants.deployment_types.LORE:
+        if args.lore_version is not None:
+            raise ValueError("--lore-version can only be specified for 'lore' deployments")
+
+    if args.deployment_type not in {
+        constants.deployment_types.EFS,
+        constants.deployment_types.LORE,
+    }:
         if args.efs_id is not None:
             raise ValueError("--efs-id can only be specified for 'efs' deployments")
 
@@ -239,6 +247,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.DOCKER_USER: args.docker_user,
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
         constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
+        constants.cloudformation.LORE_VERSION: args.lore_version,
     }
 
     if args.master_config_template_path:
@@ -263,9 +272,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         deployment_object.deploy(args.yes, args.update_terminate_agents)
     except NoCredentialsError:
         error_no_credentials()
-    except Exception:
+    except Exception as e:
         raise CliError(
-            "Stack Deployment Failed. Check the AWS CloudFormation Console for details.",
+            f"Stack Deployment Failed: {e}\nCheck the AWS CloudFormation Console for details.",
         )
 
     if not args.no_wait_for_master:
@@ -311,7 +320,7 @@ args_description = Cmd(
     "AWS help",
     [
         Cmd(
-            "list",
+            "list ls",
             handle_list,
             "list CloudFormation stacks",
             [
@@ -626,6 +635,11 @@ args_description = Cmd(
                     type=int,
                     help="Specifies the duration in seconds before idle notebook instances "
                     "are automatically terminated",
+                ),
+                Arg(
+                    "--lore-version",
+                    type=str,
+                    help=argparse.SUPPRESS,
                 ),
             ],
         ),
