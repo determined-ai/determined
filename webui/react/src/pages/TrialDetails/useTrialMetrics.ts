@@ -80,11 +80,12 @@ const summarizedMetricToSeries = (
     if (rawBatchEpochMap[metricKey]) data[XAxisDomain.Epochs] = rawBatchEpochMap[metricKey];
 
     const series: Serie = {
-      color:
-        metric.group === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
       name: `${metric.group}.${metric.name}`,
     };
+    if (metric.group === MetricType.Validation) series.color = VALIDATION_SERIES_COLOR;
+    if (metric.group === MetricType.Training) series.color = TRAINING_SERIES_COLOR;
+
     trialData[metricToKey(metric)] = series;
   });
   const xAxisOptions = Object.values(XAxisDomain);
