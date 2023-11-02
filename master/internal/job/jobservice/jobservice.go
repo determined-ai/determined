@@ -19,7 +19,7 @@ import (
 // Job is the interface for commands/experiments types that implement
 // the job service.
 type Job interface {
-	ToV1Job() *jobv1.Job
+	ToV1Job() (*jobv1.Job, error)
 	SetJobPriority(priority int) error
 	SetWeight(weight float64) error
 	SetResourcePool(resourcePool string) error
@@ -68,15 +68,19 @@ func (s *Service) UnregisterJob(jobID model.JobID) {
 	delete(s.jobByID, jobID)
 }
 
-func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) map[model.JobID]*jobv1.Job {
+func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) (map[model.JobID]*jobv1.Job, error) {
 	jobRefs := map[model.JobID]*jobv1.Job{}
 	for jID := range jobQ {
 		jobRef, ok := s.jobByID[jID]
 		if ok {
-			jobRefs[jID] = jobRef.ToV1Job()
+			ref, err := jobRef.ToV1Job()
+			if err != nil {
+				return nil, err
+			}
+			jobRefs[jID] = ref
 		}
 	}
-	return jobRefs
+	return jobRefs, nil
 }
 
 // GetJobs returns a list of jobs for a resource pool.
@@ -93,7 +97,10 @@ func (s *Service) GetJobs(
 		s.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
 	}
-	jobs := s.jobQRefs(jobQ)
+	jobs, err := s.jobQRefs(jobQ)
+	if err != nil {
+		return nil, err
+	}
 
 	// Try to fetch External jobs, if supported by the Resource Manager (RM).
 	// If the GetExternalJobs call is supported, RM returns a list of external jobs or
