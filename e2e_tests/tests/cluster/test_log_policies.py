@@ -134,12 +134,17 @@ def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
 
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
 
-    master_config = bindings.get_GetMasterConfig(api_utils.determined_test_session(admin=True)).config
+    master_config = bindings.get_GetMasterConfig(
+        api_utils.determined_test_session(admin=True)
+    ).config
     if master_config.get("launch_error"):
         exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
     else:
-        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.QUEUED)
-        exp.kill_experiments([exp_id])
+        if should_match:
+            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.QUEUED)
+            exp.kill_experiments([exp_id])
+        else:
+            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
 
     experiment_trials = exp.experiment_trials(exp_id)
     assert len(experiment_trials) == 1

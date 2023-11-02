@@ -800,9 +800,8 @@ func (t *trial) checkResourcePoolRemainingCapacity() error {
 				State:               model.ErrorState,
 				InformationalReason: msg,
 			})
-		} else {
-			logrus.Warn(msg)
 		}
+		logrus.Warn(msg)
 	}
 
 	return nil
