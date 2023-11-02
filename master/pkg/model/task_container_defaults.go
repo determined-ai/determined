@@ -46,7 +46,7 @@ type TaskContainerDefaultsConfig struct {
 	Slurm      expconf.SlurmConfigV0 `json:"slurm"`
 	Pbs        expconf.PbsConfigV0   `json:"pbs"`
 
-	LogPolicies expconf.LogPoliciesConfig
+	LogPolicies expconf.LogPoliciesConfig `json:"log_policies"`
 
 	// TODO(DET-9856) we should probably eventually move this to expconf and allow setting
 	// on a per task level.
