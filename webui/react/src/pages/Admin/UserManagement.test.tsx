@@ -11,7 +11,7 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
-import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
+import UserManagement, { CREATE_USER } from './UserManagement';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
@@ -81,7 +81,6 @@ describe('UserManagement', () => {
     setup();
 
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
-    expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
 
     expect(await screen.findByText(DISPLAY_NAME)).toBeInTheDocument();
     expect(await screen.findByText(USERNAME)).toBeInTheDocument();

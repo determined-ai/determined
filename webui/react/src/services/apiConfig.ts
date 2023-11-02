@@ -114,8 +114,18 @@ export const getUsers: DetApi<
     pagination: decoder.mapV1Pagination(response.pagination),
     users: decoder.mapV1UserList(response),
   }),
-  request: (params) =>
-    detApi.Users.getUsers(params.sortBy, params.orderBy, params.offset, params.limit, params.name),
+  request: (params, options) =>
+    detApi.Users.getUsers(
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.name,
+      params.active,
+      params.admin,
+      params.roleIdAssignedDirectlyToUser,
+      options,
+    ),
 };
 
 export const getUser: DetApi<Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser> = {

@@ -1,97 +1,64 @@
-import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+import * as t from 'io-ts';
 
-import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
+import { ValueOf } from 'types';
 
-export type UserColumnName =
-  | 'action'
-  | 'displayName'
-  | 'isActive'
-  | 'isAdmin'
-  | 'modifiedAt'
-  | 'lastAuthAt';
+export const DEFAULT_COLUMN_WIDTHS = {
+  action: 20,
+  displayName: 120,
+  isActive: 40,
+  isAdmin: 40,
+  lastAuthAt: 50,
+  modifiedAt: 50,
+} as const satisfies Record<string, number>;
+
+export type UserColumnName = keyof typeof DEFAULT_COLUMN_WIDTHS;
 
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
   'isActive',
+  'lastAuthAt',
   'isAdmin',
   'modifiedAt',
-  'lastAuthAt',
 ];
 
-export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
-  action: 20,
-  displayName: 60,
-  isActive: 40,
-  isAdmin: 40,
-  lastAuthAt: 80,
-  modifiedAt: 80,
+export const UserStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+} as const;
+export type UserStatus = ValueOf<typeof UserStatus>;
+
+export const UserRole = {
+  ADMIN: 'admin',
+  MEMBER: 'member',
+} as const;
+export type UserRole = ValueOf<typeof UserRole>;
+
+export const UserManagementSettings = t.intersection([
+  t.type({
+    sortDesc: t.boolean,
+    tableLimit: t.number,
+    tableOffset: t.number,
+  }),
+  t.partial({
+    row: t.union([t.array(t.number), t.array(t.string)]),
+    sortKey: t.keyof({
+      [V1GetUsersRequestSortBy.ACTIVE]: null,
+      [V1GetUsersRequestSortBy.ADMIN]: null,
+      [V1GetUsersRequestSortBy.DISPLAYNAME]: null,
+      [V1GetUsersRequestSortBy.MODIFIEDTIME]: null,
+      [V1GetUsersRequestSortBy.UNSPECIFIED]: null,
+      [V1GetUsersRequestSortBy.USERNAME]: null,
+      [V1GetUsersRequestSortBy.NAME]: null,
+      [V1GetUsersRequestSortBy.LASTAUTHTIME]: null,
+    }),
+  }),
+]);
+export type UserManagementSettings = t.TypeOf<typeof UserManagementSettings>;
+export const DEFAULT_SETTINGS: UserManagementSettings = {
+  sortDesc: true,
+  sortKey: V1GetUsersRequestSortBy.MODIFIEDTIME,
+  tableLimit: MINIMUM_PAGE_SIZE,
+  tableOffset: 0,
 };
-
-export interface UserManagementSettings extends InteractiveTableSettings {
-  name?: string;
-  sortDesc: boolean;
-  sortKey: V1GetUsersRequestSortBy;
-}
-
-const config: SettingsConfig<UserManagementSettings> = {
-  settings: {
-    columns: {
-      defaultValue: DEFAULT_COLUMNS,
-      skipUrlEncoding: true,
-      storageKey: 'columns',
-      type: array(string),
-    },
-    columnWidths: {
-      defaultValue: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      skipUrlEncoding: true,
-      storageKey: 'columnWidths',
-      type: array(number),
-    },
-    name: {
-      defaultValue: undefined,
-      storageKey: 'name',
-      type: union([string, undefinedType]),
-    },
-    row: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'row',
-      type: union([array(number), array(string), undefinedType]),
-    },
-    sortDesc: {
-      defaultValue: true,
-      storageKey: 'sortDesc',
-      type: boolean,
-    },
-    sortKey: {
-      defaultValue: V1GetUsersRequestSortBy.MODIFIEDTIME,
-      storageKey: 'sortKey',
-      type: union([
-        literal(V1GetUsersRequestSortBy.ACTIVE),
-        literal(V1GetUsersRequestSortBy.ADMIN),
-        literal(V1GetUsersRequestSortBy.DISPLAYNAME),
-        literal(V1GetUsersRequestSortBy.MODIFIEDTIME),
-        literal(V1GetUsersRequestSortBy.UNSPECIFIED),
-        literal(V1GetUsersRequestSortBy.USERNAME),
-        literal(V1GetUsersRequestSortBy.NAME),
-        literal(V1GetUsersRequestSortBy.LASTAUTHTIME),
-      ]),
-    },
-    tableLimit: {
-      defaultValue: MINIMUM_PAGE_SIZE,
-      storageKey: 'tableLimit',
-      type: number,
-    },
-    tableOffset: {
-      defaultValue: 0,
-      storageKey: 'tableOffset',
-      type: number,
-    },
-  },
-  storagePath: 'user-management',
-};
-
-export default config;

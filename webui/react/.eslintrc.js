@@ -157,7 +157,12 @@ module.exports = {
         html: true,
       },
     ],
-    'react-hooks/exhaustive-deps': 'error',
+    'react-hooks/exhaustive-deps': [
+      'error',
+      {
+        additionalHooks: 'useAsync',
+      },
+    ],
     'require-await': 'error',
     'semi': ['error', 'always'],
     'sort-imports': [
