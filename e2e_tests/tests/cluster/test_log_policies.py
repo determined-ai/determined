@@ -47,7 +47,6 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
         assert "trial failed and matched logs to a don't retry policy" not in trial_logs
 
 
-# TODO(DET-9872) slurm test mark.
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_k8s
 @pytest.mark.parametrize("should_match", [True, False])
@@ -105,3 +104,47 @@ def test_log_policy_exclude_node(should_match: bool) -> None:
         assert experiment_trials[0].trial.restarts == 1
         trial_logs = "\n".join(exp.trial_logs(experiment_trials[0].trial.id))
         assert "therefore will not schedule on" not in trial_logs
+
+
+# Slurm behaviour is different than agent's currently. Slurm fails
+# job if it can't be scheduled due to excluding while agents / k8s remain in queued.
+@pytest.mark.e2e_slurm
+@pytest.mark.parametrize("should_match", [True, False])
+def test_log_policy_exclude_slurm(should_match: bool) -> None:
+    agents = bindings.get_GetAgents(api_utils.determined_test_session()).agents
+    if len(agents) != 1:
+        pytest.skip("can only be run on a single agent cluster")
+
+    regex = r"assert 0 <= self\.metrics_sigma"
+    if not should_match:
+        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+
+    config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
+    config["log_policies"] = [
+        {
+            "pattern": regex,
+            "action": {
+                "type": "exclude_node",
+            },
+        },
+    ]
+    config["hyperparameters"]["metrics_sigma"] = -1
+    config["max_restarts"] = 1
+
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        exp_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
+
+    trials = exp.experiment_trials(exp_id)
+    assert len(trials) == 1
+    assert trials[0].trial.restarts == 1
+
+    times_ran = "\n".join(exp.trial_logs(trials[0].trial.id)).count("Validating checkpoint storage")
+    if should_match:
+        assert (
+            times_ran == 1
+        )  # Job fails to start up the second restart since all nodes are excluded.
+    else:
+        assert times_ran == 2
