@@ -194,6 +194,16 @@
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
       to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0``.
 
+   -  ``logPolicies``: Sets log policies for trials. See :ref:`log_policies
+      <experiment-config-min-validation-period>` for further information.
+
+      .. code:: yaml
+
+         logPolicies:
+             - pattern: ".*uncorrectable ECC error encountered.*"
+               action:
+                 type: exclude_node
+
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 
 -  ``imagePullSecretName``: Specifies the image pull secret for pulling the Determined master image.

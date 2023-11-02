@@ -103,6 +103,12 @@ specified here. You can customize environment variables for CUDA (NVIDIA GPU), C
 GPU) tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to Determined 0.17.6),
 ``cpu``, and ``rocm`` keys.
 
+``log_policies``
+================
+
+A list of log policies that take effect when a trial reports a log that matches a pattern. See
+:ref:`log_policies <config-log-policies>` for further information.
+
 ``force_pull_image``
 ====================
 

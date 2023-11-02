@@ -280,6 +280,44 @@ trials will not be restarted and will be marked as errored. An experiment is con
 if at least one of its trials completes without errors. The default value for ``max_restarts`` is
 ``5``.
 
+.. _config-log-policies:
+
+``log_policies``
+================
+
+Optional. The ``log_policies`` parameter is a list of policies that allows certain actions to be
+taken when a trial reports a log that matches the pattern. The pattern is a regex used by the Go
+language. See `this reference <https://github.com/google/re2/wiki/Syntax>`__ for details on the
+regex. The pattern regex is matched line by line against logs reported by the trial. The following
+actions can be taken
+
+-  ``exclude_node``: When a trial fails and restarts according to its ``max_restarts`` policy, if
+   any nodes reported a log that matched the pattern then that node is excluded from scheduling.
+   Only the trial will be prevented from scheduling on a node. This is useful for allowing trials to
+   reschedule and avoid nodes that may be experiencing a certain hardware issues like uncorrectable
+   gpu ECC errors.
+
+   If a trial has excluded nodes enough nodes to the point where it is unschedulable the trial will
+   fail if the master config option ``launch_error`` is set to true (default is true).
+
+-  ``cancel_retries``: If a trial reports a log that matches the pattern, then the trial will not
+   restart even if it has ``max_restarts`` left. This is useful for avoiding using resources
+   retrying a trial that encounters certain failures that won't be fixed by retrying the trial. One
+   example of this is a model too large causing a CUDA out of memory error.
+
+An example of the configuration is shown below. This can also be specified on a cluster or resource
+pool level through task container defaults.
+
+.. code:: yaml
+
+   log_policies:
+      - pattern: ".*uncorrectable ECC error encountered.*"
+        action:
+          type: exclude_node
+      - pattern: ".*CUDA out of memory.*"
+        action:
+          type: cancel_retries
+
 *******************
  Validation Policy
 *******************
