@@ -234,7 +234,7 @@ def test_delete_tensorboard_for_experiment() -> None:
         config_obj, conf.tutorials_path("mnist_pytorch"), 1
     )
 
-    command = ["det", "tensorboard", "delete-files", str(experiment_id)]
+    command = ["det", "e", "delete-tb-files", str(experiment_id)]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
     # Check if Tensorboard files are deleted
