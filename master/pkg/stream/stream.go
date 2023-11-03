@@ -33,7 +33,7 @@ type UpsertMsg struct {
 }
 
 // MarshalJSON returns a json marshaled UpsertMsg.
-func (u *UpsertMsg) MarshalJSON() ([]byte, error) {
+func (u UpsertMsg) MarshalJSON() ([]byte, error) {
 	data := map[string]Msg{
 		u.JSONKey: u.Msg,
 	}
@@ -48,7 +48,7 @@ type DeleteMsg struct {
 }
 
 // MarshalJSON returns a json marshaled DeleteMsg.
-func (d *DeleteMsg) MarshalJSON() ([]byte, error) {
+func (d DeleteMsg) MarshalJSON() ([]byte, error) {
 	data := map[string]string{
 		d.Key: d.Deleted,
 	}

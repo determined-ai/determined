@@ -58,7 +58,7 @@ func TestConfigureSubscription(t *testing.T) {
 	require.True(t, sub.filter != nil, "subscription filter is nil after configuration")
 	require.True(t, sub.filter(TestMsg{}), "set filter does not work")
 	require.True(t, len(publisher.Subscriptions) == 1,
-		"publisher's subscriptions are are nil after configuration")
+		"publisher's subscriptions are nil after configuration")
 	require.True(t, publisher.Subscriptions[0].filter(TestMsg{}),
 		"publisher's subscription has the wrong filter")
 
