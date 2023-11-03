@@ -79,7 +79,6 @@ const ProjectCard: React.FC<Props> = ({
             ) : (
               project.lastExperimentStartedAt && (
                 <TimeAgo
-                  className={css.lastExperiment}
                   datetime={project.lastExperimentStartedAt}
                   tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
                 />

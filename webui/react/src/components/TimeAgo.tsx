@@ -14,8 +14,6 @@ import {
 } from 'utils/datetime';
 import { capitalize, capitalizeWord } from 'utils/string';
 
-import css from './TimeAgo.module.scss';
-
 export const TimeAgoCase = {
   Lower: 'lower',
   Sentence: 'sentence',
@@ -25,7 +23,6 @@ export const TimeAgoCase = {
 export type TimeAgoCase = ValueOf<typeof TimeAgoCase>;
 
 interface Props {
-  className?: string;
   dateFormat?: string;
   datetime: Dayjs | Date | number | string;
   long?: boolean;
@@ -39,7 +36,6 @@ export const JUST_NOW = 'Just Now';
 export const DEFAULT_TOOLTIP_FORMAT = 'MMM D, YYYY - h:mm a';
 
 const TimeAgo: React.FC<Props> = ({
-  className,
   dateFormat = 'MMM D, YYYY',
   datetime,
   long = false,
@@ -49,9 +45,6 @@ const TimeAgo: React.FC<Props> = ({
   units = 1,
 }: Props) => {
   const [now, setNow] = useState(() => Date.now());
-  const classes: string[] = [css.base];
-
-  if (className) classes.push(className);
 
   const milliseconds = useMemo(() => {
     if (isNumber(datetime)) {
@@ -122,7 +115,7 @@ const TimeAgo: React.FC<Props> = ({
           {dayjs(milliseconds).format(tooltipFormat).replace('\\n', '\n')}
         </div>
       }>
-      <div className={classes.join(' ')}>{durationString}</div>
+      {durationString}
     </Tooltip>
   );
 };
