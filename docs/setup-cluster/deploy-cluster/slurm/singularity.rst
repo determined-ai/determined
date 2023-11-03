@@ -23,15 +23,15 @@ container runtime in use.
 Each version of Determined utilizes specifically-tagged Docker containers. The image tags referenced
 by default in this version of Determined are described below.
 
-+-------------+--------------------------------------------------------------------------+
-| Environment | File Name                                                                |
-+=============+==========================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-2b7e2a1``    |
-+-------------+--------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-2b7e2a1`` |
-+-------------+--------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-2b7e2a1``  |
-+-------------+--------------------------------------------------------------------------+
++-------------+------------------------------------------------------------------------------+
+| Environment | File Name                                                                    |
++=============+==============================================================================+
+| CPUs        | ``determinedai/environments-dev:py-3.9-pytorch-1.12-tf-2.11-cpu-ef2ebad``    |
++-------------+------------------------------------------------------------------------------+
+| NVIDIA GPUs | ``determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.11-gpu-ef2ebad`` |
++-------------+------------------------------------------------------------------------------+
+| AMD GPUs    | ``determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ef2ebad``  |
++-------------+------------------------------------------------------------------------------+
 
 See :ref:`set-environment-images` for the images Docker Hub location, and add each tagged image
 needed by your experiments to the image cache.
