@@ -18,7 +18,7 @@ def create_url_entry(version):
     return entry
 
 
-def append_entry(json_file, entry, entry_position=1):
+def insert_entry(json_file, entry, entry_position=1):
     with open(json_file, "rb") as f:
         all_urls = json.load(f)
 
@@ -29,9 +29,9 @@ def append_entry(json_file, entry, entry_position=1):
         f.write("\n")
 
 
-def insert_url(json_file, version):
+def insert_version_url(json_file, version):
     new_entry = create_url_entry(version)
-    append_entry(json_file, new_entry)
+    insert_entry(json_file, new_entry)
 
     print(f"Added dropdown link for version {version}")
 
@@ -40,4 +40,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(__doc__, file=sys.stderr)
         sys.exit(1)
-    insert_url(sys.argv[1], sys.argv[2])
+    insert_version_url(sys.argv[1], sys.argv[2])
