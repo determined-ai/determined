@@ -12,7 +12,7 @@ import (
 )
 
 // LaunchNotebook launches *notebookv1.Notebook.
-func (cs *commandService) LaunchNotebook(req *CreateGeneric) (*notebookv1.Notebook, error) {
+func (cs *CommandService) LaunchNotebook(req *CreateGeneric) (*notebookv1.Notebook, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -25,7 +25,7 @@ func (cs *commandService) LaunchNotebook(req *CreateGeneric) (*notebookv1.Notebo
 }
 
 // GetNotebooks returns all notebooks in the command service registry matching the workspace ID.
-func (cs *commandService) GetNotebooks(req *apiv1.GetNotebooksRequest) (*apiv1.GetNotebooksResponse, error) {
+func (cs *CommandService) GetNotebooks(req *apiv1.GetNotebooksRequest) (*apiv1.GetNotebooksResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -44,8 +44,8 @@ func (cs *commandService) GetNotebooks(req *apiv1.GetNotebooksRequest) (*apiv1.G
 	return resp, nil
 }
 
-// GetNotebook returns the notebook matching the notebookID.
-func (cs *commandService) GetNotebook(req *apiv1.GetNotebookRequest) (*apiv1.GetNotebookResponse, error) {
+// GetNotebook looks up a notebook by ID returns a summary of the its state and configuration.
+func (cs *CommandService) GetNotebook(req *apiv1.GetNotebookRequest) (*apiv1.GetNotebookResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -60,8 +60,8 @@ func (cs *commandService) GetNotebook(req *apiv1.GetNotebookRequest) (*apiv1.Get
 	}, nil
 }
 
-// KillNotebook marks the notebook's allocation as killed..
-func (cs *commandService) KillNotebook(req *apiv1.KillNotebookRequest) (*apiv1.KillNotebookResponse, error) {
+// KillNotebook sends a kill signal to the command's allocation.
+func (cs *CommandService) KillNotebook(req *apiv1.KillNotebookRequest) (*apiv1.KillNotebookResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -78,7 +78,7 @@ func (cs *commandService) KillNotebook(req *apiv1.KillNotebookRequest) (*apiv1.K
 }
 
 // SetNotebookPriority sets the notebook's resource manager group priority.
-func (cs *commandService) SetNotebookPriority(
+func (cs *CommandService) SetNotebookPriority(
 	req *apiv1.SetNotebookPriorityRequest,
 ) (*apiv1.SetNotebookPriorityResponse, error) {
 	cs.mu.Lock()

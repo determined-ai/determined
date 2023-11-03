@@ -65,7 +65,7 @@ type command struct {
 	syslog *logrus.Entry
 }
 
-// CreateGeneric is a request to the commandService to create a generic command.
+// CreateGeneric is a request to the CommandService to create a generic command.
 type CreateGeneric struct {
 	ContextDirectory []byte
 	Spec             *tasks.GenericCommandSpec

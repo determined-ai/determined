@@ -12,7 +12,7 @@ import (
 )
 
 // LaunchShell launches a *shellv1.Shell.
-func (cs *commandService) LaunchShell(req *CreateGeneric) (*shellv1.Shell, error) {
+func (cs *CommandService) LaunchShell(req *CreateGeneric) (*shellv1.Shell, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -25,7 +25,7 @@ func (cs *commandService) LaunchShell(req *CreateGeneric) (*shellv1.Shell, error
 }
 
 // GetShells returns all shells in the command service registry matching the workspace ID.
-func (cs *commandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShellsResponse, error) {
+func (cs *CommandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShellsResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -44,8 +44,8 @@ func (cs *commandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShel
 	return resp, nil
 }
 
-// GetShell returns the shell matching the shellID.
-func (cs *commandService) GetShell(req *apiv1.GetShellRequest) (*apiv1.GetShellResponse, error) {
+// GetShell looks up a shell by ID returns a summary of the its state and configuration.
+func (cs *CommandService) GetShell(req *apiv1.GetShellRequest) (*apiv1.GetShellResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -60,8 +60,8 @@ func (cs *commandService) GetShell(req *apiv1.GetShellRequest) (*apiv1.GetShellR
 	}, nil
 }
 
-// KillShell marks the shell's allocation as killed..
-func (cs *commandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShellResponse, error) {
+// KillShell sends a kill signal to the command's allocation.
+func (cs *CommandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShellResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -78,7 +78,7 @@ func (cs *commandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShe
 }
 
 // SetShellPriority sets the shell's resource manager group priority.
-func (cs *commandService) SetShellPriority(
+func (cs *CommandService) SetShellPriority(
 	req *apiv1.SetShellPriorityRequest,
 ) (*apiv1.SetShellPriorityResponse, error) {
 	cs.mu.Lock()

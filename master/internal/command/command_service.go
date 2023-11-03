@@ -15,11 +15,11 @@ import (
 )
 
 // DefaultCmdService is the global command service singleton.
-var DefaultCmdService *commandService
+var DefaultCmdService *CommandService
 
-// commandService tracks the different NTSC commands in the system.
+// CommandService tracks the different NTSC commands in the system.
 // Locking in: restoreAllCommands, launchNTSC, Get/Kill/LaunchNTSC(s), SetNTSCPriority, DeleteWorkspace.
-type commandService struct {
+type CommandService struct {
 	db       *db.PgDB
 	rm       rm.ResourceManager
 	mu       sync.Mutex
@@ -27,7 +27,7 @@ type commandService struct {
 	syslog   *logrus.Entry
 }
 
-// SetDefaultCmdService initializes & returns a new commandService.
+// SetDefaultCmdService initializes & returns a new CommandService.
 func SetDefaultCmdService(db *db.PgDB, rm rm.ResourceManager) {
 	if DefaultCmdService != nil {
 		logrus.Warn(
@@ -35,7 +35,7 @@ func SetDefaultCmdService(db *db.PgDB, rm rm.ResourceManager) {
 		)
 	}
 
-	DefaultCmdService = &commandService{
+	DefaultCmdService = &CommandService{
 		db:       db,
 		rm:       rm,
 		commands: make(map[model.TaskID]*command),
@@ -44,7 +44,7 @@ func SetDefaultCmdService(db *db.PgDB, rm rm.ResourceManager) {
 }
 
 // RestoreAllCommands restores all terminated commands whose end time isn't set.
-func (cs *commandService) RestoreAllCommands(
+func (cs *CommandService) RestoreAllCommands(
 	ctx context.Context,
 ) error {
 	cs.mu.Lock()
@@ -75,7 +75,7 @@ func (cs *commandService) RestoreAllCommands(
 }
 
 // createGenericCommand creates NTSC commands and persists them to the database.
-func (cs *commandService) createGenericCommand(
+func (cs *CommandService) createGenericCommand(
 	taskType model.TaskType,
 	jobType model.JobType,
 	req *CreateGeneric,
@@ -112,16 +112,16 @@ func (cs *commandService) createGenericCommand(
 	return cmd, cmd.startCmd(context.TODO()) // TODO CAROLINA: feed in a TODO() into any start methods.
 }
 
-func (cs *commandService) unregisterCommand(id model.TaskID) {
+func (cs *CommandService) unregisterCommand(id model.TaskID) {
 	cs.mu.Lock()
 	defer cs.mu.Lock()
 
 	delete(cs.commands, id)
 }
 
-// commandService NTSC methods: getNTSC, listByType, DeleteWorkspaceNTSC
+// CommandService NTSC methods: getNTSC, listByType, DeleteWorkspaceNTSC
 // getNTSC gets & checks type of a command given its ID.
-func (cs *commandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*command, error) {
+func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*command, error) {
 	c, ok := cs.commands[cmdID]
 	if !ok {
 		return nil, fmt.Errorf("get NTSC %s not found", cmdID)
@@ -136,7 +136,7 @@ func (cs *commandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*
 }
 
 // listByType returns a list of NTSCs of one type.
-func (cs *commandService) listByType(
+func (cs *CommandService) listByType(
 	reqUsers []string,
 	reqUserIDs []int32,
 	cmdType model.TaskType,
@@ -160,7 +160,7 @@ func (cs *commandService) listByType(
 }
 
 // DeleteWorkspaceNTSC deletes all NTSC associated with a workspace ID.
-func (cs *commandService) DeleteWorkspaceNTSC(req *apiv1.DeleteWorkspaceRequest) {
+func (cs *CommandService) DeleteWorkspaceNTSC(req *apiv1.DeleteWorkspaceRequest) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 

@@ -12,7 +12,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
-func (cs *commandService) LaunchTensorboard(req *CreateGeneric) (*tensorboardv1.Tensorboard, error) {
+// LaunchTensorboard launches a *tensorboardv1.Tensorboard.
+func (cs *CommandService) LaunchTensorboard(req *CreateGeneric) (*tensorboardv1.Tensorboard, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -24,7 +25,8 @@ func (cs *commandService) LaunchTensorboard(req *CreateGeneric) (*tensorboardv1.
 	return cmd.toTensorboard(), nil
 }
 
-func (cs *commandService) GetTensorboards(req *apiv1.GetTensorboardsRequest) (*apiv1.GetTensorboardsResponse, error) {
+// GetTensorboards returns all tbs in the command service registry matching the workspace ID.
+func (cs *CommandService) GetTensorboards(req *apiv1.GetTensorboardsRequest) (*apiv1.GetTensorboardsResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -43,8 +45,8 @@ func (cs *commandService) GetTensorboards(req *apiv1.GetTensorboardsRequest) (*a
 	return resp, nil
 }
 
-// GetTensorboard returns the tb matching the tbID.
-func (cs *commandService) GetTensorboard(req *apiv1.GetTensorboardRequest) (*apiv1.GetTensorboardResponse, error) {
+// GetTensorboard looks up a tensorboard by ID returns a summary of the its state and configuration.
+func (cs *CommandService) GetTensorboard(req *apiv1.GetTensorboardRequest) (*apiv1.GetTensorboardResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -59,8 +61,8 @@ func (cs *commandService) GetTensorboard(req *apiv1.GetTensorboardRequest) (*api
 	}, nil
 }
 
-// KillTensorboard marks the tb's allocation as killed..
-func (cs *commandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*apiv1.KillTensorboardResponse, error) {
+// KillTensorboard sends a kill signal to the command's allocation.
+func (cs *CommandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*apiv1.KillTensorboardResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -77,7 +79,7 @@ func (cs *commandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*a
 }
 
 // SetTensorboardPriority sets the tb's resource manager group priority.
-func (cs *commandService) SetTensorboardPriority(
+func (cs *CommandService) SetTensorboardPriority(
 	req *apiv1.SetTensorboardPriorityRequest,
 ) (*apiv1.SetTensorboardPriorityResponse, error) {
 	cs.mu.Lock()

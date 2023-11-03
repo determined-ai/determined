@@ -12,7 +12,7 @@ import (
 )
 
 // LaunchCommand launches *commandv1.Command.
-func (cs *commandService) LaunchCommand(req *CreateGeneric) (*commandv1.Command, error) {
+func (cs *CommandService) LaunchCommand(req *CreateGeneric) (*commandv1.Command, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -25,7 +25,7 @@ func (cs *commandService) LaunchCommand(req *CreateGeneric) (*commandv1.Command,
 }
 
 // GetCommands returns all commands in the command service registry matching the workspace ID.
-func (cs *commandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.GetCommandsResponse, error) {
+func (cs *CommandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.GetCommandsResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -44,8 +44,8 @@ func (cs *commandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.Get
 	return resp, nil
 }
 
-// GetCommand returns the command matching the commandID.
-func (cs *commandService) GetCommand(req *apiv1.GetCommandRequest) (*apiv1.GetCommandResponse, error) {
+// GetCommand looks up a command by ID returns a summary of the its state and configuration.
+func (cs *CommandService) GetCommand(req *apiv1.GetCommandRequest) (*apiv1.GetCommandResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -60,8 +60,8 @@ func (cs *commandService) GetCommand(req *apiv1.GetCommandRequest) (*apiv1.GetCo
 	}, nil
 }
 
-// KillCommand marks the command's allocation as killed.
-func (cs *commandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.KillCommandResponse, error) {
+// KillCommand sends a kill signal to the command's allocation.
+func (cs *CommandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.KillCommandResponse, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -78,7 +78,7 @@ func (cs *commandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.Kil
 }
 
 // SetCommandPriority sets the command's resource manager group priority.
-func (cs *commandService) SetCommandPriority(
+func (cs *CommandService) SetCommandPriority(
 	req *apiv1.SetCommandPriorityRequest,
 ) (*apiv1.SetCommandPriorityResponse, error) {
 	cs.mu.Lock()
