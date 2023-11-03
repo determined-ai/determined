@@ -15,6 +15,7 @@ import (
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -2968,4 +2969,42 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 	}
 
 	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
+}
+
+func (a *apiServer) DeleteTensorboardFiles(
+	ctx context.Context, req *apiv1.DeleteTensorboardFilesRequest,
+) (resp *apiv1.DeleteTensorboardFilesResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	exp, err := db.ExperimentByID(context.TODO(), int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceID, err := workspace.WorkspacesIDsByExperimentIDs(ctx, []int{exp.ID})
+	if err != nil {
+		return nil, err
+	}
+	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceID[0])
+	if err != nil {
+		return nil, err
+	}
+
+	var uuidList []uuid.UUID
+
+	err = runCheckpointGCTask(
+		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
+		exp.Config, uuidList, nil, true, agentUserGroup, curUser,
+		nil,
+	)
+
+	if err != nil {
+		log.WithError(err).Errorf("failed to gc tensorboard for experiment: %d", exp.ID)
+		return nil, err
+	}
+
+	return &apiv1.DeleteTensorboardFilesResponse{}, nil
 }

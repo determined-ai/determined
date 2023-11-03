@@ -6829,12 +6829,22 @@ func request_Determined_DeleteTensorboardFiles_0(ctx context.Context, marshaler 
 	var protoReq DeleteTensorboardFilesRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["experiment_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "experiment_id")
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.ExperimentId, err = runtime.Int32(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "experiment_id", err)
 	}
 
 	msg, err := client.DeleteTensorboardFiles(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -6846,12 +6856,22 @@ func local_request_Determined_DeleteTensorboardFiles_0(ctx context.Context, mars
 	var protoReq DeleteTensorboardFilesRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["experiment_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "experiment_id")
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.ExperimentId, err = runtime.Int32(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "experiment_id", err)
 	}
 
 	msg, err := server.DeleteTensorboardFiles(ctx, &protoReq)
@@ -13690,7 +13710,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("POST", pattern_Determined_DeleteTensorboardFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_Determined_DeleteTensorboardFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -18019,7 +18039,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("POST", pattern_Determined_DeleteTensorboardFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_Determined_DeleteTensorboardFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -19951,7 +19971,7 @@ var (
 
 	pattern_Determined_LaunchTensorboard_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "tensorboards"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_DeleteTensorboardFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "tensorboards", "delete"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_DeleteTensorboardFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "experiments", "experiment_id", "tensorboard-files"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_GetActiveTasksCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "tasks", "count"}, "", runtime.AssumeColonVerbOpt(true)))
 

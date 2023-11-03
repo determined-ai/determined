@@ -2937,33 +2937,6 @@ class v1DeleteProjectResponse(Printable):
         }
         return out
 
-class v1DeleteTensorboardFilesRequest(Printable):
-    """Request to delete a tensorboard files."""
-    experimentId: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        experimentId: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(experimentId, Unset):
-            self.experimentId = experimentId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1DeleteTensorboardFilesRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "experimentId" in obj:
-            kwargs["experimentId"] = obj["experimentId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "experimentId" in vars(self):
-            out["experimentId"] = self.experimentId
-        return out
-
 class v1DeleteWorkspaceResponse(Printable):
     """Response to DeleteWorkspaceRequest."""
 
@@ -15975,18 +15948,21 @@ def delete_DeleteTemplate(
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
-def post_DeleteTensorboardFiles(
+def delete_DeleteTensorboardFiles(
     session: "api.Session",
     *,
-    body: "v1DeleteTensorboardFilesRequest",
+    experimentId: int,
 ) -> None:
-    """Delete tensorboard files."""
+    """Delete tensorboard files.
+
+    - experimentId: ID of experiment that the tensorboard files are linked to.
+    """
     _params = None
     _resp = session._do_request(
-        method="POST",
-        path="/api/v1/tensorboards/delete",
+        method="DELETE",
+        path=f"/api/v1/experiments/{experimentId}/tensorboard-files",
         params=_params,
-        json=body.to_json(True),
+        json=None,
         data=None,
         headers=None,
         timeout=None,
@@ -15994,7 +15970,7 @@ def post_DeleteTensorboardFiles(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_DeleteTensorboardFiles", _resp)
+    raise APIHttpError("delete_DeleteTensorboardFiles", _resp)
 
 def delete_DeleteWebhook(
     session: "api.Session",

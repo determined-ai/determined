@@ -1502,11 +1502,10 @@ service Determined {
   rpc DeleteTensorboardFiles(DeleteTensorboardFilesRequest)
       returns (DeleteTensorboardFilesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/tensorboards/delete"
-      body: "*"
+      delete: "/api/v1/experiments/{experiment_id}/tensorboard-files"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Tensorboards"
+      tags: "Experiments"
     };
   }
 

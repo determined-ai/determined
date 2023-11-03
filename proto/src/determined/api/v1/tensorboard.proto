@@ -127,11 +127,3 @@ message LaunchTensorboardResponse {
   // List of any related warnings.
   repeated LaunchWarning warnings = 3;
 }
-
-// Request to delete a tensorboard files.
-message DeleteTensorboardFilesRequest {
-  // ID of experiment that the tensorboard files are linked to.
-  int32 experiment_id = 1;
-}
-// Response to DeleteTensorboardRequest.
-message DeleteTensorboardFilesResponse {}

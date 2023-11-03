@@ -1003,11 +1003,7 @@ def move_experiment(args: Namespace) -> None:
 
 @authentication.required
 def delete_tensorboard_files(args: Namespace) -> None:
-    body = bindings.v1DeleteTensorboardFilesRequest(
-        experimentId=args.experiment_id,
-    )
-
-    bindings.post_DeleteTensorboardFiles(cli.setup_session(args), body=body)
+    bindings.delete_DeleteTensorboardFiles(cli.setup_session(args), experimentId=args.experiment_id)
 
 def none_or_int(string: str) -> Optional[int]:
     if string.lower().strip() in ("null", "none"):
