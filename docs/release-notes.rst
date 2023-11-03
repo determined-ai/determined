@@ -19,22 +19,22 @@ Version 0.26.3
 
 -  CLI: Add a new CLI command ``det user edit <target_user> [--display-name] [--remote] [--active]
    [--admin] [--username]`` that allows the user to edit mutliple fields for the target user. Old
-   methods for editing users will still be available, but deprecated.
+   methods for editing users will still be available, but are now deprecated.
 
 -  Add new ``directory`` checkpoint storage type, which allows for storing checkpoint and
    TensorBoard data at a specified path inside the task containers. Users are responsible for
    mounting a persistent storage at this path, e.g., a shared PVC using ``pod_spec`` configuration
-   in kubernetes-based setups.
+   in Kubernetes-based setups.
 
 **Deprecated Features**
 
--  API: Support for mixed precision in ``PyTorchTrial`` using the ``NVIDIA/apex`` library is
-   deprecated and will be removed in a future version of Determined. Users should transition to
-   Torch Automatic Mixed Precision (``torch.cuda.amp``). For examples, refer to the `examples
+-  API: Support for mixed precision in ``PyTorchTrial`` using NVIDIA's Apex library is deprecated
+   and will be removed in a future version of Determined. Users should transition to Torch Automatic
+   Mixed Precision (``torch.cuda.amp``). For examples, refer to the `examples
    <https://github.com/determined-ai/determined/tree/0.26.1/harness/tests/experiment/fixtures/pytorch_amp>`_.
 
--  Images: Likewise, environment images will no longer include the ``NVIDIA/apex`` package in a
-   future version of Determined. If needed, users can install it from the official repository.
+-  Images: Likewise, environment images will no longer include the Apex package in a future version
+   of Determined. If needed, users can install it from the official repository.
 
 Version 0.26.2
 ==============
