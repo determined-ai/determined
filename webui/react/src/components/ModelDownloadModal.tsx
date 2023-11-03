@@ -14,9 +14,7 @@ const ModelDownloadModal = ({ modelVersion }: Props): JSX.Element => {
     <Modal size="medium" title="Download Model Command">
       <div>
         <CodeSample text={downloadCommand} />
-        <p style={{ color: 'var(--theme-float-on-weak)', marginTop: 8 }}>
-          Copy/paste command into the Determined CLI
-        </p>
+        <p>Copy/paste command into the Determined CLI</p>
       </div>
     </Modal>
   );
