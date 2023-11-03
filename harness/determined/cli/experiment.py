@@ -1408,7 +1408,7 @@ main_cmd = Cmd(
         Cmd(
             "delete-tb-files",
             delete_tensorboard_files,
-            "delete TensorBoard files associate with the proived experiment ID",
+            "delete TensorBoard files associated with the provided experiment ID",
             [
                 Arg("experiment_id", type=int, help="Experiment ID"),
             ],
