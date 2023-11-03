@@ -1,5 +1,5 @@
 import LineChart from 'hew/LineChart';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { Serie, XAxisDomain } from 'types';
 import handleError from 'utils/error';
@@ -9,6 +9,7 @@ import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
+  chartKey?: number;
   dateRange?: [start: number, end: number];
   formatValues?: (_: uPlot, arg0: number[]) => string[];
   groupBy?: GroupBy;
@@ -21,6 +22,7 @@ interface ClusterHistoricalUsageChartProps {
 const CHART_HEIGHT = 350;
 
 const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = ({
+  chartKey,
   dateRange,
   formatValues,
   groupBy,
@@ -29,12 +31,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   label,
   time,
 }: ClusterHistoricalUsageChartProps) => {
-  const singlePoint = useMemo(
-    // one series, and that one series has one point
-    () => Object.keys(hoursByLabel).length === 1 && Object.values(hoursByLabel)[0].length === 1,
-    [hoursByLabel],
-  );
-
   const data: Serie[] = Object.keys(hoursByLabel).map((label) => ({
     data: {
       [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [Date.parse(time[idx]) / 1000, pt]),
@@ -42,28 +38,17 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
     name: label,
   }));
 
-  const adjustedDateRange: [number, number] | undefined = useMemo(() => {
-    return (
-      dateRange ??
-      (singlePoint
-        ? [
-            new Date(`${new Date().getFullYear()}-01-01`).getTime() / 1000,
-            new Date(`${new Date().getFullYear() + 1}-01-01`).getTime() / 1000,
-          ]
-        : undefined)
-    );
-  }, [singlePoint, dateRange]);
-
   return (
     <div className={css.base}>
       <LineChart
         handleError={handleError}
         height={height}
+        key={chartKey}
         series={data}
         xAxis={XAxisDomain.Time}
         xLabel={capitalizeWord(groupBy || '')}
         xRange={{
-          [XAxisDomain.Time]: adjustedDateRange,
+          [XAxisDomain.Time]: dateRange,
           [XAxisDomain.Batches]: undefined,
           [XAxisDomain.Epochs]: undefined,
         }}

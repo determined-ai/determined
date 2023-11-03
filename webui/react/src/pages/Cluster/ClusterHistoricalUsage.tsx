@@ -135,6 +135,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
                 dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
                 hoursByLabel={series.hoursTotal}
@@ -152,6 +153,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
                 dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
                 hoursByLabel={{
@@ -172,6 +174,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
                 dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
                 hoursByLabel={{
@@ -192,6 +195,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             Failed: () => null, // TODO inform user if chart fails to load
             Loaded: (series) => (
               <ClusterHistoricalUsageChart
+                chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
                 dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
                 groupBy={series.groupedBy}
                 hoursByLabel={{
