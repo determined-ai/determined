@@ -15,4 +15,4 @@
       such as CUDA memory issues. For details, visit :ref:`experiment-config-reference` and
       :ref:`master-config-reference`.
 
-This options is also configurable at the cluster or resource pool level via task container defaults.
+This option is also configurable at the cluster or resource pool level via task container defaults.
