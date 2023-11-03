@@ -1,8 +1,9 @@
 import { Space, Typography } from 'antd';
 import Avatar from 'determined-ui/Avatar';
 import Icon from 'determined-ui/Icon';
+import Progress from 'determined-ui/Progress';
 import Spinner from 'determined-ui/Spinner';
-import { StateOfUnion } from 'determined-ui/Theme';
+import { getStateColorCssVar, StateOfUnion } from 'determined-ui/Theme';
 import Tooltip from 'determined-ui/Tooltip';
 import React from 'react';
 
@@ -11,7 +12,6 @@ import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
-import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import UserAvatar from 'components/UserAvatar';
@@ -222,8 +222,16 @@ export const experimentNameRenderer = (
 );
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
+  const color = getStateColorCssVar(record.state);
   return typeof record.progress !== 'undefined' ? (
-    <ProgressBar percent={record.progress * 100} state={record.state} />
+    <Progress
+      parts={[
+        {
+          color,
+          percent: record.progress,
+        },
+      ]}
+    />
   ) : null;
 };
 
