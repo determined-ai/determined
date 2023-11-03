@@ -183,7 +183,7 @@ Agents
       communication between trial containers.
 
    -  For TensorBoards, an inbound and outbound TCP port between 2600-2900 is used to connect the
-      master and the tensorboard container.
+      master and the TensorBoard container.
 
 .. _aws-cluster-configuration:
 

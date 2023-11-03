@@ -1336,7 +1336,7 @@ Version 0.18.3
 -  CLI: Add new flag ``--agent-config-path`` to ``det deploy local agent-up`` allowing custom agent
    configs to be used.
 -  CLI: Add ``det (notebook|shell|tensorboard) list --json`` option, allowing user to get
-   JSON-formatted notebook, shell or tensorboard task list.
+   JSON-formatted notebook, shell or TensorBoard task list.
 -  Configuration: Experiment configuration ``resources.shm_size`` now supports passing in a unit
    like ``4.5 G`` or ``128MiB``.
 

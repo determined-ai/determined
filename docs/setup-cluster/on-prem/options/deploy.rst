@@ -78,7 +78,7 @@ For single-agent clusters launched with:
 the cluster will automatically make the specified directory available to tasks on the cluster as
 ``./shared_fs``. If ``--auto-work-dir`` is not specified, the cluster will default to mounting your
 home directory. This will allow you to access your local preferences and any relevant files stored
-in the specified directory with the cluster's notebooks, shells, and tensorboard tasks. To disable
+in the specified directory with the cluster's notebooks, shells, and TensorBoard tasks. To disable
 this feature, use:
 
 .. code::
