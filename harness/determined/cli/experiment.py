@@ -1001,9 +1001,10 @@ def move_experiment(args: Namespace) -> None:
     print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
 
 
-@authentication.required
+@cli.login_sdk_client
 def delete_tensorboard_files(args: Namespace) -> None:
-    bindings.delete_DeleteTensorboardFiles(cli.setup_session(args), experimentId=args.experiment_id)
+    exp = client.get_experiment(args.experiment_id)
+    exp.delete_tensorboard_files()
 
 
 def none_or_int(string: str) -> Optional[int]:
