@@ -58,7 +58,7 @@ def maybe_run_autotuning_experiment(
     model_def_file: str,
     create_args: Optional[List[str]] = None,
     search_method_name: str = "_test",
-    max_trials: int = 2,
+    max_trials: int = 8,
 ) -> subprocess.CompletedProcess:
     command = [
         "python3",
@@ -88,7 +88,7 @@ def run_autotuning_experiment(
     model_def_file: str,
     create_args: Optional[List[str]] = None,
     search_method_name: str = "_test",
-    max_trials: int = 2,
+    max_trials: int = 8,
 ) -> int:
     completed_process = maybe_run_autotuning_experiment(
         config_file, model_def_file, create_args, search_method_name, max_trials
@@ -786,7 +786,7 @@ def run_basic_autotuning_test(
     priority: int = -1,
     expect_client_failed: bool = False,
     search_method_name: str = "_test",
-    max_trials: int = 2,
+    max_trials: int = 8,
 ) -> int:
     assert os.path.isdir(model_def_file)
     orchestrator_exp_id = run_autotuning_experiment(
