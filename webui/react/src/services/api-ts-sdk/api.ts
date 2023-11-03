@@ -2426,24 +2426,24 @@ export interface V1DeleteProjectResponse {
 export interface V1DeleteTemplateResponse {
 }
 /**
- * Request to delete a tensorboard.
+ * Request to delete a tensorboard files.
  * @export
- * @interface V1DeleteTensorboardRequest
+ * @interface V1DeleteTensorboardFilesRequest
  */
-export interface V1DeleteTensorboardRequest {
+export interface V1DeleteTensorboardFilesRequest {
     /**
-     * ID of experiment that the tensorboard is linked to.
+     * ID of experiment that the tensorboard files are linked to.
      * @type {number}
-     * @memberof V1DeleteTensorboardRequest
+     * @memberof V1DeleteTensorboardFilesRequest
      */
     experimentId?: number;
 }
 /**
  * Response to DeleteTensorboardRequest.
  * @export
- * @interface V1DeleteTensorboardResponse
+ * @interface V1DeleteTensorboardFilesResponse
  */
-export interface V1DeleteTensorboardResponse {
+export interface V1DeleteTensorboardFilesResponse {
 }
 /**
  * Response to DeleteWebhookRequest.
@@ -28260,14 +28260,14 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
         /**
          * 
          * @summary Delete tensorboard files.
-         * @param {V1DeleteTensorboardRequest} body
+         * @param {V1DeleteTensorboardFilesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTensorboard(body: V1DeleteTensorboardRequest, options: any = {}): FetchArgs {
+        deleteTensorboardFiles(body: V1DeleteTensorboardFilesRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteTensorboard.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteTensorboardFiles.');
             }
             const localVarPath = `/api/v1/tensorboards/delete`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
@@ -28526,12 +28526,12 @@ export const TensorboardsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Delete tensorboard files.
-         * @param {V1DeleteTensorboardRequest} body
+         * @param {V1DeleteTensorboardFilesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTensorboard(body: V1DeleteTensorboardRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).deleteTensorboard(body, options);
+        deleteTensorboardFiles(body: V1DeleteTensorboardFilesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTensorboardFilesResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).deleteTensorboardFiles(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -28656,12 +28656,12 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
         /**
          * 
          * @summary Delete tensorboard files.
-         * @param {V1DeleteTensorboardRequest} body
+         * @param {V1DeleteTensorboardFilesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTensorboard(body: V1DeleteTensorboardRequest, options?: any) {
-            return TensorboardsApiFp(configuration).deleteTensorboard(body, options)(fetch, basePath);
+        deleteTensorboardFiles(body: V1DeleteTensorboardFilesRequest, options?: any) {
+            return TensorboardsApiFp(configuration).deleteTensorboardFiles(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -28733,13 +28733,13 @@ export class TensorboardsApi extends BaseAPI {
     /**
      * 
      * @summary Delete tensorboard files.
-     * @param {V1DeleteTensorboardRequest} body
+     * @param {V1DeleteTensorboardFilesRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public deleteTensorboard(body: V1DeleteTensorboardRequest, options?: any) {
-        return TensorboardsApiFp(this.configuration).deleteTensorboard(body, options)(this.fetch, this.basePath)
+    public deleteTensorboardFiles(body: V1DeleteTensorboardFilesRequest, options?: any) {
+        return TensorboardsApiFp(this.configuration).deleteTensorboardFiles(body, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -2938,7 +2938,7 @@ class v1DeleteProjectResponse(Printable):
         return out
 
 class v1DeleteTensorboardFilesRequest(Printable):
-    """Request to delete a tensorboard."""
+    """Request to delete a tensorboard files."""
     experimentId: "typing.Optional[int]" = None
 
     def __init__(
