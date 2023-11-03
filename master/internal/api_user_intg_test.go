@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
@@ -79,6 +80,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 		// After a custom db is provided, we need to reinitialize the pgdb singleton.
 		thePgDB = nil
 	}
+	jobservice.SetDefaultService(mockRM)
 
 	api := &apiServer{
 		m: &Master{

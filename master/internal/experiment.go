@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
@@ -28,7 +29,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/internal/workspace"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -46,55 +46,13 @@ const (
 	maxConcurrentTrialOps = 16
 )
 
-// Experiment-specific actor messages.
 type (
-	// Searcher-related messages.
-	trialCompleteOperation struct {
-		requestID model.RequestID
-		op        searcher.ValidateAfter
-		metric    interface{}
-	}
-	trialReportProgress struct {
-		requestID model.RequestID
-		progress  searcher.PartialUnits
-	}
-	trialGetSearcherState struct {
-		requestID model.RequestID
-	}
-
-	// userInitiatedEarlyExit is a user-injected message, provided through the early exit API. It
-	// _should_ indicate the user is exiting, but in the event they don't, we will clean them up.
-	userInitiatedEarlyExit struct {
-		requestID model.RequestID
-		reason    model.ExitedReason
-	}
-
-	patchTrialState struct {
-		requestID model.RequestID
-		state     model.StateWithReason
-	}
-
-	// UnwatchEvents is initiated from the get searcher events API. It deletes the watcher with the
-	// given ID.
-	UnwatchEvents struct {
-		id uuid.UUID
-	}
-)
-
-type (
-	trialSearcherState struct {
-		Create   searcher.Create
-		Op       searcher.ValidateAfter
-		Complete bool
-		Closed   bool
-	}
-
 	experimentState struct {
-		SearcherState      json.RawMessage                        `json:"searcher_state"`
-		TrialSearcherState map[model.RequestID]trialSearcherState `json:"trial_searcher_state"`
+		SearcherState      json.RawMessage                                   `json:"searcher_state"`
+		TrialSearcherState map[model.RequestID]experiment.TrialSearcherState `json:"trial_searcher_state"`
 	}
 
-	experiment struct {
+	internalExperiment struct {
 		mu sync.Mutex
 
 		experimentState
@@ -106,7 +64,6 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		syslog              *logrus.Entry
-		self                *actor.Ref
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 		continueTrials      bool
@@ -137,7 +94,7 @@ func newExperiment(
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
-) (*experiment, []command.LaunchWarning, error) {
+) (*internalExperiment, []command.LaunchWarning, error) {
 	resources := activeConfig.Resources()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -203,7 +160,7 @@ func newExperiment(
 		return nil, nil, errors.Wrap(err, "generating ssh keys for trials")
 	}
 
-	return &experiment{
+	return &internalExperiment{
 		Experiment:   expModel,
 		activeConfig: activeConfig,
 		db:           m.db,
@@ -225,7 +182,7 @@ func newExperiment(
 		faultToleranceEnabled: true,
 
 		experimentState: experimentState{
-			TrialSearcherState: map[model.RequestID]trialSearcherState{},
+			TrialSearcherState: map[model.RequestID]experiment.TrialSearcherState{},
 		},
 
 		logCtx: logger.Context{
@@ -242,7 +199,7 @@ func newUnmanagedExperiment(
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
-) (*experiment, []command.LaunchWarning, error) {
+) (*internalExperiment, []command.LaunchWarning, error) {
 	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
@@ -252,412 +209,444 @@ func newUnmanagedExperiment(
 	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
 
 	// Will only have the model, nothing required for the experiment actor.
-	return &experiment{
+	return &internalExperiment{
 		Experiment: expModel,
 	}, nil, nil
 }
 
-func (e *experiment) Receive(ctx *actor.Context) error {
+// Start first registers the experiment and then starts synchronously.
+func (e *internalExperiment) Start() error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	switch msg := ctx.Message().(type) {
-	// Searcher-related messages.
-	case actor.PreStart:
-		e.self = ctx.Self()
-		ctx.AddLabels(e.logCtx)
-		priorityChange := func(priority int) error {
-			return e.SetPriority(&priority, false)
-		}
-		if err := tasklist.GroupPriorityChangeRegistry.Add(e.JobID, priorityChange); err != nil {
-			return err
-		}
+	if err := e.register(); err != nil {
+		return err
+	}
+	if err := e.start(); err != nil {
+		e.unregister()
+		return err
+	}
+	return nil
+}
 
-		e.rm.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
-			MaxSlots: e.activeConfig.Resources().MaxSlots(),
-			JobID:    e.JobID,
-		})
-		if err := e.setWeight(e.activeConfig.Resources().Weight()); err != nil {
-			e.updateState(model.StateWithReason{
-				State:               model.StoppingErrorState,
-				InformationalReason: err.Error(),
-			})
-			return err
-		}
-		if err := e.setPriority(e.activeConfig.Resources().Priority(), true); err != nil {
-			e.updateState(model.StateWithReason{
-				State:               model.StoppingErrorState,
-				InformationalReason: err.Error(),
-			})
-			return err
-		}
+func (e *internalExperiment) register() error {
+	return experiment.ExperimentRegistry.Add(e.ID, e)
+}
 
-		jobservice.DefaultService.RegisterJob(e.JobID, e)
+func (e *internalExperiment) unregister() {
+	if err := experiment.ExperimentRegistry.Delete(e.ID); err != nil {
+		e.syslog.WithError(err).Error("failed to unregister experiment")
+	}
+}
 
-		if e.restored {
-			j, err := e.db.JobByID(e.JobID)
-			if err != nil {
-				e.updateState(model.StateWithReason{
-					State:               model.StoppingErrorState,
-					InformationalReason: err.Error(),
-				})
-				return err
-			}
+func (e *internalExperiment) start() error {
+	priorityChange := func(priority int) error {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		return e.setPriority(&priority, false)
+	}
+	if err := tasklist.GroupPriorityChangeRegistry.Add(e.JobID, priorityChange); err != nil {
+		return err
+	}
 
-			if j.QPos.GreaterThan(decimal.Zero) {
-				e.rm.RecoverJobPosition(sproto.RecoverJobPosition{
-					JobID:        e.JobID,
-					JobPosition:  j.QPos,
-					ResourcePool: e.activeConfig.Resources().ResourcePool(),
-				})
-			}
-
-			e.restoreTrials()
-			return nil
-		}
-
-		ops, err := e.searcher.InitialOperations()
-		if err != nil {
-			err = errors.Wrap(err, "failed to generate initial operations")
-			e.updateState(model.StateWithReason{
-				State:               model.StoppingErrorState,
-				InformationalReason: err.Error(),
-			})
-			return err
-		}
-		e.processOperations(ops, nil)
-
-	case trialCompleteOperation:
-		state, ok := e.TrialSearcherState[msg.op.RequestID]
-		switch {
-		case !ok:
-			ctx.Respond(api.AsValidationError("no such trial"))
-			return nil
-		case msg.op != state.Op:
-			ctx.Respond(api.AsValidationError("expected op %v but received op %v", state.Op, msg.op))
-			return nil
-		case state.Complete:
-			ctx.Respond(api.AsValidationError("received op %v which was previously completed", msg.op))
-			return nil
-		}
-
-		state.Complete = true
-		e.TrialSearcherState[msg.op.RequestID] = state
-
-		t, ok := e.trials[msg.op.RequestID]
-		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial not found"))
-			return nil
-		}
-
-		err := t.PatchSearcherState(state)
-		if err != nil {
-			e.syslog.WithError(err).Error("patching trial search state")
-			ctx.Respond(err)
-			return nil
-		}
-
-		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
-		e.processOperations(ops, err)
-	case trialReportProgress:
-		e.searcher.SetTrialProgress(msg.requestID, msg.progress)
-		progress := e.searcher.Progress()
-		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
-			e.syslog.WithError(err).Error("failed to save experiment progress")
-		}
-	case trialGetSearcherState:
-		state, ok := e.TrialSearcherState[msg.requestID]
-		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial has no state"))
-			return nil
-		}
-		ctx.Respond(state)
-	case userInitiatedEarlyExit:
-		ref, ok := e.trials[msg.requestID]
-		if !ok {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(api.AsErrNotFound("trial not found"))
-			}
-			return nil
-		}
-		if err := ref.SetUserInitiatedEarlyExit(msg); err != nil {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(err)
-			}
-		}
-	case patchTrialState:
-		ref, ok := e.trials[msg.requestID]
-		if !ok {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(api.AsErrNotFound("trial not found"))
-			}
-			return nil
-		}
-		if err := ref.PatchState(msg.state); err != nil {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(err)
-			}
-		}
-	// Patch experiment messages.
-	case model.StateWithReason:
-		e.updateState(msg)
-	case model.State:
-		e.updateState(model.StateWithReason{State: msg})
-	case config.ExperimentConfigPatch:
-		e.activeConfig.SetName(expconf.Name{RawString: msg.Name})
-	case sproto.SetGroupMaxSlots:
-		resources := e.activeConfig.Resources()
-		resources.SetMaxSlots(msg.MaxSlots)
-		e.activeConfig.SetResources(resources)
-		msg.JobID = e.JobID
-		e.rm.SetGroupMaxSlots(msg)
-	case sproto.SetGroupWeight:
-		err := e.setWeight(msg.Weight)
-		if err != nil {
-			e.syslog.WithError(err).Info("setting experiment job weight")
-		}
-		if ctx.ExpectingResponse() {
-			ctx.Respond(err)
-		}
-	case sproto.SetGroupPriority:
-		err := e.setPriority(&msg.Priority, true)
-		if err != nil {
-			e.syslog.WithError(err).Info("setting experiment job priority")
-		}
-		if ctx.ExpectingResponse() {
-			ctx.Respond(err)
-		}
-
-	// Experiment shutdown logic.
-	case actor.PostStop:
-		if err := tasklist.GroupPriorityChangeRegistry.Delete(e.JobID); err != nil {
-			e.syslog.WithError(err).Error("failed to remove priority change registry")
-		}
-		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
-			if err := e.db.SaveExperimentProgress(e.ID, ptrs.Ptr(1.0)); err != nil {
-				e.syslog.Error(err)
-			}
-		}
-		go jobservice.DefaultService.UnregisterJob(e.JobID)
-		state := model.StoppingToTerminalStates[e.State]
-		if state == "" {
-			state = model.ErrorState
-		}
-		if wasPatched, err := e.Transition(state); err != nil {
-			return err
-		} else if !wasPatched {
-			return errors.New("experiment is already in a terminal state")
-		}
-		telemetry.ReportExperimentStateChanged(e.db, e.Experiment)
-		if err := webhooks.ReportExperimentStateChanged(
-			context.TODO(), *e.Experiment, e.activeConfig,
-		); err != nil {
-			e.syslog.WithError(err).Error("failed to send experiment state change webhook")
-		}
-
-		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
-			return err
-		}
-		e.syslog.Infof("PostStop state changed to %s", e.State)
-
-		checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
-			e.Experiment.ID,
-			e.activeConfig.CheckpointStorage().SaveExperimentBest(),
-			e.activeConfig.CheckpointStorage().SaveTrialBest(),
-			e.activeConfig.CheckpointStorage().SaveTrialLatest(),
-		)
-		if err != nil {
-			e.syslog.WithError(err).Error("")
-		}
-
-		taskSpec := *e.taskSpec
-
-		// May be no checkpoints to gc, if so skip
-		if len(checkpoints) > 0 {
-			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
-			go func() {
-				err := runCheckpointGCTask(
-					e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
-					e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
-					false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
-				)
-				if err != nil {
-					ctx.Log().WithError(err).Error("failed to GC experiment checkpoints")
-				}
-			}()
-		}
-
-		if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
-			e.syslog.WithError(err).Errorf(
-				"failure to delete snapshots for experiment: %d", e.Experiment.ID)
-		}
-
-		if err := user.DeleteSessionByToken(
-			context.TODO(),
-			taskSpec.UserSessionToken,
-		); err != nil {
-			e.syslog.WithError(err).Errorf(
-				"failure to delete user session for experiment: %d", e.Experiment.ID)
-		}
-
-		e.syslog.Info("experiment shut down successfully")
-
-	case *apiv1.PostSearcherOperationsRequest:
-		queue, err := e.searcher.GetCustomSearcherEventQueue()
-		if err != nil {
-			ctx.Respond(status.Error(codes.Internal, err.Error()))
-			return nil
-		}
-		var ops []searcher.Operation
-		for _, searcherOp := range msg.SearcherOperations {
-			switch concreteOperation := searcherOp.GetUnion().(type) {
-			case *experimentv1.SearcherOperation_CreateTrial:
-				op, err := searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
-				if err != nil {
-					e.syslog.Error(err)
-				} else {
-					ops = append(ops, *op)
-				}
-			case *experimentv1.SearcherOperation_ShutDown:
-				op, err := searcher.ShutdownFromProto(concreteOperation)
-				if err != nil {
-					e.syslog.Error(err)
-				} else {
-					ops = append(ops, *op)
-				}
-			case *experimentv1.SearcherOperation_TrialOperation:
-				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
-				case *experimentv1.TrialOperation_ValidateAfter:
-					op, err := searcher.ValidateAfterFromProto(sub)
-					if err != nil {
-						e.syslog.Error(err)
-					} else {
-						ops = append(ops, *op)
-					}
-				}
-			case *experimentv1.SearcherOperation_CloseTrial:
-				op, err := searcher.CloseFromProto(concreteOperation)
-				if err != nil {
-					e.syslog.Error(err)
-				} else {
-					ops = append(ops, *op)
-				}
-			case *experimentv1.SearcherOperation_SetSearcherProgress:
-				ops = append(ops, searcher.SetSearcherProgressFromProto(concreteOperation))
-			default:
-				e.syslog.Errorf("unimplemented op %+v", concreteOperation)
-			}
-		}
-		e.syslog.Infof("processing searcher operations %+v", ops)
-
-		// Remove newly processed events from queue.
-		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
-			ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
-		} else {
-			e.searcher.Record(ops)
-			e.processOperations(ops, nil)
-			ctx.Respond(&apiv1.PostSearcherOperationsResponse{})
-		}
-
-	case *apiv1.GetSearcherEventsRequest:
-		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
-			ctx.Respond(status.Error(codes.Internal, err.Error()))
-		} else {
-			if w, err := queue.Watch(); err != nil {
-				ctx.Respond(err)
-			} else {
-				ctx.Respond(w)
-			}
-		}
-
-	case UnwatchEvents:
-		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
-			ctx.Respond(status.Error(codes.Internal, err.Error()))
-		} else {
-			queue.Unwatch(msg.id)
-		}
-
-	case *apiv1.ActivateExperimentRequest:
-		switch ok := e.updateState(model.StateWithReason{
-			State:               model.ActiveState,
-			InformationalReason: "user requested activation",
-		}); ok {
-		case true:
-			ctx.Respond(&apiv1.ActivateExperimentResponse{})
-		default:
-			ctx.Respond(status.Errorf(codes.FailedPrecondition,
-				"experiment in incompatible state %s", e.State))
-		}
-
-	case *apiv1.PauseExperimentRequest:
-		switch ok := e.updateState(model.StateWithReason{
-			State:               model.PausedState,
-			InformationalReason: "user requested pause",
-		}); ok {
-		case true:
-			ctx.Respond(&apiv1.PauseExperimentResponse{})
-		default:
-			ctx.Respond(status.Errorf(codes.FailedPrecondition,
-				"experiment in incompatible state %s", e.State))
-		}
-
-	case *apiv1.CancelExperimentRequest:
-		switch {
-		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
-			ctx.Respond(&apiv1.CancelExperimentResponse{})
-		default:
-			switch ok := e.updateState(model.StateWithReason{
-				State:               model.StoppingCanceledState,
-				InformationalReason: "user requested cancellation",
-			}); ok {
-			case true:
-				ctx.Respond(&apiv1.CancelExperimentResponse{})
-			default:
-				ctx.Respond(status.Errorf(codes.FailedPrecondition,
-					"experiment in incompatible state %s", e.State,
-				))
-			}
-		}
-
-	case *apiv1.KillExperimentRequest:
-		switch {
-		case e.State == model.StoppingKilledState || model.TerminalStates[e.State]:
-			ctx.Respond(&apiv1.KillExperimentResponse{})
-		default:
-			switch ok := e.updateState(model.StateWithReason{
-				State:               model.StoppingKilledState,
-				InformationalReason: "user requested kill",
-			}); ok {
-			case true:
-				ctx.Respond(&apiv1.KillExperimentResponse{})
-			default:
-				ctx.Respond(status.Errorf(codes.FailedPrecondition,
-					"experiment in incompatible state %s", e.State,
-				))
-			}
-		}
-
-	case sproto.InvalidResourcesRequestError:
+	e.rm.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
+		MaxSlots: e.activeConfig.Resources().MaxSlots(),
+		JobID:    e.JobID,
+	})
+	if err := e.setWeight(e.activeConfig.Resources().Weight()); err != nil {
 		e.updateState(model.StateWithReason{
 			State:               model.StoppingErrorState,
-			InformationalReason: msg.Cause.Error(),
+			InformationalReason: err.Error(),
 		})
-
-	default:
-		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
+		return err
 	}
+	if err := e.setPriority(e.activeConfig.Resources().Priority(), true); err != nil {
+		e.updateState(model.StateWithReason{
+			State:               model.StoppingErrorState,
+			InformationalReason: err.Error(),
+		})
+		return err
+	}
+
+	jobservice.DefaultService.RegisterJob(e.JobID, e)
+
+	if e.restored {
+		j, err := e.db.JobByID(e.JobID)
+		if err != nil {
+			e.updateState(model.StateWithReason{
+				State:               model.StoppingErrorState,
+				InformationalReason: err.Error(),
+			})
+			return err
+		}
+
+		if j.QPos.GreaterThan(decimal.Zero) {
+			e.rm.RecoverJobPosition(sproto.RecoverJobPosition{
+				JobID:        e.JobID,
+				JobPosition:  j.QPos,
+				ResourcePool: e.activeConfig.Resources().ResourcePool(),
+			})
+		}
+
+		e.restoreTrials()
+		return nil
+	}
+
+	ops, err := e.searcher.InitialOperations()
+	if err != nil {
+		err = errors.Wrap(err, "failed to generate initial operations")
+		e.updateState(model.StateWithReason{
+			State:               model.StoppingErrorState,
+			InformationalReason: err.Error(),
+		})
+		return err
+	}
+	e.processOperations(ops, nil)
 
 	return nil
 }
 
-func (e *experiment) TrialClosed(requestID model.RequestID, reason *model.ExitedReason) {
+func (e *internalExperiment) TrialCompleteOperation(msg experiment.TrialCompleteOperation) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	state, ok := e.TrialSearcherState[msg.Op.RequestID]
+	switch {
+	case !ok:
+		return api.AsValidationError("no such trial")
+	case msg.Op != state.Op:
+		return api.AsValidationError("expected op %v but received op %v", state.Op, msg.Op)
+	case state.Complete:
+		return api.AsValidationError("received op %v which was previously completed", msg.Op)
+	}
+
+	state.Complete = true
+	e.TrialSearcherState[msg.Op.RequestID] = state
+
+	t, ok := e.trials[msg.Op.RequestID]
+	if !ok {
+		return api.AsErrNotFound("trial not found")
+	}
+
+	err := t.PatchSearcherState(state)
+	if err != nil {
+		e.syslog.WithError(err).Error("patching trial search state")
+		return err
+	}
+
+	ops, err := e.searcher.ValidationCompleted(msg.RequestID, msg.Metric, msg.Op)
+	e.processOperations(ops, err)
+
+	return nil
+}
+
+func (e *internalExperiment) TrialReportProgress(msg experiment.TrialReportProgress) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.searcher.SetTrialProgress(msg.RequestID, msg.Progress)
+	progress := e.searcher.Progress()
+	if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
+		e.syslog.WithError(err).Error("failed to save experiment progress")
+	}
+	return nil
+}
+
+func (e *internalExperiment) TrialGetSearcherState(requestID model.RequestID) (experiment.TrialSearcherState, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	state, ok := e.TrialSearcherState[requestID]
+	if !ok {
+		return state, api.AsErrNotFound("trial has no state")
+	}
+	return state, nil
+}
+
+func (e *internalExperiment) UserInitiatedEarlyTrialExit(msg experiment.UserInitiatedEarlyTrialExit) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	ref, ok := e.trials[msg.RequestID]
+	if !ok {
+		return api.AsErrNotFound("trial not found")
+	}
+	if err := ref.SetUserInitiatedEarlyExit(msg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *internalExperiment) PatchTrialState(msg experiment.PatchTrialState) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	ref, ok := e.trials[msg.RequestID]
+	if !ok {
+		return api.AsErrNotFound("trial not found")
+	}
+	if err := ref.PatchState(msg.State); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	resources := e.activeConfig.Resources()
+	resources.SetMaxSlots(msg.MaxSlots)
+	e.activeConfig.SetResources(resources)
+	msg.JobID = e.JobID
+	e.rm.SetGroupMaxSlots(msg)
+}
+
+func (e *internalExperiment) SetGroupWeight(weight float64) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.setWeight(weight)
+}
+
+func (e *internalExperiment) SetGroupPriority(priority int) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.setPriority(&priority, true)
+}
+
+func (e *internalExperiment) stop() error {
+	e.unregister()
+
+	if err := tasklist.GroupPriorityChangeRegistry.Delete(e.JobID); err != nil {
+		e.syslog.WithError(err).Error("failed to remove priority change registry")
+	}
+	if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
+		if err := e.db.SaveExperimentProgress(e.ID, ptrs.Ptr(1.0)); err != nil {
+			e.syslog.Error(err)
+		}
+	}
+	go jobservice.DefaultService.UnregisterJob(e.JobID)
+	state := model.StoppingToTerminalStates[e.State]
+	if state == "" {
+		state = model.ErrorState
+	}
+	if wasPatched, err := e.Transition(state); err != nil {
+		return err
+	} else if !wasPatched {
+		return errors.New("experiment is already in a terminal state")
+	}
+	telemetry.ReportExperimentStateChanged(e.db, e.Experiment)
+	if err := webhooks.ReportExperimentStateChanged(
+		context.TODO(), *e.Experiment, e.activeConfig,
+	); err != nil {
+		e.syslog.WithError(err).Error("failed to send experiment state change webhook")
+	}
+
+	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
+		return err
+	}
+	e.syslog.Infof("PostStop state changed to %s", e.State)
+
+	checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
+		e.Experiment.ID,
+		e.activeConfig.CheckpointStorage().SaveExperimentBest(),
+		e.activeConfig.CheckpointStorage().SaveTrialBest(),
+		e.activeConfig.CheckpointStorage().SaveTrialLatest(),
+	)
+	if err != nil {
+		e.syslog.WithError(err).Error("")
+	}
+
+	taskSpec := *e.taskSpec
+
+	// May be no checkpoints to gc, if so skip
+	if len(checkpoints) > 0 {
+		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
+		go func() {
+			err := runCheckpointGCTask(
+				e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
+				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
+				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
+			)
+			if err != nil {
+				e.syslog.WithError(err).Error("failed to GC experiment checkpoints")
+			}
+		}()
+	}
+
+	if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
+		e.syslog.WithError(err).Errorf(
+			"failure to delete snapshots for experiment: %d", e.Experiment.ID)
+	}
+
+	if err := user.DeleteSessionByToken(
+		context.TODO(),
+		taskSpec.UserSessionToken,
+	); err != nil {
+		e.syslog.WithError(err).Errorf(
+			"failure to delete user session for experiment: %d", e.Experiment.ID)
+	}
+
+	e.syslog.Info("experiment shut down successfully")
+	return nil
+}
+
+func (e *internalExperiment) PerformSearcherOperations(msg *apiv1.PostSearcherOperationsRequest) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	queue, err := e.searcher.GetCustomSearcherEventQueue()
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	var ops []searcher.Operation
+	for _, searcherOp := range msg.SearcherOperations {
+		switch concreteOperation := searcherOp.GetUnion().(type) {
+		case *experimentv1.SearcherOperation_CreateTrial:
+			op, err := searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
+			if err != nil {
+				e.syslog.Error(err)
+			} else {
+				ops = append(ops, *op)
+			}
+		case *experimentv1.SearcherOperation_ShutDown:
+			op, err := searcher.ShutdownFromProto(concreteOperation)
+			if err != nil {
+				e.syslog.Error(err)
+			} else {
+				ops = append(ops, *op)
+			}
+		case *experimentv1.SearcherOperation_TrialOperation:
+			switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
+			case *experimentv1.TrialOperation_ValidateAfter:
+				op, err := searcher.ValidateAfterFromProto(sub)
+				if err != nil {
+					e.syslog.Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
+			}
+		case *experimentv1.SearcherOperation_CloseTrial:
+			op, err := searcher.CloseFromProto(concreteOperation)
+			if err != nil {
+				e.syslog.Error(err)
+			} else {
+				ops = append(ops, *op)
+			}
+		case *experimentv1.SearcherOperation_SetSearcherProgress:
+			ops = append(ops, searcher.SetSearcherProgressFromProto(concreteOperation))
+		default:
+			e.syslog.Errorf("unimplemented op %+v", concreteOperation)
+		}
+	}
+	e.syslog.Infof("processing searcher operations %+v", ops)
+
+	// Remove newly processed events from queue.
+	if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
+		return status.Error(codes.Internal, "failed to remove events from queue")
+	}
+	e.searcher.Record(ops)
+	e.processOperations(ops, nil)
+	return nil
+}
+
+func (e *internalExperiment) GetSearcherEventsWatcher() (*searcher.EventsWatcher, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	queue, err := e.searcher.GetCustomSearcherEventQueue()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	watcher, err := queue.Watch()
+	return &watcher, err
+}
+
+func (e *internalExperiment) UnwatchEvents(id uuid.UUID) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	queue, err := e.searcher.GetCustomSearcherEventQueue()
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	queue.Unwatch(id)
+	return nil
+}
+
+func (e *internalExperiment) ActivateExperiment() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if ok := e.updateState(model.StateWithReason{
+		State:               model.ActiveState,
+		InformationalReason: "user requested activation",
+	}); !ok {
+		return status.Errorf(codes.FailedPrecondition,
+			"experiment in incompatible state %s", e.State)
+	}
+	return nil
+}
+
+func (e *internalExperiment) PauseExperiment() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if ok := e.updateState(model.StateWithReason{
+		State:               model.PausedState,
+		InformationalReason: "user requested pause",
+	}); !ok {
+		return status.Errorf(codes.FailedPrecondition,
+			"experiment in incompatible state %s", e.State)
+	}
+	return nil
+}
+
+func (e *internalExperiment) CancelExperiment() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if model.StoppingStates[e.State] || model.TerminalStates[e.State] {
+		return nil
+	}
+	if ok := e.updateState(model.StateWithReason{
+		State:               model.StoppingCanceledState,
+		InformationalReason: "user requested cancellation",
+	}); !ok {
+		return status.Errorf(codes.FailedPrecondition,
+			"experiment in incompatible state %s", e.State)
+	}
+	return nil
+}
+
+func (e *internalExperiment) KillExperiment() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if e.State == model.StoppingKilledState || model.TerminalStates[e.State] {
+		return nil
+	}
+	if ok := e.updateState(model.StateWithReason{
+		State:               model.StoppingKilledState,
+		InformationalReason: "user requested kill",
+	}); !ok {
+		return status.Errorf(codes.FailedPrecondition,
+			"experiment in incompatible state %s", e.State,
+		)
+	}
+	return nil
+}
+
+func (e *internalExperiment) TrialClosed(requestID model.RequestID, reason *model.ExitedReason) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	e.trialClosed(requestID, reason)
 }
 
-func (e *experiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
+func (e *internalExperiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
 	if reason != nil {
 		e.trialReportEarlyExit(requestID, *reason)
 	}
@@ -666,11 +655,13 @@ func (e *experiment) trialClosed(requestID model.RequestID, reason *model.Exited
 	ops, err := e.searcher.TrialClosed(requestID)
 	e.processOperations(ops, err)
 	if e.canTerminate() {
-		e.self.Stop()
+		if err := e.stop(); err != nil {
+			e.syslog.WithError(err).Error("failed to stop experiment on trial closed")
+		}
 	}
 }
 
-func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason model.ExitedReason) {
+func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, reason model.ExitedReason) {
 	e.syslog.WithField("requestId", requestID).Info("experiment received trial early exit")
 	state, ok := e.TrialSearcherState[requestID]
 	if !ok {
@@ -697,7 +688,7 @@ func (e *experiment) trialReportEarlyExit(requestID model.RequestID, reason mode
 	e.processOperations(ops, err)
 }
 
-func (e *experiment) trialCreated(t *trial) {
+func (e *internalExperiment) trialCreated(t *trial) {
 	requestID := t.searcher.Create.RequestID
 	if !e.searcher.TrialIsCreated(requestID) {
 		ops, err := e.searcher.TrialCreated(requestID)
@@ -708,7 +699,7 @@ func (e *experiment) trialCreated(t *trial) {
 
 // restoreTrialsFromStates from the operations that were snapshotted with the
 // last experiment checkpoint.
-func (e *experiment) restoreTrials() {
+func (e *internalExperiment) restoreTrials() {
 	for _, state := range e.TrialSearcherState {
 		checkpoint, err := e.checkpointForCreate(state.Create)
 		if err != nil {
@@ -723,7 +714,7 @@ func (e *experiment) restoreTrials() {
 	}
 }
 
-func (e *experiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
+func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
 	var continueFromTrialID *int
 	if e.continueTrials {
 		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID)
@@ -746,7 +737,7 @@ func (e *experiment) handleContinueExperiment(reqID model.RequestID) (*int, bool
 	return continueFromTrialID, false
 }
 
-func (e *experiment) processOperations(
+func (e *internalExperiment) processOperations(
 	ops []searcher.Operation, err error,
 ) {
 	if _, ok := model.StoppingStates[e.State]; ok {
@@ -790,11 +781,8 @@ func (e *experiment) processOperations(
 				continue
 			}
 			config := schemas.Copy(e.activeConfig)
-			state := trialSearcherState{Create: op, Complete: true}
+			state := experiment.TrialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
-			if e.self == nil {
-				panic("experiment actor not started")
-			}
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
@@ -890,7 +878,7 @@ func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	return experimentID, nil
 }
 
-func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
+func (e *internalExperiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
@@ -908,7 +896,7 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 	return checkpoint, nil
 }
 
-func (e *experiment) updateState(state model.StateWithReason) bool {
+func (e *internalExperiment) updateState(state model.StateWithReason) bool {
 	if wasPatched, err := e.Transition(state.State); err != nil {
 		e.syslog.Errorf("error transitioning experiment state: %s", err)
 		return false
@@ -942,17 +930,19 @@ func (e *experiment) updateState(state model.StateWithReason) bool {
 		e.syslog.Errorf("error saving experiment state: %s", err)
 	}
 	if e.canTerminate() {
-		e.self.Stop()
+		if err := e.stop(); err != nil {
+			e.syslog.WithError(err).Error("failed to stop experiment on updateState")
+		}
 	}
 	// The database error is explicitly ignored.
 	return true
 }
 
-func (e *experiment) canTerminate() bool {
+func (e *internalExperiment) canTerminate() bool {
 	return model.StoppingStates[e.State] && len(e.trials) == 0
 }
 
-func (e *experiment) Snapshot() (json.RawMessage, error) {
+func (e *internalExperiment) snapshot() (json.RawMessage, error) {
 	searcherSnapshot, err := e.searcher.Snapshot()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to snapshot searcher")
@@ -962,7 +952,7 @@ func (e *experiment) Snapshot() (json.RawMessage, error) {
 	return experimentSnapshot, errors.Wrap(err, "failed to marshal experiment")
 }
 
-func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
+func (e *internalExperiment) restore(experimentSnapshot json.RawMessage) error {
 	if err := json.Unmarshal(experimentSnapshot, &e.experimentState); err != nil {
 		return errors.Wrap(err, "failed to unmarshal experiment snapshot")
 	}
@@ -1003,14 +993,7 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) SetPriority(priority *int, forward bool) (err error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	return e.setPriority(priority, forward)
-}
-
-func (e *experiment) setPriority(priority *int, forward bool) (err error) {
+func (e *internalExperiment) setPriority(priority *int, forward bool) (err error) {
 	if priority == nil {
 		return nil
 	}
@@ -1055,7 +1038,7 @@ func (e *experiment) setPriority(priority *int, forward bool) (err error) {
 	return nil
 }
 
-func (e *experiment) setWeight(weight float64) error {
+func (e *internalExperiment) setWeight(weight float64) error {
 	resources := e.activeConfig.Resources()
 	oldWeight := resources.Weight()
 	resources.SetWeight(weight)
@@ -1081,7 +1064,7 @@ func (e *experiment) setWeight(weight float64) error {
 	return nil
 }
 
-func (e *experiment) setRP(resourcePool string) error {
+func (e *internalExperiment) setRP(resourcePool string) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
