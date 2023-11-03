@@ -29,7 +29,7 @@ def append_entry(json_file, entry, entry_position=1):
         json.dump(all_urls, f, indent=4*" ")
         f.write('\n')
 
-def main(json_file, version):
+def insert_url(json_file, version):
     new_entry = create_url_entry(version)
     append_entry(json_file, new_entry)
 
@@ -40,5 +40,5 @@ if __name__=="__main__":
     if len(sys.argv) < 3:
         print(__doc__, file=sys.stderr)
         sys.exit(1)
-    main(sys.argv[1], sys.argv[2])
+    insert_url(sys.argv[1], sys.argv[2])
 
