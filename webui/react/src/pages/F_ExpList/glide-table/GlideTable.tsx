@@ -684,7 +684,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
         return columnDefs[currentColumn.column];
       })
-      .flatMap((col) => (col ? [col] : []));
+      .flatMap((col) => (col ? [{...col, renderer: (record: ExperimentWithTrial, idx: number) => {
+        let cell = col.renderer(record, idx)
+        switch(cell.kind) {
+          case GridCellKind.Number:
+            cell = {...cell, displayData: cell.displayData || '==='}
+        }
+        return cell
+      }}] : []));
     return gridColumns;
   }, [
     columnIds,
