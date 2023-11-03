@@ -63,7 +63,9 @@ linters-settings:
   govet:
     check-shadowing: true
   errcheck:
-    exclude: .errcheck-exclude.txt
+    exclude-functions:
+      - '(*database/sql.Rows).Close'
+      - '(*github.com/jmoiron/sqlx.NamedStmt).Close'
   lll:
     line-length: 120
   misspell:
