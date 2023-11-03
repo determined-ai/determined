@@ -11,7 +11,7 @@ import Select, { Option } from 'determined-ui/Select';
 import Spinner from 'determined-ui/Spinner';
 import useUI, { Mode } from 'determined-ui/Theme';
 import { makeToast } from 'determined-ui/Toast';
-import Paragraph from 'determined-ui/Typography/Paragraph';
+import { Body } from 'determined-ui/Typography';
 import useConfirm from 'determined-ui/useConfirm';
 import { Loadable } from 'determined-ui/utils/loadable';
 import React, { useCallback, useState } from 'react';
@@ -340,10 +340,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
               </div>
             </Section>
             <Section title="Advanced">
-              <Paragraph>
+              <Body>
                 Advanced features are potentially dangerous and could require you to completely
                 reset your user settings if you make a mistake.
-              </Paragraph>
+              </Body>
               <Accordion title="I know what I'm doing">
                 <Space>
                   <Button

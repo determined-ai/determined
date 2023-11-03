@@ -19,7 +19,6 @@ import Input from 'determined-ui/Input';
 import InputNumber from 'determined-ui/InputNumber';
 import InputSearch from 'determined-ui/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'determined-ui/InputShortcut';
-import { TypographySize } from 'determined-ui/internal/fonts';
 import { Note, Serie, XAxisDomain } from 'determined-ui/internal/types';
 import { LineChart } from 'determined-ui/LineChart';
 import { useChartGrid } from 'determined-ui/LineChart/useChartGrid';
@@ -36,8 +35,6 @@ import useUI from 'determined-ui/Theme';
 import { makeToast } from 'determined-ui/Toast';
 import Toggle from 'determined-ui/Toggle';
 import Tooltip from 'determined-ui/Tooltip';
-import Header from 'determined-ui/Typography/Header';
-import Paragraph from 'determined-ui/Typography/Paragraph';
 import useConfirm, { voidPromiseFn } from 'determined-ui/useConfirm';
 import { useTags } from 'determined-ui/useTags';
 import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
@@ -111,7 +108,6 @@ const ComponentTitles = {
   Toast: 'Toast',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
-  Typography: 'Typography',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -2105,128 +2101,6 @@ const TagsSection: React.FC = () => {
   );
 };
 
-const TypographySection: React.FC = () => {
-  return (
-    <ComponentSection id="Typography" title="Typography">
-      <AntDCard>
-        <p>
-          The (<code>{'<Header>'}</code>) is a reusable header element.
-        </p>
-        <p>
-          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element.
-        </p>
-      </AntDCard>
-      <AntDCard title="Best practices">
-        <strong>Content</strong>
-        <ul>
-          <li>
-            For Headers, <code>{'<h1>'}</code> is the default.
-          </li>
-        </ul>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <strong>Typography - Header</strong>
-        <Space>
-          <Header>Header</Header>
-        </Space>
-        <strong>Typography - paragraph</strong>
-        <Space>
-          <Paragraph>this is a paragraph!</Paragraph>
-        </Space>
-      </AntDCard>
-      <AntDCard title="Font Families">
-        <Paragraph>For general UI --theme-font-family</Paragraph>
-        <Paragraph font="code">For displaying code --theme-font-family-code</Paragraph>
-      </AntDCard>
-      <AntDCard title="Font Sizing">
-        <div>
-          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-            <Header>Header</Header>
-            <Header size={TypographySize.XL}>
-              Model Registry - XL (f.s. 28px, line-height 36px)
-            </Header>
-            <Header size={TypographySize.L}>
-              Model Registry - L (f.s. 24px, line-height 32px)
-            </Header>
-            <Header size={TypographySize.default}>
-              Model Registry - default (f.s. 22px line-height 28px)
-            </Header>
-            <Header size={TypographySize.S}>Model Registry - s (f.s. 18px line-height 23px)</Header>
-            <Header size={TypographySize.XS}>
-              Model Registry - xs (f.s. 16px line-height 21px)
-            </Header>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-            <Header>Multi Line</Header>
-            <Paragraph size={TypographySize.XL} type="multi line">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
-              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
-              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
-              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
-              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
-              Obcaecati, cum eos. - XL (f.s. 16px line-height 26px)
-            </Paragraph>
-            <br />
-            <Paragraph size={TypographySize.L} type="multi line">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
-              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
-              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
-              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
-              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
-              Obcaecati, cum eos. - L (f.s. 14px line-height 22px)
-            </Paragraph>
-            <br />
-            <Paragraph size={TypographySize.default} type="multi line">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
-              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
-              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
-              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
-              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
-              Obcaecati, cum eos. - default (f.s. 12px line-height 20px)
-            </Paragraph>
-            <br />
-            <Paragraph size={TypographySize.S} type="multi line">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
-              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
-              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
-              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
-              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
-              Obcaecati, cum eos. - s (f.s. 11px line-height 18px)
-            </Paragraph>
-            <br />
-            <Paragraph size={TypographySize.XS} type="multi line">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut suscipit itaque debitis
-              amet, eligendi possimus assumenda eos, iusto ea labore, officia aspernatur optio. In
-              necessitatibus porro ut vero commodi neque. Lorem ipsum dolor sit amet consectetur
-              adipisicing elit. Voluptatibus, omnis quo dolorem magnam dolores necessitatibus iure
-              illo incidunt maiores voluptas odit eligendi dignissimos facilis vel veniam id.
-              Obcaecati, cum eos. - xs (f.s. 10px line-height 16px)
-            </Paragraph>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-            <Header>Single Line</Header>
-            <Paragraph size={TypographySize.XL}>
-              Model Registry - XL (f.s. 16px line-height 20px)
-            </Paragraph>
-            <Paragraph size={TypographySize.L}>
-              Model Registry - L (f.s. 14px line-height 18px)
-            </Paragraph>
-            <Paragraph size={TypographySize.default}>
-              Model Registry - default (f.s. 12px line-height 16px)
-            </Paragraph>
-            <Paragraph size={TypographySize.S}>
-              Model Registry - s (f.s. 11px line-height 14px)
-            </Paragraph>
-            <Paragraph size={TypographySize.XS}>
-              Model Registry - xs (f.s. 10px line-height 12px)
-            </Paragraph>
-          </div>
-        </div>
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
 const ColorSection: React.FC = () => {
   const themeStatus = Object.values(Status);
   const backgrounds = Object.values(Background);
@@ -2268,9 +2142,9 @@ const ColorSection: React.FC = () => {
   return (
     <ComponentSection id="Color" title="Color">
       <AntDCard>
-        <Paragraph>
+        <p>
           We have a variety of colors that are available for use with the components in the UI Kit.
-        </Paragraph>
+        </p>
       </AntDCard>
       {iterateOverThemes(
         [themeStatus, backgrounds, stage, surface, float, overlay, brand, interactive],
@@ -3045,9 +2919,9 @@ const SpinnerSection = () => {
   return (
     <ComponentSection id="Spinner" title="Spinner">
       <AntDCard>
-        <Paragraph>
+        <p>
           A <code>{'<Spinner>'}</code> indicates a loading state of a page or section.
-        </Paragraph>
+        </p>
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Spinner default</strong>
@@ -3076,9 +2950,9 @@ const SpinnerSection = () => {
         </div>
         <strong>Loadable spinner</strong>
         <Button onClick={() => setLoadableData(NotLoaded)}>Unload</Button>
-        <Spinner data={loadableData}>{(data) => <Paragraph>{data}</Paragraph>}</Spinner>
+        <Spinner data={loadableData}>{(data) => <p>{data}</p>}</Spinner>
         <hr />
-        <Header>Variations</Header>
+        <strong>Variations</strong>
         <strong>Centered Spinner</strong>
         <div
           style={{ border: '1px solid var(--theme-surface-border)', height: 200, width: '100%' }}>
@@ -3101,11 +2975,11 @@ const MessageSection: React.FC = () => {
   return (
     <ComponentSection id="Message" title="Message">
       <AntDCard>
-        <Paragraph>
+        <p>
           A <code>{'<Message>'}</code> displays persistent information related to the application
           state. Requires at least one of description or title. Optionally displays an action button
           and/or an icon.
-        </Paragraph>
+        </p>
       </AntDCard>
       <AntDCard title="Usage">
         <Message
@@ -3160,7 +3034,6 @@ const Components = {
   Toast: <ToastSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
-  Typography: <TypographySection />,
 };
 
 const DesignKit: React.FC = () => {

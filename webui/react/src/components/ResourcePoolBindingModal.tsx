@@ -1,5 +1,5 @@
 import { Modal } from 'determined-ui/Modal';
-import Paragraph from 'determined-ui/Typography/Paragraph';
+import { Body } from 'determined-ui/Typography';
 import React, { useRef, useState } from 'react';
 
 import Transfer from 'components/Transfer';
@@ -42,10 +42,10 @@ const ResourcePoolBindingModalComponent: React.FC<Props> = ({
         targetListTitle={`Bound to ${pool}`}
         onChange={setVisibleBindings}
       />
-      <Paragraph>
+      <Body>
         Note: Binding a resource pool to a workspace(s) prevents other workspaces from using it.
         Existing running workloads will be unaffected.
-      </Paragraph>
+      </Body>
     </Modal>
   );
 };
