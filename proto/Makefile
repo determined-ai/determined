@@ -75,8 +75,7 @@ gen-buf-image:
 check: check-fmt build/proto.stamp
 	buf lint
 	buf breaking --against $(buf_image)
-	go mod tidy
-	git diff --quiet go.mod go.sum pkg/
+	git diff --quiet pkg/
 
 .PHONY: check-fmt
 check-fmt:

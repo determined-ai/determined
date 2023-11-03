@@ -2,7 +2,7 @@
 SHELL := bash
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name 'zgen_*.go' -prune -o -name '*.go' -print) $(shell find ../schemas/expconf -name '*.json')
-MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ./go.mod ./go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
+MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
@@ -112,7 +112,7 @@ build-race: gen
 .PHONY: check
 check: check-gen
 	go mod tidy
-	git diff --quiet go.mod go.sum
+	git diff --quiet ../go.mod ../go.sum
 	golangci-lint --build-tags integration run --timeout 10m
 
 .PHONY: check-all

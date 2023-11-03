@@ -1,4 +1,4 @@
-module github.com/determined-ai/determined/master
+module github.com/determined-ai/determined
 
 go 1.21
 
@@ -9,7 +9,6 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/davecgh/go-spew v1.1.1
-	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
@@ -43,7 +42,7 @@ require (
 	github.com/prometheus/client_golang v1.11.1
 	github.com/santhosh-tekuri/jsonschema/v2 v2.2.0
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
@@ -56,7 +55,7 @@ require (
 	google.golang.org/api v0.56.0
 	google.golang.org/grpc v1.45.0
 	google.golang.org/grpc/examples v0.0.0-20210525230658-4bae49e05b28 // indirect
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.0 // v1.27.1
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gotest.tools v2.2.0+incompatible
@@ -116,7 +115,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -146,9 +145,9 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.1 // indirect
 	go.opentelemetry.io/otel/trace v1.6.1 // indirect
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/sys v0.11.0
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
@@ -170,10 +169,13 @@ require (
 
 require (
 	cloud.google.com/go/storage v1.10.0
+	github.com/docker/distribution v2.8.2+incompatible
+	github.com/docker/docker-credential-helpers v0.6.4
 	github.com/go-test/deep v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jinzhu/copier v0.3.5
+	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/uptrace/bun v1.1.14
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14
 	github.com/uptrace/bun/extra/bundebug v1.1.14
@@ -181,9 +183,24 @@ require (
 )
 
 require (
+	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/docker/go-metrics v0.0.1 // indirect
+	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/moby/term v0.5.0 // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/tklauser/go-sysconf v0.3.12 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
+)
+
+require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	golang.org/x/sync v0.1.0
 )
-
-replace github.com/determined-ai/determined/proto => ../proto
