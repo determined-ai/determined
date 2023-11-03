@@ -2994,13 +2994,11 @@ func (a *apiServer) DeleteTensorboardFiles(
 	}
 
 	var uuidList []uuid.UUID
-
 	err = runCheckpointGCTask(
 		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
 		exp.Config, uuidList, nil, true, agentUserGroup, curUser,
 		nil,
 	)
-
 	if err != nil {
 		log.WithError(err).Errorf("failed to gc tensorboard for experiment: %d", exp.ID)
 		return nil, err
