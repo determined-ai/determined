@@ -1499,8 +1499,8 @@ service Determined {
     };
   }
   // Delete tensorboard files.
-  rpc DeleteTensorboard(DeleteTensorboardRequest)
-      returns (DeleteTensorboardResponse) {
+  rpc DeleteTensorboardFiles(DeleteTensorboardFilesRequest)
+      returns (DeleteTensorboardFilesResponse) {
     option (google.api.http) = {
       post: "/api/v1/tensorboards/delete"
       body: "*"

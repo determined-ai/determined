@@ -731,18 +731,18 @@ func (x *LaunchTensorboardResponse) GetWarnings() []LaunchWarning {
 	return nil
 }
 
-// Request to delete a tensorboard.
-type DeleteTensorboardRequest struct {
+// Request to delete a tensorboard files.
+type DeleteTensorboardFilesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// ID of experiment that the tensorboard is linked to.
+	// ID of experiment that the tensorboard files are linked to.
 	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
 }
 
-func (x *DeleteTensorboardRequest) Reset() {
-	*x = DeleteTensorboardRequest{}
+func (x *DeleteTensorboardFilesRequest) Reset() {
+	*x = DeleteTensorboardFilesRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_tensorboard_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -750,13 +750,13 @@ func (x *DeleteTensorboardRequest) Reset() {
 	}
 }
 
-func (x *DeleteTensorboardRequest) String() string {
+func (x *DeleteTensorboardFilesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteTensorboardRequest) ProtoMessage() {}
+func (*DeleteTensorboardFilesRequest) ProtoMessage() {}
 
-func (x *DeleteTensorboardRequest) ProtoReflect() protoreflect.Message {
+func (x *DeleteTensorboardFilesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_tensorboard_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -768,12 +768,12 @@ func (x *DeleteTensorboardRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteTensorboardRequest.ProtoReflect.Descriptor instead.
-func (*DeleteTensorboardRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteTensorboardFilesRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTensorboardFilesRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_tensorboard_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *DeleteTensorboardRequest) GetExperimentId() int32 {
+func (x *DeleteTensorboardFilesRequest) GetExperimentId() int32 {
 	if x != nil {
 		return x.ExperimentId
 	}
@@ -781,14 +781,14 @@ func (x *DeleteTensorboardRequest) GetExperimentId() int32 {
 }
 
 // Response to DeleteTensorboardRequest.
-type DeleteTensorboardResponse struct {
+type DeleteTensorboardFilesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *DeleteTensorboardResponse) Reset() {
-	*x = DeleteTensorboardResponse{}
+func (x *DeleteTensorboardFilesResponse) Reset() {
+	*x = DeleteTensorboardFilesResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_tensorboard_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -796,13 +796,13 @@ func (x *DeleteTensorboardResponse) Reset() {
 	}
 }
 
-func (x *DeleteTensorboardResponse) String() string {
+func (x *DeleteTensorboardFilesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteTensorboardResponse) ProtoMessage() {}
+func (*DeleteTensorboardFilesResponse) ProtoMessage() {}
 
-func (x *DeleteTensorboardResponse) ProtoReflect() protoreflect.Message {
+func (x *DeleteTensorboardFilesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_tensorboard_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -814,8 +814,8 @@ func (x *DeleteTensorboardResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteTensorboardResponse.ProtoReflect.Descriptor instead.
-func (*DeleteTensorboardResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteTensorboardFilesResponse.ProtoReflect.Descriptor instead.
+func (*DeleteTensorboardFilesResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_tensorboard_proto_rawDescGZIP(), []int{11}
 }
 
@@ -954,16 +954,17 @@ var file_determined_api_v1_tensorboard_proto_rawDesc = []byte{
 	0x68, 0x57, 0x61, 0x72, 0x6e, 0x69, 0x6e, 0x67, 0x52, 0x08, 0x77, 0x61, 0x72, 0x6e, 0x69, 0x6e,
 	0x67, 0x73, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0xd2, 0x01, 0x0b, 0x74, 0x65, 0x6e, 0x73,
 	0x6f, 0x72, 0x62, 0x6f, 0x61, 0x72, 0x64, 0xd2, 0x01, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x22, 0x3f, 0x0a, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6e, 0x73, 0x6f, 0x72,
-	0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d,
-	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49,
-	0x64, 0x22, 0x1b, 0x0a, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6e, 0x73, 0x6f,
-	0x72, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35,
-	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
-	0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x44, 0x0a, 0x1d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6e, 0x73, 0x6f, 0x72,
+	0x62, 0x6f, 0x61, 0x72, 0x64, 0x46, 0x69, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
+	0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22, 0x20, 0x0a, 0x1e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x54, 0x65, 0x6e, 0x73, 0x6f, 0x72, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x46, 0x69, 0x6c, 0x65, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -992,8 +993,8 @@ var file_determined_api_v1_tensorboard_proto_goTypes = []interface{}{
 	(*SetTensorboardPriorityResponse)(nil), // 8: determined.api.v1.SetTensorboardPriorityResponse
 	(*LaunchTensorboardRequest)(nil),       // 9: determined.api.v1.LaunchTensorboardRequest
 	(*LaunchTensorboardResponse)(nil),      // 10: determined.api.v1.LaunchTensorboardResponse
-	(*DeleteTensorboardRequest)(nil),       // 11: determined.api.v1.DeleteTensorboardRequest
-	(*DeleteTensorboardResponse)(nil),      // 12: determined.api.v1.DeleteTensorboardResponse
+	(*DeleteTensorboardFilesRequest)(nil),  // 11: determined.api.v1.DeleteTensorboardFilesRequest
+	(*DeleteTensorboardFilesResponse)(nil), // 12: determined.api.v1.DeleteTensorboardFilesResponse
 	(OrderBy)(0),                           // 13: determined.api.v1.OrderBy
 	(*tensorboardv1.Tensorboard)(nil),      // 14: determined.tensorboard.v1.Tensorboard
 	(*Pagination)(nil),                     // 15: determined.api.v1.Pagination
@@ -1154,7 +1155,7 @@ func file_determined_api_v1_tensorboard_proto_init() {
 			}
 		}
 		file_determined_api_v1_tensorboard_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteTensorboardRequest); i {
+			switch v := v.(*DeleteTensorboardFilesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1166,7 +1167,7 @@ func file_determined_api_v1_tensorboard_proto_init() {
 			}
 		}
 		file_determined_api_v1_tensorboard_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteTensorboardResponse); i {
+			switch v := v.(*DeleteTensorboardFilesResponse); i {
 			case 0:
 				return &v.state
 			case 1:

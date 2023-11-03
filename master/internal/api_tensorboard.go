@@ -532,9 +532,9 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 	return configs, nil
 }
 
-func (a *apiServer) DeleteTensorboard(
-	ctx context.Context, req *apiv1.DeleteTensorboardRequest,
-) (resp *apiv1.DeleteTensorboardResponse, err error) {
+func (a *apiServer) DeleteTensorboardFiles(
+	ctx context.Context, req *apiv1.DeleteTensorboardFilesRequest,
+) (resp *apiv1.DeleteTensorboardFilesResponse, err error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -567,5 +567,5 @@ func (a *apiServer) DeleteTensorboard(
 		return nil, err
 	}
 
-	return &apiv1.DeleteTensorboardResponse{}, nil
+	return &apiv1.DeleteTensorboardFilesResponse{}, nil
 }

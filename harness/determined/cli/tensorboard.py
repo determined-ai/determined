@@ -87,11 +87,11 @@ def open_tensorboard(args: Namespace) -> None:
 
 @authentication.required
 def delete_tensorboard_files(args: Namespace) -> None:
-    body = bindings.v1DeleteTensorboardRequest(
+    body = bindings.v1DeleteTensorboardFilesRequest(
         experimentId=args.experiment_id,
     )
 
-    bindings.post_DeleteTensorboard(cli.setup_session(args), body=body)
+    bindings.post_DeleteTensorboardFiles(cli.setup_session(args), body=body)
 
 
 args_description: ArgsDescription = [

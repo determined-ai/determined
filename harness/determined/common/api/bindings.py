@@ -2937,7 +2937,7 @@ class v1DeleteProjectResponse(Printable):
         }
         return out
 
-class v1DeleteTensorboardRequest(Printable):
+class v1DeleteTensorboardFilesRequest(Printable):
     """Request to delete a tensorboard."""
     experimentId: "typing.Optional[int]" = None
 
@@ -2950,7 +2950,7 @@ class v1DeleteTensorboardRequest(Printable):
             self.experimentId = experimentId
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1DeleteTensorboardRequest":
+    def from_json(cls, obj: Json) -> "v1DeleteTensorboardFilesRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
         if "experimentId" in obj:
@@ -15975,10 +15975,10 @@ def delete_DeleteTemplate(
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
-def post_DeleteTensorboard(
+def post_DeleteTensorboardFiles(
     session: "api.Session",
     *,
-    body: "v1DeleteTensorboardRequest",
+    body: "v1DeleteTensorboardFilesRequest",
 ) -> None:
     """Delete tensorboard files."""
     _params = None
@@ -15994,7 +15994,7 @@ def post_DeleteTensorboard(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_DeleteTensorboard", _resp)
+    raise APIHttpError("post_DeleteTensorboardFiles", _resp)
 
 def delete_DeleteWebhook(
     session: "api.Session",
