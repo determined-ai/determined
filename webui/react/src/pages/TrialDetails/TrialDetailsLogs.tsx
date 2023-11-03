@@ -1,4 +1,4 @@
-import ClipboardButton from 'determined-ui/ClipboardButton';
+import CodeSample from 'determined-ui/CodeSample';
 import LogViewer, {
   FetchConfig,
   FetchDirection,
@@ -95,10 +95,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       content: (
         <div className={css.downloadConfirm}>
           <p>We recommend using the Determined CLI to download trial logs:</p>
-          <div className={css.code}>
-            <code className={css.codeSample}>{code}</code>
-            <ClipboardButton getContent={() => code} />
-          </div>
+          <CodeSample text={code} />
         </div>
       ),
       okText: 'Proceed to Download',
