@@ -9,7 +9,7 @@ from termcolor import colored
 
 import determined.deploy
 from determined.cli.errors import CliError
-from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group
+from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group, string_to_bool
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.gcp import constants, gcp
 
@@ -427,7 +427,7 @@ args_description = Cmd(
                         ),
                         Arg(
                             "--preemptible",
-                            type=bool,
+                            type=string_to_bool,
                             default=False,
                             help="whether to use preemptible instances for dynamic agents",
                         ),
@@ -535,7 +535,7 @@ args_description = Cmd(
                         ),
                         Arg(
                             "--preemption-enabled",
-                            type=bool,
+                            type=string_to_bool,
                             default=constants.defaults.PREEMPTION_ENABLED,
                             help="whether task preemption is supported in the scheduler "
                             "(only configurable for priority scheduler).",
