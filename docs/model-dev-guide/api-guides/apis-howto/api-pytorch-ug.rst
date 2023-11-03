@@ -545,7 +545,7 @@ up on batch 2), and repeats for 2 cycles:
                ),
            )
 
-See the `PyTorch tensorboard profiler tutorial
+See the `PyTorch TensorBoard profiler tutorial
 <https://pytorch.org/tutorials/intermediate/tensorboard_profiler_tutorial.html#use-profiler-to-record-execution-events>`_
 for a complete list of accepted configurations parameters.
 

@@ -158,7 +158,7 @@
 -  ``masterMemLimit``: Optional configuration. The memory limits for the Determined master.
 
 -  ``taskContainerDefaults``: Specifies Docker defaults for all task containers. A task represents a
-   single schedulable unit, such as a trial, command, or tensorboard.
+   single schedulable unit, such as a trial, command, or TensorBoard.
 
    -  ``networkMode``: The Docker network to use for the Determined task containers. If this is set
       to "host", Docker host-mode networking will be used instead. Defaults to "bridge".

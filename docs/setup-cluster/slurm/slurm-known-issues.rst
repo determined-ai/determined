@@ -120,7 +120,7 @@ may still not work.
 ************************
 
 Starting with Apptainer version 1.1.0 some changes may trigger permission problems inside of
-Determined containers for shells, tensorboards, and experiments. For example, a tensorboard log may
+Determined containers for shells, TensorBoards, and experiments. For example, a TensorBoard log may
 contain ``ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device``,
 or a shell may fail to function and the shell logs contain the message ``chown(/dev/pts/1, 63200, 5)
 failed: Invalid argument``, or an experiment may fail to launch due to ``FATAL: container creation
