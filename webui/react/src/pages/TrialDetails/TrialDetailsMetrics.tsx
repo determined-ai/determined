@@ -16,6 +16,7 @@ import {
   TrialDetails,
   XAxisDomain,
 } from 'types';
+import { glasbeyColor } from 'utils/color';
 import handleError from 'utils/error';
 import { metricSorter, metricToKey } from 'utils/metric';
 
@@ -146,7 +147,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
               return '<div>⬦ Best Checkpoint <em>(click to view details)</em> </div>';
             },
             isShownEmptyVal: false,
-            seriesColors: series.map((s) => s.color ?? '#009BDE'),
+            seriesColors: series.map((s, idx) => s.color ?? glasbeyColor(idx)),
           }),
         ],
         series,
