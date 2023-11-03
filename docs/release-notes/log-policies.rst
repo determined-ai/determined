@@ -2,18 +2,17 @@
 
 **New Features**
 
--  Experiments: Add a new experiment config option ``log_policies`` to allow configuring policies to
-   take after a regex is matched. This can also be configured at the cluster level or per resource
-   pool through task container defaults. Please see :ref:`experiment-config-reference` and
-   :ref:`master-config-reference` for more information.
+-  Experiments: Add a ``log_policies`` configuration option to define actions when a trial's log
+   matches specified patterns.
 
-   There are two action types a trial can be configured to take
+   -  The ``exclude_node`` action prevents a failed trial's restart attempts (due to its
+      max_restarts policy) from being scheduled on nodes with matched error logs. This is useful for
+      bypassing nodes with hardware issues like uncorrectable GPU ECC errors.
 
-   -  ``exclude_node``: If a trial fails and restarts, the trial will not schedule, for its
-      restarts, on a node that reported a log that matched the regex provided. This can be used to
-      allow trials to avoid being retried on nodes with certain hardware issues like uncorrectable
-      gpu ECC errors.
+   -  The ``cancel_retries`` action prevents a trial from restarting if a trial reports a log that
+      matches the pattern, even if it has remaining max_restarts. This avoids using resources for
+      retrying a trial that encounters certain failures that won't be fixed by retrying the trial,
+      such as CUDA memory issues. For details, visit :ref:`experiment-config-reference` and
+      :ref:`master-config-reference`.
 
-   -  ``cancel_retries``: If a trial reports a log that matches this pattern, the trial will not be
-      restarted. This is useful for certain errors that are not transient, such as a CUDA
-      out-of-memory error caused by the model being too large for the allocated hardware.
+This options is also configurable at the cluster or resource pool level via task container defaults.

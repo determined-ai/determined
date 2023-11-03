@@ -285,32 +285,25 @@ if at least one of its trials completes without errors. The default value for ``
 ``log_policies``
 ================
 
-Optional. The ``log_policies`` parameter is a list of policies that allows certain actions to be
-taken when a trial reports a log that matches the pattern. The pattern is a regex used by the Go
-language. See `this reference <https://github.com/google/re2/wiki/Syntax>`__ for details on the
-regex. The pattern regex is matched line by line against logs reported by the trial. The following
-actions can be taken
+Optional. Defines actions in response to trial logs matching specified regex patterns (Go language
+syntax). For more information about the syntax, you can visit this `RE2 reference page
+<https://github.com/google/re2/wiki/Syntax>`__. Actions include:
 
--  ``exclude_node``: When a trial fails and restarts according to its ``max_restarts`` policy, if
-   any nodes reported a log that matched the pattern then those nodes are excluded from scheduling
-   for all the restart attempts of that trial. Only the failed trial will be prevented from
-   scheduling on those nodes. This is useful for allowing trials to reschedule and avoid nodes that
-   may be experiencing a certain hardware issues like uncorrectable gpu ECC errors.
+-  ``exclude_node``: Excludes a failed trial's restart attempts (due to its ``max_restarts`` policy)
+   from being scheduled on nodes with matched error logs. This is useful for bypassing nodes with
+   hardware issues, like uncorrectable GPU ECC errors.
 
-   This option is currently unsupported on pbs and will take no effect.
+   Note: This option is not supported on PBS systems.
 
-   For the agent resource manager, if a trial has excluded enough nodes to the point where it is
-   unschedulable, it will fail if the master config option ``launch_error`` is set to true (default
-   is true).
+   For the agent resource manager, if a trial becomes unschedulable due to enough node exclusions,
+   and ``launch_error`` in the master config is true (default), the trial fails.
 
--  ``cancel_retries``: If a trial reports a log that matches the pattern, then the trial will not
-   restart even if it has ``max_restarts`` left. This is useful for avoiding using resources
-   retrying a trial that encounters certain failures that won't be fixed by retrying the trial. One
-   example of this is a CUDA out-of-memory error caused by a model being too large to fit on
-   allocated hardware.
+-  ``cancel_retries``: Prevents a trial from restarting if a trial reports a log that matches the
+   pattern, even if it has remaining ``max_restarts``. This avoids using resources for retrying a
+   trial that encounters certain failures that won't be fixed by retrying the trial, such as CUDA
+   memory issues.
 
-An example of the configuration is shown below. This can also be specified on a cluster or resource
-pool level through task container defaults.
+Example configuration:
 
 .. code:: yaml
 
@@ -321,6 +314,9 @@ pool level through task container defaults.
       - pattern: ".*CUDA out of memory.*"
         action:
           type: cancel_retries
+
+These settings may also be specified at the cluster or resource pool level through task container
+defaults.
 
 *******************
  Validation Policy

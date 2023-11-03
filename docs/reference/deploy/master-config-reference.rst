@@ -106,8 +106,8 @@ GPU) tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to Dete
 ``log_policies``
 ================
 
-A list of log policies that take effect when a trial reports a log that matches a pattern. See
-:ref:`log_policies <config-log-policies>` for further information.
+A list of log policies that take effect when a trial reports a log that matches a pattern. For
+details, visit :ref:`log_policies <config-log-policies>`.
 
 ``force_pull_image``
 ====================
