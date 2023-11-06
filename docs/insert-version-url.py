@@ -19,7 +19,13 @@ def create_url_entry(version):
     return entry
 
 
-def insert_entry(json_file, entry, entry_position=1):
+def insert_entry(json_file, entry):
+    """
+    The current dev version comes first and all released versions are in reverse chronological
+    order, so the latest release always goes in index 1.
+    """
+
+    entry_position = 1
     with open(json_file, "rb") as f:
         all_urls = json.load(f)
 
