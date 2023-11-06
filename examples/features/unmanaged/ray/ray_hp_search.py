@@ -3,6 +3,7 @@ import uuid
 
 import ray
 from ray import air, tune
+from ray.air import session
 from ray.tune.schedulers import AsyncHyperBandScheduler
 
 from determined.experimental import core_v2
@@ -11,8 +12,8 @@ from determined.experimental import core_v2
 def objective(config):
     hp = config["hp"]
 
-    experiment_name = air.session.get_experiment_name()
-    trial_name = air.session.get_trial_name()
+    experiment_name = session.get_experiment_name()
+    trial_name = session.get_trial_name()
     print(f"experiment name: {experiment_name} trial name: {trial_name}")
 
     core_v2.init(
@@ -41,7 +42,7 @@ def objective(config):
                 loss = hp + random.random()
                 print("metrics:", {"loss": loss})
                 core_v2.train.report_validation_metrics(steps_completed=i, metrics={"loss": loss})
-                air.session.report({"iterations": i, "loss": loss})
+                session.report({"iterations": i, "loss": loss})
     finally:
         # Note: this is not called when ASHA terminates a "bad" trial, so these trials will
         # stay in the RUNNING state until they're marked as errored after a timeout.
