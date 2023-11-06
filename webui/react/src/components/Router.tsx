@@ -1,5 +1,5 @@
-import Message from 'determined-ui/Message';
-import useUI from 'determined-ui/Theme';
+import Message from 'hew/Message';
+import useUI from 'hew/Theme';
 import { useObservable } from 'micro-observables';
 import React, { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';

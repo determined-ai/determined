@@ -1,5 +1,5 @@
-import { Modal } from 'determined-ui/Modal';
-import { makeToast } from 'determined-ui/Toast';
+import { Modal } from 'hew/Modal';
+import { makeToast } from 'hew/Toast';
 import React from 'react';
 
 import { deleteGroup } from 'services/api';

@@ -1,8 +1,8 @@
-import Form from 'determined-ui/Form';
-import { Modal } from 'determined-ui/Modal';
-import Select from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Form from 'hew/Form';
+import { Modal } from 'hew/Modal';
+import Select from 'hew/Select';
+import { makeToast } from 'hew/Toast';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useId } from 'react';
 

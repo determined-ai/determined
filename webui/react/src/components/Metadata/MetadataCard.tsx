@@ -1,7 +1,7 @@
 import { Card, Space } from 'antd';
-import Button from 'determined-ui/Button';
-import Icon from 'determined-ui/Icon';
-import Spinner from 'determined-ui/Spinner';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
+import Spinner from 'hew/Spinner';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Metadata } from 'types';

@@ -1,4 +1,4 @@
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useCallback, useEffect, useInsertionEffect, useRef, useState } from 'react';
 
 type LoadablePromiser<T> = (canceler: AbortController) => Promise<T | Loadable<T>>;

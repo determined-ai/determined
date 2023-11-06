@@ -1,4 +1,4 @@
-import Button from 'determined-ui/Button';
+import Button from 'hew/Button';
 import React, { CSSProperties, MouseEvent, useCallback } from 'react';
 
 import { handlePath, linkPath } from 'routes/utils';

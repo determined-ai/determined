@@ -1,10 +1,10 @@
 import { Card, type TabsProps } from 'antd';
-import Breadcrumb from 'determined-ui/Breadcrumb';
-import Message from 'determined-ui/Message';
-import Notes from 'determined-ui/Notes';
-import Pivot from 'determined-ui/Pivot';
-import Spinner from 'determined-ui/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import Breadcrumb from 'hew/Breadcrumb';
+import Message from 'hew/Message';
+import Notes from 'hew/Notes';
+import Pivot from 'hew/Pivot';
+import Spinner from 'hew/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

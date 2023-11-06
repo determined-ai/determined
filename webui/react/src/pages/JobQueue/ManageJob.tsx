@@ -1,7 +1,7 @@
 import { List, Modal, Select, Typography } from 'antd';
-import Form from 'determined-ui/Form';
-import Input from 'determined-ui/Input';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Form from 'hew/Form';
+import Input from 'hew/Input';
+import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';

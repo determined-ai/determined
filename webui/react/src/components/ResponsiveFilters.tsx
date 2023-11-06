@@ -1,6 +1,6 @@
-import Button from 'determined-ui/Button';
-import Dropdown from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
+import Button from 'hew/Button';
+import Dropdown from 'hew/Dropdown';
+import Icon from 'hew/Icon';
 import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';

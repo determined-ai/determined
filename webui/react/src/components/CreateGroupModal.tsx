@@ -1,11 +1,11 @@
 import { Select, Typography } from 'antd';
-import Form from 'determined-ui/Form';
-import Input from 'determined-ui/Input';
-import { Modal } from 'determined-ui/Modal';
-import Spinner from 'determined-ui/Spinner';
-import { makeToast } from 'determined-ui/Toast';
-import { Loadable } from 'determined-ui/utils/loadable';
 import { filter } from 'fp-ts/lib/Set';
+import Form from 'hew/Form';
+import Input from 'hew/Input';
+import { Modal } from 'hew/Modal';
+import Spinner from 'hew/Spinner';
+import { makeToast } from 'hew/Toast';
+import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useId, useState } from 'react';

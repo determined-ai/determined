@@ -1,10 +1,10 @@
-import Button from 'determined-ui/Button';
-import Form, { hasErrors } from 'determined-ui/Form';
-import Input from 'determined-ui/Input';
-import Message from 'determined-ui/Message';
-import { Modal } from 'determined-ui/Modal';
-import Spinner from 'determined-ui/Spinner';
-import { Loaded } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Form, { hasErrors } from 'hew/Form';
+import Input from 'hew/Input';
+import Message from 'hew/Message';
+import { Modal } from 'hew/Modal';
+import Spinner from 'hew/Spinner';
+import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useState } from 'react';
@@ -96,7 +96,7 @@ const trialContinueConfig = (
   };
 };
 
-const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
+const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const DEFAULT_MODAL_STATE = {
   config: {},

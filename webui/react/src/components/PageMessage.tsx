@@ -1,4 +1,4 @@
-import Message from 'determined-ui/Message';
+import Message from 'hew/Message';
 import { useObservable } from 'micro-observables';
 import React from 'react';
 

@@ -1,4 +1,4 @@
-import { KeyboardShortcut } from 'determined-ui/InputShortcut';
+import { KeyboardShortcut } from 'hew/InputShortcut';
 import { type } from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';

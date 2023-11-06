@@ -1,5 +1,5 @@
 import type { TabsProps } from 'antd';
-import Pivot from 'determined-ui/Pivot';
+import Pivot from 'hew/Pivot';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 

@@ -1,5 +1,5 @@
-import { ChartGrid, ChartsProps } from 'determined-ui/LineChart';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { ChartGrid, ChartsProps } from 'hew/LineChart';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useMemo, useState } from 'react';
 

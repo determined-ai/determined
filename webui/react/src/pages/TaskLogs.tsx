@@ -1,10 +1,6 @@
-import LogViewer, {
-  FetchConfig,
-  FetchDirection,
-  FetchType,
-} from 'determined-ui/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'determined-ui/LogViewer/LogViewerSelect';
-import { Settings, settingsConfigForTask } from 'determined-ui/LogViewer/LogViewerSelect.settings';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
+import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
+import { Settings, settingsConfigForTask } from 'hew/LogViewer/LogViewerSelect.settings';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 

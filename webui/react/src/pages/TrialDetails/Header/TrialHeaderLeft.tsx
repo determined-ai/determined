@@ -1,4 +1,4 @@
-import Icon from 'determined-ui/Icon';
+import Icon from 'hew/Icon';
 import React from 'react';
 import { Link } from 'react-router-dom';
 

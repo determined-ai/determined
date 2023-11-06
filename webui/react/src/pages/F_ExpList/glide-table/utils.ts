@@ -1,6 +1,6 @@
 import { DataEditorProps } from '@hpe.com/glide-data-grid';
 import dayjs from 'dayjs';
-import { Theme } from 'determined-ui/Theme';
+import { Theme } from 'hew/Theme';
 
 import { ExperimentItem } from 'types';
 import {

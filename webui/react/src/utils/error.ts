@@ -1,4 +1,4 @@
-import { makeToast, Severity } from 'determined-ui/Toast';
+import { makeToast, Severity } from 'hew/Toast';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';

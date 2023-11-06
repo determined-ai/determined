@@ -1,8 +1,4 @@
-import LogViewer, {
-  FetchConfig,
-  FetchDirection,
-  FetchType,
-} from 'determined-ui/LogViewer/LogViewer';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
 import React, { useCallback } from 'react';
 
 import { serverAddress } from 'routes/utils';

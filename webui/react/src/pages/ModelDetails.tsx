@@ -1,11 +1,11 @@
 import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
-import Input from 'determined-ui/Input';
-import Message from 'determined-ui/Message';
-import Notes from 'determined-ui/Notes';
-import Spinner from 'determined-ui/Spinner';
-import Tags, { tagsActionHelper } from 'determined-ui/Tags';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import Input from 'hew/Input';
+import Message from 'hew/Message';
+import Notes from 'hew/Notes';
+import Spinner from 'hew/Spinner';
+import Tags, { tagsActionHelper } from 'hew/Tags';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_useBlocker, useParams } from 'react-router-dom';

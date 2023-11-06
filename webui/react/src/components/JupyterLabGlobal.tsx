@@ -1,5 +1,5 @@
-import { matchesShortcut } from 'determined-ui/InputShortcut';
-import { useModal } from 'determined-ui/Modal';
+import { matchesShortcut } from 'hew/InputShortcut';
+import { useModal } from 'hew/Modal';
 import React, { useEffect } from 'react';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';

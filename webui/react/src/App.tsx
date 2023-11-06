@@ -1,10 +1,10 @@
 import { App as AntdApp } from 'antd';
-import Button from 'determined-ui/Button';
-import Spinner from 'determined-ui/Spinner';
-import useUI, { UIProvider } from 'determined-ui/Theme';
-import { notification } from 'determined-ui/Toast';
-import { ConfirmationProvider } from 'determined-ui/useConfirm';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Spinner from 'hew/Spinner';
+import useUI, { UIProvider } from 'hew/Theme';
+import { notification } from 'hew/Toast';
+import { ConfirmationProvider } from 'hew/useConfirm';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';

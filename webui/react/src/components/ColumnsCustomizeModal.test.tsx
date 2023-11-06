@@ -1,7 +1,7 @@
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from 'determined-ui/Button';
-import { useModal } from 'determined-ui/Modal';
+import Button from 'hew/Button';
+import { useModal } from 'hew/Modal';
 import React, { useMemo } from 'react';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';

@@ -1,9 +1,9 @@
-import Form from 'determined-ui/Form';
-import Icon from 'determined-ui/Icon';
-import { Modal } from 'determined-ui/Modal';
-import Nameplate from 'determined-ui/Nameplate';
-import Select, { Option, RefSelectProps } from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
+import Form from 'hew/Form';
+import Icon from 'hew/Icon';
+import { Modal } from 'hew/Modal';
+import Nameplate from 'hew/Nameplate';
+import Select, { Option, RefSelectProps } from 'hew/Select';
+import { makeToast } from 'hew/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 

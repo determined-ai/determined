@@ -1,5 +1,5 @@
-import CodeSample from 'determined-ui/CodeSample';
-import { Modal } from 'determined-ui/Modal';
+import CodeSample from 'hew/CodeSample';
+import { Modal } from 'hew/Modal';
 
 import { ModelVersion } from 'types';
 

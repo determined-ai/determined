@@ -1,10 +1,10 @@
 import { Typography } from 'antd';
-import Avatar, { Size } from 'determined-ui/Avatar';
-import Card from 'determined-ui/Card';
-import { Columns } from 'determined-ui/Columns';
-import Icon from 'determined-ui/Icon';
-import Spinner from 'determined-ui/Spinner';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Avatar, { Size } from 'hew/Avatar';
+import Card from 'hew/Card';
+import { Columns } from 'hew/Columns';
+import Icon from 'hew/Icon';
+import Spinner from 'hew/Spinner';
+import { Loadable } from 'hew/utils/loadable';
 import React from 'react';
 
 import UserAvatar from 'components/UserAvatar';

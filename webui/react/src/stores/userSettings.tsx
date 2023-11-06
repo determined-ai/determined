@@ -1,6 +1,6 @@
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
 import { isRight, match } from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 import { isEqual } from 'lodash';
