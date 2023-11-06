@@ -42,7 +42,6 @@
     "core-js": "3.32",
     "dayjs": "^1.11.7",
     "debug": "^4.3.4",
-    "determined-ui": "git+https://git@github.com/determined-ai/hew.git#WEB-1697",
     "events": "^3.3.0",
     "fp-ts": "^2.13.1",
     "fuse.js": "^6.6.2",
