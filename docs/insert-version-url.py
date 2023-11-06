@@ -3,11 +3,12 @@
 """
 Insert an entry into the version dropdown json file
 
-Usage: add_version_dropdown.py docs/_static/version-switcher/versions.json your.version.here
+Usage: add_version_dropdown.py your.version.here
 """
 
 import json
 import sys
+import os
 
 
 def create_url_entry(version):
@@ -37,7 +38,10 @@ def insert_version_url(json_file, version):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print(__doc__, file=sys.stderr)
         sys.exit(1)
-    insert_version_url(sys.argv[1], sys.argv[2])
+
+    current_directory = os.path.dirname(__file__)
+    versions_json_path = os.path.join(current_directory, "_static/version-switcher/versions.json")
+    insert_version_url(versions_json_path, sys.argv[1])
