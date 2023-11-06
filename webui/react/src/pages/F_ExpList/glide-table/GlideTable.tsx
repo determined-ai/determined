@@ -404,6 +404,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
           ? {
+              icon: <Icon decorative name="pin" />,
               key: 'pin',
               label: 'Pin column',
               onClick: () => {
@@ -418,6 +419,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             }
           : {
               disabled: pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
               key: 'unpin',
               label: 'Unpin column',
               onClick: () => {
