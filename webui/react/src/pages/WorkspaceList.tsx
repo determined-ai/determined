@@ -344,7 +344,7 @@ const WorkspaceList: React.FC = () => {
         </Button>
       }
       title="Workspaces">
-      <Columns page>
+      <Columns marginBottom={16} wrap>
         <Column>
           <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
             <Option value={WhoseWorkspaces.All}>All Workspaces</Option>

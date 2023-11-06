@@ -2447,7 +2447,7 @@ const ColumnsSection: React.FC = () => {
           Variant with <code>{'page'}</code> prop, with margins and wrapping behavior, used for
           page-level layouts/headers:
         </p>
-        <Columns page>
+        <Columns wrap>
           <Column>
             <Button>Content 1</Button>
             <Button>Content 2</Button>
