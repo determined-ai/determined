@@ -382,10 +382,10 @@ func (t *trial) maybeAllocateTask() error {
 		return err
 	}
 
-	switch restoredAllocation, err := t.maybeRestoreAllocation(); {
-	case err != nil:
+	restoredAllocation, err := t.maybeRestoreAllocation()
+	if err != nil {
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
-	case restoredAllocation != nil:
+	} else if restoredAllocation != nil {
 		specifier, err := t.buildTaskSpecifier()
 		if err != nil {
 			return err
@@ -424,10 +424,6 @@ func (t *trial) maybeAllocateTask() error {
 		}
 		t.allocationID = &ar.AllocationID
 		return nil
-	case restoredAllocation == nil && len(blockedNodes) > 0:
-		if err := t.checkResourcePoolRemainingCapacity(); err != nil {
-			return err
-		}
 	}
 
 	t.runID++
@@ -623,6 +619,17 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 				InformationalReason: "trial exceeded max restarts",
 			})
 		}
+
+		blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), t.taskID)
+		if err != nil {
+			return err
+		}
+		if len(blockedNodes) > 0 {
+			if err := t.checkResourcePoolRemainingCapacity(); err != nil {
+				return err
+			}
+		}
+
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
 			State:               model.CompletedState,
