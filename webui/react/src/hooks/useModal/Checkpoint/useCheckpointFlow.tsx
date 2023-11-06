@@ -1,4 +1,4 @@
-import { useModal } from 'determined-ui/Modal';
+import { useModal } from 'hew/Modal';
 import { ReactElement, useCallback, useMemo } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';

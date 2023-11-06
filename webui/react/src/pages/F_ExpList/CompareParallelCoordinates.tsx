@@ -1,5 +1,5 @@
-import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/Spinner';
+import Message from 'hew/Message';
+import Spinner from 'hew/Spinner';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

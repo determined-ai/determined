@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import Message from 'determined-ui/Message';
+import Message from 'hew/Message';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 

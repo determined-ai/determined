@@ -1,6 +1,6 @@
-import Form from 'determined-ui/Form';
-import Input from 'determined-ui/Input';
-import { Modal } from 'determined-ui/Modal';
+import Form from 'hew/Form';
+import Input from 'hew/Input';
+import { Modal } from 'hew/Modal';
 import React, { useCallback, useId } from 'react';
 
 import { paths } from 'routes/utils';

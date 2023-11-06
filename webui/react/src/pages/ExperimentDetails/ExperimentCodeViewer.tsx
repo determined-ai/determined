@@ -1,7 +1,7 @@
-import Icon from 'determined-ui/Icon';
-import Spinner from 'determined-ui/Spinner';
-import { Failed, Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
-import { TreeNode } from 'determined-ui/utils/types';
+import Icon from 'hew/Icon';
+import Spinner from 'hew/Spinner';
+import { Failed, Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { TreeNode } from 'hew/utils/types';
 import yaml from 'js-yaml';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -14,7 +14,7 @@ import { isSingleTrialExperiment } from 'utils/experiment';
 
 import css from './ExperimentCodeViewer.module.scss';
 
-const CodeEditor = React.lazy(() => import('determined-ui/CodeEditor'));
+const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const configIcon = <Icon name="settings" title="settings" />;
 

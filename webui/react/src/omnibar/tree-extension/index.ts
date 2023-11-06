@@ -1,4 +1,4 @@
-import { makeToast } from 'determined-ui/Toast';
+import { makeToast } from 'hew/Toast';
 import Fuse from 'fuse.js';
 
 import root from 'omnibar/tree-extension/trees/index';

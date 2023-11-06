@@ -1,7 +1,7 @@
-import Button from 'determined-ui/Button';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import useConfirm, { ConfirmModalProps } from 'determined-ui/useConfirm';
+import Button from 'hew/Button';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import useConfirm, { ConfirmModalProps } from 'hew/useConfirm';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import { Eventually } from 'types';

@@ -1,6 +1,6 @@
-import Card from 'determined-ui/Card';
-import Icon from 'determined-ui/Icon';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Card from 'hew/Card';
+import Icon from 'hew/Icon';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo } from 'react';
 

@@ -1,7 +1,7 @@
-import Button from 'determined-ui/Button';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
+import Button from 'hew/Button';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import { useModal } from 'hew/Modal';
 import React, { useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';

@@ -1,7 +1,7 @@
-import Form from 'determined-ui/Form';
-import { Modal } from 'determined-ui/Modal';
-import Select, { Option } from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
+import Form from 'hew/Form';
+import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
+import { makeToast } from 'hew/Toast';
 
 import { assignMultipleGroups } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';

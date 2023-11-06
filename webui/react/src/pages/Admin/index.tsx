@@ -1,6 +1,6 @@
 import type { TabsProps } from 'antd';
-import Pivot from 'determined-ui/Pivot';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Pivot from 'hew/Pivot';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 

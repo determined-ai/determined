@@ -1,6 +1,6 @@
-import Card from 'determined-ui/Card';
-import Icon from 'determined-ui/Icon';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Card from 'hew/Card';
+import Icon from 'hew/Icon';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
 import ResourcePoolCard from 'components/ResourcePoolCard';

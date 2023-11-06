@@ -1,4 +1,4 @@
-import { Modal } from 'determined-ui/Modal';
+import { Modal } from 'hew/Modal';
 import React from 'react';
 
 import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';

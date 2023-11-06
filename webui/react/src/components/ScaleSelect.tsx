@@ -1,4 +1,4 @@
-import Select, { Option, SelectValue } from 'determined-ui/Select';
+import Select, { Option, SelectValue } from 'hew/Select';
 import React from 'react';
 
 import { Scale } from 'types';

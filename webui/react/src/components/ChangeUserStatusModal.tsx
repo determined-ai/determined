@@ -1,8 +1,8 @@
-import Form from 'determined-ui/Form';
-import { Modal } from 'determined-ui/Modal';
-import Select, { Option } from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
-import { ValueOf } from 'determined-ui/utils/types';
+import Form from 'hew/Form';
+import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
+import { makeToast } from 'hew/Toast';
+import { ValueOf } from 'hew/utils/types';
 
 import { patchUsers } from 'services/api';
 import handleError from 'utils/error';

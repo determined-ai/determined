@@ -1,5 +1,5 @@
-import Button from 'determined-ui/Button';
-import Message from 'determined-ui/Message';
+import Button from 'hew/Button';
+import Message from 'hew/Message';
 import React from 'react';
 
 import { paths } from 'routes/utils';

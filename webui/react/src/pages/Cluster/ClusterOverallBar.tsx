@@ -1,7 +1,7 @@
-import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/Spinner';
-import { ShirtSize } from 'determined-ui/Theme';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Message from 'hew/Message';
+import Spinner from 'hew/Spinner';
+import { ShirtSize } from 'hew/Theme';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useMemo } from 'react';
 
 import Section from 'components/Section';

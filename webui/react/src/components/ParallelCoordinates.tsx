@@ -1,4 +1,4 @@
-import useUI from 'determined-ui/Theme';
+import useUI from 'hew/Theme';
 import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 

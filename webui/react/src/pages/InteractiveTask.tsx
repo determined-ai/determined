@@ -1,4 +1,4 @@
-import useUI from 'determined-ui/Theme';
+import useUI from 'hew/Theme';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';

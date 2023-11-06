@@ -1,5 +1,5 @@
 import { Skeleton, SkeletonProps } from 'antd';
-import Message, { Props as MessageProps } from 'determined-ui/Message';
+import Message, { Props as MessageProps } from 'hew/Message';
 import React, { useMemo } from 'react';
 
 import { ValueOf } from 'types';
