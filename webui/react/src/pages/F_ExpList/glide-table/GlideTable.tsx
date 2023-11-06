@@ -475,7 +475,22 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         _: () => loadingCell,
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
+          let cell = columnDefs[columnId]?.renderer?.(rowData, row);
+          switch (cell.kind) {
+            case GridCellKind.Text:
+            case GridCellKind.Number:
+              if (!cell.displayData || cell.displayData === '') {
+                cell = {
+                  ...cell,
+                  displayData: '-',
+                  themeOverride: { ...cell.themeOverride, textDark: 'LightGrey' },
+                };
+              }
+              break;
+            default:
+              break;
+          }
+          return cell || loadingCell;
         }, // TODO correctly handle error state
       });
     },
@@ -684,14 +699,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
         return columnDefs[currentColumn.column];
       })
-      .flatMap((col) => (col ? [{...col, renderer: (record: ExperimentWithTrial, idx: number) => {
-        let cell = col.renderer(record, idx)
-        switch(cell.kind) {
-          case GridCellKind.Number:
-            cell = {...cell, displayData: cell.displayData || '==='}
-        }
-        return cell
-      }}] : []));
+      .flatMap((col) => (col ? [col] : []));
     return gridColumns;
   }, [
     columnIds,
