@@ -45,6 +45,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         height={height}
         key={chartKey}
         series={data}
+        showLegend
         xAxis={XAxisDomain.Time}
         xLabel={capitalizeWord(groupBy || '')}
         xRange={{
