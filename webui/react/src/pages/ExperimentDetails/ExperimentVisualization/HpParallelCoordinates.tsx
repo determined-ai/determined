@@ -1,7 +1,7 @@
+import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import useUI from 'hew/Theme';
-import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';

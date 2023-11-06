@@ -1,9 +1,4 @@
-import useUI, {
-  DarkLight,
-  getCssVar,
-  getStateColorCssVar,
-  StateOfUnion,
-} from 'hew/Theme';
+import useUI, { DarkLight, getCssVar, getStateColorCssVar, StateOfUnion } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { CSSProperties, useMemo } from 'react';
 
