@@ -221,6 +221,11 @@ Parameters:
     Description: Lore version to deploy
     Default: latest
 
+  LoreRedisPort:
+    Type: String
+    Description: Lore version to deploy
+    Default: 9013
+
   MountEFSId:
     Type: String
     Description: preexisting EFS ID to mount
@@ -433,8 +438,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !GetAtt MasterSecurityGroup.GroupId
-      FromPort: 9012
-      ToPort: 9012
+      FromPort: ${LoreRedisPort}
+      ToPort: ${LoreRedisPort}
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
@@ -978,7 +983,8 @@ Resources:
                 --env DB_PASSWORD=${DBPassword} \
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
-                -p 9012:9012 \
+                --env LORE_SERVER_REDIS_PORT=${LoreRedisPort} \
+                -p ${LoreRedisPort}:${LoreRedisPort} \
                 -v /mnt/efs:/run/determined/workdir/shared_fs \
                 --network determined \
                 "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
