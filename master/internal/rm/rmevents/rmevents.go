@@ -118,5 +118,4 @@ func unsub(
 	if len(subsByTopicByID[msg.topic]) == 0 {
 		delete(subsByTopicByID, msg.topic)
 	}
-	return
 }

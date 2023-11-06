@@ -8,6 +8,7 @@ import (
 
 // Group is a thin wrapper around golang.org/x/sync/errgroup.Group that helps not leak its context
 // past the lifetime of the group.
+// nolint: containedctx
 type Group struct {
 	inner  *errgroup.Group
 	ctx    context.Context

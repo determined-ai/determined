@@ -52,7 +52,7 @@ func Test_errUnexpectedMessage_Error(t *testing.T) {
 	}
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
-			e := errUnexpectedMessage{
+			e := unexpectedMessageError{
 				ctx: tc.fields.ctx,
 			}
 			if got := e.Error(); got != tc.want {

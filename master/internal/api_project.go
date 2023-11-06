@@ -275,7 +275,7 @@ func (a *apiServer) getProjectColumnsByID(
 		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
 
 		// ensure we're iterating in order
-		paramKeys := make([]string, len(flatHparam))
+		paramKeys := make([]string, 0, len(flatHparam))
 		for key := range flatHparam {
 			paramKeys = append(paramKeys, key)
 		}

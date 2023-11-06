@@ -34,9 +34,7 @@ import (
 
 func errCheckpointsNotFound(ids []string) error {
 	tmp := make([]string, len(ids))
-	for i, id := range ids {
-		tmp[i] = id
-	}
+	copy(tmp, ids)
 	sort.Strings(tmp)
 	return api.NotFoundErrs("checkpoints", strings.Join(tmp, ", "), true)
 }

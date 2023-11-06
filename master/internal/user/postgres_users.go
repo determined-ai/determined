@@ -141,7 +141,7 @@ func DeleteSessionByToken(ctx context.Context, token string) error {
 	var session model.UserSession
 	// verification will fail when using external token (Jwt instead of Paseto)
 	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &session, nil); err != nil {
-		return nil
+		return nil //nolint: nilerr
 	}
 	return DeleteSessionByID(ctx, session.ID)
 }

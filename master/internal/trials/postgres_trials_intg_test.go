@@ -95,9 +95,7 @@ func TestMarkLostTrials(t *testing.T) {
 		trialIds := []int{}
 
 		for _, trs := range trials {
-			for _, trialID := range trs {
-				trialIds = append(trialIds, trialID)
-			}
+			trialIds = append(trialIds, trs...)
 		}
 
 		_, err := db.Bun().NewDelete().Model((*Trial)(nil)).
