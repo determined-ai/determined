@@ -77,7 +77,6 @@ export default defineConfig(({ mode }) => ({
     outDir: 'build',
     rollupOptions: {
       input: {
-        design: path.resolve(__dirname, 'design', 'index.html'),
         main: path.resolve(__dirname, 'index.html'),
       },
       output: {
@@ -141,9 +140,6 @@ export default defineConfig(({ mode }) => ({
       checker({
         typescript: true,
       }),
-    devServerRedirects({
-      '/design': '/design/',
-    }),
     cspHtml({
       cspRules: {
         'frame-src': ["'self'", 'netlify.determined.ai'],
