@@ -920,3 +920,15 @@ message SearchExperimentsResponse {
   // Pagination information of the full dataset
   Pagination pagination = 2;
 }
+
+// Request to delete a tensorboard files.
+message DeleteTensorboardFilesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id" ] }
+  };
+
+  // ID of experiment that the tensorboard files are linked to.
+  int32 experiment_id = 1;
+}
+// Response to DeleteTensorboardRequest.
+message DeleteTensorboardFilesResponse {}

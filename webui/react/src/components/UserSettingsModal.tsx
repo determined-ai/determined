@@ -1,8 +1,8 @@
 import { Alert } from 'antd';
-import CodeEditor from 'determined-ui/CodeEditor';
-import { Modal } from 'determined-ui/Modal';
-import useUI, { Mode } from 'determined-ui/Theme';
-import { Loadable, Loaded } from 'determined-ui/utils/loadable';
+import CodeEditor from 'hew/CodeEditor';
+import { Modal } from 'hew/Modal';
+import useUI, { Mode } from 'hew/Theme';
+import { Loadable, Loaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

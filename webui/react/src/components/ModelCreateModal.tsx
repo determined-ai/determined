@@ -1,11 +1,11 @@
-import Button from 'determined-ui/Button';
-import Form from 'determined-ui/Form';
-import Icon from 'determined-ui/Icon';
-import Input from 'determined-ui/Input';
-import { Modal } from 'determined-ui/Modal';
-import Select from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Form from 'hew/Form';
+import Icon from 'hew/Icon';
+import Input from 'hew/Input';
+import { Modal } from 'hew/Modal';
+import Select from 'hew/Select';
+import { makeToast } from 'hew/Toast';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useId, useState } from 'react';
 

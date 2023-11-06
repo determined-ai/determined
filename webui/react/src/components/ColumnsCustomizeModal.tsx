@@ -1,4 +1,4 @@
-import { Modal } from 'determined-ui/Modal';
+import { Modal } from 'hew/Modal';
 import React, { useRef, useState } from 'react';
 
 import Transfer from 'components/Transfer';

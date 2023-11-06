@@ -226,6 +226,26 @@ def test_tensorboard_inherit_image_pull_secrets() -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_delete_tensorboard_for_experiment() -> None:
+    """
+    Start a random experiment, start a TensorBoard instance pointed to
+    the experiment, delete tensorboard and verify deletion.
+    """
+    config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config_obj, conf.tutorials_path("mnist_pytorch"), 1
+    )
+
+    command = ["det", "e", "delete-tb-files", str(experiment_id)]
+    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+
+    # Check if Tensorboard files are deleted
+    tb_path = sorted(pathlib.Path("/tmp/determined-cp/").glob("*/tensorboard"))[0]
+    tb_path = tb_path / "experiment" / str(experiment_id)
+    assert not pathlib.Path(tb_path).exists()
+
+
+@pytest.mark.e2e_cpu
 def test_tensorboard_directory_storage(tmp_path: pathlib.Path) -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
     config_obj["checkpoint_storage"] = {

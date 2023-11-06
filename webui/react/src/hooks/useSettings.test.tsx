@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
-import { UIProvider } from 'determined-ui/Theme';
+import { UIProvider } from 'hew/Theme';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';

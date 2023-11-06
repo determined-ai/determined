@@ -1,4 +1,4 @@
-import Tooltip from 'determined-ui/Tooltip';
+import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
 import { CommonProps } from 'types';

@@ -1,10 +1,10 @@
 import { Space, Typography } from 'antd';
-import Avatar from 'determined-ui/Avatar';
-import Icon from 'determined-ui/Icon';
-import Progress from 'determined-ui/Progress';
-import Spinner from 'determined-ui/Spinner';
-import { getStateColorCssVar, StateOfUnion } from 'determined-ui/Theme';
-import Tooltip from 'determined-ui/Tooltip';
+import Avatar from 'hew/Avatar';
+import Icon from 'hew/Icon';
+import Progress from 'hew/Progress';
+import Spinner from 'hew/Spinner';
+import { getStateColorCssVar, StateOfUnion } from 'hew/Theme';
+import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';

@@ -1,10 +1,10 @@
 import type { TabsProps } from 'antd';
-import Button from 'determined-ui/Button';
-import Message from 'determined-ui/Message';
-import Notes from 'determined-ui/Notes';
-import Pivot from 'determined-ui/Pivot';
-import Spinner from 'determined-ui/Spinner';
-import Tooltip from 'determined-ui/Tooltip';
+import Button from 'hew/Button';
+import Message from 'hew/Message';
+import Notes from 'hew/Notes';
+import Pivot from 'hew/Pivot';
+import Spinner from 'hew/Spinner';
+import Tooltip from 'hew/Tooltip';
 import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';

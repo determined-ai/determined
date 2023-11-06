@@ -1001,6 +1001,11 @@ def move_experiment(args: Namespace) -> None:
     print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
 
 
+@authentication.required
+def delete_tensorboard_files(args: Namespace) -> None:
+    bindings.delete_DeleteTensorboardFiles(cli.setup_session(args), experimentId=args.experiment_id)
+
+
 def none_or_int(string: str) -> Optional[int]:
     if string.lower().strip() in ("null", "none"):
         return None
@@ -1398,6 +1403,14 @@ main_cmd = Cmd(
                         Arg("priority", type=int, help="priority"),
                     ],
                 ),
+            ],
+        ),
+        Cmd(
+            "delete-tb-files",
+            delete_tensorboard_files,
+            "delete TensorBoard files associate with the proived experiment ID",
+            [
+                Arg("experiment_id", type=int, help="Experiment ID"),
             ],
         ),
     ],

@@ -1,4 +1,4 @@
-import { DarkLight } from 'determined-ui/Theme';
+import { DarkLight } from 'hew/Theme';
 import React from 'react';
 
 import css from './Image.module.scss';

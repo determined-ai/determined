@@ -1,8 +1,8 @@
 import type { TabsProps } from 'antd';
-import Message from 'determined-ui/Message';
-import Pivot from 'determined-ui/Pivot';
-import Spinner from 'determined-ui/Spinner';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Message from 'hew/Message';
+import Pivot from 'hew/Pivot';
+import Spinner from 'hew/Spinner';
+import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 

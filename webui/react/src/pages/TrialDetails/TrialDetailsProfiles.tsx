@@ -1,4 +1,4 @@
-import Message from 'determined-ui/Message';
+import Message from 'hew/Message';
 import React from 'react';
 
 import Link from 'components/Link';

@@ -1,4 +1,4 @@
-import { StateOfUnion } from 'determined-ui/Theme';
+import { StateOfUnion } from 'hew/Theme';
 
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {

@@ -1,5 +1,5 @@
-import Pagination from 'determined-ui/Pagination';
-import Tooltip from 'determined-ui/Tooltip';
+import Pagination from 'hew/Pagination';
+import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';

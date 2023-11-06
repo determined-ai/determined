@@ -1,6 +1,6 @@
-import Button from 'determined-ui/Button';
-import Icon from 'determined-ui/Icon';
-import Select, { Option, SelectValue } from 'determined-ui/Select';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
+import Select, { Option, SelectValue } from 'hew/Select';
 import * as t from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';

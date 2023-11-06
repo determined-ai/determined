@@ -1,4 +1,4 @@
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, Observable, WritableObservable } from 'micro-observables';
 import { v4 as uuidv4 } from 'uuid';
 

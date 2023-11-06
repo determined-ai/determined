@@ -1,12 +1,12 @@
 import { Modal, Space, Typography } from 'antd';
-import Button from 'determined-ui/Button';
-import CodeSample from 'determined-ui/CodeSample';
-import Dropdown, { MenuOption } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
-import Spinner from 'determined-ui/Spinner';
-import Tags, { tagsActionHelper } from 'determined-ui/Tags';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import CodeSample from 'hew/CodeSample';
+import Dropdown, { MenuOption } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import { useModal } from 'hew/Modal';
+import Spinner from 'hew/Spinner';
+import Tags, { tagsActionHelper } from 'hew/Tags';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';

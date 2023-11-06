@@ -1,14 +1,14 @@
 import { Space } from 'antd';
-import Button from 'determined-ui/Button';
-import Card from 'determined-ui/Card';
-import { Column, Columns } from 'determined-ui/Columns';
-import Input from 'determined-ui/Input';
-import Message from 'determined-ui/Message';
-import { useModal } from 'determined-ui/Modal';
-import Select, { Option } from 'determined-ui/Select';
-import Spinner from 'determined-ui/Spinner';
-import Toggle from 'determined-ui/Toggle';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Card from 'hew/Card';
+import { Column, Columns } from 'hew/Columns';
+import Input from 'hew/Input';
+import Message from 'hew/Message';
+import { useModal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
+import Spinner from 'hew/Spinner';
+import Toggle from 'hew/Toggle';
+import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

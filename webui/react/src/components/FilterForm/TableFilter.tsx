@@ -1,7 +1,7 @@
-import Button from 'determined-ui/Button';
-import Dropdown from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Dropdown from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback } from 'react';
 

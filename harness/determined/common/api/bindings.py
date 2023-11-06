@@ -15948,6 +15948,30 @@ def delete_DeleteTemplate(
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
+def delete_DeleteTensorboardFiles(
+    session: "api.Session",
+    *,
+    experimentId: int,
+) -> None:
+    """Delete tensorboard files.
+
+    - experimentId: ID of experiment that the tensorboard files are linked to.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/experiments/{experimentId}/tensorboard-files",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteTensorboardFiles", _resp)
+
 def delete_DeleteWebhook(
     session: "api.Session",
     *,

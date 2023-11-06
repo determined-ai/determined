@@ -1,4 +1,4 @@
-import { IconName } from 'determined-ui/Icon';
+import { IconName } from 'hew/Icon';
 
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';

@@ -1,5 +1,5 @@
-import { Modal } from 'determined-ui/Modal';
-import { Body } from 'determined-ui/Typography';
+import { Modal } from 'hew/Modal';
+import { Body } from 'hew/Typography';
 import React, { useRef, useState } from 'react';
 
 import Transfer from 'components/Transfer';

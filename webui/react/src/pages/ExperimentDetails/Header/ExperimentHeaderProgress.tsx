@@ -1,5 +1,5 @@
-import Progress from 'determined-ui/Progress';
-import { getStateColorCssVar } from 'determined-ui/Theme';
+import Progress from 'hew/Progress';
+import { getStateColorCssVar } from 'hew/Theme';
 import React from 'react';
 
 import { ExperimentBase } from 'types';

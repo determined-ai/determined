@@ -1,4 +1,4 @@
-import Spinner from 'determined-ui/Spinner';
+import Spinner from 'hew/Spinner';
 import React, { useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';

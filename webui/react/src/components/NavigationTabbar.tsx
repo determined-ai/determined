@@ -1,9 +1,9 @@
-import Avatar from 'determined-ui/Avatar';
-import Icon, { IconName } from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
-import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Avatar from 'hew/Avatar';
+import Icon, { IconName } from 'hew/Icon';
+import { useModal } from 'hew/Modal';
+import Spinner from 'hew/Spinner';
+import useUI from 'hew/Theme';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 

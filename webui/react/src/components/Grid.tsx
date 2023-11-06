@@ -1,4 +1,4 @@
-import { ShirtSize } from 'determined-ui/Theme';
+import { ShirtSize } from 'hew/Theme';
 import React from 'react';
 
 import { ValueOf } from 'types';

@@ -1,4 +1,4 @@
-import { Loadable } from 'determined-ui/utils/loadable';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useMemo } from 'react';
 

@@ -1,8 +1,8 @@
 import { Divider } from 'antd';
-import Button from 'determined-ui/Button';
-import Form from 'determined-ui/Form';
-import useUI from 'determined-ui/Theme';
-import { notification } from 'determined-ui/Toast';
+import Button from 'hew/Button';
+import Form from 'hew/Form';
+import useUI from 'hew/Theme';
+import { notification } from 'hew/Toast';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';

@@ -1,5 +1,5 @@
-import { useModal } from 'determined-ui/Modal';
-import Notes from 'determined-ui/Notes';
+import { useModal } from 'hew/Modal';
+import Notes from 'hew/Notes';
 import React, { useCallback, useState } from 'react';
 import { unstable_useBlocker } from 'react-router-dom';
 

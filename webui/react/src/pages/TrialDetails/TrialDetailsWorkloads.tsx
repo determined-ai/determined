@@ -1,6 +1,6 @@
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
-import Select, { Option, SelectValue } from 'determined-ui/Select';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import Select, { Option, SelectValue } from 'hew/Select';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

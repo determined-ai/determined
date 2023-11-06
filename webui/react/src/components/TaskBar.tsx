@@ -1,6 +1,6 @@
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import useConfirm from 'determined-ui/useConfirm';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
 import usePermissions from 'hooks/usePermissions';

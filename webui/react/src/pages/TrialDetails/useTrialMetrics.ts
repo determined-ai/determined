@@ -1,6 +1,6 @@
-import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'determined-ui/LineChart';
-import { makeToast } from 'determined-ui/Toast';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'hew/LineChart';
+import { makeToast } from 'hew/Toast';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -80,11 +80,12 @@ const summarizedMetricToSeries = (
     if (rawBatchEpochMap[metricKey]) data[XAxisDomain.Epochs] = rawBatchEpochMap[metricKey];
 
     const series: Serie = {
-      color:
-        metric.group === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
       data,
       name: `${metric.group}.${metric.name}`,
     };
+    if (metric.group === MetricType.Validation) series.color = VALIDATION_SERIES_COLOR;
+    if (metric.group === MetricType.Training) series.color = TRAINING_SERIES_COLOR;
+
     trialData[metricToKey(metric)] = series;
   });
   const xAxisOptions = Object.values(XAxisDomain);

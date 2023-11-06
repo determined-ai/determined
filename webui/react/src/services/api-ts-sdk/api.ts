@@ -2426,6 +2426,13 @@ export interface V1DeleteProjectResponse {
 export interface V1DeleteTemplateResponse {
 }
 /**
+ * Response to DeleteTensorboardRequest.
+ * @export
+ * @interface V1DeleteTensorboardFilesResponse
+ */
+export interface V1DeleteTensorboardFilesResponse {
+}
+/**
  * Response to DeleteWebhookRequest.
  * @export
  * @interface V1DeleteWebhookResponse
@@ -13760,6 +13767,42 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Delete tensorboard files.
+         * @param {number} experimentId ID of experiment that the tensorboard files are linked to.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTensorboardFiles(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling deleteTensorboardFiles.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/tensorboard-files`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -15295,6 +15338,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete tensorboard files.
+         * @param {number} experimentId ID of experiment that the tensorboard files are linked to.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTensorboardFiles(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTensorboardFilesResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteTensorboardFiles(experimentId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -16016,6 +16078,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Delete tensorboard files.
+         * @param {number} experimentId ID of experiment that the tensorboard files are linked to.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTensorboardFiles(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).deleteTensorboardFiles(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -16502,6 +16574,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).deleteExperiments(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete tensorboard files.
+     * @param {number} experimentId ID of experiment that the tensorboard files are linked to.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public deleteTensorboardFiles(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteTensorboardFiles(experimentId, options)(this.fetch, this.basePath)
     }
     
     /**

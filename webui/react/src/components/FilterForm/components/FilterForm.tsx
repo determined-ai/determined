@@ -1,7 +1,7 @@
-import Button from 'determined-ui/Button';
-import Spinner from 'determined-ui/Spinner';
-import Toggle from 'determined-ui/Toggle';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Spinner from 'hew/Spinner';
+import Toggle from 'hew/Toggle';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useRef } from 'react';
 

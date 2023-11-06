@@ -1,5 +1,5 @@
 import { Space } from 'antd';
-import { Loadable } from 'determined-ui/utils/loadable';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useMetricNames from 'hooks/useMetricNames';
