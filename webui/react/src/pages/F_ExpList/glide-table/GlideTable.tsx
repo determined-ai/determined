@@ -483,7 +483,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 cell = {
                   ...cell,
                   displayData: '-',
-                  themeOverride: { ...cell.themeOverride, textDark: 'LightGrey' },
+                  themeOverride: {
+                    ...cell.themeOverride,
+                    textDark: getCssVar(Surface.SurfaceOnWeak),
+                  },
                 };
               }
               break;

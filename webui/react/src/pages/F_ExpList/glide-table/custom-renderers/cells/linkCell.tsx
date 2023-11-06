@@ -91,7 +91,7 @@ const renderer: CustomRenderer<LinkCell> = {
       ctx.fillText(link.title, drawX - 2, drawY);
       ctx.fillText(link.title, drawX + 2, drawY);
     }
-    ctx.fillStyle = link.title ? theme.linkColor : 'LightGrey';
+    ctx.fillStyle = link.title ? theme.linkColor : theme.textDark;
     ctx.fillText(link.title || '-', drawX, drawY);
     if (link.unmanaged) {
       const x = drawX + commaMetrics.width + 8;
