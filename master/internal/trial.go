@@ -521,10 +521,12 @@ func (t *trial) AllocationExitedCallback(exit *task.AllocationExited) {
 
 	err := t.handleAllocationExit(exit)
 	if err != nil {
-		t.syslog.WithError(err).Error("handling allocation exit")
+		t.syslog.WithError(err).Error("fatal error handling allocation exit, trial may appear hung")
 	}
 }
 
+// handleAllocationExit must either transition the trial to any terminal state or request a new allocation
+// so we can try again to complete the trial; anything else will cause the trial to hang.
 func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 	if exit.Err != nil {
 		t.syslog.WithError(exit.Err).Error("trial allocation failed")
@@ -585,7 +587,10 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 		// First check against log_pattern_policies retries.
 		notRetries, err := logpattern.ShouldRetry(context.TODO(), t.taskID)
 		if err != nil {
-			return fmt.Errorf("getting if the trial should retry due to log_pattern_policies: %w", err)
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: fmt.Sprintln("getting if the trial should retry due to log_pattern_policies: %w", err),
+			})
 		}
 
 		if len(notRetries) > 0 {
@@ -611,7 +616,10 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
 		t.restarts++
 		if err := t.db.UpdateTrialRestarts(t.id, t.restarts); err != nil {
-			return err
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: err.Error(),
+			})
 		}
 		if t.restarts > t.config.MaxRestarts() {
 			return t.transition(model.StateWithReason{
@@ -622,11 +630,17 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 
 		blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), t.taskID)
 		if err != nil {
-			return err
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: err.Error(),
+			})
 		}
 		if len(blockedNodes) > 0 {
 			if err := t.checkResourcePoolRemainingCapacity(); err != nil {
-				return err
+				return t.transition(model.StateWithReason{
+					State:               model.ErrorState,
+					InformationalReason: err.Error(),
+				})
 			}
 		}
 
@@ -644,7 +658,14 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 	}
 
 	// Maybe reschedule.
-	return errors.Wrap(t.maybeAllocateTask(), "failed to reschedule trial")
+	err := t.maybeAllocateTask()
+	if err != nil {
+		return t.transition(model.StateWithReason{
+			State:               model.CompletedState,
+			InformationalReason: "failed to reschedule trial",
+		})
+	}
+	return nil
 }
 
 // patchState decide if the state patch is valid. If so, we'll transition the trial.
@@ -675,7 +696,7 @@ func (t *trial) transition(s model.StateWithReason) error {
 		t.syslog.Infof("trial changed from state %s to %s", t.state, s.State)
 		if t.idSet {
 			if err := t.db.UpdateTrial(t.id, s.State); err != nil {
-				return errors.Wrap(err, "updating trial with end state")
+				return fmt.Errorf("updating trial with end state (%s, %s): %w", s.State, s.InformationalReason, err)
 			}
 		}
 		t.state = s.State
