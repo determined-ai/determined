@@ -445,12 +445,15 @@ func (a *apiServer) PatchUser(
 		willBeRemote = updatedUser.Remote
 		insertColumns = append(insertColumns, "remote")
 
-		if willBeRemote {
-			updatedUser.PasswordHash = model.NoPasswordLogin
-			insertColumns = append(insertColumns, "password_hash")
-		} else if !willBeRemote && req.User.Password == nil {
-			updatedUser.PasswordHash = model.EmptyPassword
-			insertColumns = append(insertColumns, "password_hash")
+		// We changed remote status. Need to clear passwords.
+		if targetUser.Remote != willBeRemote {
+			if willBeRemote {
+				updatedUser.PasswordHash = model.NoPasswordLogin
+				insertColumns = append(insertColumns, "password_hash")
+			} else if !willBeRemote && req.User.Password == nil {
+				updatedUser.PasswordHash = model.EmptyPassword
+				insertColumns = append(insertColumns, "password_hash")
+			}
 		}
 	}
 
