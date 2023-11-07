@@ -1,6 +1,6 @@
 import os
 
-from model_def import MNistTrial
+from train import MNistTrial
 
 
 class MNistFailable(MNistTrial):

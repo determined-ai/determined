@@ -25,4 +25,4 @@ searcher:
   max_length:
       batches: 8
   smaller_is_better: true
-entrypoint: failable_model_def:MNistFailable
+entrypoint: python3 failable_model_def.py

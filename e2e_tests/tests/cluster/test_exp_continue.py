@@ -198,7 +198,7 @@ def test_continue_batches() -> None:
     # Experiment fails before first checkpoint.
     exp_id = exp.create_experiment(
         conf.fixtures_path("mnist_pytorch/failable.yaml"),
-        conf.fixtures_path("mnist_pytorch/train.py"),
+        conf.fixtures_path("mnist_pytorch"),
         ["--config", "environment.environment_variables=['FAIL_AT_BATCH=2']"],
     )
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
