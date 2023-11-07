@@ -478,22 +478,24 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         Loaded: (rowData) => {
           const columnId = columnIds[col];
           let cell = columnDefs[columnId]?.renderer?.(rowData, row);
-          switch (cell.kind) {
-            case GridCellKind.Text:
-            case GridCellKind.Number:
-              if (!cell.displayData || cell.displayData === '') {
-                cell = {
-                  ...cell,
-                  displayData: '-',
-                  themeOverride: {
-                    ...cell.themeOverride,
-                    textDark: getCssVar(Surface.SurfaceOnWeak),
-                  },
-                };
-              }
-              break;
-            default:
-              break;
+          if(cell) {
+            switch (cell.kind) {
+              case GridCellKind.Text:
+              case GridCellKind.Number:
+                if (!cell.displayData || cell.displayData === '') {
+                  cell = {
+                    ...cell,
+                    displayData: '-',
+                    themeOverride: {
+                      ...cell.themeOverride,
+                      textDark: getCssVar(Surface.SurfaceOnWeak),
+                    },
+                  };
+                }
+                break;
+              default:
+                break;
+            }
           }
           return cell || loadingCell;
         }, // TODO correctly handle error state
