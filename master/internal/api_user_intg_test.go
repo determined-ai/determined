@@ -234,6 +234,14 @@ func TestLoginRemote(t *testing.T) {
 		})
 		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
 
+		// We set the password to the unloginable hash.
+		var expectedUser model.User
+		err = db.Bun().NewSelect().Model(&expectedUser).
+			Where("username = ?", username).
+			Scan(ctx, &expectedUser)
+		require.NoError(t, err)
+		require.Equal(t, model.NoPasswordLogin, expectedUser.PasswordHash)
+
 		// Changing back to unremote unsets password to blank.
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 			UserId: resp.User.Id,

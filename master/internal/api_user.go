@@ -445,11 +445,11 @@ func (a *apiServer) PatchUser(
 		willBeRemote = updatedUser.Remote
 		insertColumns = append(insertColumns, "remote")
 
-		// Clear password when we convert a remote user into non remote without password specified.
-		if !updatedUser.Remote && req.User.Password == nil {
-			if err := updatedUser.UpdatePasswordHash(""); err != nil {
-				return nil, errors.Wrap(err, "error hashing password")
-			}
+		if willBeRemote {
+			updatedUser.PasswordHash = model.NoPasswordLogin
+			insertColumns = append(insertColumns, "password_hash")
+		} else if !willBeRemote && req.User.Password == nil {
+			updatedUser.PasswordHash = model.EmptyPassword
 			insertColumns = append(insertColumns, "password_hash")
 		}
 	}
