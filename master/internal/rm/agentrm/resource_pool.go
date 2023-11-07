@@ -13,6 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -23,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // resourcePool manages the agent and task lifecycles.
@@ -473,19 +475,43 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 	case sproto.CapacityCheck:
 		reschedule = false
 		var totalSlots int
+		blockedNodeSet := set.New[string]()
+		if msg.TaskID != nil {
+			blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), *msg.TaskID)
+			if err != nil {
+				ctx.Respond(err)
+				return nil
+			}
+			blockedNodeSet = set.FromSlice(blockedNodes)
+		}
+		rp.agentStatesCache = rp.fetchAgentStates(ctx)
+		defer func() {
+			rp.agentStatesCache = nil
+		}()
+
 		switch {
 		case rp.config.Provider == nil:
-			rp.agentStatesCache = rp.fetchAgentStates(ctx)
-			defer func() {
-				rp.agentStatesCache = nil
-			}()
 			for _, a := range rp.agentStatesCache {
-				totalSlots += len(a.slotStates)
+				if !blockedNodeSet.Contains(a.Handler.Address().Local()) {
+					totalSlots += len(a.slotStates)
+				}
 			}
 		case rp.config.Provider.AWS != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.AWS.SlotsPerInstance()
+
+			for _, a := range rp.agentStatesCache {
+				if blockedNodeSet.Contains(a.Handler.Address().Local()) {
+					totalSlots -= len(a.slotStates)
+				}
+			}
 		case rp.config.Provider.GCP != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.GCP.SlotsPerInstance()
+
+			for _, a := range rp.agentStatesCache {
+				if blockedNodeSet.Contains(a.Handler.Address().Local()) {
+					totalSlots -= len(a.slotStates)
+				}
+			}
 		default:
 			panic("Invalid provider")
 		}

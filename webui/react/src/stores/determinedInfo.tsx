@@ -9,6 +9,7 @@ import PollingStore from './polling';
 export interface SsoProvider {
   name: string;
   ssoUrl: string;
+  type: string;
 }
 
 export const BrandingType = {

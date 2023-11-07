@@ -73,6 +73,10 @@ const renderer: CustomRenderer<TagsCell> = {
       x += width + TAG_GAP;
       if (x > drawArea.x + drawArea.width && row >= rows) break;
     }
+    if (tags.length === 0) {
+      ctx.fillStyle = theme.textDark;
+      ctx.fillText('-', x, rect.y + rect.height / 2);
+    }
 
     return true;
   },

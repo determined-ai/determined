@@ -115,8 +115,10 @@ func newExperiment(
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
 		}
 		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
-			poolName,
-			resources.SlotsPerTrial(),
+			&sproto.ValidateResourcePoolAvailabilityRequest{
+				Name:  poolName,
+				Slots: resources.SlotsPerTrial(),
+			},
 		)
 		if err != nil {
 			return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)

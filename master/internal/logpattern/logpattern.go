@@ -17,7 +17,10 @@ import (
 
 const regexCacheSize = 256
 
-var defaultSingleton *LogPatternPolicies
+var (
+	defaultSingleton       *LogPatternPolicies
+	expconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_pattern_policies\\\":)(.*)")
+)
 
 // LogPatternPolicies performs log pattern checks.
 type LogPatternPolicies struct {
@@ -63,6 +66,12 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 		for _, log := range logs {
 			if log.AgentID == nil {
 				return fmt.Errorf("agentID must be non nil to monitor logs")
+			}
+
+			// One of the trial logs prints expconf which has the regex pattern.
+			// We skip monitoring this line.
+			if expconfigCompiledRegex.MatchString(log.Log) {
+				continue
 			}
 
 			if compiledRegex.MatchString(log.Log) {

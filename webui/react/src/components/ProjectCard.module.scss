@@ -25,6 +25,7 @@
     align-items: end;
     display: flex;
     font-size: 12px;
+    gap: 6px;
     grid-area: footer;
     justify-content: space-between;
 
@@ -36,9 +37,6 @@
         display: flex;
         gap: 4px;
       }
-    }
-    .lastExperiment {
-      margin-left: 6px;
     }
     .archivedBadge {
       background-color: var(--theme-status-inactive);

@@ -404,6 +404,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
           ? {
+              icon: <Icon decorative name="pin" />,
               key: 'pin',
               label: 'Pin column',
               onClick: () => {
@@ -418,6 +419,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             }
           : {
               disabled: pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
               key: 'unpin',
               label: 'Unpin column',
               onClick: () => {
@@ -475,7 +477,25 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         _: () => loadingCell,
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
+          let cell = columnDefs[columnId]?.renderer?.(rowData, row);
+          switch (cell.kind) {
+            case GridCellKind.Text:
+            case GridCellKind.Number:
+              if (!cell.displayData || cell.displayData === '') {
+                cell = {
+                  ...cell,
+                  displayData: '-',
+                  themeOverride: {
+                    ...cell.themeOverride,
+                    textDark: getCssVar(Surface.SurfaceOnWeak),
+                  },
+                };
+              }
+              break;
+            default:
+              break;
+          }
+          return cell || loadingCell;
         }, // TODO correctly handle error state
       });
     },

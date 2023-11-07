@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from determined.common import util
+from determined.common import api, util
 from determined.common.api import authentication
 
 MASTER_SCHEME = "http"
@@ -40,6 +40,9 @@ ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 SCIM_USERNAME = "determined"
 SCIM_PASSWORD = "password"
+
+ALL_NTSC = set(api.NTSC_Kind.__members__.values())
+PROXIED_NTSC = {api.NTSC_Kind.notebook, api.NTSC_Kind.tensorboard}
 
 
 def fixtures_path(path: str) -> str:
