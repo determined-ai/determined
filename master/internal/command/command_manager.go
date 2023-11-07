@@ -11,6 +11,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // LaunchCommand launches *commandv1.Command.
@@ -75,7 +78,8 @@ func (cs *CommandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.Kil
 	}
 
 	completed, err := db.TaskCompleted(context.TODO(), tID)
-	if err != nil {
+	var sErr status.Status
+	if errors.As(err, &sErr) && sErr.Code() == codes.NotFound {
 		return nil, err
 	}
 
