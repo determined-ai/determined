@@ -1,12 +1,12 @@
-from argparse import Namespace
+from argparse import Namespace, FileType
+from pathlib import Path
 from functools import partial
 from typing import Any, Dict, List, Union, cast
 
 from termcolor import colored
-
 from determined import cli
 from determined.cli import command, render
-from determined.common import api
+from determined.common import api, context, util
 from determined.common.api import authentication, bindings
 from determined.common.api.bindings import v1AllocationSummary
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -109,6 +109,21 @@ def logs(args: Namespace) -> None:
             )
         )
 
+@authentication.required
+def create(args: Namespace) -> None:
+    # TODO volume???
+    config = command.parse_config(args.config_file, None, args.config, [])
+    config_text = util.yaml_safe_dump(config)
+    context_directory = context.read_v1_context(args.context, args.include)
+
+    sess = cli.setup_session(args)
+    req = bindings.v1CreateGenericTaskRequest(
+        config=config_text,
+        contextDirectory=context_directory,
+        projectId=args.project_id,
+    )
+    task_resp = bindings.post_CreateGenericTask(sess, body=req)
+    print(f"created task {task_resp.taskId}")
 
 common_log_options: List[Any] = [
     Arg(
@@ -217,6 +232,31 @@ args_description: List[Any] = [
                     *common_log_options,
                 ],
             ),
+        Cmd(
+            "create",
+            create,
+            "create experiment",
+            [
+                Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
+                Arg("context", type=Path, help="file or directory containing task context directory"),
+                Arg(
+                    "-i",
+                    "--include",
+                    action="append",
+                    default=[],
+                    type=Path,
+                    help="additional files to copy into the task container",
+                ),
+                Arg("--project_id", type=int, help="place this task inside this project"),
+                Arg("--config", action="append", default=[], help="TODO HELP"),
+                Arg(
+                    "-f",
+                    "--follow-first-trial",
+                    action="store_true",
+                    help="follow the logs of the first trial that is created",
+                ),
+            ],
+        ),
         ],
     ),
 ]

@@ -2180,6 +2180,44 @@ export interface V1CreateExperimentResponse {
     warnings?: Array<V1LaunchWarning>;
 }
 /**
+ * Request to create a new generic task.
+ * @export
+ * @interface V1CreateGenericTaskRequest
+ */
+export interface V1CreateGenericTaskRequest {
+    /**
+     * Generic task context.
+     * @type {Array<V1File>}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    contextDirectory: Array<V1File>;
+    /**
+     * Generic task config (YAML).
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    config: string;
+    /**
+     * Project id to contain the experiment.
+     * @type {number}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    projectId: number;
+}
+/**
+ * Response to CreateExperimentRequest.
+ * @export
+ * @interface V1CreateGenericTaskResponse
+ */
+export interface V1CreateGenericTaskResponse {
+    /**
+     * The created generic taskID.
+     * @type {string}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    taskId: string;
+}
+/**
  * CreateGroupRequest is the body of the request for the call to create a group.
  * @export
  * @interface V1CreateGroupRequest
@@ -17502,6 +17540,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createGenericTask.');
+            }
+            const localVarPath = `/api/v1/generic-task`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -20004,6 +20080,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGenericTask(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -21179,6 +21274,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options?: any) {
+            return InternalApiFp(configuration).createGenericTask(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -21916,6 +22021,18 @@ export class InternalApi extends BaseAPI {
      */
     public createExperiment(body: V1CreateExperimentRequest, options?: any) {
         return InternalApiFp(this.configuration).createExperiment(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Create an experiment.
+     * @param {V1CreateGenericTaskRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createGenericTask(body: V1CreateGenericTaskRequest, options?: any) {
+        return InternalApiFp(this.configuration).createGenericTask(body, options)(this.fetch, this.basePath)
     }
     
     /**

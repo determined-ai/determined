@@ -355,6 +355,18 @@ service Determined {
   }
 
   // Create an experiment.
+  rpc CreateGenericTask(CreateGenericTaskRequest)
+      returns (CreateGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/generic-task"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Create an experiment.
   rpc CreateExperiment(CreateExperimentRequest)
       returns (CreateExperimentResponse) {
     option (google.api.http) = {

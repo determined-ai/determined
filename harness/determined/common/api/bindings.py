@@ -2590,6 +2590,60 @@ class v1CreateExperimentResponse(Printable):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
+class v1CreateGenericTaskRequest(Printable):
+    """Request to create a new generic task."""
+
+    def __init__(
+        self,
+        *,
+        config: str,
+        contextDirectory: "typing.Sequence[v1File]",
+        projectId: int,
+    ):
+        self.config = config
+        self.contextDirectory = contextDirectory
+        self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
+            "projectId": obj["projectId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
+            "projectId": self.projectId,
+        }
+        return out
+
+class v1CreateGenericTaskResponse(Printable):
+    """Response to CreateExperimentRequest."""
+
+    def __init__(
+        self,
+        *,
+        taskId: str,
+    ):
+        self.taskId = taskId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGenericTaskResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "taskId": obj["taskId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "taskId": self.taskId,
+        }
+        return out
+
 class v1CreateGroupRequest(Printable):
     """CreateGroupRequest is the body of the request for the call
     to create a group.
@@ -15676,6 +15730,27 @@ def post_CreateExperiment(
     if _resp.status_code == 200:
         return v1CreateExperimentResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateExperiment", _resp)
+
+def post_CreateGenericTask(
+    session: "api.Session",
+    *,
+    body: "v1CreateGenericTaskRequest",
+) -> "v1CreateGenericTaskResponse":
+    """Create an experiment."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/generic-task",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CreateGenericTaskResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateGenericTask", _resp)
 
 def post_CreateGroup(
     session: "api.Session",
