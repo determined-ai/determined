@@ -478,7 +478,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         Loaded: (rowData) => {
           const columnId = columnIds[col];
           let cell = columnDefs[columnId]?.renderer?.(rowData, row);
-          if(cell) {
+          if (cell) {
             switch (cell.kind) {
               case GridCellKind.Text:
               case GridCellKind.Number:
