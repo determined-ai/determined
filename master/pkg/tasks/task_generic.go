@@ -12,7 +12,7 @@ type GenericTaskSpec struct {
 	// RunID        int //
 	// TrialRunID int // restartsID, should be somewhere else?
 
-	WorkspaceID int
+	ProjectID int
 
 	GenericTaskConfig model.GenericTaskConfig
 

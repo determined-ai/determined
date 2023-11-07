@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/generictask"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -26,7 +25,6 @@ type apiServer struct {
 	trials.TrialSourceInfoAPIServer
 	trials.TrialsAPIServer
 	templates.TemplateAPIServer
-	generictask.APIServer
 }
 
 // ask asks at addr the req and puts the response into what v points at. When appropriate,

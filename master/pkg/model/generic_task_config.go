@@ -4,33 +4,30 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
-/*
-// DefaultConfig is the default configuration used by all
-// commands (e.g., commands, notebooks, shells) if a request
-// does not specify any configuration options.
-func DefaultConfig(taskContainerDefaults *TaskContainerDefaultsConfig) CommandConfig {
-	out := CommandConfig{
-		Resources:        DefaultResourcesConfig(taskContainerDefaults),
-		Environment:      DefaultEnvConfig(taskContainerDefaults),
-		NotebookIdleType: NotebookIdleTypeKernelsOrTerminals,
+func DefaultConfigGenericTaskConfig(taskContainerDefaults *TaskContainerDefaultsConfig) GenericTaskConfig {
+	out := GenericTaskConfig{ // TODO
+		// Resources:        DefaultResourcesConfig(taskContainerDefaults),
+		// Environment:      DefaultEnvConfig(taskContainerDefaults),
+		// NotebookIdleType: NotebookIdleTypeKernelsOrTerminals,
 	}
 
 	if taskContainerDefaults != nil {
-		out.WorkDir = taskContainerDefaults.WorkDir
-		out.BindMounts = taskContainerDefaults.BindMounts
-		out.Pbs = taskContainerDefaults.Pbs
-		out.Slurm = taskContainerDefaults.Slurm
+		/*
+			out.WorkDir = taskContainerDefaults.WorkDir
+			out.BindMounts = taskContainerDefaults.BindMounts
+			out.Pbs = taskContainerDefaults.Pbs
+			out.Slurm = taskContainerDefaults.Slurm
+		*/
 	}
 
 	return out
 }
-*/
 
 type GenericTaskConfig struct {
 	BindMounts  BindMountsConfig    `json:"bind_mounts"`
 	Environment Environment         `json:"environment"`
 	Resources   TaskResourcesConfig `json:"resources"`
-	Entrypoint  []string            `json:"entrypoint"`
+	Entrypoint  string              `json:"entrypoint"` // TODO should be string or []string?
 	WorkDir     *string             `json:"work_dir"`
 	Debug       bool                `json:"debug"`
 

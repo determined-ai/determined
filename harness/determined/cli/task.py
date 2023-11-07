@@ -235,7 +235,7 @@ args_description: List[Any] = [
         Cmd(
             "create",
             create,
-            "create experiment",
+            "create task",
             [
                 Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
                 Arg("context", type=Path, help="file or directory containing task context directory"),
