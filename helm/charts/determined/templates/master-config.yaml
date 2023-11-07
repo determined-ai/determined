@@ -94,6 +94,9 @@ stringData:
       {{- if .Values.oidc.scimAuthenticationAttribute }}
       scim_authentication_attribute: {{ .Values.oidc.scimAuthenticationAttribute }}
       {{- end }}
+      {{- if .Values.oidc.AutoProvisionUsers }}
+      auto_provision_users: {{ .Values.oidc.AutoProvisionUsers }}
+      {{- end }}
     {{- end }}
 
     {{- if .Values.scim }}

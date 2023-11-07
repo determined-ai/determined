@@ -133,6 +133,7 @@ func DefaultConfig() *Config {
 		OIDC: OIDCConfig{
 			AuthenticationClaim:         "email",
 			SCIMAuthenticationAttribute: "userName",
+			AutoProvisionUsers:          false,
 		},
 	}
 }
@@ -304,6 +305,11 @@ func (c *Config) Resolve() error {
 
 	if c.Security.AuthZ.StrictNTSCEnabled {
 		log.Warn("_strict_ntsc_enabled option is removed and will not have any effect.")
+	}
+
+	if c.OIDC.AutoProvisionUsers && c.Scim.Enabled {
+		log.Warn("scim enabled will override OIDC AutoProvisionUsers.")
+		c.OIDC.AutoProvisionUsers = false
 	}
 
 	return nil
