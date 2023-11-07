@@ -4,7 +4,6 @@ import pytest
 
 from determined.common import util
 from determined.common.api import NTSC_Kind, Session, bindings, errors
-from determined.common.api._util import all_ntsc
 from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
@@ -231,7 +230,7 @@ def test_rbac_template_patch_config() -> None:
 
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac.rbac_disabled(), reason="ee rbac is required for this test")
-@pytest.mark.parametrize("kind", all_ntsc)
+@pytest.mark.parametrize("kind", conf.ALL_NTSC)
 def test_rbac_template_ntsc_create(kind: NTSC_Kind) -> None:
     admin_session = api_utils.determined_test_session(conf.ADMIN_CREDENTIALS)
     with rbac.create_workspaces_with_users(

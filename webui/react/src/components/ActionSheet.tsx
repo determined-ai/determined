@@ -1,5 +1,5 @@
-import { IconName } from 'determined-ui/Icon';
-import Nameplate from 'determined-ui/Nameplate';
+import { IconName } from 'hew/Icon';
+import Nameplate from 'hew/Nameplate';
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 

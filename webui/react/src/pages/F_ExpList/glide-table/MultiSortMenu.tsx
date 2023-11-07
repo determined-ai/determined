@@ -1,8 +1,8 @@
-import Button from 'determined-ui/Button';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import Select from 'determined-ui/Select';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import Select from 'hew/Select';
+import { Loadable } from 'hew/utils/loadable';
 import * as io from 'io-ts';
 
 import { V1ColumnType } from 'services/api-ts-sdk';

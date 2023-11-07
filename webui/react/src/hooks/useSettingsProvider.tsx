@@ -1,5 +1,5 @@
-import Spinner from 'determined-ui/Spinner';
-import { Loadable, NotLoaded } from 'determined-ui/utils/loadable';
+import Spinner from 'hew/Spinner';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 

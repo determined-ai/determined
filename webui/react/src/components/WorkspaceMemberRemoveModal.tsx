@@ -1,5 +1,5 @@
-import { Modal } from 'determined-ui/Modal';
-import { makeToast } from 'determined-ui/Toast';
+import { Modal } from 'hew/Modal';
+import { makeToast } from 'hew/Toast';
 import React, { useCallback, useState } from 'react';
 
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';

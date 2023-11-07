@@ -1,4 +1,4 @@
-import Avatar from 'determined-ui/Avatar';
+import Avatar from 'hew/Avatar';
 import React from 'react';
 
 import { Workspace } from 'types';

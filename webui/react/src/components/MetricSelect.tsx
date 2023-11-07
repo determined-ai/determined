@@ -1,5 +1,5 @@
 import { RefSelectProps } from 'antd/es/select';
-import Select, { OptGroup, Option, SelectValue } from 'determined-ui/Select';
+import Select, { OptGroup, Option, SelectValue } from 'hew/Select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Metric } from 'types';

@@ -1,11 +1,11 @@
 import { Space, Table } from 'antd';
 import dayjs from 'dayjs';
-import Button from 'determined-ui/Button';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
-import Nameplate from 'determined-ui/Nameplate';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import { useModal } from 'hew/Modal';
+import Nameplate from 'hew/Nameplate';
+import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

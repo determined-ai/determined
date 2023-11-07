@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from 'determined-ui/Button';
-import { useModal } from 'determined-ui/Modal';
+import Button from 'hew/Button';
+import { useModal } from 'hew/Modal';
 import React from 'react';
 
 import ExperimentDeleteModalComponent, { BUTTON_TEXT } from 'components/ExperimentDeleteModal';

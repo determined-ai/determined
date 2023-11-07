@@ -1,6 +1,6 @@
-import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/Spinner';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Message from 'hew/Message';
+import Spinner from 'hew/Spinner';
+import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';

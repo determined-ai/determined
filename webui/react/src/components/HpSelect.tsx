@@ -1,5 +1,5 @@
 import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
-import Select, { Option, SelectProps } from 'determined-ui/Select';
+import Select, { Option, SelectProps } from 'hew/Select';
 import React, { useCallback, useMemo } from 'react';
 
 import { ALL_VALUE } from 'types';

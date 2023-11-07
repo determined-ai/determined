@@ -1,10 +1,10 @@
 import { Space } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
-import Button from 'determined-ui/Button';
-import Dropdown from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import Message from 'determined-ui/Message';
-import { useModal } from 'determined-ui/Modal';
+import Button from 'hew/Button';
+import Dropdown from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import Message from 'hew/Message';
+import { useModal } from 'hew/Modal';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

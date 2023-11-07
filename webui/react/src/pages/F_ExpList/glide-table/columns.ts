@@ -6,9 +6,9 @@ import {
   Theme as GTheme,
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
-import { getColor, getInitials } from 'determined-ui/Avatar';
-import { DarkLight, Theme } from 'determined-ui/Theme';
-import { Loadable } from 'determined-ui/utils/loadable';
+import { getColor, getInitials } from 'hew/Avatar';
+import { DarkLight, Theme } from 'hew/Theme';
+import { Loadable } from 'hew/utils/loadable';
 
 import { paths } from 'routes/utils';
 import { DetailedUser, ExperimentWithTrial, ProjectColumn } from 'types';

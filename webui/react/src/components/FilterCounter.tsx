@@ -1,4 +1,4 @@
-import Button from 'determined-ui/Button';
+import Button from 'hew/Button';
 import React from 'react';
 
 interface Props {

@@ -1,6 +1,6 @@
-import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'determined-ui/LineChart';
-import { makeToast } from 'determined-ui/Toast';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'hew/LineChart';
+import { makeToast } from 'hew/Toast';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 

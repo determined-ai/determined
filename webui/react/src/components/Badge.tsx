@@ -1,10 +1,5 @@
-import useUI, {
-  DarkLight,
-  getCssVar,
-  getStateColorCssVar,
-  StateOfUnion,
-} from 'determined-ui/Theme';
-import Tooltip from 'determined-ui/Tooltip';
+import useUI, { DarkLight, getCssVar, getStateColorCssVar, StateOfUnion } from 'hew/Theme';
+import Tooltip from 'hew/Tooltip';
 import React, { CSSProperties, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';

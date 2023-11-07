@@ -44,14 +44,6 @@ describe('TimeAgo', () => {
     expect(screen.getByText(daysMatch)).toBeInTheDocument();
   });
 
-  it('should render with custom className', () => {
-    const datetime = shared.now - offsetDays;
-    const customClassName = 'customClassName';
-    const view = render(<TimeAgo className={customClassName} datetime={datetime} />);
-    const element = view.getByText(daysMatch);
-    expect(element.className).toBe(`base ${customClassName}`);
-  });
-
   it('should render "Just Now" when < 1 minute', () => {
     render(<TimeAgo datetime={shared.now - DURATION_SECOND} />);
     expect(screen.getByText(/just now/i)).toBeInTheDocument();

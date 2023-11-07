@@ -1,5 +1,5 @@
-import { makeToast } from 'determined-ui/Toast';
 import Fuse from 'fuse.js';
+import { makeToast } from 'hew/Toast';
 
 import root from 'omnibar/tree-extension/trees/index';
 import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';

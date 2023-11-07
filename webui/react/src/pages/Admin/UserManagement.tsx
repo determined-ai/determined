@@ -1,13 +1,13 @@
 import { SortOrder } from 'antd/es/table/interface';
-import Button from 'determined-ui/Button';
-import { Column, Columns } from 'determined-ui/Columns';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import Input from 'determined-ui/Input';
-import { useModal } from 'determined-ui/Modal';
-import Select, { SelectValue } from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
-import { Loadable, NotLoaded } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import { Column, Columns } from 'hew/Columns';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import Input from 'hew/Input';
+import { useModal } from 'hew/Modal';
+import Select, { SelectValue } from 'hew/Select';
+import { makeToast } from 'hew/Toast';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

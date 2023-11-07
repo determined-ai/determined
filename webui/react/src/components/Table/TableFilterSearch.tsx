@@ -1,7 +1,7 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import Button from 'determined-ui/Button';
-import Icon from 'determined-ui/Icon';
-import Input, { InputRef } from 'determined-ui/Input';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
+import Input, { InputRef } from 'hew/Input';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import css from './TableFilterSearch.module.scss';

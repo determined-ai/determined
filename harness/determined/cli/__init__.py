@@ -7,7 +7,6 @@ from determined.cli._util import (
     login_sdk_client,
     print_warnings,
     wait_ntsc_ready,
-    not_found_errs,
 )
 from determined.cli import (
     agent,

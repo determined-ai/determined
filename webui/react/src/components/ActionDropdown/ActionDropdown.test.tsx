@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { ConfirmationProvider } from 'hew/useConfirm';
 
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'types';

@@ -1,4 +1,4 @@
-import Avatar, { Props as AvatarProps } from 'determined-ui/Avatar';
+import Avatar, { Props as AvatarProps } from 'hew/Avatar';
 import React from 'react';
 
 import { User } from 'types';

@@ -1,4 +1,4 @@
-import { LineChart } from 'determined-ui/LineChart';
+import { LineChart } from 'hew/LineChart';
 import React from 'react';
 
 import Section from 'components/Section';

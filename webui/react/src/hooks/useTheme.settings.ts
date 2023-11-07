@@ -1,4 +1,4 @@
-import { Mode } from 'determined-ui/Theme';
+import { Mode } from 'hew/Theme';
 import { literal, union } from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';

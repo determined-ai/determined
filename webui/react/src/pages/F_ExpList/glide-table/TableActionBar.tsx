@@ -1,12 +1,12 @@
 import { Space } from 'antd';
-import Button from 'determined-ui/Button';
-import { Column, Columns } from 'determined-ui/Columns';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon, { IconName } from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
-import { makeToast } from 'determined-ui/Toast';
-import Tooltip from 'determined-ui/Tooltip';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import { Column, Columns } from 'hew/Columns';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon, { IconName } from 'hew/Icon';
+import { useModal } from 'hew/Modal';
+import { makeToast } from 'hew/Toast';
+import Tooltip from 'hew/Tooltip';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
