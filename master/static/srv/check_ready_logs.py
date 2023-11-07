@@ -23,6 +23,7 @@ def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str
     # them to kill us.
     while True:
         try:
+            print(f"posting state {state}")
             api.post(
                 master_url,
                 f"/api/v1/allocations/{allocation_id}/{state}",
