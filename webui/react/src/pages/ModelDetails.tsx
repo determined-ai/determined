@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
-import Notes from 'hew/Notes';
+import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
@@ -460,7 +460,7 @@ const ModelDetails: React.FC = () => {
         <Notes
           disabled={model.archived || !canModifyModel({ model: model })}
           disableTitle
-          notes={{ contents: model.notes ?? '', name: 'Notes' }}
+          docs={{ contents: model.notes ?? '', name: 'Notes' }}
           onError={handleError}
           onPageUnloadHook={unstable_useBlocker}
           onSave={saveNotes}

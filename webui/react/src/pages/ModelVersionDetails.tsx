@@ -1,8 +1,8 @@
 import { Card, type TabsProps } from 'antd';
 import Breadcrumb from 'hew/Breadcrumb';
 import Message from 'hew/Message';
-import Notes from 'hew/Notes';
 import Pivot from 'hew/Pivot';
+import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
@@ -268,7 +268,7 @@ const ModelVersionDetails: React.FC = () => {
             <Notes
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               disableTitle
-              notes={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
+              docs={{ contents: modelVersion.notes ?? '', name: 'Notes' }}
               onError={handleError}
               onPageUnloadHook={unstable_useBlocker}
               onSave={saveNotes}
