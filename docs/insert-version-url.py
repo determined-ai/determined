@@ -7,8 +7,8 @@ Usage: add_version_dropdown.py your.version.here
 """
 
 import json
-import sys
 import os
+import sys
 
 
 def create_url_entry(version):
