@@ -76,7 +76,7 @@ const SettingsContent: React.FC = () => {
           items.push({
             children: <UserManagement />,
             key: TAB_KEYS[TabType.UserManagement],
-            label: `${TabType.UserManagement} ${users.length}`,
+            label: `${TabType.UserManagement} (${users.length})`,
           });
         },
       });
@@ -86,7 +86,7 @@ const SettingsContent: React.FC = () => {
       items.push({
         children: <GroupManagement />,
         key: TAB_KEYS[TabType.GroupManagement],
-        label: `${TabType.GroupManagement} ${totalGroup ?? ''}`,
+        label: `${TabType.GroupManagement} ${totalGroup !== undefined ? `(${totalGroup})` : ''}`,
       });
     }
 
