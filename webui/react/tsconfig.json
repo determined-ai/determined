@@ -10,6 +10,7 @@
     "strict": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",

@@ -313,7 +313,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           rules={[
             { message: 'JupyterLab config required', required: true },
             {
-              validator: (rule, value) => {
+              validator: (_rule, value) => {
                 try {
                   yaml.load(value);
                   return Promise.resolve();

@@ -160,7 +160,7 @@ export const taskTypeRenderer: TaskRenderer = (_, record) => (
   </Tooltip>
 );
 
-export const taskNameRenderer: TaskRenderer = (id, record) => (
+export const taskNameRenderer: TaskRenderer = (_id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
@@ -238,7 +238,7 @@ export const modelVersionNameRenderer = (value: string, record: ModelVersion): R
 );
 
 export const modelVersionNumberRenderer = (
-  value: string,
+  _value: string,
   record: ModelVersion,
 ): React.ReactNode => (
   <Link

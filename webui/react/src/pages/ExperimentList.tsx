@@ -398,7 +398,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    const tagsRenderer = (value: string, record: ExperimentItem) => (
+    const tagsRenderer = (_value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{

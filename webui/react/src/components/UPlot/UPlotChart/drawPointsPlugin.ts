@@ -71,7 +71,7 @@ export const drawPointsPlugin = (checkpointsDict: CheckpointsDict): Plugin => {
 
   return {
     hooks: {},
-    opts: (u, opts) => {
+    opts: (_u, opts) => {
       opts.series.forEach((s, i) => {
         if (i > 0) {
           uPlot.assign(s, {

@@ -588,7 +588,7 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
 
 // TODO: use theme here
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getHeaderIcons = (appTheme: Theme): DataEditorProps['headerIcons'] => ({
+export const getHeaderIcons = (_appTheme: Theme): DataEditorProps['headerIcons'] => ({
   allSelected: () => `
     <svg width="16" height="16" viewBox="-1 -1 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="13" height="13" rx="3" fill="#D9D9D9" fill-opacity="0.05" stroke="#454545"/>

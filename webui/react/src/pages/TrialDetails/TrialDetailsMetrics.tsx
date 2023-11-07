@@ -120,7 +120,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       }, new Set<number>());
       const xVals = Array.from(xValSet).sort((a, b) => a - b);
 
-      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
+      const onPointClick = (_event: MouseEvent, point: UPlotPoint) => {
         const xVal = xVals[point.idx];
         const selectedCheckpoint =
           xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;

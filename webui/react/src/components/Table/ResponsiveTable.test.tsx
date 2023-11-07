@@ -83,7 +83,7 @@ const columnConfig: Record<RecordKey, ColumnConfig> = {
 };
 
 const generateTableData = (entries: number): TableItem[] => {
-  return new Array(entries).fill(null).map((entry, index) => {
+  return new Array(entries).fill(null).map((_entry, index) => {
     const row: UnknownRecord = { key: index };
 
     for (const column of columns) {

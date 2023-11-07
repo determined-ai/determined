@@ -148,7 +148,7 @@ export const makeDrawPoints = (
     uPlot.orient(
       u,
       seriesIdx,
-      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+      (series, _dataX, _dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
         if (!series?.fill || !series?.stroke || !scaleX?.key || !scaleY?.key) return;
 
         const data = u.data[seriesIdx];
