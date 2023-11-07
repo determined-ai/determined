@@ -1,5 +1,5 @@
 import Tooltip from 'hew/Tooltip';
-import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
+import React, { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react';
 
 import Section from 'components/Section';
 import { Agent, Resource } from 'types';
@@ -17,6 +17,7 @@ interface Props {
 
 const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slots }) => {
   const [containerWidth, setContainerWidth] = useState(0);
+  const shouldTruncate = useMemo(() => name.length > 5, [name]);
   const slotsContainer = useRef<HTMLSpanElement>(null);
   const singleSlot = slots.length === 1;
   const fewSlot = slots.length === 2;
@@ -31,8 +32,8 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
 
   return (
     <div className={css.node}>
-      <Tooltip content={name}>
-        {name.length > 5 ? (
+      {shouldTruncate ? (
+        <Tooltip content={name}>
           <span className={css.nodeName}>
             <span className={css.firstPart} style={{ maxWidth: `${containerWidth * 0.5}px` }}>
               {name}
@@ -41,10 +42,10 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
               {name}
             </span>
           </span>
-        ) : (
-          <span className={css.nodeName}>{name}</span>
-        )}
-      </Tooltip>
+        </Tooltip>
+      ) : (
+        <span className={css.nodeName}>{name}</span>
+      )}
       <span className={css.nodeCluster} ref={slotsContainer}>
         {slots.map(({ enabled }, idx) => (
           <span className={`${styles.join(' ')} ${enabled ? css.active : ''}`} key={`slot${idx}`} />
