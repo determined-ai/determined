@@ -2937,7 +2937,6 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              parallelism: [2]
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu_quarantine"]
