@@ -1743,6 +1743,43 @@ export const killTensorBoard: DetApi<Service.CommandIdParams, Api.V1KillTensorbo
       detApi.TensorBoards.killTensorboard(params.commandId),
   };
 
+export const getJupyterLab: DetApi<
+  Service.CommandIdParams,
+  Api.V1GetNotebookResponse,
+  Type.CommandTask
+> = {
+  name: 'getJupyterLab',
+  postProcess: (response) => decoder.mapV1Notebook(response.notebook),
+  request: (params: Service.CommandIdParams) => detApi.Notebooks.getNotebook(params.commandId),
+};
+
+export const getShell: DetApi<Service.CommandIdParams, Api.V1GetShellResponse, Type.CommandTask> = {
+  name: 'getShell',
+  postProcess: (response) => decoder.mapV1Shell(response.shell),
+  request: (params: Service.CommandIdParams) => detApi.Shells.getShell(params.commandId),
+};
+
+export const getTensorBoard: DetApi<
+  Service.CommandIdParams,
+  Api.V1GetTensorboardResponse,
+  Type.CommandTask
+> = {
+  name: 'getTensorBoard',
+  postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
+  request: (params: Service.CommandIdParams) =>
+    detApi.TensorBoards.getTensorboard(params.commandId),
+};
+
+export const getCommand: DetApi<
+  Service.CommandIdParams,
+  Api.V1GetCommandResponse,
+  Type.CommandTask
+> = {
+  name: 'getCommand',
+  postProcess: (response) => decoder.mapV1Command(response.command),
+  request: (params: Service.CommandIdParams) => detApi.Commands.getCommand(params.commandId),
+};
+
 export const getTemplates: DetApi<
   Service.GetTemplatesParams,
   Api.V1GetTemplatesResponse,
