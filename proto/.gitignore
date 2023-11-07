@@ -1,1 +1,3 @@
 build/
+pkg/**/*.pb.go
+**/*.pb.gw.go
