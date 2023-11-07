@@ -619,7 +619,7 @@ func (*DispatcherResourceManager) ValidateCommandResources(
 
 // ValidateResourcePoolAvailability implements rm.ResourceManager.
 func (*DispatcherResourceManager) ValidateResourcePoolAvailability(
-	string, int,
+	*sproto.ValidateResourcePoolAvailabilityRequest,
 ) ([]command.LaunchWarning, error) {
 	return nil, nil
 }
