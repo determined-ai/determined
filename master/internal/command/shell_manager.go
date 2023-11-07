@@ -1,9 +1,11 @@
 package command
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -65,15 +67,25 @@ func (cs *CommandService) KillShell(req *apiv1.KillShellRequest) (*apiv1.KillShe
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	c, err := cs.getNTSC(model.TaskID(req.ShellId), model.TaskTypeShell)
+	tID := model.TaskID(req.ShellId)
+
+	c, err := cs.getNTSC(tID, model.TaskTypeShell)
 	if err != nil {
 		return nil, err
 	}
 
-	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+	completed, err := db.TaskCompleted(context.TODO(), tID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+		return nil, err
 	}
+
+	if !completed {
+		err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			return nil, fmt.Errorf("failed to kill allocation: %w", err)
+		}
+	}
+
 	return &apiv1.KillShellResponse{Shell: c.toShell()}, nil
 }
 

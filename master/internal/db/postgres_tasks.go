@@ -89,6 +89,12 @@ func NonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID) (
 	return res.ContextDirectory, nil
 }
 
+// TaskCompleted checks if the end time exists for a task, if so, the task has completed.
+func TaskCompleted(ctx context.Context, tID model.TaskID) (bool, error) {
+	return Bun().NewSelect().Table("tasks").
+		Where("task_id = ?", tID).Where("end_time IS NOT NULL").Exists(ctx)
+}
+
 // CompleteTask persists the completion of a task.
 func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)

@@ -2,9 +2,11 @@
 package command
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -66,15 +68,25 @@ func (cs *CommandService) KillTensorboard(req *apiv1.KillTensorboardRequest) (*a
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	c, err := cs.getNTSC(model.TaskID(req.TensorboardId), model.TaskTypeTensorboard)
+	tID := model.TaskID(req.TensorboardId)
+
+	c, err := cs.getNTSC(tID, model.TaskTypeTensorboard)
 	if err != nil {
 		return nil, err
 	}
 
-	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+	completed, err := db.TaskCompleted(context.TODO(), tID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+		return nil, err
 	}
+
+	if !completed {
+		err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			return nil, fmt.Errorf("failed to kill allocation: %w", err)
+		}
+	}
+
 	return &apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard()}, nil
 }
 
