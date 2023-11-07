@@ -14,12 +14,14 @@ import "determined/master/v1/master.proto";
 // Describe one SSO provider.
 message SSOProvider {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "sso_url" ] }
+    json_schema: { required: [ "name", "sso_url", "type" ] }
   };
   // A descriptive name for this provider.
   string name = 1;
   // The URL to use for SSO with this provider.
   string sso_url = 2;
+  // The type of SSO (such as SAML, OIDC).
+  string type = 3;
 }
 
 // Get master information.
