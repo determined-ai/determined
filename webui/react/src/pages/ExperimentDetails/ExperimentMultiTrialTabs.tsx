@@ -1,6 +1,6 @@
 import type { TabsProps } from 'antd';
-import Notes from 'hew/Notes';
 import Pivot from 'hew/Pivot';
+import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -163,7 +163,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
         <Notes
           disabled={!editableNotes}
           disableTitle
-          notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
+          docs={{ contents: experiment.notes ?? '', name: 'Notes' }}
           onError={handleError}
           onPageUnloadHook={unstable_useBlocker}
           onSave={handleNotesUpdate}

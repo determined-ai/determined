@@ -19,14 +19,13 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import InputSearch from 'hew/InputSearch';
 import InputShortcut, { KeyboardShortcut } from 'hew/InputShortcut';
-import { Note, Serie, XAxisDomain } from 'hew/internal/types';
+import { Serie, XAxisDomain } from 'hew/internal/types';
 import { LineChart } from 'hew/LineChart';
 import { useChartGrid } from 'hew/LineChart/useChartGrid';
 import LogViewer from 'hew/LogViewer/LogViewer';
 import Message from 'hew/Message';
 import { Modal, useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
-import Notes, { Props as NotesProps } from 'hew/Notes';
 import Pagination from 'hew/Pagination';
 import Pivot from 'hew/Pivot';
 import Select, { Option } from 'hew/Select';
@@ -98,7 +97,6 @@ const ComponentTitles = {
   Message: 'Message',
   Modals: 'Modals',
   Nameplate: 'Nameplate',
-  Notes: 'Notes',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -1526,50 +1524,6 @@ const BreadcrumbsSection: React.FC = () => {
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
         </Breadcrumb>
-      </AntDCard>
-    </ComponentSection>
-  );
-};
-
-const useNoteDemo = (): ((props?: Omit<NotesProps, 'multiple'>) => JSX.Element) => {
-  const [note, setNote] = useState<Note>({ contents: '', name: 'Untitled' });
-  const onSave = async (n: Note) => await setNote(n);
-  return (props) => <Notes onError={handleError} {...props} notes={note} onSave={onSave} />;
-};
-
-const useNotesDemo = (): ((props?: NotesProps) => JSX.Element) => {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const onDelete = (p: number) => setNotes((n) => n.filter((_, idx) => idx !== p));
-  const onNewPage = () => setNotes((n) => [...n, { contents: '', name: 'Untitled' }]);
-  const onSave = async (n: Note[]) => await setNotes(n);
-  return (props) => (
-    <Notes
-      {...props}
-      multiple
-      notes={notes}
-      onDelete={onDelete}
-      onError={handleError}
-      onNewPage={onNewPage}
-      onSave={onSave}
-    />
-  );
-};
-
-const NotesSection: React.FC = () => {
-  return (
-    <ComponentSection id="Notes" title="Notes">
-      <AntDCard>
-        <p>
-          A <code>{'<Notes>'}</code> is used for taking notes. It can be single page note or multi
-          pages notes. Each page of note consists of a title and a sheet of note.
-        </p>
-      </AntDCard>
-      <AntDCard title="Usage">
-        <strong>Single page note</strong>
-        {useNoteDemo()()}
-        <hr />
-        <strong>Multi pages notes</strong>
-        {useNotesDemo()()}
       </AntDCard>
     </ComponentSection>
   );
@@ -3024,7 +2978,6 @@ const Components = {
   Message: <MessageSection />,
   Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
-  Notes: <NotesSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
