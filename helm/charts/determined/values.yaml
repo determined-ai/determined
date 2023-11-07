@@ -252,6 +252,12 @@ taskContainerDefaults:
   # cpuImage:
   # gpuImage:
 
+
+  # logPolicies:
+  #  - pattern: test
+  #    action:
+  #      type: exclude_node
+
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
   enabled: true
