@@ -423,6 +423,7 @@ func (a *apiServer) PatchUser(
 	}
 
 	updatedUser := &model.User{ID: targetUser.ID}
+	willBeRemote := targetUser.Remote
 	var insertColumns []string
 	if req.User.Admin != nil {
 		if err = user.AuthZProvider.Get().
@@ -441,7 +442,19 @@ func (a *apiServer) PatchUser(
 		}
 
 		updatedUser.Remote = *req.User.Remote
+		willBeRemote = updatedUser.Remote
 		insertColumns = append(insertColumns, "remote")
+
+		// We changed remote status. Need to clear passwords.
+		if targetUser.Remote != willBeRemote {
+			if willBeRemote {
+				updatedUser.PasswordHash = model.NoPasswordLogin
+				insertColumns = append(insertColumns, "password_hash")
+			} else if !willBeRemote && req.User.Password == nil {
+				updatedUser.PasswordHash = model.EmptyPassword
+				insertColumns = append(insertColumns, "password_hash")
+			}
+		}
 	}
 
 	if req.User.Active != nil {
@@ -459,7 +472,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		if targetUser.Remote {
+		if willBeRemote {
 			return nil, status.Error(codes.InvalidArgument, "Cannot set username for remote users")
 		}
 
@@ -507,7 +520,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		if targetUser.Remote {
+		if willBeRemote {
 			return nil, status.Error(codes.InvalidArgument, "Cannot set password for remote users")
 		}
 

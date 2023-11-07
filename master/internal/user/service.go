@@ -236,6 +236,10 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
+	if user.Remote { // We can't return a more specific error for informational leak reasons.
+		return nil, echo.NewHTTPError(http.StatusForbidden, "invalid credentials")
+	}
+
 	// The user must be active.
 	if !user.Active {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "user not active")
