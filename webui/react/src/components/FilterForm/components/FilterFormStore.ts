@@ -74,10 +74,15 @@ export class FilterFormStore {
   }
 
   public get fieldCount(): Observable<number> {
+    return this.getFieldCount()
+  }
+
+  public getFieldCount(): Observable<number>;
+  public getFieldCount(field?: string): Observable<number>{
     const countFields = (form: Readonly<FormGroup>): number => {
       let count = 0;
       for (const child of form.children) {
-        count += child.kind === FormKind.Group ? countFields(child) : 1;
+        count += child.kind === FormKind.Group ? countFields(child) : ((!field || field === child.columnName) ? 1 : 0);
       }
       return count;
     };
@@ -89,7 +94,7 @@ export class FilterFormStore {
           return countFields(validFilterGroup);
         },
       }),
-    );
+    ); 
   }
 
   #isValid(form: Readonly<FormGroup | FormField>): boolean {
@@ -230,6 +235,7 @@ export class FilterFormStore {
     addType: FormKind,
     obj?: { index: number; item: Readonly<FormGroup | FormField> },
   ): void {
+    console.log({id, addType, obj})
     return this.#updateGroup(id, (form) => {
       const children = obj
         ? form.children
@@ -244,6 +250,7 @@ export class FilterFormStore {
   }
 
   public removeChild(id: string): void {
+    console.log({id})
     this.#updateForm(id, () => undefined);
   }
 
