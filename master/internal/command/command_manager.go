@@ -1,8 +1,6 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -67,12 +65,12 @@ func (cs *CommandService) KillCommand(req *apiv1.KillCommandRequest) (*apiv1.Kil
 
 	c, err := cs.getNTSC(model.TaskID(req.CommandId), model.TaskTypeCommand)
 	if err != nil {
-		return nil, err
+		cs.syslog.Error(err)
 	}
 
 	err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
 	if err != nil {
-		return nil, fmt.Errorf("failed to kill allocation: %w", err)
+		cs.syslog.Errorf("failed to kill allocation: %s", err)
 	}
 	return &apiv1.KillCommandResponse{Command: c.toCommand()}, nil
 }

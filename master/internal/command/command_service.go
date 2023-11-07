@@ -128,7 +128,7 @@ func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*
 	}
 
 	if c.taskType != cmdType {
-		cs.syslog.Debugf("getNTSC: type mismatch: %s/%s", cmdType, c.taskType)
+		return nil, fmt.Errorf("getNTSC: type mismatch: %s/%s", cmdType, c.taskType)
 	}
 
 	return c, nil
