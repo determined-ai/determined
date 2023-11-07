@@ -1114,7 +1114,7 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
         "--username",
         new_username,
         "--active=true",
-        "--remote=true",
+        "--remote=false",
         "--admin=true",
     ]
 
@@ -1128,7 +1128,7 @@ def test_user_edit(clean_auth: None, login_admin: None) -> None:
     assert modded_user.displayName == new_display_name
     assert modded_user.username == new_username
     assert modded_user.active
-    assert modded_user.remote
+    assert not modded_user.remote
     assert modded_user.admin
 
 
