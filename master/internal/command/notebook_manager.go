@@ -107,26 +107,3 @@ func (cs *CommandService) SetNotebookPriority(
 	}
 	return &apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook()}, nil
 }
-
-// toNotebook() takes a *command from the command service registry & returns a *notebookv1.Notebook.
-func (c *command) toNotebook() *notebookv1.Notebook {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	allo := c.refreshAllocationState()
-	return &notebookv1.Notebook{
-		Id:             c.stringID(),
-		State:          enrichState(allo.State),
-		Description:    c.Config.Description,
-		Container:      allo.SingleContainer().ToProto(),
-		ServiceAddress: c.serviceAddress(),
-		StartTime:      protoutils.ToTimestamp(c.registeredTime),
-		Username:       c.Base.Owner.Username,
-		UserId:         int32(c.Base.Owner.ID),
-		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
-		ResourcePool:   c.Config.Resources.ResourcePool,
-		ExitStatus:     c.exitStatus.String(),
-		JobId:          c.jobID.String(),
-		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
-	}
-}

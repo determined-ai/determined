@@ -18,7 +18,6 @@ import (
 var DefaultCmdService *CommandService
 
 // CommandService tracks the different NTSC commands in the system.
-// Locking in: restoreAllCommands, launchNTSC, Get/Kill/LaunchNTSC(s), SetNTSCPriority, DeleteWorkspace.
 type CommandService struct {
 	db       *db.PgDB
 	rm       rm.ResourceManager
@@ -109,7 +108,7 @@ func (cs *CommandService) createGenericCommand(
 	// Add it to the registry.
 	cs.commands[cmd.taskID] = cmd
 
-	return cmd, cmd.startCmd(context.TODO()) // TODO CAROLINA: feed in a TODO() into any start methods.
+	return cmd, cmd.startCmd(context.TODO())
 }
 
 func (cs *CommandService) unregisterCommand(id model.TaskID) {
@@ -119,7 +118,6 @@ func (cs *CommandService) unregisterCommand(id model.TaskID) {
 	delete(cs.commands, id)
 }
 
-// CommandService NTSC methods: getNTSC, listByType, DeleteWorkspaceNTSC
 // getNTSC gets & checks type of a command given its ID.
 func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*command, error) {
 	c, ok := cs.commands[cmdID]

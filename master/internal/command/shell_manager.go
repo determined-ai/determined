@@ -107,29 +107,3 @@ func (cs *CommandService) SetShellPriority(
 	}
 	return &apiv1.SetShellPriorityResponse{Shell: c.toShell()}, nil
 }
-
-// toShell() takes a *command from the command service registry & returns a *shellv1.Shell.
-func (c *command) toShell() *shellv1.Shell {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	allo := c.refreshAllocationState()
-	return &shellv1.Shell{
-		Id:             c.stringID(),
-		State:          enrichState(allo.State),
-		Description:    c.Config.Description,
-		StartTime:      protoutils.ToTimestamp(c.registeredTime),
-		Container:      allo.SingleContainer().ToProto(),
-		PrivateKey:     *c.Metadata.PrivateKey,
-		PublicKey:      *c.Metadata.PublicKey,
-		Username:       c.Base.Owner.Username,
-		UserId:         int32(c.Base.Owner.ID),
-		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
-		ResourcePool:   c.Config.Resources.ResourcePool,
-		ExitStatus:     c.exitStatus.String(),
-		Addresses:      toProto(allo.SingleContainerAddresses()),
-		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
-		JobId:          c.jobID.String(),
-		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
-	}
-}

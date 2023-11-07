@@ -108,29 +108,3 @@ func (cs *CommandService) SetTensorboardPriority(
 	}
 	return &apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard()}, nil
 }
-
-// toTensorboard() takes a *command from the command service registry & returns a *tensorboardv1.Tensorboard.
-func (c *command) toTensorboard() *tensorboardv1.Tensorboard {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	allo := c.refreshAllocationState()
-	state := enrichState(allo.State)
-	return &tensorboardv1.Tensorboard{
-		Id:             c.stringID(),
-		State:          state,
-		Description:    c.Config.Description,
-		StartTime:      protoutils.ToTimestamp(c.registeredTime),
-		Container:      allo.SingleContainer().ToProto(),
-		ServiceAddress: c.serviceAddress(),
-		ExperimentIds:  c.Metadata.ExperimentIDs,
-		TrialIds:       c.Metadata.TrialIDs,
-		Username:       c.Base.Owner.Username,
-		UserId:         int32(c.Base.Owner.ID),
-		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
-		ResourcePool:   c.Config.Resources.ResourcePool,
-		ExitStatus:     c.exitStatus.String(),
-		JobId:          c.jobID.String(),
-		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
-	}
-}

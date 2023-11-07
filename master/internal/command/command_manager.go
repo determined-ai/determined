@@ -107,25 +107,3 @@ func (cs *CommandService) SetCommandPriority(
 	}
 	return &apiv1.SetCommandPriorityResponse{Command: c.toCommand()}, nil
 }
-
-// toCommand() takes a *command from the command service registry & returns a *commandv1.Command.
-func (c *command) toCommand() *commandv1.Command {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	allo := c.refreshAllocationState()
-	return &commandv1.Command{
-		Id:           c.stringID(),
-		State:        enrichState(allo.State),
-		Description:  c.Config.Description,
-		Container:    allo.SingleContainer().ToProto(),
-		StartTime:    protoutils.ToTimestamp(c.registeredTime),
-		Username:     c.Base.Owner.Username,
-		UserId:       int32(c.Base.Owner.ID),
-		DisplayName:  c.Base.Owner.DisplayName.ValueOrZero(),
-		ResourcePool: c.Config.Resources.ResourcePool,
-		ExitStatus:   c.exitStatus.String(),
-		JobId:        c.jobID.String(),
-		WorkspaceId:  int32(c.GenericCommandSpec.Metadata.WorkspaceID),
-	}
-}
