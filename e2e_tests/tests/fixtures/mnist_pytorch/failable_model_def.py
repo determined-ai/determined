@@ -26,6 +26,7 @@ if __name__ == "__main__":
         trainer.fit(
             checkpoint_policy="none",
             checkpoint_period=pytorch.Batch(3),
-            validation_period=pytorch.Batch(1)
+            validation_period=pytorch.Batch(1),
+            latest_checkpoint=info.latest_checkpoint,
         )
 
