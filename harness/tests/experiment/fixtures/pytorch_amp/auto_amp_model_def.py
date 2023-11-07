@@ -12,7 +12,7 @@ context during the forward pass.
 from typing import Dict, Sequence, Union
 
 import torch
-from model_def import MNistTrial
+from train import MNistTrial
 
 from determined.pytorch import PyTorchTrialContext
 

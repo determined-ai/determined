@@ -3,7 +3,7 @@ This example demonstrates how to modify a model to use PyTorch's support for
 NVIDIA APEX in Determined.
 """
 
-from model_def import MNistTrial
+from train import MNistTrial
 
 from determined.pytorch import PyTorchTrialContext
 
