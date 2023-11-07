@@ -123,6 +123,7 @@ const WebhooksView: React.FC = () => {
             </li>
           );
         }
+        return <></>;
       });
 
     return [

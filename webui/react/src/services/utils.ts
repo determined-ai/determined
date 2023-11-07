@@ -107,4 +107,5 @@ export const readStream = async <T = unknown>(
   } catch (e) {
     handleError(await processApiError(fetchArgs.url, e));
   }
+  return;
 };

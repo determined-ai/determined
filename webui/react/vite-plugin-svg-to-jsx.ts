@@ -84,6 +84,7 @@ export const svgToReact = (config: SvgoConfig): Plugin[] => {
             },
           });
         }
+        return;
       },
       name: 'svg-to-react:transform',
     },
