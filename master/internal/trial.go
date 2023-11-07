@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/logpattern"
@@ -619,8 +620,15 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			})
 		}
 
-		// TODO(DET-9897) redo capacity check when we decide to allocate again.
-		// Since we could have excluded nodes.
+		blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), t.taskID)
+		if err != nil {
+			return err
+		}
+		if len(blockedNodes) > 0 {
+			if err := t.checkResourcePoolRemainingCapacity(); err != nil {
+				return err
+			}
+		}
 
 	case exit.UserRequestedStop:
 		return t.transition(model.StateWithReason{
@@ -770,4 +778,34 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 			len(allocations),
 		)
 	}
+}
+
+func (t *trial) checkResourcePoolRemainingCapacity() error {
+	launchWarnings, err := t.rm.ValidateResourcePoolAvailability(
+		&sproto.ValidateResourcePoolAvailabilityRequest{
+			Name:   t.config.Resources().ResourcePool(),
+			Slots:  t.config.Resources().SlotsPerTrial(),
+			TaskID: &t.taskID,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("checking resource availability: %v", err.Error())
+	}
+	if len(launchWarnings) > 0 {
+		msg := fmt.Sprintf(
+			"task ID %v slots requested exceeds %v resource pool capacity",
+			t.taskID,
+			t.config.Resources().ResourcePool(),
+		)
+		if config.GetMasterConfig().LaunchError {
+			logrus.Error(msg)
+			return t.transition(model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: msg,
+			})
+		}
+		logrus.Warn(msg)
+	}
+
+	return nil
 }
