@@ -1,6 +1,6 @@
 import Icon from 'hew/Icon';
 import Tooltip from 'hew/Tooltip';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Link from 'components/Link';

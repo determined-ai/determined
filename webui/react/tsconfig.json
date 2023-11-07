@@ -9,6 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "noImplicitThis": true,
+    "noUnusedLocals": true,
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
