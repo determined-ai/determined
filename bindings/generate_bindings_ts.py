@@ -550,7 +550,7 @@ export class BaseAPI {{
  * @extends {{Error}}
  */
 export class RequiredError extends Error {{
-    name: "RequiredError"
+    override name: "RequiredError"
     constructor(public field: string, msg?: string) {{
         super(msg);
     }}
