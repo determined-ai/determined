@@ -116,6 +116,7 @@
       slots_per_trial: 15
       weight: 1000
       max_slots: 900
+      is_single_node: false
       priority: 55
       resource_pool: 'asdf'
       native_parallel: false
@@ -215,6 +216,7 @@
       slots_per_trial: 1
       weight: 1
       max_slots: null
+      is_single_node: false
       priority: null
       resource_pool: ''
     scheduling_unit: 100
