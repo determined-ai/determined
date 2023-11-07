@@ -264,7 +264,7 @@ const GroupManagement: React.FC = () => {
           <Nameplate icon={<Icon name="group" title="Group" />} name={r.group.name ?? ''} />
         ),
         title: 'Group',
-        width: 'fit-content',
+        width: '100%',
       },
       {
         dataIndex: 'users',
@@ -273,7 +273,7 @@ const GroupManagement: React.FC = () => {
         onCell: onRightClickableCell,
         render: (_: string, r: V1GroupSearchResult) => r.numMembers,
         title: 'Members',
-        width: 'fit-content',
+        width: '100%',
       },
       {
         className: 'fullCell',
