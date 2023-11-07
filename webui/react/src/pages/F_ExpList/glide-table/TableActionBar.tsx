@@ -1,9 +1,10 @@
 import { Space } from 'antd';
 import Button from 'hew/Button';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import { makeToast } from 'hew/Toast';
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
@@ -262,9 +263,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           makeToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             experiments`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -353,7 +353,7 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <Columns>
+    <Row>
       <Column>
         <Space className={css.base}>
           <TableFilter
@@ -391,7 +391,7 @@ const TableActionBar: React.FC<Props> = ({
         </Space>
       </Column>
       <Column align="right">
-        <Columns>
+        <Row>
           {heatmapBtnVisible && (
             <Tooltip content={'Toggle Metric Heatmap'}>
               <Button
@@ -409,7 +409,7 @@ const TableActionBar: React.FC<Props> = ({
               Compare
             </Button>
           )}
-        </Columns>
+        </Row>
       </Column>
       {batchAction && (
         <BatchActionConfirmModal.Component
@@ -435,7 +435,7 @@ const TableActionBar: React.FC<Props> = ({
         selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />
-    </Columns>
+    </Row>
   );
 };
 

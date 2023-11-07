@@ -1,9 +1,10 @@
 import { Space } from 'antd';
 import Button from 'hew/Button';
 import Card from 'hew/Card';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
@@ -344,7 +345,7 @@ const WorkspaceList: React.FC = () => {
         </Button>
       }
       title="Workspaces">
-      <Columns marginBottom={16} wrap>
+      <Row marginBottom={16} wrap>
         <Column>
           <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
             <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
@@ -366,7 +367,7 @@ const WorkspaceList: React.FC = () => {
             {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
           </Space>
         </Column>
-      </Columns>
+      </Row>
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList

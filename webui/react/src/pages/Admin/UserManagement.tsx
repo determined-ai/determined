@@ -1,10 +1,11 @@
 import { SortOrder } from 'antd/es/table/interface';
 import Button from 'hew/Button';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { SelectValue } from 'hew/Select';
 import { makeToast } from 'hew/Toast';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
@@ -107,16 +108,16 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Groups, label: 'Manage Groups' },
-            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
         : [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   const handleDropdown = useCallback(
@@ -217,11 +218,11 @@ const UserManagement: React.FC = () => {
       };
       const roleParams = Array.isArray(roleFilter)
         ? {
-            roleIdAssignedDirectlyToUser: roleFilter,
-          }
+          roleIdAssignedDirectlyToUser: roleFilter,
+        }
         : {
-            admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
-          };
+          admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
+        };
       return await getUsers({
         ...params,
         ...roleParams,
@@ -439,9 +440,9 @@ const UserManagement: React.FC = () => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar}>
-          <Columns>
+          <Row>
             <Column>
-              <Columns>
+              <Row>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
@@ -464,10 +465,10 @@ const UserManagement: React.FC = () => {
                   width={170}
                   onChange={handleStatusFilterApply}
                 />
-              </Columns>
+              </Row>
             </Column>
             <Column align="right">
-              <Columns>
+              <Row>
                 {selectedUserIds.length > 0 && (
                   <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
                     <Button>Actions</Button>
@@ -479,9 +480,9 @@ const UserManagement: React.FC = () => {
                   onClick={CreateUserModal.open}>
                   {CREATE_USER}
                 </Button>
-              </Columns>
+              </Row>
             </Column>
-          </Columns>
+          </Row>
         </div>
         {settings ? (
           <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns>

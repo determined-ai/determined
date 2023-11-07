@@ -1,10 +1,11 @@
 import { Space } from 'antd';
 import Button from 'hew/Button';
 import Card from 'hew/Card';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
@@ -403,7 +404,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   return (
     <>
-      <Columns marginBottom={16} wrap>
+      <Row marginBottom={16} wrap>
         <Column>
           <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
             <Option value={WhoseProjects.All}>All Projects</Option>
@@ -439,7 +440,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             </div>
           </Space>
         </Column>
-      </Columns>
+      </Row>
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
