@@ -1556,44 +1556,6 @@ jobs:
       - react-get-deps
       - run: make -C webui/react test-ci-flaky
 
-  test-unit-react-screenshot:
-    docker:
-      - image: cimg/node:20.1.0
-        environment:
-          CI: "true"
-    resource_class: xlarge
-    steps:
-      - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
-      - run:
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_PATHS="webui/react/src/package-lock.json webui/react/src/package.json webui/react/src/pages/DesignKit.tsx webui/react/design"
-            if git diff --quiet $MERGE_BASE -- $DIFF_PATHS; then
-              echo "DesignKit not changed, halting job now."
-              circleci-agent step halt
-            else
-              echo "DesignKit changed, running downstream check."
-            fi
-          name: check for designkit changes
-      - react-get-deps
-      - run:
-          command: make -C webui/react visual-test
-          name: generate screenshots
-      - store_artifacts:
-          path: webui/react/screenshot-summary.html
-      - run:
-          command: |
-            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            if [ -f webui/react/.diff-detected ] ; then
-              export MESSAGE="Hello! DesignKit diffs for commit $CIRCLE_SHA1 are available for you to view [here]($ARTIFACT_URL)"
-            else
-              export MESSAGE="Hello! No changes detected to DesignKit for commit $CIRCLE_SHA1. Verify [here]($ARTIFACT_URL)"
-            fi
-            node webui/react/scripts/make-github-comment.mjs "$MESSAGE"
-          name: report results
-
   test-intg-downstream:
     docker:
       - image: cimg/node:20.1.0
@@ -2561,9 +2523,6 @@ workflows:
     jobs:
       - test-unit-go
       - test-unit-react
-      - test-unit-react-screenshot:
-          context: github-write
-          filters: *any-upstream
       - test-unit-harness-cpu
       - test-unit-harness-tf2
       - test-unit-harness-pytorch2-cpu
