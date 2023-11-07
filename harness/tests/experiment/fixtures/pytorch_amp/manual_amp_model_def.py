@@ -12,8 +12,8 @@ context during the forward pass.
 from typing import Any, Dict, Optional, Sequence, Tuple, Union, cast
 
 import torch
-from train import MNistTrial
 from torch.cuda.amp import GradScaler, autocast
+from train import MNistTrial
 
 from determined.pytorch import PyTorchTrialContext
 

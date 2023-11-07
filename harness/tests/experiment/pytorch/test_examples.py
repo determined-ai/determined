@@ -106,6 +106,7 @@ def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0)
             tmp_path=tmp_path,
             exp_config=exp_config,
             steps=1,
+            trial_args={"hparams": hparams},
         )
     else:
         pytorch_utils.train_from_checkpoint(
@@ -116,6 +117,7 @@ def run_mnist(tmp_path: pathlib.Path, batches_trained: typing.Optional[int] = 0)
             exp_config=exp_config,
             steps=(1, 1),
             batches_trained=batches_trained,
+            trial_args={"hparams": hparams},
         )
         return True
 
