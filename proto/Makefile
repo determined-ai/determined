@@ -42,6 +42,14 @@ build/proto.stamp: $(source_files)
 	for source in $(source_files) ; do protoc -I src "$$source" --go_out=plugins=grpc:build/proto || exit 1; done
 	# GRPC generation.
 	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto --grpc-gateway_opt allow_delete_body=true
+
+	# Add a file that just has "package packageName" to each directory.
+	# This is our hack to make dependabot work.
+	# We need `go mod tidy` to do nothing when it is run, if we have no "proto/pkg" files then go mod tidy adds a
+	# github.com/determined-ai/determined/proto dependcy to the go.mod since it is missing.
+	# Commiting a single file per package causes a lot less issues than commiting every proto change ever.
+	for source in $(source_files) ; do echo "package $$(basename $$source .proto)v1 // This is generated and committed once per proto package." > $(build_path)/$$(basename $$source .proto)v1/package.go; done
+
 	mv $(build_path) pkg
 ifeq "$(shell uname)" "Darwin"
 	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
