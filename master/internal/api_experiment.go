@@ -3016,7 +3016,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 		return nil, err
 	}
 
-	exp, err := db.ExperimentByID(context.TODO(), int(req.ExperimentId))
+	exp, err := db.ExperimentByID(ctx, int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}
@@ -3025,7 +3025,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 	if err != nil {
 		return nil, err
 	}
-	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceID[0])
+	agentUserGroup, err := user.GetAgentUserGroup(ctx, *exp.OwnerID, workspaceID[0])
 	if err != nil {
 		return nil, err
 	}
