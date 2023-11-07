@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "noImplicitThis": true,
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
