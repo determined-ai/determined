@@ -22,7 +22,23 @@
     .nodeName {
       font-size: var(--header-size-xs);
       margin-bottom: 6px;
+      overflow: hidden;
       text-transform: uppercase;
+      white-space: nowrap;
+
+      .firstPart,
+      .lastPart {
+        display: inline-block;
+        overflow: hidden;
+        vertical-align: bottom;
+        white-space: nowrap;
+      }
+      .firstPart {
+        text-overflow: ellipsis;
+      }
+      .lastPart {
+        direction: rtl;
+      }
     }
     .nodeCluster {
       align-items: center;
