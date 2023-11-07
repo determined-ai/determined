@@ -88,6 +88,8 @@ export class BaseAPI {
         if (configuration) {
             this.configuration = configuration;
             this.basePath = configuration.basePath || this.basePath;
+        } else {
+            this.configuration = new Configuration()
         }
     }
 };
@@ -102,6 +104,7 @@ export class RequiredError extends Error {
     override name: "RequiredError"
     constructor(public field: string, msg?: string) {
         super(msg);
+        this.name = "RequiredError"
     }
 }
 
