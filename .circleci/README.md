@@ -20,3 +20,15 @@ As of this writing, `config.yml` sets the following parameters:
 ## real_config.yml
 
 This is the file where all tests are currently defined. New steps, jobs, and workflows related to executing actual tests should be added here.
+
+# Docker images for CircleCI (package-and-push-system)
+
+The Package and Push System builds and distributes Docker images for master and agent. There are two primary jobs in this system that handle Docker images differently depending on where and how they will be used:
+
+## package-and-push-system-local
+This job builds Docker images for the master and agent and saves them locally on the CircleCI executor. Images built by this job are not pushed to Docker Hub or any remote image repository. They're only available on the CircleCI machine that performed the build.
+
+## package-and-push-system-dev
+This job builds Docker images and pushes them to Docker Hub. After this step is run, the images are globally available for different deployment environments (like `det deploy` on AWS or Kubernetes). This step is required to be upstream of any tests or deployments that require Docker images to be accessible from external environments.
+
+In cases where a Docker image is needed by job "Downstream", and `package-and-push-system-dev` is omitted from Downstream's `requires` section, Downstream might still succeed if another job has previously pushed the relevant Docker image for the same Git commit. This is true even if the job that ran `package-and-push-system-dev` is in a different workflow or pipeline.
