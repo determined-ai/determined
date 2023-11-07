@@ -79,14 +79,14 @@ class Build:
     def get_artifacts(self) -> Dict[str, str]:
         print(f"fetching artifacts for {self.job_name}", file=sys.stderr)
         url = f"{BASE_URL}/{self.build_num}/artifacts"
-        req = requests.get(url)
+        req = requests.get(url, verify=False)
         req.raise_for_status()
 
         artifacts = {}
         for meta in req.json():
             path = os.path.basename(meta["path"])
             print(f"fetching {path}", file=sys.stderr)
-            req = requests.get(meta["url"])
+            req = requests.get(meta["url"], verify=False)
             req.raise_for_status()
             artifacts[path] = req.content.decode("utf8")
         return artifacts
@@ -95,7 +95,7 @@ class Build:
 def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Build]:
     # Get all the recent jobs.
     print("fetching recent jobs", file=sys.stderr)
-    req = requests.get(BASE_URL, params={"limit": "100", "filter": "completed"})
+    req = requests.get(BASE_URL, params={"limit": "100", "filter": "completed"}, verify=False)
     req.raise_for_status()
 
     # Get all the build numbers matching this commit.
