@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'determined-ui/Theme';
-import { ConfirmationProvider } from 'determined-ui/useConfirm';
+import { UIProvider } from 'hew/Theme';
+import { ConfirmationProvider } from 'hew/useConfirm';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';

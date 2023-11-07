@@ -1,5 +1,5 @@
-import Icon from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
+import Icon from 'hew/Icon';
+import { useModal } from 'hew/Modal';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import ExperimentCreateModalComponent, {

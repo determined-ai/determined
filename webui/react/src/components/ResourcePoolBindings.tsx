@@ -1,7 +1,7 @@
-import Avatar, { Size } from 'determined-ui/Avatar';
-import Button from 'determined-ui/Button';
-import { useModal } from 'determined-ui/Modal';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Avatar, { Size } from 'hew/Avatar';
+import Button from 'hew/Button';
+import { useModal } from 'hew/Modal';
+import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useEffect, useMemo } from 'react';
 

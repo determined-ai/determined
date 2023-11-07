@@ -1,6 +1,6 @@
-import Button from 'determined-ui/Button';
-import Icon from 'determined-ui/Icon';
-import { useModal } from 'determined-ui/Modal';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
+import { useModal } from 'hew/Modal';
 import React, { useCallback } from 'react';
 
 import ModelCreateModal from 'components/ModelCreateModal';

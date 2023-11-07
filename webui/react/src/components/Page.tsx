@@ -1,5 +1,5 @@
-import { MenuItem } from 'determined-ui/Dropdown';
-import Spinner from 'determined-ui/Spinner';
+import { MenuItem } from 'hew/Dropdown';
+import Spinner from 'hew/Spinner';
 import { useObservable } from 'micro-observables';
 import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';

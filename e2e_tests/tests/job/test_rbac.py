@@ -5,7 +5,6 @@ import pytest
 import tests.config as conf
 from determined.common import api
 from determined.common.api import NTSC_Kind, bindings, errors
-from determined.common.api._util import all_ntsc
 from tests import api_utils
 from tests import experiment as exp
 from tests.cluster import test_rbac as rbac
@@ -34,7 +33,7 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
             ["--project_id", str(pid)],
         )
         print(f"created experiment {experiment_id}")
-    for kind in all_ntsc:
+    for kind in conf.ALL_NTSC:
         print(f"creating {kind}")
         ntsc = api_utils.launch_ntsc(
             admin_session, workspace_id=ws.id, typ=kind, exp_id=experiment_id

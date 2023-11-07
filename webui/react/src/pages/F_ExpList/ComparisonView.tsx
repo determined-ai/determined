@@ -1,5 +1,5 @@
-import Message from 'determined-ui/Message';
-import Pivot, { TabItem } from 'determined-ui/Pivot';
+import Message from 'hew/Message';
+import Pivot, { TabItem } from 'hew/Pivot';
 import React, { useMemo } from 'react';
 
 import SplitPane from 'components/SplitPane';

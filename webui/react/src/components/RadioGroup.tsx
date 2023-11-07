@@ -1,7 +1,7 @@
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
-import Icon, { IconName, IconSize } from 'determined-ui/Icon';
-import Tooltip from 'determined-ui/Tooltip';
+import Icon, { IconName, IconSize } from 'hew/Icon';
+import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 

@@ -1,6 +1,6 @@
-import Progress from 'determined-ui/Progress';
-import { getStateColorCssVar, ShirtSize } from 'determined-ui/Theme';
-import Tooltip from 'determined-ui/Tooltip';
+import Progress from 'hew/Progress';
+import { getStateColorCssVar, ShirtSize } from 'hew/Theme';
+import Tooltip from 'hew/Tooltip';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';

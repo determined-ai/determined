@@ -1,13 +1,13 @@
 import { Space, Typography } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import Button from 'determined-ui/Button';
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import Input from 'determined-ui/Input';
-import { useModal } from 'determined-ui/Modal';
-import Tags from 'determined-ui/Tags';
-import Toggle from 'determined-ui/Toggle';
-import { Loadable } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import Input from 'hew/Input';
+import { useModal } from 'hew/Modal';
+import Tags from 'hew/Tags';
+import Toggle from 'hew/Toggle';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';

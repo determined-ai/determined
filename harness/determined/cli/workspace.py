@@ -31,7 +31,7 @@ workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace nam
 def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
     workspace_id = None
     if args.workspace_name:
-        workspace = cli.workspace.workspace_by_name(cli.setup_session(args), args.workspace_name)
+        workspace = api.workspace_by_name(cli.setup_session(args), args.workspace_name)
         if workspace.archived:
             raise ArgumentError(None, f'Workspace "{args.workspace_name}" is archived.')
         workspace_id = workspace.id
@@ -72,15 +72,6 @@ def render_workspaces(
     if not from_list_api:
         headers = WORKSPACE_HEADERS + ["Checkpoint Storage Config"]
     render.tabulate_or_csv(headers, values, False)
-
-
-def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
-    assert name, "workspace name cannot be empty"
-    w = bindings.get_GetWorkspaces(sess, nameCaseSensitive=name).workspaces
-    assert len(w) <= 1, "workspace name is assumed to be unique."
-    if len(w) == 0:
-        raise cli.not_found_errs("workspace", name, sess)
-    return bindings.get_GetWorkspace(sess, id=w[0].id).workspace
 
 
 @authentication.required
@@ -147,7 +138,7 @@ def list_workspace_projects(args: Namespace) -> None:
 @authentication.required
 def list_pools(args: Namespace) -> None:
     session = cli.setup_session(args)
-    w = workspace_by_name(session, args.workspace_name)
+    w = api.workspace_by_name(session, args.workspace_name)
     resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
     pools_str = ""
     if resp.resourcePools:
@@ -207,7 +198,7 @@ def create_workspace(args: Namespace) -> None:
 @authentication.required
 def describe_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    w = workspace_by_name(sess, args.workspace_name)
+    w = api.workspace_by_name(sess, args.workspace_name)
     if args.json:
         determined.cli.render.print_json(w.to_json())
     else:
@@ -223,7 +214,7 @@ def describe_workspace(args: Namespace) -> None:
 @authentication.required
 def delete_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    w = workspace_by_name(sess, args.workspace_name)
+    w = api.workspace_by_name(sess, args.workspace_name)
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
         "in the unrecoverable deletion of all associated projects, experiments,\n"
@@ -254,7 +245,7 @@ def delete_workspace(args: Namespace) -> None:
 @authentication.required
 def archive_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    current = workspace_by_name(sess, args.workspace_name)
+    current = api.workspace_by_name(sess, args.workspace_name)
     bindings.post_ArchiveWorkspace(sess, id=current.id)
     print(f"Successfully archived workspace {args.workspace_name}.")
 
@@ -262,7 +253,7 @@ def archive_workspace(args: Namespace) -> None:
 @authentication.required
 def unarchive_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    current = workspace_by_name(sess, args.workspace_name)
+    current = api.workspace_by_name(sess, args.workspace_name)
     bindings.post_UnarchiveWorkspace(sess, id=current.id)
     print(f"Successfully un-archived workspace {args.workspace_name}.")
 
@@ -272,7 +263,7 @@ def edit_workspace(args: Namespace) -> None:
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 
     sess = cli.setup_session(args)
-    current = workspace_by_name(sess, args.workspace_name)
+    current = api.workspace_by_name(sess, args.workspace_name)
     agent_user_group = _parse_agent_user_group_args(args)
     updated = bindings.v1PatchWorkspace(
         name=args.name,

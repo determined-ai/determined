@@ -183,15 +183,16 @@ export default defineConfig(({ mode }) => ({
       },
     },
     deps: {
+      // resolve css imports
+      inline: [/hew/],
+
       // necessary to fix react-dnd jsx runtime issue
       registerNodeLoader: true,
-      // resolve css imports
-      inline: [/determined-ui/],
     },
     environment: 'jsdom',
     exclude: [...configDefaults.exclude, './src/e2e/*'],
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
-    testNamePattern: process.env.INCLUDE_FLAKY === 'true' ? /@flaky/ : /^(?!.*@flaky)/
+    testNamePattern: process.env.INCLUDE_FLAKY === 'true' ? /@flaky/ : /^(?!.*@flaky)/,
   },
 }));

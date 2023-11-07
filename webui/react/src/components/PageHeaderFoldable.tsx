@@ -1,7 +1,7 @@
-import Button from 'determined-ui/Button';
-import Dropdown, { DropdownEvent, MenuItem } from 'determined-ui/Dropdown';
-import Icon from 'determined-ui/Icon';
-import Tooltip from 'determined-ui/Tooltip';
+import Button from 'hew/Button';
+import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
+import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useState } from 'react';
 
 import { isMouseEvent } from 'utils/routes';

@@ -1,9 +1,9 @@
 import { ConfigProvider } from 'antd';
-import Button from 'determined-ui/Button';
-import Form from 'determined-ui/Form';
-import Icon from 'determined-ui/Icon';
-import Input from 'determined-ui/Input';
-import useUI from 'determined-ui/Theme';
+import Button from 'hew/Button';
+import Form from 'hew/Form';
+import Icon from 'hew/Icon';
+import Input from 'hew/Input';
+import useUI from 'hew/Theme';
 import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';

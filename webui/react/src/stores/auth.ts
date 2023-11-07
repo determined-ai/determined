@@ -1,4 +1,4 @@
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, WritableObservable } from 'micro-observables';
 
 import { globalStorage } from 'globalStorage';

@@ -1,8 +1,8 @@
 import { Typography } from 'antd';
-import Avatar, { Size } from 'determined-ui/Avatar';
-import Card from 'determined-ui/Card';
-import Icon from 'determined-ui/Icon';
-import Tooltip from 'determined-ui/Tooltip';
+import Avatar, { Size } from 'hew/Avatar';
+import Card from 'hew/Card';
+import Icon from 'hew/Icon';
+import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
@@ -79,7 +79,6 @@ const ProjectCard: React.FC<Props> = ({
             ) : (
               project.lastExperimentStartedAt && (
                 <TimeAgo
-                  className={css.lastExperiment}
                   datetime={project.lastExperimentStartedAt}
                   tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
                 />

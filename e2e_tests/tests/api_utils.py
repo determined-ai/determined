@@ -44,6 +44,24 @@ def create_test_user(
     return authentication.Credentials(user.username, password)
 
 
+def assign_user_role(session: api.Session, user: str, role: str, workspace: Optional[str]) -> None:
+    user_assign = api.create_user_assignment_request(
+        session, user=user, role=role, workspace=workspace
+    )
+    req = bindings.v1AssignRolesRequest(userRoleAssignments=user_assign, groupRoleAssignments=[])
+    bindings.post_AssignRoles(session, body=req)
+
+
+def assign_group_role(
+    session: api.Session, group: str, role: str, workspace: Optional[str]
+) -> None:
+    group_assign = api.create_group_assignment_request(
+        session, group=group, role=role, workspace=workspace
+    )
+    req = bindings.v1AssignRolesRequest(userRoleAssignments=[], groupRoleAssignments=group_assign)
+    bindings.post_AssignRoles(session, body=req)
+
+
 def configure_token_store(credentials: authentication.Credentials) -> None:
     """Authenticate the user for CLI usage with the given credentials."""
     token_store = authentication.TokenStore(conf.make_master_url())

@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'determined-ui/Theme';
+import { UIProvider } from 'hew/Theme';
 
 import { User } from 'types';
 
@@ -15,7 +15,7 @@ const testUsers: User[] = [
   },
 ];
 
-vi.mock('determined-ui/Tooltip');
+vi.mock('hew/Tooltip');
 
 const Component = ({ user }: Partial<Props> = {}) => {
   return <UserAvatar hideTooltip={false} user={user} />;

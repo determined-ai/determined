@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from 'determined-ui/Button';
-import { useModal } from 'determined-ui/Modal';
-import { UIProvider } from 'determined-ui/Theme';
+import Button from 'hew/Button';
+import { useModal } from 'hew/Modal';
+import { UIProvider } from 'hew/Theme';
 import React, { useCallback, useEffect } from 'react';
 
 import { setUserPassword as mockSetUserPassword } from 'services/api';

@@ -1,4 +1,4 @@
-import { Modal } from 'determined-ui/Modal';
+import { Modal } from 'hew/Modal';
 import React, { useCallback } from 'react';
 
 import { setProjectNotes } from 'services/api';

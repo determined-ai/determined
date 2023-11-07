@@ -1,9 +1,9 @@
 import { Modal, Tag, Typography } from 'antd';
-import Message from 'determined-ui/Message';
-import Select, { Option, SelectValue } from 'determined-ui/Select';
-import Spinner from 'determined-ui/Spinner';
-import { Loadable } from 'determined-ui/utils/loadable';
-import usePrevious from 'determined-ui/utils/usePrevious';
+import Message from 'hew/Message';
+import Select, { Option, SelectValue } from 'hew/Select';
+import Spinner from 'hew/Spinner';
+import { Loadable } from 'hew/utils/loadable';
+import usePrevious from 'hew/utils/usePrevious';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 

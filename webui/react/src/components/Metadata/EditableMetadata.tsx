@@ -1,4 +1,4 @@
-import Form from 'determined-ui/Form';
+import Form from 'hew/Form';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';

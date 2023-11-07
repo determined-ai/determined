@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import pytest
 
-from determined.cli import command
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from tests import config as conf
@@ -67,10 +66,10 @@ def test_trial_logs() -> None:
 @pytest.mark.parametrize(
     "task_type,task_config,log_regex",
     [
-        (command.TaskTypeCommand, {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
-        (command.TaskTypeNotebook, {}, re.compile("^.*Jupyter Server .* is running.*$")),
-        (command.TaskTypeShell, {}, re.compile("^.*Server listening on.*$")),
-        (command.TaskTypeTensorBoard, {}, re.compile("^.*TensorBoard .* at .*$")),
+        ("command", {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
+        ("notebook", {}, re.compile("^.*Jupyter Server .* is running.*$")),
+        ("shell", {}, re.compile("^.*Server listening on.*$")),
+        ("tensorboard", {}, re.compile("^.*TensorBoard .* at .*$")),
     ],
 )
 def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
@@ -82,7 +81,7 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
     rps = bindings.get_GetResourcePools(session)
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 
-    if task_type == command.TaskTypeTensorBoard:
+    if task_type == "tensorboard":
         exp_id = exp.run_basic_test(
             conf.fixtures_path("no_op/single.yaml"),
             conf.fixtures_path("no_op"),
@@ -90,13 +89,13 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         )
         treq = bindings.v1LaunchTensorboardRequest(config=task_config, experimentIds=[exp_id])
         task_id = bindings.post_LaunchTensorboard(session, body=treq).tensorboard.id
-    elif task_type == command.TaskTypeNotebook:
+    elif task_type == "notebook":
         nreq = bindings.v1LaunchNotebookRequest(config=task_config)
         task_id = bindings.post_LaunchNotebook(session, body=nreq).notebook.id
-    elif task_type == command.TaskTypeCommand:
+    elif task_type == "command":
         creq = bindings.v1LaunchCommandRequest(config=task_config)
         task_id = bindings.post_LaunchCommand(session, body=creq).command.id
-    elif task_type == command.TaskTypeShell:
+    elif task_type == "shell":
         sreq = bindings.v1LaunchShellRequest(config=task_config)
         task_id = bindings.post_LaunchShell(session, body=sreq).shell.id
     else:
@@ -139,7 +138,14 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         raise
 
     finally:
-        command._kill(master_url, task_type, task_id)
+        if task_type == "tensorboard":
+            bindings.post_KillTensorboard(session, tensorboardId=task_id)
+        elif task_type == "notebook":
+            bindings.post_KillNotebook(session, notebookId=task_id)
+        elif task_type == "command":
+            bindings.post_KillCommand(session, commandId=task_id)
+        elif task_type == "shell":
+            bindings.post_KillShell(session, shellId=task_id)
 
 
 def check_logs(

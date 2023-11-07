@@ -1,7 +1,7 @@
-import Form from 'determined-ui/Form';
-import { Modal } from 'determined-ui/Modal';
-import Select, { Option, RefSelectProps } from 'determined-ui/Select';
-import { makeToast } from 'determined-ui/Toast';
+import Form from 'hew/Form';
+import { Modal } from 'hew/Modal';
+import Select, { Option, RefSelectProps } from 'hew/Select';
+import { makeToast } from 'hew/Toast';
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import UserBadge from 'components/UserBadge';

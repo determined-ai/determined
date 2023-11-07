@@ -1,8 +1,8 @@
 import { Select } from 'antd';
-import Form from 'determined-ui/Form';
-import { Modal } from 'determined-ui/Modal';
-import Spinner from 'determined-ui/Spinner';
-import { makeToast } from 'determined-ui/Toast';
+import Form from 'hew/Form';
+import { Modal } from 'hew/Modal';
+import Spinner from 'hew/Spinner';
+import { makeToast } from 'hew/Toast';
 import React, { useEffect, useId } from 'react';
 
 import { updateGroup } from 'services/api';

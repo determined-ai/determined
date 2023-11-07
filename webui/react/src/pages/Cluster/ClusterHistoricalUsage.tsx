@@ -1,7 +1,7 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
-import Button from 'determined-ui/Button';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import Button from 'hew/Button';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/Section';

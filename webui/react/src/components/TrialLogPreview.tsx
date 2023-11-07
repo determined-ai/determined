@@ -3,8 +3,8 @@ import LogViewerEntry, {
   DATETIME_FORMAT,
   LogEntry,
   MAX_DATETIME_LENGTH,
-} from 'determined-ui/LogViewer/LogViewerEntry';
-import Tooltip from 'determined-ui/Tooltip';
+} from 'hew/LogViewer/LogViewerEntry';
+import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';

@@ -1,7 +1,7 @@
-import Button from 'determined-ui/Button';
-import Icon from 'determined-ui/Icon';
-import Spinner from 'determined-ui/Spinner';
-import useUI, { DarkLight } from 'determined-ui/Theme';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
+import Spinner from 'hew/Spinner';
+import useUI, { DarkLight } from 'hew/Theme';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';

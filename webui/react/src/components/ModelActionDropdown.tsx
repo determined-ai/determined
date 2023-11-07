@@ -1,5 +1,5 @@
-import Dropdown, { MenuItem } from 'determined-ui/Dropdown';
-import { useModal } from 'determined-ui/Modal';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
+import { useModal } from 'hew/Modal';
 import React, { useCallback } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';

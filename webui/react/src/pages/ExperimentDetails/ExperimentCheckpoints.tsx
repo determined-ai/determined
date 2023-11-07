@@ -1,6 +1,6 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import { useModal } from 'determined-ui/Modal';
-import useConfirm from 'determined-ui/useConfirm';
+import { useModal } from 'hew/Modal';
+import useConfirm from 'hew/useConfirm';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';

@@ -1,4 +1,4 @@
-import { TagAction, tagsActionHelper } from 'determined-ui/Tags';
+import { TagAction, tagsActionHelper } from 'hew/Tags';
 import { useCallback } from 'react';
 
 import { patchExperiment } from 'services/api';

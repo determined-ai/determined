@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
-import DatePicker from 'determined-ui/DatePicker';
-import Select, { Option, SelectValue } from 'determined-ui/Select';
+import DatePicker from 'hew/DatePicker';
+import Select, { Option, SelectValue } from 'hew/Select';
 import React from 'react';
 
 import ResponsiveFilters from 'components/ResponsiveFilters';

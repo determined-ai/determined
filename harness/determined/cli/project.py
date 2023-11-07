@@ -9,7 +9,7 @@ from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
 
-from .workspace import list_workspace_projects, pagination_args, workspace_by_name
+from .workspace import list_workspace_projects, pagination_args
 
 
 def render_experiments(args: Namespace, experiments: Sequence[bindings.v1Experiment]) -> None:
@@ -61,10 +61,10 @@ def render_project(project: bindings.v1Project) -> None:
 def project_by_name(
     sess: api.Session, workspace_name: str, project_name: str
 ) -> Tuple[bindings.v1Workspace, bindings.v1Project]:
-    w = workspace_by_name(sess, workspace_name)
+    w = api.workspace_by_name(sess, workspace_name)
     p = bindings.get_GetWorkspaceProjects(sess, id=w.id, name=project_name).projects
     if len(p) == 0:
-        raise cli.not_found_errs("project", project_name, sess)
+        raise api.not_found_errs("project", project_name, sess)
     return (w, p[0])
 
 
@@ -102,7 +102,7 @@ def list_project_experiments(args: Namespace) -> None:
 @authentication.required
 def create_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    w = workspace_by_name(sess, args.workspace_name)
+    w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1PostProjectRequest(
         name=args.name, description=args.description, workspaceId=w.id
     )

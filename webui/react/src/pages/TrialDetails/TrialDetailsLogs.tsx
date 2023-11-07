@@ -1,14 +1,10 @@
-import CodeSample from 'determined-ui/CodeSample';
-import LogViewer, {
-  FetchConfig,
-  FetchDirection,
-  FetchType,
-} from 'determined-ui/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'determined-ui/LogViewer/LogViewerSelect';
-import { Settings, settingsConfigForTrial } from 'determined-ui/LogViewer/LogViewerSelect.settings';
-import Spinner from 'determined-ui/Spinner';
-import useUI from 'determined-ui/Theme';
-import useConfirm from 'determined-ui/useConfirm';
+import CodeSample from 'hew/CodeSample';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
+import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
+import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
+import Spinner from 'hew/Spinner';
+import useUI from 'hew/Theme';
+import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useSettings } from 'hooks/useSettings';

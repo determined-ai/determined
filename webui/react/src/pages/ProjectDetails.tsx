@@ -1,7 +1,7 @@
 import type { TabsProps } from 'antd';
-import Message from 'determined-ui/Message';
-import Spinner from 'determined-ui/Spinner';
-import { Loadable, Loaded, NotLoaded } from 'determined-ui/utils/loadable';
+import Message from 'hew/Message';
+import Spinner from 'hew/Spinner';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';

@@ -42,6 +42,7 @@ def test_trial_logs_converts_epoch_time(make_trialref: Callable[[int], trial.Tri
     list(trialref.logs(timestamp_before=before_ts, timestamp_after=after_ts))
 
     call = responses.calls[0]
+    assert isinstance(call, responses.Call)
     assert call.request.params["timestampBefore"] == timestamp_before
     assert call.request.params["timestampAfter"] == timestamp_after
 
