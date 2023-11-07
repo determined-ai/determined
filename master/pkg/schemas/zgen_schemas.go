@@ -1602,7 +1602,7 @@ var (
                 "null"
             ],
             "minimum": 0,
-            "default": 5
+            "default": 1
         },
         "tensor_fusion_threshold": {
             "type": [

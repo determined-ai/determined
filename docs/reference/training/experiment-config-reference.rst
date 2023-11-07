@@ -1442,7 +1442,7 @@ training. Defaults to ``64``.
 ============================
 
 Optional. The delay (in milliseconds) between each tensor fusion during distributed training.
-Defaults to ``5``.
+Defaults to ``1``.
 
 ``auto_tune_tensor_fusion``
 ===========================
