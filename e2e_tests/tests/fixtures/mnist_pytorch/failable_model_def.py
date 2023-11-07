@@ -2,6 +2,7 @@ import logging
 import os
 
 from train import MNistTrial
+
 import determined as det
 from determined import pytorch
 
@@ -29,4 +30,3 @@ if __name__ == "__main__":
             validation_period=pytorch.Batch(1),
             latest_checkpoint=info.latest_checkpoint,
         )
-
