@@ -389,13 +389,13 @@ const ModelDetails: React.FC = () => {
     pageBreadcrumb.push(
       workspace.id === 1
         ? {
-          breadcrumbName: 'Uncategorized Experiments',
-          path: paths.projectDetails(1),
-        }
+            breadcrumbName: 'Uncategorized Experiments',
+            path: paths.projectDetails(1),
+          }
         : {
-          breadcrumbName: workspace.name,
-          path: paths.workspaceDetails(workspace.id),
-        },
+            breadcrumbName: workspace.name,
+            path: paths.workspaceDetails(workspace.id),
+          },
       {
         breadcrumbName: 'Model Registry',
         path:
