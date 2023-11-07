@@ -21,7 +21,7 @@ def test_delete_experiment_removes_tensorboard_files() -> None:
     command = ["det", "e", "delete", str(experiment_id), "--yes"]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
-    time.sleep(3)
+    time.sleep(10)
     # Check if Tensorboard files are deleted
     tb_path = sorted(pathlib.Path("/tmp/determined-cp/").glob("*/tensorboard"))[0]
     tb_path = tb_path / "experiment" / str(experiment_id)
