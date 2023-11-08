@@ -2060,16 +2060,10 @@ jobs:
       - attach_workspace:
           at: .
 
-      - reinstall-go
-
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-
-      - run:
-          name: Get master dependencies
-          command: make -C master get-deps
 
       - install-devcluster
       - unless:
