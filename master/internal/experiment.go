@@ -719,8 +719,10 @@ func (e *internalExperiment) restoreTrials() {
 func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
 	var continueFromTrialID *int
 	if e.continueTrials {
-		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID); {
+		case errors.Is(err, sql.ErrNoRows):
+		// Trial doesn't exist, don't do anything
+		case err != nil:
 			e.updateState(model.StateWithReason{
 				State: model.StoppingErrorState,
 				InformationalReason: fmt.Sprintf(
@@ -728,12 +730,13 @@ func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*i
 			})
 			e.syslog.Error(err)
 			return nil, true
-		}
-		if trial.State != model.CompletedState {
-			continueFromTrialID = &trial.ID
-		} else {
-			e.trialClosed(reqID, nil)
-			return nil, true
+		case err == nil:
+			if trial.State != model.CompletedState {
+				continueFromTrialID = &trial.ID
+			} else {
+				e.trialClosed(reqID, nil)
+				return nil, true
+			}
 		}
 	}
 	return continueFromTrialID, false
