@@ -113,7 +113,7 @@ func (cs *CommandService) createGenericCommand(
 
 func (cs *CommandService) unregisterCommand(id model.TaskID) {
 	cs.mu.Lock()
-	defer cs.mu.Lock()
+	defer cs.mu.Unlock()
 
 	delete(cs.commands, id)
 }
