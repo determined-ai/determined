@@ -144,6 +144,7 @@ export class FilterFormStore {
   #updateForm(
     match: MatchFunc<FormField | FormGroup>,
     patch: PatchFunc<FormField | FormGroup>,
+    autoSweep?: boolean,
   ): void {
     this.#formset.update((loadableFilterSet) => {
       return Loadable.map(loadableFilterSet, (filterSet) => {
@@ -177,15 +178,17 @@ export class FilterFormStore {
         if (filterGroup.kind === FormKind.Field) {
           throw new Error('patch changed base filter group to field');
         }
-        const updatedSet = {
+        let updatedSet = {
           ...filterSet,
           filterGroup,
         };
-        const retval = {
-          ...updatedSet,
-          ...this.#sweepInvalid(updatedSet.filterGroup),
-        };
-        return retval;
+        if (autoSweep) {
+          updatedSet = {
+            ...updatedSet,
+            filterGroup: { ...this.#sweepInvalid(updatedSet.filterGroup) },
+          };
+        }
+        return updatedSet;
       });
     });
   }
@@ -269,6 +272,7 @@ export class FilterFormStore {
     this.#updateForm(
       (field) => field.kind === FormKind.Field && field.columnName === column,
       () => undefined,
+      true,
     );
   }
 
