@@ -65,7 +65,7 @@ import { LinkCell } from './custom-renderers/cells/linkCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
-import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
+import { BANNED_SORT_COLUMNS, Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
@@ -343,6 +343,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
+      const filterCount = formStore.getFieldCount(column.column).get();
+
       const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
       const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
@@ -367,38 +369,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onIsOpenFilterChange?.(true);
         setMenuIsOpen(false);
       };
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
 
       const items: MenuItem[] = [
-        ...(BANNED_FILTER_COLUMNS.includes(column.column)
-          ? []
-          : [
-              ...sortMenuItemsForColumn(column, sorts, onSortChange),
-              { type: 'divider' as const },
-              {
-                icon: <Icon decorative name="filter" />,
-                key: 'filter',
-                label: 'Filter by this column',
-                onClick: () => {
-                  setTimeout(() => {
-                    filterMenuItemsForColumn();
-                  }, 5);
-                },
-              },
-            ]),
-        heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
-          ? {
-              icon: <Icon decorative name="heatmap" />,
-              key: 'heatmap',
-              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
-              onClick: () => {
-                toggleHeatmap(column.column);
-              },
-            }
-          : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length || isMobile
           ? null
@@ -430,6 +405,50 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 setMenuIsOpen(false);
               },
             },
+        ...(BANNED_SORT_COLUMNS.has(column.column)
+          ? []
+          : [{ type: 'divider' as const }, ...sortMenuItemsForColumn(column, sorts, onSortChange)]),
+        ...(BANNED_FILTER_COLUMNS.includes(column.column)
+          ? []
+          : [
+              { type: 'divider' as const },
+              {
+                icon: <Icon decorative name="filter" />,
+                key: 'filter',
+                label: 'Add Filter',
+                onClick: () => {
+                  setTimeout(() => {
+                    filterMenuItemsForColumn();
+                  }, 5);
+                },
+              },
+            ]),
+        filterCount > 0
+          ? {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter-clear',
+              label: `Clear Filter (${filterCount})`,
+              onClick: () => {
+                setTimeout(() => {
+                  clearFilterForColumn();
+                }, 5);
+              },
+            }
+          : null,
+        heatmapOn &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
+          ? {
+              icon: <Icon decorative name="heatmap" />,
+              key: 'heatmap',
+              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+              onClick: () => {
+                toggleHeatmap(column.column);
+              },
+            }
+          : null,
       ];
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);

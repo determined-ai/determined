@@ -11,6 +11,7 @@ import {
   FormFieldValue,
   FormGroup,
   FormKind,
+  MatchFunc,
   Operator,
   PatchFunc,
 } from 'components/FilterForm/components/type';
@@ -74,15 +75,19 @@ export class FilterFormStore {
   }
 
   public get fieldCount(): Observable<number> {
-    return this.getFieldCount()
+    return this.getFieldCount();
   }
 
-  public getFieldCount(): Observable<number>;
-  public getFieldCount(field?: string): Observable<number>{
+  public getFieldCount(field?: string): Observable<number> {
     const countFields = (form: Readonly<FormGroup>): number => {
       let count = 0;
       for (const child of form.children) {
-        count += child.kind === FormKind.Group ? countFields(child) : ((!field || field === child.columnName) ? 1 : 0);
+        count +=
+          child.kind === FormKind.Group
+            ? countFields(child)
+            : !field || field === child.columnName
+            ? 1
+            : 0;
       }
       return count;
     };
@@ -94,7 +99,7 @@ export class FilterFormStore {
           return countFields(validFilterGroup);
         },
       }),
-    ); 
+    );
   }
 
   #isValid(form: Readonly<FormGroup | FormField>): boolean {
@@ -136,14 +141,16 @@ export class FilterFormStore {
     );
   }
 
-  #updateForm(id: string, patch: PatchFunc<FormField | FormGroup>): void {
+  #updateForm(
+    match: MatchFunc<FormField | FormGroup>,
+    patch: PatchFunc<FormField | FormGroup>,
+  ): void {
     this.#formset.update((loadableFilterSet) => {
       return Loadable.map(loadableFilterSet, (filterSet) => {
         // keep updates to a minimum -- ids should be unique, so all following traversal should have no effect
         let hit = false;
         const traverse = (entity: FormGroup | FormField): FormGroup | FormField | undefined => {
-          if (hit) return entity;
-          if (entity.id === id) {
+          if (match(entity)) {
             const retVal = patch(entity);
             if (entity !== retVal) {
               hit = true;
@@ -153,12 +160,11 @@ export class FilterFormStore {
           }
           if (entity.kind === FormKind.Group) {
             const children = entity.children.map(traverse).filter(isNotUndefined);
-            if (hit) {
-              return {
-                ...entity,
-                children,
-              };
-            }
+
+            return {
+              ...entity,
+              children,
+            };
           }
           return entity;
         };
@@ -171,30 +177,41 @@ export class FilterFormStore {
         if (filterGroup.kind === FormKind.Field) {
           throw new Error('patch changed base filter group to field');
         }
-        return {
+        const updatedSet = {
           ...filterSet,
           filterGroup,
         };
+        const retval = {
+          ...updatedSet,
+          ...this.#sweepInvalid(updatedSet.filterGroup),
+        };
+        return retval;
       });
     });
   }
 
   #updateField(id: string, patch: PatchFunc<FormField>): void {
-    return this.#updateForm(id, (arg) => {
-      if (arg.kind === FormKind.Group) {
-        return arg;
-      }
-      return patch(arg);
-    });
+    return this.#updateForm(
+      (field) => field.id === id,
+      (arg) => {
+        if (arg.kind === FormKind.Group) {
+          return arg;
+        }
+        return patch(arg);
+      },
+    );
   }
 
   #updateGroup(id: string, patch: PatchFunc<FormGroup>): void {
-    return this.#updateForm(id, (arg) => {
-      if (arg.kind === FormKind.Field) {
-        return arg;
-      }
-      return patch(arg);
-    });
+    return this.#updateForm(
+      (field) => field.id === id,
+      (arg) => {
+        if (arg.kind === FormKind.Field) {
+          return arg;
+        }
+        return patch(arg);
+      },
+    );
   }
 
   public setFieldColumnName(
@@ -235,7 +252,6 @@ export class FilterFormStore {
     addType: FormKind,
     obj?: { index: number; item: Readonly<FormGroup | FormField> },
   ): void {
-    console.log({id, addType, obj})
     return this.#updateGroup(id, (form) => {
       const children = obj
         ? form.children
@@ -249,9 +265,18 @@ export class FilterFormStore {
     });
   }
 
+  public removeByField(column: string): void {
+    this.#updateForm(
+      (field) => field.kind === FormKind.Field && field.columnName === column,
+      () => undefined,
+    );
+  }
+
   public removeChild(id: string): void {
-    console.log({id})
-    this.#updateForm(id, () => undefined);
+    this.#updateForm(
+      (field) => field.id === id,
+      () => undefined,
+    );
   }
 
   public setArchivedValue(val: boolean): void {

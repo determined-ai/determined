@@ -11,7 +11,7 @@ import { ProjectColumn } from 'types';
 import css from './MultiSortMenu.module.scss';
 
 // in the list of columns from the api but not supported by the sort functionality
-const BANNED_SORT_COLUMNS = new Set(['tags']);
+export const BANNED_SORT_COLUMNS = new Set(['tags']);
 
 const directionType = io.keyof({ asc: null, desc: null });
 export type DirectionType = io.TypeOf<typeof directionType>;
