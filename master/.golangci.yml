@@ -93,15 +93,15 @@ linters:
     #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
 
     # Linters that we should probably enable. Please give each a ticket.
-    - cyclop          # TODO(DET-!!!)
-    - errorlint       # TODO(DET-!!!)
-    - forcetypeassert # TODO(DET-!!!)
-    - wrapcheck       # TODO(DET-!!!)
-    - maintidx        # TODO(DET-!!!)
-    - gocyclo         # TODO(DET-!!!)
-    - gocognit        # TODO(DET-!!!)
-    - funlen          # TODO(DET-!!!)
-    - nestif          # TODO(DET-!!!)
+    - cyclop          # TODO(DET-9951)
+    - errorlint       # TODO(DET-9952)
+    - forcetypeassert # TODO(DET-9953)
+    - wrapcheck       # TODO(DET-9954)
+    - maintidx        # TODO(DET-9956)
+    - gocyclo         # TODO(DET-9957)
+    - gocognit        # TODO(DET-9958)
+    - funlen          # TODO(DET-9959)
+    - nestif          # TODO(DET-9960)
 
     # Toss up linters.
     - predeclared
