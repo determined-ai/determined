@@ -154,7 +154,6 @@ class ModelSortBy(enum.Enum):
     Specifies the field to sort a list of models on.
 
     Attributes:
-        UNSPECIFIED
         NAME
         DESCRIPTION
         CREATION_TIME
@@ -162,7 +161,6 @@ class ModelSortBy(enum.Enum):
         WORKSPACE
     """
 
-    UNSPECIFIED = bindings.v1GetModelsRequestSortBy.UNSPECIFIED.value
     NAME = bindings.v1GetModelsRequestSortBy.NAME.value
     DESCRIPTION = bindings.v1GetModelsRequestSortBy.DESCRIPTION.value
     CREATION_TIME = bindings.v1GetModelsRequestSortBy.CREATION_TIME.value
