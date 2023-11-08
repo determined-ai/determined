@@ -100,13 +100,13 @@ func (a *JobAuthZRBAC) FilterJobs(
 	for _, job := range jobs {
 		switch job.Type {
 		case jobv1.Type_TYPE_EXPERIMENT:
-			viewable, _ := viewableExpWorkspaces[int(job.WorkspaceId)]
+			viewable := viewableExpWorkspaces[int(job.WorkspaceId)]
 			if userHasGlobalExpViewPerm || viewable {
 				viewableJobs = append(viewableJobs, job)
 			}
 		case jobv1.Type_TYPE_NOTEBOOK, jobv1.Type_TYPE_TENSORBOARD, jobv1.Type_TYPE_SHELL,
 			jobv1.Type_TYPE_COMMAND:
-			viewable, _ := viewableNtscWorkspaces[model.AccessScopeID(job.WorkspaceId)]
+			viewable := viewableNtscWorkspaces[model.AccessScopeID(job.WorkspaceId)]
 			if userHasGlobalNTSCViewPerm || viewable {
 				viewableJobs = append(viewableJobs, job)
 			}

@@ -21,8 +21,8 @@ func init() {
 	AuthZProvider.Register("rbac", &WorkspaceAuthZRBAC{})
 }
 
-// ErrorLookup is the error returned when a user's permissions couldn't be looked up.
-var ErrorLookup = errors.New("error looking up user's permissions")
+// ErrLookup is the error returned when a user's permissions couldn't be looked up.
+var ErrLookup = errors.New("error looking up user's permissions")
 
 // WorkspaceAuthZRBAC is the RBAC implementation of WorkspaceAuthZ.
 type WorkspaceAuthZRBAC struct{}
@@ -49,7 +49,7 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaceProjects(
 	workspaceIDs, err := workspacesUserHasPermissionOn(ctx, curUser.ID,
 		workspaceIDsFromProjects(projects), rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT)
 	if err != nil {
-		return nil, errors.Wrap(err, ErrorLookup.Error())
+		return nil, errors.Wrap(err, ErrLookup.Error())
 	}
 
 	result := make([]*projectv1.Project, 0, len(projects))
@@ -85,7 +85,7 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
 	ids, err := workspacesUserHasPermissionOn(ctx, curUser.ID, workspaceIDs,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 	if err != nil {
-		return nil, errors.Wrap(err, ErrorLookup.Error())
+		return nil, errors.Wrap(err, ErrLookup.Error())
 	}
 	if len(ids) == len(workspaces) {
 		return workspaces, nil
@@ -122,7 +122,7 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaceIDs(
 	ids, err := workspacesUserHasPermissionOn(ctx, curUser.ID, workspaceIDs,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 	if err != nil {
-		return nil, errors.Wrap(err, ErrorLookup.Error())
+		return nil, errors.Wrap(err, ErrLookup.Error())
 	}
 	if len(ids) == len(workspaceIDs) {
 		return workspaceIDs, nil
@@ -387,7 +387,7 @@ func workspacesUserHasPermissionOn(ctx context.Context, uid model.UserID,
 
 	summary, err := rbac.GetPermissionSummary(ctx, uid)
 	if err != nil {
-		return nil, errors.Wrap(err, ErrorLookup.Error())
+		return nil, errors.Wrap(err, ErrLookup.Error())
 	}
 
 	workspacesWithPermission := make(map[int32]bool)

@@ -111,7 +111,7 @@ func (a *ModelAuthZRBAC) CanGetModel(ctx context.Context, curUser model.User,
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY})
 	defer func() {
 		if err == nil || authz.IsPermissionDenied(err) {
-			fields["permissionGranted"] = (authz.IsPermissionDenied(err) == false)
+			fields["permissionGranted"] = !authz.IsPermissionDenied(err)
 			audit.Log(fields)
 		}
 	}()

@@ -62,7 +62,7 @@ func IsRBACLog(entry *logrus.Entry) bool {
 // IsRBACPermissionDenied determines whether the log entry is an RBAC log that indicates
 // permission was denied.
 func IsRBACPermissionDenied(entry *logrus.Entry) bool {
-	return entry.Data["permissionGranted"] != nil && entry.Data["permissionGranted"].(bool) != true
+	return entry.Data["permissionGranted"] != nil && !entry.Data["permissionGranted"].(bool)
 }
 
 // Log is a convenience function for logging to logrus.

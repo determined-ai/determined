@@ -68,7 +68,7 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 	defer func() {
 		if err == nil || authz.IsPermissionDenied(err) {
-			fields["permissionGranted"] = (authz.IsPermissionDenied(err) == false)
+			fields["permissionGranted"] = !authz.IsPermissionDenied(err)
 			audit.Log(fields)
 		}
 	}()
