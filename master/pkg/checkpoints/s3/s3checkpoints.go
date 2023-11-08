@@ -39,7 +39,7 @@ func GetS3BucketRegion(ctx context.Context, bucket string) (string, error) {
 		Region: aws.String("us-west-2"),
 	})
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	out, err := s3.New(sess).GetBucketLocationWithContext(ctx, &s3.GetBucketLocationInput{

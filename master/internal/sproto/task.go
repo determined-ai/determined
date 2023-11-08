@@ -136,7 +136,7 @@ func (*ReleaseResources) ResourcesEvent() {}
 func (*ResourcesStateChanged) ResourcesEvent() {}
 
 // ResourcesEvent implements ResourcesEvent.
-func (*ResourcesFailure) ResourcesEvent() {}
+func (*ResourcesFailureError) ResourcesEvent() {}
 
 // ResourcesEvent implements ResourcesEvent.
 func (*ContainerLog) ResourcesEvent() {}

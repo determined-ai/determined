@@ -1033,7 +1033,7 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 			JobID:    e.JobID,
 		}).(type) {
 		case nil:
-		case rmerrors.ErrUnsupported:
+		case rmerrors.UnsupportedError:
 			e.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
@@ -1059,7 +1059,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		JobID:  e.JobID,
 	}).(type) {
 	case nil:
-	case rmerrors.ErrUnsupported:
+	case rmerrors.UnsupportedError:
 		e.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		resources.SetWeight(oldWeight)

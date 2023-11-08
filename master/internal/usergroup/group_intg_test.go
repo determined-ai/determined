@@ -264,13 +264,13 @@ func TestUserGroups(t *testing.T) {
 	t.Run("update groups and memberships", func(t *testing.T) {
 		updateTestUser1 := model.User{
 			ID:       9861724,
-			Username: fmt.Sprintf("IntegrationTest#{9861724}"),
+			Username: "IntegrationTest#{9861724}",
 			Admin:    false,
 			Active:   false,
 		}
 		updateTestUser2 := model.User{
 			ID:       16780345,
-			Username: fmt.Sprintf("IntegrationTest#{16780345}"),
+			Username: "IntegrationTest#{16780345}",
 			Admin:    false,
 			Active:   false,
 		}

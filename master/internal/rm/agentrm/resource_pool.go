@@ -140,7 +140,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
-			rmevents.Publish(msg.AllocationID, &sproto.ResourcesFailure{
+			rmevents.Publish(msg.AllocationID, &sproto.ResourcesFailureError{
 				FailureType: sproto.RestoreError,
 				ErrMsg:      err.Error(),
 				ExitCode:    nil,

@@ -33,7 +33,7 @@ const determinedName = "determined"
 
 var (
 	errExternalSessions = status.Error(codes.PermissionDenied, "not enabled with external sessions")
-	latinText           = regexp.MustCompile("[^[:graph:]\\s]")
+	latinText           = regexp.MustCompile(`[^[:graph:]\s]`)
 )
 
 func clearUsername(targetUser model.User, name string, minLength int) (*string, error) {

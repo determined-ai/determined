@@ -19,7 +19,7 @@ func TestResponseTimeout(t *testing.T) {
 	}))
 	start := time.Now()
 	result, ok := system.Ask(ref, "").GetOrElseTimeout(true, 1*time.Millisecond)
-	duration := time.Now().Sub(start)
+	duration := time.Since(start)
 	assert.Assert(t, duration < sleepDuration, "test duration: %d ms", duration.Milliseconds())
 	assert.Assert(t, result.(bool))
 	assert.Assert(t, !ok)
@@ -36,7 +36,7 @@ func TestResponseTimeoutOk(t *testing.T) {
 	start := time.Now()
 	timeoutDuration := 1 * time.Second
 	result, ok := system.Ask(ref, "").GetOrElseTimeout(true, timeoutDuration)
-	duration := time.Now().Sub(start)
+	duration := time.Since(start)
 	assert.Assert(t, duration < timeoutDuration, "test duration: %d ms", duration.Milliseconds())
 	assert.Assert(t, result.(bool) == false)
 	assert.Assert(t, ok)
