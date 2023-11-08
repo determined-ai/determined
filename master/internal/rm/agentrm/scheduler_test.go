@@ -41,9 +41,11 @@ func setupResourcePool(
 		}
 	}
 
+	agentsRef, _ := system.ActorOf(sproto.AgentsAddr, actor.ActorFunc(func(context *actor.Context) error { return nil }))
+
 	rp := newResourcePool(
 		conf, db, nil, MakeScheduler(conf.Scheduler),
-		MakeFitFunction(conf.Scheduler.FittingPolicy))
+		MakeFitFunction(conf.Scheduler.FittingPolicy), agentsRef)
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)
@@ -69,7 +71,7 @@ func forceAddAgent(
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(agentID), &MockAgent{ID: agentID, Slots: numSlots})
 	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref}, 100)
+	state := newAgentState(ref, 100)
 	for i := 0; i < numSlots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -99,7 +101,7 @@ func newFakeAgentState(
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(id), &MockAgent{ID: id, Slots: slots})
 	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref}, maxZeroSlotContainers)
+	state := newAgentState(ref, maxZeroSlotContainers)
 	for i := 0; i < slots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -478,9 +480,7 @@ func setupSchedulerStates(
 		ref, created := system.ActorOf(actor.Addr(mockAgent.ID), mockAgent)
 		assert.Assert(t, created)
 
-		agent := newAgentState(sproto.AddAgent{
-			Agent: ref,
-		}, mockAgent.MaxZeroSlotContainers)
+		agent := newAgentState(ref, mockAgent.MaxZeroSlotContainers)
 
 		for i := 0; i < mockAgent.Slots; i++ {
 			agent.Devices[device.Device{ID: device.ID(i)}] = nil

@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/master/pkg/ws"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -33,7 +34,7 @@ import (
 type (
 	agent struct {
 		address          string
-		resourcePool     *actor.Ref
+		updates          *queue.Queue[agentUpdatedEvent]
 		socket           *ws.WebSocket[*aproto.MasterMessage, aproto.AgentMessage]
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
@@ -125,7 +126,12 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
 			// agentReconnectWait if it never reconnects.
 			// Ensure RP is aware of the agent.
-			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self()}).Get()
+			ctx.Log().Infof("adding agent: %s", a.agentState.agentID())
+			err := a.updateAgentStartStats(a.resourcePoolName, ctx.Self().Address().Local(), a.agentState.numSlots())
+			if err != nil {
+				ctx.Log().WithError(err).Error("failed to update agent start stats")
+			}
+			a.notifyListeners()
 			a.socketDisconnected(ctx)
 		}
 	case model.AgentSummary:
@@ -231,11 +237,11 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 				}
 			}
 			a.reconnectBacklog = nil
-			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+			a.notifyListeners()
 		}
 
 	case socketDisconnect:
-		defer ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+		defer a.notifyListeners()
 		defer a.socketDisconnected(ctx)
 
 		err := a.socket.Close()
@@ -332,7 +338,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			drain:   &a.agentState.draining,
 		})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
-		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+		a.notifyListeners()
 	case *proto.DisableAgentRequest:
 		if a.awaitingReconnect {
 			ctx.Respond(errRecovering)
@@ -361,7 +367,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
-		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+		a.notifyListeners()
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 
@@ -463,7 +469,12 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			}
 		}
 
-		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
+		ctx.Log().Infof("removing agent: %s", a.agentState.agentID())
+		err := a.updateAgentEndStats(ctx.Self().Address().Local())
+		if err != nil {
+			ctx.Log().WithError(err).Error("failed to update agent end stats")
+		}
+		a.notifyListeners()
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -598,15 +609,16 @@ func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
 }
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
-	a.agentState = newAgentState(
-		sproto.AddAgent{Agent: ctx.Self()},
-		a.maxZeroSlotContainers)
+	a.agentState = newAgentState(ctx.Self(), a.maxZeroSlotContainers)
 	a.agentState.resourcePoolName = a.resourcePoolName
 	a.agentState.agentStarted(agentStarted)
-	ctx.Tell(a.resourcePool, sproto.AddAgent{
-		Agent: ctx.Self(),
-		Slots: a.agentState.numSlots(),
-	})
+
+	ctx.Log().Infof("adding agent: %s", a.agentState.agentID())
+	err := a.updateAgentStartStats(a.resourcePoolName, ctx.Self().Address().Local(), a.agentState.numSlots())
+	if err != nil {
+		ctx.Log().WithError(err).Error("failed to update agent start stats")
+	}
+	a.notifyListeners()
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
@@ -794,5 +806,24 @@ func (a *agent) socketDisconnected(ctx *actor.Context) {
 		enabled: &a.agentState.enabled,
 		drain:   &a.agentState.draining,
 	})
-	ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+}
+
+func (a *agent) notifyListeners() {
+	a.updates.Put(agentUpdatedEvent{resourcePool: a.resourcePoolName})
+}
+
+func (a *agent) updateAgentStartStats(
+	poolName string, agentID string, slots int,
+) error {
+	return db.SingleDB().RecordAgentStats(&model.AgentStats{
+		ResourcePool: poolName,
+		AgentID:      agentID,
+		Slots:        slots,
+	})
+}
+
+func (a *agent) updateAgentEndStats(agentID string) error {
+	return db.EndAgentStats(&model.AgentStats{
+		AgentID: agentID,
+	})
 }

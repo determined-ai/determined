@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -41,7 +40,7 @@ type resourcePool struct {
 	provisioner      *provisioner.Provisioner
 	provisionerError error
 
-	agents           map[*actor.Ref]bool
+	agentsRef        *actor.Ref
 	agentStatesCache map[*actor.Ref]*agentState
 	taskList         *tasklist.TaskList
 	groups           map[model.JobID]*tasklist.Group
@@ -74,6 +73,7 @@ func newResourcePool(
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
+	agentsRef *actor.Ref,
 ) *resourcePool {
 	d := &resourcePool{
 		config: config,
@@ -82,7 +82,7 @@ func newResourcePool(
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
 
-		agents:         make(map[*actor.Ref]bool),
+		agentsRef:      agentsRef,
 		taskList:       tasklist.New(),
 		groups:         make(map[model.JobID]*tasklist.Group),
 		queuePositions: tasklist.InitializeJobSortState(false),
@@ -431,12 +431,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		return err
 
 	case
-		sproto.AddAgent,
-		sproto.RemoveAgent,
-		sproto.UpdateAgent:
-		return rp.receiveAgentMsg(ctx)
-
-	case
 		sproto.SetGroupMaxSlots,
 		sproto.SetAllocationName,
 		sproto.AllocateRequest,
@@ -526,12 +520,9 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			SlotsAvailable:   totalSlots,
 		})
 
-	case aproto.GetRPConfig:
-		reschedule = false
-		ctx.Respond(aproto.GetRPResponse{
-			AgentReconnectWait:    rp.config.AgentReconnectWait,
-			MaxZeroSlotContainers: rp.config.MaxAuxContainersPerAgent,
-		})
+	case agentUpdatedEvent:
+		// Used to notify the resource pool that it should refresh agent states and reschedule on the next tick.
+		reschedule = true
 
 	case schedulerTick:
 		if rp.provisioner != nil {
@@ -581,53 +572,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		return actor.ErrUnexpectedMessage(ctx)
 	}
-	return nil
-}
-
-func (rp *resourcePool) receiveAgentMsg(ctx *actor.Context) error {
-	var agentID string
-	switch msg := ctx.Message().(type) {
-	// TODO(ilia): I hope go will have a good way to do this one day.
-	case sproto.AddAgent:
-		agentID = msg.Agent.Address().Local()
-	case sproto.RemoveAgent:
-		agentID = msg.Agent.Address().Local()
-	case sproto.UpdateAgent:
-		agentID = msg.Agent.Address().Local()
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	logger := ctx.Log().WithField("agent-id", agentID)
-
-	switch msg := ctx.Message().(type) {
-	case sproto.AddAgent:
-		// agent_id is logged in the unstructured message because this log line is used by
-		// some scripts that parse the logs for GPU usage stats.
-		logger.Infof("adding agent: %s", agentID)
-		rp.agents[msg.Agent] = true
-		err := rp.updateAgentStartStats(rp.config.PoolName, agentID, msg.Slots)
-		if err != nil {
-			logger.WithError(err).Error("failed to update agent start stats")
-		}
-	case sproto.RemoveAgent:
-		logger.Infof("removing agent: %s", agentID)
-
-		delete(rp.agents, msg.Agent)
-		err := rp.updateAgentEndStats(agentID)
-		if err != nil {
-			logger.WithError(err).Error("failed to update agent end stats")
-		}
-	case sproto.UpdateAgent:
-		_, ok := rp.agents[msg.Agent]
-		if !ok {
-			logger.Warn("received update on unknown agent")
-		} else {
-			logger.Debug("updating agent")
-		}
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-
 	return nil
 }
 
@@ -805,28 +749,12 @@ func (rp *resourcePool) JobStopped(jobID model.JobID) {
 	delete(rp.queuePositions, jobID)
 }
 
-func (rp *resourcePool) updateAgentStartStats(
-	poolName string, agentID string, slots int,
-) error {
-	return rp.db.RecordAgentStats(&model.AgentStats{
-		ResourcePool: poolName,
-		AgentID:      agentID,
-		Slots:        slots,
-	})
-}
-
-func (rp *resourcePool) updateAgentEndStats(agentID string) error {
-	return db.EndAgentStats(&model.AgentStats{
-		AgentID: agentID,
-	})
-}
-
 func (rp *resourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*agentState {
-	agents := maps.Keys(rp.agents)
+	agents := rp.agentsRef.Children()
 
 	responses := ctx.AskAll(getAgentState{}, agents...).GetAll()
 
-	result := make(map[*actor.Ref]*agentState, len(rp.agents))
+	result := make(map[*actor.Ref]*agentState, len(agents))
 	for ref, msg := range responses {
 		switch msg := msg.(type) {
 		case *agentState:
