@@ -57,7 +57,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	configYAML string,
 	projectID *int,
 ) (
-	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, error,
+	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
 	defer func() {
 		debug.PrintStack()
@@ -77,13 +77,14 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	if err != nil {
 		return nil,
 			nil,
+			nil,
 			status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
 
 	workspaceID := 1 // TODO convert projectID to workspaceID here
 	agentUserGroup, err := user.GetAgentUserGroup(ctx, userModel.ID, workspaceID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Validate the resource configuration.
@@ -92,7 +93,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	poolName, err := a.m.rm.ResolveResourcePool(
 		resources.ResourcePool, workspaceID, resources.SlotsPerTask)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
@@ -102,12 +103,12 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("checking resource availability: %v", err.Error())
+		return nil, nil, nil, fmt.Errorf("checking resource availability: %v", err.Error())
 	}
 	if a.m.config.ResourceManager.AgentRM != nil &&
 		a.m.config.LaunchError &&
 		len(launchWarnings) > 0 {
-		return nil, nil, fmt.Errorf("slots requested exceeds cluster capacity")
+		return nil, nil, nil, fmt.Errorf("slots requested exceeds cluster capacity")
 	}
 
 	// Get the base TaskSpec.
@@ -116,7 +117,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		a.m.config.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting TaskContainerDefaults: %v", err)
+		return nil, nil, nil, fmt.Errorf("getting TaskContainerDefaults: %v", err)
 	}
 	taskSpec := *a.m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
@@ -129,7 +130,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	// TODO don't remove defaults with this.
 	if err := yaml.Unmarshal([]byte(configYAML), &taskConfig); err != nil {
-		return nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
+		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
 	}
 
 	// Copy discovered (default) resource pool name and slot count.
@@ -152,14 +153,14 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		workdirSetInReq := taskConfig.WorkDir != nil &&
 			(workDirInDefaults == nil || *workDirInDefaults != *taskConfig.WorkDir)
 		if workdirSetInReq {
-			return nil, nil, status.Errorf(codes.InvalidArgument,
+			return nil, nil, nil, status.Errorf(codes.InvalidArgument,
 				"cannot set work_dir and context directory at the same time")
 		}
 		taskConfig.WorkDir = nil
 
 		contextDirectoryBytes, err = archive.ToTarGz(userFiles)
 		if err != nil {
-			return nil, nil, status.Errorf(codes.InvalidArgument,
+			return nil, nil, nil, status.Errorf(codes.InvalidArgument,
 				fmt.Errorf("compressing files context files: %w", err).Error())
 		}
 	}
@@ -169,7 +170,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	if extConfig.Enabled() {
 		token, err = grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
-			return nil, nil, status.Errorf(codes.Internal,
+			return nil, nil, nil, status.Errorf(codes.Internal,
 				errors.Wrapf(err,
 					"unable to get external user token").Error())
 		}
@@ -177,7 +178,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	} else {
 		token, err = user.StartSession(ctx, userModel)
 		if err != nil {
-			return nil, nil, status.Errorf(codes.Internal,
+			return nil, nil, nil, status.Errorf(codes.Internal,
 				errors.Wrapf(err,
 					"unable to create user session inside task").Error())
 		}
@@ -186,6 +187,47 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	genericTaskSpec.Base = taskSpec
 	genericTaskSpec.GenericTaskConfig = taskConfig
+
+	return genericTaskSpec, launchWarnings, contextDirectoryBytes, nil
+}
+
+func (a *apiServer) CreateGenericTask(
+	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
+) (*apiv1.CreateGenericTaskResponse, error) {
+	// Parse launch commnads.
+	var projectID *int
+	if req.ProjectId != nil {
+		projectID = ptrs.Ptr(int(*req.ProjectId))
+	}
+	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
+		ctx, req.ContextDirectory, req.Config, projectID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(warnings) > 0 {
+		return nil, nil // TODO warnings
+	}
+	// TODO rbac check.
+
+	// Maybe fill in description?
+
+	// TODO do we need to wrap entrypoint with a custom wrapper?
+	// If we do it feels like a weird place to do it
+
+	if err := check.Validate(genericTaskSpec.GenericTaskConfig); err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid generic task config: %s",
+			err.Error(),
+		)
+	}
+
+	genericTaskSpec.Base.ExtraEnvVars = map[string]string{
+		"DET_TASK_TYPE": string(model.TaskTypeGeneric),
+	}
+
+	// Persist the task.
 
 	taskID := model.NewTaskID()
 	jobID := model.NewJobID()
@@ -221,50 +263,8 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("persisting task information: %w", err)
+		return nil, fmt.Errorf("persisting task information: %w", err)
 	}
-
-	return genericTaskSpec, launchWarnings, nil
-}
-
-func (a *apiServer) CreateGenericTask(
-	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
-) (*apiv1.CreateGenericTaskResponse, error) {
-	// Parse launch commnads.
-	var projectID *int
-	if req.ProjectId != nil {
-		projectID = ptrs.Ptr(int(*req.ProjectId))
-	}
-	genericTaskSpec, warnings, err := a.getGenericTaskLaunchParameters(
-		ctx, req.ContextDirectory, req.Config, projectID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(warnings) > 0 {
-		return nil, nil // TODO warnings
-	}
-	// TODO rbac check.
-
-	// Maybe fill in description?
-
-	// TODO do we need to wrap entrypoint with a custom wrapper?
-	// If we do it feels like a weird place to do it
-
-	if err := check.Validate(genericTaskSpec.GenericTaskConfig); err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"invalid generic task config: %s",
-			err.Error(),
-		)
-	}
-
-	genericTaskSpec.Base.ExtraEnvVars = map[string]string{
-		"DET_TASK_TYPE": string(model.TaskTypeGeneric),
-	}
-
-	// Persist the task.
-
 	// TODO actually create the task
 
 	return &apiv1.CreateGenericTaskResponse{}, nil

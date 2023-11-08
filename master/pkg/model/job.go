@@ -37,7 +37,7 @@ const (
 	JobTypeExperiment JobType = "EXPERIMENT"
 	// JobTypeCheckpointGC is the "CheckpointGC" job type for enum.job_type in Postgres.
 	JobTypeCheckpointGC JobType = "CHECKPOINT_GC"
-	JobTypeGeneric      JobType = "CHECKPOINT_GC"
+	JobTypeGeneric      JobType = "GENERIC"
 )
 
 // Proto returns the proto representation of the job type.
