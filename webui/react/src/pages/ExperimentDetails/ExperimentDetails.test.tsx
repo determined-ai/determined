@@ -10,7 +10,7 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import { } from 'stores/cluster';
+import {} from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';

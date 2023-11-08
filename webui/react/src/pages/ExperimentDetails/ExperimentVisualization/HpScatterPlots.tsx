@@ -1,6 +1,6 @@
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'components/ThemeProvider';;
+import useUI from 'components/ThemeProvider';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GalleryModal from 'components/GalleryModal';

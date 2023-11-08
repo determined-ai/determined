@@ -1,4 +1,4 @@
-import useUI from 'components/ThemeProvider';;
+import useUI from 'components/ThemeProvider';
 import { useCallback, useEffect, useRef } from 'react';
 
 type PollingFn = (() => Promise<void>) | (() => void);

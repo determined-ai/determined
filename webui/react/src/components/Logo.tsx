@@ -10,7 +10,7 @@ import { serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { reactHostAddress } from 'utils/routes';
-import useUI from 'components/ThemeProvider';;
+import useUI from 'components/ThemeProvider';
 import css from './Logo.module.scss';
 
 const Orientation = {

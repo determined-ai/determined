@@ -1,7 +1,7 @@
 import { Divider } from 'antd';
 import Button from 'hew/Button';
 import Form from 'hew/Form';
-import useUI from 'components/ThemeProvider';;
+import useUI from 'components/ThemeProvider';
 import { notification } from 'hew/Toast';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -78,7 +78,7 @@ const SignIn: React.FC = () => {
       if (!queries.has('redirect')) {
         routeToReactUrl(
           locationToPath(location.state) ||
-          (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
+            (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
         routeAll(queries.get('redirect') || '');

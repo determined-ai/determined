@@ -1,5 +1,5 @@
 import Spinner from 'hew/Spinner';
-import useUI from 'components/ThemeProvider';;
+import useUI from 'components/ThemeProvider';
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 

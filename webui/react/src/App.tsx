@@ -200,7 +200,11 @@ const AppView: React.FC = () => {
         </div>
       </UIProvider>
     ),
-    NotLoaded: () => <UIProvider theme={theme} themeIsDark={isDarkMode}><Spinner center spinning /></UIProvider>,
+    NotLoaded: () => (
+      <UIProvider theme={theme} themeIsDark={isDarkMode}>
+        <Spinner center spinning />
+      </UIProvider>
+    ),
   });
 };
 

@@ -2,7 +2,7 @@ import { type TabsProps } from 'antd';
 import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
-import useUI from 'components/ThemeProvider';;
+import useUI from 'components/ThemeProvider';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

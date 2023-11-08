@@ -125,12 +125,7 @@ const TrialLogPreview: React.FC<Props> = ({
         <div className={css.preview} onClick={handleClick}>
           <div className={css.container} ref={containerRef}>
             {logEntry && (
-              <LogViewerEntry
-                noWrap
-
-                timeStyle={{ width: dateTimeWidth }}
-                {...logEntry}
-              />
+              <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
             )}
           </div>
         </div>

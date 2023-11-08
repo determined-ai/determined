@@ -84,4 +84,4 @@ const useUITheme = (
   return { isDarkMode, theme };
 };
 
-export default useUITheme; 
+export default useUITheme;

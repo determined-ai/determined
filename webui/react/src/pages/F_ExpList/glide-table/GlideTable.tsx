@@ -309,13 +309,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                onSelectionChange?.('remove-all', [0, data.length]);
-                setMenuIsOpen(false);
-              },
-            }
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  onSelectionChange?.('remove-all', [0, data.length]);
+                  setMenuIsOpen(false);
+                },
+              }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -376,38 +376,38 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
-            ...sortMenuItemsForColumn(column, sorts, onSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Filter by this column',
-              onClick: () => {
-                setTimeout(() => {
-                  filterMenuItemsForColumn();
-                }, 5);
+              ...sortMenuItemsForColumn(column, sorts, onSortChange),
+              { type: 'divider' as const },
+              {
+                icon: <Icon decorative name="filter" />,
+                key: 'filter',
+                label: 'Filter by this column',
+                onClick: () => {
+                  setTimeout(() => {
+                    filterMenuItemsForColumn();
+                  }, 5);
+                },
               },
-            },
-          ]),
+            ]),
         heatmapOn &&
-          (column.column === 'searcherMetricsVal' ||
-            (column.type === V1ColumnType.NUMBER &&
-              (column.location === V1LocationType.VALIDATIONS ||
-                column.location === V1LocationType.TRAINING)))
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
           ? {
-            icon: <Icon decorative name="heatmap" />,
-            key: 'heatmap',
-            label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
-            onClick: () => {
-              toggleHeatmap(column.column);
-            },
-          }
+              icon: <Icon decorative name="heatmap" />,
+              key: 'heatmap',
+              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+              onClick: () => {
+                toggleHeatmap(column.column);
+              },
+            }
           : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length || isMobile
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
-            ? {
+          ? {
               icon: <Icon decorative name="pin" />,
               key: 'pin',
               label: 'Pin column',
@@ -421,7 +421,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 setMenuIsOpen(false);
               },
             }
-            : {
+          : {
               disabled: pinnedColumnsCount <= 1,
               icon: <Icon decorative name="pin" />,
               key: 'unpin',
