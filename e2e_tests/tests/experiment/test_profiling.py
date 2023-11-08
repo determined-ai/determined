@@ -26,7 +26,7 @@ def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: b
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url())
 
-    config_path = os.path.join(model_def, "const-profiling.yaml")
+    config_path = conf.fixtures_path("mnist_pytorch/const-profiling.yaml")
 
     config_obj = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
