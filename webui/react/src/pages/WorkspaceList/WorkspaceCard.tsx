@@ -35,7 +35,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     <>
       <Card
         actionMenu={!workspace.immutable ? menu : undefined}
-        size="medium"
+        size="small"
         onClick={(e: AnyMouseEvent) =>
           handlePath(e, { path: paths.workspaceDetails(workspace.id) })
         }
