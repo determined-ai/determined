@@ -2,8 +2,6 @@ package aproto
 
 import (
 	"time"
-
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -18,12 +16,3 @@ const (
 	// attempts and AgentReconnectWait before crashing.
 	AgentReconnectWait = AgentReconnectAttempts * AgentReconnectBackoff
 )
-
-// GetRPConfig is a request from agent to RP actor for some config options.
-type GetRPConfig struct{}
-
-// GetRPResponse is a response to the previous request.
-type GetRPResponse struct {
-	AgentReconnectWait    model.Duration
-	MaxZeroSlotContainers int
-}

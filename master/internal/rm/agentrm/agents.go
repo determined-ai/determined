@@ -18,14 +18,24 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
+type agentUpdatedEvent struct {
+	resourcePool string
+}
+
 // initializeAgents creates a new global agents actor.
 func initializeAgents(
-	system *actor.System, rm ResourceManager, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
-) {
-	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{rm: rm, opts: opts})
+	system *actor.System, poolConfigs []config.ResourcePoolConfig, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
+) (*actor.Ref, *queue.Queue[agentUpdatedEvent]) {
+	updates := queue.New[agentUpdatedEvent]()
+	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{
+		updates:     updates,
+		poolConfigs: poolConfigs,
+		opts:        opts,
+	})
 	check.Panic(check.True(ok, "agents address already taken"))
 	system.Ask(agentsRef, actor.Ping{}).Get()
 	e.GET("/agent*", func(c echo.Context) error {
@@ -38,11 +48,13 @@ func initializeAgents(
 		}
 		return echo.ErrNotFound
 	})
+	return agentsRef, updates
 }
 
 type agents struct {
-	rm   ResourceManager
-	opts *aproto.MasterSetAgentOptions
+	updates     *queue.Queue[agentUpdatedEvent]
+	poolConfigs []config.ResourcePoolConfig
+	opts        *aproto.MasterSetAgentOptions
 }
 
 func (a *agents) Receive(ctx *actor.Context) error {
@@ -157,21 +169,22 @@ func (a *agents) createAgentActor(
 		resourcePool = "default"
 	}
 
-	if err := a.rm.ValidateResourcePool(resourcePool); err != nil {
-		return nil, fmt.Errorf("cannot find specified resource pool for agent %s: %w", id, err)
+	var poolConfig *config.ResourcePoolConfig
+	for _, pc := range a.poolConfigs {
+		pc := pc
+		if pc.PoolName == resourcePool {
+			poolConfig = &pc
+			break
+		}
+	}
+	if poolConfig == nil {
+		return nil, fmt.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
 	}
 
-	resourcePoolRef, err := a.rm.getResourcePoolRef(resourcePool)
-	if err != nil {
-		return nil, fmt.Errorf("getting resource pool for agent: %w", err)
-	}
-
-	rpConfig := ctx.Ask(resourcePoolRef, aproto.GetRPConfig{}).Get().(aproto.GetRPResponse)
 	ref, ok := ctx.ActorOf(id, &agent{
-		resourcePool:          resourcePoolRef,
 		resourcePoolName:      resourcePool,
-		maxZeroSlotContainers: rpConfig.MaxZeroSlotContainers,
-		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
+		maxZeroSlotContainers: poolConfig.MaxAuxContainersPerAgent,
+		agentReconnectWait:    time.Duration(poolConfig.AgentReconnectWait),
 		opts:                  opts,
 		agentState:            restoredAgentState,
 	})

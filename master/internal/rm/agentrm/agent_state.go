@@ -60,10 +60,10 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
+func newAgentState(self *actor.Ref, maxZeroSlotContainers int) *agentState {
 	return &agentState{
-		syslog:                log.WithField("component", "agent-state").WithField("id", msg.Agent.Address().Local()),
-		Handler:               msg.Agent,
+		syslog:                log.WithField("component", "agent-state-state").WithField("id", self.Address().Local()),
+		Handler:               self,
 		Devices:               make(map[device.Device]*cproto.ID),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,

@@ -6,11 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -163,7 +161,6 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 
 	// Test removing agents.
 	agent1 := system.Get(actor.Addr("agent1"))
-	delete(rp.agents, agent1)
 	delete(rp.agentStatesCache, agent1)
 	updated = rp.updateScalingInfo()
 	assert.Check(t, updated)
@@ -232,19 +229,6 @@ func TestSettingGroupPriority(t *testing.T) {
 	rp.mu.Lock()
 	assert.Check(t, rp.groups[jobID] == nil)
 	rp.mu.Unlock()
-}
-
-func TestAddRemoveAgent(t *testing.T) {
-	system := actor.NewSystem(t.Name())
-	db := &mocks.DB{}
-	_, ref := setupResourcePool(t, db, system, nil, nil, nil, nil)
-	agentRef, created := system.ActorOf(actor.Addr("agent"), &MockAgent{ID: "agent", Slots: 2})
-	assert.Assert(t, created)
-
-	system.Tell(ref, sproto.AddAgent{Agent: agentRef})
-	db.On("RecordAgentStats", mock.Anything).Return(nil)
-
-	system.Tell(ref, sproto.RemoveAgent{Agent: agentRef})
 }
 
 func setupRPSamePriority(t *testing.T) *resourcePool {
