@@ -30,7 +30,7 @@ func (a *OauthAuthZRBAC) CanAdministrateOauth(
 					SubjectType: "oauth",
 				},
 			}
-			fields["permissionGranted"] = (authz.IsPermissionDenied(err) == false)
+			fields["permissionGranted"] = !authz.IsPermissionDenied(err)
 			audit.Log(fields)
 		}
 	}()

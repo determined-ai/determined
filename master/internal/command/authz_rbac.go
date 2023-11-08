@@ -71,7 +71,7 @@ func (a *NSCAuthZRBAC) checkForPermissions(
 	a.addLogInfoWorkspaces(&fields, curUser, permission, workspaceIDs)
 	defer func() {
 		if err == nil || authz.IsPermissionDenied(err) {
-			fields["permissionGranted"] = authz.IsPermissionDenied(err) == false
+			fields["permissionGranted"] = !authz.IsPermissionDenied(err)
 			audit.Log(fields)
 		}
 	}()
@@ -90,7 +90,7 @@ func (a *NSCAuthZRBAC) checkForPermission(
 	a.addLogInfo(&fields, curUser, permission, workspaceID)
 	defer func() {
 		if err == nil || authz.IsPermissionDenied(err) {
-			fields["permissionGranted"] = authz.IsPermissionDenied(err) == false
+			fields["permissionGranted"] = !authz.IsPermissionDenied(err)
 			audit.Log(fields)
 		}
 	}()

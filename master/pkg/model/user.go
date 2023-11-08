@@ -205,7 +205,7 @@ func (e *ExternalSessions) fetchInvalidations(cert *tls.Certificate) {
 		},
 	}
 
-	req, err := http.NewRequest("GET", e.InvalidationURI, nil)
+	req, err := http.NewRequest(http.MethodGet, e.InvalidationURI, nil)
 	if err != nil {
 		log.WithError(err).Errorf("error fetching token invalidations")
 		return
@@ -224,7 +224,7 @@ func (e *ExternalSessions) fetchInvalidations(cert *tls.Certificate) {
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode >= 300 {
+	if resp.StatusCode >= 300 { //nolint: usestdlibvars
 		return
 	}
 

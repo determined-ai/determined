@@ -525,7 +525,7 @@ func (*DispatcherResourceManager) MoveJob(sproto.MoveJob) error {
 	// TODO(HAL-2863): We may not be able to support these specific actions, but how we
 	// let people interact with the job queue in dispatcher/slurm world.
 	// ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in slurm"))
-	return rmerrors.ErrUnsupported("move job unsupported in the dispatcher RM")
+	return rmerrors.UnsupportedError("move job unsupported in the dispatcher RM")
 }
 
 // RecoverJobPosition implements rm.ResourceManager.
@@ -599,13 +599,13 @@ func (m *DispatcherResourceManager) SetGroupMaxSlots(
 // SetGroupPriority implements rm.ResourceManager.
 func (*DispatcherResourceManager) SetGroupPriority(sproto.SetGroupPriority) error {
 	// TODO(HAL-2863)
-	return rmerrors.ErrUnsupported("set group priority unsupported in the dispatcher RM")
+	return rmerrors.UnsupportedError("set group priority unsupported in the dispatcher RM")
 }
 
 // SetGroupWeight implements rm.ResourceManager.
 func (*DispatcherResourceManager) SetGroupWeight(sproto.SetGroupWeight) error {
 	// TODO(HAL-2863)
-	return rmerrors.ErrUnsupported("set group weight unsupported in the dispatcher RM")
+	return rmerrors.UnsupportedError("set group weight unsupported in the dispatcher RM")
 }
 
 // ValidateCommandResources implements rm.ResourceManager.
