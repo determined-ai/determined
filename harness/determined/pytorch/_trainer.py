@@ -119,17 +119,17 @@ class Trainer:
                 report after every 5th, 30th, and 45th batch.
             checkpoint_policy: Controls how Determined performs checkpoints after validation
                 operations, if at all. Should be set to one of the following values:
-                    best (default): A checkpoint will be taken after every validation operation
-                        that performs better than all previous validations for this experiment.
-                        Validation metrics are compared according to the ``metric`` and
-                        ``smaller_is_better`` fields in the searcher configuration. This option
-                        is only supported for on-cluster training.
-                    all: A checkpoint will be taken after every validation, no matter the
-                        validation performance.
-                    none: A checkpoint will never be taken due to a validation. However,
-                        even with this policy selected, checkpoints are still expected to be taken
-                        after the trial is finished training, due to cluster scheduling decisions,
-                        before search method decisions, or due to ``min_checkpoint_period``.
+                best (default): A checkpoint will be taken after every validation operation
+                    that performs better than all previous validations for this experiment.
+                    Validation metrics are compared according to the ``metric`` and
+                    ``smaller_is_better`` fields in the searcher configuration. This option
+                    is only supported for on-cluster training.
+                all: A checkpoint will be taken after every validation, no matter the
+                    validation performance.
+                none: A checkpoint will never be taken due to a validation. However,
+                    even with this policy selected, checkpoints are still expected to be taken
+                    after the trial is finished training, due to cluster scheduling decisions,
+                    before search method decisions, or due to ``min_checkpoint_period``.
             latest_checkpoint: Configures the checkpoint used to start or continue training.
                 This value should be set to ``det.get_cluster_info().latest_checkpoint`` for
                 standard continue training functionality.
