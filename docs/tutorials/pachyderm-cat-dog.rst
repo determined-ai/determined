@@ -26,15 +26,15 @@ After completing the steps in this tutorial, you will have a a fully-built batch
 `pipeline <https://docs.pachyderm.com/latest/learn/glossary/pipeline/>`__ with results and you will
 understand how to leverage Pachyderm when working with your Determined cluster.
 
-.. image:: /assets/images/pach-batch-inf-pipeline.png
-   :alt: Completed batch inferencing pipeline
-
 By following these instructions, you will:
 
 -  Install Determined and Pachyderm locally.
 -  Create a batch inferencing project and train a model.
 -  Bring a downloaded checkpoint from Determined into Pachyderm.
 -  Create pipelines for training the data, inferencing, and collecting the results.
+
+.. image:: /assets/images/pach-batch-inf-pipeline.png
+   :alt: Completed batch inferencing pipeline
 
 ***************
  Prerequisites
@@ -102,9 +102,9 @@ Verify you have installed the latest version of both products.
       You should see a configuration summary the displays the versions for ``pachctl`` and
       ``pachd``.
 
-****************************************
- Create a Project for Batch Inferencing
-****************************************
+*****************************************************
+ Create a Project in Pachyderm for Batch Inferencing
+*****************************************************
 
 To begin, you'll need a project to group together all your training and inference repositories
 (repos) and pipelines. To do this, you'll create a new project in Pachyderm.
@@ -126,9 +126,9 @@ cohesively. This encapsulation makes it easier to manage batch inferencing workf
 
 You are now ready to create a project repo.
 
-********************************
- Create Repos for Training Data
-********************************
+*********************************************
+ Create Repos in Pachyderm for Training Data
+*********************************************
 
 To manage our training data effectively, we'll first need to create `repos
 <https://docs.pachyderm.com/latest/learn/basic-concepts/#basic-concepts-repositories-repo>`_ for
