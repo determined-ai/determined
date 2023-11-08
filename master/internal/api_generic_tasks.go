@@ -19,11 +19,15 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -231,6 +235,7 @@ func (a *apiServer) CreateGenericTask(
 
 	taskID := model.NewTaskID()
 	jobID := model.NewJobID()
+	startTime := time.Now()
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// TODO these actually aren't in the transcation.
 		if err := a.m.db.AddJob(&model.Job{
@@ -244,7 +249,7 @@ func (a *apiServer) CreateGenericTask(
 		if err := a.m.db.AddTask(&model.Task{
 			TaskID:     taskID,
 			TaskType:   model.TaskTypeGeneric,
-			StartTime:  time.Now(), // start time is submit time?
+			StartTime:  startTime, // start time is submit time?
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
@@ -265,7 +270,49 @@ func (a *apiServer) CreateGenericTask(
 	if err != nil {
 		return nil, fmt.Errorf("persisting task information: %w", err)
 	}
-	// TODO actually create the task
 
-	return &apiv1.CreateGenericTaskResponse{}, nil
+	logCtx := logger.Context{
+		"job-id":    jobID,
+		"task-id":   taskID,
+		"task-type": model.TaskTypeGeneric,
+	}
+	priorityChange := func(priority int) error {
+		return nil
+	}
+	if err = tasklist.GroupPriorityChangeRegistry.Add(jobID, priorityChange); err != nil {
+		return nil, err
+	}
+	// TODO actually create the task
+	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
+		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
+		TaskID:            taskID,
+		JobID:             jobID,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              genericTaskSpec.GenericTaskConfig.Description,
+
+		SlotsNeeded:  genericTaskSpec.GenericTaskConfig.Resources.SlotsPerTask,
+		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool,
+		FittingRequirements: sproto.FittingRequirements{
+			SingleAgent: true,
+		},
+
+		//ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), taskID),
+		//IdleTimeout: idleWatcherConfig,
+		Restore: false,
+		//ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
+	}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
+	if err != nil {
+		return nil, err
+	}
+
+	jobservice.DefaultService.RegisterJob(jobID, genericTaskSpec)
+
+	// if err := c.persist(); err != nil {
+	// 	ctx.Log().WithError(err).Warnf("command persist failure")
+	// }
+
+	return &apiv1.CreateGenericTaskResponse{TaskId: string(taskID)}, nil
 }
+
+func onAllocationExit(ae *task.AllocationExited) {}

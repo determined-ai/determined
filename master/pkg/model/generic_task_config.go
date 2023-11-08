@@ -6,8 +6,8 @@ import (
 
 func DefaultConfigGenericTaskConfig(taskContainerDefaults *TaskContainerDefaultsConfig) GenericTaskConfig {
 	out := GenericTaskConfig{ // TODO
-		// Resources:        DefaultResourcesConfig(taskContainerDefaults),
-		// Environment:      DefaultEnvConfig(taskContainerDefaults),
+		// Resources:   DefaultResourcesConfig(taskContainerDefaults),
+		Environment: DefaultEnvConfig(taskContainerDefaults),
 		// NotebookIdleType: NotebookIdleTypeKernelsOrTerminals,
 	}
 
@@ -30,9 +30,7 @@ type GenericTaskConfig struct {
 	Entrypoint  string              `json:"entrypoint"` // TODO should be string or []string?
 	WorkDir     *string             `json:"work_dir"`
 	Debug       bool                `json:"debug"`
-
-	// This should be in run
-	// Description string              `json:"description"`
+	Description string              `json:"description"` // should be in run
 
 	// Pbs         expconf.PbsConfig   `json:"pbs,omitempty"`
 	// Slurm       expconf.SlurmConfig `json:"slurm,omitempty"`

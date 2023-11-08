@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // Maybe think of better name.
@@ -18,3 +19,19 @@ type GenericTaskSpec struct {
 
 	// Keys ssh.PrivateAndPublicKeys
 }
+
+func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
+	res := s.Base
+
+	res.Entrypoint = []string{s.GenericTaskConfig.Entrypoint}
+	res.TaskType = s.Base.TaskType
+	res.Environment = s.GenericTaskConfig.Environment.ToExpconf()
+	// res.ResourcesConfig = s.GenericTaskConfig.Resources.ToExpconf()
+
+	return res
+}
+
+func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error)              { return nil, nil }
+func (s GenericTaskSpec) SetJobPriority(priority int) error         { return nil }
+func (s GenericTaskSpec) SetWeight(weight float64) error            { return nil }
+func (s GenericTaskSpec) SetResourcePool(resourcePool string) error { return nil }
