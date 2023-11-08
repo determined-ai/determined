@@ -178,17 +178,10 @@ export class FilterFormStore {
         if (filterGroup.kind === FormKind.Field) {
           throw new Error('patch changed base filter group to field');
         }
-        let updatedSet = {
+        return {
           ...filterSet,
-          filterGroup,
+          filterGroup: autoSweep ? this.#sweepInvalid(filterGroup) : filterGroup,
         };
-        if (autoSweep) {
-          updatedSet = {
-            ...updatedSet,
-            filterGroup: { ...this.#sweepInvalid(updatedSet.filterGroup) },
-          };
-        }
-        return updatedSet;
       });
     });
   }
