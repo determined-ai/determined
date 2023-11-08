@@ -13,6 +13,7 @@ import (
 	bun "github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/version"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -276,6 +277,11 @@ func (a *apiServer) GetUserByUsername(
 	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, nil
 }
 
+var errUserRemoteRequiresEE = status.Error(
+	codes.InvalidArgument,
+	"remote users cannot login without an IdP connection, which requires enterprise edition",
+)
+
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest,
 ) (*apiv1.PostUserResponse, error) {
@@ -287,6 +293,9 @@ func (a *apiServer) PostUser(
 	}
 	if req.Password != "" && req.User.Remote {
 		return nil, status.Error(codes.InvalidArgument, "cannot set password for remote user")
+	}
+	if req.User.Remote && !version.IsEE {
+		return nil, errUserRemoteRequiresEE
 	}
 
 	userToAdd := &model.User{
@@ -407,6 +416,9 @@ func (a *apiServer) PatchUser(
 	}
 	if req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "must provide user")
+	}
+	if req.User.Remote != nil && *req.User.Remote && !version.IsEE {
+		return nil, errUserRemoteRequiresEE
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
