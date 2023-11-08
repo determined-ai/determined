@@ -344,6 +344,8 @@ class Shipper(threading.Thread):
     def ship(self, data: bytes, backoffs: List[int]) -> None:
         for delay in backoffs:
             time.sleep(delay)
+            print(data.decode())
+            print(self.logs_url)
             try:
                 req = urllib.request.Request(self.logs_url, data, self.headers, method="POST")
                 try:

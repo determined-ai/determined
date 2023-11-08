@@ -27,7 +27,7 @@ type GenericTaskConfig struct {
 	BindMounts  BindMountsConfig    `json:"bind_mounts"`
 	Environment Environment         `json:"environment"`
 	Resources   TaskResourcesConfig `json:"resources"`
-	Entrypoint  string              `json:"entrypoint"` // TODO should be string or []string?
+	Entrypoint  []string            `json:"entrypoint"` // TODO should be string or []string?
 	WorkDir     *string             `json:"work_dir"`
 	Debug       bool                `json:"debug"`
 	Description string              `json:"description"` // should be in run
