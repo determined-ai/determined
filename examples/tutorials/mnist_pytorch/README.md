@@ -10,7 +10,6 @@ tutorial](https://github.com/pytorch/examples/tree/master/mnist).
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.
-* **const_profiling.yaml**: Same as `const.yaml`, but enables profiling (for on-cluster training).
 * **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
 * **dist_random.yaml**: Distributed training with a random grid search algorithm.
 * **adaptive.yaml**: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
@@ -55,19 +54,6 @@ between iterations.
 resources:
   slots_per_trial: 2
 entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
-```
-
-#### Profiling
-When training on-cluster, you can profile your training using the Determined profiler. Results can then be viewed in 
-the experiment's "Profiler" tab in the Web UI. 
-
-In your training code, the profiler is configured with `Trainer.configure_profiler`. `train.py` accepts an optional 
-`--profiling` argument to enable profiling, and `const_profiling.yaml` modifies `entrypoint` to pass the argument to
-the training script.
-
-```yaml
-...
-entrypoint: python3 train.py --profiling
 ```
 
 ## Results
