@@ -1,5 +1,4 @@
 import json
-import os
 import tempfile
 from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
