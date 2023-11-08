@@ -34,23 +34,39 @@ class Trainer:
         self._local_training = self._info is None or self._info.task_type != "TRIAL"
 
     def configure_profiler(
-        self, sync_timings: bool, enabled: bool, begin_on_batch: int, end_after_batch: int
+        self,
+        sync_timings: bool = True,
+        enabled: bool = False,
+        begin_on_batch: int = 0,
+        end_after_batch: Optional[int] = None,
     ) -> None:
         """
-        Configures the Determined profiler. This method should only be called before .fit(), and
-        only once within the scope of init(). If called multiple times, the last call's
-        configuration will be used.
+        Configures the Determined profiler. This functionality is only supported for on-cluster
+        training. For local training mode, this method is a no-op.
+
+        This method should only be called before .fit(), and only once within the scope of init().
+        If called multiple times, the last call's configuration will be used.
 
         Arguments:
-            sync_timings: Specifies whether Determined should wait for all GPU kernel streams
-                before considering a timing as ended. Defaults to ‘true’. Applies only for
+            sync_timings: (Optional) Specifies whether Determined should wait for all GPU kernel
+                streams before considering a timing as ended. Defaults to true. Applies only for
                 frameworks that collect timing metrics (currently just PyTorch).
-            enabled: Defines whether profiles should be collected or not. Defaults to false.
-            begin_on_batch: Specifies the batch on which profiling should begin.
-            end_after_batch: Specifies the batch after which profiling should end.
+            enabled: (Optional) Defines whether profiles should be collected or not. Defaults to
+                false.
+            begin_on_batch: (Optional) Specifies the batch on which profiling should begin.
+                Defaults to 0.
+            end_after_batch: (Optional) Specifies the batch after which profiling should end.
+
+        .. note::
+
+           Profiles are collected for a maximum of 5 minutes, regardless of the settings above.
+
         """
-        if self._info is None:
-            raise ValueError("Determined profiler must be run on cluster.")
+        if self._local_training:
+            self._det_profiler = profiler.DummyProfilerAgent()
+            return
+
+        assert self._info, "Determined profiler must be run on cluster."
 
         self._det_profiler = profiler.ProfilerAgent(
             trial_id=str(self._info.trial.trial_id),

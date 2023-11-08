@@ -14,6 +14,7 @@ The model can be trained either locally or on-cluster with the same training cod
 """
 import logging
 import pathlib
+import sys
 from typing import Any, Dict
 
 import data
@@ -83,7 +84,7 @@ class MNistTrial(pytorch.PyTorchTrial):
         return {"validation_loss": validation_loss, "accuracy": accuracy}
 
 
-def run(local: bool = False):
+def run(local: bool = False, profiling: bool = False):
     """Initializes the trial and runs the training loop.
 
     This method configures the appropriate training parameters for both local and on-cluster
@@ -95,6 +96,7 @@ def run(local: bool = False):
 
     Arguments:
         local: Whether to run this script locally. Defaults to false (on-cluster training).
+        profiling: Whether to enable profiling (for on-cluster training). Defaults to false.
     """
 
     info = det.get_cluster_info()
@@ -115,11 +117,15 @@ def run(local: bool = False):
     with pytorch.init() as train_context:
         trial = MNistTrial(train_context, hparams=hparams)
         trainer = pytorch.Trainer(trial, train_context)
+        trainer.configure_profiler(enabled=profiling)
         trainer.fit(max_length=max_length, latest_checkpoint=latest_checkpoint)
 
 
 if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+
     local_training = det.get_cluster_info() is None
-    run(local=local_training)
+    profiling_enabled = len(sys.argv) > 1 and sys.argv[1] == "--profiling"
+
+    run(local=local_training, profiling=profiling_enabled)
