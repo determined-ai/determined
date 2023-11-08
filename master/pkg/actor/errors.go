@@ -11,11 +11,11 @@ import (
 // has no response.
 var errNoResponse = errors.New("no response from actor")
 
-type errUnexpectedMessage struct {
+type unexpectedMessageError struct {
 	ctx *Context
 }
 
-func (e errUnexpectedMessage) Error() string {
+func (e unexpectedMessageError) Error() string {
 	var msg interface{} = e.ctx.Message()
 	if v := reflect.ValueOf(e.ctx.Message()); v.Kind() == reflect.Ptr {
 		msg = v.Elem().Interface()
@@ -39,5 +39,5 @@ func (e errUnexpectedMessage) Error() string {
 // ErrUnexpectedMessage is returned by an actor in response to a message that it was not expecting
 // to receive.
 func ErrUnexpectedMessage(ctx *Context) error {
-	return errUnexpectedMessage{ctx: ctx}
+	return unexpectedMessageError{ctx: ctx}
 }

@@ -46,7 +46,7 @@ type TaskContainerDefaultsConfig struct {
 	Slurm      expconf.SlurmConfigV0 `json:"slurm"`
 	Pbs        expconf.PbsConfigV0   `json:"pbs"`
 
-	LogPolicies expconf.LogPoliciesConfig
+	LogPolicies expconf.LogPoliciesConfig `json:"log_policies"`
 
 	// TODO(DET-9856) we should probably eventually move this to expconf and allow setting
 	// on a per task level.
@@ -106,7 +106,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 	}
 
 	// Merge Resources-related settings into the config.
-	//nolint:exhaustivestruct // Devices are the only thing relevant from TaskContainerDefaults.
+	//nolint:exhaustruct // Devices are the only thing relevant from TaskContainerDefaults.
 	resources := expconf.ResourcesConfig{
 		RawDevices: c.Devices.ToExpconf(),
 	}
@@ -131,7 +131,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 		podSpec = c.GPUPodSpec
 	}
 
-	//nolint:exhaustivestruct // RawPorts is not in TaskContainerDefaults.
+	//nolint:exhaustruct // RawPorts is not in TaskContainerDefaults.
 	env := expconf.EnvironmentConfig{
 		RawAddCapabilities:      c.AddCapabilities,
 		RawDropCapabilities:     c.DropCapabilities,

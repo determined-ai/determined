@@ -112,6 +112,7 @@ func initMockedTelemetry(t *testing.T) (*mockClient, *mocks.ResourceManager, *mo
 // Helper function for ReportExperimentCreated.
 func createExpConfig() expconf.ExperimentConfig {
 	maxLength := expconf.NewLengthInBatches(100)
+	//nolint:exhaustruct
 	activeConfig := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
 			RawMetric: ptrs.Ptr("loss"),

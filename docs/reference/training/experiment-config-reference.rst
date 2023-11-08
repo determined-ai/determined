@@ -280,6 +280,44 @@ trials will not be restarted and will be marked as errored. An experiment is con
 if at least one of its trials completes without errors. The default value for ``max_restarts`` is
 ``5``.
 
+.. _config-log-policies:
+
+``log_policies``
+================
+
+Optional. Defines actions in response to trial logs matching specified regex patterns (Go language
+syntax). For more information about the syntax, you can visit this `RE2 reference page
+<https://github.com/google/re2/wiki/Syntax>`__. Actions include:
+
+-  ``exclude_node``: Excludes a failed trial's restart attempts (due to its ``max_restarts`` policy)
+   from being scheduled on nodes with matched error logs. This is useful for bypassing nodes with
+   hardware issues, like uncorrectable GPU ECC errors.
+
+   Note: This option is not supported on PBS systems.
+
+   For the agent resource manager, if a trial becomes unschedulable due to enough node exclusions,
+   and ``launch_error`` in the master config is true (default), the trial fails.
+
+-  ``cancel_retries``: Prevents a trial from restarting if a trial reports a log that matches the
+   pattern, even if it has remaining ``max_restarts``. This avoids using resources for retrying a
+   trial that encounters certain failures that won't be fixed by retrying the trial, such as CUDA
+   memory issues.
+
+Example configuration:
+
+.. code:: yaml
+
+   log_policies:
+      - pattern: ".*uncorrectable ECC error encountered.*"
+        action:
+          type: exclude_node
+      - pattern: ".*CUDA out of memory.*"
+        action:
+          type: cancel_retries
+
+These settings may also be specified at the cluster or resource pool level through task container
+defaults.
+
 *******************
  Validation Policy
 *******************
@@ -1248,9 +1286,9 @@ Optional. The Docker image to use when executing the workload. This image must b
 container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using
 ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0`` for NVIDIA GPUs.
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.24.0`` for CPUs.
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.24.0`` for ROCm.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4`` for NVIDIA GPUs.
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4`` for CPUs.
+-  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
@@ -1404,7 +1442,7 @@ training. Defaults to ``64``.
 ============================
 
 Optional. The delay (in milliseconds) between each tensor fusion during distributed training.
-Defaults to ``5``.
+Defaults to ``1``.
 
 ``auto_tune_tensor_fusion``
 ===========================

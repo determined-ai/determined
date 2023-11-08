@@ -616,7 +616,7 @@ def experiment_logs(args: Namespace) -> None:
     sess = cli.setup_session(args)
     trials = bindings.get_GetExperimentTrials(sess, experimentId=args.experiment_id).trials
     if len(trials) == 0:
-        raise cli.not_found_errs("experiment", args.experiment_id, sess)
+        raise api.not_found_errs("experiment", args.experiment_id, sess)
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
     try:
         logs = api.trial_logs(
@@ -1001,9 +1001,10 @@ def move_experiment(args: Namespace) -> None:
     print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
 
 
-@authentication.required
+@cli.login_sdk_client
 def delete_tensorboard_files(args: Namespace) -> None:
-    bindings.delete_DeleteTensorboardFiles(cli.setup_session(args), experimentId=args.experiment_id)
+    exp = client.get_experiment(args.experiment_id)
+    exp.delete_tensorboard_files()
 
 
 def none_or_int(string: str) -> Optional[int]:
@@ -1408,7 +1409,7 @@ main_cmd = Cmd(
         Cmd(
             "delete-tb-files",
             delete_tensorboard_files,
-            "delete TensorBoard files associate with the proived experiment ID",
+            "delete TensorBoard files associated with the provided experiment ID",
             [
                 Arg("experiment_id", type=int, help="Experiment ID"),
             ],

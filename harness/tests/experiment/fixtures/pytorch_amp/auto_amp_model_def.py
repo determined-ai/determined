@@ -9,17 +9,14 @@ The methods `train_batch` and `evaluate_batch` are modified to use an autocast
 context during the forward pass.
 """
 
-from typing import Dict, Sequence, Union
+import typing
 
-import torch
-from model_def import MNistTrial
+from train import MNistTrial
 
 from determined.pytorch import PyTorchTrialContext
 
-TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
-
 
 class MNistAutoAMPTrial(MNistTrial):
-    def __init__(self, context: PyTorchTrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext, hparams: typing.Optional[typing.Dict]) -> None:
         context.experimental.use_amp()
-        super().__init__(context)
+        super().__init__(context=context, hparams=hparams)

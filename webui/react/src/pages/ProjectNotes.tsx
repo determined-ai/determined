@@ -1,5 +1,5 @@
 import { useModal } from 'hew/Modal';
-import Notes from 'hew/Notes';
+import Notes from 'hew/RichTextEditor';
 import React, { useCallback, useState } from 'react';
 import { unstable_useBlocker } from 'react-router-dom';
 
@@ -64,8 +64,8 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     <>
       <Notes
         disabled={project?.archived || !editPermission}
+        docs={project?.notes ?? []}
         multiple
-        notes={project?.notes ?? []}
         onDelete={handleDeleteNote}
         onError={handleError}
         onNewPage={handleNewNotesPage}

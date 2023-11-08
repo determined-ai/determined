@@ -63,6 +63,7 @@ func waitForCondition(timeout time.Duration, condition func() bool) bool {
 }
 
 func conditionServerUp() bool {
+	//nolint: noctx
 	resp, err := http.Get("http://" + u.Path + "/proxy")
 	if err == nil {
 		resp.Body.Close() //nolint:errcheck

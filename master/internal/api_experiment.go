@@ -1548,8 +1548,8 @@ func (a *apiServer) ContinueExperiment(
 				}
 			}
 			if !hasIncompleteTrials {
-				return status.Error(codes.FailedPrecondition, fmt.Sprint(
-					"experiment has been completed, cannot continue this experiment"))
+				return status.Error(codes.FailedPrecondition,
+					"experiment has been completed, cannot continue this experiment")
 			}
 		} else if isSingle && len(trialsResp.Trials) > 0 {
 			if _, err := tx.NewUpdate().Model(&model.Trial{}).
@@ -1795,7 +1795,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	var timeSinceLastAuth time.Time
 	for {
 		var response apiv1.ExpMetricNamesResponse
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
 			for _, expID := range req.Ids {
 				exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), int(expID),
 					experiment.AuthZProvider.Get().CanGetExperimentArtifacts)
@@ -1895,7 +1895,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	seenBatches := make(map[int32]bool)
 	var startTime time.Time
 	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
 			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
@@ -1996,7 +1996,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	var timeSinceLastAuth time.Time
 	var startTime time.Time
 	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
 			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
@@ -2184,7 +2184,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	trialCursors := make(map[int32]time.Time)
 	currentTrials := make(map[int32]bool)
 	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
 			exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				experiment.AuthZProvider.Get().CanGetExperimentArtifacts)
 			if err != nil {
@@ -3016,7 +3016,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 		return nil, err
 	}
 
-	exp, err := db.ExperimentByID(context.TODO(), int(req.ExperimentId))
+	exp, err := db.ExperimentByID(ctx, int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}
@@ -3025,7 +3025,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 	if err != nil {
 		return nil, err
 	}
-	agentUserGroup, err := user.GetAgentUserGroup(context.TODO(), *exp.OwnerID, workspaceID[0])
+	agentUserGroup, err := user.GetAgentUserGroup(ctx, *exp.OwnerID, workspaceID[0])
 	if err != nil {
 		return nil, err
 	}

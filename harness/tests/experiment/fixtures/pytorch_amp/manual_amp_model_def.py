@@ -9,11 +9,11 @@ The methods `train_batch` and `evaluate_batch` are modified to use an autocast
 context during the forward pass.
 """
 
-from typing import Any, Dict, Sequence, Tuple, Union, cast
+from typing import Any, Dict, Optional, Sequence, Tuple, Union, cast
 
 import torch
-from model_def import MNistTrial
 from torch.cuda.amp import GradScaler, autocast
+from train import MNistTrial
 
 from determined.pytorch import PyTorchTrialContext
 
@@ -21,9 +21,9 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 class MNistManualAMPTrial(MNistTrial):
-    def __init__(self, context: PyTorchTrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext, hparams: Optional[Dict]) -> None:
         self.scaler = context.wrap_scaler(GradScaler())
-        super().__init__(context)
+        super().__init__(context=context, hparams=hparams)
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int

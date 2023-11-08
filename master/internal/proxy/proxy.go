@@ -88,7 +88,6 @@ func (p *Proxy) Register(serviceID string, url *url.URL, proxyTCP bool, unauth b
 		ProxyTCP:             proxyTCP,
 		AllowUnauthenticated: unauth,
 	}
-	return
 }
 
 // Unregister removes the service from the proxy. All future requests until the service name is

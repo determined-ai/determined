@@ -89,9 +89,9 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0`` for NVIDIA GPUs.
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.24.0`` for ROCm.
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.24.0`` for CPUs.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4`` for NVIDIA GPUs.
+-  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4`` for CPUs.
 
 ``environment_variables``
 =========================
@@ -102,6 +102,12 @@ Environment variables specified in the experiment configuration will override de
 specified here. You can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD
 GPU) tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to Determined 0.17.6),
 ``cpu``, and ``rocm`` keys.
+
+``log_policies``
+================
+
+A list of log policies that take effect when a trial reports a log that matches a pattern. For
+details, visit :ref:`log_policies <config-log-policies>`.
 
 ``force_pull_image``
 ====================

@@ -40,7 +40,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-2b7e2a1
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-bf9480b
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -226,7 +226,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-2b7e2a1
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-bf9480b
 
   login-docker:
     parameters:
@@ -1556,44 +1556,6 @@ jobs:
       - react-get-deps
       - run: make -C webui/react test-ci-flaky
 
-  test-unit-react-screenshot:
-    docker:
-      - image: cimg/node:20.1.0
-        environment:
-          CI: "true"
-    resource_class: xlarge
-    steps:
-      - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
-      - run:
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_PATHS="webui/react/src/package-lock.json webui/react/src/package.json webui/react/src/pages/DesignKit.tsx webui/react/design"
-            if git diff --quiet $MERGE_BASE -- $DIFF_PATHS; then
-              echo "DesignKit not changed, halting job now."
-              circleci-agent step halt
-            else
-              echo "DesignKit changed, running downstream check."
-            fi
-          name: check for designkit changes
-      - react-get-deps
-      - run:
-          command: make -C webui/react visual-test
-          name: generate screenshots
-      - store_artifacts:
-          path: webui/react/screenshot-summary.html
-      - run:
-          command: |
-            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            if [ -f webui/react/.diff-detected ] ; then
-              export MESSAGE="Hello! DesignKit diffs for commit $CIRCLE_SHA1 are available for you to view [here]($ARTIFACT_URL)"
-            else
-              export MESSAGE="Hello! No changes detected to DesignKit for commit $CIRCLE_SHA1. Verify [here]($ARTIFACT_URL)"
-            fi
-            node webui/react/scripts/make-github-comment.mjs "$MESSAGE"
-          name: report results
-
   test-intg-downstream:
     docker:
       - image: cimg/node:20.1.0
@@ -1831,7 +1793,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1852,7 +1814,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-2b7e2a1
+      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-bf9480b
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1873,7 +1835,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-2b7e2a1
+      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-bf9480b
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -1894,7 +1856,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2315,7 +2277,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4
         type: string
       accel-node-taints:
         type: string
@@ -2561,9 +2523,6 @@ workflows:
     jobs:
       - test-unit-go
       - test-unit-react
-      - test-unit-react-screenshot:
-          context: github-write
-          filters: *any-upstream
       - test-unit-harness-cpu
       - test-unit-harness-tf2
       - test-unit-harness-pytorch2-cpu
@@ -2937,7 +2896,6 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              parallelism: [2]
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu_quarantine"]

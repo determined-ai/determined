@@ -222,22 +222,22 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	// create exp and config
 	maxLength := expconf.NewLengthInBatches(100)
 	maxRestarts := 0
-	activeConfig := expconf.ExperimentConfig{ //nolint:exhaustivestruct
-		RawSearcher: &expconf.SearcherConfig{ //nolint:exhaustivestruct
+	activeConfig := expconf.ExperimentConfig{ //nolint:exhaustruct
+		RawSearcher: &expconf.SearcherConfig{ //nolint:exhaustruct
 			RawMetric: ptrs.Ptr("loss"),
-			RawSingleConfig: &expconf.SingleConfig{ //nolint:exhaustivestruct
+			RawSingleConfig: &expconf.SingleConfig{ //nolint:exhaustruct
 				RawMaxLength: &maxLength,
 			},
 		},
 		RawEntrypoint:      &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
 		RawHyperparameters: expconf.Hyperparameters{},
-		RawCheckpointStorage: &expconf.CheckpointStorageConfig{ //nolint:exhaustivestruct
-			RawSharedFSConfig: &expconf.SharedFSConfig{ //nolint:exhaustivestruct
+		RawCheckpointStorage: &expconf.CheckpointStorageConfig{ //nolint:exhaustruct
+			RawSharedFSConfig: &expconf.SharedFSConfig{ //nolint:exhaustruct
 				RawHostPath: ptrs.Ptr("/"),
 			},
 		},
 		RawMaxRestarts: &maxRestarts,
-	} //nolint:exhaustivestruct
+	} //nolint:exhaustruct
 	activeConfig = schemas.WithDefaults(activeConfig)
 	model.DefaultTaskContainerDefaults().MergeIntoExpConfig(&activeConfig)
 

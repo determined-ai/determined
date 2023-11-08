@@ -108,7 +108,7 @@ func FromContainerStarted(cs *aproto.ContainerStarted) *ResourcesStarted {
 
 // ResourcesStopped contains the information needed by tasks from container stopped.
 type ResourcesStopped struct {
-	Failure *ResourcesFailure
+	Failure *ResourcesFailureError
 }
 
 // Proto returns the proto representation of ResourcesStopped.
@@ -129,7 +129,7 @@ func FromContainerStopped(cs *aproto.ContainerStopped) *ResourcesStopped {
 
 	rs := &ResourcesStopped{}
 	if f := cs.Failure; f != nil {
-		rs.Failure = &ResourcesFailure{
+		rs.Failure = &ResourcesFailureError{
 			FailureType: FromContainerFailureType(f.FailureType),
 			ErrMsg:      f.ErrMsg,
 			ExitCode:    FromContainerExitCode(f.ExitCode),
@@ -143,14 +143,14 @@ func FromContainerStopped(cs *aproto.ContainerStopped) *ResourcesStopped {
 func ResourcesError(failureType FailureType, err error) ResourcesStopped {
 	if err == nil {
 		return ResourcesStopped{
-			Failure: &ResourcesFailure{
+			Failure: &ResourcesFailureError{
 				FailureType: failureType,
 				ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
 			},
 		}
 	}
 	return ResourcesStopped{
-		Failure: &ResourcesFailure{
+		Failure: &ResourcesFailureError{
 			FailureType: failureType,
 			ErrMsg:      err.Error(),
 		},
@@ -164,15 +164,15 @@ func (r ResourcesStopped) String() string {
 	return r.Failure.Error()
 }
 
-// ResourcesFailure contains information about restored resources' failure.
-type ResourcesFailure struct {
+// ResourcesFailureError contains information about restored resources' failure.
+type ResourcesFailureError struct {
 	FailureType FailureType
 	ErrMsg      string
 	ExitCode    *ExitCode
 }
 
 // Proto returns the proto representation of ResourcesFailure.
-func (f *ResourcesFailure) Proto() *taskv1.ResourcesFailure {
+func (f *ResourcesFailureError) Proto() *taskv1.ResourcesFailure {
 	if f == nil {
 		return nil
 	}
@@ -193,20 +193,20 @@ func (f *ResourcesFailure) Proto() *taskv1.ResourcesFailure {
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
 func NewResourcesFailure(
 	failureType FailureType, msg string, code *ExitCode,
-) *ResourcesFailure {
-	return &ResourcesFailure{
+) *ResourcesFailureError {
+	return &ResourcesFailureError{
 		FailureType: failureType,
 		ErrMsg:      msg,
 		ExitCode:    code,
 	}
 }
 
-func (f ResourcesFailure) Error() string {
+func (f ResourcesFailureError) Error() string {
 	if f.ExitCode == nil {
 		if len(f.ErrMsg) > 0 {
 			return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
 		}
-		return fmt.Sprintf("%s", f.FailureType)
+		return string(f.FailureType)
 	}
 	return fmt.Sprintf("%s: %s (exit code %d)", f.FailureType, f.ErrMsg, *f.ExitCode)
 }
@@ -336,7 +336,7 @@ func IsUnrecoverableSystemError(err error) bool {
 // shouldn't count against `max_restarts`.
 func IsTransientSystemError(err error) bool {
 	switch err := err.(type) {
-	case ResourcesFailure:
+	case ResourcesFailureError:
 		switch err.FailureType {
 		case ResourcesFailed, TaskError:
 			return false

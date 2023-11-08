@@ -498,7 +498,7 @@ func (c *command) setPriority(priority int, forward bool) error {
 			JobID:    c.jobID,
 		}).(type) {
 		case nil:
-		case rmerrors.ErrUnsupported:
+		case rmerrors.UnsupportedError:
 			c.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return fmt.Errorf("setting group priority for command: %w", err)

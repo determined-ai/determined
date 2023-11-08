@@ -26,6 +26,7 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -130,6 +131,137 @@ func fetchUserIds(ctx context.Context, t *testing.T, api *apiServer, req *apiv1.
 		ids = append(ids, model.UserID(u.Id))
 	}
 	return ids
+}
+
+func TestLoginRemote(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	t.Run("created with remote", func(t *testing.T) {
+		username := uuid.New().String()
+		resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+			User: &userv1.User{
+				Username: username,
+				Remote:   true,
+				Active:   true,
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+		})
+		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
+
+		// Can't change password while they are remote.
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Password: ptrs.Ptr("pass"),
+			},
+		})
+		require.ErrorContains(t, err, "Cannot set password")
+
+		// Changing back to unremote means we can login with blank password.
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Remote: ptrs.Ptr(false),
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("created with remote changed with password", func(t *testing.T) {
+		username := uuid.New().String()
+		resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+			User: &userv1.User{
+				Username: username,
+				Remote:   true,
+				Active:   true,
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Remote:   ptrs.Ptr(false),
+				Password: ptrs.Ptr("testpassword"),
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+			Password: "testpassword",
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("created without remote", func(t *testing.T) {
+		username := uuid.New().String()
+		resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+			User: &userv1.User{
+				Username: username,
+				Active:   true,
+			},
+			Password: "testpassword",
+		})
+		require.NoError(t, err)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+			Password: "testpassword",
+		})
+		require.NoError(t, err)
+
+		// Cannot login when we switch to remote.
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Remote: ptrs.Ptr(true),
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+		})
+		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
+
+		// We set the password to the unloginable hash.
+		var expectedUser model.User
+		err = db.Bun().NewSelect().Model(&expectedUser).
+			Where("username = ?", username).
+			Scan(ctx, &expectedUser)
+		require.NoError(t, err)
+		require.Equal(t, model.NoPasswordLogin, expectedUser.PasswordHash)
+
+		// Changing back to unremote unsets password to blank.
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Remote: ptrs.Ptr(true),
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+			Password: "testpassword",
+		})
+		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+		})
+		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
+	})
 }
 
 func TestGetUsersRemote(t *testing.T) {

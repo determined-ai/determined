@@ -1,7 +1,8 @@
-//nolint:exhaustivestruct
+//nolint:exhaustruct
 package model
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/docker/docker/api/types"
@@ -362,6 +363,30 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLogPatternUnmarshal(t *testing.T) {
+	var tcd TaskContainerDefaultsConfig
+	require.NoError(t, json.Unmarshal([]byte(string(`{
+		    "log_policies": [
+		        {"pattern": "test", "action": {"type": "exclude_node"}},
+		        {"pattern": "test2", "action": {"type": "cancel_retries"}}
+		    ]
+		}`)), &tcd))
+
+	expected := TaskContainerDefaultsConfig{
+		ShmSizeBytes: 4294967296,
+		NetworkMode:  "bridge",
+		LogPolicies: expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "test", RawAction: expconf.LogAction{
+				RawExcludeNode: &expconf.LogActionExcludeNode{},
+			}},
+			expconf.LogPolicy{RawPattern: "test2", RawAction: expconf.LogAction{
+				RawCancelRetries: &expconf.LogActionCancelRetries{},
+			}},
+		},
+	}
+	require.Equal(t, expected, tcd)
 }
 
 func TestLogPatternPoliciesMerging(t *testing.T) {

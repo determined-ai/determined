@@ -3,18 +3,10 @@ from collections import namedtuple
 from typing import Any, Dict, List, Set, Tuple
 
 import determined.cli.render
-from determined.cli import (
-    default_pagination_args,
-    render,
-    require_feature_flag,
-    setup_session,
-    user_groups,
-    workspace,
-)
+from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import session
 
 rbac_flag_disabled_message = (
     "RBAC commands require the Determined Enterprise Edition "
@@ -134,7 +126,7 @@ def list_roles(args: Namespace) -> None:
 
 
 def role_with_assignment_to_dict(
-    session: session.Session,
+    session: api.Session,
     r: bindings.v1RoleWithAssignments,
     assignment: bindings.v1RoleAssignment,
 ) -> Dict[str, Any]:
@@ -162,7 +154,7 @@ def role_with_assignment_to_dict(
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_users_roles(args: Namespace) -> None:
     session = setup_session(args)
-    user_id = user_groups.usernames_to_user_ids(session, [args.username])[0]
+    user_id = api.usernames_to_user_ids(session, [args.username])[0]
     resp = bindings.get_GetRolesAssignedToUser(session, userId=user_id)
     if args.json:
         determined.cli.render.print_json(resp.to_json())
@@ -198,7 +190,7 @@ def list_users_roles(args: Namespace) -> None:
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_groups_roles(args: Namespace) -> None:
     session = setup_session(args)
-    group_id = user_groups.group_name_to_group_id(session, args.group_name)
+    group_id = api.group_name_to_group_id(session, args.group_name)
     resp = bindings.get_GetRolesAssignedToGroup(session, groupId=group_id)
     if args.json:
         determined.cli.render.print_json(resp.to_json())
@@ -238,7 +230,7 @@ def list_groups_roles(args: Namespace) -> None:
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def describe_role(args: Namespace) -> None:
     session = setup_session(args)
-    role_id = role_name_to_role_id(session, args.role_name)
+    role_id = api.role_name_to_role_id(session, args.role_name)
     req = bindings.v1GetRolesByIDRequest(roleIds=[role_id])
     resp = bindings.post_GetRolesByID(session, body=req)
     if args.json:
@@ -318,34 +310,47 @@ def describe_role(args: Namespace) -> None:
         print()
 
 
-def create_assignment_request(
-    session: session.Session, args: Namespace
+def make_assign_req(
+    session: api.Session,
+    args: Namespace,
 ) -> Tuple[List[bindings.v1UserRoleAssignment], List[bindings.v1GroupRoleAssignment]]:
-    if (args.username_to_assign is None) == (args.group_name_to_assign is None):
-        raise api.errors.BadRequestException(
-            "must provide exactly one of --username-to-assign or --group-name-to-assign"
+    """
+    A helper for assign_role and unassign_role, which take the same command line flags.
+    """
+    if args.username_to_assign:
+        user_assign = api.create_user_assignment_request(
+            session,
+            user=args.username_to_assign,
+            role=args.role_name,
+            workspace=args.workspace_name,
         )
+    else:
+        user_assign = []
 
-    role = bindings.v1Role(roleId=role_name_to_role_id(session, args.role_name))
+    if args.group_name_to_assign:
+        group_assign = api.create_group_assignment_request(
+            session,
+            group=args.group_name_to_assign,
+            role=args.role_name,
+            workspace=args.workspace_name,
+        )
+    else:
+        group_assign = []
 
-    workspace_id = None
-    if args.workspace_name is not None:
-        workspace_id = workspace.workspace_by_name(session, args.workspace_name).id
-    role_assign = bindings.v1RoleAssignment(role=role, scopeWorkspaceId=workspace_id)
-
-    if args.username_to_assign is not None:
-        user_id = user_groups.usernames_to_user_ids(session, [args.username_to_assign])[0]
-        return [bindings.v1UserRoleAssignment(userId=user_id, roleAssignment=role_assign)], []
-
-    group_id = user_groups.group_name_to_group_id(session, args.group_name_to_assign)
-    return [], [bindings.v1GroupRoleAssignment(groupId=group_id, roleAssignment=role_assign)]
+    return user_assign, group_assign
 
 
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def assign_role(args: Namespace) -> None:
+    # Valid CLI usage is enforced before even creating a session.
+    if (args.username_to_assign is None) == (args.group_name_to_assign is None):
+        raise api.errors.BadRequestException(
+            "must provide exactly one of --username-to-assign or --group-name-to-assign"
+        )
+
     session = setup_session(args)
-    user_assign, group_assign = create_assignment_request(session, args)
+    user_assign, group_assign = make_assign_req(session, args)
     req = bindings.v1AssignRolesRequest(
         userRoleAssignments=user_assign, groupRoleAssignments=group_assign
     )
@@ -371,8 +376,14 @@ def assign_role(args: Namespace) -> None:
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def unassign_role(args: Namespace) -> None:
+    # Valid CLI usage is enforced before even creating a session.
+    if (args.username_to_assign is None) == (args.group_name_to_assign is None):
+        raise api.errors.BadRequestException(
+            "must provide exactly one of --username-to-assign or --group-name-to-assign"
+        )
+
     session = setup_session(args)
-    user_assign, group_assign = create_assignment_request(session, args)
+    user_assign, group_assign = make_assign_req(session, args)
     req = bindings.v1RemoveAssignmentsRequest(
         userRoleAssignments=user_assign, groupRoleAssignments=group_assign
     )
@@ -384,22 +395,13 @@ def unassign_role(args: Namespace) -> None:
     if len(user_assign) > 0:
         print(
             f"removed role '{args.role_name}' with ID {user_assign[0].roleAssignment.role.roleId} "
-            + f"from user '{args.username_to_assign}' with ID {user_assign[0].userId}{scope}"
+            f"from user '{args.username_to_assign}' with ID {user_assign[0].userId}{scope}"
         )
     else:
         print(
             f"removed role '{args.role_name}' with ID {group_assign[0].roleAssignment.role.roleId} "
-            + f"from group '{args.group_name_to_assign}' with ID {group_assign[0].groupId}{scope}"
+            f"from group '{args.group_name_to_assign}' with ID {group_assign[0].groupId}{scope}"
         )
-
-
-def role_name_to_role_id(session: session.Session, role_name: str) -> int:
-    req = bindings.v1ListRolesRequest(limit=499, offset=0)
-    resp = bindings.post_ListRoles(session=session, body=req)
-    for r in resp.roles:
-        if r.name == role_name and r.roleId is not None:
-            return r.roleId
-    raise api.errors.BadRequestException(f"could not find role name {role_name}")
 
 
 args_description = [

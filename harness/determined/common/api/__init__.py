@@ -11,6 +11,15 @@ from determined.common.api._util import (
     NTSC_Kind,
     AnyNTSC,
 )
+from determined.common.api._rbac import (
+    role_name_to_role_id,
+    create_user_assignment_request,
+    create_group_assignment_request,
+    usernames_to_user_ids,
+    group_name_to_group_id,
+    workspace_by_name,
+    not_found_errs,
+)
 from determined.common.api.authentication import Authentication, salt_and_hash
 from determined.common.api.logs import (
     pprint_logs,

@@ -1,2 +1,0 @@
-override_mmdet_config:
-  fp16.loss_scale: 512.
