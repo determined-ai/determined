@@ -3,10 +3,10 @@ import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
-import { getStateColorCssVar } from 'hew/Theme';
+import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
+import { getStateColorThemeVar } from 'utils/color';
 import Badge from 'components/Badge';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
@@ -126,6 +126,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
+  const { getThemeVar } = useTheme();
   const [isChangingState, setIsChangingState] = useState(false);
   const [isRunningArchive, setIsRunningArchive] = useState<boolean>(false);
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
@@ -173,8 +174,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const stateStyle = useMemo(
     () => ({
-      backgroundColor: getStateColorCssVar(experiment.state),
-      color: getStateColorCssVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
+      backgroundColor: getThemeVar(getStateColorThemeVar((experiment.state))),
+      color: getThemeVar(getStateColorThemeVar(experiment.state, { isOn: true, strongWeak: 'strong' })),
     }),
     [experiment.state],
   );

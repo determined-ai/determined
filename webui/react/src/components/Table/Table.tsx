@@ -221,20 +221,6 @@ export const experimentNameRenderer = (
   </Typography.Text>
 );
 
-export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  const color = getStateColorCssVar(record.state);
-  return typeof record.progress !== 'undefined' ? (
-    <Progress
-      parts={[
-        {
-          color,
-          percent: record.progress,
-        },
-      ]}
-    />
-  ) : null;
-};
-
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (

@@ -9,7 +9,7 @@ import Tags from 'hew/Tags';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-
+import Progress from 'hew/Progress';
 import Badge, { BadgeType } from 'components/Badge';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
@@ -28,7 +28,6 @@ import {
   defaultRowClassName,
   experimentDurationRenderer,
   experimentNameRenderer,
-  experimentProgressRenderer,
   ExperimentRenderer,
   expStateRenderer,
   getFullPaginationConfig,
@@ -92,6 +91,8 @@ import {
   settingsConfigForProject,
 } from './ExperimentList.settings';
 import css from './ProjectDetails.module.scss';
+import { useTheme } from 'hew/Theme';
+import { getStateColorThemeVar } from 'utils/color';
 
 const filterKeys: Array<keyof ExperimentListSettings> = ['label', 'search', 'state', 'user'];
 
@@ -126,7 +127,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [batchAction, setBatchAction] = useState<Action>();
   const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-
+  const { getThemeVar } = useTheme();
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
 
@@ -441,6 +442,20 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
     const checkpointSizeRenderer = (value: number) => (value ? humanReadableBytes(value) : '');
+
+    const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
+      const color = getThemeVar(getStateColorThemeVar(record.state));
+      return typeof record.progress !== 'undefined' ? (
+        <Progress
+          parts={[
+            {
+              color,
+              percent: record.progress,
+            },
+          ]}
+        />
+      ) : null;
+    };
 
     return [
       {

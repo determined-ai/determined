@@ -1,11 +1,11 @@
-import { useTheme, getStateColorCssVar, StateOfUnion, ThemeVariable } from 'hew/Theme';
+import { useTheme, StateOfUnion } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { CSSProperties, useMemo } from 'react';
 import useUITheme from 'hooks/useUITheme';
 import useUI from 'components/ThemeProvider';
 import { stateToLabel } from 'constants/states';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
-import { hsl2str, str2hsl } from 'utils/color';
+import { getStateColorThemeVar, hsl2str, str2hsl } from 'utils/color';
 import css from './Badge.module.scss';
 
 export const BadgeType = {
@@ -31,20 +31,19 @@ const Badge: React.FC<BadgeProps> = ({
   ...props
 }: BadgeProps) => {
   const { ui } = useUI();
-  const { getThemeVar } = useTheme();
   const { isDarkMode } = useUITheme(ui.mode, ui.theme);
+  const { getThemeVar } = useTheme();
   const { classes, style } = useMemo(() => {
     const classes = [css.base];
     const style: CSSProperties = {};
-
     if (type === BadgeType.State) {
-      const backgroundColor = str2hsl(getThemeVar(getStateColorCssVar(state) as ThemeVariable));
+      const backgroundColor = str2hsl(getThemeVar(getStateColorThemeVar(state)));
       style.backgroundColor = hsl2str({
         ...backgroundColor,
         l: isDarkMode ? 35 : 45,
         s: backgroundColor.s > 0 ? (isDarkMode ? 70 : 50) : 0,
       });
-      style.color = getStateColorCssVar(state, { isOn: true });
+      style.color = getThemeVar(getStateColorThemeVar(state, { isOn: true }));
       classes.push(css.state);
 
       if (
