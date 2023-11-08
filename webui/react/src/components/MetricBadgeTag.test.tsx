@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 
 import { Metric } from 'types';
 
@@ -10,7 +10,7 @@ vi.mock('hew/Tooltip');
 const setup = (metric: Metric) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <MetricBadgeTag metric={metric} />,
     </UIProvider>,
   );

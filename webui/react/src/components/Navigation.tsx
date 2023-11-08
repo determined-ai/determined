@@ -1,5 +1,5 @@
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import { useInitApi } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useEffect } from 'react';

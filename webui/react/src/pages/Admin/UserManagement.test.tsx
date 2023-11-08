@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useCallback, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -66,7 +66,7 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <DndProvider backend={HTML5Backend}>
         <Container />
       </DndProvider>

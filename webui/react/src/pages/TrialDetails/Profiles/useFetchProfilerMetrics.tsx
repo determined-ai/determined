@@ -1,4 +1,4 @@
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import { useEffect, useState } from 'react';
 
 import { terminalRunStates } from 'constants/states';

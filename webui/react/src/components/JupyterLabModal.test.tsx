@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -85,7 +85,7 @@ const setup = async () => {
 
   render(
     <BrowserRouter>
-      <UIProvider>
+      <UIProvider theme={DefaultTheme.Light}>
         <ModalTrigger />
       </UIProvider>
     </BrowserRouter>,

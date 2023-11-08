@@ -1,7 +1,7 @@
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -152,12 +152,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
         data: {
           series: focusedTrial?.id
             ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => ({
-                lineWidth: chartData?.trialIds.indexOf(focusedTrial.id) === index ? 3 : 1,
-                strokeStyle:
-                  chartData?.trialIds.indexOf(focusedTrial.id) === index
-                    ? ui.theme.ixOnActive
-                    : rgba2str({ ...str2rgba(ui.theme.ixOn), a: 0.1 }),
-              }))
+              lineWidth: chartData?.trialIds.indexOf(focusedTrial.id) === index ? 3 : 1,
+              strokeStyle:
+                chartData?.trialIds.indexOf(focusedTrial.id) === index
+                  ? ui.theme.ixOnActive
+                  : rgba2str({ ...str2rgba(ui.theme.ixOn), a: 0.1 }),
+            }))
             : undefined,
           targetColorScale: colorScale.map((scale) => scale.color),
           targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
@@ -201,16 +201,16 @@ const HpParallelCoordinates: React.FC<Props> = ({
       newDimensions.push(
         selectedScale === Scale.Log
           ? {
-              key,
-              label: key,
-              logBase: 10,
-              type: DimensionType.Logarithmic,
-            }
+            key,
+            label: key,
+            logBase: 10,
+            type: DimensionType.Logarithmic,
+          }
           : {
-              key,
-              label: key,
-              type: DimensionType.Linear,
-            },
+            key,
+            label: key,
+            type: DimensionType.Linear,
+          },
       );
     }
 

@@ -1,4 +1,5 @@
 import Spinner from 'hew/Spinner';
+import UIProvider from 'hew/Theme';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
@@ -7,7 +8,8 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
-
+import useUITheme from './useUITheme';
+import useUI from 'components/ThemeProvider';
 /*
  * UserSettingsState contains all the settings for a user
  * across the application. Each key identifies a unique part
@@ -35,25 +37,29 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
   const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
+  const { ui, actions: uiActions } = useUI();
 
+  const { theme, isDarkMode } = useUITheme(ui.mode, ui.theme);
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);
   }, []);
 
   return (
-    <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
-      <UserSettings.Provider
-        value={{
-          isLoading,
-          querySettings: querySettings.current,
-          // Note that this cast fails when a setting is anything other than a JsonObject.
-          // Settings that are not JsonObjects should only be accessed via the new store.
-          state: userSettings._forUseSettingsOnly() as unknown as WritableObservable<
-            Loadable<UserSettingsState>
-          >,
-        }}>
-        {children}
-      </UserSettings.Provider>
-    </Spinner>
+    <UIProvider theme={theme} themeIsDark={isDarkMode}>
+      <Spinner spinning={isLoading && !(isAuthChecked && !currentUser)} tip="Loading Page">
+        <UserSettings.Provider
+          value={{
+            isLoading,
+            querySettings: querySettings.current,
+            // Note that this cast fails when a setting is anything other than a JsonObject.
+            // Settings that are not JsonObjects should only be accessed via the new store.
+            state: userSettings._forUseSettingsOnly() as unknown as WritableObservable<
+              Loadable<UserSettingsState>
+            >,
+          }}>
+          {children}
+        </UserSettings.Provider>
+      </Spinner>
+    </UIProvider>
   );
 };

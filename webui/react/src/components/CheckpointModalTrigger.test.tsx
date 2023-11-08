@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
@@ -39,7 +39,7 @@ const ModalTrigger: React.FC = () => {
 const setup = async () => {
   render(
     <BrowserRouter>
-      <UIProvider>
+      <UIProvider theme={DefaultTheme.Light}>
         <ConfirmationProvider>
           <ModalTrigger />
         </ConfirmationProvider>

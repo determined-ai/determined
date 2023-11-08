@@ -7,7 +7,7 @@ import {
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import { DarkLight, Theme } from 'hew/Theme';
+import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
 import { paths } from 'routes/utils';
@@ -89,14 +89,14 @@ interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
   rowSelection: CompactSelection;
-  darkLight: DarkLight;
+  themeIsDark: boolean;
   users: Loadable<DetailedUser[]>;
   selectAll: boolean;
 }
 export const getColumnDefs = ({
   columnWidths,
   rowSelection,
-  darkLight,
+  themeIsDark,
   users,
   selectAll,
   appTheme,
@@ -203,11 +203,11 @@ export const getColumnDefs = ({
         link:
           record.experiment.forkedFrom !== undefined
             ? {
-                href: record.experiment.forkedFrom
-                  ? paths.experimentDetails(record.experiment.forkedFrom)
-                  : undefined,
-                title: String(record.experiment.forkedFrom ?? ''),
-              }
+              href: record.experiment.forkedFrom
+                ? paths.experimentDetails(record.experiment.forkedFrom)
+                : undefined,
+              title: String(record.experiment.forkedFrom ?? ''),
+            }
             : undefined,
         navigateOn: 'click',
         underlineOffset: 6,
@@ -414,7 +414,7 @@ export const getColumnDefs = ({
           image: undefined,
           initials: getInitials(displayName),
           kind: 'user-profile-cell',
-          tint: getColor(displayName, darkLight),
+          tint: getColor(displayName, themeIsDark),
         },
         kind: GridCellKind.Custom,
       };
@@ -500,9 +500,8 @@ const getHeatmapColor = (min: number, max: number, value: number): string => {
   const red = [44, 222];
   const green = [119, 66];
   const blue = [176, 91];
-  return `rgb(${red[0] + (red[1] - red[0]) * p}, ${green[0] + (green[1] - green[0]) * p}, ${
-    blue[0] + (blue[1] - blue[0]) * p
-  })`;
+  return `rgb(${red[0] + (red[1] - red[0]) * p}, ${green[0] + (green[1] - green[0]) * p}, ${blue[0] + (blue[1] - blue[0]) * p
+    })`;
 };
 
 export const defaultNumberColumn = (

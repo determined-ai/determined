@@ -1,4 +1,4 @@
-import { Mode } from 'hew/Theme';
+import { Mode } from 'components/ThemeProvider';
 import { literal, union } from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';

@@ -111,23 +111,23 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   const fileOpts = [
     submittedConfig
       ? {
-          download: `${experiment.id}_submitted_configuration.yaml`,
-          icon: configIcon,
-          isLeaf: true,
-          key: 'Submitted Configuration',
-          subtitle: 'original submitted config',
-          title: 'Submitted Configuration',
-        }
+        download: `${experiment.id}_submitted_configuration.yaml`,
+        icon: configIcon,
+        isLeaf: true,
+        key: 'Submitted Configuration',
+        subtitle: 'original submitted config',
+        title: 'Submitted Configuration',
+      }
       : null,
     runtimeConfig
       ? {
-          download: `${experiment.id}_runtime_configuration.yaml`,
-          icon: configIcon,
-          isLeaf: true,
-          key: 'Runtime Configuration',
-          subtitle: 'after merge with defaults and templates',
-          title: 'Runtime Configuration',
-        }
+        download: `${experiment.id}_runtime_configuration.yaml`,
+        icon: configIcon,
+        isLeaf: true,
+        key: 'Runtime Configuration',
+        subtitle: 'after merge with defaults and templates',
+        title: 'Runtime Configuration',
+      }
       : null,
     ...Loadable.getOrElse([], expFiles),
   ].filter((valid) => !!valid) as TreeNode[];

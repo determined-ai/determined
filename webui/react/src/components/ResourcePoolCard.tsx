@@ -3,7 +3,7 @@ import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import useUI, { DarkLight, ShirtSize } from 'hew/Theme';
+import { ShirtSize } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
@@ -26,6 +26,8 @@ import { getSlotContainerStates } from 'utils/cluster';
 import { useObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
+import useUI from 'components/ThemeProvider';
+import useUITheme from 'hooks/useUITheme';
 
 import { ConditionalWrapper } from './ConditionalWrapper';
 import Json from './Json';
@@ -71,11 +73,12 @@ const poolAttributes = [
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   const { ui } = useUI();
+  const { isDarkMode } = useUITheme(ui.mode, ui.theme);
 
   let iconSrc = '';
   switch (type) {
     case V1ResourcePoolType.AWS:
-      iconSrc = ui.darkLight === DarkLight.Light ? awsLogo : awsLogoOnDark;
+      iconSrc = isDarkMode ? awsLogo : awsLogoOnDark;
       break;
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;

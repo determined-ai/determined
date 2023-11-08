@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import React, { useCallback, useEffect } from 'react';
 
@@ -76,7 +76,7 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <ConfirmationProvider>
         <Container />
       </ConfirmationProvider>

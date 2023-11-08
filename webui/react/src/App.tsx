@@ -1,8 +1,9 @@
 import { App as AntdApp } from 'antd';
 import Button from 'hew/Button';
 import Spinner from 'hew/Spinner';
-import useUI, { UIProvider } from 'hew/Theme';
+import useUI, { ThemeProvider } from 'components/ThemeProvider';
 import { notification } from 'hew/Toast';
+import UIProvider from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
@@ -26,11 +27,11 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import { useSettings } from 'hooks/useSettings';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
+import useUITheme from 'hooks/useUITheme';
 import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
-import { StoreProvider } from 'stores';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
@@ -62,6 +63,8 @@ const AppView: React.FC = () => {
   } = useSettings<themeSettings>(themeConfig);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { ui, actions: uiActions } = useUI();
+
+  const { theme, isDarkMode } = useUITheme(ui.mode, ui.theme);
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -159,59 +162,58 @@ const AppView: React.FC = () => {
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: () => (
-      <div className={css.base}>
-        {isAuthChecked ? (
-          <>
-            {isServerReachable ? (
-              <AntdApp>
-                <ConfirmationProvider>
-                  <Navigation>
-                    <JupyterLabGlobal
-                      enabled={
-                        Loadable.isLoaded(loadableUser) &&
-                        (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                      }
-                      workspace={workspace ?? undefined}
-                    />
-                    <Omnibar />
-                    <main>
-                      <Router routes={appRoutes} />
-                    </main>
-                  </Navigation>
-                </ConfirmationProvider>
-              </AntdApp>
-            ) : (
-              <PageMessage title="Server is Unreachable">
-                <p>
-                  Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
-                  check the firewall and cluster settings.
-                </p>
-                <Button onClick={refreshPage}>Try Again</Button>
-              </PageMessage>
-            )}
-          </>
-        ) : (
-          <Spinner center spinning />
-        )}
-      </div>
+      <UIProvider theme={theme} themeIsDark={isDarkMode}>
+        <div className={css.base}>
+          {isAuthChecked ? (
+            <>
+              {isServerReachable ? (
+                <AntdApp>
+                  <ConfirmationProvider>
+                    <Navigation>
+                      <JupyterLabGlobal
+                        enabled={
+                          Loadable.isLoaded(loadableUser) &&
+                          (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                        }
+                        workspace={workspace ?? undefined}
+                      />
+                      <Omnibar />
+                      <main>
+                        <Router routes={appRoutes} />
+                      </main>
+                    </Navigation>
+                  </ConfirmationProvider>
+                </AntdApp>
+              ) : (
+                <PageMessage title="Server is Unreachable">
+                  <p>
+                    Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
+                    check the firewall and cluster settings.
+                  </p>
+                  <Button onClick={refreshPage}>Try Again</Button>
+                </PageMessage>
+              )}
+            </>
+          ) : (
+            <Spinner center spinning />
+          )}
+        </div>
+      </UIProvider>
     ),
-    NotLoaded: () => <Spinner center spinning />,
+    NotLoaded: () => <UIProvider theme={theme} themeIsDark={isDarkMode}><Spinner center spinning /></UIProvider>,
   });
 };
 
 const App: React.FC = () => {
-  const info = useObservable(determinedStore.info);
   return (
     <HelmetProvider>
-      <StoreProvider>
+      <ThemeProvider>
         <SettingsProvider>
-          <UIProvider branding={info.branding}>
-            <DndProvider backend={HTML5Backend}>
-              <AppView />
-            </DndProvider>
-          </UIProvider>
+          <DndProvider backend={HTML5Backend}>
+            <AppView />
+          </DndProvider>
         </SettingsProvider>
-      </StoreProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 };

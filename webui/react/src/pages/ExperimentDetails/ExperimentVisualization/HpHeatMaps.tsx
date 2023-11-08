@@ -1,6 +1,6 @@
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';

@@ -1,6 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
@@ -21,7 +21,7 @@ const setup = ({
   ...props
 }: BadgeProps = {}) => {
   return render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <Badge tooltip={tooltip} type={type} {...props}>
         {children}
       </Badge>
@@ -39,7 +39,7 @@ describe('Badge', () => {
     const TestComponent = () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
-        <UIProvider>
+        <UIProvider theme={DefaultTheme.Light}>
           <button role="button" onClick={() => setValue(SlotState.Running)} />
           <Badge state={value} type={BadgeType.State} />
         </UIProvider>

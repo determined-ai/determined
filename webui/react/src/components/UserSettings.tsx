@@ -9,13 +9,12 @@ import InputShortcut, { KeyboardShortcut, shortcutToString } from 'hew/InputShor
 import { useModal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import useUI, { Mode } from 'hew/Theme';
 import { makeToast } from 'hew/Toast';
 import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
-
+import useUI, { Mode } from './ThemeProvider';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';

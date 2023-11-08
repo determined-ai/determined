@@ -6,7 +6,7 @@ import { matchesShortcut, shortcutToString } from 'hew/InputShortcut';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import { boolean } from 'io-ts';

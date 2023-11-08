@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
@@ -37,8 +37,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -47,8 +47,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -123,7 +123,7 @@ const setup = (
   result: HookReturn;
 } => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <Container>{children}</Container>
     </UIProvider>
   );

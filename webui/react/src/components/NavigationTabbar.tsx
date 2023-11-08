@@ -2,7 +2,7 @@ import Avatar from 'hew/Avatar';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -99,12 +99,12 @@ const NavigationTabbar: React.FC = () => {
     (workspaces) =>
       workspaces.map(
         (workspace) =>
-          ({
-            icon: <Avatar palette="muted" square text={workspace.name} />,
-            label: workspace.name,
-            onClick: (e: AnyMouseEvent) =>
-              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-          } as ActionItem),
+        ({
+          icon: <Avatar palette="muted" square text={workspace.name} />,
+          label: workspace.name,
+          onClick: (e: AnyMouseEvent) =>
+            handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+        } as ActionItem),
       ),
   );
 

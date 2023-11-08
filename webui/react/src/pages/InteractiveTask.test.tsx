@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
@@ -36,7 +36,7 @@ const InteractiveTaskPageContainer: React.FC = () => {
 const InteractiveTaskContainer: React.FC = () => {
   return (
     <BrowserRouter>
-      <UIProvider>
+      <UIProvider theme={DefaultTheme.Light}>
         <HelmetProvider>
           <ConfirmationProvider>
             <InteractiveTaskPageContainer />

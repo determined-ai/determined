@@ -1,4 +1,4 @@
-import useUI, { Mode } from 'hew/Theme';
+import useUI, { Mode } from './ThemeProvider';
 import React from 'react';
 
 import css from './ThemeToggle.module.scss';

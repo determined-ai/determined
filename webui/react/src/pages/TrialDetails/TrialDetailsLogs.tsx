@@ -3,7 +3,7 @@ import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
+import useUI from 'components/ThemeProvider';;
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

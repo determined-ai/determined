@@ -127,7 +127,7 @@ const TrialLogPreview: React.FC<Props> = ({
             {logEntry && (
               <LogViewerEntry
                 noWrap
-                style={{ position: 'relative' }}
+
                 timeStyle={{ width: dateTimeWidth }}
                 {...logEntry}
               />

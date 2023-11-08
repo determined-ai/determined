@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { HelmetProvider } from 'react-helmet-async';
 
 import {
@@ -10,7 +10,7 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import {} from 'stores/cluster';
+import { } from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
@@ -53,7 +53,7 @@ vi.mock('./ExperimentVisualization', () => ({
 
 const setup = () => {
   const view = render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <HelmetProvider>
         <BrowserRouter>
           <ExperimentDetails />

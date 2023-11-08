@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -14,7 +14,7 @@ vi.mock('hew/Tooltip');
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <BadgeTag tooltip={tooltip} {...props}>
         {children}
       </BadgeTag>
