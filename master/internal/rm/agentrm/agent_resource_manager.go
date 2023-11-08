@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -46,13 +47,13 @@ func New(
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *ResourceManager {
+	agentsRef, agentUpdates := initializeAgents(system, config.ResourcePools, echo, opts)
 	ref, _ := system.ActorOf(
 		sproto.AgentRMAddr,
-		newAgentResourceManager(db, config, cert),
+		newAgentResourceManager(db, config, cert, agentsRef, agentUpdates),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 	rm := ResourceManager{ResourceManager: actorrm.Wrap(ref)}
-	initializeAgents(system, rm, echo, opts)
 	return &rm
 }
 
@@ -265,18 +266,23 @@ type agentResourceManager struct {
 	cert        *tls.Certificate
 	db          *db.PgDB
 
-	pools map[string]*actor.Ref
+	agentsRef    *actor.Ref
+	agentUpdates *queue.Queue[agentUpdatedEvent]
+	pools        map[string]*actor.Ref
 }
 
-func newAgentResourceManager(db *db.PgDB, config *config.ResourceConfig,
-	cert *tls.Certificate,
+func newAgentResourceManager(
+	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentsRef *actor.Ref,
+	agentUpdates *queue.Queue[agentUpdatedEvent],
 ) *agentResourceManager {
 	return &agentResourceManager{
-		config:      config.ResourceManager.AgentRM,
-		poolsConfig: config.ResourcePools,
-		cert:        cert,
-		db:          db,
-		pools:       make(map[string]*actor.Ref),
+		config:       config.ResourceManager.AgentRM,
+		poolsConfig:  config.ResourcePools,
+		cert:         cert,
+		db:           db,
+		agentsRef:    agentsRef,
+		agentUpdates: agentUpdates,
+		pools:        make(map[string]*actor.Ref),
 	}
 }
 
@@ -289,6 +295,17 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				a.pools[config.PoolName] = rpRef
 			}
 		}
+		go func() {
+			for {
+				update := a.agentUpdates.Get()
+				pool, ok := a.pools[update.resourcePool]
+				if !ok {
+					ctx.Log().Warn("ignoring agent update for unknown pool: %w", update.resourcePool)
+					continue
+				}
+				ctx.Tell(pool, update)
+			}
+		}()
 
 	case sproto.AllocateRequest:
 		// this code exists to handle the case where an experiment does not have
@@ -485,6 +502,7 @@ func (a *agentResourceManager) createResourcePool(
 		cert,
 		MakeScheduler(config.Scheduler),
 		MakeFitFunction(config.Scheduler.FittingPolicy),
+		a.agentsRef,
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
