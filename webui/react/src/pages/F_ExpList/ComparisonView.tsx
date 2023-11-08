@@ -50,7 +50,7 @@ const ComparisonView: React.FC<Props> = ({
 
   const metricData = useTrialMetrics(trials);
 
-  const tabs: PivotProps["items"] = useMemo(() => {
+  const tabs: PivotProps['items'] = useMemo(() => {
     return [
       {
         children: (
