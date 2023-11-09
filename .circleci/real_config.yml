@@ -419,6 +419,7 @@ commands:
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
             fi
+            echo <<parameters.python-version>> >> /tmp/cachefile
 
       - restore_cache:
           keys:
@@ -2058,10 +2059,78 @@ jobs:
       - attach_workspace:
           at: .
 
-      - setup-python-venv:
-          determined: True
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: <<pipeline.parameters.machine-image>>
+      #- setup-python-venv:
+      #    determined: True
+      #    extra-requirements-file: "e2e_tests/tests/requirements.txt"
+      #    executor: <<pipeline.parameters.machine-image>>
+
+      # Load cache
+      - run:
+          name: Write cache key
+          command: |
+            pip freeze --all >> /tmp/cachefile
+            cat harness/setup.py >> /tmp/cachefile
+            echo e2e_tests/tests/requirments.txt >> /tmp/cachefile
+            cat e2e_tests/tests/requirments.txt >> /tmp/cachefile
+            echo 3.8.16 >> /tmp/cachefile # TODO
+
+      - restore_cache:
+          keys:
+            - det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
+
+      - run:
+          name: install Python
+          command: |
+            echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
+
+            cat \<<'EOF' > /tmp/install_python.sh
+            #!/bin/bash
+            PYTHON_VERSION="${1}"
+
+            CONDA_DIR="/opt/conda"
+            CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
+            CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
+            CONDA_URL="https://repo.anaconda.com/miniconda"
+
+            mkdir -p /etc/determined/conda.d
+            mkdir -p "${CONDA_DIR}"
+
+            cd /tmp
+            curl --retry 3 -fsSL -O "${CONDA_URL}/${CONDA_INSTALLER}"
+            echo "${CONDA_SHA256}  ${CONDA_INSTALLER}" | sha256sum ${CONDA_INSTALLER}
+            bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
+            rm -f "./${CONDA_INSTALLER}"
+
+            ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
+            ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
+            ${CONDA_DIR}/bin/conda clean --all -y
+            EOF
+
+            sudo bash /tmp/install_python.sh 3.8.16 # TODO
+
+            python3 -m venv /tmp/venv
+            echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
+            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
+
+            python3 -m pip install build
+
+            pip install e2e_tests/tests/requirments.txt
+
+      - pull-task-images:
+          tf2: <<parameters.tf2>>
+
+      - save_cache:
+          key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
+          paths:
+            - "/tmp/venv"
+            - "/var/lib/docker" # Is this right?
+
+      - when:
+          condition: true
+          steps:
+            - install-wheel:
+                package-name: determined
+                package-location: ~/project/harness
 
       - install-devcluster
       - unless:
@@ -2070,9 +2139,6 @@ jobs:
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
-
-      - pull-task-images:
-          tf2: <<parameters.tf2>>
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
