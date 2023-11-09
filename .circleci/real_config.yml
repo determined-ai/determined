@@ -586,7 +586,7 @@ commands:
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
-            --self-from-file /tmp/tests-to-run \
+            --select-from-file /tmp/tests-to-run \
             .
       - upload-test-job:
           only_on_branch: main
