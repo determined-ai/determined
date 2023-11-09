@@ -2594,6 +2594,10 @@ workflows:
           requires:
             - build-react
             - build-docs
+          filters:
+            branches:
+              only:
+                - main
 
       - package-and-push-system-dev:
           requires:
