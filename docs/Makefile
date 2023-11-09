@@ -63,7 +63,7 @@ clean:
 	rm -rf site build attributions.rst
 
 .PHONY: pre-publish
-pre-publish:
+pre-publish: build/sp-html.stamp
 	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
 
 .PHONY: publish-check

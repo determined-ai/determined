@@ -19,7 +19,11 @@ plan: init
 
 .PHONY: publish
 publish: init
+	# Terraform controls the static cloudfront configuration.
 	terraform apply -auto-approve
+	# publish-to-s3.sh publishes the per-version content.
+	./publish-to-s3.sh --version $(shell cat ../../VERSION)
+
 
 .PHONY: check
 check: init

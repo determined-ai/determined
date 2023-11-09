@@ -41,29 +41,3 @@ resource "aws_s3_bucket_object" "robots" {
   content          = "User-agent: *\nSitemap: https://docs.determined.ai/latest/sitemap.xml"
   content_type     = "text"
 }
-
-resource "null_resource" "upload" {
-  triggers = {
-    version = "${var.det_version}"
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      aws s3 sync ../site/html s3://${aws_s3_bucket.docs.id}/${var.det_version} ;
-      aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.distribution.id} --paths '/${var.det_version}/*'
-    EOT
-  }
-}
-
-resource "null_resource" "upload_latest" {
-  triggers = {
-    version = "${var.det_version}"
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      aws s3 sync ../site/html s3://${aws_s3_bucket.docs.id}/latest --delete ;
-      aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.distribution.id} --paths '/latest/*'
-    EOT
-  }
-}
