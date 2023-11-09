@@ -33,6 +33,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
 }: ClusterHistoricalUsageChartProps) => {
   const data: Serie[] = Object.keys(hoursByLabel).map((label) => ({
     data: {
+      // convert Unix times from milliseconds to seconds
       [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [Date.parse(time[idx]) / 1000, pt]),
     },
     name: label,
