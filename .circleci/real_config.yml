@@ -419,7 +419,6 @@ commands:
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
             fi
-            echo <<parameters.python-version>> >> /tmp/cachefile
 
       - restore_cache:
           keys:
@@ -2070,8 +2069,8 @@ jobs:
           command: |
             pip freeze --all >> /tmp/cachefile
             cat harness/setup.py >> /tmp/cachefile
-            echo e2e_tests/tests/requirments.txt >> /tmp/cachefile
-            cat e2e_tests/tests/requirments.txt >> /tmp/cachefile
+            echo ./tests/requirments.txt >> /tmp/cachefile
+            cat ./tests/requirments.txt >> /tmp/cachefile
             echo 3.8.16 >> /tmp/cachefile # TODO
 
       - restore_cache:
@@ -2114,7 +2113,7 @@ jobs:
 
             python3 -m pip install build
 
-            pip install e2e_tests/tests/requirments.txt
+            pip install ./tests/requirments.txt
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
