@@ -1,11 +1,13 @@
-import { useTheme, StateOfUnion } from 'hew/Theme';
+import { StateOfUnion, useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { CSSProperties, useMemo } from 'react';
-import useUITheme from 'hooks/useUITheme';
+
 import useUI from 'components/ThemeProvider';
 import { stateToLabel } from 'constants/states';
+import useUITheme from 'hooks/useUITheme';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { getStateColorThemeVar, hsl2str, str2hsl } from 'utils/color';
+
 import css from './Badge.module.scss';
 
 export const BadgeType = {

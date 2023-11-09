@@ -6,7 +6,7 @@ import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { getStateColorThemeVar } from 'utils/color';
+
 import Badge from 'components/Badge';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
@@ -43,6 +43,7 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { getStateColorThemeVar } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
@@ -174,8 +175,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const stateStyle = useMemo(
     () => ({
-      backgroundColor: getThemeVar(getStateColorThemeVar((experiment.state))),
-      color: getThemeVar(getStateColorThemeVar(experiment.state, { isOn: true, strongWeak: 'strong' })),
+      backgroundColor: getThemeVar(getStateColorThemeVar(experiment.state)),
+      color: getThemeVar(
+        getStateColorThemeVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
+      ),
     }),
     [experiment.state],
   );

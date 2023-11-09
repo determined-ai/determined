@@ -1,5 +1,6 @@
 import Progress from 'hew/Progress';
 import { ShirtSize } from 'hew/Theme';
+import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { useMemo } from 'react';
 
@@ -9,12 +10,12 @@ import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { ResourceState, SlotState } from 'types';
+import { getStateColorThemeVar } from 'utils/color';
 import { routeToReactUrl } from 'utils/routes';
 import { floatToPercent } from 'utils/string';
-import { useTheme } from 'hew/Theme';
+
 import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';
-import { getStateColorThemeVar } from 'utils/color';
 
 export interface Props {
   className?: string;
@@ -105,18 +106,18 @@ const SlotAllocationBar: React.FC<Props> = ({
     if (isAux && footer) {
       const freePerc =
         footer.auxContainerCapacity &&
-          footer.auxContainersRunning &&
-          footer.auxContainerCapacity - footer.auxContainersRunning > 0
+        footer.auxContainersRunning &&
+        footer.auxContainerCapacity - footer.auxContainersRunning > 0
           ? (footer.auxContainerCapacity - footer.auxContainersRunning) /
-          footer.auxContainerCapacity
+            footer.auxContainerCapacity
           : 1;
       const parts = {
         free: {
-          color: getThemeVar(getStateColorThemeVar((SlotState.Free))),
+          color: getThemeVar(getStateColorThemeVar(SlotState.Free)),
           percent: freePerc,
         },
         running: {
-          color: getThemeVar(getStateColorThemeVar((SlotState.Running))),
+          color: getThemeVar(getStateColorThemeVar(SlotState.Running)),
           percent: 1 - freePerc,
         },
       };
@@ -126,20 +127,20 @@ const SlotAllocationBar: React.FC<Props> = ({
       slotsPotential && slotsPotential > totalSlots ? totalSlots / slotsPotential : 1;
     const parts = {
       free: {
-        color: getThemeVar(getStateColorThemeVar((SlotState.Free))),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Free)),
         percent: totalSlots < 1 ? 0 : (freeSlots / totalSlots) * slotsAvailablePer,
       },
       pending: {
-        color: getThemeVar(getStateColorThemeVar((SlotState.Pending))),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Pending)),
         percent: totalSlots < 1 ? 0 : (pendingSlots / totalSlots) * slotsAvailablePer,
       },
       potential: {
         bordered: true,
-        color: getThemeVar(getStateColorThemeVar((SlotState.Potential))),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Potential)),
         percent: 1 - slotsAvailablePer,
       },
       running: {
-        color: getThemeVar(getStateColorThemeVar((SlotState.Running))),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Running)),
         percent: totalSlots < 1 ? 0 : (stateTallies.RUNNING / totalSlots) * slotsAvailablePer,
       },
     };
@@ -270,18 +271,21 @@ const SlotAllocationBar: React.FC<Props> = ({
         <div className={css.footer}>
           {poolType === V1ResourcePoolType.K8S ? (
             <header>
-              {`${isAux
-                ? `${footer.auxContainersRunning} Aux Containers Running`
-                : `${resourceStates.length} ${title || 'Compute'} Slots Allocated`
-                }`}
+              {`${
+                isAux
+                  ? `${footer.auxContainersRunning} Aux Containers Running`
+                  : `${resourceStates.length} ${title || 'Compute'} Slots Allocated`
+              }`}
             </header>
           ) : (
             <header>
-              {`${isAux
-                ? `${footer.auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running`
-                : `${resourceStates.length}/${totalSlotsNum} ${title || 'Compute'
-                } Slots Allocated`
-                }`}
+              {`${
+                isAux
+                  ? `${footer.auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running`
+                  : `${resourceStates.length}/${totalSlotsNum} ${
+                      title || 'Compute'
+                    } Slots Allocated`
+              }`}
             </header>
           )}
           {renderFooterJobs()}

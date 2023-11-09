@@ -5,11 +5,13 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
+import Progress from 'hew/Progress';
 import Tags from 'hew/Tags';
+import { useTheme } from 'hew/Theme';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import Progress from 'hew/Progress';
+
 import Badge, { BadgeType } from 'components/Badge';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
@@ -70,6 +72,7 @@ import {
   RecordKey,
   RunState,
 } from 'types';
+import { getStateColorThemeVar } from 'utils/color';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
@@ -91,8 +94,6 @@ import {
   settingsConfigForProject,
 } from './ExperimentList.settings';
 import css from './ProjectDetails.module.scss';
-import { useTheme } from 'hew/Theme';
-import { getStateColorThemeVar } from 'utils/color';
 
 const filterKeys: Array<keyof ExperimentListSettings> = ['label', 'search', 'state', 'user'];
 
