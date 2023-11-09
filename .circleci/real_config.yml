@@ -1466,6 +1466,7 @@ jobs:
   lint-react:
     docker:
       - image: cimg/node:20.1.0
+    resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
