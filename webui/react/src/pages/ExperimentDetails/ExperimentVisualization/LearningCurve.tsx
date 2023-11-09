@@ -1,13 +1,13 @@
 import { LineChart } from 'hew/LineChart';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'components/ThemeProvider';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
+import useUI from 'components/ThemeProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
 import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';

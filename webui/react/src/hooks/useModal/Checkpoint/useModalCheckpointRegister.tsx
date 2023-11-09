@@ -144,7 +144,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     },
-    [modalClose, selectedModelNumVersions],
+    [modalClose, selectedModelNumVersions, openToast],
   );
 
   const handleOk = useCallback(

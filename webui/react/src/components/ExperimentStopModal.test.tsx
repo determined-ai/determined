@@ -9,13 +9,12 @@ import ExperimentStopModalComponent, {
   BUTTON_TEXT,
   CHECKBOX_TEXT,
 } from 'components/ExperimentStopModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import {
   cancelExperiment as mockCancelExperiment,
   killExperiment as mockKillExperiment,
 } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup();
 

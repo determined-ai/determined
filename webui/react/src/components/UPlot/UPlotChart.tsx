@@ -4,10 +4,12 @@ import Spinner from 'hew/Spinner';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
+
+import useUI from 'components/ThemeProvider';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import useUI from 'components/ThemeProvider';
+
 import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
 import css from './UPlotChart.module.scss';

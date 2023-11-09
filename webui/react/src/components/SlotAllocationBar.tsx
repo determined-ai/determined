@@ -1,6 +1,5 @@
 import Progress from 'hew/Progress';
-import { ShirtSize } from 'hew/Theme';
-import { useTheme } from 'hew/Theme';
+import { ShirtSize, useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { useMemo } from 'react';
 
@@ -146,7 +145,16 @@ const SlotAllocationBar: React.FC<Props> = ({
     };
 
     return [parts.running, parts.pending, parts.free, parts.potential];
-  }, [totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential, footer, isAux]);
+  }, [
+    getThemeVar,
+    totalSlots,
+    stateTallies,
+    pendingSlots,
+    freeSlots,
+    slotsPotential,
+    footer,
+    isAux,
+  ]);
 
   const totalSlotsNum = useMemo(() => {
     return slotsPotential || totalSlots;

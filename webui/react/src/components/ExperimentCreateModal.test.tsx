@@ -12,10 +12,9 @@ import ExperimentCreateModalComponent, {
   FULL_CONFIG_BUTTON_TEXT,
   SIMPLE_CONFIG_BUTTON_TEXT,
 } from 'components/ExperimentCreateModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup();
 

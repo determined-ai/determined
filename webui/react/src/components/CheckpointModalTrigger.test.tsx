@@ -6,9 +6,9 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';

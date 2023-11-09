@@ -6,13 +6,13 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREATE_USER } from './UserManagement';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';

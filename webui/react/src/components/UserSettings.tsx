@@ -14,9 +14,10 @@ import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
-import useUI, { Mode } from 'components/ThemeProvider';
+
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
+import useUI, { Mode } from 'components/ThemeProvider';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
   shortcutSettingsConfig,
@@ -85,7 +86,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         return e as Error;
       }
     },
-    [currentUser?.id],
+    [currentUser?.id, openToast],
   );
 
   const handleSaveUsername = useCallback(
@@ -101,7 +102,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         return e as Error;
       }
     },
-    [currentUser?.id],
+    [currentUser?.id, openToast],
   );
 
   const [newPassword, setNewPassword] = useState<string>('');

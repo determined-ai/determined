@@ -39,7 +39,7 @@ const RemoveUserFromGroupModalComponent = ({
         handleError(e, { silent: true, type: ErrorType.Input });
       }
     },
-    [onExpand, fetchGroups],
+    [onExpand, openToast, fetchGroups],
   );
 
   const handleOk = useCallback(() => {

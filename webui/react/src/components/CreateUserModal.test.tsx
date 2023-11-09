@@ -6,6 +6,7 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { postUser as mockCreateUser } from 'services/api';
 
 import CreateUserModalComponent, {
@@ -14,7 +15,6 @@ import CreateUserModalComponent, {
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
 } from './CreateUserModal';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 vi.mock('services/api', () => ({
   getUserRoles: () => Promise.resolve([]),

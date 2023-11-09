@@ -4,11 +4,11 @@ import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
-import useUI from 'components/ThemeProvider';
 /*
  * UserSettingsState contains all the settings for a user
  * across the application. Each key identifies a unique part
@@ -36,7 +36,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
   const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
-  const { ui, actions: uiActions, theme, isDarkMode } = useUI();
+  const { theme, isDarkMode } = useUI();
 
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);

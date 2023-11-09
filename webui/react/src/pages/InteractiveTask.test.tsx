@@ -6,10 +6,10 @@ import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 
 import InteractiveTask from './InteractiveTask';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';

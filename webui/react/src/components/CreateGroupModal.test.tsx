@@ -5,6 +5,7 @@ import { useModal } from 'hew/Modal';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
@@ -16,7 +17,6 @@ import CreateGroupModalComponent, {
   MODAL_HEADER_LABEL_CREATE,
   MODAL_HEADER_LABEL_EDIT,
 } from './CreateGroupModal';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';

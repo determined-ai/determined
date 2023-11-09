@@ -4,6 +4,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import { Column, Columns } from 'hew/Columns';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
+import { useTheme } from 'hew/Theme';
 import { notification } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
@@ -57,7 +58,6 @@ import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-tabl
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import { RowHeight } from './glide-table/OptionsMenu';
 import TableActionBar from './glide-table/TableActionBar';
-import { useTheme } from 'hew/Theme';
 
 interface Props {
   project: Project;

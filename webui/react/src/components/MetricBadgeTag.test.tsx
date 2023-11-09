@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { Metric } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 vi.mock('hew/Tooltip');
 

@@ -110,7 +110,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         });
       }
     }
-  }, [form, workspace.id, onClose]);
+  }, [form, workspace.id, onClose, openToast]);
 
   return (
     <Modal

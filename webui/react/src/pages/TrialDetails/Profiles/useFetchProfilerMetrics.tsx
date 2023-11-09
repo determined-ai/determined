@@ -1,6 +1,6 @@
-import useUI from 'components/ThemeProvider';
 import { useEffect, useState } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import { terminalRunStates } from 'constants/states';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';

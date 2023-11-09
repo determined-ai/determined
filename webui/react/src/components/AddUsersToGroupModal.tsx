@@ -86,7 +86,7 @@ const AddUsersToGroupModalComponent: React.FC<Props> = ({ users, onClose, group 
         });
       }
     }
-  }, [form, group.group.groupId, onClose]);
+  }, [form, group.group.groupId, onClose, openToast]);
 
   return (
     <Modal

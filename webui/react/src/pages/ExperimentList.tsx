@@ -647,6 +647,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     ContextMenu,
     experimentTags,
+    getThemeVar,
     labelFilterDropdown,
     labels,
     nameFilterSearch,

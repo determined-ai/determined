@@ -6,10 +6,9 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React, { useMemo } from 'react';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
-
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;

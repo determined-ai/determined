@@ -54,7 +54,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
         });
       }
     }
-  }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId, onClose]);
+  }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId, onClose, openToast]);
 
   return (
     <Modal

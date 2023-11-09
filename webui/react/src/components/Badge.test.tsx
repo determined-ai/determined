@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useState } from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { stateToLabel } from 'constants/states';
 import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeProps, BadgeType } from './Badge';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();

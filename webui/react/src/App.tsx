@@ -1,9 +1,8 @@
 import { App as AntdApp } from 'antd';
 import Button from 'hew/Button';
 import Spinner from 'hew/Spinner';
-import useUI, { ThemeProvider } from 'components/ThemeProvider';
-import { notification } from 'hew/Toast';
 import UIProvider from 'hew/Theme';
+import { notification } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
@@ -18,6 +17,7 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
+import useUI, { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';

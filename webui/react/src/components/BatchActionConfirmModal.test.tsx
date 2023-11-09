@@ -5,10 +5,10 @@ import { DEFAULT_CANCEL_LABEL, useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { ExperimentAction as Action, ExperimentAction } from 'types';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 interface Props {
   action: ExperimentAction;

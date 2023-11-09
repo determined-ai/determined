@@ -10,10 +10,9 @@ import ExperimentEditModalComponent, {
   DESCRIPTION_LABEL,
   NAME_LABEL,
 } from 'components/ExperimentEditModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { patchExperiment as mockPatchExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup();
 

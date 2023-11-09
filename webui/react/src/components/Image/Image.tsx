@@ -1,7 +1,6 @@
 import React from 'react';
 
 import css from './Image.module.scss';
-import { boolean } from 'fp-ts';
 
 export interface Props {
   isDarkMode?: boolean;

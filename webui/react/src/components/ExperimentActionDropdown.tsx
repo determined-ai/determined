@@ -261,6 +261,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onComplete,
       onLink,
       onVisibleChange,
+      openToast,
       cell,
     ],
   );

@@ -180,7 +180,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         getStateColorThemeVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
       ),
     }),
-    [experiment.state],
+    [experiment.state, getThemeVar],
   );
 
   const disabled =

@@ -14,6 +14,7 @@ import gcpLogo from 'assets/images/gcp-logo.svg?url';
 import k8sLogo from 'assets/images/k8s-logo.svg?url';
 import staticLogo from 'assets/images/on-prem-logo.svg?url';
 import SlotAllocationBar from 'components/SlotAllocationBar';
+import useUI from 'components/ThemeProvider';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -26,7 +27,6 @@ import { getSlotContainerStates } from 'utils/cluster';
 import { useObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
-import useUI from 'components/ThemeProvider';
 
 import { ConditionalWrapper } from './ConditionalWrapper';
 import Json from './Json';
@@ -71,7 +71,7 @@ const poolAttributes = [
 
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
-  const { ui, isDarkMode } = useUI();
+  const { isDarkMode } = useUI();
 
   let iconSrc = '';
   switch (type) {

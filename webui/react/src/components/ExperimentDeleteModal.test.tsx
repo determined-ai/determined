@@ -6,10 +6,9 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import ExperimentDeleteModalComponent, { BUTTON_TEXT } from 'components/ExperimentDeleteModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { deleteExperiment as mockDeleteExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup();
 

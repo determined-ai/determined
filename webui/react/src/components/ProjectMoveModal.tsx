@@ -55,7 +55,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, onMove, project.id, project.name, workspaces]);
+  }, [destinationWorkspaceId, onMove, openToast, project.id, project.name, workspaces]);
 
   const handleWorkspaceSelect = useCallback(
     (selectedWorkspaceId: SelectValue) => {

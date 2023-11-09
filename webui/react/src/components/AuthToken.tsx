@@ -25,7 +25,7 @@ const AuthToken: React.FC = () => {
         title: 'Unable to Copy to Clipboard',
       });
     }
-  }, [token]);
+  }, [token, openToast]);
 
   return (
     <Message

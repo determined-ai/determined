@@ -6,7 +6,6 @@ import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { User } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
-import Default from 'pages/DefaultRoute';
 
 const testUsers: User[] = [
   {

@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
-import { ValueOf } from 'types';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ThemeProvider } from 'components/ThemeProvider';
+import { ValueOf } from 'types';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
