@@ -7,6 +7,8 @@ import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 
@@ -92,7 +94,7 @@ const Container: React.FC = () => {
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = async () => {
-  const view = render(<Container />);
+  const view = render(<UIProvider theme={DefaultTheme.Light}><ThemeProvider><Container /></ThemeProvider></UIProvider>);
   await user.click(screen.getByRole('button', { name: 'Open Modal' }));
 
   return { view };

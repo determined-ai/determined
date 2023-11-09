@@ -12,6 +12,7 @@ import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREATE_USER } from './UserManagement';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
@@ -67,9 +68,11 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <UIProvider theme={DefaultTheme.Light}>
-      <DndProvider backend={HTML5Backend}>
-        <Container />
-      </DndProvider>
+      <ThemeProvider>
+        <DndProvider backend={HTML5Backend}>
+          <Container />
+        </DndProvider>
+      </ThemeProvider>
     </UIProvider>,
   );
 

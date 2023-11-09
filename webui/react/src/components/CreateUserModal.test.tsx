@@ -13,6 +13,8 @@ import CreateUserModalComponent, {
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
 } from './CreateUserModal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { ThemeProvider } from './ThemeProvider';
 
 vi.mock('services/api', () => ({
   getUserRoles: () => Promise.resolve([]),
@@ -38,7 +40,10 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <BrowserRouter>
-      <Container />
+      <UIProvider theme={DefaultTheme.Light}><ThemeProvider>
+        <Container />
+      </ThemeProvider>
+      </UIProvider>
     </BrowserRouter>,
   );
 

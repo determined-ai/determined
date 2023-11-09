@@ -22,7 +22,7 @@ export const TimeAgoCase = {
 
 export type TimeAgoCase = ValueOf<typeof TimeAgoCase>;
 
-interface Props {
+export interface Props {
   dateFormat?: string;
   datetime: Dayjs | Date | number | string;
   long?: boolean;

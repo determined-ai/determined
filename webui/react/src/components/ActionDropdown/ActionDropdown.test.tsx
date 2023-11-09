@@ -4,6 +4,8 @@ import { ConfirmationProvider } from 'hew/useConfirm';
 
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'types';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
@@ -43,9 +45,13 @@ const DropDownContainer = () => {
 
 const setup = () => {
   const view = render(
-    <ConfirmationProvider>
-      <DropDownContainer />
-    </ConfirmationProvider>,
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <ConfirmationProvider>
+          <DropDownContainer />
+        </ConfirmationProvider>
+      </ThemeProvider>
+    </UIProvider>,
   );
   return { view };
 };

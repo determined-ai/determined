@@ -5,12 +5,17 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Mode } from './ThemeProvider';
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
+import {
+  ThemeProvider
+} from './ThemeProvider';
 
 const ThemeToggleContainer: React.FC = () => (
   <UIProvider theme={DefaultTheme.Light}>
-    <BrowserRouter>
-      <ThemeToggle />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <ThemeToggle />
+      </BrowserRouter>
+    </ThemeProvider>
   </UIProvider>
 );
 

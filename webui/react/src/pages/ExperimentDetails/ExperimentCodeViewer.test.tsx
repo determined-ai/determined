@@ -13,6 +13,7 @@ import { DetailedUser } from 'types';
 import { generateExperiment } from 'utils/task';
 
 import CodeViewer, { Props } from './ExperimentCodeViewer';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -130,7 +131,9 @@ const setup = (props: Pick<Props, 'experiment'> = { experiment: experimentMock }
   render(
     <BrowserRouter>
       <UIProvider theme={DefaultTheme.Light}>
-        <Container {...props} />
+        <ThemeProvider >
+          <Container {...props} />
+        </ThemeProvider>
       </UIProvider>
     </BrowserRouter>,
   );

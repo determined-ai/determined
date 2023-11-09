@@ -7,6 +7,8 @@ import React from 'react';
 import { ExperimentAction as Action, ExperimentAction } from 'types';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { ThemeProvider } from './ThemeProvider';
 
 interface Props {
   action: ExperimentAction;
@@ -33,7 +35,7 @@ const ModalTrigger: React.FC<Props> = ({ action }) => {
 const user = userEvent.setup();
 
 const setup = async (action: ExperimentAction) => {
-  render(<ModalTrigger action={action} />);
+  render(<UIProvider theme={DefaultTheme.Light}><ThemeProvider><ModalTrigger action={action} /></ThemeProvider></UIProvider>);
 
   await user.click(screen.getByRole('button'));
 };

@@ -11,6 +11,7 @@ import userSettings from 'stores/userSettings';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -37,8 +38,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -47,8 +48,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -110,7 +111,11 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   return (
     <SettingsProvider>
-      <BrowserRouter>{children}</BrowserRouter>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <BrowserRouter>{children}</BrowserRouter>
+        </ThemeProvider>
+      </UIProvider>
     </SettingsProvider>
   );
 };
@@ -124,7 +129,9 @@ const setup = (
 } => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <UIProvider theme={DefaultTheme.Light}>
-      <Container>{children}</Container>
+      <ThemeProvider>
+        <Container>{children}</Container>
+      </ThemeProvider>
     </UIProvider>
   );
   const hookResult = renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {

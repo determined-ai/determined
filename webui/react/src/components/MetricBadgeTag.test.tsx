@@ -4,6 +4,7 @@ import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { Metric } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
+import { ThemeProvider } from './ThemeProvider';
 
 vi.mock('hew/Tooltip');
 
@@ -11,7 +12,8 @@ const setup = (metric: Metric) => {
   const handleOnChange = vi.fn();
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
-      <MetricBadgeTag metric={metric} />,
+      <ThemeProvider>
+        <MetricBadgeTag metric={metric} /></ThemeProvider>,
     </UIProvider>,
   );
   return { handleOnChange, view };

@@ -15,6 +15,8 @@ import TableFilterDropdown, {
   ARIA_LABEL_CONTAINER,
   ARIA_LABEL_INPUT,
 } from './TableFilterDropdown';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { theme } from 'antd';
 
 const ColumnValueType = {
   Decimal: 'decimal',
@@ -144,22 +146,24 @@ const setup = (options?: { pagination?: Pagination }) => {
   });
 
   const view = render(
-    <ResponsiveTable<TableItem>
-      columns={newColumns}
-      dataSource={data}
-      pagination={paginationConfig}
-      onChange={onChange}
-    />,
+    <UIProvider theme={DefaultTheme.Light}>
+      <ResponsiveTable<TableItem>
+        columns={newColumns}
+        dataSource={data}
+        pagination={paginationConfig}
+        onChange={onChange}
+      /></UIProvider >,
   );
 
   const rerender = () =>
     view.rerender(
-      <ResponsiveTable<TableItem>
-        columns={columns}
-        dataSource={data}
-        pagination={paginationConfig}
-        onChange={onChange}
-      />,
+      <UIProvider theme={DefaultTheme.Light}>
+        <ResponsiveTable<TableItem>
+          columns={columns}
+          dataSource={data}
+          pagination={paginationConfig}
+          onChange={onChange}
+        /></UIProvider>,
     );
 
   const user = userEvent.setup();

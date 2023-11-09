@@ -16,6 +16,7 @@ import CreateGroupModalComponent, {
   MODAL_HEADER_LABEL_CREATE,
   MODAL_HEADER_LABEL_EDIT,
 } from './CreateGroupModal';
+import { ThemeProvider } from './ThemeProvider';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';
@@ -68,7 +69,9 @@ const Container: React.FC<Props> = ({ group }) => {
 const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
-      <Container group={group} />
+      <ThemeProvider>
+        <Container group={group} />
+      </ThemeProvider>
     </UIProvider>,
   );
 

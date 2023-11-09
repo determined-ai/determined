@@ -5,6 +5,7 @@ import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { generateAlphaNumeric } from 'utils/string';
 
 import BadgeTag, { Props } from './BadgeTag';
+import { ThemeProvider } from './ThemeProvider';
 
 const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();
@@ -15,9 +16,11 @@ vi.mock('hew/Tooltip');
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
-      <BadgeTag tooltip={tooltip} {...props}>
-        {children}
-      </BadgeTag>
+      <ThemeProvider>
+        <BadgeTag tooltip={tooltip} {...props}>
+          {children}
+        </BadgeTag>
+      </ThemeProvider>
     </UIProvider>,
   );
   return { view };

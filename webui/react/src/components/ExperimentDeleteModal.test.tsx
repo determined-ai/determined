@@ -7,6 +7,9 @@ import React from 'react';
 import ExperimentDeleteModalComponent, { BUTTON_TEXT } from 'components/ExperimentDeleteModal';
 import { deleteExperiment as mockDeleteExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { ThemeProvider } from './ThemeProvider';
+import Default from 'pages/DefaultRoute';
 
 const user = userEvent.setup();
 
@@ -32,7 +35,7 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  render(<ModalTrigger />);
+  render(<UIProvider theme={DefaultTheme.Light}><ModalTrigger /><ThemeProvider></ThemeProvider></UIProvider>);
 
   await user.click(screen.getByRole('button'));
 };

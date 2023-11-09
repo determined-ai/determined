@@ -9,6 +9,7 @@ import { BrowserRouter } from 'react-router-dom';
 import authStore from 'stores/auth';
 
 import InteractiveTask from './InteractiveTask';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
@@ -37,11 +38,13 @@ const InteractiveTaskContainer: React.FC = () => {
   return (
     <BrowserRouter>
       <UIProvider theme={DefaultTheme.Light}>
-        <HelmetProvider>
-          <ConfirmationProvider>
-            <InteractiveTaskPageContainer />
-          </ConfirmationProvider>
-        </HelmetProvider>
+        <ThemeProvider>
+          <HelmetProvider>
+            <ConfirmationProvider>
+              <InteractiveTaskPageContainer />
+            </ConfirmationProvider>
+          </HelmetProvider>
+        </ThemeProvider>
       </UIProvider>
     </BrowserRouter>
   );

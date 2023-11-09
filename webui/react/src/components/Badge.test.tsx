@@ -8,6 +8,7 @@ import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeProps, BadgeType } from './Badge';
+import { ThemeProvider } from './ThemeProvider';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
@@ -22,9 +23,11 @@ const setup = ({
 }: BadgeProps = {}) => {
   return render(
     <UIProvider theme={DefaultTheme.Light}>
-      <Badge tooltip={tooltip} type={type} {...props}>
-        {children}
-      </Badge>
+      <ThemeProvider>
+        <Badge tooltip={tooltip} type={type} {...props}>
+          {children}
+        </Badge>
+      </ThemeProvider>
     </UIProvider>,
   );
 };
@@ -40,8 +43,10 @@ describe('Badge', () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
         <UIProvider theme={DefaultTheme.Light}>
-          <button role="button" onClick={() => setValue(SlotState.Running)} />
-          <Badge state={value} type={BadgeType.State} />
+          <ThemeProvider>
+            <button role="button" onClick={() => setValue(SlotState.Running)} />
+            <Badge state={value} type={BadgeType.State} />
+          </ThemeProvider>
         </UIProvider>
       );
     };

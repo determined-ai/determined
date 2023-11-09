@@ -9,6 +9,7 @@ import {
   METADATA_KEY_PLACEHOLDER,
   METADATA_VALUE_PLACEHOLDER,
 } from './EditableRow';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 const initMetadata = { hello: 'world', testing: 'metadata' };
 
@@ -17,7 +18,7 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = (metadata: Metadata = {}, editing = false) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />,
+    <UIProvider theme={DefaultTheme.Light}><EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} /></UIProvider>,
   );
   return { handleOnChange, view };
 };

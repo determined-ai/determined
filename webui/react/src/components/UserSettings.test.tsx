@@ -13,6 +13,7 @@ import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 
 import UserSettings from './UserSettings';
+import { ThemeProvider } from './ThemeProvider';
 
 vi.mock('services/api', () => ({
   getUsers: () =>
@@ -65,21 +66,25 @@ const Container: React.FC = () => {
   }, [loadUsers]);
 
   return (
-    <UserSettings
-      show={true}
-      onClose={() => {
-        return null;
-      }}
-    />
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <UserSettings
+          show={true}
+          onClose={() => {
+            return null;
+          }}
+        /></ThemeProvider></UIProvider>
   );
 };
 
 const setup = () =>
   render(
     <UIProvider theme={DefaultTheme.Light}>
-      <ConfirmationProvider>
-        <Container />
-      </ConfirmationProvider>
+      <ThemeProvider>
+        <ConfirmationProvider>
+          <Container />
+        </ConfirmationProvider>
+      </ThemeProvider>
     </UIProvider>,
   );
 

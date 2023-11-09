@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import RoutePagination from './RoutePagination';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 vi.mock('hew/Tooltip');
 
@@ -24,12 +25,13 @@ const setup = (initialId: number) => {
   const navigateToId = vi.fn();
 
   render(
-    <RoutePagination
-      currentId={initialId}
-      ids={IDS_ARRAY}
-      tooltipLabel={TOOLTIP_LABEL}
-      onSelectId={navigateToId}
-    />,
+    <UIProvider theme={DefaultTheme.Light}>
+      <RoutePagination
+        currentId={initialId}
+        ids={IDS_ARRAY}
+        tooltipLabel={TOOLTIP_LABEL}
+        onSelectId={navigateToId}
+      /></UIProvider>,
   );
 
   return navigateToId;
