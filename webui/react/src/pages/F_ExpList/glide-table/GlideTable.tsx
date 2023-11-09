@@ -47,6 +47,7 @@ import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
+import { pluralizer } from 'utils/string';
 
 import {
   ColumnDef,
@@ -417,9 +418,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 key: 'filter',
                 label: 'Add Filter',
                 onClick: () => {
-                  setTimeout(() => {
-                    filterMenuItemsForColumn();
-                  }, 5);
+                  setTimeout(filterMenuItemsForColumn, 5);
                 },
               },
             ]),
@@ -427,11 +426,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           ? {
               icon: <Icon decorative name="filter" />,
               key: 'filter-clear',
-              label: `Clear Filter (${filterCount})`,
+              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
               onClick: () => {
-                setTimeout(() => {
-                  clearFilterForColumn();
-                }, 5);
+                setTimeout(clearFilterForColumn, 5);
               },
             }
           : null,
