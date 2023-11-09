@@ -25,7 +25,7 @@ import (
 func AddProviderInfoToMasterResponse(config *config.Config, masterResp *apiv1.GetMasterResponse) {
 	for _, p := range getProviders(config) {
 		masterResp.SsoProviders = append(masterResp.SsoProviders,
-			&apiv1.SSOProvider{Name: p.Name, SsoUrl: p.SSOInitiateURL})
+			&apiv1.SSOProvider{Name: p.Name, SsoUrl: p.SSOInitiateURL, Type: p.Type})
 	}
 }
 
@@ -44,6 +44,7 @@ func getProviders(config *config.Config) []aproto.SSOProviderInfo {
 		ssoProviderInfo = append(ssoProviderInfo, aproto.SSOProviderInfo{
 			SSOInitiateURL: u.String(),
 			Name:           config.SAML.Provider,
+			Type:           "SAML",
 		})
 	}
 
@@ -58,6 +59,7 @@ func getProviders(config *config.Config) []aproto.SSOProviderInfo {
 		ssoProviderInfo = append(ssoProviderInfo, aproto.SSOProviderInfo{
 			SSOInitiateURL: u.String(),
 			Name:           name,
+			Type:           "OIDC",
 		})
 	}
 
@@ -65,6 +67,7 @@ func getProviders(config *config.Config) []aproto.SSOProviderInfo {
 		ssoProviderInfo = append(ssoProviderInfo, aproto.SSOProviderInfo{
 			SSOInitiateURL: config.DetCloud.LoginURL,
 			Name:           "det-cloud",
+			Type:           "DetCloud",
 		})
 	}
 	return ssoProviderInfo
