@@ -7,7 +7,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import Json from 'components/Json';
+import JsonGlossary from 'components/JsonGlossary';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -125,28 +125,21 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const renderPoolConfig = useCallback(() => {
     if (!pool) return;
-    const details = structuredClone(pool.details);
+    const { details, stats, ...mainSection } = structuredClone(pool);
     for (const key in details) {
       if (details[key as keyof V1ResourcePoolDetail] === null) {
         delete details[key as keyof V1ResourcePoolDetail];
       }
     }
 
-    const mainSection = structuredClone(pool);
-    delete mainSection.stats;
     return (
       <>
-        <Json
-          alternateBackground
-          json={mainSection as unknown as JsonObject}
-          translateLabel={camelCaseToSentence}
-        />
+        <JsonGlossary json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
             <Divider />
             <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
-            <Json
-              alternateBackground
+            <JsonGlossary
               json={details[key as keyof V1ResourcePoolDetail] as unknown as JsonObject}
               translateLabel={camelCaseToSentence}
             />
