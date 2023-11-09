@@ -56,6 +56,7 @@ func (cs *CommandService) RestoreAllCommands(
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").
 		Where("allocation.state != ?", model.AllocationStateTerminated).
+		Where("task.task_id = command_snapshot.task_id").
 		Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to remake commands: %w", err)
