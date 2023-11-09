@@ -2066,6 +2066,7 @@ jobs:
       # Load cache
       - run:
           name: Write cache key
+          working_directory: ~/project/e2e_tests
           command: |
             pip freeze --all >> /tmp/cachefile
             cat harness/setup.py >> /tmp/cachefile
@@ -2079,6 +2080,7 @@ jobs:
 
       - run:
           name: install Python
+          working_directory: ~/project/e2e_tests
           command: |
             echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
 
