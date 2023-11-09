@@ -64,7 +64,7 @@ func (cs *CommandService) RestoreAllCommands(
 
 	for i := range snapshots {
 		cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
-		if err == nil {
+		if err != nil {
 			return err
 		}
 		// Restore to the command service registry.
