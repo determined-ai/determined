@@ -14,6 +14,8 @@ import { DetailedUser } from 'types';
 
 import UserSettings from './UserSettings';
 import { ThemeProvider } from './ThemeProvider';
+import { App } from 'antd';
+import { useInitApi } from 'hew/Toast';
 
 vi.mock('services/api', () => ({
   getUsers: () =>
@@ -65,15 +67,14 @@ const Container: React.FC = () => {
     loadUsers();
   }, [loadUsers]);
 
+  useInitApi();
   return (
-    <UIProvider theme={DefaultTheme.Light}>
-      <ThemeProvider>
-        <UserSettings
-          show={true}
-          onClose={() => {
-            return null;
-          }}
-        /></ThemeProvider></UIProvider>
+    <UserSettings
+      show={true}
+      onClose={() => {
+        return null;
+      }}
+    />
   );
 };
 
@@ -81,9 +82,11 @@ const setup = () =>
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
-        <ConfirmationProvider>
-          <Container />
-        </ConfirmationProvider>
+        <App>
+          <ConfirmationProvider>
+            <Container />
+          </ConfirmationProvider>
+        </App>
       </ThemeProvider>
     </UIProvider>,
   );
