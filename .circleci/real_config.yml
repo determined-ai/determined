@@ -559,7 +559,7 @@ commands:
           command: |
             pip install pytest-select==0.1.2
 
-            pytest --collect-only --quiet -m 'managed_devcluster' | \
+            pytest --collect-only --quiet -m '<<parameters.mark>>' | \
                 grep '::' | \
                 circleci tests split --split-by=timings --timings-type=testname > /tmp/tests-to-run
 
