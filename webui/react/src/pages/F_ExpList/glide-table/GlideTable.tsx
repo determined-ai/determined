@@ -66,7 +66,7 @@ import { LinkCell } from './custom-renderers/cells/linkCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
-import { BANNED_SORT_COLUMNS, Sort, sortMenuItemsForColumn } from './MultiSortMenu';
+import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
@@ -375,43 +375,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       };
 
       const items: MenuItem[] = [
-        // Column is pinned if the index is inside of the frozen columns
-        col < staticColumns.length || isMobile
-          ? null
-          : col > pinnedColumnsCount + staticColumns.length - 1
-          ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(
-                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
-                );
-                setMenuIsOpen(false);
-              },
-            }
-          : {
-              disabled: pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-                setMenuIsOpen(false);
-              },
-            },
-        ...(BANNED_SORT_COLUMNS.has(column.column)
-          ? []
-          : [{ type: 'divider' as const }, ...sortMenuItemsForColumn(column, sorts, onSortChange)]),
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
+              ...sortMenuItemsForColumn(column, sorts, onSortChange),
               { type: 'divider' as const },
               {
                 icon: <Icon decorative name="filter" />,
@@ -446,6 +413,37 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             }
           : null,
+        // Column is pinned if the index is inside of the frozen columns
+        col < staticColumns.length || isMobile
+          ? null
+          : col > pinnedColumnsCount + staticColumns.length - 1
+          ? {
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(
+                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
+                );
+                setMenuIsOpen(false);
+              },
+            }
+          : {
+              disabled: pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
+            },
       ];
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
