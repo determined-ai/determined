@@ -13,6 +13,8 @@ import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ThemeProvider } from './ThemeProvider';
+import { useInitApi } from 'hew/Toast';
+import { App } from 'antd';
 
 const user = userEvent.setup();
 
@@ -23,7 +25,7 @@ vi.mock('services/api', () => ({
 const ModalTrigger: React.FC = () => {
   const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
   const { experiment, trial } = generateTestExperimentData();
-
+  useInitApi();
   return (
     <>
       <Button onClick={ExperimentCreateModal.open} />
@@ -37,10 +39,14 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  render(<UIProvider theme={DefaultTheme.Light}>
-    <ThemeProvider>
-      <ModalTrigger />
-    </ThemeProvider></UIProvider>);
+  render(
+    <App>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <ModalTrigger />
+        </ThemeProvider>
+      </UIProvider>
+    </App>);
 
   await user.click(screen.getByRole('button'));
 };

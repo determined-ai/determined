@@ -9,7 +9,7 @@ import InputShortcut, { KeyboardShortcut, shortcutToString } from 'hew/InputShor
 import { useModal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
@@ -63,7 +63,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
   const confirm = useConfirm();
-
+  const { openToast } = useToast();
   const UserSettingsModal = useModal(UserSettingsModalComponent);
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
   const {
@@ -79,7 +79,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         await userStore.patchUser(currentUser?.id || 0, {
           displayName: newValue as string,
         });
-        makeToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
+        openToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
       } catch (e) {
         handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
@@ -94,9 +94,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         await userStore.patchUser(currentUser?.id || 0, {
           username: newValue as string,
         });
-        makeToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
+        openToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
       } catch (e) {
-        makeToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
+        openToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
         handleError(e, { silent: true, type: ErrorType.Input });
         return e as Error;
       }

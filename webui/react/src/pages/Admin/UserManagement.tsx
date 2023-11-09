@@ -6,7 +6,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
 import Select, { SelectValue } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -81,14 +81,14 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const ManageGroupsModal = useModal(ManageGroupsModalComponent);
   const ConfigureAgentModal = useModal(ConfigureAgentModalComponent);
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
-
+  const { openToast } = useToast();
   const { canModifyUsers } = usePermissions();
   const { rbacEnabled } = useObservable(determinedStore.info);
 
   const onToggleActive = useCallback(async () => {
     try {
       await patchUsers({ activate: !user.isActive, userIds: [user.id] });
-      makeToast({
+      openToast({
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
       });
@@ -107,16 +107,16 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Groups, label: 'Manage Groups' },
-            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
         : [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   const handleDropdown = useCallback(
@@ -217,11 +217,11 @@ const UserManagement: React.FC = () => {
       };
       const roleParams = Array.isArray(roleFilter)
         ? {
-            roleIdAssignedDirectlyToUser: roleFilter,
-          }
+          roleIdAssignedDirectlyToUser: roleFilter,
+        }
         : {
-            admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
-          };
+          admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
+        };
       return await getUsers({
         ...params,
         ...roleParams,
