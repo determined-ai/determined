@@ -69,7 +69,6 @@ import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
-import useUITheme from 'hooks/useUITheme';
 import { useTheme } from 'hew/Theme';
 
 export interface GlideTableProps {
@@ -208,9 +207,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const {
     ui: { theme: appTheme, darkLight, mode },
+    isDarkMode,
   } = useUI();
   const { getThemeVar } = useTheme();
-  const { isDarkMode: themeIsDark } = useUITheme(mode, appTheme);
   const theme = getTheme(appTheme);
 
   const users = useObservable(usersStore.getUsers());
@@ -230,7 +229,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       getColumnDefs({
         appTheme,
         columnWidths,
-        themeIsDark,
+        themeIsDark: isDarkMode,
         rowSelection: selection.rows,
         selectAll,
         users,
@@ -309,13 +308,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  onSelectionChange?.('remove-all', [0, data.length]);
-                  setMenuIsOpen(false);
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                onSelectionChange?.('remove-all', [0, data.length]);
+                setMenuIsOpen(false);
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -376,38 +375,38 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
-              ...sortMenuItemsForColumn(column, sorts, onSortChange),
-              { type: 'divider' as const },
-              {
-                icon: <Icon decorative name="filter" />,
-                key: 'filter',
-                label: 'Filter by this column',
-                onClick: () => {
-                  setTimeout(() => {
-                    filterMenuItemsForColumn();
-                  }, 5);
-                },
-              },
-            ]),
-        heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
-          ? {
-              icon: <Icon decorative name="heatmap" />,
-              key: 'heatmap',
-              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+            ...sortMenuItemsForColumn(column, sorts, onSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Filter by this column',
               onClick: () => {
-                toggleHeatmap(column.column);
+                setTimeout(() => {
+                  filterMenuItemsForColumn();
+                }, 5);
               },
-            }
+            },
+          ]),
+        heatmapOn &&
+          (column.column === 'searcherMetricsVal' ||
+            (column.type === V1ColumnType.NUMBER &&
+              (column.location === V1LocationType.VALIDATIONS ||
+                column.location === V1LocationType.TRAINING)))
+          ? {
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+            onClick: () => {
+              toggleHeatmap(column.column);
+            },
+          }
           : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length || isMobile
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
-          ? {
+            ? {
               icon: <Icon decorative name="pin" />,
               key: 'pin',
               label: 'Pin column',
@@ -421,7 +420,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 setMenuIsOpen(false);
               },
             }
-          : {
+            : {
               disabled: pinnedColumnsCount <= 1,
               icon: <Icon decorative name="pin" />,
               key: 'unpin',

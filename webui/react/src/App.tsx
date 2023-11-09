@@ -27,7 +27,6 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import { useSettings } from 'hooks/useSettings';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
-import useUITheme from 'hooks/useUITheme';
 import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
@@ -62,9 +61,7 @@ const AppView: React.FC = () => {
     updateSettings,
   } = useSettings<themeSettings>(themeConfig);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
-  const { ui, actions: uiActions } = useUI();
-
-  const { theme, isDarkMode } = useUITheme(ui.mode, ui.theme);
+  const { ui, actions: uiActions, theme, isDarkMode } = useUI();
 
   useEffect(() => {
     if (isServerReachable) checkAuth();

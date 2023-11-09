@@ -8,7 +8,6 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
-import useUITheme from './useUITheme';
 import useUI from 'components/ThemeProvider';
 /*
  * UserSettingsState contains all the settings for a user
@@ -37,9 +36,8 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const isAuthChecked = useObservable(authStore.isChecked);
   const querySettings = useRef(new URLSearchParams(''));
   const isLoading = Loadable.isNotLoaded(useObservable(userSettings._forUseSettingsOnly()));
-  const { ui, actions: uiActions } = useUI();
+  const { ui, actions: uiActions, theme, isDarkMode } = useUI();
 
-  const { theme, isDarkMode } = useUITheme(ui.mode, ui.theme);
   useEffect(() => {
     querySettings.current = new URLSearchParams(window.location.search);
   }, []);

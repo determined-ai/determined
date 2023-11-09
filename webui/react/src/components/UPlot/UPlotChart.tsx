@@ -4,7 +4,6 @@ import Spinner from 'hew/Spinner';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
-import useUITheme from 'hooks/useUITheme';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
@@ -90,8 +89,7 @@ const UPlotChart: React.FC<Props> = ({
   const chartDivRef = useRef<HTMLDivElement>(null);
   const classes = [css.base];
 
-  const { ui } = useUI();
-  const { isDarkMode } = useUITheme(ui.mode, ui.theme);
+  const { ui, isDarkMode } = useUI();
   const { options: syncOptions, syncService } = useChartSync();
 
   // line charts have their zoom state handled by `SyncProvider`, scatter charts do not.

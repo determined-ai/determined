@@ -1,4 +1,5 @@
 import { Theme } from 'hew/Theme';
+import _ from 'lodash';
 import { DefaultTheme } from 'hew/Theme/themes';
 import React, {
     Dispatch,
@@ -10,7 +11,8 @@ import React, {
     useReducer,
     useState,
 } from 'react';
-
+import { useObservable } from 'micro-observables';
+import determinedInfo from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 export const Mode = {
     Dark: 'dark',
@@ -178,7 +180,8 @@ const reducer = (state: StateUI, action: ActionUI): StateUI => {
     return { ...state, ...newState }; // TODO: check for deep equality here instead of on the full state
 };
 
-const useUI = (): { actions: UIActions; ui: StateUI } => {
+const useUI = (): { actions: UIActions; ui: StateUI, theme: Theme, isDarkMode: boolean } => {
+
     const context = useContext(StateContext);
     if (context === undefined) {
         throw new Error('useStore(UI) must be used within a ThemeProvider');
@@ -188,7 +191,39 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
         throw new Error('useStoreDispatch must be used within a ThemeProvider');
     }
     const uiActions = useMemo(() => new UIActions(dispatchContext), [dispatchContext]);
-    return { actions: uiActions, ui: context };
+
+    const info = useObservable(determinedInfo.info);
+    const mode = context.mode;
+    const branding = info?.branding || BrandingType.Determined;
+    const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
+
+    const darkLight = getDarkLight(mode, systemMode);
+
+    const theme = useMemo(() => {
+        const userTheme = context.theme;
+        return userTheme && !_.isEqual(userTheme, {}) ? userTheme : themes[branding][darkLight];
+    }, [context, themes, branding, darkLight]
+    );
+
+    const isDarkMode = useMemo(() => darkLight === DarkLight.Dark, [darkLight]);
+
+    const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
+        if (!event.matches) setSystemMode(getSystemMode());
+    }, []);
+
+    // Detect browser/OS level dark/light mode changes.
+    useEffect(() => {
+        matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
+        matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
+
+        return () => {
+            matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
+            matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).removeEventListener('change', handleSchemeChange);
+        };
+    }, [handleSchemeChange]);
+
+
+    return { actions: uiActions, theme, isDarkMode, ui: context };
 };
 
 export const ThemeProvider: React.FC<{ children?: React.ReactNode; branding?: BrandingType }> = ({

@@ -27,7 +27,7 @@ const AddUsersToGroupsModalComponent = ({
   fetchUsers,
 }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
-
+  const { openToast } = useToast();
   const onSubmit = async () => {
     const values = await form.validateFields();
 

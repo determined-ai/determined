@@ -26,7 +26,7 @@ const AddUsersToGroupModalComponent: React.FC<Props> = ({ users, onClose, group 
   const [filteredUsers, setFilteredUsers] = useState<DetailedUser[]>([]);
   const [form] = Form.useForm<FormInputs>();
   const ref = useRef<RefSelectProps>(null);
-
+  const { openToast } = useToast();
   useEffect(() => {
     ref.current?.focus();
   }, []);

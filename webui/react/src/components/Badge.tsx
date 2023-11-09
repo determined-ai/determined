@@ -4,7 +4,6 @@ import React, { CSSProperties, useMemo } from 'react';
 
 import useUI from 'components/ThemeProvider';
 import { stateToLabel } from 'constants/states';
-import useUITheme from 'hooks/useUITheme';
 import { ResourceState, RunState, SlotState, ValueOf } from 'types';
 import { getStateColorThemeVar, hsl2str, str2hsl } from 'utils/color';
 
@@ -32,8 +31,7 @@ const Badge: React.FC<BadgeProps> = ({
   type = BadgeType.Default,
   ...props
 }: BadgeProps) => {
-  const { ui } = useUI();
-  const { isDarkMode } = useUITheme(ui.mode, ui.theme);
+  const { ui, isDarkMode } = useUI();
   const { getThemeVar } = useTheme();
   const { classes, style } = useMemo(() => {
     const classes = [css.base];

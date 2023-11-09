@@ -27,7 +27,6 @@ import { useObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
 import useUI from 'components/ThemeProvider';
-import useUITheme from 'hooks/useUITheme';
 
 import { ConditionalWrapper } from './ConditionalWrapper';
 import Json from './Json';
@@ -72,8 +71,7 @@ const poolAttributes = [
 
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
-  const { ui } = useUI();
-  const { isDarkMode } = useUITheme(ui.mode, ui.theme);
+  const { ui, isDarkMode } = useUI();
 
   let iconSrc = '';
   switch (type) {

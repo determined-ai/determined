@@ -59,7 +59,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [canceler] = useState(new AbortController());
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
-
+  const { openToast } = useToast();
   const { canCreateModelVersion } = usePermissions();
 
   const handleClose = useCallback(
