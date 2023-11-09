@@ -14,7 +14,7 @@ from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.experiment.test_custom_searcher import FallibleSearchRunner, check_trial_state
+from tests.experiment import test_custom_searcher
 from tests.fixtures.custom_searcher import searchers
 
 TIMESTAMP = int(time.time())
@@ -148,7 +148,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
 
     ok = True
     for trial in response_trials:
-        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+        ok = ok and test_custom_searcher.check_trial_state(trial, bindings.trialv1State.COMPLETED)
     assert ok, "some trials failed"
 
 
@@ -209,7 +209,7 @@ def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> N
                     test_type="noop",
                     exception_points=[exception_point],
                 )
-                search_runner_mock = FallibleSearchRunner(
+                search_runner_mock = test_custom_searcher.FallibleSearchRunner(
                     exception_point, search_method, pathlib.Path(searcher_dir)
                 )
                 search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
