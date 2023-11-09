@@ -1,3 +1,7 @@
+from typing import Iterable
+
+import termcolor
+
 from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base
 
@@ -43,9 +47,20 @@ class EFS(VPCBase):
 class Lore(VPCBase):
     template = "lore.yaml"
     deployment_type = constants.deployment_types.LORE
+    lore_info = "View the Lore UI: " + termcolor.colored("{master_url}/lore", "blue")
 
     def before_deploy_print(self) -> None:
         super().before_deploy_print()
         lore_tag = self.parameters[constants.cloudformation.LORE_VERSION] or "latest"
         print(f"Lore Version: {lore_tag}")
         print(f"Lore Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
+
+    @property
+    def info_partials(self) -> Iterable[str]:
+        return (
+            self.lore_info,
+            self.master_info,
+            self.ui_info,
+            self.logs_info,
+            self.ssh_info,
+        )
