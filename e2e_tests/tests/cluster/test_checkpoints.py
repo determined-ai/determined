@@ -21,26 +21,19 @@ from .test_users import det_spawn
 EXPECT_TIMEOUT = 5
 
 
-def wait_for_gc_to_finish(experiment_ids: List[int]) -> None:
+def wait_for_gc_to_finish(experiment_id: int) -> None:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-
-    seen_gc_experiment_ids = set()
-    done_gc_experiment_ids = set()
+    saw_gc = False
     # Don't wait longer than 5 minutes (as 600 half-seconds to improve our sampling resolution).
     for _ in range(600):
         r = api.get(conf.make_master_url(), "tasks").json()
         names = [task["name"] for task in r.values()]
-
-        for experiment_id in experiment_ids:
-            gc_name = f"Checkpoint GC (Experiment {experiment_id})"
-            if gc_name in names:
-                seen_gc_experiment_ids.add(experiment_id)
-            elif experiment_id in seen_gc_experiment_ids:
-                # We saw the gc before but now don't so we assume it is done.
-                done_gc_experiment_ids.add(experiment_id)
-
-        if len(done_gc_experiment_ids) == len(experiment_ids):
+        gc_name = f"Checkpoint GC (Experiment {experiment_id})"
+        if gc_name in names:
+            saw_gc = True
+        elif saw_gc:
+            # We previously saw checkpoint gc but now we don't, so it must have finished.
             return
         time.sleep(0.5)
 
@@ -152,12 +145,15 @@ def test_delete_checkpoints() -> None:
         config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
     )
 
+    wait_for_gc_to_finish(exp_id_1)
+    wait_for_gc_to_finish(exp_id_2)
+
     test_session = api_utils.determined_test_session()
     exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(
         session=test_session, id=exp_id_1
     ).checkpoints
     exp_2_checkpoints = bindings.get_GetExperimentCheckpoints(
-        session=test_session, id=exp_id_2
+        session=test_session, id=exp_id_1
     ).checkpoints
     assert len(exp_1_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp_id_1}"
     assert len(exp_2_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp_id_2}"
@@ -186,7 +182,8 @@ def test_delete_checkpoints() -> None:
     delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=d_checkpoint_uuids)
     bindings.delete_DeleteCheckpoints(session=test_session, body=delete_body)
 
-    wait_for_gc_to_finish([exp_id_1, exp_id_2])
+    wait_for_gc_to_finish(exp_id_1)
+    wait_for_gc_to_finish(exp_id_2)
 
     for d_c in d_checkpoint_uuids:
         ensure_checkpoint_deleted(test_session, d_c, storage_manager)
@@ -268,7 +265,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
         # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
         # be spun up still.  So we'll wait for it to run.
-        wait_for_gc_to_finish([experiment_id])
+        wait_for_gc_to_finish(experiment_id)
 
         # Checkpoints are not marked as deleted until gc_checkpoint task starts.
         retries = 5
@@ -468,7 +465,7 @@ def test_checkpoint_partial_delete() -> None:
         checkpointUuids=[completed_checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
-    wait_for_gc_to_finish([exp_id])
+    wait_for_gc_to_finish(exp_id)
 
     assert_checkpoint_state(
         completed_checkpoints[0].uuid,
@@ -494,7 +491,7 @@ def test_checkpoint_partial_delete() -> None:
         checkpointUuids=[completed_checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
-    wait_for_gc_to_finish([exp_id])
+    wait_for_gc_to_finish(exp_id)
 
     assert_checkpoint_state(
         completed_checkpoints[0].uuid,
@@ -512,7 +509,7 @@ def test_checkpoint_partial_delete() -> None:
         checkpointUuids=[completed_checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
-    wait_for_gc_to_finish([exp_id])
+    wait_for_gc_to_finish(exp_id)
 
     assert_checkpoint_state(
         completed_checkpoints[0].uuid,
@@ -535,7 +532,7 @@ def test_checkpoint_partial_delete() -> None:
         checkpointUuids=[completed_checkpoints[1].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(test_session, body=remove_body)
-    wait_for_gc_to_finish([exp_id])
+    wait_for_gc_to_finish(exp_id)
 
     assert_checkpoint_state(
         completed_checkpoints[1].uuid,
