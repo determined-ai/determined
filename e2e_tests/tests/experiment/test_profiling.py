@@ -1,5 +1,4 @@
 import json
-import os
 import tempfile
 from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
@@ -18,7 +17,7 @@ from tests import experiment as exp
 @pytest.mark.parametrize(
     "model_def,timings_enabled",
     [
-        (conf.tutorials_path("mnist_pytorch"), True),
+        (conf.fixtures_path("mnist_pytorch"), True),
     ],
 )
 def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: bool) -> None:
@@ -26,10 +25,9 @@ def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: b
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url())
 
-    config_path = os.path.join(model_def, "const.yaml")
+    config_path = conf.fixtures_path("mnist_pytorch/const-profiling.yaml")
 
     config_obj = conf.load_config(config_path)
-    config_obj = conf.set_profiling_enabled(config_obj)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config_obj, f)

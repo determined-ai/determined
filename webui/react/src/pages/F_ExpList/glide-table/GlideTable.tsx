@@ -47,6 +47,7 @@ import {
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
+import { pluralizer } from 'utils/string';
 
 import {
   ColumnDef,
@@ -307,13 +308,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                onSelectionChange?.('remove-all', [0, data.length]);
-                setMenuIsOpen(false);
-              },
-            }
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  onSelectionChange?.('remove-all', [0, data.length]);
+                  setMenuIsOpen(false);
+                },
+              }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -345,6 +346,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
+      const filterCount = formStore.getFieldCount(column.column).get();
+
       const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
       const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
@@ -369,43 +372,54 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onIsOpenFilterChange?.(true);
         setMenuIsOpen(false);
       };
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
 
       const items: MenuItem[] = [
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
-            ...sortMenuItemsForColumn(column, sorts, onSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Filter by this column',
-              onClick: () => {
-                setTimeout(() => {
-                  filterMenuItemsForColumn();
-                }, 5);
+              ...sortMenuItemsForColumn(column, sorts, onSortChange),
+              { type: 'divider' as const },
+              {
+                icon: <Icon decorative name="filter" />,
+                key: 'filter',
+                label: 'Add Filter',
+                onClick: () => {
+                  setTimeout(filterMenuItemsForColumn, 5);
+                },
               },
-            },
-          ]),
-        heatmapOn &&
-          (column.column === 'searcherMetricsVal' ||
-            (column.type === V1ColumnType.NUMBER &&
-              (column.location === V1LocationType.VALIDATIONS ||
-                column.location === V1LocationType.TRAINING)))
+            ]),
+        filterCount > 0
           ? {
-            icon: <Icon decorative name="heatmap" />,
-            key: 'heatmap',
-            label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
-            onClick: () => {
-              toggleHeatmap(column.column);
-            },
-          }
+              icon: <Icon decorative name="filter" />,
+              key: 'filter-clear',
+              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+              onClick: () => {
+                setTimeout(clearFilterForColumn, 5);
+              },
+            }
+          : null,
+        heatmapOn &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
+          ? {
+              icon: <Icon decorative name="heatmap" />,
+              key: 'heatmap',
+              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+              onClick: () => {
+                toggleHeatmap(column.column);
+              },
+            }
           : null,
         // Column is pinned if the index is inside of the frozen columns
         col < staticColumns.length || isMobile
           ? null
           : col > pinnedColumnsCount + staticColumns.length - 1
-            ? {
+          ? {
               icon: <Icon decorative name="pin" />,
               key: 'pin',
               label: 'Pin column',
@@ -419,7 +433,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 setMenuIsOpen(false);
               },
             }
-            : {
+          : {
               disabled: pinnedColumnsCount <= 1,
               icon: <Icon decorative name="pin" />,
               key: 'unpin',
