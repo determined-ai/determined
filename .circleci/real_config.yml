@@ -561,6 +561,7 @@ commands:
 
             pytest --collect-only --quiet -m '<<parameters.mark>>' | \
                 grep '::' | \
+                awk -F'::' '{print $2}' | \
                 circleci tests split --split-by=timings --timings-type=testname > /tmp/tests-to-run
 
             echo "Running tests:"
