@@ -2069,7 +2069,7 @@ jobs:
           working_directory: ~/project/e2e_tests
           command: |
             pip freeze --all >> /tmp/cachefile
-            cat harness/setup.py >> /tmp/cachefile
+            cat ../harness/setup.py >> /tmp/cachefile
             echo ./tests/requirments.txt >> /tmp/cachefile
             cat ./tests/requirments.txt >> /tmp/cachefile
             echo 3.8.16 >> /tmp/cachefile # TODO
