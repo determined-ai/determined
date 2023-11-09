@@ -374,7 +374,51 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         formStore.removeByField(column.column);
       };
 
+      const isPinned = col <= pinnedColumnsCount + staticColumns.length - 1;
       const items: MenuItem[] = [
+        // Column is pinned if the index is inside of the frozen columns
+        col < staticColumns.length || isMobile
+          ? null
+          : !isPinned
+          ? {
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(
+                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
+                );
+                setMenuIsOpen(false);
+              },
+            }
+          : {
+              disabled: pinnedColumnsCount <= 1,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
+            },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+            onSortableColumnChange?.(newSortableColumns);
+            if (isPinned) {
+              onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+            }
+          },
+        },
+        { type: 'divider' as const },
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
@@ -413,37 +457,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             }
           : null,
-        // Column is pinned if the index is inside of the frozen columns
-        col < staticColumns.length || isMobile
-          ? null
-          : col > pinnedColumnsCount + staticColumns.length - 1
-          ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(
-                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
-                );
-                setMenuIsOpen(false);
-              },
-            }
-          : {
-              disabled: pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-                setMenuIsOpen(false);
-              },
-            },
       ];
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
