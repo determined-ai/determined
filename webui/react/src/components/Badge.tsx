@@ -31,7 +31,7 @@ const Badge: React.FC<BadgeProps> = ({
   type = BadgeType.Default,
   ...props
 }: BadgeProps) => {
-  const { ui, isDarkMode } = useUI();
+  const { isDarkMode } = useUI();
   const { getThemeVar } = useTheme();
   const { classes, style } = useMemo(() => {
     const classes = [css.base];
@@ -63,7 +63,7 @@ const Badge: React.FC<BadgeProps> = ({
     }
 
     return { classes, style };
-  }, [state, type, ui.darkLight]);
+  }, [getThemeVar, state, type, isDarkMode]);
 
   const badge = (
     <span className={classes.join(' ')} style={style}>

@@ -6,11 +6,12 @@ import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-li
 import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg?url';
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
+import useUI from 'components/ThemeProvider';
 import { serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { reactHostAddress } from 'utils/routes';
-import useUI from 'components/ThemeProvider';
+
 import css from './Logo.module.scss';
 
 const Orientation = {
@@ -52,7 +53,7 @@ const Logo: React.FC<Props> = ({
   branding = BrandingType.Determined,
   orientation = Orientation.Vertical,
 }: Props) => {
-  const { ui } = useUI();
+  const { isDarkMode } = useUI();
   const classes = [css[branding], css[orientation]];
 
   const alt = useMemo(() => {
@@ -66,7 +67,11 @@ const Logo: React.FC<Props> = ({
   }, [branding]);
 
   return (
-    <img alt={alt} className={classes.join(' ')} src={logos[branding][orientation][ui.darkLight]} />
+    <img
+      alt={alt}
+      className={classes.join(' ')}
+      src={logos[branding][orientation][isDarkMode ? 'dark' : 'light']}
+    />
   );
 };
 

@@ -22,12 +22,12 @@ export const Mode = {
 } as const;
 
 export type Mode = ValueOf<typeof Mode>;
-export type DarkLight = ValueOf<typeof DarkLight>;
+type DarkLight = ValueOf<typeof DarkLight>;
 /**
  * DarkLight is a resolved form of `Mode` where we figure out
  * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
  */
-export const DarkLight = {
+const DarkLight = {
   Dark: 'dark',
   Light: 'light',
 } as const;
