@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
@@ -15,8 +16,6 @@ import TableFilterDropdown, {
   ARIA_LABEL_CONTAINER,
   ARIA_LABEL_INPUT,
 } from './TableFilterDropdown';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { theme } from 'antd';
 
 const ColumnValueType = {
   Decimal: 'decimal',
@@ -152,7 +151,8 @@ const setup = (options?: { pagination?: Pagination }) => {
         dataSource={data}
         pagination={paginationConfig}
         onChange={onChange}
-      /></UIProvider >,
+      />
+    </UIProvider>,
   );
 
   const rerender = () =>
@@ -163,7 +163,8 @@ const setup = (options?: { pagination?: Pagination }) => {
           dataSource={data}
           pagination={paginationConfig}
           onChange={onChange}
-        /></UIProvider>,
+        />
+      </UIProvider>,
     );
 
   const user = userEvent.setup();

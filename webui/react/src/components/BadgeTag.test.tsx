@@ -5,7 +5,7 @@ import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { generateAlphaNumeric } from 'utils/string';
 
 import BadgeTag, { Props } from './BadgeTag';
-import { ThemeProvider } from './ThemeProvider';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();

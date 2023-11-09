@@ -118,8 +118,9 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     } else {
       openToast({
         closeable: true,
-        description: `${numFailures} out of ${numFailures + numSuccesses
-          } eligible experiments failed to move
+        description: `${numFailures} out of ${
+          numFailures + numSuccesses
+        } eligible experiments failed to move
       to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         severity: 'Warning',

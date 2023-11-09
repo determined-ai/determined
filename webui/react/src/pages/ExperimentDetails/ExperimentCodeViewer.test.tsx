@@ -5,6 +5,7 @@ import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -13,7 +14,6 @@ import { DetailedUser } from 'types';
 import { generateExperiment } from 'utils/task';
 
 import CodeViewer, { Props } from './ExperimentCodeViewer';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -131,7 +131,7 @@ const setup = (props: Pick<Props, 'experiment'> = { experiment: experimentMock }
   render(
     <BrowserRouter>
       <UIProvider theme={DefaultTheme.Light}>
-        <ThemeProvider >
+        <ThemeProvider>
           <Container {...props} />
         </ThemeProvider>
       </UIProvider>

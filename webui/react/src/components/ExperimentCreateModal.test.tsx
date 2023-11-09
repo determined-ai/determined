@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { useInitApi } from 'hew/Toast';
 import React from 'react';
 
 import ExperimentCreateModalComponent, {
@@ -11,10 +14,8 @@ import ExperimentCreateModalComponent, {
 } from 'components/ExperimentCreateModal';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { ThemeProvider } from './ThemeProvider';
-import { useInitApi } from 'hew/Toast';
-import { App } from 'antd';
+
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup();
 
@@ -46,7 +47,8 @@ const setup = async () => {
           <ModalTrigger />
         </ThemeProvider>
       </UIProvider>
-    </App>);
+    </App>,
+  );
 
   await user.click(screen.getByRole('button'));
 };

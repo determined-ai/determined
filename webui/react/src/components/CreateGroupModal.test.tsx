@@ -16,7 +16,7 @@ import CreateGroupModalComponent, {
   MODAL_HEADER_LABEL_CREATE,
   MODAL_HEADER_LABEL_EDIT,
 } from './CreateGroupModal';
-import { ThemeProvider } from './ThemeProvider';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';

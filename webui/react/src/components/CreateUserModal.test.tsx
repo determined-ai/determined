@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -13,8 +14,7 @@ import CreateUserModalComponent, {
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
 } from './CreateUserModal';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { ThemeProvider } from './ThemeProvider';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 vi.mock('services/api', () => ({
   getUserRoles: () => Promise.resolve([]),
@@ -40,9 +40,10 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <BrowserRouter>
-      <UIProvider theme={DefaultTheme.Light}><ThemeProvider>
-        <Container />
-      </ThemeProvider>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <Container />
+        </ThemeProvider>
       </UIProvider>
     </BrowserRouter>,
   );

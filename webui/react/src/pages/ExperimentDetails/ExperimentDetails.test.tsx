@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { ThemeProvider } from 'components/ThemeProvider';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -10,11 +11,10 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
-import { } from 'stores/cluster';
+import {} from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 vi.useFakeTimers();
 /**

@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import RoutePagination from './RoutePagination';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 vi.mock('hew/Tooltip');
 
@@ -31,7 +31,8 @@ const setup = (initialId: number) => {
         ids={IDS_ARRAY}
         tooltipLabel={TOOLTIP_LABEL}
         onSelectId={navigateToId}
-      /></UIProvider>,
+      />
+    </UIProvider>,
   );
 
   return navigateToId;

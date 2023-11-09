@@ -8,7 +8,7 @@ import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeProps, BadgeType } from './Badge';
-import { ThemeProvider } from './ThemeProvider';
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();

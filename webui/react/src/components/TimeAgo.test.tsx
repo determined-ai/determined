@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import {
   DURATION_DAY,
@@ -9,30 +10,29 @@ import {
   DURATION_YEAR,
 } from 'utils/datetime';
 
-import TimeAgo, { TimeAgoCase, Props, DEFAULT_TOOLTIP_FORMAT } from './TimeAgo';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
+import TimeAgo, { DEFAULT_TOOLTIP_FORMAT, Props, TimeAgoCase } from './TimeAgo';
 
-const setup = (
-  {
-    dateFormat = 'MMM D, YYYY',
-    datetime,
-    long = false,
-    noUpdate = false,
-    stringCase = TimeAgoCase.Sentence,
-    tooltipFormat = DEFAULT_TOOLTIP_FORMAT,
-    units = 1,
-  }: Props) => {
+const setup = ({
+  dateFormat = 'MMM D, YYYY',
+  datetime,
+  long = false,
+  noUpdate = false,
+  stringCase = TimeAgoCase.Sentence,
+  tooltipFormat = DEFAULT_TOOLTIP_FORMAT,
+  units = 1,
+}: Props) => {
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
       <TimeAgo
         dateFormat={dateFormat}
         datetime={datetime}
-        noUpdate={noUpdate}
         long={long}
+        noUpdate={noUpdate}
         stringCase={stringCase}
         tooltipFormat={tooltipFormat}
         units={units}
-      /></UIProvider >,
+      />
+    </UIProvider>,
   );
   return { view };
 };

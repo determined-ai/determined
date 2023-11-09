@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import RadioGroup, { RadioGroupOption } from './RadioGroup';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 const user = userEvent.setup();
 
@@ -10,7 +10,8 @@ const setup = (options: RadioGroupOption[], iconOnly = false) => {
   const handleOnChange = vi.fn();
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
-      <RadioGroup iconOnly={iconOnly} options={options} onChange={handleOnChange} /></UIProvider>,
+      <RadioGroup iconOnly={iconOnly} options={options} onChange={handleOnChange} />
+    </UIProvider>,
   );
   return { handleOnChange, view };
 };

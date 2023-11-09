@@ -5,13 +5,13 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
-import { ThemeProvider } from 'components/ThemeProvider';
 
 const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -38,8 +38,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-        children: JSX.Element;
-      }
+          children: JSX.Element;
+        }
       | undefined,
   ) => void;
 };
@@ -48,8 +48,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-        children: JSX.Element;
-      }
+          children: JSX.Element;
+        }
       | undefined,
   ) => void;
 };

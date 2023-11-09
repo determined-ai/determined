@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import Section from './Section';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 const setup = ({
   title = '',
@@ -27,7 +27,8 @@ const setup = ({
         maxHeight={maxHeight}
         options={options}
         title={title}
-      /></UIProvider>,
+      />
+    </UIProvider>,
   );
   return { handleOnChange, view };
 };

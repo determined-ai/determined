@@ -16,7 +16,7 @@ import DataEditor, {
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import useUI from 'components/ThemeProvider';
+import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import { literal, union } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +29,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import useUI from 'components/ThemeProvider';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
@@ -43,7 +44,6 @@ import {
   ProjectColumn,
   ProjectMetricsRange,
 } from 'types';
-import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
@@ -69,7 +69,6 @@ import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
-import { useTheme } from 'hew/Theme';
 
 export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
@@ -206,7 +205,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   >>(null);
 
   const {
-    ui: { theme: appTheme, darkLight, mode },
+    ui: { theme: appTheme },
     isDarkMode,
   } = useUI();
   const { getThemeVar } = useTheme();
@@ -229,12 +228,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       getColumnDefs({
         appTheme,
         columnWidths,
-        themeIsDark: isDarkMode,
         rowSelection: selection.rows,
         selectAll,
+        themeIsDark: isDarkMode,
         users,
       }),
-    [selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
+    [selectAll, selection.rows, isDarkMode, columnWidths, users, appTheme],
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
@@ -277,7 +276,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
       return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, hoveredRow, selection.rows],
+    [colorMap, data, getThemeVar, hoveredRow, selection.rows],
   );
 
   const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
@@ -504,7 +503,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }, // TODO correctly handle error state
       });
     },
-    [appTheme, data, columnIds, columnDefs],
+    [appTheme, data, columnIds, columnDefs, getThemeVar],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(

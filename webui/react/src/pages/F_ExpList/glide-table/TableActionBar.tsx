@@ -262,8 +262,9 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
-              } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${
+              numFailures + numSuccesses
+            } eligible
             experiments`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -285,7 +286,7 @@ const TableActionBar: React.FC<Props> = ({
         onActionComplete?.();
       }
     },
-    [sendBatchActions, onActionComplete, onActionSuccess],
+    [sendBatchActions, onActionComplete, onActionSuccess, openToast],
   );
 
   const handleBatchAction = useCallback(

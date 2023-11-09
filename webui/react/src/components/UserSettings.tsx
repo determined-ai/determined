@@ -14,7 +14,7 @@ import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
-import useUI, { Mode } from './ThemeProvider';
+import useUI, { Mode } from 'components/ThemeProvider';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import { ThemeOptions } from 'components/ThemeToggle';

@@ -2,13 +2,14 @@ import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React, { useMemo } from 'react';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { ThemeProvider } from './ThemeProvider';
+
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;
@@ -45,7 +46,10 @@ const ColumnsButton: React.FC = () => {
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
         <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
-        <ColumnsCustomizeModal.Component columns={columns} defaultVisibleColumns={DEFAULT_COLUMNS} />
+        <ColumnsCustomizeModal.Component
+          columns={columns}
+          defaultVisibleColumns={DEFAULT_COLUMNS}
+        />
       </ThemeProvider>
     </UIProvider>
   );

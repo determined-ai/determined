@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import { Metadata } from 'types';
 
@@ -9,7 +10,6 @@ import {
   METADATA_KEY_PLACEHOLDER,
   METADATA_VALUE_PLACEHOLDER,
 } from './EditableRow';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 const initMetadata = { hello: 'world', testing: 'metadata' };
 
@@ -18,7 +18,9 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = (metadata: Metadata = {}, editing = false) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <UIProvider theme={DefaultTheme.Light}><EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} /></UIProvider>,
+    <UIProvider theme={DefaultTheme.Light}>
+      <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />
+    </UIProvider>,
   );
   return { handleOnChange, view };
 };

@@ -1,5 +1,6 @@
-import useUI, { Mode } from './ThemeProvider';
 import React from 'react';
+
+import useUI, { Mode } from 'components/ThemeProvider';
 
 import css from './ThemeToggle.module.scss';
 

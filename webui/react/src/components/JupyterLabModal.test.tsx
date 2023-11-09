@@ -10,7 +10,8 @@ import JupyterLabModalComponent from 'components/JupyterLabModal';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';
-import { ThemeProvider } from './ThemeProvider';
+
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
@@ -91,7 +92,7 @@ const setup = async () => {
           <ModalTrigger />
         </ThemeProvider>
       </UIProvider>
-    </BrowserRouter >,
+    </BrowserRouter>,
   );
 
   await user.click(await screen.findByRole('button'));

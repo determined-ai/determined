@@ -13,7 +13,7 @@ import userSettings from 'stores/userSettings';
 import { DetailedUser } from 'types';
 
 import UserSettings from './UserSettings';
-import { ThemeProvider } from './ThemeProvider';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { App } from 'antd';
 import { useInitApi } from 'hew/Toast';
 

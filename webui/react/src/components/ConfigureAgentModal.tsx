@@ -79,17 +79,17 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
           initialValues={
             user?.agentUserGroup
               ? {
-                agentGid: user?.agentUserGroup.agentGid,
-                agentGroup: user?.agentUserGroup.agentGroup,
-                agentUid: user?.agentUserGroup.agentUid,
-                agentUser: user?.agentUserGroup.agentUser,
-              }
+                  agentGid: user?.agentUserGroup.agentGid,
+                  agentGroup: user?.agentUserGroup.agentGroup,
+                  agentUid: user?.agentUserGroup.agentUid,
+                  agentUser: user?.agentUserGroup.agentUser,
+                }
               : {
-                agentGid: undefined,
-                agentGroup: undefined,
-                agentUid: undefined,
-                agentUser: undefined,
-              }
+                  agentGid: undefined,
+                  agentGroup: undefined,
+                  agentUid: undefined,
+                  agentUser: undefined,
+                }
           }
           onFieldsChange={handleFieldsChange}>
           <Form.Item

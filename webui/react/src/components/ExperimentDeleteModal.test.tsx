@@ -2,14 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import ExperimentDeleteModalComponent, { BUTTON_TEXT } from 'components/ExperimentDeleteModal';
 import { deleteExperiment as mockDeleteExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
-import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { ThemeProvider } from './ThemeProvider';
-import Default from 'pages/DefaultRoute';
+
+import { ThemeProvider } from 'components/ThemeProvider';
 
 const user = userEvent.setup();
 
@@ -35,7 +35,12 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  render(<UIProvider theme={DefaultTheme.Light}><ModalTrigger /><ThemeProvider></ThemeProvider></UIProvider>);
+  render(
+    <UIProvider theme={DefaultTheme.Light}>
+      <ModalTrigger />
+      <ThemeProvider />
+    </UIProvider>,
+  );
 
   await user.click(screen.getByRole('button'));
 };

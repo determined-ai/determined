@@ -15,7 +15,6 @@ interface Props {
 }
 
 const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
-
   const { openToast } = useToast();
 
   const handleSubmit = async () => {
