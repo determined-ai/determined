@@ -282,7 +282,6 @@ commands:
       - restore_cache:
           keys:
             - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
-      - run: go mod download
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
