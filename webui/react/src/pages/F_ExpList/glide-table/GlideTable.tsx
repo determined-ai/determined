@@ -47,6 +47,7 @@ import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
+import { pluralizer } from 'utils/string';
 
 import {
   ColumnDef,
@@ -343,6 +344,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
+      const filterCount = formStore.getFieldCount(column.column).get();
+
       const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
       const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
@@ -367,6 +370,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onIsOpenFilterChange?.(true);
         setMenuIsOpen(false);
       };
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
 
       const items: MenuItem[] = [
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
@@ -377,14 +383,22 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               {
                 icon: <Icon decorative name="filter" />,
                 key: 'filter',
-                label: 'Filter by this column',
+                label: 'Add Filter',
                 onClick: () => {
-                  setTimeout(() => {
-                    filterMenuItemsForColumn();
-                  }, 5);
+                  setTimeout(filterMenuItemsForColumn, 5);
                 },
               },
             ]),
+        filterCount > 0
+          ? {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter-clear',
+              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+              onClick: () => {
+                setTimeout(clearFilterForColumn, 5);
+              },
+            }
+          : null,
         heatmapOn &&
         (column.column === 'searcherMetricsVal' ||
           (column.type === V1ColumnType.NUMBER &&
