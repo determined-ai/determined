@@ -228,16 +228,16 @@ describe('Color Utilities', () => {
 
   describe('cssVarToThemeVar', () => {
     it('should create valid status theme variable', () => {
-      Object.keys(Status).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Status[key])).toEqual(
+      Object.entries(Status).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'status' ? 'status' : `status${key}`,
         ),
       );
     });
 
     it('should create valid background theme variable', () => {
-      Object.keys(Background).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Background[key])).toEqual(
+      Object.entries(Background).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'background'
             ? 'background'
             : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
@@ -246,8 +246,8 @@ describe('Color Utilities', () => {
     });
 
     it('should create valid stage theme variable', () => {
-      Object.keys(Stage).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Stage[key])).toEqual(
+      Object.entries(Stage).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'stage'
             ? 'stage'
             : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
@@ -256,8 +256,8 @@ describe('Color Utilities', () => {
     });
 
     it('should create valid surface theme variable', () => {
-      Object.keys(Surface).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Surface[key])).toEqual(
+      Object.entries(Surface).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'surface'
             ? 'surface'
             : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
@@ -266,8 +266,8 @@ describe('Color Utilities', () => {
     });
 
     it('should create valid float theme variable', () => {
-      Object.keys(Float).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Float[key])).toEqual(
+      Object.entries(Float).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'float'
             ? 'float'
             : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
@@ -276,8 +276,8 @@ describe('Color Utilities', () => {
     });
 
     it('should create valid overlay theme variable', () => {
-      Object.keys(Overlay).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Overlay[key])).toEqual(
+      Object.entries(Overlay).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'overlay'
             ? 'overlay'
             : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
@@ -286,8 +286,8 @@ describe('Color Utilities', () => {
     });
 
     it('should create valid brand theme variable', () => {
-      Object.keys(Brand).forEach((key) =>
-        expect(utils.cssVarToThemeVar(Brand[key])).toEqual(
+      Object.entries(Brand).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'brand'
             ? 'brand'
             : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
@@ -296,10 +296,10 @@ describe('Color Utilities', () => {
     });
 
     it('should create valid interactive theme variable', () => {
-      Object.keys(Interactive).forEach((key) => {
+      Object.entries(Interactive).forEach(([key, value]) => {
         const s = key.toString().charAt(0).toLowerCase() + key.toString().slice(1);
         const expectedString = s.replaceAll('interactive', 'ix');
-        expect(utils.cssVarToThemeVar(Interactive[k] as string)).toEqual(
+        expect(utils.cssVarToThemeVar(value)).toEqual(
           key.toString().toLowerCase() === 'ix' ? 'ix' : expectedString,
         );
       });
