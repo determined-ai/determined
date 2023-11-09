@@ -557,14 +557,21 @@ commands:
           name: Split tests
           working_directory: ~/project/e2e_tests
           command: |
-            pip install pytest-select==0.1.2
+            # Preselect the files that contain any matching tests to minimize how wrong CircleCI's
+            # splitting can get things. (The presence of files with no tests can cause the files
+            # with tests to be bunched up incorrectly, making the split suboptimal.)
 
-            pytest --collect-only --quiet -m '<<parameters.mark>>' | \
-                grep '::' | \
-                sed 's/[^:]*:://' | \
-                circleci tests split --split-by=timings --timings-type=testname > /tmp/tests-to-run
+            # `--setup-plan` tells pytest to not run any tests but instead print out a description
+            # of the tests that would be run, along with some other stuff. Each file containing
+            # any selected tests is printed on a line by itself, except for (for some reason) a
+            # single trailing space.
+            pytest --setup-plan -m '<<parameters.mark>>' | grep '\.py $' | sed 's/ $//' > /tmp/all-relevant-files
 
-            echo "Running tests:"
+            echo 'All files with tests matching mark "<<parameters.mark>>":'
+            sed 's/^/- /' </tmp/all-relevant-files
+
+            circleci tests split --split-by=timings < /tmp/all-relevant-files > /tmp/tests-to-run
+            echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
             if [ ! -s /tmp/tests-to-run ]; then
