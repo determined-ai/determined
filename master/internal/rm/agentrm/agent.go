@@ -764,7 +764,7 @@ func (a *agent) gatherContainersToReattach() []aproto.ContainerReattach {
 }
 
 func (a *agent) handleContainersReattached(agentStarted *aproto.AgentStarted) error {
-	a.syslog.Debugf("agent ContainersRestored ip: %v , reattached: %v, allocations: %v",
+	a.syslog.Debugf("agent ContainersRestored ip: %v , reattached: %v, containers: %v",
 		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))
 
 	recovered := map[cproto.ID]aproto.ContainerReattachAck{}

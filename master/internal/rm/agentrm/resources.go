@@ -6,7 +6,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -16,8 +15,6 @@ import (
 
 // containerResources contains information for tasks have been allocated but not yet started.
 type containerResources struct {
-	system *actor.System
-
 	req         *sproto.AllocateRequest
 	agent       *agentState
 	devices     []device.Device
@@ -33,7 +30,7 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeDockerContainer,
 		AllocationID:  c.req.AllocationID,
 		AgentDevices: map[aproto.ID][]device.Device{
-			aproto.ID(c.agent.ID): c.devices,
+			aproto.ID(c.agent.id): c.devices,
 		},
 
 		ContainerID: &c.containerID,

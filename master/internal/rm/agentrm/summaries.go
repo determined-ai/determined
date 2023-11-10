@@ -8,7 +8,7 @@ import (
 // newAgentSummary returns a new immutable view of the agent.
 func newAgentSummary(state *agentState) sproto.AgentSummary {
 	return sproto.AgentSummary{
-		Name:   string(state.ID),
+		Name:   string(state.id),
 		IsIdle: state.idle(),
 	}
 }

@@ -110,7 +110,7 @@ func (a *agents) list() map[agentID]*agentState {
 			a.syslog.WithError(err).Warnf("failed to get agent state for agent %s", id)
 			continue
 		}
-		result[state.ID] = state
+		result[state.id] = state
 	}
 	return result
 }

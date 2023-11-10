@@ -190,7 +190,6 @@ func (rp *resourcePool) restoreResources(
 		}
 
 		cr := containerResources{
-			system:      ctx.Self().System(),
 			req:         req,
 			agent:       agentState,
 			devices:     cs.Devices,
@@ -247,7 +246,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 					if err != nil {
 						ctx.Log().WithError(err).Errorf(
 							"failed to deallocate container %s on agent %s when rolling back assignments",
-							resource.containerID, resource.agent.ID,
+							resource.containerID, resource.agent.id,
 						)
 					}
 				}(r)
@@ -269,7 +268,6 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		}
 
 		resources = append(resources, &containerResources{
-			system:      ctx.Self().System(),
 			req:         req,
 			agent:       fit.Agent,
 			containerID: containerID,
@@ -351,7 +349,7 @@ func (rp *resourcePool) resourcesReleased(
 			if err != nil {
 				ctx.Log().WithError(err).Errorf(
 					"failed to deallocate container %s on agent %s",
-					typed.containerID, typed.agent.ID,
+					typed.containerID, typed.agent.id,
 				)
 			}
 			delete(allocated.Resources, rID)
@@ -365,7 +363,7 @@ func (rp *resourcePool) resourcesReleased(
 			if err != nil {
 				ctx.Log().WithError(err).Errorf(
 					"failed to deallocate container %s on agent %s",
-					typed.containerID, typed.agent.ID,
+					typed.containerID, typed.agent.id,
 				)
 			}
 		}
@@ -759,7 +757,7 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 		state, err := a.State()
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to get agent state for agent %s", a.id)
-			delete(rp.agentStatesCache, state.ID)
+			delete(rp.agentStatesCache, state.id)
 			continue
 		}
 		rp.agentStatesCache[a.id] = state
