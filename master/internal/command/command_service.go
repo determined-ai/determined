@@ -106,10 +106,15 @@ func (cs *CommandService) createGenericCommand(
 			"task-id":   taskID,
 		}),
 	}
+
+	if err := cmd.startCmd(context.TODO()); err != nil {
+		return nil, err
+	}
+
 	// Add it to the registry.
 	cs.commands[cmd.taskID] = cmd
 
-	return cmd, cmd.startCmd(context.TODO())
+	return cmd, nil
 }
 
 func (cs *CommandService) unregisterCommand(id model.TaskID) {
