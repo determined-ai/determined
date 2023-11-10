@@ -9,7 +9,7 @@ import (
 
 // Hard Constraints.
 func agentPermittedSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
-	return !slices.Contains(req.BlockedNodes, string(agent.ID))
+	return !slices.Contains(req.BlockedNodes, string(agent.id))
 }
 
 func slotsSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {

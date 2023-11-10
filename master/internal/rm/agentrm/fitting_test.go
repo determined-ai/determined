@@ -516,7 +516,7 @@ func byID(
 	agents := make(map[agentID]*agentState, len(handlers))
 	index := make([]*agentState, 0, len(handlers))
 	for _, agent := range handlers {
-		agents[agent.ID] = agent
+		agents[agent.id] = agent
 		index = append(index, agent)
 	}
 	return agents, index

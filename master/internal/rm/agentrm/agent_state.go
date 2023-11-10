@@ -43,8 +43,7 @@ type slot struct {
 type agentState struct {
 	syslog *log.Entry
 
-	// Handler is agent actor reference.
-	ID               agentID // TODO(!!!): Why agentID and aproto.ID? Let's just have one or the other.
+	id               agentID // TODO(!!!): Why agentID and aproto.ID? Let's just have one or the other.
 	handler          *agent
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
@@ -64,7 +63,7 @@ type agentState struct {
 func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		syslog:                log.WithField("component", "agent-state-state").WithField("id", id),
-		ID:                    id,
+		id:                    id,
 		Devices:               make(map[device.Device]*cproto.ID),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
@@ -76,11 +75,11 @@ func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 }
 
 func (a *agentState) string() string {
-	return string(a.ID)
+	return string(a.id)
 }
 
 func (a *agentState) agentID() agentID {
-	return a.ID
+	return a.id
 }
 
 // numSlots returns the total number of slots available.
@@ -198,7 +197,7 @@ func (a *agentState) deallocateContainer(id cproto.ID) {
 // deepCopy returns a copy of agentState for scheduler internals.
 func (a *agentState) deepCopy() *agentState {
 	copiedAgent := &agentState{
-		ID:                    a.ID,
+		id:                    a.id,
 		handler:               a.handler,
 		Devices:               maps.Clone(a.Devices),
 		maxZeroSlotContainers: a.maxZeroSlotContainers,
@@ -499,7 +498,7 @@ func (a *agentState) persist() error {
 
 func (a *agentState) delete() error {
 	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).
-		Where("agent_id = ?", a.ID).
+		Where("agent_id = ?", a.id).
 		Exec(context.TODO())
 	return err
 }
@@ -637,6 +636,7 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 	}
 
 	result := agentState{
+		id:                    as.AgentID,
 		syslog:                log.WithField("component", "agent-state").WithField("id", as.AgentID),
 		maxZeroSlotContainers: as.MaxZeroSlotContainers,
 		resourcePoolName:      as.ResourcePoolName,

@@ -332,12 +332,12 @@ func removeTaskFromAgents(
 
 		// TODO properly handle this case since this will likely
 		// lead to issues in many cases.
-		agentState := agents[allocation.agent.ID]
+		agentState := agents[allocation.agent.id]
 		if agentState == nil {
 			log.Errorf("tried to remove an allocation (allocationID: %s containerID: %s) "+
 				"from an agent: (agentID: %+v) but scheduler could not find the agent",
 				allocation.req.AllocationID, allocation.containerID,
-				allocation.agent.ID,
+				allocation.agent.id,
 			)
 			continue
 		}

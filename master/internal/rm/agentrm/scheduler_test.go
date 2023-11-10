@@ -86,7 +86,7 @@ func forceAddAgent(
 		_, err := state.allocateFreeDevices(0, cproto.NewID())
 		assert.NilError(t, err)
 	}
-	agents[state.ID] = state
+	agents[state.id] = state
 	return state
 }
 
@@ -552,7 +552,6 @@ func setupSchedulerStates(
 				ID: req.AllocationID,
 				Resources: map[sproto.ResourcesID]sproto.Resources{
 					sproto.ResourcesID(containerID): &containerResources{
-						system:      system,
 						req:         req,
 						agent:       agentState,
 						containerID: containerID,

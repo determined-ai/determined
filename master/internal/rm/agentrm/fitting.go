@@ -60,7 +60,7 @@ func (c candidateList) Less(i, j int) bool {
 		return false
 	default:
 		// As a final tiebreaker, compare the agent IDs in string order.
-		return a.Agent.ID < b.Agent.ID
+		return a.Agent.id < b.Agent.id
 	}
 }
 
@@ -252,5 +252,5 @@ func stringHashNumber(s string) uint64 {
 
 func hashDistance(req *sproto.AllocateRequest, agent *agentState) uint64 {
 	return stringHashNumber(string(req.AllocationID)) -
-		stringHashNumber(string(agent.ID))
+		stringHashNumber(string(agent.id))
 }

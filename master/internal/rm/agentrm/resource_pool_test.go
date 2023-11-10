@@ -175,10 +175,10 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	// Test agent state change.
 	// Allocate a container to a device of the agent2.
 	i := 0
-	for d := range rp.agentStatesCache[agent3.ID].Devices {
+	for d := range rp.agentStatesCache[agent3.id].Devices {
 		if i == 0 {
 			id := cproto.ID(uuid.New().String())
-			rp.agentStatesCache[agent3.ID].Devices[d] = &id
+			rp.agentStatesCache[agent3.id].Devices[d] = &id
 		}
 		i++
 	}
