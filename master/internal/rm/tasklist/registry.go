@@ -77,7 +77,8 @@ func (r *Registry[K, V]) OnDelete(key K, callback func()) {
 	}()
 }
 
-func (r *Registry[K, V]) Clone() map[K]V {
+// Snapshot returns a shallow copy of the underlying map.
+func (r *Registry[K, V]) Snapshot() map[K]V {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
@@ -35,6 +36,7 @@ const (
 // ResourceManager is a resource manager for Determined-managed resources.
 type ResourceManager struct {
 	*actorrm.ResourceManager
+	agents *agents
 }
 
 // New returns a new ResourceManager, which manages communicating with
@@ -42,23 +44,71 @@ type ResourceManager struct {
 func New(
 	system *actor.System,
 	db *db.PgDB,
-	echo *echo.Echo,
+	e *echo.Echo,
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *ResourceManager {
-	agentService, agentUpdates := initializeAgents(system, config.ResourcePools, echo, opts)
+	agentService, agentUpdates := newAgentService(config.ResourcePools, opts)
+
+	// TODO(!!!): This isn't going to work anymore.
+	e.GET("/agents", func(c echo.Context) error {
+		if !c.IsWebSocket() {
+			return echo.ErrBadRequest
+		}
+		return agentService.websocketRequest(webSocketRequest{Ctx: c})
+	})
+
 	ref, _ := system.ActorOf(
 		sproto.AgentRMAddr,
 		newAgentResourceManager(db, config, cert, agentService, agentUpdates),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
-	rm := ResourceManager{ResourceManager: actorrm.Wrap(ref)}
+	rm := ResourceManager{ResourceManager: actorrm.Wrap(ref), agents: agentService}
 	return &rm
 }
 
-func agentAddr(agentID string) actor.Address {
-	return sproto.AgentsAddr.Child(agentID)
+// GetAgents implements rm.ResourceManager.
+func (a ResourceManager) GetAgents(
+	msg *apiv1.GetAgentsRequest,
+) (resp *apiv1.GetAgentsResponse, err error) {
+	return a.agents.getAgents(msg), nil
+}
+
+// GetAgent implements rm.ResourceManager.
+func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
+	agent, ok := a.agents.get(agentID(msg.AgentId))
+	if !ok {
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+	}
+	return agent.getAgentRequest(msg), nil
+}
+
+// EnableAgent implements rm.ResourceManager.
+func (a *ResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+	agent, ok := a.agents.get(agentID(msg.AgentId))
+	if !ok {
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+	}
+	return agent.enableAgent(msg)
+}
+
+// DisableAgent implements rm.ResourceManager.
+func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+	agent, ok := a.agents.get(agentID(msg.AgentId))
+	if !ok {
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+	}
+	return agent.disableAgent(msg)
+}
+
+// GetSlots implements rm.ResourceManager.
+func (a *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
+	agent, ok := a.agents.get(agentID(msg.AgentId))
+	if !ok {
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+	}
+	return agent.getSlotsRequest(msg), nil
 }
 
 // GetSlot implements rm.ResourceManager.
@@ -71,7 +121,7 @@ func (a *ResourceManager) GetSlot(
 	}
 	deviceID := device.ID(deviceIDStr)
 
-	result, err := a.handlePatchSlotState(req.AgentId, patchSlotState{id: deviceID})
+	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID})
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +139,7 @@ func (a ResourceManager) EnableSlot(
 	deviceID := device.ID(deviceIDStr)
 
 	enabled := true
-	result, err := a.handlePatchSlotState(req.AgentId, patchSlotState{id: deviceID, enabled: &enabled})
+	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
 	if err != nil {
 		return nil, err
 	}
@@ -107,22 +157,25 @@ func (a ResourceManager) DisableSlot(
 	deviceID := device.ID(deviceIDStr)
 
 	enabled := false
-	result, err := a.handlePatchSlotState(req.AgentId, patchSlotState{id: deviceID, enabled: &enabled, drain: &req.Drain})
+	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{
+		id:      deviceID,
+		enabled: &enabled,
+		drain:   &req.Drain,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return &apiv1.DisableSlotResponse{Slot: result.ToProto()}, nil
 }
 
-// TODO(!!!): wire up
 func (a ResourceManager) handlePatchSlotState(
-	agentID string, msg patchSlotState,
+	agentID agentID, msg patchSlotState,
 ) (*model.SlotSummary, error) {
-	var resp model.SlotSummary
-	if err := a.AskAt(agentAddr(agentID), msg, &resp); err != nil {
-		return nil, err
+	agent, ok := a.agents.get(agentID)
+	if !ok {
+		return nil, api.NotFoundErrs("agent", string(agentID), true)
 	}
-	return &resp, nil
+	return agent.patchSlotState(msg)
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
@@ -254,27 +307,19 @@ func (a ResourceManager) ValidateResourcePoolAvailability(v *sproto.ValidateReso
 	}
 }
 
-// GetAgents gets the state of connected agents. Go around the RM and directly to the agents actor
-// to avoid blocking asks through it.
-func (a ResourceManager) GetAgents(
-	msg *apiv1.GetAgentsRequest,
-) (resp *apiv1.GetAgentsResponse, err error) {
-	return resp, a.AskAt(sproto.AgentsAddr, msg, &resp)
-}
-
 type agentResourceManager struct {
 	config      *config.AgentResourceManagerConfig
 	poolsConfig []config.ResourcePoolConfig
 	cert        *tls.Certificate
 	db          *db.PgDB
 
-	agentService agentService
+	agentService *agents
 	agentUpdates *queue.Queue[agentUpdatedEvent]
 	pools        map[string]*actor.Ref
 }
 
 func newAgentResourceManager(
-	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService agentService,
+	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService *agents,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
 ) *agentResourceManager {
 	return &agentResourceManager{
