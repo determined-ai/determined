@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -46,7 +45,7 @@ type agentState struct {
 
 	// Handler is agent actor reference.
 	ID               agentID // TODO(!!!): Why agentID and aproto.ID? Let's just have one or the other.
-	handler          *actor.Ref
+	handler          *agent
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
 	enabled          bool

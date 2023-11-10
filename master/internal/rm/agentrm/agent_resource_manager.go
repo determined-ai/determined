@@ -114,6 +114,7 @@ func (a ResourceManager) DisableSlot(
 	return &apiv1.DisableSlotResponse{Slot: result.ToProto()}, nil
 }
 
+// TODO(!!!): wire up
 func (a ResourceManager) handlePatchSlotState(
 	agentID string, msg patchSlotState,
 ) (*model.SlotSummary, error) {

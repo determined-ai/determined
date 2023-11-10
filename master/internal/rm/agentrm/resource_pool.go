@@ -242,46 +242,32 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		if rollback {
 			// Rollback previous allocations.
 			for _, resource := range resources {
-				ctx.Tell(resource.agent.handler,
-					deallocateContainer{containerID: resource.containerID})
+				// TODO(!!!): go because it was a tell; does it need to be?
+				go resource.agent.handler.deallocateContainer(deallocateContainer{containerID: resource.containerID})
 			}
 		}
 	}()
 
 	for _, fit := range fits {
 		containerID := cproto.NewID()
-		rr := ctx.Ask(fit.Agent.handler, allocateFreeDevices{
+		resp, err := fit.Agent.handler.allocateFreeDevices(allocateFreeDevices{
 			slots:       fit.Slots,
 			containerID: containerID,
 		})
-		var resp actor.Message
-		if err := rr.Error(); err != nil {
-			resp = errors.New("ask error in allocateFreeDevices")
-		} else {
-			resp = rr.Get()
-			if resp == nil {
-				resp = errors.New("nil allocateFreeDevices response")
-			}
-		}
-
-		switch resp := resp.(type) {
-		case allocateFreeDevicesResponse:
-			devices := resp.devices
-			resources = append(resources, &containerResources{
-				system:      ctx.Self().System(),
-				req:         req,
-				agent:       fit.Agent,
-				containerID: containerID,
-				devices:     devices,
-			})
-		case error:
+		if err != nil {
 			// Rollback previous allocations.
-			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
+			ctx.Log().WithError(err).Warnf("failed to allocate request %s", req.AllocationID)
 			rollback = true
 			return false
-		default:
-			panic(fmt.Sprintf("bad allocateFreeDevices response: %+v", resp))
 		}
+
+		resources = append(resources, &containerResources{
+			system:      ctx.Self().System(),
+			req:         req,
+			agent:       fit.Agent,
+			containerID: containerID,
+			devices:     resp.devices,
+		})
 	}
 
 	// persist allocation_resources and container_resources.
@@ -314,7 +300,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	rmevents.Publish(req.AllocationID, allocated.Clone())
 
 	// Refresh state for the updated agents.
-	allocatedAgents := make([]*actor.Ref, 0, len(resources))
+	allocatedAgents := make([]*agent, 0, len(resources))
 	for _, allocation := range resources {
 		allocatedAgents = append(allocatedAgents, allocation.agent.handler)
 	}
@@ -354,7 +340,7 @@ func (rp *resourcePool) resourcesReleased(
 			}
 
 			typed := r.(*containerResources)
-			ctx.Tell(typed.agent.handler, deallocateContainer{containerID: typed.containerID})
+			typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
 			delete(allocated.Resources, rID)
 			break
 		}
@@ -362,7 +348,7 @@ func (rp *resourcePool) resourcesReleased(
 		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
 		for _, r := range allocated.Resources {
 			typed := r.(*containerResources)
-			ctx.Tell(typed.agent.handler, deallocateContainer{containerID: typed.containerID})
+			typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
 		}
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
 		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
@@ -485,24 +471,24 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 
 		switch {
 		case rp.config.Provider == nil:
-			for _, a := range rp.agentStatesCache {
-				if !blockedNodeSet.Contains(a.Handler.Address().Local()) {
+			for id, a := range rp.agentStatesCache {
+				if !blockedNodeSet.Contains(string(id)) {
 					totalSlots += len(a.slotStates)
 				}
 			}
 		case rp.config.Provider.AWS != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.AWS.SlotsPerInstance()
 
-			for _, a := range rp.agentStatesCache {
-				if blockedNodeSet.Contains(a.Handler.Address().Local()) {
+			for id, a := range rp.agentStatesCache {
+				if blockedNodeSet.Contains(string(id)) {
 					totalSlots -= len(a.slotStates)
 				}
 			}
 		case rp.config.Provider.GCP != nil:
 			totalSlots = rp.config.Provider.MaxInstances * rp.config.Provider.GCP.SlotsPerInstance()
 
-			for _, a := range rp.agentStatesCache {
-				if blockedNodeSet.Contains(a.Handler.Address().Local()) {
+			for id, a := range rp.agentStatesCache {
+				if blockedNodeSet.Contains(string(id)) {
 					totalSlots -= len(a.slotStates)
 				}
 			}
@@ -749,20 +735,17 @@ func (rp *resourcePool) JobStopped(jobID model.JobID) {
 	delete(rp.queuePositions, jobID)
 }
 
-func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*actor.Ref) {
-	responses := ctx.AskAll(getAgentState{}, agents...).GetAll()
+func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*agent) {
+	// TODO(!!!): id maybe isn't safe to access, but maybe is. Either way, probably use a getter.
 
-	for ref, msg := range responses {
-		switch msg := msg.(type) {
-		case *agentState:
-			rp.agentStatesCache[msg.ID] = msg
-		case error:
-			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
-			delete(rp.agentStatesCache, agentID(ref.Address().Local()))
-		default:
-			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())
-			delete(rp.agentStatesCache, agentID(ref.Address().Local()))
+	for _, a := range agents {
+		state, err := a.getAgentState()
+		if err != nil {
+			ctx.Log().WithError(err).Warnf("failed to get agent state for agent %s", a.id)
+			delete(rp.agentStatesCache, a.id)
+			continue
 		}
+		rp.agentStatesCache[a.id] = state
 	}
 }
 

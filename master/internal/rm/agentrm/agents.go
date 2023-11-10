@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/connsave"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -29,11 +29,11 @@ type agentService interface {
 
 type actorAgentService struct {
 	syslog    *logrus.Entry
-	agentsRef *actor.Ref
+	agentsRef *agents
 	system    *actor.System
 }
 
-func newActorAgentService(system *actor.System, agentsRef *actor.Ref) *actorAgentService {
+func newActorAgentService(system *actor.System, agentsRef *agents) *actorAgentService {
 	return &actorAgentService{
 		syslog:    logrus.WithField("component", "agents"),
 		agentsRef: agentsRef,
@@ -43,23 +43,16 @@ func newActorAgentService(system *actor.System, agentsRef *actor.Ref) *actorAgen
 
 // list implements agentService.
 func (a *actorAgentService) list() map[agentID]*agentState {
-	agents := a.agentsRef.Children()
-
-	responses := a.system.AskAll(getAgentState{}, agents...).GetAll()
-
+	agents := a.agentsRef.agents.Clone()
 	result := make(map[agentID]*agentState, len(agents))
-	for ref, msg := range responses {
-		switch msg := msg.(type) {
-		case *agentState:
-			result[msg.agentID()] = msg
-		case error:
-			a.syslog.WithField("component", "agents").WithError(msg).
-				Warnf("failed to get agent state for agent %s", ref.Address().Local())
-		default:
-			a.syslog.Warnf("bad agent state response for agent %s", ref.Address().Local())
+	for id, a := range agents {
+		state, err := a.getAgentState()
+		if err != nil {
+			a.syslog.WithError(err).Warnf("failed to get agent state for agent %s", id)
+			continue
 		}
+		result[state.ID] = state
 	}
-
 	return result
 }
 
@@ -72,11 +65,12 @@ func initializeAgents(
 	system *actor.System, poolConfigs []config.ResourcePoolConfig, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
 ) (agentService, *queue.Queue[agentUpdatedEvent]) {
 	updates := queue.New[agentUpdatedEvent]()
-	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{
+	agentsImpl := &agents{
 		updates:     updates,
 		poolConfigs: poolConfigs,
 		opts:        opts,
-	})
+	}
+	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, agentsImpl)
 	check.Panic(check.True(ok, "agents address already taken"))
 	system.Ask(agentsRef, actor.Ping{}).Get()
 	e.GET("/agent*", func(c echo.Context) error {
@@ -89,10 +83,11 @@ func initializeAgents(
 		}
 		return echo.ErrNotFound
 	})
-	return newActorAgentService(system, agentsRef), updates
+	return newActorAgentService(system, agentsImpl), updates
 }
 
 type agents struct {
+	agents      tasklist.Registry[agentID, *agent]
 	updates     *queue.Queue[agentUpdatedEvent]
 	poolConfigs []config.ResourcePoolConfig
 	opts        *aproto.MasterSetAgentOptions
@@ -114,14 +109,15 @@ func (a *agents) Receive(ctx *actor.Context) error {
 
 		for agentID := range agentStates {
 			state := agentStates[agentID]
-			agentRef, err := a.createAgentActor(
-				ctx, agentID, state.resourcePoolName, a.opts, &state)
+			agentRef, err := a.createAgent(ctx, agentID, state.resourcePoolName, a.opts, &state, func() {
+				a.agents.Delete(agentID)
+			})
 			if err != nil {
 				ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
 				badAgentIds = append(badAgentIds, agentID)
 				continue
 			}
-			ctx.Ask(agentRef, actor.Ping{}).Get()
+			a.agents.Add(agentID, agentRef)
 			ctx.Log().Debugf("restored agent state: %s", agentID)
 		}
 
@@ -147,7 +143,6 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		}
 
 		id := msg.Ctx.QueryParam("id")
-		existingRef := ctx.Child(id)
 		reconnect, err := msg.IsReconnect()
 		if err != nil {
 			ctx.Respond(errors.Wrapf(err, "parsing reconnect query param"))
@@ -158,9 +153,10 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		// accept it. Whether it is a network failure or a crash/restart, we will just try
 		// to reattach whatever containers still exist.
 		// That logic is located in agent.receive(ws.WebSocketRequest).
-		if existingRef != nil {
+		existingRef, ok := a.agents.Load(agentID(id))
+		if ok {
 			ctx.Log().WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
-			ctx.Respond(ctx.Ask(existingRef, msg).Get())
+			existingRef.tryReconnectWebsocket(msg)
 			return nil
 		}
 
@@ -174,15 +170,19 @@ func (a *agents) Receive(ctx *actor.Context) error {
 
 		// Finally, this must not be a recovery flow, so just create the agent actor.
 		resourcePool := msg.Ctx.QueryParam("resource_pool")
-		if ref, err := a.createAgentActor(ctx, agentID(id), resourcePool, a.opts, nil); err != nil {
+		if ref, err := a.createAgent(ctx, agentID(id), resourcePool, a.opts, nil, func() {
+			a.agents.Delete(agentID(id))
+		}); err != nil {
 			ctx.Respond(err)
 		} else {
-			ctx.Respond(ctx.Ask(ref, msg).Get())
+			a.agents.Add(agentID(id), ref)
+			ref.tryReconnectWebsocket(msg)
 		}
+		// TODO(!!!): check for ctx.Children() here.
 
 	case *apiv1.GetAgentsRequest:
 		response := &apiv1.GetAgentsResponse{}
-		for _, a := range a.summarize(ctx) {
+		for _, a := range a.summarize() {
 			response.Agents = append(response.Agents, a.ToProto())
 		}
 		ctx.Respond(response)
@@ -195,13 +195,14 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (a *agents) createAgentActor(
+func (a *agents) createAgent(
 	ctx *actor.Context,
 	id agentID,
 	resourcePool string,
 	opts *aproto.MasterSetAgentOptions,
 	restoredAgentState *agentState,
-) (*actor.Ref, error) {
+	unregister func(),
+) (*agent, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
@@ -222,34 +223,32 @@ func (a *agents) createAgentActor(
 		return nil, fmt.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
 	}
 
-	ref, ok := ctx.ActorOf(id, &agent{
-		updates:               a.updates,
-		resourcePoolName:      resourcePool,
-		maxZeroSlotContainers: poolConfig.MaxAuxContainersPerAgent,
-		agentReconnectWait:    time.Duration(poolConfig.AgentReconnectWait),
-		opts:                  opts,
-		agentState:            restoredAgentState,
-	})
-	if !ok {
-		return nil, errors.Errorf("agent already connected: %s", id)
-	}
-	return ref, nil
+	return newAgent(
+		ctx.Self().System(),
+		id,
+		a.updates,
+		resourcePool,
+		poolConfig,
+		opts,
+		restoredAgentState,
+		unregister,
+	), nil
 }
 
 func (a *agents) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
-		ctx.Respond(apiCtx.JSON(http.StatusOK, a.summarize(ctx)))
+		ctx.Respond(apiCtx.JSON(http.StatusOK, a.summarize()))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}
 }
 
-func (a *agents) summarize(ctx *actor.Context) model.AgentsSummary {
-	results := ctx.AskAll(model.AgentSummary{}, ctx.Children()...).GetAll()
-	summary := make(map[string]model.AgentSummary, len(results))
-	for ref, result := range results {
-		summary[ref.Address().String()] = result.(model.AgentSummary)
+func (a *agents) summarize() model.AgentsSummary {
+	agents := a.agents.Clone()
+	summary := make(map[string]model.AgentSummary, len(agents))
+	for id, a := range agents {
+		summary[string(id)] = a.summarize()
 	}
 	return summary
 }
