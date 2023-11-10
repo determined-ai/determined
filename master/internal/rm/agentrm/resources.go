@@ -60,7 +60,7 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 
-	c.agent.handler.startTaskContainerLock(sproto.StartTaskContainer{
+	c.agent.handler.StartTaskContainer(sproto.StartTaskContainer{
 		AllocationID: c.req.AllocationID,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
@@ -78,7 +78,7 @@ func (c containerResources) Start(
 
 // Kill notifies the agent to kill the container.
 func (c containerResources) Kill(logCtx logger.Context) {
-	c.agent.handler.killTaskContainerLock(sproto.KillTaskContainer{
+	c.agent.handler.KillTaskContainer(sproto.KillTaskContainer{
 		ContainerID: c.containerID,
 		LogContext:  logCtx,
 	})

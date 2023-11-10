@@ -70,13 +70,6 @@ func forceAddAgent(
 	numUsedSlots int,
 	numZeroSlotContainers int,
 ) *agentState {
-	// TODO(!!!): delete or change.
-	// ref := newAgent(agentID(agentIDStr), queue.New[agentUpdatedEvent](), resourcePoolName, &config.ResourcePoolConfig{
-	// 	MaxAuxContainersPerAgent: 100,
-	// 	AgentReconnectWait:       model.Duration(time.Minute),
-	// }, &aproto.MasterSetAgentOptions{}, nil, func() {})
-	// state := ref.agentState
-
 	state := newAgentState(agentID(agentIDStr), 100)
 	state.handler = &agent{}
 	for i := 0; i < numSlots; i++ {
