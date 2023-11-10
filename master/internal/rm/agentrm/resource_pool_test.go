@@ -161,7 +161,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 
 	// Test removing agents.
 	agent1 := system.Get(actor.Addr("agent1"))
-	delete(rp.agentStatesCache, agent1)
+	delete(rp.agentStatesCache, agentID(agent1.Address().Local()))
 	updated = rp.updateScalingInfo()
 	assert.Check(t, updated)
 	assert.DeepEqual(t, *rp.scalingInfo, sproto.ScalingInfo{
@@ -176,10 +176,10 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	// Test agent state change.
 	// Allocate a container to a device of the agent2.
 	i := 0
-	for d := range rp.agentStatesCache[agent3.Handler].Devices {
+	for d := range rp.agentStatesCache[agent3.ID].Devices {
 		if i == 0 {
 			id := cproto.ID(uuid.New().String())
-			rp.agentStatesCache[agent3.Handler].Devices[d] = &id
+			rp.agentStatesCache[agent3.ID].Devices[d] = &id
 		}
 		i++
 	}

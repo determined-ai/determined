@@ -47,10 +47,10 @@ func New(
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *ResourceManager {
-	agentsRef, agentUpdates := initializeAgents(system, config.ResourcePools, echo, opts)
+	agentService, agentUpdates := initializeAgents(system, config.ResourcePools, echo, opts)
 	ref, _ := system.ActorOf(
 		sproto.AgentRMAddr,
-		newAgentResourceManager(db, config, cert, agentsRef, agentUpdates),
+		newAgentResourceManager(db, config, cert, agentService, agentUpdates),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 	rm := ResourceManager{ResourceManager: actorrm.Wrap(ref)}
@@ -267,13 +267,13 @@ type agentResourceManager struct {
 	cert        *tls.Certificate
 	db          *db.PgDB
 
-	agentsRef    *actor.Ref
+	agentService agentService
 	agentUpdates *queue.Queue[agentUpdatedEvent]
 	pools        map[string]*actor.Ref
 }
 
 func newAgentResourceManager(
-	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentsRef *actor.Ref,
+	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService agentService,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
 ) *agentResourceManager {
 	return &agentResourceManager{
@@ -281,7 +281,7 @@ func newAgentResourceManager(
 		poolsConfig:  config.ResourcePools,
 		cert:         cert,
 		db:           db,
-		agentsRef:    agentsRef,
+		agentService: agentService,
 		agentUpdates: agentUpdates,
 		pools:        make(map[string]*actor.Ref),
 	}
@@ -503,7 +503,7 @@ func (a *agentResourceManager) createResourcePool(
 		cert,
 		MakeScheduler(config.Scheduler),
 		MakeFitFunction(config.Scheduler.FittingPolicy),
-		a.agentsRef,
+		a.agentService,
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {

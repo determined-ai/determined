@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -22,6 +23,46 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
+type agentService interface {
+	list() map[agentID]*agentState
+}
+
+type actorAgentService struct {
+	syslog    *logrus.Entry
+	agentsRef *actor.Ref
+	system    *actor.System
+}
+
+func newActorAgentService(system *actor.System, agentsRef *actor.Ref) *actorAgentService {
+	return &actorAgentService{
+		syslog:    logrus.WithField("component", "agents"),
+		agentsRef: agentsRef,
+		system:    system,
+	}
+}
+
+// list implements agentService.
+func (a *actorAgentService) list() map[agentID]*agentState {
+	agents := a.agentsRef.Children()
+
+	responses := a.system.AskAll(getAgentState{}, agents...).GetAll()
+
+	result := make(map[agentID]*agentState, len(agents))
+	for ref, msg := range responses {
+		switch msg := msg.(type) {
+		case *agentState:
+			result[msg.agentID()] = msg
+		case error:
+			a.syslog.WithField("component", "agents").WithError(msg).
+				Warnf("failed to get agent state for agent %s", ref.Address().Local())
+		default:
+			a.syslog.Warnf("bad agent state response for agent %s", ref.Address().Local())
+		}
+	}
+
+	return result
+}
+
 type agentUpdatedEvent struct {
 	resourcePool string
 }
@@ -29,7 +70,7 @@ type agentUpdatedEvent struct {
 // initializeAgents creates a new global agents actor.
 func initializeAgents(
 	system *actor.System, poolConfigs []config.ResourcePoolConfig, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
-) (*actor.Ref, *queue.Queue[agentUpdatedEvent]) {
+) (agentService, *queue.Queue[agentUpdatedEvent]) {
 	updates := queue.New[agentUpdatedEvent]()
 	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{
 		updates:     updates,
@@ -48,7 +89,7 @@ func initializeAgents(
 		}
 		return echo.ErrNotFound
 	})
-	return agentsRef, updates
+	return newActorAgentService(system, agentsRef), updates
 }
 
 type agents struct {
@@ -182,6 +223,7 @@ func (a *agents) createAgentActor(
 	}
 
 	ref, ok := ctx.ActorOf(id, &agent{
+		updates:               a.updates,
 		resourcePoolName:      resourcePool,
 		maxZeroSlotContainers: poolConfig.MaxAuxContainersPerAgent,
 		agentReconnectWait:    time.Duration(poolConfig.AgentReconnectWait),

@@ -760,7 +760,7 @@ func TestPrioritySchedulingNoPreemptionByPosition(t *testing.T) {
 
 func AllocateTasks(
 	toAllocate []*sproto.AllocateRequest,
-	agents map[*actor.Ref]*agentState,
+	agents map[agentID]*agentState,
 	taskList *tasklist.TaskList,
 ) {
 	for _, req := range toAllocate {
