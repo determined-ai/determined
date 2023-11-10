@@ -46,7 +46,6 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 func (c containerResources) Start(
 	logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
-	handler := c.agent.handler
 	spec.ContainerID = string(c.containerID)
 	spec.ResourcesID = string(c.containerID)
 	spec.AllocationID = string(c.req.AllocationID)
@@ -61,7 +60,7 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 
-	return c.system.Ask(handler, sproto.StartTaskContainer{
+	c.agent.handler.startTaskContainerLock(sproto.StartTaskContainer{
 		AllocationID: c.req.AllocationID,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
@@ -73,12 +72,13 @@ func (c containerResources) Start(
 			Spec: spec.ToDockerSpec(),
 		},
 		LogContext: logCtx,
-	}).Error()
+	})
+	return nil
 }
 
 // Kill notifies the agent to kill the container.
 func (c containerResources) Kill(logCtx logger.Context) {
-	c.system.Tell(c.agent.handler, sproto.KillTaskContainer{
+	c.agent.handler.killTaskContainerLock(sproto.KillTaskContainer{
 		ContainerID: c.containerID,
 		LogContext:  logCtx,
 	})

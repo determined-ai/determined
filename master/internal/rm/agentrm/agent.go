@@ -1,24 +1,25 @@
 package agentrm
 
 import (
+	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	actorapi "github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -28,11 +29,21 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/master/pkg/ws"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
-	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
+
+var errRecovering = errors.New("agent disconnected, wait for recovery")
 
 type (
 	agent struct {
+		system     *actor.System
+		syslog     *logrus.Entry
+		unregister func()
+
+		mu sync.Mutex
+
+		id               agentID
+		registeredTime   time.Time
 		address          string
 		updates          *queue.Queue[agentUpdatedEvent]
 		socket           *ws.WebSocket[*aproto.MasterMessage, aproto.AgentMessage]
@@ -64,7 +75,7 @@ type (
 		// websocket connection if the websocket does reconnect and in poststop if it does not.
 		awaitingRestore  bool
 		reconnectBacklog []interface{}
-		reconnectTimers  []*actor.Ref
+		reconnectTimers  []*time.Timer
 		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
 		// pop back to our previous state.
 		preDisconnectEnabled  bool
@@ -78,8 +89,6 @@ type (
 
 	reconnectTimeout struct{}
 
-	// getAgentState response is agent.agentState.
-	getAgentState struct{}
 	// patchAllSlotsState updates the state of all slots.
 	patchAllSlotsState struct {
 		enabled *bool
@@ -108,379 +117,468 @@ type (
 	socketDisconnect struct{}
 )
 
-var errRecovering = errors.New("agent disconnected, wait for recovery")
+func newAgent(
+	system *actor.System,
+	id agentID,
+	updates *queue.Queue[agentUpdatedEvent],
+	resourcePoolName string,
+	rpConfig *config.ResourcePoolConfig,
+	opts *aproto.MasterSetAgentOptions,
+	restoredAgentState *agentState,
+	unregister func(),
+) *agent {
+	// REVIEWER NOTE: good to run prestart sync because the old code ping ask'd us anyways.
+	a := &agent{
+		system:                system,
+		syslog:                logrus.WithField("component", "agent").WithField("id", id),
+		id:                    id,
+		registeredTime:        time.Now(),
+		resourcePoolName:      resourcePoolName,
+		maxZeroSlotContainers: rpConfig.MaxAuxContainersPerAgent,
+		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
+		opts:                  opts,
+		agentState:            restoredAgentState,
+		unregister:            unregister,
+	}
 
-func (a *agent) Receive(ctx *actor.Context) error {
-	return a.receive(ctx, ctx.Message())
+	if restoring := a.agentState != nil; restoring {
+		a.started = true
+		a.awaitingRestore = true
+		// Update maxZeroSlotContainers config setting.
+		a.agentState.maxZeroSlotContainers = a.maxZeroSlotContainers
+		// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
+		// agentReconnectWait if it never reconnects.
+		// Ensure RP is aware of the agent.
+		a.syslog.Infof("adding agent: %s", a.agentState.agentID())
+		err := a.updateAgentStartStats(a.resourcePoolName, string(a.id), a.agentState.numSlots())
+		if err != nil {
+			a.syslog.WithError(err).Error("failed to update agent start stats")
+		}
+		a.notifyListeners()
+		a.socketDisconnected()
+	}
+
+	return a
 }
 
-func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
-	switch msg := msg.(type) {
-	case actor.PreStart:
-		if a.agentState != nil { // not nil agentState on PreStart means it's restored.
-			a.started = true
-			a.awaitingRestore = true
-			a.agentState.ID = agentID(ctx.Self().Address().Local())
-			a.agentState.handler = ctx.Self()
-			// Update maxZeroSlotContainers config setting.
-			a.agentState.maxZeroSlotContainers = a.maxZeroSlotContainers
-			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
-			// agentReconnectWait if it never reconnects.
-			// Ensure RP is aware of the agent.
-			ctx.Log().Infof("adding agent: %s", a.agentState.agentID())
-			err := a.updateAgentStartStats(a.resourcePoolName, ctx.Self().Address().Local(), a.agentState.numSlots())
-			if err != nil {
-				ctx.Log().WithError(err).Error("failed to update agent start stats")
-			}
-			a.notifyListeners()
-			a.socketDisconnected(ctx)
-		}
-	case model.AgentSummary:
-		ctx.Respond(a.summarize(ctx))
-	case actorapi.WebSocketRequest:
-		if a.socket != nil {
-			err := errors.New("websocket already connected")
-			ctx.Log().WithError(err).Error("socket not nil when WebSocketRequest received")
-			return err
-		}
+func (a *agent) allocateFreeDevices(msg allocateFreeDevices) (allocateFreeDevicesResponse, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 
-		conn, err := ws.UpgradeEchoConnection(msg.Ctx)
+	if !a.started {
+		a.syslog.Debugf("received allocateFreeDevices on non-started agent")
+		return allocateFreeDevicesResponse{}, errors.New("can't allocate free devices: agent not started")
+	}
+
+	devices, err := a.agentState.allocateFreeDevices(msg.slots, msg.containerID)
+	if err != nil {
+		return allocateFreeDevicesResponse{}, err
+	}
+	return allocateFreeDevicesResponse{devices: devices}, nil
+}
+
+func (a *agent) deallocateContainer(msg deallocateContainer) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.started {
+		return errors.New("can't deallocate container: agent not started")
+	}
+	a.agentState.deallocateContainer(msg.containerID)
+	return nil
+}
+
+func (a *agent) getAgentState() (*agentState, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.started {
+		return nil, errors.New("agent state is not available: agent not started")
+	}
+
+	return a.agentState.deepCopy(), nil
+}
+
+func (a *agent) startTaskContainerLock(msg sproto.StartTaskContainer) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	a.startTaskContainer(msg)
+}
+
+func (a *agent) startTaskContainer(msg sproto.StartTaskContainer) {
+	if a.awaitingReconnect {
+		a.bufferForRecovery(msg)
+		return
+	}
+	log := a.syslog.
+		WithFields(msg.LogContext.Fields()).
+		WithField("container-id", msg.StartContainer.Container.ID).
+		WithField("slots", len(msg.StartContainer.Container.Devices))
+	log.Infof("starting container")
+
+	a.socket.Outbox <- aproto.AgentMessage{StartContainer: &msg.StartContainer}
+
+	if err := a.agentState.startContainer(msg); err != nil {
+		log.WithError(err).Error("failed to update agent state")
+	}
+}
+
+// TODO(!!!): better API.
+func (a *agent) killTaskContainerLock(msg sproto.KillTaskContainer) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	a.killTaskContainer(msg)
+}
+
+func (a *agent) killTaskContainer(msg sproto.KillTaskContainer) {
+	if a.awaitingReconnect {
+		a.bufferForRecovery(msg)
+		return
+	}
+
+	log := a.syslog.
+		WithFields(msg.LogContext.Fields()).
+		WithField("container-id", msg.ContainerID)
+	log.Infof("killing container")
+
+	killMsg := aproto.SignalContainer{
+		ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
+	}
+	a.socket.Outbox <- aproto.AgentMessage{SignalContainer: &killMsg}
+}
+
+// TODO(!!!): rename, not always a crash.
+func (a *agent) crash(cause error) {
+	defer a.unregister()
+
+	// TODO(!!!): More debugging information for crashes.
+	if cause != nil {
+		a.syslog.WithError(cause).Error("agent crashed")
+	}
+
+	if a.started {
+		// This normally will run on agent WebSocketRequest to populate
+		// agentState.containerAllocation. There is technically still race here
+		// (and also in calling this in WebSocketRequest). We have no synchronization
+		// between allocation actors starting and registering themselves in the
+		// allocationmap and the lookup of allocationmap in restoreContainersField().
+		// Though this will likely run after agentReconnectWait which should
+		// give enough time for this to be populated.
+		// TODO: add explicit synchronization here.
+		err := a.agentState.restoreContainersField()
 		if err != nil {
-			msg := "error upgrading connection to WebSocket"
-			ctx.Log().WithError(err).Error(msg)
-			return errors.Wrap(err, msg)
+			a.syslog.WithError(err).Error("failed restoreContainersField in shutdown of agent")
 		}
 
-		wsName := "master-agent-ws-" + ctx.Self().Address().String()
-		socket, err := ws.Wrap[*aproto.MasterMessage, aproto.AgentMessage](wsName, conn)
-		if err != nil {
-			msg := "failed to accept websocket connection"
-			ctx.Log().WithError(err).Error(msg)
-			return errors.Wrap(err, msg)
+		for cid := range a.agentState.containerAllocation {
+			stopped := aproto.ContainerError(
+				aproto.AgentFailed, errors.New("agent closed with allocated containers"))
+			a.containerStateChanged(aproto.ContainerStateChanged{
+				Container: cproto.Container{
+					ID:    cid,
+					State: cproto.Terminated,
+				},
+				ContainerStopped: &stopped,
+			})
 		}
 
-		// spin up goroutine that sends messages to self
-		go func() {
-			defer ctx.Tell(ctx.Self(), socketDisconnect{})
+		if err := a.agentState.delete(); err != nil {
+			a.syslog.WithError(err).Warnf("failed to delete agent state")
+		}
+	} else {
+		a.syslog.Info("agent disconnected but wasn't started")
+	}
 
-			for {
-				select {
-				case msg := <-socket.Inbox:
-					// If the Inbox has closed, we get a zero value
-					if msg == nil {
-						return
-					}
-					ctx.Tell(ctx.Self(), *msg)
-				case <-socket.Done:
+	if a.socket != nil {
+		if err := a.socket.Close(); err != nil {
+			a.syslog.WithError(err).Warnf("error while shutting down agent WebSocket")
+		}
+	}
+
+	a.syslog.Infof("removing agent: %s", a.agentState.agentID())
+	err := a.updateAgentEndStats(string(a.id))
+	if err != nil {
+		a.syslog.WithError(err).Error("failed to update agent end stats")
+	}
+	a.notifyListeners()
+}
+
+func (a *agent) tryReconnectWebsocket(msg actorapi.WebSocketRequest) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	// TODO(!!!): We use to decide to crash and actually crash under different locks, but should we _really_ do that?
+	err := a.websocketRequest(msg)
+	if err != nil {
+		a.crash(err)
+		return
+	}
+}
+
+func (a *agent) websocketRequest(msg actorapi.WebSocketRequest) error {
+	// REVIEWER NOTE: returning in this function was a crash previously.
+	if a.socket != nil {
+		err := errors.New("websocket already connected")
+		a.syslog.WithError(err).Error("socket not nil when WebSocketRequest received")
+		return err
+	}
+
+	conn, err := ws.UpgradeEchoConnection(msg.Ctx)
+	if err != nil {
+		msg := "error upgrading connection to WebSocket"
+		a.syslog.WithError(err).Error(msg)
+		return errors.Wrap(err, msg)
+	}
+
+	wsName := "master-agent-ws-" + string(a.id)
+	socket, err := ws.Wrap[*aproto.MasterMessage, aproto.AgentMessage](wsName, conn)
+	if err != nil {
+		msg := "failed to accept websocket connection"
+		a.syslog.WithError(err).Error(msg)
+		return errors.Wrap(err, msg)
+	}
+
+	// spin up goroutine that sends messages to self
+	go func() {
+		defer a.handleSocketDisconnect()
+
+		for {
+			select {
+			case msg := <-socket.Inbox:
+				// If the Inbox has closed, we get a zero value
+				if msg == nil {
 					return
 				}
+				a.handleIncomingWSMessage(msg)
+			case <-socket.Done:
+				return
 			}
-		}()
+		}
+	}()
 
-		a.socket = socket
-		a.version = msg.Ctx.QueryParam("version")
+	a.socket = socket
+	a.version = msg.Ctx.QueryParam("version")
 
-		lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")
-		if lastColonIndex == -1 {
-			a.address = msg.Ctx.Request().RemoteAddr
+	lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")
+	if lastColonIndex == -1 {
+		a.address = msg.Ctx.Request().RemoteAddr
+	} else {
+		a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
+	}
+
+	a.adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(msg)
+
+	var masterSetAgentOptions aproto.AgentMessage
+	if a.awaitingReconnect {
+		optsCopy := *a.opts
+		optsCopy.ContainersToReattach = a.gatherContainersToReattach()
+		masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
+	} else {
+		masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: a.opts}
+	}
+
+	if a.awaitingRestore {
+		a.awaitingRestore = false
+	}
+
+	a.socket.Outbox <- masterSetAgentOptions
+
+	if a.awaitingReconnect {
+		a.syslog.Info("agent reconnected")
+		a.awaitingReconnect = false
+
+		// Cancel reconnect timers.
+		for _, timerActor := range a.reconnectTimers {
+			timerActor.Stop()
+		}
+		a.reconnectTimers = nil
+
+		// Re-propagate our old state back on successful recovery.
+		if a.preDisconnectEnabled {
+			a.agentState.enable()
 		} else {
-			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
+			a.agentState.disable(a.preDisconnectDraining)
 		}
-
-		a.adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(ctx, msg)
-
-		var masterSetAgentOptions aproto.AgentMessage
-		if a.awaitingReconnect {
-			optsCopy := *a.opts
-			optsCopy.ContainersToReattach = a.gatherContainersToReattach(ctx)
-			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
-		} else {
-			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: a.opts}
-		}
-
-		if a.awaitingRestore {
-			a.awaitingRestore = false
-		}
-
-		a.socket.Outbox <- masterSetAgentOptions
-
-		if a.awaitingReconnect {
-			ctx.Log().Info("agent reconnected")
-			a.awaitingReconnect = false
-
-			// Cancel reconnect timers.
-			for _, timerActor := range a.reconnectTimers {
-				timerActor.Stop()
-			}
-			a.reconnectTimers = nil
-
-			// Re-propagate our old state back on successful recovery.
-			if a.preDisconnectEnabled {
-				a.agentState.enable()
-			} else {
-				a.agentState.disable(a.preDisconnectDraining)
-			}
-			a.agentState.patchAllSlotsState(patchAllSlotsState{
-				enabled: &a.agentState.enabled,
-				drain:   &a.agentState.draining,
-			})
-
-			if len(a.reconnectBacklog) > 0 {
-				for i, msg := range a.reconnectBacklog {
-					ctx.Log().Debugf("will replay reconnectBacklog %d %s", i, reflect.TypeOf(msg))
-				}
-			}
-
-			for _, msg := range a.reconnectBacklog {
-				if err := a.receive(ctx, msg); err != nil {
-					ctx.Log().WithError(err).WithField("msg", msg).Errorf("replaying backlog")
-					return errors.Wrapf(err, "replaying backlog")
-				}
-			}
-			a.reconnectBacklog = nil
-			a.notifyListeners()
-		}
-
-	case socketDisconnect:
-		defer a.notifyListeners()
-		defer a.socketDisconnected(ctx)
-
-		err := a.socket.Close()
-		if err != nil {
-			if !a.started {
-				// If we happen to fail before the agent has started and been registered with
-				// the resource manager, then nothing can be running on it. In this case we
-				// just fail outright and make it restart.
-				return errors.Wrapf(err, "child failed: %s", a.socket.Name())
-			}
-
-			ctx.Log().
-				WithError(err).
-				Errorf("WebSocket failed, awaiting reconnect: %s", a.socket.Name())
-			return nil
-		}
-
-		// If the socket has closed gracefully, there are really two cases:
-		//  * the agent is being brought down temporarily (software or config update)
-		//  * the agent is being brought down permanently
-		// Since the former is more frequent and it doesn't really hurt the latter for the agent to
-		// hang around for a bit on our side, we always treat gracefully socket closures as
-		// temporary disconnects.
-		if !a.started {
-			ctx.Self().Stop()
-			return nil
-		}
-
-		ctx.Log().Infof("websocket closed gracefully, awaiting reconnect: %s", a.socket.Name())
-
-	case sproto.KillTaskContainer:
-		if a.awaitingReconnect {
-			a.bufferForRecovery(ctx, msg)
-			return nil
-		}
-
-		log := ctx.Log().
-			WithFields(msg.LogContext.Fields()).
-			WithField("container-id", msg.ContainerID)
-		log.Infof("killing container")
-
-		killMsg := aproto.SignalContainer{
-			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
-		}
-		a.socket.Outbox <- aproto.AgentMessage{SignalContainer: &killMsg}
-	case aproto.SignalContainer:
-		if a.awaitingReconnect {
-			a.bufferForRecovery(ctx, msg)
-			return nil
-		}
-
-		a.socket.Outbox <- aproto.AgentMessage{SignalContainer: &msg}
-	case sproto.StartTaskContainer:
-		if a.awaitingReconnect {
-			a.bufferForRecovery(ctx, msg)
-			return nil
-		}
-		log := ctx.Log().
-			WithFields(msg.LogContext.Fields()).
-			WithField("container-id", msg.StartContainer.Container.ID).
-			WithField("slots", len(msg.StartContainer.Container.Devices))
-		log.Infof("starting container")
-
-		a.socket.Outbox <- aproto.AgentMessage{StartContainer: &msg.StartContainer}
-
-		if err := a.agentState.startContainer(msg); err != nil {
-			log.WithError(err).Error("failed to update agent state")
-		}
-	case aproto.MasterMessage:
-		a.handleIncomingWSMessage(ctx, msg)
-	case *proto.GetAgentRequest:
-		ctx.Respond(&proto.GetAgentResponse{Agent: a.summarize(ctx).ToProto()})
-	case *proto.GetSlotsRequest:
-		var slots []*agentv1.Slot
-		for _, s := range a.summarize(ctx).Slots {
-			slots = append(slots, s.ToProto())
-		}
-		sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
-		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
-	case *proto.EnableAgentRequest:
-		if a.awaitingReconnect {
-			ctx.Respond(errRecovering)
-			return nil
-		}
-
-		if !a.started {
-			ctx.Respond(errors.New("can't enable agent: agent not started"))
-			return nil
-		}
-
-		a.agentState.enable()
 		a.agentState.patchAllSlotsState(patchAllSlotsState{
 			enabled: &a.agentState.enabled,
 			drain:   &a.agentState.draining,
 		})
-		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
+
+		if len(a.reconnectBacklog) > 0 {
+			for i, msg := range a.reconnectBacklog {
+				a.syslog.Debugf("will replay reconnectBacklog %d %s", i, reflect.TypeOf(msg))
+			}
+		}
+
+		for _, msg := range a.reconnectBacklog {
+			switch msg := msg.(type) {
+			case sproto.KillTaskContainer:
+				a.killTaskContainer(msg)
+			case sproto.StartTaskContainer:
+				a.startTaskContainer(msg)
+			default:
+				panic(fmt.Sprintf("incorrect type for message buffered for recovery: %T", msg))
+			}
+		}
+		a.reconnectBacklog = nil
 		a.notifyListeners()
-	case *proto.DisableAgentRequest:
-		if a.awaitingReconnect {
-			ctx.Respond(errRecovering)
-			return nil
-		}
-
-		if !a.started {
-			ctx.Respond(errors.New("can't disable agent: agent not started"))
-			return nil
-		}
-
-		// Mark current agent as disabled with RP.
-		a.agentState.disable(msg.Drain)
-		// Update individual slot state.
-		a.agentState.patchAllSlotsState(patchAllSlotsState{
-			enabled: &a.agentState.enabled,
-			drain:   &a.agentState.draining,
-		})
-		// Kill both slotted and zero-slot tasks, unless draining.
-		if !msg.Drain {
-			for _, aID := range a.agentState.containerAllocation {
-				rmevents.Publish(aID, &sproto.ReleaseResources{
-					Reason:    "agent disabled",
-					ForceKill: true,
-				})
-			}
-		}
-		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
-		a.notifyListeners()
-	case echo.Context:
-		a.handleAPIRequest(ctx, msg)
-
-	case reconnectTimeout:
-		// Re-enter from actor.ChildFailed.
-		if a.awaitingReconnect {
-			return errors.New("agent failed to reconnect by deadline")
-		}
-	case getAgentState:
-		if !a.started {
-			ctx.Respond(errors.New("agent state is not available: agent not started"))
-			return nil
-		}
-
-		ctx.Respond(a.agentState.deepCopy())
-	case patchSlotState:
-		if !a.started {
-			ctx.Respond(errors.New("can't patch slot state: agent not started"))
-			return nil
-		}
-
-		result, err := a.agentState.patchSlotState(msg)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		ctx.Respond(result)
-	case patchAllSlotsState:
-		if !a.started {
-			ctx.Respond(errors.New("can't patch slots state: agent not started"))
-			return nil
-		}
-
-		ctx.Respond(a.agentState.patchAllSlotsState(msg))
-	case allocateFreeDevices:
-		if !a.started {
-			ctx.Log().Debugf("received allocateFreeDevices on non-started agent")
-			ctx.Respond(errors.New("can't allocate free devices: agent not started"))
-			return nil
-		}
-		devices, err := a.agentState.allocateFreeDevices(msg.slots, msg.containerID)
-		if err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(allocateFreeDevicesResponse{
-				devices: devices,
-			})
-		}
-	case deallocateContainer:
-		if !a.started {
-			ctx.Respond(errors.New("can't deallocate container: agent not started"))
-			return nil
-		}
-		a.agentState.deallocateContainer(msg.containerID)
-	case model.SlotsSummary:
-		if !a.started {
-			ctx.Respond(model.SlotsSummary{})
-			return nil
-		}
-
-		ctx.Respond(a.agentState.getSlotsSummary(ctx.Self().Address().String()))
-	case actor.PostStop:
-		if a.started {
-			// This normally will run on agent WebSocketRequest to populate
-			// agentState.containerAllocation. There is technically still race here
-			// (and also in calling this in WebSocketRequest). We have no synchronization
-			// between allocation actors starting and registering themselves in the
-			// allocationmap and the lookup of allocationmap in restoreContainersField().
-			// Though this will likely run after agentReconnectWait which should
-			// give enough time for this to be populated.
-			// TODO: add explicit synchronization here.
-			err := a.agentState.restoreContainersField()
-			if err != nil {
-				ctx.Log().WithError(err).Error("failed restoreContainersField in shutdown of agent")
-			}
-
-			for cid := range a.agentState.containerAllocation {
-				stopped := aproto.ContainerError(
-					aproto.AgentFailed, errors.New("agent closed with allocated containers"))
-				a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-					Container: cproto.Container{
-						ID:    cid,
-						State: cproto.Terminated,
-					},
-					ContainerStopped: &stopped,
-				})
-			}
-
-			if err := a.agentState.delete(); err != nil {
-				ctx.Log().WithError(err).Warnf("failed to delete agent state")
-			}
-		} else {
-			ctx.Log().Info("agent disconnected but wasn't started")
-		}
-
-		if a.socket != nil {
-			if err := a.socket.Close(); err != nil {
-				ctx.Log().WithError(err).Warnf("error while shutting down agent WebSocket")
-			}
-		}
-
-		ctx.Log().Infof("removing agent: %s", a.agentState.agentID())
-		err := a.updateAgentEndStats(ctx.Self().Address().Local())
-		if err != nil {
-			ctx.Log().WithError(err).Error("failed to update agent end stats")
-		}
-		a.notifyListeners()
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
+
+func (a *agent) handleSocketDisconnect() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	defer a.notifyListeners()
+	defer a.socketDisconnected()
+
+	err := a.socket.Close()
+	if err != nil {
+		if !a.started {
+			// If we happen to fail before the agent has started and been registered with
+			// the resource manager, then nothing can be running on it. In this case we
+			// just fail outright and make it restart.
+			a.crash(errors.Wrapf(err, "child failed: %s", a.socket.Name()))
+			return
+		}
+
+		a.syslog.
+			WithError(err).
+			Errorf("WebSocket failed, awaiting reconnect: %s", a.socket.Name())
+		return
+	}
+
+	// If the socket has closed gracefully, there are really two cases:
+	//  * the agent is being brought down temporarily (software or config update)
+	//  * the agent is being brought down permanently
+	// Since the former is more frequent and it doesn't really hurt the latter for the agent to
+	// hang around for a bit on our side, we always treat gracefully socket closures as
+	// temporary disconnects.
+	if !a.started {
+		a.crash(nil)
+		return
+	}
+
+	a.syslog.Infof("websocket closed gracefully, awaiting reconnect: %s", a.socket.Name())
+}
+
+// TODO(!!!): This needs to be wired up (override actorrm).
+func (a *agent) getAgentRequest(msg *apiv1.GetAgentRequest) *apiv1.GetAgentResponse {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	return &apiv1.GetAgentResponse{Agent: a.summarize().ToProto()}
+}
+
+// TODO(!!!): This needs to be wired up (override actorrm).
+func (a *agent) getSlotsRequest(msg *apiv1.GetSlotsRequest) *apiv1.GetSlotsResponse {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	var slots []*agentv1.Slot
+	for _, s := range a.summarize().Slots {
+		slots = append(slots, s.ToProto())
+	}
+	sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
+	return &apiv1.GetSlotsResponse{Slots: slots}
+}
+
+// TODO(!!!): This needs to be wired up (override actorrm).
+func (a *agent) enableAgentRequest(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if a.awaitingReconnect {
+		return nil, errRecovering
+	}
+
+	if !a.started {
+		return nil, errors.New("can't enable agent: agent not started")
+	}
+
+	a.agentState.enable()
+	a.agentState.patchAllSlotsState(patchAllSlotsState{
+		enabled: &a.agentState.enabled,
+		drain:   &a.agentState.draining,
+	})
+	a.notifyListeners()
+	return &apiv1.EnableAgentResponse{Agent: a.summarize().ToProto()}, nil
+}
+
+// TODO(!!!): This needs to be wired up (override actorrm).
+func (a *agent) disableAgentRequest(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if a.awaitingReconnect {
+		return nil, errRecovering
+	}
+
+	if !a.started {
+		return nil, errors.New("can't disable agent: agent not started")
+	}
+
+	// Mark current agent as disabled with RP.
+	a.agentState.disable(msg.Drain)
+	// Update individual slot state.
+	a.agentState.patchAllSlotsState(patchAllSlotsState{
+		enabled: &a.agentState.enabled,
+		drain:   &a.agentState.draining,
+	})
+	// Kill both slotted and zero-slot tasks, unless draining.
+	if !msg.Drain {
+		for _, aID := range a.agentState.containerAllocation {
+			rmevents.Publish(aID, &sproto.ReleaseResources{
+				Reason:    "agent disabled",
+				ForceKill: true,
+			})
+		}
+	}
+	a.notifyListeners()
+	return &apiv1.DisableAgentResponse{Agent: a.summarize().ToProto()}, nil
+}
+
+func (a *agent) slotsSummary() model.SlotsSummary {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.started {
+		return model.SlotsSummary{}
+	}
+
+	return a.agentState.getSlotsSummary(fmt.Sprintf("/agents/%s", a.id))
+}
+
+func (a *agent) patchSlotState(msg patchSlotState) (model.SlotSummary, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.started {
+		return model.SlotSummary{}, errors.New("can't patch slot state: agent not started")
+	}
+
+	result, err := a.agentState.patchSlotState(msg)
+	if err != nil {
+		return model.SlotSummary{}, err
+	}
+	return result, nil
+}
+
+func (a *agent) patchAllSlotsState(msg patchAllSlotsState) (model.SlotsSummary, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.started {
+		return model.SlotsSummary{}, errors.New("can't patch slots state: agent not started")
+	}
+
+	return a.agentState.patchAllSlotsState(msg), nil
+}
+
+// REVIEWER NOTE: I removed aproto.SignalContainer; it was unused in the master.
 
 // On the Determined Enterprise Edition, when the dev cluster is started with
 // "tools/slurmcluster.sh", an SSH tunnel is created between the local host and
@@ -492,7 +590,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 // names to their respective IP addresses via "/etc/hosts", DNS, or some other
 // mechanism, this will work.
 func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
-	ctx *actor.Context,
 	msg actorapi.WebSocketRequest,
 ) {
 	// Check if the address is a loopback address.
@@ -501,7 +598,7 @@ func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
 
 		masterHostname, err := os.Hostname()
 		if err != nil {
-			ctx.Log().Warnf("Unable to get hostname : %v", err)
+			a.syslog.Warnf("Unable to get hostname : %v", err)
 		}
 
 		// We're not running on a local cluster. In other words, the agent and
@@ -510,7 +607,7 @@ func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
 		// to the reverse tunnel that was set up by "tools/slurmcluster.sh".
 		// Use the "hostname" parameter that the agent sent us as the address.
 		if agentHostname != masterHostname {
-			ctx.Log().Infof(
+			a.syslog.Infof(
 				"remote address for agent is loopback ('%s'), using provided hostname '%s' instead",
 				a.address, agentHostname)
 			a.address = agentHostname
@@ -518,34 +615,29 @@ func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
 	}
 }
 
-func (a *agent) bufferForRecovery(ctx *actor.Context, msg interface{}) {
+func (a *agent) bufferForRecovery(msg any) {
 	// This explodes the debug logs when msg is big
-	// ctx.Log().WithField("msg", msg).Debugf("buffering message until agent reconnects")
-	ctx.Log().WithField("msg-type", reflect.TypeOf(msg)).
+	// a.syslog.WithField("msg", msg).Debugf("buffering message until agent reconnects")
+	a.syslog.WithField("msg-type", reflect.TypeOf(msg)).
 		Debugf("buffering message until agent reconnects")
 	a.reconnectBacklog = append(a.reconnectBacklog, msg)
 }
 
-func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		ctx.Respond(apiCtx.JSON(http.StatusOK, a.summarize(ctx)))
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
+// REVIEWER NOTE: I completely removed the old echo /agents/:id
 
-func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMessage) {
-	log := ctx.Log().WithField("agent-id", ctx.Self().Address().Local())
+func (a *agent) handleIncomingWSMessage(msg *aproto.MasterMessage) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	switch {
 	case msg.AgentStarted != nil:
-		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
+		a.syslog.Infof("agent connected ip: %v resource pool: %s slots: %d",
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
 
 		if a.started {
 			err := a.agentState.checkAgentStartedDevicesMatch(msg.AgentStarted)
 			if err != nil {
-				log.WithError(err).
+				a.syslog.WithError(err).
 					Error("change in agent devices was detected")
 				a.socket.Outbox <- aproto.AgentMessage{
 					AgentShutdown: &aproto.AgentShutdown{
@@ -553,26 +645,26 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 					},
 				}
 
-				ctx.Self().Stop()
+				a.crash(err)
 				return
 			}
 		} else {
-			a.agentStarted(ctx, msg.AgentStarted)
+			a.agentStarted(msg.AgentStarted)
 		}
 
 		a.started = true
 
-		if err := a.handleContainersReattached(ctx, msg.AgentStarted); err != nil {
-			log.WithError(err).
+		if err := a.handleContainersReattached(msg.AgentStarted); err != nil {
+			a.syslog.WithError(err).
 				Error("failure in handleContainersReattached")
 		}
 	case msg.ContainerStateChanged != nil:
-		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
+		a.containerStateChanged(*msg.ContainerStateChanged)
 	case msg.ContainerLog != nil:
 		aID, ok := a.agentState.containerAllocation[msg.ContainerLog.ContainerID]
 		if !ok {
 			containerID := msg.ContainerLog.ContainerID
-			log.WithField("container-id", containerID).Warnf(
+			a.syslog.WithField("container-id", containerID).Warnf(
 				"received ContainerLog from container not allocated to agent: "+
 					"container %s, message: %v", containerID, msg.ContainerLog)
 			return
@@ -596,7 +688,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
 			}
 			if err != nil {
-				log.Errorf("error recording task stats %s", err)
+				a.syslog.Errorf("error recording task stats %s", err)
 			}
 		}
 
@@ -609,28 +701,28 @@ func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
 	return record.TaskType == model.TaskTypeTrial
 }
 
-func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
-	a.agentState = newAgentState(agentID(ctx.Self().Address().Local()), a.maxZeroSlotContainers)
-	a.agentState.handler = ctx.Self() // TODO(!!!): Replace this with a.agentState.handler = a soon.
+func (a *agent) agentStarted(agentStarted *aproto.AgentStarted) {
+	a.agentState = newAgentState(a.id, a.maxZeroSlotContainers)
+	a.agentState.handler = a
 	a.agentState.resourcePoolName = a.resourcePoolName
 	a.agentState.agentStarted(agentStarted)
 
-	ctx.Log().Infof("adding agent: %s", a.agentState.agentID())
-	err := a.updateAgentStartStats(a.resourcePoolName, ctx.Self().Address().Local(), a.agentState.numSlots())
+	a.syslog.Infof("adding agent: %s", a.agentState.agentID())
+	err := a.updateAgentStartStats(a.resourcePoolName, string(a.id), a.agentState.numSlots())
 	if err != nil {
-		ctx.Log().WithError(err).Error("failed to update agent start stats")
+		a.syslog.WithError(err).Error("failed to update agent start stats")
 	}
 	a.notifyListeners()
 }
 
-func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
+func (a *agent) containerStateChanged(sc aproto.ContainerStateChanged) {
 	aID, ok := a.agentState.containerAllocation[sc.Container.ID]
 	if !ok {
 		// We may receieve late terminations when reconnected agent is cleaning up
 		// terminated containers.
 		if sc.Container.State != cproto.Terminated {
 			containerID := sc.Container.ID
-			ctx.Log().WithField("container-id", containerID).Warnf(
+			a.syslog.WithField("container-id", containerID).Warnf(
 				"received ContainerStateChanged from container not allocated to agent: "+
 					"container %s, message: %v", containerID, sc)
 		}
@@ -643,7 +735,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 			sc.ContainerStarted.ProxyAddress = a.address
 		}
 	case cproto.Terminated:
-		ctx.Log().
+		a.syslog.
 			WithError(sc.ContainerStopped.Failure).
 			Infof("container %s terminated", sc.Container.ID)
 		delete(a.agentState.containerAllocation, sc.Container.ID)
@@ -653,10 +745,13 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	a.agentState.containerStateChanged(sc)
 }
 
-func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
+func (a *agent) summarize() model.AgentSummary {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	result := model.AgentSummary{
-		ID:             ctx.Self().Address().Local(),
-		RegisteredTime: ctx.Self().RegisteredTime(),
+		ID:             string(a.id),
+		RegisteredTime: a.registeredTime,
 		ResourcePool:   []string{a.resourcePoolName},
 		Addresses:      []string{a.address},
 		// Default dummy values if the AgentStarted hasn't been processed yet.
@@ -669,7 +764,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 	}
 
 	if a.agentState != nil {
-		result.Slots = a.agentState.getSlotsSummary(ctx.Self().Address().String())
+		result.Slots = a.agentState.getSlotsSummary(fmt.Sprintf("/agents/%s", a.id))
 		result.Enabled = a.agentState.enabled
 		result.Draining = a.agentState.draining
 		result.NumContainers = len(a.agentState.containerAllocation)
@@ -678,10 +773,10 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 	return result
 }
 
-func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.ContainerReattach {
+func (a *agent) gatherContainersToReattach() []aproto.ContainerReattach {
 	err := a.agentState.restoreContainersField()
 	if err != nil {
-		ctx.Log().WithError(err).Warn("failed restoreContainersField in gatherContainersToReattach")
+		a.syslog.WithError(err).Warn("failed restoreContainersField in gatherContainersToReattach")
 	}
 	result := make([]aproto.ContainerReattach, 0, len(a.agentState.containerAllocation))
 
@@ -692,10 +787,8 @@ func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.Containe
 	return result
 }
 
-func (a *agent) handleContainersReattached(
-	ctx *actor.Context, agentStarted *aproto.AgentStarted,
-) error {
-	ctx.Log().Debugf("agent ContainersRestored ip: %v , reattached: %v, allocations: %v",
+func (a *agent) handleContainersReattached(agentStarted *aproto.AgentStarted) error {
+	a.syslog.Debugf("agent ContainersRestored ip: %v , reattached: %v, allocations: %v",
 		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))
 
 	recovered := map[cproto.ID]aproto.ContainerReattachAck{}
@@ -705,7 +798,7 @@ func (a *agent) handleContainersReattached(
 		cid := containerRestored.Container.ID
 		if containerRestored.Failure != nil &&
 			containerRestored.Failure.FailureType == aproto.RestoreError {
-			ctx.Log().Infof(
+			a.syslog.Infof(
 				"agent failed to restore container: %s: %s",
 				cid, containerRestored.Failure.ErrMsg)
 			doomed[cid] = containerRestored
@@ -713,7 +806,7 @@ func (a *agent) handleContainersReattached(
 		}
 
 		if containerRestored.Failure != nil {
-			ctx.Log().Infof(
+			a.syslog.Infof(
 				"reattached container %s terminated while away: %s",
 				cid, containerRestored.Failure.ErrMsg)
 			doomed[cid] = containerRestored
@@ -721,7 +814,7 @@ func (a *agent) handleContainersReattached(
 		}
 
 		if containerRestored.Container.State == cproto.Terminated {
-			ctx.Log().Warnf(
+			a.syslog.Warnf(
 				"reattached container %s terminated while away", cid)
 			doomed[cid] = containerRestored
 			continue
@@ -729,14 +822,14 @@ func (a *agent) handleContainersReattached(
 
 		_, ok := a.agentState.containerAllocation[cid]
 		if !ok {
-			ctx.Log().Warnf(
+			a.syslog.Warnf(
 				"agent state is missing container %s on reattach", cid)
 			doomed[cid] = containerRestored
 			continue
 		}
 
 		if a.agentState.containerState[cid].State != containerRestored.Container.State {
-			ctx.Log().Warnf(
+			a.syslog.Warnf(
 				"reattached container %s has changed state: %s to %s",
 				cid, a.agentState.containerState[cid].State,
 				containerRestored.Container.State)
@@ -748,11 +841,10 @@ func (a *agent) handleContainersReattached(
 	}
 
 	// Mark the rest as dead.
-	return a.clearNonReattachedContainers(ctx, recovered, doomed)
+	return a.clearNonReattachedContainers(recovered, doomed)
 }
 
 func (a *agent) clearNonReattachedContainers(
-	ctx *actor.Context,
 	recovered map[cproto.ID]aproto.ContainerReattachAck,
 	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
 ) error {
@@ -775,7 +867,7 @@ func (a *agent) clearNonReattachedContainers(
 			stopped = a.defaultReattachFailureMessage()
 		}
 
-		a.containerStateChanged(ctx, aproto.ContainerStateChanged{
+		a.containerStateChanged(aproto.ContainerStateChanged{
 			Container:        *containerState,
 			ContainerStopped: &stopped,
 		})
@@ -791,12 +883,12 @@ func (a *agent) defaultReattachFailureMessage() aproto.ContainerStopped {
 	)
 }
 
-func (a *agent) socketDisconnected(ctx *actor.Context) {
+func (a *agent) socketDisconnected() {
 	a.socket = nil
 	a.awaitingReconnect = true
 
-	timerActor, _ := actors.NotifyAfter(ctx, a.agentReconnectWait, reconnectTimeout{})
-	a.reconnectTimers = append(a.reconnectTimers, timerActor)
+	timer := time.AfterFunc(a.agentReconnectWait, a.reconnectTimeout)
+	a.reconnectTimers = append(a.reconnectTimers, timer)
 
 	a.preDisconnectEnabled = a.agentState.enabled
 	a.preDisconnectDraining = a.agentState.draining
@@ -808,6 +900,19 @@ func (a *agent) socketDisconnected(ctx *actor.Context) {
 		enabled: &a.agentState.enabled,
 		drain:   &a.agentState.draining,
 	})
+	a.notifyListeners()
+}
+
+func (a *agent) reconnectTimeout() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	// Re-enter from actor.ChildFailed.
+	if a.awaitingReconnect {
+		// TODO(!!!): How do we "crash" now? Call PostStop and unregister ourselves?
+		a.crash(errors.New("agent failed to reconnect by deadline"))
+		return
+	}
 }
 
 func (a *agent) notifyListeners() {
