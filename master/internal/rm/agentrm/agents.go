@@ -26,36 +26,36 @@ type agentUpdatedEvent struct {
 
 // webSocketRequest notifies the actor that a websocket is attempting to connect.
 type webSocketRequest struct {
-	Ctx echo.Context
+	echoCtx echo.Context
 }
 
 // isReconnect checks if agent is reconnecting after a network failure.
 func (w *webSocketRequest) isReconnect() (bool, error) {
-	return strconv.ParseBool(w.Ctx.QueryParam("reconnect"))
+	return strconv.ParseBool(w.echoCtx.QueryParam("reconnect"))
 }
 
 type agents struct {
 	syslog *logrus.Entry
 	mu     sync.Mutex
 
-	agents      *tasklist.Registry[agentID, *agent]
-	updates     *queue.Queue[agentUpdatedEvent]
-	poolConfigs []config.ResourcePoolConfig
-	opts        *aproto.MasterSetAgentOptions
+	agents       *tasklist.Registry[agentID, *agent]
+	agentUpdates *queue.Queue[agentUpdatedEvent]
+	poolConfigs  []config.ResourcePoolConfig
+	opts         *aproto.MasterSetAgentOptions
 }
 
 func newAgentService(
 	poolConfigs []config.ResourcePoolConfig,
 	opts *aproto.MasterSetAgentOptions,
 ) (*agents, *queue.Queue[agentUpdatedEvent]) {
-	updates := queue.New[agentUpdatedEvent]()
+	agentUpdates := queue.New[agentUpdatedEvent]()
 	// REVIEWER NOTE: fine to do prestart sync because we ping ask'd the agents actor anyway.
 	a := &agents{
-		syslog:      logrus.WithField("component", "agents"),
-		agents:      tasklist.NewRegistry[agentID, *agent](),
-		updates:     updates,
-		poolConfigs: poolConfigs,
-		opts:        opts,
+		syslog:       logrus.WithField("component", "agents"),
+		agents:       tasklist.NewRegistry[agentID, *agent](),
+		agentUpdates: agentUpdates,
+		poolConfigs:  poolConfigs,
+		opts:         opts,
 	}
 
 	// TODO(ilia): only restore the agents which have some non-zero state.
@@ -97,7 +97,7 @@ func newAgentService(
 		}
 	}
 
-	return a, updates
+	return a, agentUpdates
 }
 
 // list implements agentService.
@@ -105,7 +105,7 @@ func (a *agents) list() map[agentID]*agentState {
 	agents := a.agents.Snapshot()
 	result := make(map[agentID]*agentState, len(agents))
 	for id, a := range agents {
-		state, err := a.getAgentState()
+		state, err := a.State()
 		if err != nil {
 			a.syslog.WithError(err).Warnf("failed to get agent state for agent %s", id)
 			continue
@@ -119,12 +119,11 @@ func (a *agents) get(id agentID) (*agent, bool) {
 	return a.agents.Load(id)
 }
 
-// TODO(!!!): How did the actor code asking us this handle the errors? This used to ctx.Respond all the errors.
-func (a *agents) websocketRequest(msg webSocketRequest) error {
+func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	cmuxConn := connsave.GetConn(msg.Ctx.Request().Context()).(*cmux.MuxConn)
+	cmuxConn := connsave.GetConn(msg.echoCtx.Request().Context()).(*cmux.MuxConn)
 	// Here, we just have to check that there are any certificates at all, since the top-level TLS
 	// config verifies that any certificates that are provided are valid.
 	if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
@@ -137,7 +136,7 @@ func (a *agents) websocketRequest(msg webSocketRequest) error {
 		}
 	}
 
-	id := msg.Ctx.QueryParam("id")
+	id := msg.echoCtx.QueryParam("id")
 	reconnect, err := msg.isReconnect()
 	if err != nil {
 		return errors.Wrapf(err, "parsing reconnect query param")
@@ -150,7 +149,7 @@ func (a *agents) websocketRequest(msg webSocketRequest) error {
 	existingRef, ok := a.agents.Load(agentID(id))
 	if ok {
 		a.syslog.WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
-		existingRef.tryReconnectWebsocket(msg)
+		existingRef.HandleWebsocketConnection(msg)
 		return nil
 	}
 
@@ -162,7 +161,7 @@ func (a *agents) websocketRequest(msg webSocketRequest) error {
 	}
 
 	// Finally, this must not be a recovery flow, so just create the agent actor.
-	resourcePool := msg.Ctx.QueryParam("resource_pool")
+	resourcePool := msg.echoCtx.QueryParam("resource_pool")
 	ref, err := a.createAgent(agentID(id), resourcePool, a.opts, nil, func() { _ = a.agents.Delete(agentID(id)) })
 	if err != nil {
 		return err
@@ -172,16 +171,16 @@ func (a *agents) websocketRequest(msg webSocketRequest) error {
 	if err != nil {
 		return fmt.Errorf("adding agent because of incoming websocket: %w", err)
 	}
-	ref.tryReconnectWebsocket(msg)
+	ref.HandleWebsocketConnection(msg)
 	return nil
 }
 
 func (a *agents) getAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
-	response := &apiv1.GetAgentsResponse{}
+	var response apiv1.GetAgentsResponse
 	for _, a := range a.summarize() {
 		response.Agents = append(response.Agents, a.ToProto())
 	}
-	return response
+	return &response
 }
 
 func (a *agents) createAgent(
@@ -213,7 +212,7 @@ func (a *agents) createAgent(
 
 	return newAgent(
 		id,
-		a.updates,
+		a.agentUpdates,
 		resourcePool,
 		poolConfig,
 		opts,

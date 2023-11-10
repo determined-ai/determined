@@ -51,12 +51,11 @@ func New(
 ) *ResourceManager {
 	agentService, agentUpdates := newAgentService(config.ResourcePools, opts)
 
-	// TODO(!!!): This isn't going to work anymore.
 	e.GET("/agents", func(c echo.Context) error {
 		if !c.IsWebSocket() {
 			return echo.ErrBadRequest
 		}
-		return agentService.websocketRequest(webSocketRequest{Ctx: c})
+		return agentService.HandleWebsocketConnection(webSocketRequest{echoCtx: c})
 	})
 
 	ref, _ := system.ActorOf(
@@ -81,7 +80,7 @@ func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentR
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
-	return agent.getAgentRequest(msg), nil
+	return agent.GetAgent(msg), nil
 }
 
 // EnableAgent implements rm.ResourceManager.
@@ -90,7 +89,7 @@ func (a *ResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.Ena
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
-	return agent.enableAgent(msg)
+	return agent.EnableAgent(msg)
 }
 
 // DisableAgent implements rm.ResourceManager.
@@ -99,7 +98,7 @@ func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.D
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
-	return agent.disableAgent(msg)
+	return agent.DisableAgent(msg)
 }
 
 // GetSlots implements rm.ResourceManager.
@@ -108,7 +107,7 @@ func (a *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsR
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
-	return agent.getSlotsRequest(msg), nil
+	return agent.GetSlots(msg), nil
 }
 
 // GetSlot implements rm.ResourceManager.
@@ -175,7 +174,7 @@ func (a ResourceManager) handlePatchSlotState(
 	if !ok {
 		return nil, api.NotFoundErrs("agent", string(agentID), true)
 	}
-	return agent.patchSlotState(msg)
+	return agent.PatchSlotState(msg)
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.

@@ -243,7 +243,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 			// Rollback previous allocations.
 			for _, r := range resources {
 				go func(resource *containerResources) {
-					err := resource.agent.handler.deallocateContainer(deallocateContainer{containerID: resource.containerID})
+					err := resource.agent.handler.DeallocateContainer(deallocateContainer{containerID: resource.containerID})
 					if err != nil {
 						ctx.Log().WithError(err).Errorf(
 							"failed to deallocate container %s on agent %s when rolling back assignments",
@@ -257,7 +257,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 	for _, fit := range fits {
 		containerID := cproto.NewID()
-		resp, err := fit.Agent.handler.allocateFreeDevices(allocateFreeDevices{
+		resp, err := fit.Agent.handler.AllocateFreeDevices(allocateFreeDevices{
 			slots:       fit.Slots,
 			containerID: containerID,
 		})
@@ -347,7 +347,7 @@ func (rp *resourcePool) resourcesReleased(
 			}
 
 			typed := r.(*containerResources)
-			err := typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
+			err := typed.agent.handler.DeallocateContainer(deallocateContainer{containerID: typed.containerID})
 			if err != nil {
 				ctx.Log().WithError(err).Errorf(
 					"failed to deallocate container %s on agent %s",
@@ -361,7 +361,7 @@ func (rp *resourcePool) resourcesReleased(
 		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
 		for _, r := range allocated.Resources {
 			typed := r.(*containerResources)
-			err := typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
+			err := typed.agent.handler.DeallocateContainer(deallocateContainer{containerID: typed.containerID})
 			if err != nil {
 				ctx.Log().WithError(err).Errorf(
 					"failed to deallocate container %s on agent %s",
@@ -755,13 +755,11 @@ func (rp *resourcePool) JobStopped(jobID model.JobID) {
 }
 
 func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*agent) {
-	// TODO(!!!): id maybe isn't safe to access, but maybe is. Either way, probably use a getter.
-
 	for _, a := range agents {
-		state, err := a.getAgentState()
+		state, err := a.State()
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to get agent state for agent %s", a.id)
-			delete(rp.agentStatesCache, a.id)
+			delete(rp.agentStatesCache, state.ID)
 			continue
 		}
 		rp.agentStatesCache[a.id] = state

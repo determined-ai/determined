@@ -45,7 +45,7 @@ type agentState struct {
 
 	// Handler is agent actor reference.
 	ID               agentID // TODO(!!!): Why agentID and aproto.ID? Let's just have one or the other.
-	handler          *agent  // TODO(!!!): This handler BS is very strange.
+	handler          *agent
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
 	enabled          bool
@@ -60,7 +60,7 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-// TODO(!!!): it is weird newAgentState can be new'd up so incomplete/wrong.
+// TODO(!!!): It is error-prone that we can new up an agentState is incomplete / would cause panics.
 func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		syslog:                log.WithField("component", "agent-state-state").WithField("id", id),
