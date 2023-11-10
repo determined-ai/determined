@@ -120,7 +120,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		if a.agentState != nil { // not nil agentState on PreStart means it's restored.
 			a.started = true
 			a.awaitingRestore = true
-			a.agentState.Handler = ctx.Self()
+			a.agentState.ID = agentID(ctx.Self().Address().Local())
+			a.agentState.handler = ctx.Self()
 			// Update maxZeroSlotContainers config setting.
 			a.agentState.maxZeroSlotContainers = a.maxZeroSlotContainers
 			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
@@ -609,7 +610,8 @@ func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
 }
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
-	a.agentState = newAgentState(ctx.Self(), a.maxZeroSlotContainers)
+	a.agentState = newAgentState(agentID(ctx.Self().Address().Local()), a.maxZeroSlotContainers)
+	a.agentState.handler = ctx.Self() // TODO(!!!): Replace this with a.agentState.handler = a soon.
 	a.agentState.resourcePoolName = a.resourcePoolName
 	a.agentState.agentStarted(agentStarted)
 
