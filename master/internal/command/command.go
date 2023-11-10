@@ -177,7 +177,7 @@ func (c *command) startCmd(ctx context.Context) error {
 
 // registerJobAndTask registers the command with the job service & adds the command to the job & task dbs.
 func (c *command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
-	c.registeredTime = time.Now()
+	c.registeredTime = time.Now().Truncate(time.Millisecond)
 	if err := db.AddJobTx(ctx, tx, &model.Job{
 		JobID:   c.jobID,
 		JobType: c.jobType,
