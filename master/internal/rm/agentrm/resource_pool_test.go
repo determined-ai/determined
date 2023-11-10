@@ -160,8 +160,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	})
 
 	// Test removing agents.
-	agent1 := system.Get(actor.Addr("agent1"))
-	delete(rp.agentStatesCache, agentID(agent1.Address().Local()))
+	delete(rp.agentStatesCache, agentID("agent1"))
 	updated = rp.updateScalingInfo()
 	assert.Check(t, updated)
 	assert.DeepEqual(t, *rp.scalingInfo, sproto.ScalingInfo{

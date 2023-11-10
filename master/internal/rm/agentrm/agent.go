@@ -19,8 +19,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	actorapi "github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -36,7 +34,6 @@ var errRecovering = errors.New("agent disconnected, wait for recovery")
 
 type (
 	agent struct {
-		system     *actor.System
 		syslog     *logrus.Entry
 		unregister func()
 
@@ -45,7 +42,7 @@ type (
 		id               agentID
 		registeredTime   time.Time
 		address          string
-		updates          *queue.Queue[agentUpdatedEvent]
+		updates          *queue.Queue[agentUpdatedEvent] // TODO(!!!): I really hate the name of this field.
 		socket           *ws.WebSocket[*aproto.MasterMessage, aproto.AgentMessage]
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
@@ -87,8 +84,6 @@ type (
 		agentState *agentState
 	}
 
-	reconnectTimeout struct{}
-
 	// patchAllSlotsState updates the state of all slots.
 	patchAllSlotsState struct {
 		enabled *bool
@@ -113,12 +108,10 @@ type (
 	deallocateContainer struct {
 		containerID cproto.ID
 	}
-
-	socketDisconnect struct{}
 )
 
+// TODO(!!!): bit of a bad iface that this takes the entire rpConfig.
 func newAgent(
-	system *actor.System,
 	id agentID,
 	updates *queue.Queue[agentUpdatedEvent],
 	resourcePoolName string,
@@ -129,10 +122,10 @@ func newAgent(
 ) *agent {
 	// REVIEWER NOTE: good to run prestart sync because the old code ping ask'd us anyways.
 	a := &agent{
-		system:                system,
 		syslog:                logrus.WithField("component", "agent").WithField("id", id),
 		id:                    id,
 		registeredTime:        time.Now(),
+		updates:               updates,
 		resourcePoolName:      resourcePoolName,
 		maxZeroSlotContainers: rpConfig.MaxAuxContainersPerAgent,
 		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
@@ -144,6 +137,7 @@ func newAgent(
 	if restoring := a.agentState != nil; restoring {
 		a.started = true
 		a.awaitingRestore = true
+		a.agentState.handler = a
 		// Update maxZeroSlotContainers config setting.
 		a.agentState.maxZeroSlotContainers = a.maxZeroSlotContainers
 		// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
@@ -177,6 +171,8 @@ func (a *agent) allocateFreeDevices(msg allocateFreeDevices) (allocateFreeDevice
 	return allocateFreeDevicesResponse{devices: devices}, nil
 }
 
+// REVIEWER NOTE: deallocate container was always a tell in earlier code but it could error and respond with that error,
+// which means it would've panicked on "sender not expecting response" or something.
 func (a *agent) deallocateContainer(msg deallocateContainer) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -305,7 +301,8 @@ func (a *agent) crash(cause error) {
 	a.notifyListeners()
 }
 
-func (a *agent) tryReconnectWebsocket(msg actorapi.WebSocketRequest) {
+// TODO(!!!): misnomer, isn't always reconnect.
+func (a *agent) tryReconnectWebsocket(msg webSocketRequest) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -317,7 +314,7 @@ func (a *agent) tryReconnectWebsocket(msg actorapi.WebSocketRequest) {
 	}
 }
 
-func (a *agent) websocketRequest(msg actorapi.WebSocketRequest) error {
+func (a *agent) websocketRequest(msg webSocketRequest) error {
 	// REVIEWER NOTE: returning in this function was a crash previously.
 	if a.socket != nil {
 		err := errors.New("websocket already connected")
@@ -465,7 +462,6 @@ func (a *agent) handleSocketDisconnect() {
 	a.syslog.Infof("websocket closed gracefully, awaiting reconnect: %s", a.socket.Name())
 }
 
-// TODO(!!!): This needs to be wired up (override actorrm).
 func (a *agent) getAgentRequest(msg *apiv1.GetAgentRequest) *apiv1.GetAgentResponse {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -473,7 +469,6 @@ func (a *agent) getAgentRequest(msg *apiv1.GetAgentRequest) *apiv1.GetAgentRespo
 	return &apiv1.GetAgentResponse{Agent: a.summarize().ToProto()}
 }
 
-// TODO(!!!): This needs to be wired up (override actorrm).
 func (a *agent) getSlotsRequest(msg *apiv1.GetSlotsRequest) *apiv1.GetSlotsResponse {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -486,8 +481,7 @@ func (a *agent) getSlotsRequest(msg *apiv1.GetSlotsRequest) *apiv1.GetSlotsRespo
 	return &apiv1.GetSlotsResponse{Slots: slots}
 }
 
-// TODO(!!!): This needs to be wired up (override actorrm).
-func (a *agent) enableAgentRequest(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+func (a *agent) enableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -508,8 +502,7 @@ func (a *agent) enableAgentRequest(msg *apiv1.EnableAgentRequest) (*apiv1.Enable
 	return &apiv1.EnableAgentResponse{Agent: a.summarize().ToProto()}, nil
 }
 
-// TODO(!!!): This needs to be wired up (override actorrm).
-func (a *agent) disableAgentRequest(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+func (a *agent) disableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -541,44 +534,24 @@ func (a *agent) disableAgentRequest(msg *apiv1.DisableAgentRequest) (*apiv1.Disa
 	return &apiv1.DisableAgentResponse{Agent: a.summarize().ToProto()}, nil
 }
 
-func (a *agent) slotsSummary() model.SlotsSummary {
+func (a *agent) patchSlotState(msg patchSlotState) (*model.SlotSummary, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	if !a.started {
-		return model.SlotsSummary{}
-	}
-
-	return a.agentState.getSlotsSummary(fmt.Sprintf("/agents/%s", a.id))
-}
-
-func (a *agent) patchSlotState(msg patchSlotState) (model.SlotSummary, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if !a.started {
-		return model.SlotSummary{}, errors.New("can't patch slot state: agent not started")
+		return nil, errors.New("can't patch slot state: agent not started")
 	}
 
 	result, err := a.agentState.patchSlotState(msg)
 	if err != nil {
-		return model.SlotSummary{}, err
+		return nil, err
 	}
-	return result, nil
+	return &result, nil
 }
 
-func (a *agent) patchAllSlotsState(msg patchAllSlotsState) (model.SlotsSummary, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
+// REVIEWER NOTE: I removed patchAllSlotStates; it was unused.
 
-	if !a.started {
-		return model.SlotsSummary{}, errors.New("can't patch slots state: agent not started")
-	}
-
-	return a.agentState.patchAllSlotsState(msg), nil
-}
-
-// REVIEWER NOTE: I removed aproto.SignalContainer; it was unused in the master.
+// REVIEWER NOTE: I removed receive aproto.SignalContainer; it was unused.
 
 // On the Determined Enterprise Edition, when the dev cluster is started with
 // "tools/slurmcluster.sh", an SSH tunnel is created between the local host and
@@ -590,7 +563,7 @@ func (a *agent) patchAllSlotsState(msg patchAllSlotsState) (model.SlotsSummary, 
 // names to their respective IP addresses via "/etc/hosts", DNS, or some other
 // mechanism, this will work.
 func (a *agent) adjustAgentIPAddrIfRunningDevClusterOnHpcUsingAnSSHTunnel(
-	msg actorapi.WebSocketRequest,
+	msg webSocketRequest,
 ) {
 	// Check if the address is a loopback address.
 	if addr := net.ParseIP(strings.Trim(a.address, "[]")); addr != nil && addr.IsLoopback() {
@@ -669,6 +642,7 @@ func (a *agent) handleIncomingWSMessage(msg *aproto.MasterMessage) {
 					"container %s, message: %v", containerID, msg.ContainerLog)
 			return
 		}
+		// TODO(!!!): When you log back in, I think all you need to do is wire of the external API call things.
 		rmevents.Publish(aID, &sproto.ContainerLog{
 			ContainerID: msg.ContainerLog.ContainerID,
 			Timestamp:   msg.ContainerLog.Timestamp,
@@ -745,10 +719,15 @@ func (a *agent) containerStateChanged(sc aproto.ContainerStateChanged) {
 	a.agentState.containerStateChanged(sc)
 }
 
-func (a *agent) summarize() model.AgentSummary {
+// TODO(!!!): better solution for locked vs not locked. let's just do the caps bullshit?
+func (a *agent) Summarize() model.AgentSummary {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	return a.summarize()
+}
+
+func (a *agent) summarize() model.AgentSummary {
 	result := model.AgentSummary{
 		ID:             string(a.id),
 		RegisteredTime: a.registeredTime,

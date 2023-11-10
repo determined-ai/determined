@@ -40,7 +40,7 @@ type resourcePool struct {
 	provisioner      *provisioner.Provisioner
 	provisionerError error
 
-	agentService     agentService
+	agentService     *agents
 	agentStatesCache map[agentID]*agentState
 	taskList         *tasklist.TaskList
 	groups           map[model.JobID]*tasklist.Group
@@ -73,7 +73,7 @@ func newResourcePool(
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
-	agentService agentService,
+	agentService *agents,
 ) *resourcePool {
 	d := &resourcePool{
 		config: config,
@@ -241,9 +241,16 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	defer func() {
 		if rollback {
 			// Rollback previous allocations.
-			for _, resource := range resources {
-				// TODO(!!!): go because it was a tell; does it need to be?
-				go resource.agent.handler.deallocateContainer(deallocateContainer{containerID: resource.containerID})
+			for _, r := range resources {
+				go func(resource *containerResources) {
+					err := resource.agent.handler.deallocateContainer(deallocateContainer{containerID: resource.containerID})
+					if err != nil {
+						ctx.Log().WithError(err).Errorf(
+							"failed to deallocate container %s on agent %s when rolling back assignments",
+							resource.containerID, resource.agent.ID,
+						)
+					}
+				}(r)
 			}
 		}
 	}()
@@ -340,7 +347,13 @@ func (rp *resourcePool) resourcesReleased(
 			}
 
 			typed := r.(*containerResources)
-			typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
+			err := typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
+			if err != nil {
+				ctx.Log().WithError(err).Errorf(
+					"failed to deallocate container %s on agent %s",
+					typed.containerID, typed.agent.ID,
+				)
+			}
 			delete(allocated.Resources, rID)
 			break
 		}
@@ -348,7 +361,13 @@ func (rp *resourcePool) resourcesReleased(
 		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
 		for _, r := range allocated.Resources {
 			typed := r.(*containerResources)
-			typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
+			err := typed.agent.handler.deallocateContainer(deallocateContainer{containerID: typed.containerID})
+			if err != nil {
+				ctx.Log().WithError(err).Errorf(
+					"failed to deallocate container %s on agent %s",
+					typed.containerID, typed.agent.ID,
+				)
+			}
 		}
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
 		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})

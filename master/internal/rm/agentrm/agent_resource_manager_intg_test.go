@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 
 	"gotest.tools/assert"
 
@@ -58,6 +59,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 			"cpu-pool": cpuPoolRef,
 			"gpu-pool": gpuPoolRef,
 		},
+		agentUpdates: queue.New[agentUpdatedEvent](),
 	}
 	agentRMRef, created := system.ActorOf(actor.Addr("agentRM"), agentRM)
 	assert.Assert(t, created)
