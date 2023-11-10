@@ -321,7 +321,7 @@ func TestFindFits(t *testing.T) {
 					agent.ZeroSlotContainers,
 				))
 			}
-			agentsByHandler, agentsByIndex := byHandler(agents...)
+			agentsByHandler, agentsByIndex := byID(agents...)
 			fits := findFits(&tc.Task, agentsByHandler, tc.FittingMethod, false)
 			assert.Assert(t, len(fits) > 0)
 			assert.Equal(t, fits[0].Agent, agentsByIndex[tc.ExpectedAgentFit])
@@ -440,7 +440,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 					),
 				)
 			}
-			agents, index := byHandler(index...)
+			agents, index := byID(index...)
 			agentIndex := make(map[*agentState]int)
 			for idx, agent := range index {
 				agentIndex[agent] = idx
@@ -478,7 +478,7 @@ func TestFindFitDisallowedNodes(t *testing.T) {
 		newFakeAgentState(t, system, "agent1", 4, 0, 100, 0),
 		newFakeAgentState(t, system, "agent2", 4, 0, 100, 0),
 	}
-	agentsByHandler, _ := byHandler(agents...)
+	agentsByHandler, _ := byID(agents...)
 
 	task := &sproto.AllocateRequest{
 		BlockedNodes: []string{"agent1", "agent2"},
@@ -510,13 +510,13 @@ func TestFindFitDisallowedNodes(t *testing.T) {
 	assert.Equal(t, fits[0].Agent, agents[0])
 }
 
-func byHandler(
+func byID(
 	handlers ...*agentState,
-) (map[*actor.Ref]*agentState, []*agentState) {
-	agents := make(map[*actor.Ref]*agentState, len(handlers))
+) (map[agentID]*agentState, []*agentState) {
+	agents := make(map[agentID]*agentState, len(handlers))
 	index := make([]*agentState, 0, len(handlers))
 	for _, agent := range handlers {
-		agents[agent.Handler] = agent
+		agents[agent.ID] = agent
 		index = append(index, agent)
 	}
 	return agents, index

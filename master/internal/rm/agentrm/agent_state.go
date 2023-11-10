@@ -45,7 +45,8 @@ type agentState struct {
 	syslog *log.Entry
 
 	// Handler is agent actor reference.
-	Handler          *actor.Ref
+	ID               agentID // TODO(!!!): Why agentID and aproto.ID? Let's just have one or the other.
+	handler          *actor.Ref
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
 	enabled          bool
@@ -60,10 +61,10 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(self *actor.Ref, maxZeroSlotContainers int) *agentState {
+func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 	return &agentState{
-		syslog:                log.WithField("component", "agent-state-state").WithField("id", self.Address().Local()),
-		Handler:               self,
+		syslog:                log.WithField("component", "agent-state-state").WithField("id", id),
+		ID:                    id,
 		Devices:               make(map[device.Device]*cproto.ID),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
@@ -75,11 +76,11 @@ func newAgentState(self *actor.Ref, maxZeroSlotContainers int) *agentState {
 }
 
 func (a *agentState) string() string {
-	return a.Handler.Address().Local()
+	return string(a.ID)
 }
 
 func (a *agentState) agentID() agentID {
-	return agentID(a.string())
+	return a.ID
 }
 
 // numSlots returns the total number of slots available.
@@ -197,7 +198,8 @@ func (a *agentState) deallocateContainer(id cproto.ID) {
 // deepCopy returns a copy of agentState for scheduler internals.
 func (a *agentState) deepCopy() *agentState {
 	copiedAgent := &agentState{
-		Handler:               a.Handler,
+		ID:                    a.ID,
+		handler:               a.handler,
 		Devices:               maps.Clone(a.Devices),
 		maxZeroSlotContainers: a.maxZeroSlotContainers,
 		enabled:               a.enabled,
@@ -497,7 +499,7 @@ func (a *agentState) persist() error {
 
 func (a *agentState) delete() error {
 	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).
-		Where("agent_id = ?", a.Handler.Address().Local()).
+		Where("agent_id = ?", a.ID).
 		Exec(context.TODO())
 	return err
 }

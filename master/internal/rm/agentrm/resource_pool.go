@@ -38,8 +38,8 @@ type resourcePool struct {
 	provisioner      *provisioner.Provisioner
 	provisionerError error
 
-	agentsRef        *actor.Ref
-	agentStatesCache map[*actor.Ref]*agentState
+	agentService     agentService
+	agentStatesCache map[agentID]*agentState
 	taskList         *tasklist.TaskList
 	groups           map[model.JobID]*tasklist.Group
 	queuePositions   tasklist.JobSortState // secondary sort key based on job submission time
@@ -71,7 +71,7 @@ func newResourcePool(
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
-	agentsRef *actor.Ref,
+	agentService agentService,
 ) *resourcePool {
 	d := &resourcePool{
 		config: config,
@@ -80,7 +80,7 @@ func newResourcePool(
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
 
-		agentsRef:      agentsRef,
+		agentService:   agentService,
 		taskList:       tasklist.New(),
 		groups:         make(map[model.JobID]*tasklist.Group),
 		queuePositions: tasklist.InitializeJobSortState(false),
@@ -153,7 +153,7 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 func (rp *resourcePool) restoreResources(
 	ctx *actor.Context, req *sproto.AllocateRequest,
 ) error {
-	rp.agentStatesCache = rp.fetchAgentStates(ctx)
+	rp.agentStatesCache = rp.agentService.list()
 	defer func() {
 		rp.agentStatesCache = nil
 	}()
@@ -177,8 +177,8 @@ func (rp *resourcePool) restoreResources(
 
 	agentStateMap := map[aproto.ID]*agentState{}
 
-	for agentRef := range rp.agentStatesCache {
-		agentStateMap[aproto.ID(agentRef.Address().Local())] = rp.agentStatesCache[agentRef]
+	for agentRef, state := range rp.agentStatesCache {
+		agentStateMap[aproto.ID(state.agentID())] = rp.agentStatesCache[agentRef]
 	}
 
 	for _, cs := range containerSnapshots {
@@ -240,7 +240,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		if rollback {
 			// Rollback previous allocations.
 			for _, resource := range resources {
-				ctx.Tell(resource.agent.Handler,
+				ctx.Tell(resource.agent.handler,
 					deallocateContainer{containerID: resource.containerID})
 			}
 		}
@@ -248,7 +248,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 	for _, fit := range fits {
 		containerID := cproto.NewID()
-		rr := ctx.Ask(fit.Agent.Handler, allocateFreeDevices{
+		rr := ctx.Ask(fit.Agent.handler, allocateFreeDevices{
 			slots:       fit.Slots,
 			containerID: containerID,
 		})
@@ -314,7 +314,7 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(resources))
 	for _, allocation := range resources {
-		allocatedAgents = append(allocatedAgents, allocation.agent.Handler)
+		allocatedAgents = append(allocatedAgents, allocation.agent.handler)
 	}
 
 	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
@@ -352,7 +352,7 @@ func (rp *resourcePool) resourcesReleased(
 			}
 
 			typed := r.(*containerResources)
-			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
+			ctx.Tell(typed.agent.handler, deallocateContainer{containerID: typed.containerID})
 			delete(allocated.Resources, rID)
 			break
 		}
@@ -360,7 +360,7 @@ func (rp *resourcePool) resourcesReleased(
 		ctx.Log().Infof("all resources are released for %s", msg.AllocationID)
 		for _, r := range allocated.Resources {
 			typed := r.(*containerResources)
-			ctx.Tell(typed.agent.Handler, deallocateContainer{containerID: typed.containerID})
+			ctx.Tell(typed.agent.handler, deallocateContainer{containerID: typed.containerID})
 		}
 		rp.taskList.RemoveTaskByID(msg.AllocationID)
 		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
@@ -458,7 +458,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 
 	case getResourceSummary:
 		reschedule = false
-		rp.agentStatesCache = rp.fetchAgentStates(ctx)
+		rp.agentStatesCache = rp.agentService.list()
 		defer func() {
 			rp.agentStatesCache = nil
 		}()
@@ -469,7 +469,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
-			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+			rp.agentStatesCache = rp.agentService.list()
 			defer func() {
 				rp.agentStatesCache = nil
 			}()
@@ -509,7 +509,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		}
 		if rp.reschedule {
 			ctx.Log().Trace("scheduling")
-			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+			rp.agentStatesCache = rp.agentService.list()
 			defer func() {
 				rp.agentStatesCache = nil
 			}()
@@ -723,39 +723,19 @@ func (rp *resourcePool) JobStopped(jobID model.JobID) {
 	delete(rp.queuePositions, jobID)
 }
 
-func (rp *resourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*agentState {
-	agents := rp.agentsRef.Children()
-
-	responses := ctx.AskAll(getAgentState{}, agents...).GetAll()
-
-	result := make(map[*actor.Ref]*agentState, len(agents))
-	for ref, msg := range responses {
-		switch msg := msg.(type) {
-		case *agentState:
-			result[ref] = msg
-		case error:
-			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
-		default:
-			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())
-		}
-	}
-
-	return result
-}
-
 func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*actor.Ref) {
 	responses := ctx.AskAll(getAgentState{}, agents...).GetAll()
 
 	for ref, msg := range responses {
 		switch msg := msg.(type) {
 		case *agentState:
-			rp.agentStatesCache[ref] = msg
+			rp.agentStatesCache[msg.ID] = msg
 		case error:
 			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
-			delete(rp.agentStatesCache, ref)
+			delete(rp.agentStatesCache, agentID(ref.Address().Local()))
 		default:
 			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())
-			delete(rp.agentStatesCache, ref)
+			delete(rp.agentStatesCache, agentID(ref.Address().Local()))
 		}
 	}
 }

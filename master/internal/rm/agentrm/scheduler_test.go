@@ -45,7 +45,7 @@ func setupResourcePool(
 
 	rp := newResourcePool(
 		conf, db, nil, MakeScheduler(conf.Scheduler),
-		MakeFitFunction(conf.Scheduler.FittingPolicy), agentsRef)
+		MakeFitFunction(conf.Scheduler.FittingPolicy), newActorAgentService(system, agentsRef))
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)
@@ -63,15 +63,16 @@ func setupResourcePool(
 func forceAddAgent(
 	t *testing.T,
 	system *actor.System,
-	agents map[*actor.Ref]*agentState,
-	agentID string,
+	agents map[agentID]*agentState,
+	agentIDStr string,
 	numSlots int,
 	numUsedSlots int,
 	numZeroSlotContainers int,
 ) *agentState {
-	ref, created := system.ActorOf(actor.Addr(agentID), &MockAgent{ID: agentID, Slots: numSlots})
+	ref, created := system.ActorOf(actor.Addr(agentIDStr), &MockAgent{ID: agentIDStr, Slots: numSlots})
 	assert.Assert(t, created)
-	state := newAgentState(ref, 100)
+	state := newAgentState(agentID(ref.Address().Local()), 100)
+	state.handler = ref
 	for i := 0; i < numSlots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -86,7 +87,7 @@ func forceAddAgent(
 		_, err := state.allocateFreeDevices(0, cproto.NewID())
 		assert.NilError(t, err)
 	}
-	agents[state.Handler] = state
+	agents[state.ID] = state
 	return state
 }
 
@@ -101,7 +102,8 @@ func newFakeAgentState(
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(id), &MockAgent{ID: id, Slots: slots})
 	assert.Assert(t, created)
-	state := newAgentState(ref, maxZeroSlotContainers)
+	state := newAgentState(agentID(ref.Address().Local()), maxZeroSlotContainers)
+	state.handler = ref
 	for i := 0; i < slots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -473,19 +475,20 @@ func setupSchedulerStates(
 ) (
 	*tasklist.TaskList,
 	map[model.JobID]*tasklist.Group,
-	map[*actor.Ref]*agentState,
+	map[agentID]*agentState,
 ) {
-	agents := make(map[*actor.Ref]*agentState, len(mockAgents))
+	agents := make(map[agentID]*agentState, len(mockAgents))
 	for _, mockAgent := range mockAgents {
 		ref, created := system.ActorOf(actor.Addr(mockAgent.ID), mockAgent)
 		assert.Assert(t, created)
 
-		agent := newAgentState(ref, mockAgent.MaxZeroSlotContainers)
+		agent := newAgentState(agentID(ref.Address().Local()), mockAgent.MaxZeroSlotContainers)
+		agent.handler = ref
 
 		for i := 0; i < mockAgent.Slots; i++ {
 			agent.Devices[device.Device{ID: device.ID(i)}] = nil
 		}
-		agents[ref] = agent
+		agents[agentID(ref.Address().Local())] = agent
 	}
 
 	groups := make(map[model.JobID]*tasklist.Group, len(mockGroups))
@@ -527,7 +530,7 @@ func setupSchedulerStates(
 		if mockTask.AllocatedAgent != nil {
 			assert.Assert(t, mockTask.AllocatedAgent.Slots >= mockTask.SlotsNeeded)
 			agentRef := system.Get(actor.Addr(mockTask.AllocatedAgent.ID))
-			agentState := agents[agentRef]
+			agentState := agents[agentID(agentRef.Address().Local())]
 			containerID := cproto.NewID()
 
 			devices := make([]device.Device, 0)
