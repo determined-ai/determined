@@ -11,12 +11,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -35,15 +36,6 @@ const (
 	worst = "worst"
 )
 
-// ResourceManager is a resource manager for Determined-managed resources.
-type ResourceManager struct {
-	*actorrm.ResourceManager
-
-	agents *agents
-
-	doNotUseRMUnlessYouAreReallySure *agentResourceManager
-}
-
 // New returns a new ResourceManager, which manages communicating with
 // and scheduling on Determined agents.
 func New(
@@ -53,7 +45,7 @@ func New(
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) *ResourceManager {
+) *agentResourceManager {
 	agentService, agentUpdates := newAgentService(config.ResourcePools, opts)
 
 	e.GET("/agents", func(c echo.Context) error {
@@ -63,101 +55,133 @@ func New(
 		return agentService.HandleWebsocketConnection(webSocketRequest{echoCtx: c})
 	})
 
-	rm := newAgentResourceManager(db, config, cert, agentService, agentUpdates)
-	ref, _ := system.ActorOf(
-		sproto.AgentRMAddr,
-		rm,
-	)
-	system.Ask(ref, actor.Ping{}).Get()
-	return &ResourceManager{
-		ResourceManager:                  actorrm.Wrap(ref),
-		agents:                           agentService,
-		doNotUseRMUnlessYouAreReallySure: rm,
-	}
+	return newAgentResourceManager(db, config, cert, agentService, agentUpdates)
 }
 
-// GetAgents implements rm.ResourceManager.
-func (a ResourceManager) GetAgents(
-	msg *apiv1.GetAgentsRequest,
-) (resp *apiv1.GetAgentsResponse, err error) {
-	return a.agents.getAgents(msg), nil
-}
-
-// GetAgent implements rm.ResourceManager.
-func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	agent, ok := a.agents.get(agentID(msg.AgentId))
+func (a *agentResourceManager) handlePatchSlotState(
+	agentID agentID, msg patchSlotState,
+) (*model.SlotSummary, error) {
+	agent, ok := a.agentService.get(agentID)
 	if !ok {
-		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+		return nil, api.NotFoundErrs("agent", string(agentID), true)
 	}
-	return agent.GetAgent(msg), nil
+	return agent.PatchSlotState(msg)
 }
 
-// EnableAgent implements rm.ResourceManager.
-func (a *ResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
-	agent, ok := a.agents.get(agentID(msg.AgentId))
-	if !ok {
-		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
+func (a *agentResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcePoolAvailabilityRequest) (bool, error) {
+	pool, err := a.poolByName(v.Name)
+	if err != nil {
+		return false, err
 	}
-	return agent.EnableAgent(msg)
+
+	resp, err := pool.CapacityCheck(sproto.CapacityCheck{
+		Slots:  v.Slots,
+		TaskID: v.TaskID,
+	})
+	if err != nil {
+		return false, err
+	}
+	return resp.CapacityExceeded, nil
+}
+
+type agentResourceManager struct {
+	syslog *logrus.Entry
+
+	config      *config.AgentResourceManagerConfig
+	poolsConfig []config.ResourcePoolConfig
+	cert        *tls.Certificate
+	db          *db.PgDB
+
+	agentService *agents // TODO(!!!): Rename to agents.
+	agentUpdates *queue.Queue[agentUpdatedEvent]
+	pools        map[string]*resourcePool // immutable. cannot be made mutable without significant change.
+}
+
+func newAgentResourceManager(
+	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService *agents,
+	agentUpdates *queue.Queue[agentUpdatedEvent],
+) *agentResourceManager {
+	a := &agentResourceManager{
+		syslog: logrus.WithField("component", "agentrm"),
+
+		config:       config.ResourceManager.AgentRM,
+		poolsConfig:  config.ResourcePools,
+		cert:         cert,
+		db:           db,
+		agentService: agentService,
+		agentUpdates: agentUpdates,
+		pools:        make(map[string]*resourcePool),
+	}
+
+	for ix, config := range a.poolsConfig {
+		rp, err := a.createResourcePool(a.db, a.poolsConfig[ix], a.cert)
+		if err != nil {
+			// TODO(!!!): Crash cluster or no?
+			a.syslog.WithError(err).Errorf("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
+			continue
+		}
+		a.pools[config.PoolName] = rp
+	}
+	go func() {
+		for {
+			update := a.agentUpdates.Get()
+			pool, ok := a.pools[update.resourcePool]
+			if !ok {
+				a.syslog.Warn("ignoring agent update for unknown pool: %w", update.resourcePool)
+				continue
+			}
+			pool.NotifyAgentUpdated()
+		}
+	}()
+
+	return a
+}
+
+// Allocate implements rm.ResourceManager.
+func (a *agentResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
+	// this code exists to handle the case where an experiment does not have
+	// an explicit resource pool specified in the config. This should never happen
+	// for newly created/forked experiments as the default pool is filled in to the
+	// config at creation time. However, old experiments which were created prior to
+	// the introduction of resource pools could have no resource pool associated with
+	// them and so we need to handle that case gracefully.
+	if len(msg.ResourcePool) == 0 {
+		if msg.SlotsNeeded == 0 {
+			msg.ResourcePool = a.config.DefaultAuxResourcePool
+		} else {
+			msg.ResourcePool = a.config.DefaultComputeResourcePool
+		}
+	}
+	pool, err := a.poolByName(msg.ResourcePool)
+	if err != nil {
+		// TODO(!!!): Post actor refactor, apply https://github.com/uber-go/guide/blob/master/style.md#handle-errors-once
+		// everywhere, but make sure we don't lose any crucial logging.
+		a.syslog.WithError(err).Error("handling an allocate request")
+		return nil, err
+	}
+
+	sub := rmevents.Subscribe(msg.AllocationID)
+	pool.Allocate(msg)
+	return sub, nil
+}
+
+// DeleteJob implements rm.ResourceManager.
+func (*agentResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error) {
+	return sproto.EmptyDeleteJobResponse(), nil
 }
 
 // DisableAgent implements rm.ResourceManager.
-func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
-	agent, ok := a.agents.get(agentID(msg.AgentId))
+func (a *agentResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+	agent, ok := a.agentService.get(agentID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
 	return agent.DisableAgent(msg)
 }
 
-// GetSlots implements rm.ResourceManager.
-func (a *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
-	agent, ok := a.agents.get(agentID(msg.AgentId))
-	if !ok {
-		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
-	}
-	return agent.GetSlots(msg), nil
-}
-
-// GetSlot implements rm.ResourceManager.
-func (a *ResourceManager) GetSlot(
-	req *apiv1.GetSlotRequest,
-) (resp *apiv1.GetSlotResponse, err error) {
-	deviceIDStr, err := strconv.Atoi(req.SlotId)
-	if err != nil {
-		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
-	}
-	deviceID := device.ID(deviceIDStr)
-
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID})
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.GetSlotResponse{Slot: result.ToProto()}, nil
-}
-
-// EnableSlot implements 'det slot enable...' functionality.
-func (a ResourceManager) EnableSlot(
-	req *apiv1.EnableSlotRequest,
-) (resp *apiv1.EnableSlotResponse, err error) {
-	deviceIDStr, err := strconv.Atoi(req.SlotId)
-	if err != nil {
-		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
-	}
-	deviceID := device.ID(deviceIDStr)
-
-	enabled := true
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.EnableSlotResponse{Slot: result.ToProto()}, nil
-}
-
-// DisableSlot implements 'det slot disable...' functionality.
-func (a ResourceManager) DisableSlot(
-	req *apiv1.DisableSlotRequest,
-) (resp *apiv1.DisableSlotResponse, err error) {
+// DisableSlot implements rm.ResourceManager.
+func (a *agentResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error) {
 	deviceIDStr, err := strconv.Atoi(req.SlotId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
@@ -176,44 +200,239 @@ func (a ResourceManager) DisableSlot(
 	return &apiv1.DisableSlotResponse{Slot: result.ToProto()}, nil
 }
 
-func (a ResourceManager) handlePatchSlotState(
-	agentID agentID, msg patchSlotState,
-) (*model.SlotSummary, error) {
-	agent, ok := a.agents.get(agentID)
+// EnableAgent implements rm.ResourceManager.
+func (a *agentResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+	agent, ok := a.agentService.get(agentID(msg.AgentId))
 	if !ok {
-		return nil, api.NotFoundErrs("agent", string(agentID), true)
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
-	return agent.PatchSlotState(msg)
+	return agent.EnableAgent(msg)
 }
 
-// ValidateResourcePool validates existence of a resource pool.
-func (a ResourceManager) ValidateResourcePool(name string) error {
-	_, err := a.doNotUseRMUnlessYouAreReallySure.poolByName(name)
+// EnableSlot implements rm.ResourceManager.
+func (a *agentResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error) {
+	deviceIDStr, err := strconv.Atoi(req.SlotId)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
+	}
+	deviceID := device.ID(deviceIDStr)
+
+	enabled := true
+	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.EnableSlotResponse{Slot: result.ToProto()}, nil
+}
+
+// ExternalPreemptionPending implements rm.ResourceManager.
+func (*agentResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error {
+	return rmerrors.ErrNotSupported
+}
+
+// GetAgent implements rm.ResourceManager.
+func (a *agentResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
+	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	if !ok {
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+	}
+	return agent.GetAgent(msg), nil
+}
+
+// GetAgents implements rm.ResourceManager.
+func (a *agentResourceManager) GetAgents(msg *apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error) {
+	return a.agentService.getAgents(msg), nil
+}
+
+// GetAllocationSummaries implements rm.ResourceManager.
+func (a *agentResourceManager) GetAllocationSummaries(
+	msg sproto.GetAllocationSummaries,
+) (map[model.AllocationID]sproto.AllocationSummary, error) {
+	summaries := make(map[model.AllocationID]sproto.AllocationSummary)
+	for _, pool := range a.pools {
+		rpSummaries := pool.GetAllocationSummaries(msg)
+		maps.Copy(summaries, rpSummaries)
+	}
+	return summaries, nil
+}
+
+// GetAllocationSummary implements rm.ResourceManager.
+func (a *agentResourceManager) GetAllocationSummary(
+	msg sproto.GetAllocationSummary,
+) (*sproto.AllocationSummary, error) {
+	for _, pool := range a.pools {
+		summary, ok := pool.GetAllocationSummary(msg)
+		if !ok {
+			continue
+		}
+		return &summary, nil
+	}
+	return nil, errors.New("allocation not found")
+}
+
+// GetDefaultAuxResourcePool implements rm.ResourceManager.
+func (a *agentResourceManager) GetDefaultAuxResourcePool(
+	sproto.GetDefaultAuxResourcePoolRequest,
+) (sproto.GetDefaultAuxResourcePoolResponse, error) {
+	if a.config.DefaultAuxResourcePool == "" {
+		return sproto.GetDefaultAuxResourcePoolResponse{}, rmerrors.ErrNoDefaultResourcePool
+	}
+	return sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool}, nil
+}
+
+// GetDefaultComputeResourcePool implements rm.ResourceManager.
+func (a *agentResourceManager) GetDefaultComputeResourcePool(
+	sproto.GetDefaultComputeResourcePoolRequest,
+) (sproto.GetDefaultComputeResourcePoolResponse, error) {
+	if a.config.DefaultComputeResourcePool == "" {
+		return sproto.GetDefaultComputeResourcePoolResponse{}, rmerrors.ErrNoDefaultResourcePool
+	}
+	return sproto.GetDefaultComputeResourcePoolResponse{
+		PoolName: a.config.DefaultComputeResourcePool,
+	}, nil
+}
+
+// GetExternalJobs implements rm.ResourceManager.
+func (*agentResourceManager) GetExternalJobs(sproto.GetExternalJobs) ([]*jobv1.Job, error) {
+	return nil, rmerrors.ErrNotSupported
+}
+
+// GetJobQ implements rm.ResourceManager.
+func (a *agentResourceManager) GetJobQ(msg sproto.GetJobQ) (map[model.JobID]*sproto.RMJobInfo, error) {
+	if msg.ResourcePool == "" {
+		msg.ResourcePool = a.config.DefaultComputeResourcePool
+	}
+
+	pool, err := a.poolByName(msg.ResourcePool)
+	if err != nil {
+		return nil, err
+	}
+	return pool.GetJobQ(sproto.GetJobQ{ResourcePool: msg.ResourcePool}), nil
+}
+
+// GetJobQueueStatsRequest implements rm.ResourceManager.
+func (a *agentResourceManager) GetJobQueueStatsRequest(msg *apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error) {
+	resp := &apiv1.GetJobQueueStatsResponse{
+		Results: make([]*apiv1.RPQueueStat, 0),
+	}
+
+	for name, pool := range a.pools {
+		if len(msg.ResourcePools) != 0 && !slices.Contains(msg.ResourcePools, name) {
+			continue
+		}
+
+		stats := pool.GetJobQStats(sproto.GetJobQStats{})
+
+		aggregates, err := a.fetchAvgQueuedTime(name)
+		if err != nil {
+			a.syslog.WithError(err).Error("fetch average queued time")
+			continue
+		}
+
+		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
+			ResourcePool: name,
+			Stats:        stats,
+			Aggregates:   aggregates,
+		})
+	}
+
+	return resp, nil
+}
+
+// GetResourcePools implements rm.ResourceManager.
+func (a *agentResourceManager) GetResourcePools(msg *apiv1.GetResourcePoolsRequest) (*apiv1.GetResourcePoolsResponse, error) {
+	summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig))
+	for _, pool := range a.poolsConfig {
+		summary, err := a.createResourcePoolSummary(pool.PoolName)
+		if err != nil {
+			// Should only raise an error if the resource pool doesn't exist and that can't happen.
+			// But best to handle it anyway in case the implementation changes in the future.
+			a.syslog.WithError(err).Error("")
+			return nil, err
+		}
+
+		jobStats, err := a.getPoolJobStats(pool)
+		if err != nil {
+			return nil, err
+		}
+
+		summary.Stats = jobStats
+		summaries = append(summaries, summary)
+	}
+	return &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}, nil
+}
+
+// GetSlot implements rm.ResourceManager.
+func (a *agentResourceManager) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
+	deviceIDStr, err := strconv.Atoi(req.SlotId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
+	}
+	deviceID := device.ID(deviceIDStr)
+
+	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID})
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.GetSlotResponse{Slot: result.ToProto()}, nil
+}
+
+// GetSlots implements rm.ResourceManager.
+func (a *agentResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
+	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	if !ok {
+		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
+	}
+	return agent.GetSlots(msg), nil
+}
+
+// IsReattachableOnlyAfterStarted implements rm.ResourceManager.
+func (*agentResourceManager) IsReattachableOnlyAfterStarted() bool {
+	return true
+}
+
+// MoveJob implements rm.ResourceManager.
+func (a *agentResourceManager) MoveJob(msg sproto.MoveJob) error {
+	// REVIEWER NOTE: We had a bug here; if MoveJob ever returned errors (or really anything that used AskAll),
+	// then we had a reflect failure deserializing the response.
+	for _, pool := range a.pools {
+		err := pool.MoveJob(msg)
+		if err != nil {
+			a.syslog.WithError(err).Errorf("failed to move job %s", msg.ID)
+			return err
+		}
 	}
 	return nil
 }
 
-// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
-func (a ResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcePoolAvailabilityRequest) (bool, error) {
-	pool, err := a.doNotUseRMUnlessYouAreReallySure.poolByName(v.Name)
-	if err != nil {
-		return false, err
-	}
-
-	resp, err := pool.CapacityCheck(sproto.CapacityCheck{
-		Slots:  v.Slots,
-		TaskID: v.TaskID,
-	})
-	if err != nil {
-		return false, err
-	}
-	return resp.CapacityExceeded, nil
+// NotifyContainerRunning implements rm.ResourceManager.
+func (*agentResourceManager) NotifyContainerRunning(sproto.NotifyContainerRunning) error {
+	// Agent Resource Manager does not implement a handler for the
+	// NotifyContainerRunning message, as it is only used on HPC
+	// (High Performance Computing).
+	return rmerrors.ErrNotSupported
 }
 
-// ResolveResourcePool fully resolves the resource pool name.
-func (a ResourceManager) ResolveResourcePool(name string, workspaceID, slots int) (string, error) {
+// RecoverJobPosition implements rm.ResourceManager.
+func (a *agentResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
+	pool, err := a.poolByName(msg.ResourcePool)
+	if err != nil {
+		a.syslog.WithError(err).Error("recovering job position")
+		// TODO(!!!): Better error handling.
+		return
+	}
+	pool.RecoverJobPosition(msg)
+}
+
+// Release implements rm.ResourceManager.
+func (a *agentResourceManager) Release(msg sproto.ResourcesReleased) {
+	for _, pool := range a.pools {
+		pool.ResourcesReleased(msg)
+	}
+}
+
+// ResolveResourcePool implements rm.ResourceManager.
+func (a *agentResourceManager) ResolveResourcePool(name string, workspaceID int, slots int) (string, error) {
 	ctx := context.TODO()
 	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
@@ -273,8 +492,95 @@ func (a ResourceManager) ResolveResourcePool(name string, workspaceID, slots int
 	return name, nil
 }
 
-// ValidateResources ensures enough resources are available for a command.
-func (a ResourceManager) ValidateResources(name string, slots int, command bool) error {
+// SetAllocationName implements rm.ResourceManager.
+func (a *agentResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
+	for _, pool := range a.pools {
+		// TODO(!!!): Was a tell before, so the `go` is to keep the same structure. Being careful at first.
+		go pool.SetAllocationName(msg)
+	}
+}
+
+// SetGroupMaxSlots implements rm.ResourceManager.
+func (a *agentResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
+	for _, pool := range a.pools {
+		// TODO(!!!): Was a tell before, so the `go` is to keep the same structure. Careful at first...
+		go pool.SetGroupMaxSlots(msg)
+	}
+}
+
+// SetGroupPriority implements rm.ResourceManager.
+func (a *agentResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
+	for _, pool := range a.pools {
+		err := pool.setGroupPriority(msg)
+		if err != nil {
+			a.syslog.WithError(err).Errorf("failed to set priority for job %s", msg.JobID)
+			return err
+		}
+	}
+	return nil
+}
+
+// SetGroupWeight implements rm.ResourceManager.
+func (a *agentResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
+	for _, pool := range a.pools {
+		// TODO(!!!): SetGroupWeight was an ask but SetGroupMaxSlots was a tell..? Ok.
+		pool.SetGroupWeight(msg)
+	}
+	return nil
+}
+
+// TaskContainerDefaults implements rm.ResourceManager.
+func (a *agentResourceManager) TaskContainerDefaults(resourcePoolName string, fallbackConfig model.TaskContainerDefaultsConfig) (model.TaskContainerDefaultsConfig, error) {
+	result := fallbackConfig
+	// Iterate through configured pools looking for a TaskContainerDefaults setting.
+	for _, pool := range a.poolsConfig {
+		if resourcePoolName == pool.PoolName {
+			if pool.TaskContainerDefaults == nil {
+				break
+			}
+			result = *pool.TaskContainerDefaults
+		}
+	}
+	return result, nil
+}
+
+// ValidateCommandResources implements rm.ResourceManager.
+func (a *agentResourceManager) ValidateCommandResources(msg sproto.ValidateCommandResourcesRequest) (sproto.ValidateCommandResourcesResponse, error) {
+	pool, err := a.poolByName(msg.ResourcePool)
+	if err != nil {
+		a.syslog.WithError(err).Error("recovering job position")
+		return sproto.ValidateCommandResourcesResponse{}, err
+	}
+	return pool.ValidateCommandResources(msg), nil
+}
+
+// ValidateResourcePool implements rm.ResourceManager.
+func (a *agentResourceManager) ValidateResourcePool(name string) error {
+	_, err := a.poolByName(name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// ValidateResourcePoolAvailability implements rm.ResourceManager.
+func (a *agentResourceManager) ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityRequest) ([]command.LaunchWarning, error) {
+	if v.Slots == 0 {
+		return nil, nil
+	}
+
+	switch exceeded, err := a.CheckMaxSlotsExceeded(v); {
+	case err != nil:
+		return nil, fmt.Errorf("validating request for (%s, %d): %w", v.Name, v.Slots, err)
+	case exceeded:
+		return []command.LaunchWarning{command.CurrentSlotsExceeded}, nil
+	default:
+		return nil, nil
+	}
+}
+
+// ValidateResources implements rm.ResourceManager.
+func (a *agentResourceManager) ValidateResources(name string, slots int, command bool) error {
 	// TODO: Replace this function usage with ValidateCommandResources
 	if slots > 0 && command {
 		switch resp, err := a.ValidateCommandResources(
@@ -291,323 +597,20 @@ func (a ResourceManager) ValidateResources(name string, slots int, command bool)
 	return nil
 }
 
-// ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
-func (a ResourceManager) ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityRequest) (
-	[]command.LaunchWarning,
-	error,
-) {
-	if v.Slots == 0 {
-		return nil, nil
-	}
-
-	switch exceeded, err := a.CheckMaxSlotsExceeded(v); {
-	case err != nil:
-		return nil, fmt.Errorf("validating request for (%s, %d): %w", v.Name, v.Slots, err)
-	case exceeded:
-		return []command.LaunchWarning{command.CurrentSlotsExceeded}, nil
-	default:
-		return nil, nil
-	}
-}
-
-type agentResourceManager struct {
-	config      *config.AgentResourceManagerConfig
-	poolsConfig []config.ResourcePoolConfig
-	cert        *tls.Certificate
-	db          *db.PgDB
-
-	agentService *agents
-	agentUpdates *queue.Queue[agentUpdatedEvent]
-	pools        map[string]*resourcePool
-}
-
-func newAgentResourceManager(
-	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService *agents,
-	agentUpdates *queue.Queue[agentUpdatedEvent],
-) *agentResourceManager {
-	return &agentResourceManager{
-		config:       config.ResourceManager.AgentRM,
-		poolsConfig:  config.ResourcePools,
-		cert:         cert,
-		db:           db,
-		agentService: agentService,
-		agentUpdates: agentUpdates,
-		pools:        make(map[string]*resourcePool),
-	}
-}
-
-func (a *agentResourceManager) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		for ix, config := range a.poolsConfig {
-			rp, err := a.createResourcePool(ctx, a.db, a.poolsConfig[ix], a.cert)
-			if err != nil {
-				// TODO(!!!): Crash cluster or no?
-				ctx.Log().WithError(err).Errorf("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
-				continue
-			}
-			a.pools[config.PoolName] = rp
-		}
-		go func() {
-			for {
-				update := a.agentUpdates.Get()
-				pool, ok := a.pools[update.resourcePool]
-				if !ok {
-					ctx.Log().Warn("ignoring agent update for unknown pool: %w", update.resourcePool)
-					continue
-				}
-				pool.NotifyAgentUpdated()
-			}
-		}()
-
-	case sproto.AllocateRequest:
-		// this code exists to handle the case where an experiment does not have
-		// an explicit resource pool specified in the config. This should never happen
-		// for newly created/forked experiments as the default pool is filled in to the
-		// config at creation time. However, old experiments which were created prior to
-		// the introduction of resource pools could have no resource pool associated with
-		// them and so we need to handle that case gracefully.
-		if len(msg.ResourcePool) == 0 {
-			if msg.SlotsNeeded == 0 {
-				msg.ResourcePool = a.config.DefaultAuxResourcePool
-			} else {
-				msg.ResourcePool = a.config.DefaultComputeResourcePool
-			}
-		}
-		pool, err := a.poolByName(msg.ResourcePool)
-		if err != nil {
-			ctx.Log().WithError(err).Error("handling an allocate request")
-			if ctx.ExpectingResponse() {
-				ctx.Respond(err)
-			}
-			return nil
-		}
-		pool.Allocate(msg)
-
-	case sproto.ResourcesReleased:
-		for _, pool := range a.pools {
-			pool.ResourcesReleased(msg)
-		}
-
-	// REVIEWER NOTE: make sure i didn't swap pointers/non-pointers here otherwise messages won't receive.
-	case sproto.SetGroupMaxSlots:
-		for _, pool := range a.pools {
-			// TODO(!!!): Was a tell before, so the `go` is to keep the same structure. Careful at first...
-			go pool.SetGroupMaxSlots(msg)
-		}
-
-	case sproto.SetGroupWeight:
-		for _, pool := range a.pools {
-			// TODO(!!!): SetGroupWeight was an ask but SetGroupMaxSlots was a tell..? Ok.
-			pool.SetGroupWeight(msg)
-		}
-
-	case sproto.SetGroupPriority:
-		for _, pool := range a.pools {
-			err := pool.setGroupPriority(msg)
-			if err != nil {
-				ctx.Log().WithError(err).Errorf("failed to set priority for job %s", msg.JobID)
-				if ctx.ExpectingResponse() {
-					ctx.Respond(err)
-				}
-				return nil
-			}
-		}
-
-	case sproto.MoveJob:
-		// REVIEWER NOTE: We had a bug here; if MoveJob ever returned errors (or really anything that used AskAll),
-		// then we had a reflect failure deserializing the response.
-		for _, pool := range a.pools {
-			err := pool.MoveJob(msg)
-			if err != nil {
-				ctx.Log().WithError(err).Errorf("failed to move job %s", msg.ID)
-				if ctx.ExpectingResponse() {
-					ctx.Respond(err)
-				}
-				return nil
-			}
-		}
-
-	case sproto.PendingPreemption:
-		ctx.Respond(actor.ErrUnexpectedMessage(ctx))
-		return nil
-
-	case sproto.DeleteJob:
-		// For now, there is nothing to cleanup in determined-agents world.
-		ctx.Respond(sproto.EmptyDeleteJobResponse())
-
-	case sproto.RecoverJobPosition:
-		pool, err := a.poolByName(msg.ResourcePool)
-		if err != nil {
-			ctx.Log().WithError(err).Error("recovering job position")
-			if ctx.ExpectingResponse() {
-				ctx.Respond(err)
-			}
-			return nil
-		}
-		pool.RecoverJobPosition(msg)
-
-	case sproto.GetAllocationSummary:
-		for _, pool := range a.pools {
-			summary, ok := pool.GetAllocationSummary(msg)
-			if !ok {
-				continue
-			}
-			ctx.Respond(summary)
-			return nil
-		}
-
-	case sproto.GetAllocationSummaries:
-		summaries := make(map[model.AllocationID]sproto.AllocationSummary)
-		for _, pool := range a.pools {
-			rpSummaries := pool.GetAllocationSummaries(msg)
-			maps.Copy(summaries, rpSummaries)
-		}
-		ctx.Respond(summaries)
-
-	case sproto.SetAllocationName:
-		for _, pool := range a.pools {
-			// TODO(!!!): Was a tell before, so the `go` is to keep the same structure. Careful at first...
-			go pool.SetAllocationName(msg)
-		}
-
-	case sproto.GetDefaultComputeResourcePoolRequest:
-		if a.config.DefaultComputeResourcePool == "" {
-			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
-		} else {
-			ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-				PoolName: a.config.DefaultComputeResourcePool,
-			})
-		}
-
-	case sproto.GetDefaultAuxResourcePoolRequest:
-		if a.config.DefaultAuxResourcePool == "" {
-			ctx.Respond(rmerrors.ErrNoDefaultResourcePool)
-		} else {
-			ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
-		}
-
-	case sproto.ValidateCommandResourcesRequest:
-		pool, err := a.poolByName(msg.ResourcePool)
-		if err != nil {
-			ctx.Log().WithError(err).Error("recovering job position")
-			if ctx.ExpectingResponse() {
-				ctx.Respond(err)
-			}
-			return nil
-		}
-		resp := pool.ValidateCommandResources(msg)
-		if ctx.ExpectingResponse() {
-			ctx.Respond(resp)
-		}
-
-	case *apiv1.GetResourcePoolsRequest:
-		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig))
-		for _, pool := range a.poolsConfig {
-			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
-			if err != nil {
-				// Should only raise an error if the resource pool doesn't exist and that can't happen.
-				// But best to handle it anyway in case the implementation changes in the future.
-				ctx.Log().WithError(err).Error("")
-				ctx.Respond(err)
-				return nil
-			}
-
-			jobStats, err := a.getPoolJobStats(ctx, pool)
-			if err != nil {
-				ctx.Respond(err)
-				return nil
-			}
-
-			summary.Stats = jobStats
-			summaries = append(summaries, summary)
-		}
-		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
-		ctx.Respond(resp)
-	case *apiv1.GetAgentsRequest:
-		ctx.Respond(a.agentService.getAgents(&apiv1.GetAgentsRequest{}))
-
-	case sproto.GetJobQ:
-		if msg.ResourcePool == "" {
-			msg.ResourcePool = a.config.DefaultComputeResourcePool
-		}
-
-		pool, err := a.poolByName(msg.ResourcePool)
-		if err != nil {
-			ctx.Respond(err)
-		}
-		ctx.Respond(pool.GetJobQ(sproto.GetJobQ{ResourcePool: msg.ResourcePool}))
-
-	case *apiv1.GetJobQueueStatsRequest:
-		resp := &apiv1.GetJobQueueStatsResponse{
-			Results: make([]*apiv1.RPQueueStat, 0),
-		}
-
-		for name, pool := range a.pools {
-			if len(msg.ResourcePools) != 0 && !slices.Contains(msg.ResourcePools, name) {
-				continue
-			}
-
-			stats := pool.GetJobQStats(sproto.GetJobQStats{})
-
-			aggregates, err := a.fetchAvgQueuedTime(name)
-			if err != nil {
-				ctx.Log().WithError(err).Error("fetch average queued time")
-				continue
-			}
-
-			resp.Results = append(resp.Results, &apiv1.RPQueueStat{
-				ResourcePool: name,
-				Stats:        stats,
-				Aggregates:   aggregates,
-			})
-		}
-
-		ctx.Respond(resp)
-		return nil
-
-	case taskContainerDefaults:
-		ctx.Respond(a.getTaskContainerDefaults(msg))
-
-	case sproto.GetExternalJobs:
-		ctx.Respond(rmerrors.ErrNotSupported)
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func (a *agentResourceManager) getTaskContainerDefaults(
-	msg taskContainerDefaults,
-) model.TaskContainerDefaultsConfig {
-	result := msg.fallbackDefault
-	// Iterate through configured pools looking for a TaskContainerDefaults setting.
-	for _, pool := range a.poolsConfig {
-		if msg.resourcePool == pool.PoolName {
-			if pool.TaskContainerDefaults == nil {
-				break
-			}
-			result = *pool.TaskContainerDefaults
-		}
-	}
-	return result
-}
-
 func (a *agentResourceManager) createResourcePool(
-	ctx *actor.Context, db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
+	db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) (*resourcePool, error) {
-	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
+	a.syslog.Infof("creating resource pool: %s", config.PoolName)
 
 	// TODO(!!!): newResourcePool can do this logic, createResourcePool can go away.
 	// We pass the config here in by value so that in the case where we replace
 	// the scheduler config with the global scheduler config (when the pool does
 	// not define one for itself) we do not modify the original data structures.
 	if config.Scheduler != nil {
-		ctx.Log().Infof("pool %s using local scheduling config", config.PoolName)
+		a.syslog.Infof("pool %s using local scheduling config", config.PoolName)
 	} else {
 		config.Scheduler = a.config.Scheduler
-		ctx.Log().Infof("pool %s using global scheduling config", config.PoolName)
+		a.syslog.Infof("pool %s using global scheduling config", config.PoolName)
 	}
 
 	return newResourcePool(
@@ -628,9 +631,7 @@ func (a *agentResourceManager) poolByName(name string) (*resourcePool, error) {
 	return pool, nil
 }
 
-func (a *agentResourceManager) getPoolJobStats(
-	ctx *actor.Context, poolConfig config.ResourcePoolConfig,
-) (*jobv1.QueueStats, error) {
+func (a *agentResourceManager) getPoolJobStats(poolConfig config.ResourcePoolConfig) (*jobv1.QueueStats, error) {
 	pool, err := a.poolByName(poolConfig.PoolName)
 	if err != nil {
 		return nil, err
@@ -650,7 +651,6 @@ func (a *agentResourceManager) getResourcePoolConfig(poolName string) (
 }
 
 func (a *agentResourceManager) createResourcePoolSummary(
-	ctx *actor.Context,
 	poolName string,
 ) (*resourcepoolv1.ResourcePool, error) {
 	pool, err := a.getResourcePoolConfig(poolName)
@@ -701,7 +701,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		// This means the scheduler setting should be inherited from the resource manager
 		pool.Scheduler = a.config.Scheduler
 		if a.config.Scheduler == nil {
-			ctx.Log().Errorf("scheduler is not present in config or in resource manager")
+			a.syslog.Errorf("scheduler is not present in config or in resource manager")
 			return &resourcepoolv1.ResourcePool{}, err
 		}
 	}
@@ -756,7 +756,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		}
 
 		if pool.Scheduler.FittingPolicy != best && pool.Scheduler.FittingPolicy != worst {
-			ctx.Log().Errorf("unrecognized scheduler fitting policy")
+			a.syslog.Errorf("unrecognized scheduler fitting policy")
 			return &resourcepoolv1.ResourcePool{}, err
 		}
 	}
@@ -877,28 +877,9 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 	return res, nil
 }
 
-// NotifyContainerRunning receives a notification from the container to let
-// the master know that the container is running.
-func (a ResourceManager) NotifyContainerRunning(
-	msg sproto.NotifyContainerRunning,
-) error {
-	// Agent Resource Manager does not implement a handler for the
-	// NotifyContainerRunning message, as it is only used on HPC
-	// (High Performance Computing).
-	return errors.New(
-		"the NotifyContainerRunning message is unsupported for AgentResourceManager")
-}
-
-type taskContainerDefaults struct {
-	fallbackDefault model.TaskContainerDefaultsConfig
-	resourcePool    string
-}
-
-// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
-func (a ResourceManager) TaskContainerDefaults(
-	pool string,
-	fallbackConfig model.TaskContainerDefaultsConfig,
-) (result model.TaskContainerDefaultsConfig, err error) {
-	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
-	return result, a.Ask(req, &result)
+// mostly for tests.
+func (a *agentResourceManager) stop() {
+	for _, pool := range a.pools {
+		pool.stop()
+	}
 }

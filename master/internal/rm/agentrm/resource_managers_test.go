@@ -42,7 +42,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 	taskSummary, err := rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]sproto.AllocationSummary))
-	assert.NilError(t, rm.Ref().StopAndAwaitTermination())
+	rm.stop()
 }
 
 func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
@@ -76,5 +76,5 @@ func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
 	})
 	assert.Assert(t, err == nil, err)
 	assert.Assert(t, resp.Fulfillable)
-	assert.NilError(t, rm.Ref().StopAndAwaitTermination())
+	rm.stop()
 }
