@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -20,12 +21,11 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(
-		ref, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, ThrowError{})
@@ -35,20 +35,19 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 		<-n
 	}
 
-	assert.NilError(t, ref.StopAndAwaitTermination())
-	assert.Equal(t, rp.taskList.Len(), 0)
+	rp.stop()
+	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(
-		ref, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, ThrowPanic{})
@@ -58,20 +57,19 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 		<-n
 	}
 
-	assert.NilError(t, ref.StopAndAwaitTermination())
-	assert.Equal(t, rp.taskList.Len(), 0)
+	rp.stop()
+	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(
-		ref, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
 	assert.NilError(t, taskRef.StopAndAwaitTermination())
@@ -80,26 +78,25 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 		<-n
 	}
 
-	assert.NilError(t, ref.StopAndAwaitTermination())
-	assert.Equal(t, rp.taskList.Len(), 0)
+	rp.stop()
+	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(
-		ref, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, sproto.ReleaseResources{}).Get()
 
-	assert.NilError(t, ref.StopAndAwaitTermination())
-	assert.Equal(t, rp.taskList.Len(), 0)
+	rp.stop()
+	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
 }
 
 func TestScalingInfoAgentSummary(t *testing.T) {
@@ -130,7 +127,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 		{ID: "unallocated-gpu-task4", SlotsNeeded: 1},
 		{ID: "unallocated-gpu-task5", SlotsNeeded: 5},
 	}
-	rp, _ := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 	rp.slotsPerInstance = 4
 
 	// Test basic.
@@ -206,19 +203,20 @@ func TestSettingGroupPriority(t *testing.T) {
 		},
 	}
 
-	rp, ref := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	// Test setting a non-default priority for a group.
 	updatedPriority := 22
 	jobID := model.NewJobID()
 	assert.Equal(t, tasklist.GroupPriorityChangeRegistry.Add(jobID, nil), nil)
-	system.Ask(ref, sproto.SetGroupPriority{Priority: updatedPriority, JobID: jobID}).Get()
+	err := rp.SetGroupPriority(sproto.SetGroupPriority{Priority: updatedPriority, JobID: jobID})
+	require.NoError(t, err)
 
 	for _, n := range rp.notifications {
 		<-n
 	}
 
-	assert.NilError(t, ref.StopAndAwaitTermination())
+	rp.stop()
 	assert.Check(t, rp.groups[jobID] != nil)
 	assert.Check(t, rp.groups[jobID].Priority != nil)
 	assert.Equal(t, *rp.groups[jobID].Priority, updatedPriority)
@@ -242,7 +240,7 @@ func setupRPSamePriority(t *testing.T) *resourcePool {
 		},
 	}
 
-	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
 		"job1": decimal.New(100, 1000),
@@ -360,7 +358,7 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 		},
 	}
 
-	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
 		"job1": decimal.New(100, 1000),
@@ -418,7 +416,7 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 		},
 	}
 
-	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
 		"job1": decimal.New(100, 1000),

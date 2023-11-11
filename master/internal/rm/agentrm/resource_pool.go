@@ -48,7 +48,8 @@ type resourcePool struct {
 	queuePositions   tasklist.JobSortState // secondary sort key based on job submission time
 	scalingInfo      *sproto.ScalingInfo
 
-	reschedule bool
+	reschedule      bool
+	rescheduleTimer *time.Timer
 
 	// Track notifyOnStop for testing purposes.
 	saveNotifications bool
@@ -56,13 +57,6 @@ type resourcePool struct {
 
 	db db.DB
 }
-
-// getResourceSummary is a message to request a summary of the resources used by the
-// resource pool (agents, slots, cpu containers).
-type getResourceSummary struct{}
-
-// schedulerTick periodically triggers the scheduler to act.
-type schedulerTick struct{}
 
 // actionCoolDown is the rate limit for scheduler action.
 const actionCoolDown = 500 * time.Millisecond
@@ -95,6 +89,9 @@ func newResourcePool(
 		db:         db,
 	}
 
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+
 	// REVIEWER NOTE: PreStart wasn't sync but I decided after review it was fine to be.
 	err := rp.setupProvisioner()
 	if err != nil {
@@ -102,7 +99,7 @@ func newResourcePool(
 	}
 
 	// TODO(!!!): Do we need to store this timer and stop if; if we can "crash" we do.
-	time.AfterFunc(actionCoolDown, rp.schedulerTick)
+	rp.rescheduleTimer = time.AfterFunc(actionCoolDown, rp.schedulerTick)
 	return rp, nil
 }
 
@@ -118,6 +115,14 @@ func (rp *resourcePool) setupProvisioner() error {
 	rp.slotsPerInstance = p.SlotsPerInstance()
 	rp.provisioner = p
 	return nil
+}
+
+func (rp *resourcePool) Allocate(msg sproto.AllocateRequest) {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.reschedule = true
+
+	rp.allocateRequest(msg)
 }
 
 func (rp *resourcePool) allocateRequest(msg sproto.AllocateRequest) {
@@ -227,10 +232,173 @@ func (rp *resourcePool) restoreResources(
 	return nil
 }
 
+func (rp *resourcePool) SetAllocationName(msg sproto.SetAllocationName) {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.receiveSetTaskName(msg)
+}
+
 func (rp *resourcePool) receiveSetTaskName(msg sproto.SetAllocationName) {
 	if task, found := rp.taskList.TaskByID(msg.AllocationID); found {
 		task.Name = msg.Name
 	}
+}
+
+func (rp *resourcePool) ResourcesReleased(msg sproto.ResourcesReleased) {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.reschedule = true
+
+	rp.resourcesReleased(msg)
+}
+
+func (rp *resourcePool) resourcesReleased(msg sproto.ResourcesReleased) {
+	_, ok := rp.taskList.TaskByID(msg.AllocationID)
+	if !ok {
+		rp.syslog.Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
+		return
+	}
+
+	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
+	case allocated == nil:
+		rp.syslog.Infof("released before allocated for %s", msg.AllocationID)
+		rp.taskList.RemoveTaskByID(msg.AllocationID)
+		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
+	case msg.ResourcesID != nil:
+		rp.syslog.Infof("incrementally released resources %v for %s", *msg.ResourcesID, msg.AllocationID)
+		for rID, r := range allocated.Resources {
+			if r.Summary().ResourcesID != *msg.ResourcesID {
+				continue
+			}
+
+			typed := r.(*containerResources)
+			err := typed.agent.handler.DeallocateContainer(deallocateContainer{containerID: typed.containerID})
+			if err != nil {
+				rp.syslog.WithError(err).Errorf(
+					"failed to deallocate container %s on agent %s",
+					typed.containerID, typed.agent.id,
+				)
+			}
+			delete(allocated.Resources, rID)
+			break
+		}
+	default:
+		rp.syslog.Infof("all resources are released for %s", msg.AllocationID)
+		for _, r := range allocated.Resources {
+			typed := r.(*containerResources)
+			err := typed.agent.handler.DeallocateContainer(deallocateContainer{containerID: typed.containerID})
+			if err != nil {
+				rp.syslog.WithError(err).Errorf(
+					"failed to deallocate container %s on agent %s",
+					typed.containerID, typed.agent.id,
+				)
+			}
+		}
+		rp.taskList.RemoveTaskByID(msg.AllocationID)
+		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
+	}
+}
+
+func (rp *resourcePool) SetGroupWeight(msg sproto.SetGroupWeight) {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.reschedule = true
+
+	rp.getOrCreateGroup(msg.JobID).Weight = msg.Weight
+}
+
+func (rp *resourcePool) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.reschedule = true
+
+	rp.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
+}
+
+func (rp *resourcePool) SetGroupPriority(msg sproto.SetGroupPriority) error {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.reschedule = true
+
+	return rp.setGroupPriority(msg)
+}
+
+func (rp *resourcePool) setGroupPriority(msg sproto.SetGroupPriority) error {
+	g := rp.getOrCreateGroup(msg.JobID)
+	if (g.Priority != nil && *g.Priority == msg.Priority) ||
+		rp.config.Scheduler.Priority == nil {
+		return nil
+	}
+	rp.syslog.Infof("setting priority for group of %s to %d", msg.JobID, msg.Priority)
+	g.Priority = &msg.Priority
+	time, err := tasklist.GetJobSubmissionTime(rp.taskList, msg.JobID)
+	if err != nil {
+		rp.syslog.Errorf("failed to get job submission time: %s", err)
+		return nil
+	}
+	rp.queuePositions[msg.JobID] = tasklist.InitializeQueuePosition(time, false)
+	return nil
+}
+
+func (rp *resourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
+	if g, ok := rp.groups[jobID]; ok {
+		return g
+	}
+	g := &tasklist.Group{JobID: jobID, Weight: 1}
+
+	if rp.config.Scheduler.Priority != nil {
+		if rp.config.Scheduler.Priority.DefaultPriority == nil {
+			panic("default priority is not configured")
+		}
+		g.Priority = rp.config.Scheduler.Priority.DefaultPriority
+	}
+
+	rp.groups[jobID] = g
+	tasklist.GroupPriorityChangeRegistry.OnDelete(jobID, func() {
+		rp.JobStopped(jobID)
+	})
+	return g
+}
+
+// TODO(!!!): Do we even need to "crash" resource pools? Ever..?
+// TODO(!!!): Test failure domains, what happens when this panics?
+func (rp *resourcePool) schedulerTick() {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+
+	if rp.provisioner != nil {
+		if err := rp.provisioner.LaunchError(); err != rp.provisionerError {
+			rp.provisionerError = err
+			if err != nil {
+				rp.reschedule = true
+			}
+		}
+	}
+	if rp.reschedule {
+		rp.syslog.Trace("scheduling")
+		rp.agentStatesCache = rp.agentService.list()
+		defer func() {
+			rp.agentStatesCache = nil
+		}()
+
+		rp.pruneTaskList()
+		toAllocate, toRelease := rp.scheduler.Schedule(rp)
+		if len(toAllocate) > 0 || len(toRelease) > 0 {
+			rp.syslog.
+				WithField("toAllocate", len(toAllocate)).
+				WithField("toRelease", len(toRelease)).
+				Debugf("scheduled")
+		}
+		for _, req := range toAllocate {
+			rp.allocateResources(req)
+		}
+		for _, aID := range toRelease {
+			rp.releaseResource(aID)
+		}
+		rp.sendScalingInfo()
+	}
+	rp.reschedule = false
+	rp.rescheduleTimer = time.AfterFunc(actionCoolDown, rp.schedulerTick)
 }
 
 // allocateResources assigns resources based on a request and notifies the request
@@ -335,78 +503,10 @@ func (rp *resourcePool) releaseResource(aID model.AllocationID) {
 	rmevents.Publish(aID, &sproto.ReleaseResources{Reason: "preempted by the scheduler"})
 }
 
-// TODO(!!!): dedup a bunch of these functions
-func (rp *resourcePool) ResourcesReleased(msg sproto.ResourcesReleased) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	rp.resourcesReleased(msg)
-}
-
-func (rp *resourcePool) resourcesReleased(msg sproto.ResourcesReleased) {
-	_, ok := rp.taskList.TaskByID(msg.AllocationID)
-	if !ok {
-		rp.syslog.Debugf("ignoring release for task not allocated to pool %s", msg.AllocationID)
-		return
+func (rp *resourcePool) sendScalingInfo() {
+	if rp.provisioner != nil && rp.updateScalingInfo() {
+		rp.provisioner.UpdateScalingInfo(rp.scalingInfo)
 	}
-
-	switch allocated := rp.taskList.Allocation(msg.AllocationID); {
-	case allocated == nil:
-		rp.syslog.Infof("released before allocated for %s", msg.AllocationID)
-		rp.taskList.RemoveTaskByID(msg.AllocationID)
-		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
-	case msg.ResourcesID != nil:
-		rp.syslog.Infof("incrementally released resources %v for %s", *msg.ResourcesID, msg.AllocationID)
-		for rID, r := range allocated.Resources {
-			if r.Summary().ResourcesID != *msg.ResourcesID {
-				continue
-			}
-
-			typed := r.(*containerResources)
-			err := typed.agent.handler.DeallocateContainer(deallocateContainer{containerID: typed.containerID})
-			if err != nil {
-				rp.syslog.WithError(err).Errorf(
-					"failed to deallocate container %s on agent %s",
-					typed.containerID, typed.agent.id,
-				)
-			}
-			delete(allocated.Resources, rID)
-			break
-		}
-	default:
-		rp.syslog.Infof("all resources are released for %s", msg.AllocationID)
-		for _, r := range allocated.Resources {
-			typed := r.(*containerResources)
-			err := typed.agent.handler.DeallocateContainer(deallocateContainer{containerID: typed.containerID})
-			if err != nil {
-				rp.syslog.WithError(err).Errorf(
-					"failed to deallocate container %s on agent %s",
-					typed.containerID, typed.agent.id,
-				)
-			}
-		}
-		rp.taskList.RemoveTaskByID(msg.AllocationID)
-		rmevents.Publish(msg.AllocationID, sproto.ResourcesReleasedEvent{})
-	}
-}
-
-func (rp *resourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
-	if g, ok := rp.groups[jobID]; ok {
-		return g
-	}
-	g := &tasklist.Group{JobID: jobID, Weight: 1}
-
-	if rp.config.Scheduler.Priority != nil {
-		if rp.config.Scheduler.Priority.DefaultPriority == nil {
-			panic("default priority is not configured")
-		}
-		g.Priority = rp.config.Scheduler.Priority.DefaultPriority
-	}
-
-	rp.groups[jobID] = g
-	tasklist.GroupPriorityChangeRegistry.OnDelete(jobID, func() {
-		rp.JobStopped(jobID)
-	})
-	return g
 }
 
 func (rp *resourcePool) updateScalingInfo() bool {
@@ -421,74 +521,64 @@ func (rp *resourcePool) updateScalingInfo() bool {
 	return rp.scalingInfo.Update(desiredInstanceNum, agents)
 }
 
-func (rp *resourcePool) sendScalingInfo() {
-	if rp.provisioner != nil && rp.updateScalingInfo() {
-		rp.provisioner.UpdateScalingInfo(rp.scalingInfo)
+func (rp *resourcePool) refreshAgentStateCacheFor(agents []*agent) {
+	for _, a := range agents {
+		state, err := a.State()
+		if err != nil {
+			rp.syslog.WithError(err).Warnf("failed to get agent state for agent %s", a.id)
+			delete(rp.agentStatesCache, state.id)
+			continue
+		}
+		rp.agentStatesCache[a.id] = state
 	}
 }
 
-// TODO(!!!): Do we even need to "crash" resource pools? Ever..?
-// TODO(!!!): Test failure domains, what happens when this panics?
-func (rp *resourcePool) schedulerTick() {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-
-	if rp.provisioner != nil {
-		if err := rp.provisioner.LaunchError(); err != rp.provisionerError {
-			rp.provisionerError = err
-			if err != nil {
-				rp.reschedule = true
-			}
-		}
+func (rp *resourcePool) pruneTaskList() {
+	if rp.provisioner == nil || rp.provisionerError == nil {
+		return
 	}
-	if rp.reschedule {
-		rp.syslog.Trace("scheduling")
-		rp.agentStatesCache = rp.agentService.list()
-		defer func() {
-			rp.agentStatesCache = nil
-		}()
 
-		rp.pruneTaskList()
-		toAllocate, toRelease := rp.scheduler.Schedule(rp)
-		if len(toAllocate) > 0 || len(toRelease) > 0 {
-			rp.syslog.
-				WithField("toAllocate", len(toAllocate)).
-				WithField("toRelease", len(toRelease)).
-				Debugf("scheduled")
-		}
-		for _, req := range toAllocate {
-			rp.allocateResources(req)
-		}
-		for _, aID := range toRelease {
-			rp.releaseResource(aID)
-		}
-		rp.sendScalingInfo()
+	before := rp.taskList.Len()
+	slotCount, err := rp.provisioner.CurrentSlotCount()
+	if err != nil {
+		return
 	}
-	rp.reschedule = false
-	time.AfterFunc(actionCoolDown, rp.schedulerTick)
+
+	rp.syslog.
+		WithError(rp.provisionerError).
+		WithField("slotCount", slotCount).
+		Error("provisioner in error state")
+
+	var allocationsToRemove []model.AllocationID
+	for it := rp.taskList.Iterator(); it.Next(); {
+		task := it.Value()
+		if rp.taskList.IsScheduled(task.AllocationID) {
+			rp.syslog.Debugf("task %s already in progress", task.AllocationID)
+			continue
+		}
+		if task.SlotsNeeded <= slotCount {
+			rp.syslog.Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
+			continue
+		}
+		rp.syslog.WithError(rp.provisionerError).Warnf("removing task %s from list", task.AllocationID)
+		allocationsToRemove = append(allocationsToRemove, task.AllocationID)
+	}
+	for _, aID := range allocationsToRemove {
+		rmevents.Publish(aID, &sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
+	}
+	after := rp.taskList.Len()
+	rp.syslog.WithField("before", before).WithField("after", after).Warn("pruned task list")
 }
 
 func (rp *resourcePool) NotifyAgentUpdated() {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
-
-	// TODO(!!!): Maybe we invert this bit, so we schedule by default always but have explicit skips.
 	rp.reschedule = true
 }
-
-func (rp *resourcePool) Allocate(msg sproto.AllocateRequest) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	rp.allocateRequest(msg)
-}
-
-// TODO(!!!): Don't forget to go back and fix the reschedule shit.
 
 func (rp *resourcePool) GetAllocationSummary(msg sproto.GetAllocationSummary) (sproto.AllocationSummary, bool) {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
-
-	// TODO(!!!): No reschedule.
 
 	resp := rp.taskList.TaskSummary(msg.ID, rp.groups, rp.config.Scheduler.GetType())
 	if resp == nil {
@@ -502,9 +592,6 @@ func (rp *resourcePool) GetAllocationSummaries(
 ) map[model.AllocationID]sproto.AllocationSummary {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
-
-	// TODO(!!!): No reschedule.
-
 	return rp.taskList.TaskSummaries(rp.groups, rp.config.Scheduler.GetType())
 }
 
@@ -514,8 +601,6 @@ func (rp *resourcePool) ValidateCommandResources(
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
-	// TODO(!!!): No reschedule.
-
 	fulfillable := true // Default to "true" when unknown.
 	if rp.slotsPerInstance > 0 {
 		fulfillable = rp.slotsPerInstance >= msg.Slots
@@ -523,11 +608,11 @@ func (rp *resourcePool) ValidateCommandResources(
 	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
 }
 
-func (rp *resourcePool) getResourceSummary(msg getResourceSummary) resourceSummary {
+// getResourceSummary requests a summary of the resources used by the resource pool (agents, slots, cpu containers).
+// TODO(!!!): Caps, following the convention we have going.
+func (rp *resourcePool) getResourceSummary() resourceSummary {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
-
-	// TODO(!!!): No reschedule.
 
 	rp.agentStatesCache = rp.agentService.list()
 	defer func() {
@@ -539,8 +624,6 @@ func (rp *resourcePool) getResourceSummary(msg getResourceSummary) resourceSumma
 func (rp *resourcePool) CapacityCheck(msg sproto.CapacityCheck) (sproto.CapacityCheckResponse, error) {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
-
-	// TODO(!!!): No reschedule.
 
 	var totalSlots int
 	blockedNodeSet := set.New[string]()
@@ -592,6 +675,14 @@ func (rp *resourcePool) CapacityCheck(msg sproto.CapacityCheck) (sproto.Capacity
 		CapacityExceeded: capacityExceeded,
 		SlotsAvailable:   totalSlots,
 	}, nil
+}
+
+func (rp *resourcePool) MoveJob(msg sproto.MoveJob) error {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
+	rp.reschedule = true
+
+	return rp.moveJob(msg.ID, msg.Anchor, msg.Ahead)
 }
 
 func (rp *resourcePool) moveJob(
@@ -690,27 +781,11 @@ func (rp *resourcePool) moveJob(
 	return nil
 }
 
-func (rp *resourcePool) SetGroupWeight(msg sproto.SetGroupWeight) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	rp.getOrCreateGroup(msg.JobID).Weight = msg.Weight
-}
-
-func (rp *resourcePool) SetGroupPriority(msg sproto.SetGroupPriority) error {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	return rp.setGroupPriority(msg)
-}
-
-func (rp *resourcePool) MoveJob(msg sproto.MoveJob) error {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	return rp.moveJob(msg.ID, msg.Anchor, msg.Ahead)
-}
-
 func (rp *resourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
+	rp.reschedule = true
+
 	rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
 
@@ -727,88 +802,19 @@ func (rp *resourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJo
 	return rp.scheduler.JobQInfo(rp)
 }
 
-func (rp *resourcePool) setGroupPriority(msg sproto.SetGroupPriority) error {
-	g := rp.getOrCreateGroup(msg.JobID)
-	if (g.Priority != nil && *g.Priority == msg.Priority) ||
-		rp.config.Scheduler.Priority == nil {
-		return nil
-	}
-	rp.syslog.Infof("setting priority for group of %s to %d", msg.JobID, msg.Priority)
-	g.Priority = &msg.Priority
-	time, err := tasklist.GetJobSubmissionTime(rp.taskList, msg.JobID)
-	if err != nil {
-		rp.syslog.Errorf("failed to get job submission time: %s", err)
-		return nil
-	}
-	rp.queuePositions[msg.JobID] = tasklist.InitializeQueuePosition(time, false)
-	return nil
-}
-
-func (rp *resourcePool) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	rp.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
-}
-
-func (rp *resourcePool) SetAllocationName(msg sproto.SetAllocationName) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	rp.receiveSetTaskName(msg)
-}
-
 func (rp *resourcePool) JobStopped(jobID model.JobID) {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
+	rp.reschedule = true
 
 	delete(rp.groups, jobID)
 	delete(rp.queuePositions, jobID)
 }
 
-func (rp *resourcePool) refreshAgentStateCacheFor(agents []*agent) {
-	for _, a := range agents {
-		state, err := a.State()
-		if err != nil {
-			rp.syslog.WithError(err).Warnf("failed to get agent state for agent %s", a.id)
-			delete(rp.agentStatesCache, state.id)
-			continue
-		}
-		rp.agentStatesCache[a.id] = state
-	}
-}
+// only for tests, for now.
+func (rp *resourcePool) stop() {
+	rp.mu.Lock()
+	defer rp.mu.Unlock()
 
-func (rp *resourcePool) pruneTaskList() {
-	if rp.provisioner == nil || rp.provisionerError == nil {
-		return
-	}
-
-	before := rp.taskList.Len()
-	slotCount, err := rp.provisioner.CurrentSlotCount()
-	if err != nil {
-		return
-	}
-
-	rp.syslog.
-		WithError(rp.provisionerError).
-		WithField("slotCount", slotCount).
-		Error("provisioner in error state")
-
-	var allocationsToRemove []model.AllocationID
-	for it := rp.taskList.Iterator(); it.Next(); {
-		task := it.Value()
-		if rp.taskList.IsScheduled(task.AllocationID) {
-			rp.syslog.Debugf("task %s already in progress", task.AllocationID)
-			continue
-		}
-		if task.SlotsNeeded <= slotCount {
-			rp.syslog.Debugf("task %s can be scheduled with number of available slots", task.AllocationID)
-			continue
-		}
-		rp.syslog.WithError(rp.provisionerError).Warnf("removing task %s from list", task.AllocationID)
-		allocationsToRemove = append(allocationsToRemove, task.AllocationID)
-	}
-	for _, aID := range allocationsToRemove {
-		rmevents.Publish(aID, &sproto.InvalidResourcesRequestError{Cause: rp.provisionerError})
-	}
-	after := rp.taskList.Len()
-	rp.syslog.WithField("before", before).WithField("after", after).Warn("pruned task list")
+	rp.rescheduleTimer.Stop()
 }
