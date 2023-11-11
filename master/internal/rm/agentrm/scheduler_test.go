@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -31,7 +32,7 @@ func setupResourcePool(
 	mockTasks []*MockTask,
 	mockGroups []*MockGroup,
 	mockAgents []*MockAgent,
-) (*resourcePool, *actor.Ref) {
+) *resourcePool {
 	if conf == nil {
 		conf = &config.ResourcePoolConfig{PoolName: "pool"}
 	}
@@ -44,21 +45,19 @@ func setupResourcePool(
 
 	agentsRef, _ := newAgentService([]config.ResourcePoolConfig{*conf}, &aproto.MasterSetAgentOptions{})
 
-	rp := newResourcePool(
+	rp, err := newResourcePool(
 		conf, db, nil, MakeScheduler(conf.Scheduler),
 		MakeFitFunction(conf.Scheduler.FittingPolicy), agentsRef)
+	require.NoError(t, err)
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)
 	rp.saveNotifications = true
-	ref, created := system.ActorOf(actor.Addr(rp.config.PoolName), rp)
-	assert.Assert(t, created)
-	system.Ask(ref, actor.Ping{}).Get()
 
 	for _, task := range mockTasks {
-		task.RMRef = ref
+		task.RPRef = rp
 	}
-	return rp, ref
+	return rp
 }
 
 func forceAddAgent(

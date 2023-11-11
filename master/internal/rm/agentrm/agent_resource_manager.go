@@ -343,7 +343,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			rp, err := a.createResourcePool(ctx, a.db, a.poolsConfig[ix], a.cert)
 			if err != nil {
 				// TODO(!!!): Crash cluster or no?
-				ctx.Log().WithError(err).Error("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
+				ctx.Log().WithError(err).Errorf("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
 				continue
 			}
 			a.pools[config.PoolName] = rp
@@ -406,7 +406,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		for _, pool := range a.pools {
 			err := pool.setGroupPriority(msg)
 			if err != nil {
-				ctx.Log().WithError(err).Error("failed to set priority for job %s", msg.JobID)
+				ctx.Log().WithError(err).Errorf("failed to set priority for job %s", msg.JobID)
 				if ctx.ExpectingResponse() {
 					ctx.Respond(err)
 				}
@@ -420,7 +420,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		for _, pool := range a.pools {
 			err := pool.MoveJob(msg)
 			if err != nil {
-				ctx.Log().WithError(err).Error("failed to move job %s", msg.ID)
+				ctx.Log().WithError(err).Errorf("failed to move job %s", msg.ID)
 				if ctx.ExpectingResponse() {
 					ctx.Respond(err)
 				}
@@ -825,7 +825,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	if err != nil {
 		return nil, err
 	}
-	resourceSummary := rp.getResourceSummary(getResourceSummary{})
+	resourceSummary := rp.getResourceSummary()
 
 	resp.NumAgents = int32(resourceSummary.numAgents)
 	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
