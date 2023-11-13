@@ -1,9 +1,8 @@
 import { Space, Typography } from 'antd';
 import Avatar from 'hew/Avatar';
 import Icon from 'hew/Icon';
-import Progress from 'hew/Progress';
 import Spinner from 'hew/Spinner';
-import { getStateColorCssVar, StateOfUnion } from 'hew/Theme';
+import { StateOfUnion } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
@@ -220,20 +219,6 @@ export const experimentNameRenderer = (
     </Link>
   </Typography.Text>
 );
-
-export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  const color = getStateColorCssVar(record.state);
-  return typeof record.progress !== 'undefined' ? (
-    <Progress
-      parts={[
-        {
-          color,
-          percent: record.progress,
-        },
-      ]}
-    />
-  ) : null;
-};
 
 /* Model Table Column Renderers */
 

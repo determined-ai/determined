@@ -1,5 +1,6 @@
-import { GLASBEY } from 'constants/colors';
+import { getStateColorCssVar, StateOfUnion, ThemeVariable } from 'hew/Theme';
 
+import { GLASBEY } from 'constants/colors';
 /*
  * h - hue between 0 and 360
  * s - saturation between 0.0 and 1.0
@@ -254,4 +255,24 @@ export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => 
 
 export const rgbDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => {
   return pointDistance([rgba0.r, rgba0.g, rgba0.b], [rgba1.r, rgba1.g, rgba1.b]);
+};
+
+export const cssVarToThemeVar = (cssVar: string): ThemeVariable => {
+  const regEx = /var\(--theme-(.*?)\)/;
+  const themeVarStringArray = cssVar.match(regEx)?.[1].split('-');
+  const themeVariable = themeVarStringArray?.[0].concat(
+    themeVarStringArray
+      .slice(1)
+      .map((propertyName: string) => propertyName.replaceAll('interactive', 'ix'))
+      .map((propertyName: string) => propertyName.charAt(0).toUpperCase() + propertyName.slice(1))
+      .join(''),
+  );
+  return themeVariable as ThemeVariable;
+};
+
+export const getStateColorThemeVar = (
+  state: StateOfUnion | undefined,
+  options: { isOn?: boolean; strongWeak?: 'strong' | 'weak' } = {},
+): ThemeVariable => {
+  return cssVarToThemeVar(getStateColorCssVar(state, options));
 };

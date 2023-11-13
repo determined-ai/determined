@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as src from 'hew/LogViewer/LogViewer';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
@@ -75,7 +75,7 @@ const generateLogs = (
 
 const setup = (props: src.Props) => {
   return render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <src.default {...props} />
       {/* increase variation in DOM */}
       <span>{Math.random()}</span>

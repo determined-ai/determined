@@ -5,7 +5,9 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
+import Progress from 'hew/Progress';
 import Tags from 'hew/Tags';
+import { useTheme } from 'hew/Theme';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -28,7 +30,6 @@ import {
   defaultRowClassName,
   experimentDurationRenderer,
   experimentNameRenderer,
-  experimentProgressRenderer,
   ExperimentRenderer,
   expStateRenderer,
   getFullPaginationConfig,
@@ -71,6 +72,7 @@ import {
   RecordKey,
   RunState,
 } from 'types';
+import { getStateColorThemeVar } from 'utils/color';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
   canActionExperiment,
@@ -126,7 +128,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [batchAction, setBatchAction] = useState<Action>();
   const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-
+  const { getThemeVar } = useTheme();
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
 
@@ -442,6 +444,20 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
     const checkpointSizeRenderer = (value: number) => (value ? humanReadableBytes(value) : '');
 
+    const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
+      const color = getThemeVar(getStateColorThemeVar(record.state));
+      return typeof record.progress !== 'undefined' ? (
+        <Progress
+          parts={[
+            {
+              color,
+              percent: record.progress,
+            },
+          ]}
+        />
+      ) : null;
+    };
+
     return [
       {
         align: 'right',
@@ -631,6 +647,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     ContextMenu,
     experimentTags,
+    getThemeVar,
     labelFilterDropdown,
     labels,
     nameFilterSearch,

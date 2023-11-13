@@ -3,7 +3,7 @@ import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
 import Select, { Option, RefSelectProps } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
@@ -38,6 +38,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
 }: Props) => {
   const idPrefix = useId();
   const [filteredOption, setFilteredOption] = useState<UserOrGroup[]>([]);
+  const { openToast } = useToast();
   const [form] = Form.useForm<FormInputs>();
   const ref = useRef<RefSelectProps>(null);
 
@@ -85,7 +86,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
 
         form.resetFields();
         onClose?.();
-        makeToast({
+        openToast({
           severity: 'Confirm',
           title: `${values.userOrGroupId.length} users or groups added to workspace.`,
         });
@@ -109,7 +110,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
         });
       }
     }
-  }, [form, workspace.id, onClose]);
+  }, [form, workspace.id, onClose, openToast]);
 
   return (
     <Modal

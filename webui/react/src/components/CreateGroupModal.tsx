@@ -4,7 +4,7 @@ import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -73,6 +73,8 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
   const isCreateModal = !group;
   const messages = isCreateModal ? CREATE_VALUES : EDIT_VALUES;
 
+  const { openToast } = useToast();
+
   const roles = useObservable(roleStore.roles);
   const groupName = Form.useWatch(GROUP_NAME_NAME, form);
 
@@ -128,7 +130,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
           groupRoles.map((r) => r.id),
         );
         if (!nameUpdated && !rolesUpdated) {
-          makeToast({ title: 'No changes to save.' });
+          openToast({ title: 'No changes to save.' });
           return;
         }
 
@@ -171,11 +173,11 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
           }
         }
       }
-      makeToast({ severity: 'Confirm', title: messages.API_SUCCESS_MESSAGE });
+      openToast({ severity: 'Confirm', title: messages.API_SUCCESS_MESSAGE });
       form.resetFields();
       onClose?.();
     } catch (e) {
-      makeToast({ severity: 'Error', title: messages.API_FAILURE_MESSAGE });
+      openToast({ severity: 'Error', title: messages.API_FAILURE_MESSAGE });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

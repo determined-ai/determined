@@ -1,12 +1,12 @@
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
+import useUI from 'components/ThemeProvider';
 import { terminalRunStates } from 'constants/states';
 import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';

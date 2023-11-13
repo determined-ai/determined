@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
@@ -144,22 +145,26 @@ const setup = (options?: { pagination?: Pagination }) => {
   });
 
   const view = render(
-    <ResponsiveTable<TableItem>
-      columns={newColumns}
-      dataSource={data}
-      pagination={paginationConfig}
-      onChange={onChange}
-    />,
+    <UIProvider theme={DefaultTheme.Light}>
+      <ResponsiveTable<TableItem>
+        columns={newColumns}
+        dataSource={data}
+        pagination={paginationConfig}
+        onChange={onChange}
+      />
+    </UIProvider>,
   );
 
   const rerender = () =>
     view.rerender(
-      <ResponsiveTable<TableItem>
-        columns={columns}
-        dataSource={data}
-        pagination={paginationConfig}
-        onChange={onChange}
-      />,
+      <UIProvider theme={DefaultTheme.Light}>
+        <ResponsiveTable<TableItem>
+          columns={columns}
+          dataSource={data}
+          pagination={paginationConfig}
+          onChange={onChange}
+        />
+      </UIProvider>,
     );
 
   const user = userEvent.setup();

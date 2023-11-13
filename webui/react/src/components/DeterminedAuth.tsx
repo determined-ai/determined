@@ -3,10 +3,10 @@ import Button from 'hew/Button';
 import Form from 'hew/Form';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
-import useUI from 'hew/Theme';
 import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';

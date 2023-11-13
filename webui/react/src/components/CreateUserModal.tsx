@@ -4,7 +4,7 @@ import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
@@ -58,6 +58,7 @@ interface FormInputs {
 }
 
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
+  const { openToast } = useToast();
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -108,7 +109,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         }
         fetchUserRoles();
         if (currentUser?.id === user.id) checkAuth();
-        makeToast({ severity: 'Confirm', title: 'User has been updated' });
+        openToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {
         formData[ACTIVE_NAME] = true;
         const u = await postUser({ user: formData });
@@ -116,12 +117,12 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: uid }]);
         }
-        makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
+        openToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
         form.resetFields();
       }
       onClose?.();
     } catch (e) {
-      makeToast({
+      openToast({
         severity: 'Error',
         title: user ? 'Error updating user' : 'Error creating new user',
       });

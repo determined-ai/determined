@@ -1,7 +1,7 @@
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 
 import { assignMultipleGroups } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -27,7 +27,7 @@ const AddUsersToGroupsModalComponent = ({
   fetchUsers,
 }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
-
+  const { openToast } = useToast();
   const onSubmit = async () => {
     const values = await form.validateFields();
 
@@ -36,7 +36,7 @@ const AddUsersToGroupsModalComponent = ({
         new Set(values[GROUPS_NAME].flatMap((v) => (v !== undefined ? [v] : []))),
       );
       await assignMultipleGroups({ addGroups: groupIds, removeGroups: [], userIds });
-      makeToast({
+      openToast({
         title: 'Successfully added to groups',
       });
       clearTableSelection();

@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { Suspense } from 'react';
 
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
@@ -16,7 +16,7 @@ vi.mock('services/api', () => ({
 
 const setup = (pool: ResourcePool) => {
   const view = render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <Suspense>
         <RenderAllocationBarResourcePool resourcePool={pool} />
       </Suspense>

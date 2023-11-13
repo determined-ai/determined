@@ -1,10 +1,10 @@
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
+import useUI from 'components/ThemeProvider';
 import { terminalCommandStates } from 'constants/states';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';

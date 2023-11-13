@@ -3,7 +3,7 @@ import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import useUI, { DarkLight, ShirtSize } from 'hew/Theme';
+import { ShirtSize } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import React, { Suspense, useCallback, useEffect, useMemo } from 'react';
@@ -14,6 +14,7 @@ import gcpLogo from 'assets/images/gcp-logo.svg?url';
 import k8sLogo from 'assets/images/k8s-logo.svg?url';
 import staticLogo from 'assets/images/on-prem-logo.svg?url';
 import SlotAllocationBar from 'components/SlotAllocationBar';
+import useUI from 'components/ThemeProvider';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -70,12 +71,12 @@ const poolAttributes = [
 
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
-  const { ui } = useUI();
+  const { isDarkMode } = useUI();
 
   let iconSrc = '';
   switch (type) {
     case V1ResourcePoolType.AWS:
-      iconSrc = ui.darkLight === DarkLight.Light ? awsLogo : awsLogoOnDark;
+      iconSrc = isDarkMode ? awsLogo : awsLogoOnDark;
       break;
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;

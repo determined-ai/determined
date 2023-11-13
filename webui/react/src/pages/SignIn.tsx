@@ -1,7 +1,6 @@
 import { Divider } from 'antd';
 import Button from 'hew/Button';
 import Form from 'hew/Form';
-import useUI from 'hew/Theme';
 import { notification } from 'hew/Toast';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -14,6 +13,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
+import useUI from 'components/ThemeProvider';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';

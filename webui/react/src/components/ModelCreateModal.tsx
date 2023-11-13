@@ -4,7 +4,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useId, useState } from 'react';
@@ -41,6 +41,7 @@ interface Props {
 const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
   const idPrefix = useId();
   const { canCreateModelWorkspace } = usePermissions();
+  const { openToast } = useToast();
   const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
   const loadableWorkspaces = useObservable(workspaceStore.workspaces);
   const isWorkspace = workspaceId !== undefined;
@@ -72,7 +73,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         workspaceId,
       });
       if (!response?.id) return;
-      makeToast({
+      openToast({
         description: `${modelName} has been created`,
         link: <Link path={paths.modelDetails(response.name)}>View Model</Link>,
         severity: 'Info',

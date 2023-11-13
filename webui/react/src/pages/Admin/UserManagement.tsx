@@ -6,7 +6,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
 import Select, { SelectValue } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -81,14 +81,14 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const ManageGroupsModal = useModal(ManageGroupsModalComponent);
   const ConfigureAgentModal = useModal(ConfigureAgentModalComponent);
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
-
+  const { openToast } = useToast();
   const { canModifyUsers } = usePermissions();
   const { rbacEnabled } = useObservable(determinedStore.info);
 
   const onToggleActive = useCallback(async () => {
     try {
       await patchUsers({ activate: !user.isActive, userIds: [user.id] });
-      makeToast({
+      openToast({
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
       });
@@ -101,7 +101,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
         type: ErrorType.Api,
       });
     }
-  }, [fetchUsers, user]);
+  }, [fetchUsers, openToast, user]);
 
   const menuItems =
     userManagementEnabled && canModifyUsers

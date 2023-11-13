@@ -7,7 +7,7 @@ import {
   SizedGridColumn,
 } from '@hpe.com/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import { DarkLight, Theme } from 'hew/Theme';
+import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
 import { paths } from 'routes/utils';
@@ -89,14 +89,14 @@ interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
   rowSelection: CompactSelection;
-  darkLight: DarkLight;
+  themeIsDark: boolean;
   users: Loadable<DetailedUser[]>;
   selectAll: boolean;
 }
 export const getColumnDefs = ({
   columnWidths,
   rowSelection,
-  darkLight,
+  themeIsDark,
   users,
   selectAll,
   appTheme,
@@ -414,7 +414,7 @@ export const getColumnDefs = ({
           image: undefined,
           initials: getInitials(displayName),
           kind: 'user-profile-cell',
-          tint: getColor(displayName, darkLight),
+          tint: getColor(displayName, themeIsDark),
         },
         kind: GridCellKind.Custom,
       };
