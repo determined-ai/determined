@@ -534,20 +534,12 @@ func (a *apiServer) GetTasks(
 			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
 		if authz.IsPermissionDenied(err) {
-			obfuscatedSummary, err := authz.ObfuscateNTSCTask(allocationSummary)
-			if err != nil {
-				return nil, err
-			}
-			if !isExp {
-				pbAllocationIDToSummary[string(authz.HiddenString)] = obfuscatedSummary.Proto()
-			} else {
-				pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
-			}
+			continue
 		} else if err != nil {
 			return nil, err
-		} else {
-			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 		}
+
+		pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 	}
 
 	return &apiv1.GetTasksResponse{AllocationIdToSummary: pbAllocationIDToSummary}, nil
