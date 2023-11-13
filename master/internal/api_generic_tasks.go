@@ -37,24 +37,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-func parseJustGenericResources(configBytes []byte) model.TaskResourcesConfig {
-	// Make this function usable on experiment or command configs.
-	type DummyConfig struct {
-		Resources model.TaskResourcesConfig `json:"resources"`
-	}
-
-	dummy := DummyConfig{
-		Resources: model.TaskResourcesConfig{
-			SlotsPerTask: 1,
-		},
-	}
-
-	// Don't throw errors; validation should happen elsewhere.
-	_ = yaml.Unmarshal(configBytes, &dummy)
-
-	return dummy.Resources
-}
-
 func (a *apiServer) getGenericTaskLaunchParameters(
 	ctx context.Context,
 	contextDirectory []*utilv1.File,
@@ -92,10 +74,14 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	}
 
 	// Validate the resource configuration.
-	resources := parseJustGenericResources([]byte(configYAML))
+	resources := model.ParseJustResources([]byte(configYAML))
+
+	if resources.SlotsPerTask == nil {
+		resources.SlotsPerTask = ptrs.Ptr(1)
+	}
 
 	poolName, err := a.m.rm.ResolveResourcePool(
-		resources.ResourcePool, workspaceID, resources.SlotsPerTask)
+		resources.ResourcePool, workspaceID, *resources.SlotsPerTask)
 	if err != nil {
 		return nil, nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -103,7 +89,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
 		&sproto.ValidateResourcePoolAvailabilityRequest{
 			Name:  poolName,
-			Slots: resources.SlotsPerTask,
+			Slots: *resources.SlotsPerTask,
 		},
 	)
 	if err != nil {
@@ -138,11 +124,11 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	}
 
 	// Copy discovered (default) resource pool name and slot count.
-	taskConfig.Resources.ResourcePool = poolName
-	taskConfig.Resources.SlotsPerTask = resources.SlotsPerTask
+	taskConfig.Resources.RawResourcePool = &poolName
+	taskConfig.Resources.RawSlotsPerTask = resources.SlotsPerTask
 
 	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
-	if taskConfig.Resources.SlotsPerTask == 0 {
+	if taskConfig.Resources.SlotsPerTask() == 0 {
 		taskContainerPodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
 	}
 	taskConfig.Environment.PodSpec = (*k8sV1.Pod)(schemas.Merge(
@@ -282,25 +268,25 @@ func (a *apiServer) CreateGenericTask(
 	if err = tasklist.GroupPriorityChangeRegistry.Add(jobID, priorityChange); err != nil {
 		return nil, err
 	}
-	// TODO actually create the task
+
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
 		TaskID:            taskID,
 		JobID:             jobID,
 		JobSubmissionTime: startTime,
 		IsUserVisible:     true,
-		Name:              genericTaskSpec.GenericTaskConfig.Description,
+		Name:              fmt.Sprintf("Generic Task %s", taskID),
 
-		SlotsNeeded:  genericTaskSpec.GenericTaskConfig.Resources.SlotsPerTask,
-		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool,
+		SlotsNeeded:  genericTaskSpec.GenericTaskConfig.Resources.SlotsPerTask(),
+		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
-			SingleAgent: true,
+			SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
 		},
 
-		//ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), taskID),
-		//IdleTimeout: idleWatcherConfig,
+		// ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), taskID),
+		// IdleTimeout: idleWatcherConfig,
 		Restore: false,
-		//ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
+		// ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
 	}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
 	if err != nil {
 		return nil, err

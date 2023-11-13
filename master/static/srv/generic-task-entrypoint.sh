@@ -8,7 +8,7 @@ if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
     export DET_PYTHON_EXECUTABLE="python3"
 fi
 
-# In order to be able to use a proxy when running a command, Python must be
+# In order to be able to use a proxy when running a generic task, Python must be
 # available in the container, and the "determined*.whl" must be installed,
 # which contains the "determined/exec/prep_container.py" script that's needed
 # to register the proxy with the Determined master.

@@ -1871,6 +1871,21 @@ var (
             "minimum": 0,
             "default": 1
         },
+        "slots_per_task": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 1
+        },
+        "is_single_node": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
         "weight": {
             "type": [
                 "number",

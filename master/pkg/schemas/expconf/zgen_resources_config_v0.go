@@ -16,6 +16,17 @@ func (r *ResourcesConfigV0) SetSlots(val *int) {
 	r.RawSlots = val
 }
 
+func (r ResourcesConfigV0) IsSingleNode() bool {
+	if r.RawIsSingleNode == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .IsSingleNode")
+	}
+	return *r.RawIsSingleNode
+}
+
+func (r *ResourcesConfigV0) SetIsSingleNode(val bool) {
+	r.RawIsSingleNode = &val
+}
+
 func (r ResourcesConfigV0) MaxSlots() *int {
 	return r.RawMaxSlots
 }
@@ -33,6 +44,17 @@ func (r ResourcesConfigV0) SlotsPerTrial() int {
 
 func (r *ResourcesConfigV0) SetSlotsPerTrial(val int) {
 	r.RawSlotsPerTrial = &val
+}
+
+func (r ResourcesConfigV0) SlotsPerTask() int {
+	if r.RawSlotsPerTask == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .SlotsPerTask")
+	}
+	return *r.RawSlotsPerTask
+}
+
+func (r *ResourcesConfigV0) SetSlotsPerTask(val int) {
+	r.RawSlotsPerTask = &val
 }
 
 func (r ResourcesConfigV0) Weight() float64 {

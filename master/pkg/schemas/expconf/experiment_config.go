@@ -210,8 +210,10 @@ type ResourcesConfigV0 struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
 	RawSlots *int `json:"slots,omitempty"`
 
+	RawIsSingleNode   *bool    `json:"is_single_node"`
 	RawMaxSlots       *int     `json:"max_slots"`
 	RawSlotsPerTrial  *int     `json:"slots_per_trial"`
+	RawSlotsPerTask   *int     `json:"slots_per_task"`
 	RawWeight         *float64 `json:"weight"`
 	RawNativeParallel *bool    `json:"native_parallel,omitempty"`
 	RawShmSize        *int     `json:"shm_size"`

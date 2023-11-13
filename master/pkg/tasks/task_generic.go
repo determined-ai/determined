@@ -10,19 +10,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// Maybe think of better name.
+// GenericTaskSpec is the generic task spec.
 type GenericTaskSpec struct {
-	Base TaskSpec
-
-	// CollectionID int //
-	// RunID        int //
-	// TrialRunID int // restartsID, should be somewhere else?
-
+	Base      TaskSpec
 	ProjectID int
 
 	GenericTaskConfig model.GenericTaskConfig
-
-	// Keys ssh.PrivateAndPublicKeys
 }
 
 func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
@@ -39,15 +32,18 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 			tar.TypeReg,
 		),
 	}, "/")
+
 	res.ExtraArchives = []cproto.RunArchive{commandEntryArchive}
 	res.TaskType = s.Base.TaskType
 	res.Environment = s.GenericTaskConfig.Environment.ToExpconf()
+
 	res.WorkDir = DefaultWorkDir
 	if s.GenericTaskConfig.WorkDir != nil {
 		res.WorkDir = *s.GenericTaskConfig.WorkDir
 	}
 	res.ResolveWorkDir()
-	// res.ResourcesConfig = s.GenericTaskConfig.Resources.ToExpconf()
+
+	res.ResourcesConfig = s.GenericTaskConfig.Resources
 
 	return res
 }
