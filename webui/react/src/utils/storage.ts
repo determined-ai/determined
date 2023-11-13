@@ -11,6 +11,7 @@ export class MemoryStore implements Storage {
   private store: Record<string, string>;
 
   constructor() {
+    this.length = 0;
     this.store = {};
   }
 

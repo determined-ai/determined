@@ -156,9 +156,9 @@ vi.mock('hew/internal/useGetCharMeasureInContainer', () => ({
 vi.mock('hew/internal/services', () => ({
   __esModule: true,
   readLogStream: (
-    serverAddress: (path: string) => string,
+    _serverAddress: (path: string) => string,
     { options }: FetchArgs,
-    onError: (e: unknown, options?: object) => void,
+    _onError: (e: unknown, options?: object) => void,
     onEvent: (event: unknown) => void,
   ): void => {
     // Default mocking options.

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { ResourcePool } from 'types';

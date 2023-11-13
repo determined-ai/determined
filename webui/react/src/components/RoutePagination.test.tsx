@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
-import React from 'react';
 
 import RoutePagination from './RoutePagination';
 

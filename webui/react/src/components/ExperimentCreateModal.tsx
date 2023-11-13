@@ -401,7 +401,7 @@ const ExperimentCreateModalComponent = ({
               rules={[
                 {
                   required: true,
-                  validator: (rule, value) => {
+                  validator: (_rule, value) => {
                     let errorMessage = '';
                     if (!value) errorMessage = 'Please provide a max length.';
                     if (value < 1) errorMessage = 'Max length must be at least 1.';

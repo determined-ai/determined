@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { ThemeProvider } from 'components/ThemeProvider';
 import { stateToLabel } from 'constants/states';

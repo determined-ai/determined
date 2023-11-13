@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
-import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'types';
@@ -84,7 +83,7 @@ const columnConfig: Record<RecordKey, ColumnConfig> = {
 };
 
 const generateTableData = (entries: number): TableItem[] => {
-  return new Array(entries).fill(null).map((entry, index) => {
+  return new Array(entries).fill(null).map((_entry, index) => {
     const row: UnknownRecord = { key: index };
 
     for (const column of columns) {

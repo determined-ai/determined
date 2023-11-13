@@ -352,21 +352,24 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [handleUserFilterApply, handleUserFilterReset, settings.user],
   );
 
-  const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
-    try {
-      await patchExperiment({
-        body: { description: editedDescription },
-        experimentId: id,
-      });
-    } catch (e) {
-      handleError(e, {
-        isUserTriggered: true,
-        publicMessage: 'Unable to save experiment description.',
-        silent: false,
-      });
-      return e as Error;
-    }
-  }, []);
+  const saveExperimentDescription = useCallback(
+    async (editedDescription: string, id: number): Promise<Error | void> => {
+      try {
+        await patchExperiment({
+          body: { description: editedDescription },
+          experimentId: id,
+        });
+      } catch (e) {
+        handleError(e, {
+          isUserTriggered: true,
+          publicMessage: 'Unable to save experiment description.',
+          silent: false,
+        });
+        return e as Error;
+      }
+    },
+    [],
+  );
 
   const canEditExperiment =
     !!project &&
@@ -398,7 +401,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    const tagsRenderer = (value: string, record: ExperimentItem) => (
+    const tagsRenderer = (_value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{

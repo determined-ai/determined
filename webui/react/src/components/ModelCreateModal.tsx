@@ -167,6 +167,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       if (metadataKeySet.size !== metadataKeys.length) {
                         return await Promise.reject(new Error('No dupelicate keys'));
                       }
+                      return await Promise.resolve();
                     },
                   },
                 ]}>
@@ -229,6 +230,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       if (tags && tagSet.size !== tags.length) {
                         return await Promise.reject(new Error('No dupelicate tags'));
                       }
+                      return await Promise.resolve();
                     },
                   },
                 ]}>

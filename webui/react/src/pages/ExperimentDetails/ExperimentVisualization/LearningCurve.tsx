@@ -162,7 +162,7 @@ const LearningCurve: React.FC<Props> = ({
     [handleTrialFocus, trialIds],
   );
 
-  const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
+  const handleTableMouseEnter = useCallback((_event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setHighlightedTrialId(record.id);
   }, []);
 

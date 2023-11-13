@@ -110,6 +110,7 @@ const ResourcePoolCard: React.FC<Props> = ({
     if (defaultAux && defaultCompute) return 'Default';
     if (defaultAux) return 'Default Aux';
     if (defaultCompute) return 'Default Compute';
+    return undefined;
   }, [defaultAux, defaultCompute]);
 
   useEffect(() => {

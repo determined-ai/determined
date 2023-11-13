@@ -100,7 +100,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
           rules={[
             {
               message: INCORRECT_PASSWORD_MESSAGE,
-              validator: async (rule, value) => {
+              validator: async (_rule, value) => {
                 await login({ password: value ?? '', username: currentUser?.username ?? '' });
               },
             },
@@ -115,7 +115,7 @@ const PasswordChangeModalComponent: React.FC<Props> = ({ newPassword, onSubmit }
             { message: CONFIRM_PASSWORD_REQUIRED_MESSAGE, required: true },
             {
               message: PASSWORDS_NOT_MATCHING_MESSAGE,
-              validator: (rule, value) => {
+              validator: (_rule, value) => {
                 return value === newPassword ? Promise.resolve() : Promise.reject();
               },
             },

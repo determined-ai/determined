@@ -90,12 +90,13 @@ const TimeAgo: React.FC<Props> = ({
     }
   }, [duration, stringCase]);
 
-  const updateInterval = useMemo(() => {
+  const updateInterval = useMemo((): number => {
     if (noUpdate || delta === 0) return 0;
     if (delta < DURATION_MINUTE) return DURATION_SECOND;
     if (delta < DURATION_HOUR) return DURATION_MINUTE;
     if (delta < DURATION_DAY) return DURATION_HOUR;
     if (delta < DURATION_YEAR) return DURATION_DAY;
+    return 0;
   }, [delta, noUpdate]);
 
   useEffect(() => {
