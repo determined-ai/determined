@@ -1,11 +1,29 @@
 package db
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/uptrace/bun"
+
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+// AddJobTx persists the existence of a job with a transcation.
+func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
+	if idb == nil {
+		idb = Bun()
+	}
+
+	if _, err := idb.NewInsert().Model(j).Exec(ctx); err != nil {
+		return fmt.Errorf("adding job: %w", err)
+	}
+
+	return nil
+}
 
 // AddJob persists the existence of a job.
 func (db *PgDB) AddJob(j *model.Job) error {

@@ -162,7 +162,6 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 				errors.Wrapf(err,
 					"unable to get external user token").Error())
 		}
-		err = nil
 	} else {
 		token, err = user.StartSession(ctx, userModel)
 		if err != nil {
@@ -175,6 +174,10 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	genericTaskSpec.Base = taskSpec
 	genericTaskSpec.GenericTaskConfig = taskConfig
+
+	genericTaskSpec.Base.ExtraEnvVars = map[string]string{
+		"DET_TASK_TYPE": string(model.TaskTypeGeneric),
+	}
 
 	return genericTaskSpec, launchWarnings, contextDirectoryBytes, nil
 }
@@ -207,7 +210,6 @@ func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) err
 func (a *apiServer) CreateGenericTask(
 	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
 ) (*apiv1.CreateGenericTaskResponse, error) {
-	// Parse launch commnads.
 	var projectID int
 	if req.ProjectId != nil {
 		projectID = int(*req.ProjectId)
@@ -234,33 +236,27 @@ func (a *apiServer) CreateGenericTask(
 		)
 	}
 
-	genericTaskSpec.Base.ExtraEnvVars = map[string]string{
-		"DET_TASK_TYPE": string(model.TaskTypeGeneric),
-	}
-
 	// Persist the task.
-
 	taskID := model.NewTaskID()
 	jobID := model.NewJobID()
 	startTime := time.Now()
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// TODO these actually aren't in the transcation.
-		if err := a.m.db.AddJob(&model.Job{
+		if err := db.AddJobTx(ctx, tx, &model.Job{
 			JobID:   jobID,
 			JobType: model.JobTypeGeneric,
 			OwnerID: &genericTaskSpec.Base.Owner.ID,
 		}); err != nil {
-			return errors.Wrapf(err, "persisting job %v", taskID)
+			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
 
-		if err := a.m.db.AddTask(&model.Task{
+		if err := db.AddTaskTx(ctx, tx, &model.Task{
 			TaskID:     taskID,
 			TaskType:   model.TaskTypeGeneric,
-			StartTime:  startTime, // start time is submit time?
+			StartTime:  startTime,
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
-			return errors.Wrapf(err, "persisting task %v", taskID)
+			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
 
 		// TODO persist config elemnts
@@ -304,20 +300,13 @@ func (a *apiServer) CreateGenericTask(
 			SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
 		},
 
-		// ProxyPorts:  sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), taskID),
-		// IdleTimeout: idleWatcherConfig,
 		Restore: false,
-		// ProxyTLS:    c.TaskType == model.TaskTypeNotebook,
 	}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
 	if err != nil {
 		return nil, err
 	}
 
 	jobservice.DefaultService.RegisterJob(jobID, genericTaskSpec)
-
-	// if err := c.persist(); err != nil {
-	// 	ctx.Log().WithError(err).Warnf("command persist failure")
-	// }
 
 	return &apiv1.CreateGenericTaskResponse{
 		TaskId:   string(taskID),
