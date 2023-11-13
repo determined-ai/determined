@@ -14,8 +14,6 @@ from determined.common import api, check
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
-NO_PERMISSIONS = "NO PERMISSIONS"
-
 
 def local_id(address: str) -> str:
     return os.path.basename(address)
@@ -28,7 +26,7 @@ def list_agents(args: argparse.Namespace) -> None:
     agents = [
         collections.OrderedDict(
             [
-                ("id", local_id(a.id) if a.id else NO_PERMISSIONS),
+                ("id", local_id(a.id)),
                 ("version", a.version),
                 ("registered_time", render.format_time(a.registeredTime)),
                 ("num_slots", len(a.slots) if a.slots is not None else ""),
@@ -66,17 +64,16 @@ def list_agents(args: argparse.Namespace) -> None:
 
 @authentication.required
 def list_slots(args: argparse.Namespace) -> None:
-    task_res = bindings.get_GetTasks(cli.setup_session(args))
+    task_res = api.get(args.master, "tasks")
     resp = bindings.get_GetAgents(cli.setup_session(args))
 
-    allocations = task_res.allocationIdToSummary if task_res.allocationIdToSummary else {}
+    allocations = task_res.json()
 
     c_names = {
-        r.containerId: {"name": a.name, "allocation_id": a.allocationId if a.name else ""}
+        r["container_id"]: {"name": a["name"], "allocation_id": a["allocation_id"]}
         for a in allocations.values()
-        for r in a.resources
-        if a.resources
-        if r.containerId
+        for r in a["resources"]
+        if r["container_id"]
     }
 
     def device_type_string(deviceType: typing.Optional[bindings.devicev1Type]) -> str:
@@ -95,8 +92,7 @@ def list_slots(args: argparse.Namespace) -> None:
         container_id = slot.container.id
 
         if slot.container and container_id in containers:
-            name = str(containers[container_id]["name"])
-            return name if name else NO_PERMISSIONS
+            return str(containers[container_id]["name"])
 
         if slot.container and (
             "determined-master-deployment" in container_id
@@ -112,7 +108,7 @@ def list_slots(args: argparse.Namespace) -> None:
     slots = [
         collections.OrderedDict(
             [
-                ("agent_id", local_id(agent.id) if agent.id else local_id(NO_PERMISSIONS)),
+                ("agent_id", local_id(agent.id)),
                 (
                     "resource_pools",
                     ", ".join(agent.resourcePools) if agent.resourcePools is not None else "",
@@ -123,9 +119,7 @@ def list_slots(args: argparse.Namespace) -> None:
                 (
                     "allocation_id",
                     c_names[slot.container.id]["allocation_id"]
-                    if slot.container
-                    and slot.container.id in c_names
-                    and c_names[slot.container.id]["name"]
+                    if slot.container and slot.container.id in c_names
                     else ("OCCUPIED" if slot.container else "FREE"),
                 ),
                 ("task_name", get_task_name(c_names, slot)),
