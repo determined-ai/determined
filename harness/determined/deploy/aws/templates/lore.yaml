@@ -982,6 +982,7 @@ Resources:
                 -v /mnt/efs:/run/determined/workdir/shared_fs \
                 --network determined \
                 "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
+              test $? -eq 0 || ( echo "Failed to launch lore container." && exit 1 )
             fi
 
             touch /usr/local/determined/etc/master.yaml
