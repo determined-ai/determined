@@ -198,7 +198,7 @@ const ResourcePoolCard: React.FC<Props> = ({
                   </div>
                 </section>
               )}
-              <JsonGlossary json={shortDetails} />
+              <JsonGlossary alignValues="right" json={shortDetails} />
               <div />
             </div>
           </Suspense>

@@ -2,16 +2,17 @@ import Glossary from 'hew/Glossary';
 import React from 'react';
 
 import { JsonObject } from 'types';
-import { isObject } from 'utils/data';
+import { isObject, isString } from 'utils/data';
 
 type TextTransfomer = (key: string) => string;
 
 interface Props {
   json: JsonObject;
   translateLabel?: TextTransfomer;
+  alignValues?: 'left' | 'right';
 }
 
-const JsonGlossary: React.FC<Props> = ({ json, translateLabel }: Props) => {
+const JsonGlossary: React.FC<Props> = ({ json, translateLabel, alignValues }: Props) => {
   const content = Object.entries(json).map(([label, jsonValue]) => {
     let textValue = '';
     if (isObject(jsonValue)) {
@@ -22,11 +23,11 @@ const JsonGlossary: React.FC<Props> = ({ json, translateLabel }: Props) => {
       textValue = jsonValue.toString();
     }
     return {
-      label: typeof label === 'string' && translateLabel ? translateLabel(label) : label,
+      label: isString(label) ? translateLabel?.(label) ?? label : label,
       value: textValue,
     };
   });
-  return <Glossary content={content} />;
+  return <Glossary alignValues={alignValues} content={content} />;
 };
 
 export default JsonGlossary;

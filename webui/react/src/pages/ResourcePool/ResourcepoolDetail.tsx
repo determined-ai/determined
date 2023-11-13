@@ -134,7 +134,7 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     return (
       <>
-        <JsonGlossary json={mainSection} translateLabel={camelCaseToSentence} />
+        <JsonGlossary alignValues="right" json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
             <Divider />
