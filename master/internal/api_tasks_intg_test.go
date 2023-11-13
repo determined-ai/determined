@@ -5,9 +5,10 @@ package internal
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"slices"
 	"testing"
 	"time"
@@ -128,7 +129,7 @@ func validateResponseSummary(t *testing.T, expectedTaskSummary *taskv1.Allocatio
 		require.Equal(t, expectedResource.AllocationId, r.AllocationId)
 		var contID string = *r.ContainerId
 		var expectedContID string = *expectedResource.ContainerId
-		require.Equal(t, string(expectedContID), string(contID))
+		require.Equal(t, expectedContID, contID)
 		require.Equal(t, len(expectedResource.AgentDevices), len(r.AgentDevices))
 		require.ElementsMatch(t, maps.Keys(expectedResource.AgentDevices),
 			maps.Keys(r.AgentDevices))
@@ -246,7 +247,7 @@ func getRandomString() string {
 	return randomUUID.String()
 }
 
-func mockAllocationSummary(taskID model.TaskID,
+func mockAllocationSummary(t *testing.T, taskID model.TaskID,
 	allocID model.AllocationID,
 ) sproto.AllocationSummary {
 	grs := getRandomString
@@ -272,7 +273,9 @@ func mockAllocationSummary(taskID model.TaskID,
 
 	// Same as above; since obfuscating an int just sets it to -1, we set devID to any
 	// non-negative int so that we can test whether or not the value gets obscured.
-	devID := rand.Int()
+	randID, err := rand.Int(rand.Reader, big.NewInt(100000000))
+	require.NoError(t, err)
+	devID := randID.Int64()
 	dev := device.Device{
 		ID: device.ID(devID), Brand: grs(), UUID: grs(), Type: device.Type(grs()),
 	}
@@ -322,8 +325,13 @@ func TestGetTasksAuthZ(t *testing.T) {
 	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-101)).
 		Return(authz2.PermissionDeniedError{}).Once()
 
-	summaryAccess := mockAllocationSummary(canAccessNotebookID, canAccessAllocationID)
-	summaryNoAccess := mockAllocationSummary(cantAccessNotebookID, cantAccessAllocationID)
+	cantAccessNotebookID2, cantAccessAllocationID2 := mockNotebookWithWorkspaceID(ctx, api, t, -102)
+	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-102)).
+		Return(authz2.PermissionDeniedError{}).Once()
+
+	summaryAccess := mockAllocationSummary(t, canAccessNotebookID, canAccessAllocationID)
+	summaryNoAccess := mockAllocationSummary(t, cantAccessNotebookID, cantAccessAllocationID)
+	summaryNoAccess2 := mockAllocationSummary(t, cantAccessNotebookID2, cantAccessAllocationID2)
 
 	allocations = map[model.AllocationID]sproto.AllocationSummary{
 		"alloc0": {
@@ -334,6 +342,7 @@ func TestGetTasksAuthZ(t *testing.T) {
 		},
 		"alloc2": summaryAccess,
 		"alloc3": summaryNoAccess,
+		"alloc4": summaryNoAccess2,
 	}
 
 	NTSCTasks := make(map[string]int)
@@ -343,8 +352,16 @@ func TestGetTasksAuthZ(t *testing.T) {
 	resp, err := api.GetTasks(ctx, &apiv1.GetTasksRequest{})
 	require.NoError(t, err)
 
-	require.ElementsMatch(t, []string{"alloc0", "alloc1", "alloc2", authz2.HiddenString},
-		maps.Keys(resp.AllocationIdToSummary))
+	// require.ElementsMatch(t, []string{"alloc0", "alloc1", "alloc2", authz2.HiddenString},
+	// 	maps.Keys(resp.AllocationIdToSummary))
+	require.Equal(t, len(allocations), len(resp.AllocationIdToSummary))
+
+	savedAllocIDs := map[string]bool{"alloc0": true, "alloc1": true, "alloc2": true,
+		"alloc3": false, "alloc4": false}
+	for id, shouldContainID := range savedAllocIDs {
+		_, containsID := resp.AllocationIdToSummary[id]
+		require.Equal(t, shouldContainID, containsID)
+	}
 
 	// Check that NTSC tasks that are accessed by user with no permissions are obfuscated.
 	permissions := []string{"alloc2"}

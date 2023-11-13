@@ -15,9 +15,12 @@ import (
 )
 
 const (
+	// HiddenString is an obfuscated string from Determined API.
 	HiddenString = "********"
-	HiddenInt    = -1
-	HiddenBool   = false
+	// HiddenInt is an obfuscated int from Determined API.
+	HiddenInt = -1
+	// HiddenBool is an obfuscated bool from Determined API.
+	HiddenBool = false
 )
 
 // ObfuscateDevice obfuscates sensitive information in given Device.
