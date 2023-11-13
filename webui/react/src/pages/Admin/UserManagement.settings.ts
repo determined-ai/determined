@@ -54,6 +54,7 @@ export const UserManagementSettings = t.intersection([
       [V1GetUsersRequestSortBy.USERNAME]: null,
       [V1GetUsersRequestSortBy.NAME]: null,
       [V1GetUsersRequestSortBy.LASTAUTHTIME]: null,
+      [V1GetUsersRequestSortBy.REMOTE]: null,
     }),
   }),
 ]);

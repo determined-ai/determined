@@ -401,9 +401,10 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'remote',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['remote'],
-        key: 'remote',
+        key: V1GetUsersRequestSortBy.REMOTE,
         onCell: onRightClickableCell,
         render: (value: boolean): React.ReactNode => (value ? 'Remote' : 'Local'),
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.remote, b.remote),
         title: 'Remote',
       },
       {
