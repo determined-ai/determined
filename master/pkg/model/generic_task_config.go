@@ -10,7 +10,7 @@ import (
 func DefaultConfigGenericTaskConfig(
 	taskContainerDefaults *TaskContainerDefaultsConfig,
 ) GenericTaskConfig {
-	out := GenericTaskConfig{ // TODO
+	out := GenericTaskConfig{
 		Resources: expconf.ResourcesConfig{
 			RawSlotsPerTask: ptrs.Ptr(1),
 			RawIsSingleNode: ptrs.Ptr(true),

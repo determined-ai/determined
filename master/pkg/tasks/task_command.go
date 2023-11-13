@@ -46,7 +46,7 @@ type GenericCommandSpec struct {
 
 	CommandID string
 
-	Config model.CommandConfig // Want our own config
+	Config model.CommandConfig
 
 	// Deprecated: kept so we can still marshal to this.
 	// Please use command.CreateGeneric.modelDef instead.

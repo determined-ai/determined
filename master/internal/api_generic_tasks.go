@@ -123,7 +123,6 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Copy discovered (default) resource pool name and slot count.
 	taskConfig.Resources.RawResourcePool = &poolName
 	taskConfig.Resources.RawSlotsPerTask = resources.SlotsPerTask
-	//	taskConfig.Resources.RawIsSingleNode = resources.IsSingleNode
 
 	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
 	if taskConfig.Resources.SlotsPerTask() == 0 {
