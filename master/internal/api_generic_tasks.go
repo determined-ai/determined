@@ -45,17 +45,14 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	ctx context.Context,
 	contextDirectory []*utilv1.File,
 	configYAML string,
-	projectID *int,
+	projectID int,
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
 	var err error
 	genericTaskSpec := &tasks.GenericTaskSpec{}
 
-	genericTaskSpec.ProjectID = model.DefaultProjectID
-	if projectID != nil {
-		genericTaskSpec.ProjectID = *projectID
-	}
+	genericTaskSpec.ProjectID = projectID
 
 	// Validate the userModel and get the agent userModel group.
 	userModel, _, err := grpcutil.GetUser(ctx)
@@ -66,8 +63,11 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 			status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
 
-	workspaceID := 1 // TODO convert projectID to workspaceID here
-	agentUserGroup, err := user.GetAgentUserGroup(ctx, userModel.ID, workspaceID)
+	proj, err := a.GetProjectByID(ctx, int32(genericTaskSpec.ProjectID), *userModel)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	agentUserGroup, err := user.GetAgentUserGroup(ctx, userModel.ID, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -80,7 +80,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	}
 
 	poolName, err := a.m.rm.ResolveResourcePool(
-		resources.ResourcePool, workspaceID, *resources.SlotsPerTask)
+		resources.ResourcePool, int(proj.WorkspaceId), *resources.SlotsPerTask)
 	if err != nil {
 		return nil, nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -192,7 +192,7 @@ func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) err
 	} else if err != nil {
 		return err
 	}
-	if err := project.AuthZProvider.Get().CanGetProject(context.TODO(), *userModel, p); err != nil {
+	if err := project.AuthZProvider.Get().CanGetProject(ctx, *userModel, p); err != nil {
 		return authz.SubIfUnauthorized(err, errProjectNotFound)
 	}
 
@@ -208,28 +208,23 @@ func (a *apiServer) CreateGenericTask(
 	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
 ) (*apiv1.CreateGenericTaskResponse, error) {
 	// Parse launch commnads.
-	var projectID *int
+	var projectID int
 	if req.ProjectId != nil {
-		projectID = ptrs.Ptr(int(*req.ProjectId))
+		projectID = int(*req.ProjectId)
+	} else {
+		projectID = model.DefaultProjectID
 	}
+
+	if err := a.canCreateGenericTask(ctx, projectID); err != nil {
+		return nil, err
+	}
+
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
 		ctx, req.ContextDirectory, req.Config, projectID,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if len(warnings) > 0 {
-		return nil, nil // TODO warnings
-	}
-
-	if err := a.canCreateGenericTask(ctx, genericTaskSpec.ProjectID); err != nil {
-		return nil, err
-	}
-
-	// if err :=
-
-	// TODO do we need to wrap entrypoint with a custom wrapper?
-	// If we do it feels like a weird place to do it
 
 	if err := check.Validate(genericTaskSpec.GenericTaskConfig); err != nil {
 		return nil, status.Errorf(
