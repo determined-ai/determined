@@ -37,7 +37,7 @@ const MODAL_HEADER_LABEL_VIEW = 'View User';
 const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
-const REMOTE_LABEL = 'Remote';
+const REMOTE_LABEL = 'Remote (user uses external authentication, not password)';
 const REMOTE_NAME = 'remote';
 const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
@@ -183,7 +183,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
               <Switch disabled={viewOnly} />
             </Form.Item>
           )}
-          {rbacEnabled && (
+          {rbacEnabled && canAssignRolesFlag && (
             <Form.Item
               initialValue={user?.remote}
               label={REMOTE_LABEL}
