@@ -11,6 +11,8 @@ from determined.common.api import authentication, bindings
 from determined.common.api.bindings import v1AllocationSummary
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
+NO_PERMISSIONS = "NO PERMISSIONS"
+
 
 def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None:
     """Render tasks for JSON, tabulate or csv output.
@@ -45,9 +47,9 @@ def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None
     ]
     values = [
         [
-            task.taskId,
-            task.allocationId,
-            task.name,
+            task.taskId if task.name else NO_PERMISSIONS,
+            task.allocationId if task.name else NO_PERMISSIONS,
+            task.name if task.name else NO_PERMISSIONS,
             task.slotsNeeded,
             render.format_time(task.registeredTime),
             agent_info(task),

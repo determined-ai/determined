@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"slices"
 	"testing"
 	"time"
 
@@ -27,11 +29,15 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/devicev1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -107,9 +113,99 @@ func TestPostTaskLogs(t *testing.T) {
 	}
 }
 
+func validateResponseSummary(t *testing.T, expectedTaskSummary *taskv1.AllocationSummary,
+	taskSummary *taskv1.AllocationSummary,
+) {
+	require.Equal(t, expectedTaskSummary.TaskId, taskSummary.TaskId)
+	require.Equal(t, expectedTaskSummary.AllocationId, taskSummary.AllocationId)
+	require.Equal(t, expectedTaskSummary.Name, taskSummary.Name)
+
+	require.Equal(t, len(expectedTaskSummary.Resources), len(taskSummary.Resources))
+
+	for i, r := range taskSummary.Resources {
+		expectedResource := expectedTaskSummary.Resources[i]
+		require.Equal(t, expectedResource.ResourcesId, r.ResourcesId)
+		require.Equal(t, expectedResource.AllocationId, r.AllocationId)
+		var contID string = *r.ContainerId
+		var expectedContID string = *expectedResource.ContainerId
+		require.Equal(t, string(expectedContID), string(contID))
+		require.Equal(t, len(expectedResource.AgentDevices), len(r.AgentDevices))
+		require.ElementsMatch(t, maps.Keys(expectedResource.AgentDevices),
+			maps.Keys(r.AgentDevices))
+		for devName, devs := range expectedResource.AgentDevices {
+			for ind, dev := range devs.Devices {
+				agentDevice := r.AgentDevices[devName].Devices[ind]
+				require.Equal(t, dev.Brand, agentDevice.Brand)
+				require.Equal(t, dev.Uuid, agentDevice.Uuid)
+			}
+		}
+	}
+
+	require.Equal(t, len(expectedTaskSummary.ProxyPorts), len(taskSummary.ProxyPorts))
+	for ind, pp := range taskSummary.ProxyPorts {
+		expProxyPortConfig := expectedTaskSummary.ProxyPorts[ind]
+		require.Equal(t, expProxyPortConfig.ServiceId, pp.ServiceId)
+		require.Equal(t, int(expProxyPortConfig.Port), int(pp.Port))
+		require.Equal(t, expProxyPortConfig.ProxyTcp, pp.ProxyTcp)
+		require.Equal(t, expProxyPortConfig.Unauthenticated, pp.Unauthenticated)
+	}
+}
+
+func CheckObfuscatedTask(t *testing.T, taskSummary *taskv1.AllocationSummary, id string,
+	allocs map[model.AllocationID]sproto.AllocationSummary, permissions []string,
+) error {
+	hasPermissions := slices.Contains(permissions, id)
+	allocSummary := allocs[model.AllocationID(id)]
+	if hasPermissions {
+		validateResponseSummary(t, allocSummary.Proto(), taskSummary)
+	} else {
+		// Create expected obfuscated task summary.
+		obfuscatedSummary := &taskv1.AllocationSummary{}
+		obfuscatedSummary.TaskId = authz2.HiddenString
+		obfuscatedSummary.AllocationId = authz2.HiddenString
+		obfuscatedSummary.Name = ""
+
+		for _, r := range taskSummary.Resources {
+			resource := &taskv1.ResourcesSummary{}
+			resource.ResourcesId = authz2.HiddenString
+			resource.AllocationId = authz2.HiddenString
+			var contID string = string(authz2.HiddenString)
+			resource.ContainerId = &contID
+			agentDevice := make(map[string]*taskv1.ResourcesSummary_Devices)
+			for _, devs := range r.AgentDevices {
+				obfuscatedDevs := &taskv1.ResourcesSummary_Devices{}
+				obfuscatedDevices := make([]*devicev1.Device, len(devs.Devices))
+				for ind := range devs.Devices {
+					obfuscatedDev := &devicev1.Device{
+						Brand: authz2.HiddenString,
+						Uuid:  authz2.HiddenString,
+					}
+					obfuscatedDevices[ind] = obfuscatedDev
+				}
+				obfuscatedDevs.Devices = obfuscatedDevices
+				agentDevice[authz2.HiddenString] = obfuscatedDevs
+			}
+			resource.AgentDevices = agentDevice
+			obfuscatedSummary.Resources = append(obfuscatedSummary.Resources, resource)
+		}
+		proxyPortConfs := make([]*taskv1.ProxyPortConfig, len(taskSummary.ProxyPorts))
+		for ind := range taskSummary.ProxyPorts {
+			ppConf := &taskv1.ProxyPortConfig{}
+			ppConf.ServiceId = authz2.HiddenString
+			ppConf.Port = authz2.HiddenInt
+			ppConf.ProxyTcp = authz2.HiddenBool
+			ppConf.Unauthenticated = authz2.HiddenBool
+			proxyPortConfs[ind] = ppConf
+		}
+		obfuscatedSummary.ProxyPorts = proxyPortConfs
+		validateResponseSummary(t, obfuscatedSummary, taskSummary)
+	}
+	return nil
+}
+
 func mockNotebookWithWorkspaceID(
 	ctx context.Context, api *apiServer, t *testing.T, workspaceID int,
-) model.TaskID {
+) (model.TaskID, model.AllocationID) {
 	nb := &model.Task{
 		TaskID:   model.NewTaskID(),
 		TaskType: model.TaskTypeNotebook,
@@ -142,7 +238,57 @@ func mockNotebookWithWorkspaceID(
 	}).Exec(ctx)
 	require.NoError(t, err)
 
-	return nb.TaskID
+	return nb.TaskID, allocationID
+}
+
+func getRandomString() string {
+	randomUUID := uuid.New()
+	return randomUUID.String()
+}
+
+func mockAllocationSummary(taskID model.TaskID,
+	allocID model.AllocationID,
+) sproto.AllocationSummary {
+	grs := getRandomString
+	summary := sproto.AllocationSummary{
+		TaskID: taskID, AllocationID: allocID, Name: grs(),
+	}
+
+	// Since mockAllocationSummary is used in conjunction with testing obfuscated tasks and
+	// obfuscating a boolean just sets it to false, we set defaultBool to true so that we can
+	// test whether or not the value gets obscured.
+	defaultBool := true
+	pPortConf := sproto.ProxyPortConfig{
+		ServiceID: grs(),
+		Port:      0, ProxyTCP: defaultBool, Unauthenticated: defaultBool,
+	}
+	pPortConfs := []*sproto.ProxyPortConfig{&pPortConf}
+
+	resID := sproto.ResourcesID(grs())
+	restype := sproto.ResourcesType(grs())
+	agentDevices := make(map[aproto.ID][]device.Device)
+	aPID := aproto.ID(grs())
+	var devs []device.Device
+
+	// Same as above; since obfuscating an int just sets it to -1, we set devID to any
+	// non-negative int so that we can test whether or not the value gets obscured.
+	devID := rand.Int()
+	dev := device.Device{
+		ID: device.ID(devID), Brand: grs(), UUID: grs(), Type: device.Type(grs()),
+	}
+	devs = append(devs, dev)
+	agentDevices[aPID] = devs
+	resContID := cproto.ID(grs())
+	resourcesSummary := sproto.ResourcesSummary{
+		ResourcesID: resID, ResourcesType: restype, AllocationID: allocID,
+		AgentDevices: agentDevices, ContainerID: &resContID,
+	}
+	resourcesSummaries := []sproto.ResourcesSummary{resourcesSummary}
+
+	summary.Resources = resourcesSummaries
+	summary.ProxyPorts = pPortConfs
+
+	return summary
 }
 
 func TestGetTasksAuthZ(t *testing.T) {
@@ -168,13 +314,16 @@ func TestGetTasksAuthZ(t *testing.T) {
 			return e.ID == cantAccessTrial.ExperimentID
 		})).Return(authz2.PermissionDeniedError{}).Once()
 
-	canAccessNotebookID := mockNotebookWithWorkspaceID(ctx, api, t, -100)
+	canAccessNotebookID, canAccessAllocationID := mockNotebookWithWorkspaceID(ctx, api, t, -100)
 	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-100)).
 		Return(nil).Once()
 
-	cantAccessNotebookID := mockNotebookWithWorkspaceID(ctx, api, t, -101)
+	cantAccessNotebookID, cantAccessAllocationID := mockNotebookWithWorkspaceID(ctx, api, t, -101)
 	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-101)).
 		Return(authz2.PermissionDeniedError{}).Once()
+
+	summaryAccess := mockAllocationSummary(canAccessNotebookID, canAccessAllocationID)
+	summaryNoAccess := mockAllocationSummary(cantAccessNotebookID, cantAccessAllocationID)
 
 	allocations = map[model.AllocationID]sproto.AllocationSummary{
 		"alloc0": {
@@ -183,18 +332,29 @@ func TestGetTasksAuthZ(t *testing.T) {
 		"alloc1": {
 			TaskID: expCantAccessTask.TaskID,
 		},
-		"alloc2": {
-			TaskID: canAccessNotebookID,
-		},
-		"alloc3": {
-			TaskID: cantAccessNotebookID,
-		},
+		"alloc2": summaryAccess,
+		"alloc3": summaryNoAccess,
 	}
+
+	NTSCTasks := make(map[string]int)
+	NTSCTasks["alloc2"] = 0
+	NTSCTasks[authz2.HiddenString] = 0
 
 	resp, err := api.GetTasks(ctx, &apiv1.GetTasksRequest{})
 	require.NoError(t, err)
 
-	require.ElementsMatch(t, []string{"alloc0", "alloc2"}, maps.Keys(resp.AllocationIdToSummary))
+	require.ElementsMatch(t, []string{"alloc0", "alloc1", "alloc2", authz2.HiddenString},
+		maps.Keys(resp.AllocationIdToSummary))
+
+	// Check that NTSC tasks that are accessed by user with no permissions are obfuscated.
+	permissions := []string{"alloc2"}
+	for id, summary := range resp.AllocationIdToSummary {
+		_, contains := NTSCTasks[id]
+		if contains {
+			err := CheckObfuscatedTask(t, summary, id, allocations, permissions)
+			require.NoError(t, err)
+		}
+	}
 }
 
 func TestPostTaskLogsLogPattern(t *testing.T) {
