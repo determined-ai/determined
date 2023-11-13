@@ -14,15 +14,13 @@ def test_delete_experiment_removes_tensorboard_files() -> None:
     """
     Start a random experiment, delete the experiment and verify that TensorBoard files are deleted.
     """
-    config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config_obj, conf.tutorials_path("mnist_pytorch"), 1
-    )
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
 
     command = ["det", "e", "delete", str(experiment_id), "--yes"]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
-    ticks = 120
+    ticks = 60
     for i in range(ticks):
         try:
             state = exp.experiment_state(experiment_id)
@@ -30,11 +28,15 @@ def test_delete_experiment_removes_tensorboard_files() -> None:
                 print(f"experiment in state {state} waiting to be deleted")
             time.sleep(1)
         except api.errors.NotFoundException:
+            # Check if Tensorboard files are deleted
+            path = (
+                config_obj["checkpoint_storage"]["host_path"]
+                + "/"
+                + config_obj["checkpoint_storage"]["storage_path"]
+            )
+            tb_path = sorted(pathlib.Path(path).glob("*/tensorboard"))[0]
+            tb_path = tb_path / "experiment" / str(experiment_id)
+            assert not pathlib.Path(tb_path).exists()
             return
 
     pytest.fail(f"experiment failed to be deleted after {ticks} seconds")
-
-    # Check if Tensorboard files are deleted
-    tb_path = sorted(pathlib.Path("/tmp/determined-cp/").glob("*/tensorboard"))[0]
-    tb_path = tb_path / "experiment" / str(experiment_id)
-    assert not pathlib.Path(tb_path).exists()
