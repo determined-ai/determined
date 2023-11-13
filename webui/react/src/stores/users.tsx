@@ -1,12 +1,14 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
-import _ from 'lodash';
+import * as t from 'io-ts';
+import { Observable } from 'micro-observables';
 
 import { getCurrentUser, getUsers, patchUser } from 'services/api';
 import type { GetUsersParams, PatchUserParams } from 'services/types';
 import { DetailedUser, DetailedUserList } from 'types';
+import { asValueObjectFactory, ValueObjectOf } from 'utils/asValueObject';
 import handleError from 'utils/error';
-import { observable, WritableObservable } from 'utils/observable';
+import { deepObservable, immutableObservable } from 'utils/observable';
 
 import PollingStore from './polling';
 
@@ -16,10 +18,39 @@ function compareUser(a: DetailedUser, b: DetailedUser): number {
   return aName.localeCompare(bName);
 }
 
+const asValueOfUser = asValueObjectFactory(
+  t.intersection(
+    [
+      t.partial({
+        agentUserGroup: t.partial(
+          {
+            agentGid: t.number,
+            agentGroup: t.string,
+            agentUid: t.number,
+            agentUser: t.string,
+          },
+          'AgentUserGroup',
+        ),
+        displayName: t.string,
+        lastAuthAt: t.number,
+        modifiedAt: t.number,
+      }),
+      t.type({
+        id: t.number,
+        isActive: t.boolean,
+        isAdmin: t.boolean,
+        username: t.string,
+      }),
+    ],
+    'DetailedUser',
+  ),
+);
+
 class UserStore extends PollingStore {
-  #userIds: WritableObservable<Loadable<number[]>> = observable(NotLoaded);
-  #usersById: WritableObservable<Map<number, DetailedUser>> = observable(Map());
-  #currentUser: WritableObservable<Loadable<DetailedUser>> = observable(NotLoaded);
+  // TODO: investigate replacing userIds + usersById with OrderedMap
+  #userIds = deepObservable<Loadable<number[]>>(NotLoaded);
+  #usersById = immutableObservable<Map<number, ValueObjectOf<DetailedUser>>>(Map());
+  #currentUser = deepObservable<Loadable<DetailedUser>>(NotLoaded);
 
   public readonly currentUser = this.#currentUser.readOnly();
 
@@ -31,14 +62,16 @@ class UserStore extends PollingStore {
   }
 
   public getUsers() {
-    return this.#userIds.select((loadable) => {
+    return Observable.select([this.#userIds, this.#usersById], (loadable, usersById) => {
       const userIds = Loadable.getOrElse([], loadable);
       if (userIds.length === 0) return NotLoaded;
 
       const users = userIds
-        .map((id) => this.#usersById.get().get(id))
-        .filter((user) => !!user) as DetailedUser[];
-      return Loaded(users.sort(compareUser));
+        .map(usersById.get)
+        .filter((u): u is Exclude<typeof u, undefined> => u !== undefined)
+        .sort(compareUser);
+
+      return Loaded(users);
     });
   }
 
@@ -49,7 +82,7 @@ class UserStore extends PollingStore {
   public async patchUser(userId: number, userParams: PatchUserParams['userParams']) {
     const user = await patchUser({ userId, userParams });
     this.#usersById.update((prev) => {
-      return prev.set(user.id, user);
+      return prev.set(user.id, asValueOfUser(user));
     });
     const currentUser = Loadable.getOrElse(undefined, this.#currentUser.get());
     if (currentUser?.id === user.id) this.#currentUser.set(Loaded(user));
@@ -61,7 +94,7 @@ class UserStore extends PollingStore {
     getCurrentUser({ signal: signal ?? canceler.signal })
       .then((response) => {
         this.#currentUser.set(Loaded(response));
-        this.#usersById.update((map) => map.set(response.id, response));
+        this.#usersById.update((map) => map.set(response.id, asValueOfUser(response)));
       })
       .catch((e) => handleError(e, { publicSubject: 'Unable to fetch current user.' }));
 
@@ -92,22 +125,15 @@ class UserStore extends PollingStore {
   }
 
   protected updateUsersFromResponse(response: DetailedUserList) {
-    let hasUserChanges = false;
     this.#usersById.update((prev) =>
       prev.withMutations((map) => {
         response.users.forEach((newUser) => {
-          const oldUser = map.get(newUser.id);
-          if (!_.isEqual(oldUser, newUser)) {
-            map.set(newUser.id, newUser);
-            hasUserChanges = true;
-          }
+          map.set(newUser.id, asValueOfUser(newUser));
         });
       }),
     );
 
-    if (hasUserChanges) {
-      this.#userIds.set(Loaded(response.users.map((user) => user.id)));
-    }
+    this.#userIds.set(Loaded(response.users.map((user) => user.id)));
   }
 }
 
