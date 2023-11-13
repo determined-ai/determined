@@ -48,13 +48,14 @@ func TestCommandManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Commands), 2)
 
 	// Kill 1 command.
-	resp3, err := DefaultCmdService.KillCommand(&apiv1.KillCommandRequest{CommandId: cmd2.Id})
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
+	cmd3 := resp3.ToV1Command()
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
-	require.Equal(t, resp3.Command.State, taskv1.State_STATE_TERMINATED)
+	require.Equal(t, cmd3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set command priority.
-	resp4, err := DefaultCmdService.SetCommandPriority(&apiv1.SetCommandPriorityRequest{CommandId: cmd1.Id})
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -81,13 +82,14 @@ func TestNotebookManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Notebooks), 2)
 
 	// Kill 1 Notebook.
-	resp3, err := DefaultCmdService.KillNotebook(&apiv1.KillNotebookRequest{NotebookId: cmd2.Id})
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
+	nb3 := resp3.ToV1Notebook()
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
-	require.Equal(t, resp3.Notebook.State, taskv1.State_STATE_TERMINATED)
+	require.Equal(t, nb3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Notebook priority.
-	resp4, err := DefaultCmdService.SetNotebookPriority(&apiv1.SetNotebookPriorityRequest{NotebookId: cmd1.Id})
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -114,13 +116,14 @@ func TestShellManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Shells), 2)
 
 	// Kill 1 Shell.
-	resp3, err := DefaultCmdService.KillShell(&apiv1.KillShellRequest{ShellId: cmd2.Id})
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
+	shell3 := resp3.ToV1Shell()
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
-	require.Equal(t, resp3.Shell.State, taskv1.State_STATE_TERMINATED)
+	require.Equal(t, shell3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Shell priority.
-	resp4, err := DefaultCmdService.SetShellPriority(&apiv1.SetShellPriorityRequest{ShellId: cmd1.Id})
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -147,13 +150,14 @@ func TestTensorboardManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Tensorboards), 2)
 
 	// Kill 1 Tensorboard.
-	resp3, err := DefaultCmdService.KillTensorboard(&apiv1.KillTensorboardRequest{TensorboardId: cmd2.Id})
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
+	tb3 := resp3.ToV1Tensorboard()
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
-	require.Equal(t, resp3.Tensorboard.State, taskv1.State_STATE_TERMINATED)
+	require.Equal(t, tb3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Tensorboard priority.
-	resp4, err := DefaultCmdService.SetTensorboardPriority(&apiv1.SetTensorboardPriorityRequest{TensorboardId: cmd1.Id})
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -189,33 +193,49 @@ func CreateMockGenericReq(t *testing.T, pgDB *db.PgDB) *CreateGeneric {
 }
 
 func launchCommand(ctx context.Context, t *testing.T, db *db.PgDB) *commandv1.Command {
-	cmd, err := DefaultCmdService.LaunchCommand(CreateMockGenericReq(t, db))
+	cmd, err := DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeCommand,
+		model.JobTypeCommand,
+		CreateMockGenericReq(t, db))
+	v1cmd := cmd.ToV1Command()
 	require.NoError(t, err)
 	require.NotNil(t, cmd)
-	require.NotNil(t, DefaultCmdService.commands[model.TaskID(cmd.Id)])
-	return cmd
+	require.NotNil(t, DefaultCmdService.commands[model.TaskID(v1cmd.Id)])
+	return v1cmd
 }
 
 func launchNotebook(ctx context.Context, t *testing.T, db *db.PgDB) *notebookv1.Notebook {
-	notebook, err := DefaultCmdService.LaunchNotebook(CreateMockGenericReq(t, db))
+	cmd, err := DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeNotebook,
+		model.JobTypeNotebook,
+		CreateMockGenericReq(t, db))
+	v1nb := cmd.ToV1Notebook()
 	require.NoError(t, err)
-	require.NotNil(t, notebook)
-	require.NotNil(t, DefaultCmdService.commands[model.TaskID(notebook.Id)])
-	return notebook
+	require.NotNil(t, v1nb)
+	require.NotNil(t, DefaultCmdService.commands[model.TaskID(v1nb.Id)])
+	return v1nb
 }
 
 func launchShell(ctx context.Context, t *testing.T, db *db.PgDB) *shellv1.Shell {
-	shell, err := DefaultCmdService.LaunchShell(CreateMockGenericReq(t, db))
+	cmd, err := DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeShell,
+		model.JobTypeShell,
+		CreateMockGenericReq(t, db))
+	v1shell := cmd.ToV1Shell()
 	require.NoError(t, err)
-	require.NotNil(t, shell)
-	require.NotNil(t, DefaultCmdService.commands[model.TaskID(shell.Id)])
-	return shell
+	require.NotNil(t, v1shell)
+	require.NotNil(t, DefaultCmdService.commands[model.TaskID(v1shell.Id)])
+	return v1shell
 }
 
 func launchTensorboard(ctx context.Context, t *testing.T, db *db.PgDB) *tensorboardv1.Tensorboard {
-	tensorboard, err := DefaultCmdService.LaunchTensorboard(CreateMockGenericReq(t, db))
+	cmd, err := DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeTensorboard,
+		model.JobTypeTensorboard,
+		CreateMockGenericReq(t, db))
+	v1tb := cmd.ToV1Tensorboard()
 	require.NoError(t, err)
-	require.NotNil(t, tensorboard)
-	require.NotNil(t, DefaultCmdService.commands[model.TaskID(tensorboard.Id)])
-	return tensorboard
+	require.NotNil(t, v1tb)
+	require.NotNil(t, DefaultCmdService.commands[model.TaskID(v1tb.Id)])
+	return v1tb
 }

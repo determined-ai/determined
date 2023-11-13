@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -22,7 +23,7 @@ type CommandService struct {
 	db       *db.PgDB
 	rm       rm.ResourceManager
 	mu       sync.Mutex
-	commands map[model.TaskID]*command
+	commands map[model.TaskID]*Command
 	syslog   *logrus.Entry
 }
 
@@ -37,7 +38,7 @@ func SetDefaultCmdService(db *db.PgDB, rm rm.ResourceManager) {
 	DefaultCmdService = &CommandService{
 		db:       db,
 		rm:       rm,
-		commands: make(map[model.TaskID]*command),
+		commands: make(map[model.TaskID]*Command),
 		syslog:   logrus.WithField("component", "command-service"),
 	}
 }
@@ -74,18 +75,21 @@ func (cs *CommandService) RestoreAllCommands(
 	return nil
 }
 
-// createGenericCommand creates NTSC commands and persists them to the database.
-func (cs *CommandService) createGenericCommand(
+// LaunchGenericCommand creates NTSC commands and persists them to the database.
+func (cs *CommandService) LaunchGenericCommand(
 	taskType model.TaskType,
 	jobType model.JobType,
 	req *CreateGeneric,
-) (*command, error) {
+) (*Command, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
 	taskID := model.NewTaskID()
 	jobID := model.NewJobID()
 	req.Spec.CommandID = string(taskID)
 	req.Spec.TaskType = taskType
 
-	cmd := &command{
+	cmd := &Command{
 		db: cs.db,
 		rm: cs.rm,
 
@@ -125,7 +129,7 @@ func (cs *CommandService) unregisterCommand(id model.TaskID) {
 }
 
 // getNTSC gets & checks type of a command given its ID.
-func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*command, error) {
+func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*Command, error) {
 	c, ok := cs.commands[cmdID]
 	if !ok {
 		return nil, fmt.Errorf("get NTSC %s not found", cmdID)
@@ -143,23 +147,32 @@ func (cs *CommandService) listByType(
 	reqUsers []string,
 	reqUserIDs []int32,
 	cmdType model.TaskType,
-) (cmds []*command, users map[string]bool, userIds map[int32]bool) {
-	users = make(map[string]bool, len(reqUsers))
+	workspaceID int32,
+) []*Command {
+	users := make(map[string]bool, len(reqUsers))
 	for _, user := range reqUsers {
 		users[user] = true
 	}
-	userIds = make(map[int32]bool, len(reqUserIDs))
+	userIds := make(map[int32]bool, len(reqUserIDs))
 	for _, user := range reqUserIDs {
 		userIds[user] = true
 	}
 
-	cmds = []*command{}
+	cmds := []*Command{}
 	for _, c := range cs.commands {
-		if c.taskType == cmdType {
+		wID := int32(c.GenericCommandSpec.Metadata.WorkspaceID)
+		username := c.Base.Owner.Username
+		userID := int32(c.Base.Owner.ID)
+		// skip if it doesn't match the requested workspaceID if any.
+		if workspaceID != 0 && workspaceID != wID {
+			continue
+		}
+		if c.taskType == cmdType && ((len(users) == 0 && len(userIds) == 0) ||
+			users[username] || userIds[userID]) {
 			cmds = append(cmds, c)
 		}
 	}
-	return cmds, users, userIds
+	return cmds
 }
 
 // DeleteWorkspaceNTSC deletes all NTSC associated with a workspace ID.
@@ -170,4 +183,50 @@ func (cs *CommandService) DeleteWorkspaceNTSC(req *apiv1.DeleteWorkspaceRequest)
 	for _, c := range cs.commands {
 		c.deleteIfInWorkspace(req)
 	}
+}
+
+// SetNTSCPriority sets the NTSC's resource manager group priority.
+func (cs *CommandService) SetNTSCPriority(
+	id string, priority int,
+) (*Command, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	c, err := cs.getNTSC(model.TaskID(id), model.TaskTypeCommand)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.setNTSCPriority(priority, true)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// KillNTSC sends a kill signal to the command's allocation.
+func (cs *CommandService) KillNTSC(id string) (*Command, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	tID := model.TaskID(id)
+
+	c, err := cs.getNTSC(tID, model.TaskTypeNotebook)
+	if err != nil {
+		return nil, err
+	}
+
+	completed, err := db.TaskCompleted(context.TODO(), tID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !completed {
+		err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
+		if err != nil {
+			return nil, fmt.Errorf("failed to kill allocation: %w", err)
+		}
+	}
+
+	return c, nil
 }

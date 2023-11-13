@@ -140,7 +140,9 @@ func (a *apiServer) KillShell(
 		return nil, err
 	}
 
-	return command.DefaultCmdService.KillShell(req)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.ShellId)
+
+	return &apiv1.KillShellResponse{Shell: cmd.ToV1Shell()}, nil
 }
 
 func (a *apiServer) SetShellPriority(
@@ -169,7 +171,12 @@ func (a *apiServer) SetShellPriority(
 		return nil, err
 	}
 
-	return command.DefaultCmdService.SetShellPriority(req)
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.ShellId, int(req.Priority))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.SetShellPriorityResponse{Shell: cmd.ToV1Shell()}, nil
 }
 
 func (a *apiServer) LaunchShell(
@@ -261,13 +268,16 @@ func (a *apiServer) LaunchShell(
 	launchReq.Spec.Keys = &keys
 
 	// Launch a Shell.
-	shell, err := command.DefaultCmdService.LaunchShell(launchReq)
+	cmd, err := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeShell,
+		model.JobTypeShell,
+		launchReq)
 	if err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell:    shell,
+		Shell:    cmd.ToV1Shell(),
 		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil

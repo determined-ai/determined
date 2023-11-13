@@ -147,7 +147,11 @@ func (a *apiServer) KillNotebook(
 	if err != nil {
 		return nil, err
 	}
-	return command.DefaultCmdService.KillNotebook(req)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.NotebookId)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.KillNotebookResponse{Notebook: cmd.ToV1Notebook()}, nil
 }
 
 func (a *apiServer) SetNotebookPriority(
@@ -171,7 +175,12 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
-	return command.DefaultCmdService.SetNotebookPriority(req)
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.NotebookId, int(req.Priority))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.SetNotebookPriorityResponse{Notebook: cmd.ToV1Notebook()}, nil
 }
 
 // isNTSCPermittedToLaunch checks authorization to launch in a given
@@ -330,13 +339,16 @@ func (a *apiServer) LaunchNotebook(
 	}
 
 	// Launch a Notebook.
-	notebook, err := command.DefaultCmdService.LaunchNotebook(launchReq)
+	genericCmd, err := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeNotebook,
+		model.JobTypeNotebook,
+		launchReq)
 	if err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchNotebookResponse{
-		Notebook: notebook,
+		Notebook: genericCmd.ToV1Notebook(),
 		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil

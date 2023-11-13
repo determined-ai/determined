@@ -43,9 +43,9 @@ var queueStates = []model.AllocationState{
 	model.AllocationStateAssigned,
 }
 
-// command is executed in a containerized environment on a Determined cluster.
+// Command is executed in a containerized environment on a Determined cluster.
 // Locking in: toNTSC, startCmd, onExit, deleteIfInWorkspace.
-type command struct {
+type Command struct {
 	mu sync.Mutex
 
 	db *db.PgDB
@@ -79,11 +79,11 @@ func commandFromSnapshot(
 	db *db.PgDB,
 	rm rm.ResourceManager,
 	snapshot *CommandSnapshot,
-) (*command, error) {
+) (*Command, error) {
 	taskID := snapshot.TaskID
 	taskType := snapshot.Task.TaskType
 	jobID := snapshot.Task.Job.JobID
-	cmd := &command{
+	cmd := &Command{
 		db:                 db,
 		rm:                 rm,
 		registeredTime:     snapshot.RegisteredTime,
@@ -107,7 +107,7 @@ func commandFromSnapshot(
 }
 
 // start starts the command & its respective allocation. Once started, it persists to the db.
-func (c *command) startCmd(ctx context.Context) error {
+func (c *Command) startCmd(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -176,7 +176,7 @@ func (c *command) startCmd(ctx context.Context) error {
 }
 
 // registerJobAndTask registers the command with the job service & adds the command to the job & task dbs.
-func (c *command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
+func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 	c.registeredTime = time.Now().Truncate(time.Millisecond)
 	if err := db.AddJobTx(ctx, tx, &model.Job{
 		JobID:   c.jobID,
@@ -198,7 +198,7 @@ func (c *command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 	return nil
 }
 
-func (c *command) persistAndEvictContextDirectoryFromMemory() error {
+func (c *Command) persistAndEvictContextDirectoryFromMemory() error {
 	if c.contextDirectory == nil {
 		c.contextDirectory = make([]byte, 0)
 	}
@@ -214,7 +214,7 @@ func (c *command) persistAndEvictContextDirectoryFromMemory() error {
 	return nil
 }
 
-func (c *command) persist() error {
+func (c *Command) persist() error {
 	snapshot := &CommandSnapshot{
 		TaskID:             c.taskID,
 		RegisteredTime:     c.registeredTime,
@@ -229,7 +229,7 @@ func (c *command) persist() error {
 
 // onExit runs when an command's allocation exits. It marks the command task as complete, and unregisters where needed.
 // onExit locks ahead of gc -> unregisterCommand.
-func (c *command) onExit(ae *task.AllocationExited) {
+func (c *Command) onExit(ae *task.AllocationExited) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -250,7 +250,7 @@ func (c *command) onExit(ae *task.AllocationExited) {
 }
 
 // gc garbage collects the exited command.
-func (c *command) garbageCollect() {
+func (c *Command) garbageCollect() {
 	if err := tasklist.GroupPriorityChangeRegistry.Delete(c.jobID); err != nil {
 		c.syslog.WithError(err).Error("deleting command from GroupPriorityChangeRegistry")
 	}
@@ -275,7 +275,7 @@ func (c *command) garbageCollect() {
 
 // command NTSC methods: setNTSCPriority, deleteIfInWorkspace.
 // These functions are not locked, rather only where they're called.
-func (c *command) setNTSCPriority(priority int, forward bool) error {
+func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
 			Priority: priority,
@@ -294,7 +294,7 @@ func (c *command) setNTSCPriority(priority int, forward bool) error {
 	return nil
 }
 
-func (c *command) deleteIfInWorkspace(req *apiv1.DeleteWorkspaceRequest) {
+func (c *Command) deleteIfInWorkspace(req *apiv1.DeleteWorkspaceRequest) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -310,8 +310,8 @@ func (c *command) deleteIfInWorkspace(req *apiv1.DeleteWorkspaceRequest) {
 	}
 }
 
-// toCommand() takes a *command from the command service registry & returns a *commandv1.Command.
-func (c *command) toCommand() *commandv1.Command {
+// ToV1Command takes a *Command from the command service registry & returns a *commandv1.Command.
+func (c *Command) ToV1Command() *commandv1.Command {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -332,8 +332,8 @@ func (c *command) toCommand() *commandv1.Command {
 	}
 }
 
-// toNotebook() takes a *command from the command service registry & returns a *notebookv1.Notebook.
-func (c *command) toNotebook() *notebookv1.Notebook {
+// ToV1Notebook takes a *Command from the command service registry & returns a *notebookv1.Notebook.
+func (c *Command) ToV1Notebook() *notebookv1.Notebook {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -355,8 +355,8 @@ func (c *command) toNotebook() *notebookv1.Notebook {
 	}
 }
 
-// toShell() takes a *command from the command service registry & returns a *shellv1.Shell.
-func (c *command) toShell() *shellv1.Shell {
+// ToV1Shell takes a *Command from the command service registry & returns a *shellv1.Shell.
+func (c *Command) ToV1Shell() *shellv1.Shell {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -381,8 +381,8 @@ func (c *command) toShell() *shellv1.Shell {
 	}
 }
 
-// toTensorboard() takes a *command from the command service registry & returns a *tensorboardv1.Tensorboard.
-func (c *command) toTensorboard() *tensorboardv1.Tensorboard {
+// ToV1Tensorboard takes a *Command from the command service registry & returns a *tensorboardv1.Tensorboard.
+func (c *Command) ToV1Tensorboard() *tensorboardv1.Tensorboard {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -407,14 +407,14 @@ func (c *command) toTensorboard() *tensorboardv1.Tensorboard {
 	}
 }
 
-// toCommand(), toNotebook(), toShell(), toTensorboard() helper functions:
+// ToV1Command(), ToV1Notebook(), ToV1Shell(), ToV1Tensorboard() helper functions:
 // refreshAllocationState, enrichState, toProto, serviceAddress, stringID
 
 // Refresh our view of the allocation state. If the allocation has sent us an exit status,
 // we don't ask for a refresh because it won't respond. Otherwise, ask with a timeout
 // since there is another ask in the opposite direction, and even though it's probably
 // 1 in a million runs, we don't want to deadlock.
-func (c *command) refreshAllocationState() task.AllocationState {
+func (c *Command) refreshAllocationState() task.AllocationState {
 	if c.exitStatus != nil {
 		return c.exitStatus.FinalState
 	}
@@ -443,10 +443,10 @@ func toProto(as []cproto.Address) []*structpb.Struct {
 	return res
 }
 
-func (c *command) serviceAddress() string {
+func (c *Command) serviceAddress() string {
 	return fmt.Sprintf("/proxy/%s/", c.taskID)
 }
 
-func (c *command) stringID() string {
+func (c *Command) stringID() string {
 	return c.taskID.String()
 }

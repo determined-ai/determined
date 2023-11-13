@@ -157,7 +157,12 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	return command.DefaultCmdService.KillTensorboard(req)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.TensorboardId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.KillTensorboardResponse{Tensorboard: cmd.ToV1Tensorboard()}, nil
 }
 
 func (a *apiServer) SetTensorboardPriority(
@@ -187,7 +192,12 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
-	return command.DefaultCmdService.SetTensorboardPriority(req)
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.TensorboardId, int(req.Priority))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.SetTensorboardPriorityResponse{Tensorboard: cmd.ToV1Tensorboard()}, nil
 }
 
 func (a *apiServer) LaunchTensorboard(
@@ -432,13 +442,14 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	// Launch a TensorBoard.
-	tensorboard, err := command.DefaultCmdService.LaunchTensorboard(launchReq)
+	cmd, err := command.DefaultCmdService.LaunchGenericCommand(model.TaskTypeTensorboard,
+		model.JobTypeTensorboard, launchReq)
 	if err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
-		Tensorboard: tensorboard,
+		Tensorboard: cmd.ToV1Tensorboard(),
 		Config:      protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings:    pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, err

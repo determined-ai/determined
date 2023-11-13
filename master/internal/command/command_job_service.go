@@ -13,8 +13,8 @@ import (
 
 // jobservice.Service methods
 
-// ToV1Job() takes a command and returns a job.
-func (c *command) ToV1Job() (*jobv1.Job, error) {
+// ToV1Job takes a command and returns a job.
+func (c *Command) ToV1Job() (*jobv1.Job, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -40,7 +40,7 @@ func (c *command) ToV1Job() (*jobv1.Job, error) {
 }
 
 // SetJobPriority sets a command's job priority.
-func (c *command) SetJobPriority(priority int) error {
+func (c *Command) SetJobPriority(priority int) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -55,7 +55,7 @@ func (c *command) SetJobPriority(priority int) error {
 }
 
 // SetWeight sets the command's group weight.
-func (c *command) SetWeight(weight float64) error {
+func (c *Command) SetWeight(weight float64) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -75,6 +75,6 @@ func (c *command) SetWeight(weight float64) error {
 }
 
 // SetResourcePool is not implemented for commands.
-func (c *command) SetResourcePool(resourcePool string) error {
+func (c *Command) SetResourcePool(resourcePool string) error {
 	return fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType)
 }

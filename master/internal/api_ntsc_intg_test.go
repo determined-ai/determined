@@ -74,7 +74,11 @@ func TestCanGetNTSC(t *testing.T) {
 	invalidID := "non-existing"
 
 	// Notebooks.
-	nb, _ := command.DefaultCmdService.LaunchNotebook(mockGenericReq(t, api.m.db))
+	genericNb, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeNotebook,
+		model.JobTypeNotebook,
+		mockGenericReq(t, api.m.db))
+	nb := genericNb.ToV1Notebook()
 
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("notebook", invalidID, true), err)
@@ -83,7 +87,12 @@ func TestCanGetNTSC(t *testing.T) {
 	require.Equal(t, apiPkg.NotFoundErrs("notebook", nb.Id, true), err)
 
 	// Commands.
-	cmd, _ := command.DefaultCmdService.LaunchCommand(mockGenericReq(t, api.m.db))
+	genericCmd, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeCommand,
+		model.JobTypeCommand,
+		mockGenericReq(t, api.m.db))
+
+	cmd := genericCmd.ToV1Command()
 
 	_, err = api.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("command", invalidID, true), err)
@@ -92,7 +101,11 @@ func TestCanGetNTSC(t *testing.T) {
 	require.Equal(t, apiPkg.NotFoundErrs("command", cmd.Id, true), err)
 
 	// Shells.
-	shell, _ := command.DefaultCmdService.LaunchShell(mockGenericReq(t, api.m.db))
+	genericShell, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeShell,
+		model.JobTypeShell,
+		mockGenericReq(t, api.m.db))
+	shell := genericShell.ToV1Shell()
 
 	_, err = api.GetShell(ctx, &apiv1.GetShellRequest{ShellId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("shell", invalidID, true), err)
@@ -105,7 +118,9 @@ func TestCanGetNTSC(t *testing.T) {
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 
-	tb, _ := command.DefaultCmdService.LaunchTensorboard(mockGenericReq(t, api.m.db))
+	genericTb, _ := command.DefaultCmdService.LaunchGenericCommand(model.TaskTypeTensorboard,
+		model.JobTypeTensorboard, mockGenericReq(t, api.m.db))
+	tb := genericTb.ToV1Tensorboard()
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: invalidID})
 	require.Equal(t, apiPkg.NotFoundErrs("tensorboard", invalidID, true), err)
@@ -156,17 +171,30 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	).Times(3)
 
 	// Notebooks.
-	nb, _ := command.DefaultCmdService.LaunchNotebook(mockGenericReq(t, api.m.db))
+	genericNb, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeNotebook,
+		model.JobTypeNotebook,
+		mockGenericReq(t, api.m.db))
+	nb := genericNb.ToV1Notebook()
+
 	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: nb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Commands.
-	cmd, _ := command.DefaultCmdService.LaunchCommand(mockGenericReq(t, api.m.db))
+	genericCmd, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeCommand,
+		model.JobTypeCommand,
+		mockGenericReq(t, api.m.db))
+	cmd := genericCmd.ToV1Command()
 	_, err = api.KillCommand(ctx, &apiv1.KillCommandRequest{CommandId: cmd.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Shells.
-	shell, _ := command.DefaultCmdService.LaunchShell(mockGenericReq(t, api.m.db))
+	genericShell, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeShell,
+		model.JobTypeShell,
+		mockGenericReq(t, api.m.db))
+	shell := genericShell.ToV1Shell()
 	_, err = api.KillShell(ctx, &apiv1.KillShellRequest{ShellId: shell.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
@@ -174,7 +202,9 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Once()
-	tb, _ := command.DefaultCmdService.LaunchTensorboard(mockGenericReq(t, api.m.db))
+	genericTb, _ := command.DefaultCmdService.LaunchGenericCommand(model.TaskTypeTensorboard,
+		model.JobTypeTensorboard, mockGenericReq(t, api.m.db))
+	tb := genericTb.ToV1Tensorboard()
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: tb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
@@ -218,22 +248,36 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	).Times(4)
 
 	// Notebooks.
-	nb, _ := command.DefaultCmdService.LaunchNotebook(mockGenericReq(t, api.m.db))
+	genericNb, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeNotebook,
+		model.JobTypeNotebook,
+		mockGenericReq(t, api.m.db))
+	nb := genericNb.ToV1Notebook()
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: nb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Commands.
-	cmd, _ := command.DefaultCmdService.LaunchCommand(mockGenericReq(t, api.m.db))
+	genericCmd, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeCommand,
+		model.JobTypeCommand,
+		mockGenericReq(t, api.m.db))
+	cmd := genericCmd.ToV1Command()
 	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: cmd.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Shells.
-	shell, _ := command.DefaultCmdService.LaunchShell(mockGenericReq(t, api.m.db))
+	genericShell, _ := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeShell,
+		model.JobTypeShell,
+		mockGenericReq(t, api.m.db))
+	shell := genericShell.ToV1Shell()
 	_, err = api.SetShellPriority(ctx, &apiv1.SetShellPriorityRequest{ShellId: shell.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Tensorboards.
-	tb, _ := command.DefaultCmdService.LaunchTensorboard(mockGenericReq(t, api.m.db))
+	genericTb, _ := command.DefaultCmdService.LaunchGenericCommand(model.TaskTypeTensorboard,
+		model.JobTypeTensorboard, mockGenericReq(t, api.m.db))
+	tb := genericTb.ToV1Tensorboard()
 	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{TensorboardId: tb.Id})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
