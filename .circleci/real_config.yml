@@ -2612,7 +2612,7 @@ workflows:
           name: test-e2e-cpu
           requires:
             - build-go
-          parallelism: 4
+          parallelism: 6
           tf2: true
           mark: e2e_cpu
 
@@ -2620,7 +2620,7 @@ workflows:
           name: test-e2e-cpu-double
           requires:
             - build-go
-          parallelism: 1
+          parallelism: 3
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -2630,7 +2630,7 @@ workflows:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
-          parallelism: 2
+          parallelism: 4
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
