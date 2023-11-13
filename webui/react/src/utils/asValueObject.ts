@@ -7,7 +7,7 @@ import { contramap } from 'fp-ts/Ord';
 import { and } from 'fp-ts/Predicate';
 import { fromEntries, getEq as recordEqFor, toEntries } from 'fp-ts/Record';
 import { Eq as stringEq, Ord as stringOrd } from 'fp-ts/string';
-import { fst } from 'fp-ts/tuple';
+import { fst } from 'fp-ts/Tuple';
 import { hash } from 'immutable';
 import * as t from 'io-ts';
 
