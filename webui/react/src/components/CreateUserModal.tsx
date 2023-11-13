@@ -30,6 +30,8 @@ const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
 export const API_SUCCESS_MESSAGE_CREATE =
   'New user with empty password has been created, advise user to reset password as soon as possible.';
+export const API_SUCCESS_MESSAGE_CREATE_REMOTE =
+  'New remote user has been created; please configure access in IdP.';
 const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
 export const MODAL_HEADER_LABEL_CREATE = 'Add User';
@@ -121,7 +123,10 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: uid }]);
         }
-        openToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
+        openToast({
+          severity: 'Confirm',
+          title: u.user?.remote ? API_SUCCESS_MESSAGE_CREATE_REMOTE : API_SUCCESS_MESSAGE_CREATE,
+        });
         form.resetFields();
       }
       onClose?.();
