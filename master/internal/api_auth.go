@@ -46,6 +46,8 @@ func (a *apiServer) Login(
 		return nil, status.Error(codes.FailedPrecondition, "please run `det auth login` to authenticate")
 	}
 
+	fmt.Println(req.Username)
+
 	if req.Username == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
 	}
