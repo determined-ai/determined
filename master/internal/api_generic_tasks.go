@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -16,10 +15,14 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -34,6 +37,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
@@ -45,11 +49,6 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
-	defer func() {
-		debug.PrintStack()
-	}()
-
-	fmt.Println("Getting to master", configYAML)
 	var err error
 	genericTaskSpec := &tasks.GenericTaskSpec{}
 
@@ -118,7 +117,6 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
 	workDirInDefaults := taskConfig.WorkDir
 
-	// TODO don't remove defaults with this.
 	if err := yaml.Unmarshal([]byte(configYAML), &taskConfig); err != nil {
 		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
 	}
@@ -181,6 +179,31 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	return genericTaskSpec, launchWarnings, contextDirectoryBytes, nil
 }
 
+func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) error {
+	userModel, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
+	p := &projectv1.Project{}
+	if err := a.m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
+		return errProjectNotFound
+	} else if err != nil {
+		return err
+	}
+	if err := project.AuthZProvider.Get().CanGetProject(context.TODO(), *userModel, p); err != nil {
+		return authz.SubIfUnauthorized(err, errProjectNotFound)
+	}
+
+	if err := command.AuthZProvider.Get().CanCreateGenericTask(
+		ctx, *userModel, model.AccessScopeID(p.WorkspaceId)); err != nil {
+		return status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	return nil
+}
+
 func (a *apiServer) CreateGenericTask(
 	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
 ) (*apiv1.CreateGenericTaskResponse, error) {
@@ -198,9 +221,12 @@ func (a *apiServer) CreateGenericTask(
 	if len(warnings) > 0 {
 		return nil, nil // TODO warnings
 	}
-	// TODO rbac check.
 
-	// Maybe fill in description?
+	if err := a.canCreateGenericTask(ctx, genericTaskSpec.ProjectID); err != nil {
+		return nil, err
+	}
+
+	// if err :=
 
 	// TODO do we need to wrap entrypoint with a custom wrapper?
 	// If we do it feels like a weird place to do it
@@ -298,7 +324,10 @@ func (a *apiServer) CreateGenericTask(
 	// 	ctx.Log().WithError(err).Warnf("command persist failure")
 	// }
 
-	return &apiv1.CreateGenericTaskResponse{TaskId: string(taskID)}, nil
+	return &apiv1.CreateGenericTaskResponse{
+		TaskId:   string(taskID),
+		Warnings: pkgCommand.LaunchWarningToProto(warnings),
+	}, nil
 }
 
 func onAllocationExit(ae *task.AllocationExited) {}

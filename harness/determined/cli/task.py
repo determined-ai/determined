@@ -125,6 +125,9 @@ def create(args: Namespace) -> None:
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")
 
+    if task_resp.warnings:
+        cli.print_warnings(resp.warnings)
+
 common_log_options: List[Any] = [
     Arg(
         "-f",
