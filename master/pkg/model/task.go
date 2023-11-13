@@ -223,8 +223,12 @@ func (a AcceleratorData) Proto() *apiv1.AcceleratorData {
 }
 
 // Proto returns the proto representation of the task state.
-func (s AllocationState) Proto() taskv1.State {
-	switch s {
+func (s *AllocationState) Proto() taskv1.State {
+	if s == nil {
+		return taskv1.State_STATE_UNSPECIFIED
+	}
+
+	switch *s {
 	case AllocationStateWaiting:
 		return taskv1.State_STATE_WAITING
 	case AllocationStatePulling:
@@ -244,13 +248,21 @@ func (s AllocationState) Proto() taskv1.State {
 
 // Proto returns the proto representation of the allocation state.
 func (a Allocation) Proto() *taskv1.Allocation {
-	startTime := a.StartTime.String()
-	endTime := a.EndTime.String()
+	var startTime *string
+	if a.StartTime != nil {
+		startTime = ptrs.Ptr(a.StartTime.String())
+	}
+
+	var endTime *string
+	if a.EndTime != nil {
+		endTime = ptrs.Ptr(a.EndTime.String())
+	}
+
 	return &taskv1.Allocation{
 		TaskId:       string(a.TaskID),
 		IsReady:      a.IsReady,
-		StartTime:    &startTime,
-		EndTime:      &endTime,
+		StartTime:    startTime,
+		EndTime:      endTime,
 		AllocationId: string(a.AllocationID),
 		State:        a.State.Proto(),
 		Slots:        int32(a.Slots),
