@@ -101,7 +101,7 @@ Default Images
 +-------------+-------------------------------------------------------------------------------+
 | Environment | File Name                                                                     |
 +=============+===============================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4``          |
+| CPUs        | ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.26.4``          |
 +-------------+-------------------------------------------------------------------------------+
 | NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4``       |
 +-------------+-------------------------------------------------------------------------------+
@@ -195,7 +195,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4
+   FROM determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.26.4
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.8

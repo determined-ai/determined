@@ -91,7 +91,7 @@ Default values:
 
 -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4`` for NVIDIA GPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4`` for CPUs.
+-  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.26.4`` for CPUs.
 
 ``environment_variables``
 =========================
