@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -19,6 +18,7 @@ type GenericTaskSpec struct {
 	GenericTaskConfig model.GenericTaskConfig
 }
 
+// ToTaskSpec converts the generic task spec to the common task spec.
 func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 	res := s.Base
 
@@ -34,11 +34,9 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 		),
 	}, "/")
 
-	// TODO proxy ports
-
-	// TODO
-	// res.PbsConfig = s.Config.Pbs
-	// res.SlurmConfig = s.Config.Slurm
+	// TODO proxy ports eventually.
+	res.PbsConfig = s.GenericTaskConfig.Pbs
+	res.SlurmConfig = s.GenericTaskConfig.Slurm
 
 	res.ExtraArchives = []cproto.RunArchive{commandEntryArchive}
 	res.TaskType = s.Base.TaskType
@@ -54,7 +52,6 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 
 	res.Description = "generic-task"
 
-	fmt.Println("bind mounts", s.GenericTaskConfig.BindMounts)
 	res.Mounts = ToDockerMounts(s.GenericTaskConfig.BindMounts.ToExpconf(), res.WorkDir)
 
 	if shm := s.GenericTaskConfig.Resources.ShmSize(); shm != nil {
@@ -66,8 +63,17 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 	return res
 }
 
-// TODO
-func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error)              { return nil, nil }
-func (s GenericTaskSpec) SetJobPriority(priority int) error         { return nil }
-func (s GenericTaskSpec) SetWeight(weight float64) error            { return nil }
+// TODO fill in job information. These should probably be on a different struct.
+// not right on the generic task spec.
+
+// ToV1Job todo.
+func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) { return nil, nil }
+
+// SetJobPriority todo.
+func (s GenericTaskSpec) SetJobPriority(priority int) error { return nil }
+
+// SetWeight todo.
+func (s GenericTaskSpec) SetWeight(weight float64) error { return nil }
+
+// SetResourcePool todo.
 func (s GenericTaskSpec) SetResourcePool(resourcePool string) error { return nil }

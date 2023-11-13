@@ -6,29 +6,29 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-func DefaultConfigGenericTaskConfig(taskContainerDefaults *TaskContainerDefaultsConfig) GenericTaskConfig {
+// DefaultConfigGenericTaskConfig merges task containter defaults into a default generic task config struct.
+func DefaultConfigGenericTaskConfig(
+	taskContainerDefaults *TaskContainerDefaultsConfig,
+) GenericTaskConfig {
 	out := GenericTaskConfig{ // TODO
 		Resources: expconf.ResourcesConfig{
 			RawSlotsPerTask: ptrs.Ptr(1),
 			RawIsSingleNode: ptrs.Ptr(true),
 		},
 		Environment: DefaultEnvConfig(taskContainerDefaults),
-		// NotebookIdleType: NotebookIdleTypeKernelsOrTerminals,
 	}
 
-	// TODO
 	if taskContainerDefaults != nil {
-		/*
-			out.WorkDir = taskContainerDefaults.WorkDir
-			out.BindMounts = taskContainerDefaults.BindMounts
-			out.Pbs = taskContainerDefaults.Pbs
-			out.Slurm = taskContainerDefaults.Slurm
-		*/
+		out.WorkDir = taskContainerDefaults.WorkDir
+		out.BindMounts = taskContainerDefaults.BindMounts
+		out.Pbs = taskContainerDefaults.Pbs
+		out.Slurm = taskContainerDefaults.Slurm
 	}
 
 	return out
 }
 
+// GenericTaskConfig like expconf or command config but for generic tasks.
 type GenericTaskConfig struct {
 	BindMounts  BindMountsConfig        `json:"bind_mounts"`
 	Environment Environment             `json:"environment"`
@@ -37,8 +37,8 @@ type GenericTaskConfig struct {
 	WorkDir     *string                 `json:"work_dir"`
 	Debug       bool                    `json:"debug"`
 
-	// Pbs         expconf.PbsConfig   `json:"pbs,omitempty"`
-	// Slurm       expconf.SlurmConfig `json:"slurm,omitempty"`
+	Pbs   expconf.PbsConfig   `json:"pbs,omitempty"`
+	Slurm expconf.SlurmConfig `json:"slurm,omitempty"`
 }
 
 // Validate implements the check.Validatable interface.

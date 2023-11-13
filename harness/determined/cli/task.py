@@ -1,9 +1,10 @@
-from argparse import Namespace, FileType
-from pathlib import Path
+from argparse import FileType, Namespace
 from functools import partial
+from pathlib import Path
 from typing import Any, Dict, List, Union, cast
 
 from termcolor import colored
+
 from determined import cli
 from determined.cli import command, render
 from determined.common import api, context, util
@@ -109,13 +110,13 @@ def logs(args: Namespace) -> None:
             )
         )
 
+
 @authentication.required
 def create(args: Namespace) -> None:
-    # TODO volume???
     config = command.parse_config(args.config_file, None, args.config, [])
     config_text = util.yaml_safe_dump(config)
     context_directory = context.read_v1_context(args.context, args.include)
-    
+
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
         config=config_text,
@@ -127,7 +128,21 @@ def create(args: Namespace) -> None:
 
     # TODO add an -f option for following logs
     if task_resp.warnings:
-        cli.print_warnings(resp.warnings)
+        cli.print_warnings(task_resp.warnings)
+
+    if args.follow:
+        try:
+            logs = api.task_logs(sess, task_resp.taskId, follow=True)
+            api.pprint_logs(logs)
+        finally:
+            print(
+                colored(
+                    "Task log stream ended. To reopen log stream, run: "
+                    "det task logs -f {}".format(task_resp.taskId),
+                    "green",
+                )
+            )
+
 
 common_log_options: List[Any] = [
     Arg(
@@ -236,31 +251,35 @@ args_description: List[Any] = [
                     *common_log_options,
                 ],
             ),
-        Cmd(
-            "create",
-            create,
-            "create task",
-            [
-                Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
-                Arg("context", type=Path, help="file or directory containing task context directory"),
-                Arg(
-                    "-i",
-                    "--include",
-                    action="append",
-                    default=[],
-                    type=Path,
-                    help="additional files to copy into the task container",
-                ),
-                Arg("--project_id", type=int, help="place this task inside this project"),
-                Arg("--config", action="append", default=[], help="TODO HELP"),
-                Arg(
-                    "-f",
-                    "--follow-first-trial",
-                    action="store_true",
-                    help="follow the logs of the first trial that is created",
-                ),
-            ],
-        ),
+            Cmd(
+                "create",
+                create,
+                "create task",
+                [
+                    Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
+                    Arg(
+                        "context",
+                        type=Path,
+                        help="file or directory containing task context directory",
+                    ),
+                    Arg(
+                        "-i",
+                        "--include",
+                        action="append",
+                        default=[],
+                        type=Path,
+                        help="additional files to copy into the task container",
+                    ),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
+                    Arg("--config", action="append", default=[], help="TODO HELP"),
+                    Arg(
+                        "-f",
+                        "--follow",
+                        action="store_true",
+                        help="follow the logs of the task that is created",
+                    ),
+                ],
+            ),
         ],
     ),
 ]

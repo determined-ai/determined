@@ -49,13 +49,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
-	var err error
-	defer func() {
-		fmt.Println("FAILING with this error", err)
-	}()
-	genericTaskSpec := &tasks.GenericTaskSpec{}
-
-	genericTaskSpec.ProjectID = projectID
+	genericTaskSpec := &tasks.GenericTaskSpec{
+		ProjectID: projectID,
+	}
 
 	// Validate the userModel and get the agent userModel group.
 	userModel, _, err := grpcutil.GetUser(ctx)
@@ -214,8 +210,6 @@ func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) err
 func (a *apiServer) CreateGenericTask(
 	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
 ) (*apiv1.CreateGenericTaskResponse, error) {
-	fmt.Println(string(req.Config))
-
 	var projectID int
 	if req.ProjectId != nil {
 		projectID = int(*req.ProjectId)
@@ -291,8 +285,6 @@ func (a *apiServer) CreateGenericTask(
 	if err = tasklist.GroupPriorityChangeRegistry.Add(jobID, priorityChange); err != nil {
 		return nil, err
 	}
-
-	fmt.Println(genericTaskSpec.Base.Mounts)
 
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
