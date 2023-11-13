@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev23
+    default: v1dev24
   gke-version:
     type: string
     default: "1.25.10"
@@ -285,11 +285,6 @@ commands:
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
-      - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
-          paths:
-            - "/home/circleci/go/"
-            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -1615,6 +1610,12 @@ jobs:
           paths:
             - "master/build"
             - "agent/build"
+      # Save cache after we build master and agent so we can have our build cache there.
+      - save_cache:
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
+          paths:
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
 
   build-proto:
     docker:
