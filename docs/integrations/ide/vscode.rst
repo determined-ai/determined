@@ -31,19 +31,19 @@
  Addendum for Windows Users
 ############################
 
-#. On Windows, VSCode uses CMD to run its ssh command under the hood, so we have to modify a few
-   things in this config file. First, prepend the proxy command to use WSL. In a CMD shell, type
-   `where wsl` and prepend the result to the ProxyCommand entry in your config file. This should
-   lead to a ProxyCommand that looks like this:
+#. On Windows, Visual Studio Code uses CMD to run its SSH command under the hood. Therefore, we need
+   to make a few modifications to the config file. First, prepend the proxy command to use WSL. In a
+   CMD shell, type where wsl and prepend the result to the ProxyCommand entry in your config file.
+   This should lead to a ProxyCommand that looks like this:
 
    .. code::
 
       ProxyCommand C:\Windows\System32\wsl.exe /path/to/python -m determined.cli.tunnel <DET_MASTER_URL_HERE> %h
 
-#. An additional quirk of using CMD for the ssh step is that the key file needs to be moved out of
-   the WSL filesystem, otherwise there will be permission ambiguity that Windows OpenSSH won't like.
-   To circumvent this, we need to move or copy the file to the Windows filesystem. This key file can
-   be found in WSL in the directory `/home/<username>/.cache/determined/shell/<your_shell_id>/key`.
+#. An additional quirk of using CMD for the SSH step is that the key file needs to be moved out of
+   the WSL filesystem. Otherwise, there will be permission ambiguity that Windows OpenSSH won't
+   like. To work around this, move or copy the file to the Windows filesystem. This key file can be
+   found in WSL in the directory /home/<username>/.cache/determined/shell/<your_shell_id>/key.
 
    .. code::
 
