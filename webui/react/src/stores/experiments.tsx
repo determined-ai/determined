@@ -19,7 +19,7 @@ import {
   RunState,
 } from 'types';
 import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
-import { Observable, observable, WritableObservable } from 'utils/observable';
+import { immutableObservable, Observable } from 'utils/observable';
 import { encodeParams } from 'utils/store';
 
 import PollingStore from './polling';
@@ -169,12 +169,8 @@ type ExperimentCache = t.TypeOf<typeof experimentCacheCodec>;
 
 class ExperimentStore extends PollingStore {
   // Cache values keyed by encoded request param.
-  #experimentCache: WritableObservable<Map<string, ValueObjectOf<ExperimentCache>>> = observable(
-    Map(),
-  );
-  #experimentMap: WritableObservable<Map<number, ValueObjectOf<ExperimentItem>>> = observable(
-    Map(),
-  );
+  #experimentCache = immutableObservable<Map<string, ValueObjectOf<ExperimentCache>>>(Map());
+  #experimentMap = immutableObservable<Map<number, ValueObjectOf<ExperimentItem>>>(Map());
 
   public getExperimentsByIds(experimentIds: number[]): Observable<Readonly<ExperimentItem[]>> {
     return this.#experimentMap.select((map) =>
