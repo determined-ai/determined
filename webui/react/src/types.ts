@@ -128,6 +128,7 @@ export interface DetailedUser extends User {
   id: number;
   isActive: boolean;
   isAdmin: boolean;
+  remote?: boolean;
 }
 
 export interface DetailedUserList extends WithPagination {

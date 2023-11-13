@@ -403,7 +403,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['remote'],
         key: 'remote',
         onCell: onRightClickableCell,
-        render: (value: boolean): React.ReactNode => value ? 'Remote' : 'Local',
+        render: (value: boolean): React.ReactNode => (value ? 'Remote' : 'Local'),
         title: 'Remote',
       },
       {

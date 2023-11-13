@@ -37,6 +37,8 @@ const MODAL_HEADER_LABEL_VIEW = 'View User';
 const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
+const REMOTE_LABEL = 'Remote';
+const REMOTE_NAME = 'remote';
 const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
@@ -53,6 +55,7 @@ interface FormInputs {
   [USER_NAME_NAME]: string;
   [DISPLAY_NAME_NAME]: string;
   [ADMIN_NAME]: boolean;
+  [REMOTE_NAME]: boolean;
   [ROLE_NAME]: number[];
   [ACTIVE_NAME]: boolean;
 }
@@ -177,6 +180,15 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
           </Form.Item>
           {!rbacEnabled && (
             <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+              <Switch disabled={viewOnly} />
+            </Form.Item>
+          )}
+          {rbacEnabled && (
+            <Form.Item
+              initialValue={user?.remote}
+              label={REMOTE_LABEL}
+              name={REMOTE_NAME}
+              valuePropName="checked">
               <Switch disabled={viewOnly} />
             </Form.Item>
           )}
