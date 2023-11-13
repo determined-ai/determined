@@ -2216,6 +2216,12 @@ export interface V1CreateGenericTaskResponse {
      * @memberof V1CreateGenericTaskResponse
      */
     taskId: string;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 /**
  * CreateGroupRequest is the body of the request for the call to create a group.

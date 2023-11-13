@@ -2,12 +2,16 @@ package model
 
 import (
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func DefaultConfigGenericTaskConfig(taskContainerDefaults *TaskContainerDefaultsConfig) GenericTaskConfig {
 	out := GenericTaskConfig{ // TODO
-		// Resources:   DefaultResourcesConfig(taskContainerDefaults),
+		Resources: expconf.ResourcesConfig{
+			RawSlotsPerTask: ptrs.Ptr(1),
+			RawIsSingleNode: ptrs.Ptr(true),
+		},
 		Environment: DefaultEnvConfig(taskContainerDefaults),
 		// NotebookIdleType: NotebookIdleTypeKernelsOrTerminals,
 	}
@@ -40,7 +44,7 @@ type GenericTaskConfig struct {
 // Validate implements the check.Validatable interface.
 func (c *GenericTaskConfig) Validate() []error {
 	return []error{
-		check.GreaterThanOrEqualTo(c.Resources.SlotsPerTask, 0,
+		check.GreaterThanOrEqualTo(c.Resources.SlotsPerTask(), 0,
 			"resources.slots_per_task must be >= 0"),
 		check.GreaterThan(len(c.Entrypoint), 0, "entrypoint must be non-empty"),
 	}

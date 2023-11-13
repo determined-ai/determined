@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -33,6 +34,12 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 		),
 	}, "/")
 
+	// TODO proxy ports
+
+	// TODO
+	// res.PbsConfig = s.Config.Pbs
+	// res.SlurmConfig = s.Config.Slurm
+
 	res.ExtraArchives = []cproto.RunArchive{commandEntryArchive}
 	res.TaskType = s.Base.TaskType
 	res.Environment = s.GenericTaskConfig.Environment.ToExpconf()
@@ -45,9 +52,21 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 
 	res.ResourcesConfig = s.GenericTaskConfig.Resources
 
+	res.Description = "generic-task"
+
+	fmt.Println("bind mounts", s.GenericTaskConfig.BindMounts)
+	res.Mounts = ToDockerMounts(s.GenericTaskConfig.BindMounts.ToExpconf(), res.WorkDir)
+
+	if shm := s.GenericTaskConfig.Resources.ShmSize(); shm != nil {
+		res.ShmSize = int64(*shm)
+	}
+
+	res.TaskType = model.TaskTypeGeneric
+
 	return res
 }
 
+// TODO
 func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error)              { return nil, nil }
 func (s GenericTaskSpec) SetJobPriority(priority int) error         { return nil }
 func (s GenericTaskSpec) SetWeight(weight float64) error            { return nil }

@@ -50,6 +50,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
 	var err error
+	defer func() {
+		fmt.Println("FAILING with this error", err)
+	}()
 	genericTaskSpec := &tasks.GenericTaskSpec{}
 
 	genericTaskSpec.ProjectID = projectID
@@ -124,6 +127,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Copy discovered (default) resource pool name and slot count.
 	taskConfig.Resources.RawResourcePool = &poolName
 	taskConfig.Resources.RawSlotsPerTask = resources.SlotsPerTask
+	//	taskConfig.Resources.RawIsSingleNode = resources.IsSingleNode
 
 	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
 	if taskConfig.Resources.SlotsPerTask() == 0 {
@@ -210,6 +214,8 @@ func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) err
 func (a *apiServer) CreateGenericTask(
 	ctx context.Context, req *apiv1.CreateGenericTaskRequest,
 ) (*apiv1.CreateGenericTaskResponse, error) {
+	fmt.Println(string(req.Config))
+
 	var projectID int
 	if req.ProjectId != nil {
 		projectID = int(*req.ProjectId)
@@ -264,7 +270,7 @@ func (a *apiServer) CreateGenericTask(
 		if _, err := tx.NewInsert().Model(&model.TaskContextDirectory{
 			TaskID:           taskID,
 			ContextDirectory: contextDirectoryBytes,
-		}).Exec(context.TODO()); err != nil {
+		}).Exec(ctx); err != nil {
 			return fmt.Errorf("persisting context directory files: %w", err)
 		}
 
@@ -285,6 +291,8 @@ func (a *apiServer) CreateGenericTask(
 	if err = tasklist.GroupPriorityChangeRegistry.Add(jobID, priorityChange); err != nil {
 		return nil, err
 	}
+
+	fmt.Println(genericTaskSpec.Base.Mounts)
 
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),

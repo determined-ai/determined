@@ -115,7 +115,7 @@ def create(args: Namespace) -> None:
     config = command.parse_config(args.config_file, None, args.config, [])
     config_text = util.yaml_safe_dump(config)
     context_directory = context.read_v1_context(args.context, args.include)
-
+    
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
         config=config_text,
@@ -125,6 +125,7 @@ def create(args: Namespace) -> None:
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")
 
+    # TODO add an -f option for following logs
     if task_resp.warnings:
         cli.print_warnings(resp.warnings)
 

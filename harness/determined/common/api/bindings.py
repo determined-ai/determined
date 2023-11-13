@@ -2623,25 +2623,33 @@ class v1CreateGenericTaskRequest(Printable):
 
 class v1CreateGenericTaskResponse(Printable):
     """Response to CreateExperimentRequest."""
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         taskId: str,
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.taskId = taskId
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "taskId": obj["taskId"],
         }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "taskId": self.taskId,
         }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
 class v1CreateGroupRequest(Printable):
