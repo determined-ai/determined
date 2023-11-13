@@ -23,7 +23,7 @@ var (
 )
 
 // BCryptCost is a stopgap until we implement sane master-configuration.
-const BCryptCost = 15
+const DefaultBCryptCost = 15
 
 // UserID is the type for user IDs.
 type UserID int
@@ -109,14 +109,16 @@ func (user User) ValidatePassword(password string) bool {
 
 // UpdatePasswordHash updates the model's password hash employing necessary cryptographic
 // techniques.
-func (user *User) UpdatePasswordHash(password string) error {
+func (user *User) UpdatePasswordHash(password string, optionalCost *int) error {
 	if password == "" {
 		user.PasswordHash = null.NewString("", false)
 	} else {
-		passwordHash, err := bcrypt.GenerateFromPassword(
-			[]byte(password),
-			BCryptCost,
-		)
+		cost := DefaultBCryptCost
+		if optionalCost != nil {
+			cost = *optionalCost
+		}
+
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), cost)
 		if err != nil {
 			return err
 		}

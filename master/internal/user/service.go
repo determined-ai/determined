@@ -16,6 +16,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/config"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -368,7 +369,9 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
 
-		if err = user.UpdatePasswordHash(*params.Password); err != nil {
+		if err = user.UpdatePasswordHash(
+			*params.Password, config.GetMasterConfig().InternalConfig.BCryptCost,
+		); err != nil {
 			return nil, err
 		}
 		toUpdate = append(toUpdate, "password_hash")

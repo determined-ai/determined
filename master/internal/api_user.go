@@ -345,7 +345,9 @@ func (a *apiServer) PostUser(
 			hashedPassword = replicateClientSideSaltAndHash(req.Password)
 		}
 
-		if err = userToAdd.UpdatePasswordHash(hashedPassword); err != nil {
+		if err = userToAdd.UpdatePasswordHash(
+			hashedPassword, config.GetMasterConfig().InternalConfig.BCryptCost,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -385,7 +387,10 @@ func (a *apiServer) SetUserPassword(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	if err = targetUser.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+	if err = targetUser.UpdatePasswordHash(
+		replicateClientSideSaltAndHash(req.Password),
+		config.GetMasterConfig().InternalConfig.BCryptCost,
+	); err != nil {
 		return nil, err
 	}
 	switch err = user.Update(ctx, &targetUser, []string{"password_hash"}, nil); {
@@ -528,7 +533,9 @@ func (a *apiServer) PatchUser(
 		if !req.User.IsHashed {
 			hashedPassword = replicateClientSideSaltAndHash(hashedPassword)
 		}
-		if err := updatedUser.UpdatePasswordHash(hashedPassword); err != nil {
+		if err := updatedUser.UpdatePasswordHash(
+			hashedPassword, config.GetMasterConfig().InternalConfig.BCryptCost,
+		); err != nil {
 			return nil, errors.Wrap(err, "error hashing password")
 		}
 		insertColumns = append(insertColumns, "password_hash")
