@@ -22,7 +22,7 @@ var (
 	NoPasswordLogin = null.NewString("", true)
 )
 
-// BCryptCost is a stopgap until we implement sane master-configuration.
+// DefaultBCryptCost is a stopgap until we implement sane master-configuration.
 const DefaultBCryptCost = 15
 
 // UserID is the type for user IDs.
