@@ -56,7 +56,7 @@ func TestCommandManagerLifecycle(t *testing.T) {
 	require.Equal(t, cmd3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set command priority.
-	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0, model.TaskTypeCommand)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -91,7 +91,7 @@ func TestNotebookManagerLifecycle(t *testing.T) {
 	require.Equal(t, nb3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Notebook priority.
-	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0, model.TaskTypeNotebook)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -126,7 +126,7 @@ func TestShellManagerLifecycle(t *testing.T) {
 	require.Equal(t, shell3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Shell priority.
-	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0, model.TaskTypeShell)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }
@@ -161,7 +161,7 @@ func TestTensorboardManagerLifecycle(t *testing.T) {
 	require.Equal(t, tb3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Tensorboard priority.
-	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0)
+	resp4, err := DefaultCmdService.SetNTSCPriority(cmd1.Id, 0, model.TaskTypeTensorboard)
 	require.NotNil(t, resp4)
 	require.NoError(t, err)
 }

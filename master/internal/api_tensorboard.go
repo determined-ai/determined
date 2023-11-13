@@ -192,7 +192,10 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
-	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.TensorboardId, int(req.Priority))
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(
+		req.TensorboardId,
+		int(req.Priority),
+		model.TaskTypeTensorboard)
 	if err != nil {
 		return nil, err
 	}

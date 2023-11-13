@@ -171,7 +171,7 @@ func (a *apiServer) SetShellPriority(
 		return nil, err
 	}
 
-	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.ShellId, int(req.Priority))
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.ShellId, int(req.Priority), model.TaskTypeShell)
 	if err != nil {
 		return nil, err
 	}

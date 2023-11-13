@@ -175,7 +175,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
-	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.NotebookId, int(req.Priority))
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.NotebookId, int(req.Priority), model.TaskTypeNotebook)
 	if err != nil {
 		return nil, err
 	}

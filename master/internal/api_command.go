@@ -344,7 +344,7 @@ func (a *apiServer) SetCommandPriority(
 		return nil, err
 	}
 
-	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.CommandId, int(req.Priority))
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.CommandId, int(req.Priority), model.TaskTypeCommand)
 	if err != nil {
 		return nil, err
 	}

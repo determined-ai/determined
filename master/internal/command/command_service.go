@@ -187,12 +187,12 @@ func (cs *CommandService) DeleteWorkspaceNTSC(req *apiv1.DeleteWorkspaceRequest)
 
 // SetNTSCPriority sets the NTSC's resource manager group priority.
 func (cs *CommandService) SetNTSCPriority(
-	id string, priority int,
+	id string, priority int, taskType model.TaskType,
 ) (*Command, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	c, err := cs.getNTSC(model.TaskID(id), model.TaskTypeCommand)
+	c, err := cs.getNTSC(model.TaskID(id), taskType)
 	if err != nil {
 		return nil, err
 	}
