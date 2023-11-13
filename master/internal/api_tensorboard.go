@@ -157,7 +157,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	cmd, err := command.DefaultCmdService.KillNTSC(req.TensorboardId)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.TensorboardId, model.TaskTypeTensorboard)
 	if err != nil {
 		return nil, err
 	}

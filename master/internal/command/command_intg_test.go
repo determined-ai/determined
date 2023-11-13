@@ -48,10 +48,11 @@ func TestCommandManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Commands), 2)
 
 	// Kill 1 command.
-	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
-	cmd3 := resp3.ToV1Command()
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id, model.TaskTypeCommand)
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
+
+	cmd3 := resp3.ToV1Command()
 	require.Equal(t, cmd3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set command priority.
@@ -82,10 +83,11 @@ func TestNotebookManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Notebooks), 2)
 
 	// Kill 1 Notebook.
-	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
-	nb3 := resp3.ToV1Notebook()
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id, model.TaskTypeNotebook)
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
+
+	nb3 := resp3.ToV1Notebook()
 	require.Equal(t, nb3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Notebook priority.
@@ -116,10 +118,11 @@ func TestShellManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Shells), 2)
 
 	// Kill 1 Shell.
-	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
-	shell3 := resp3.ToV1Shell()
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id, model.TaskTypeShell)
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
+
+	shell3 := resp3.ToV1Shell()
 	require.Equal(t, shell3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Shell priority.
@@ -150,10 +153,11 @@ func TestTensorboardManagerLifecycle(t *testing.T) {
 	require.Equal(t, len(resp2.Tensorboards), 2)
 
 	// Kill 1 Tensorboard.
-	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id)
-	tb3 := resp3.ToV1Tensorboard()
+	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id, model.TaskTypeTensorboard)
 	require.NotNil(t, resp3)
 	require.NoError(t, err)
+
+	tb3 := resp3.ToV1Tensorboard()
 	require.Equal(t, tb3.State, taskv1.State_STATE_TERMINATED)
 
 	// Set Tensorboard priority.

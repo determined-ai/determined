@@ -147,7 +147,7 @@ func (a *apiServer) KillNotebook(
 	if err != nil {
 		return nil, err
 	}
-	cmd, err := command.DefaultCmdService.KillNTSC(req.NotebookId)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.NotebookId, model.TaskTypeNotebook)
 	if err != nil {
 		return nil, err
 	}

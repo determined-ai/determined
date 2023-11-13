@@ -312,7 +312,7 @@ func (a *apiServer) KillCommand(
 		return nil, err
 	}
 
-	cmd, err := command.DefaultCmdService.KillNTSC(req.CommandId)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.CommandId, model.TaskTypeCommand)
 	if err != nil {
 		return nil, err
 	}

@@ -205,13 +205,13 @@ func (cs *CommandService) SetNTSCPriority(
 }
 
 // KillNTSC sends a kill signal to the command's allocation.
-func (cs *CommandService) KillNTSC(id string) (*Command, error) {
+func (cs *CommandService) KillNTSC(id string, taskType model.TaskType) (*Command, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
 	tID := model.TaskID(id)
 
-	c, err := cs.getNTSC(tID, model.TaskTypeNotebook)
+	c, err := cs.getNTSC(tID, taskType)
 	if err != nil {
 		return nil, err
 	}

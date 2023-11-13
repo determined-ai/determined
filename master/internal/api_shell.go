@@ -140,7 +140,7 @@ func (a *apiServer) KillShell(
 		return nil, err
 	}
 
-	cmd, err := command.DefaultCmdService.KillNTSC(req.ShellId)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.ShellId, model.TaskTypeShell)
 
 	return &apiv1.KillShellResponse{Shell: cmd.ToV1Shell()}, nil
 }
