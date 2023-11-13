@@ -441,7 +441,9 @@ const UserManagement: React.FC = () => {
         title: '',
       },
     ];
-    return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
+    return rbacEnabled
+      ? columns.filter((c) => c.dataIndex !== 'isAdmin')
+      : columns.filter((c) => c.dataIndex !== 'remote');
   }, [fetchUsers, groups, info.userManagementEnabled, rbacEnabled, settings]);
 
   return (
