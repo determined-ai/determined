@@ -399,6 +399,14 @@ const UserManagement: React.FC = () => {
         title: 'Role',
       },
       {
+        dataIndex: 'remote',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['remote'],
+        key: 'remote',
+        onCell: onRightClickableCell,
+        render: (value: boolean): React.ReactNode => value ? 'Remote' : 'Local',
+        title: 'Remote',
+      },
+      {
         dataIndex: 'modifiedAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
