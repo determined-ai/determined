@@ -2070,9 +2070,9 @@ jobs:
           command: |
             pip freeze --all >> /tmp/cachefile
             cat ../harness/setup.py >> /tmp/cachefile
-            echo ./tests/requirments.txt >> /tmp/cachefile
-            cat ./tests/requirments.txt >> /tmp/cachefile
-            echo 3.8.16 >> /tmp/cachefile # TODO
+            echo ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
+            cat ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
+            echo 3.8.16 >> /tmp/cachefile
 
       - restore_cache:
           keys:
@@ -2115,7 +2115,7 @@ jobs:
 
             python3 -m pip install build
 
-            pip install ./tests/requirments.txt
+            pip install ~/project/e2e_tests/tests/requirements.txt
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
@@ -2253,7 +2253,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          extra-requirements-file: "e2e_tests/tests/requirementstxt"
           executor: <<pipeline.parameters.docker-image>>
       - when:
           condition: <<parameters.enable-tls>>
