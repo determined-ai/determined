@@ -100,6 +100,8 @@ args_description = [
                               cli.output_format_args["yaml"])
                     ]
                 ),
+                Group(cli.output_format_args["json"],
+                      cli.output_format_args["yaml"]),
             ]
         ),
         Cmd("info", get_master, "fetch master info", [
