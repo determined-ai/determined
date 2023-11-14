@@ -188,11 +188,14 @@ export const asValueObject = <T extends t.HasProps>(
   value: t.TypeOf<T>,
 ): ValueObjectOf<t.TypeOf<T>> => {
   const eq = mixedToEq(codec);
-  let hashCode: number | null = null;
   return {
     ...value,
-    equals: (other: unknown) => eq.equals(value, other),
-    hashCode: () => (hashCode ||= hash(JSON.stringify(recursiveStripKeys(codec, value)))),
+    equals(other: unknown) {
+      return eq.equals(this, other);
+    },
+    hashCode() {
+      return hash(JSON.stringify(recursiveStripKeys(codec, this)));
+    },
   };
 };
 
