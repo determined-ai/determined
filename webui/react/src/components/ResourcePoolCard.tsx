@@ -13,6 +13,9 @@ import awsLogo from 'assets/images/aws-logo.svg?url';
 import gcpLogo from 'assets/images/gcp-logo.svg?url';
 import k8sLogo from 'assets/images/k8s-logo.svg?url';
 import staticLogo from 'assets/images/on-prem-logo.svg?url';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import JsonGlossary from 'components/JsonGlossary';
+import ResourcePoolBindingModalComponent from 'components/ResourcePoolBindingModal';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import useUI from 'components/ThemeProvider';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
@@ -28,9 +31,6 @@ import { useObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
 
-import { ConditionalWrapper } from './ConditionalWrapper';
-import Json from './Json';
-import ResourcePoolBindingModalComponent from './ResourcePoolBindingModal';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
@@ -198,7 +198,7 @@ const ResourcePoolCard: React.FC<Props> = ({
                   </div>
                 </section>
               )}
-              <Json hideDivider json={shortDetails} />
+              <JsonGlossary alignValues="right" json={shortDetails} />
               <div />
             </div>
           </Suspense>

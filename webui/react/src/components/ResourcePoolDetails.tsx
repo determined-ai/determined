@@ -1,7 +1,7 @@
 import { Divider, Modal } from 'antd';
 import React, { Fragment } from 'react';
 
-import Json from 'components/Json';
+import JsonGlossary from 'components/JsonGlossary';
 import { V1ResourcePoolDetail } from 'services/api-ts-sdk';
 import { JsonObject, ResourcePool } from 'types';
 import { camelCaseToSentence } from 'utils/string';
@@ -41,12 +41,15 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       title={title}
       onCancel={props.finally}
       onOk={props.finally}>
-      <Json json={mainSection as unknown as JsonObject} translateLabel={camelCaseToSentence} />
+      <JsonGlossary
+        json={mainSection as unknown as JsonObject}
+        translateLabel={camelCaseToSentence}
+      />
       {Object.keys(details).map((key) => (
         <Fragment key={key}>
           <Divider />
           <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
-          <Json
+          <JsonGlossary
             json={details[key as keyof V1ResourcePoolDetail] as unknown as JsonObject}
             translateLabel={camelCaseToSentence}
           />
