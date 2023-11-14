@@ -2113,9 +2113,9 @@ jobs:
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
-            python3 -m pip install build
+            /tmp/venv/bin/python -m pip install build
 
-            python3 -m pip install -r ~/project/e2e_tests/tests/requirements.txt
+            /tmp/venv/bin/python -m pip install -r ~/project/e2e_tests/tests/requirements.txt
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
