@@ -111,7 +111,7 @@ func (cs *CommandService) LaunchGenericCommand(
 		}),
 	}
 
-	if err := cmd.startCmd(context.TODO()); err != nil {
+	if err := cmd.Start(context.TODO()); err != nil {
 		return nil, err
 	}
 
@@ -181,7 +181,7 @@ func (cs *CommandService) DeleteWorkspaceNTSC(req *apiv1.DeleteWorkspaceRequest)
 	defer cs.mu.Unlock()
 
 	for _, c := range cs.commands {
-		c.deleteIfInWorkspace(req)
+		c.DeleteIfInWorkspace(req)
 	}
 }
 

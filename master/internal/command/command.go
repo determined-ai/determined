@@ -44,7 +44,7 @@ var queueStates = []model.AllocationState{
 }
 
 // Command is executed in a containerized environment on a Determined cluster.
-// Locking in: toNTSC, startCmd, onExit, deleteIfInWorkspace.
+// Locking in: Start, OnExit, DeleteIfInWorkspace, ToV1Command/Shell/Notebook/Tensorboard.
 type Command struct {
 	mu sync.Mutex
 
@@ -103,11 +103,11 @@ func commandFromSnapshot(
 			"taskID":    taskID,
 		}),
 	}
-	return cmd, cmd.startCmd(context.TODO())
+	return cmd, cmd.Start(context.TODO())
 }
 
-// start starts the command & its respective allocation. Once started, it persists to the db.
-func (c *Command) startCmd(ctx context.Context) error {
+// Start starts the command & its respective allocation. Once started, it persists to the db.
+func (c *Command) Start(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -161,7 +161,7 @@ func (c *Command) startCmd(ctx context.Context) error {
 			IdleTimeout:         idleWatcherConfig,
 			Restore:             c.restored,
 			ProxyTLS:            c.TaskType == model.TaskTypeNotebook,
-		}, c.db, c.rm, c.GenericCommandSpec, c.onExit)
+		}, c.db, c.rm, c.GenericCommandSpec, c.OnExit)
 	if err != nil {
 		return err
 	}
@@ -227,9 +227,9 @@ func (c *Command) persist() error {
 	return err
 }
 
-// onExit runs when an command's allocation exits. It marks the command task as complete, and unregisters where needed.
-// onExit locks ahead of gc -> unregisterCommand.
-func (c *Command) onExit(ae *task.AllocationExited) {
+// OnExit runs when an command's allocation exits. It marks the command task as complete, and unregisters where needed.
+// OnExit locks ahead of gc -> unregisterCommand.
+func (c *Command) OnExit(ae *task.AllocationExited) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -273,8 +273,6 @@ func (c *Command) garbageCollect() {
 	}
 }
 
-// command NTSC methods: setNTSCPriority, deleteIfInWorkspace.
-// These functions are not locked, rather only where they're called.
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
@@ -294,7 +292,8 @@ func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	return nil
 }
 
-func (c *Command) deleteIfInWorkspace(req *apiv1.DeleteWorkspaceRequest) {
+// DeleteIfInWorkspace deletes a command's allocation matching a workspaceID.
+func (c *Command) DeleteIfInWorkspace(req *apiv1.DeleteWorkspaceRequest) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
