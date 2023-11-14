@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import tarfile
 import tempfile
 from argparse import Namespace
@@ -8,7 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from termcolor import colored
 
-from determined import cli
+from determined import cli, errors
 from determined.cli import render
 from determined.cli.master import format_log_entry
 from determined.common import api
@@ -181,7 +182,17 @@ def download(args: Namespace) -> None:
             raise ValueError(f"No checkpoints found for trial {args.trial_id}")
         checkpoint = checkpoints[0]
 
-    path = checkpoint.download(path=args.output_dir)
+    try:
+        path = checkpoint.download(path=args.output_dir)
+    except errors.CheckpointStateException:
+        print(
+            f"Invalid Checkpoint State for checkpoint {checkpoint.uuid}.\n",
+            "It's likely that this checkpoint is deleted. Please retry with a valid checkpoint UUID.",
+            sep=''
+        )
+        return
+    except Exception as e:
+        raise e
 
     if args.quiet:
         print(path)

@@ -237,7 +237,6 @@ class Trial:
                 sortByMetric=sort_by if isinstance(sort_by, str) else None,
                 offset=offset,
                 limit=max_results,
-                states=[bindings.checkpointv1State.COMPLETED],
             )
 
         resps = api.read_paginated(
