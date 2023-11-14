@@ -108,16 +108,16 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     userManagementEnabled && canModifyUsers
       ? rbacEnabled
         ? [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Groups, label: 'Manage Groups' },
-          { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+            { key: MenuKey.Edit, label: 'Edit User' },
+            { key: MenuKey.Groups, label: 'Manage Groups' },
+            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+          ]
         : [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+            { key: MenuKey.Edit, label: 'Edit User' },
+            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+          ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   const handleDropdown = useCallback(
@@ -218,11 +218,11 @@ const UserManagement: React.FC = () => {
       };
       const roleParams = Array.isArray(roleFilter)
         ? {
-          roleIdAssignedDirectlyToUser: roleFilter,
-        }
+            roleIdAssignedDirectlyToUser: roleFilter,
+          }
         : {
-          admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
-        };
+            admin: (roleFilter || undefined) && roleFilter === UserRole.ADMIN,
+          };
       return await getUsers({
         ...params,
         ...roleParams,
