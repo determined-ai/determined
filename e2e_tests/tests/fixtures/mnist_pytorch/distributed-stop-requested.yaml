@@ -18,4 +18,4 @@ searcher:
   max_length:
       batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
-entrypoint: stop_requested_model_def:MNistTrialStopRequested
+entrypoint: python3 stop_requested_model_def.py

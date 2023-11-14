@@ -9,6 +9,7 @@ import (
 )
 
 // Context holds contextual information for the context's recipient and the current message.
+// nolint: containedctx
 type Context struct {
 	inner      context.Context
 	message    Message

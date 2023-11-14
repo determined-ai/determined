@@ -477,7 +477,27 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         _: () => loadingCell,
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          return columnDefs[columnId]?.renderer?.(rowData, row) || loadingCell;
+          let cell: GridCell | undefined = columnDefs[columnId]?.renderer(rowData, row);
+          if (cell) {
+            switch (cell.kind) {
+              case GridCellKind.Text:
+              case GridCellKind.Number:
+                if (!cell.displayData || cell.displayData === '') {
+                  cell = {
+                    ...cell,
+                    displayData: '-',
+                    themeOverride: {
+                      ...cell.themeOverride,
+                      textDark: getCssVar(Surface.SurfaceOnWeak),
+                    },
+                  };
+                }
+                break;
+              default:
+                break;
+            }
+          }
+          return cell || loadingCell;
         }, // TODO correctly handle error state
       });
     },

@@ -65,7 +65,7 @@ func (c *command) SetWeight(weight float64) error {
 		JobID:  c.jobID,
 	}).(type) {
 	case nil:
-	case rmerrors.ErrUnsupported:
+	case rmerrors.UnsupportedError:
 		c.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		return fmt.Errorf("setting group weight for command: %w", err)

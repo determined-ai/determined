@@ -648,6 +648,7 @@ func TestDeleteExperiments(t *testing.T) {
 		}
 
 		// Create experiment snapshot
+		//nolint:exhaustruct
 		config := expconf.SearcherConfig{
 			RawCustomConfig: &expconf.CustomConfig{},
 		}

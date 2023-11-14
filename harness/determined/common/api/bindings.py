@@ -12080,15 +12080,18 @@ class v1SSOProvider(Printable):
         *,
         name: str,
         ssoUrl: str,
+        type: str,
     ):
         self.name = name
         self.ssoUrl = ssoUrl
+        self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SSOProvider":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "name": obj["name"],
             "ssoUrl": obj["ssoUrl"],
+            "type": obj["type"],
         }
         return cls(**kwargs)
 
@@ -12096,6 +12099,7 @@ class v1SSOProvider(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "name": self.name,
             "ssoUrl": self.ssoUrl,
+            "type": self.type,
         }
         return out
 

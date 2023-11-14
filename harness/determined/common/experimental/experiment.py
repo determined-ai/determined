@@ -601,6 +601,21 @@ class Experiment:
 
         return checkpoint_refs[:limit]
 
+    def delete_tensorboard_files(self) -> None:
+        """Delete tensorboard files for this experiment.
+
+        This will remove the directory:
+            /<root>/tensorboard/experiment/<id>
+        from
+            /<root>/tensorboard/experiment
+
+        for the id of this experiment.
+        """
+        bindings.delete_DeleteTensorboardFiles(
+            self._session,
+            experimentId=self._id,
+        )
+
     def __repr__(self) -> str:
         return "Experiment(id={})".format(self.id)
 

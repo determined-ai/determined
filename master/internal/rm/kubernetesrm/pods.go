@@ -1026,7 +1026,7 @@ func (p *pods) disableNode(
 
 func (p *pods) releaseAllocationsOnDisabledNode(nodeName string) error {
 	listOptions := metaV1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s", determinedLabel),
+		LabelSelector: determinedLabel,
 		FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
 	}
 	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)

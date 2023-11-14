@@ -50,7 +50,7 @@ func TestContainer(t *testing.T) {
 		signalAtState cproto.State
 		signal        syscall.Signal
 
-		failure *aproto.ContainerFailure
+		failure *aproto.ContainerFailureError
 	}{
 		{
 			name:       "successful command",
@@ -62,7 +62,7 @@ func TestContainer(t *testing.T) {
 			name:       "non-existent image",
 			image:      "lieblos/notanimageipushed",
 			entrypoint: []string{"echo", "hello"},
-			failure: &aproto.ContainerFailure{
+			failure: &aproto.ContainerFailureError{
 				FailureType: aproto.TaskError,
 				ErrMsg:      "repository does not exist or may require 'docker login'",
 			},
@@ -71,7 +71,7 @@ func TestContainer(t *testing.T) {
 			name:       "non-existent command",
 			image:      "python:3.8.16",
 			entrypoint: []string{"badcommandthatdoesntexit"},
-			failure: &aproto.ContainerFailure{
+			failure: &aproto.ContainerFailureError{
 				FailureType: aproto.TaskError,
 				ErrMsg:      "executable file not found in $PATH",
 			},
@@ -80,7 +80,7 @@ func TestContainer(t *testing.T) {
 			name:       "failed command",
 			image:      "python:3.8.16",
 			entrypoint: []string{"ls", "badfile"},
-			failure: &aproto.ContainerFailure{
+			failure: &aproto.ContainerFailureError{
 				FailureType: aproto.ContainerFailed,
 				ErrMsg:      "container failed with non-zero exit code",
 				ExitCode:    (*aproto.ExitCode)(ptrs.Ptr(2)),
@@ -91,7 +91,7 @@ func TestContainer(t *testing.T) {
 			image:         "pytorch/pytorch",
 			entrypoint:    []string{"echo", "hello"},
 			detachAtState: cproto.Pulling,
-			failure: &aproto.ContainerFailure{
+			failure: &aproto.ContainerFailureError{
 				FailureType: aproto.ContainerMissing,
 				ErrMsg:      "container is gone on reattachment",
 			},
@@ -108,7 +108,7 @@ func TestContainer(t *testing.T) {
 			entrypoint:    []string{"echo", "hello"},
 			signalAtState: cproto.Pulling,
 			signal:        syscall.SIGKILL,
-			failure: &aproto.ContainerFailure{
+			failure: &aproto.ContainerFailureError{
 				FailureType: aproto.ContainerAborted,
 				ErrMsg:      "killed before run",
 			},
@@ -119,7 +119,7 @@ func TestContainer(t *testing.T) {
 			entrypoint:    []string{"sleep", "60"},
 			signalAtState: cproto.Running,
 			signal:        syscall.SIGKILL,
-			failure: &aproto.ContainerFailure{
+			failure: &aproto.ContainerFailureError{
 				FailureType: aproto.ContainerFailed,
 				ErrMsg:      "137",
 				ExitCode:    (*aproto.ExitCode)(ptrs.Ptr(137)),
@@ -229,7 +229,7 @@ func TestContainerStatus(t *testing.T) {
 	dockerEventAction := "create"
 	timeoutDuration := 10 * time.Second
 	signalToSend := syscall.SIGKILL
-	expectedFailure := &aproto.ContainerFailure{
+	expectedFailure := &aproto.ContainerFailureError{
 		FailureType: aproto.ContainerAborted,
 		ErrMsg:      "killed before run",
 	}

@@ -24,7 +24,7 @@ const PageHeader: React.FC<Props> = (props: Props) => {
   const showHeader = props.options;
 
   // TODO: The breadcrumb is required on every Page component
-  // however the SignIn and DesignKit pages are special cases
+  // however the SignIn page is a special case
   // where a breadcrumb is not shown. Once both components are changed
   // these two checks should be removed.
   const showBreadcrumb = props.breadcrumb.length > 0;

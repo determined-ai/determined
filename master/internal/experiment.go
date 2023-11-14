@@ -115,8 +115,10 @@ func newExperiment(
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
 		}
 		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
-			poolName,
-			resources.SlotsPerTrial(),
+			&sproto.ValidateResourcePoolAvailabilityRequest{
+				Name:  poolName,
+				Slots: resources.SlotsPerTrial(),
+			},
 		)
 		if err != nil {
 			return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
@@ -717,8 +719,10 @@ func (e *internalExperiment) restoreTrials() {
 func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
 	var continueFromTrialID *int
 	if e.continueTrials {
-		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID); {
+		case errors.Is(err, sql.ErrNoRows):
+		// Trial doesn't exist, don't do anything
+		case err != nil:
 			e.updateState(model.StateWithReason{
 				State: model.StoppingErrorState,
 				InformationalReason: fmt.Sprintf(
@@ -726,12 +730,13 @@ func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*i
 			})
 			e.syslog.Error(err)
 			return nil, true
-		}
-		if trial.State != model.CompletedState {
-			continueFromTrialID = &trial.ID
-		} else {
-			e.trialClosed(reqID, nil)
-			return nil, true
+		case err == nil:
+			if trial.State != model.CompletedState {
+				continueFromTrialID = &trial.ID
+			} else {
+				e.trialClosed(reqID, nil)
+				return nil, true
+			}
 		}
 	}
 	return continueFromTrialID, false
@@ -1028,7 +1033,7 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 			JobID:    e.JobID,
 		}).(type) {
 		case nil:
-		case rmerrors.ErrUnsupported:
+		case rmerrors.UnsupportedError:
 			e.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
@@ -1054,7 +1059,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		JobID:  e.JobID,
 	}).(type) {
 	case nil:
-	case rmerrors.ErrUnsupported:
+	case rmerrors.UnsupportedError:
 		e.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		resources.SetWeight(oldWeight)

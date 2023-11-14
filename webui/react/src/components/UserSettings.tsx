@@ -11,7 +11,7 @@ import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import useUI, { Mode } from 'hew/Theme';
 import { makeToast } from 'hew/Toast';
-import Paragraph from 'hew/Typography/Paragraph';
+import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
@@ -340,10 +340,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
               </div>
             </Section>
             <Section title="Advanced">
-              <Paragraph>
+              <Body>
                 Advanced features are potentially dangerous and could require you to completely
                 reset your user settings if you make a mistake.
-              </Paragraph>
+              </Body>
               <Accordion title="I know what I'm doing">
                 <Space>
                   <Button

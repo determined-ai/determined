@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-//nolint:exhaustivestruct
+//nolint:exhaustruct
 package internal
 
 import (
