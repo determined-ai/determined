@@ -335,6 +335,9 @@ commands:
       install-python:
         type: boolean
         default: true
+      skip-cache:
+        type: boolean
+        default: false
       extras-requires:
         type: string
         default: ""
@@ -404,25 +407,29 @@ commands:
                 name: Install pypa builder
                 command: python3 -m pip install build
 
-      - run:
-          name: Write cache key
-          command: |
-            echo <<parameters.executor>> > /tmp/cachefile
-            pip freeze --all >> /tmp/cachefile
-            if [ "<<parameters.determined>>" = "true" ]; then
-              cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.model-hub>>" = "true" ]; then
-              cat model_hub/setup.py >> /tmp/cachefile
-            fi
-            echo <<parameters.extras-requires>> >> /tmp/cachefile
-            if [ -n <<parameters.extra-requirements-file>> ]; then
-              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
-            fi
 
-      - restore_cache:
-          keys:
-            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
+      - unless:
+          condition: <<parameters.skip-cache>>
+          steps:
+            - run:
+                name: Write cache key
+                command: |
+                  echo <<parameters.executor>> > /tmp/cachefile
+                  pip freeze --all >> /tmp/cachefile
+                  if [ "<<parameters.determined>>" = "true" ]; then
+                    cat harness/setup.py >> /tmp/cachefile
+                  fi
+                  if [ "<<parameters.model-hub>>" = "true" ]; then
+                    cat model_hub/setup.py >> /tmp/cachefile
+                  fi
+                  echo <<parameters.extras-requires>> >> /tmp/cachefile
+                  if [ -n <<parameters.extra-requirements-file>> ]; then
+                    cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+                    fi
+            - restore_cache:
+                keys:
+                  - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
+
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -2072,66 +2079,21 @@ jobs:
             cat ../harness/setup.py >> /tmp/cachefile
             echo ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
             cat ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
+            echo "<<parameters.managed-devcluster>>" >> /tmp/cachefile
             echo 3.8.16 >> /tmp/cachefile
 
       - restore_cache:
           keys:
             - det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
 
-      - run:
-          name: install Python
-          working_directory: ~/project/e2e_tests
-          command: |
-            echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
-
-            cat \<<'EOF' > /tmp/install_python.sh
-            #!/bin/bash
-            PYTHON_VERSION="${1}"
-
-            CONDA_DIR="/opt/conda"
-            CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
-            CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
-            CONDA_URL="https://repo.anaconda.com/miniconda"
-
-            mkdir -p /etc/determined/conda.d
-            mkdir -p "${CONDA_DIR}"
-
-            cd /tmp
-            curl --retry 3 -fsSL -O "${CONDA_URL}/${CONDA_INSTALLER}"
-            echo "${CONDA_SHA256}  ${CONDA_INSTALLER}" | sha256sum ${CONDA_INSTALLER}
-            bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
-            rm -f "./${CONDA_INSTALLER}"
-
-            ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
-            ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
-            ${CONDA_DIR}/bin/conda clean --all -y
-            EOF
-
-            sudo bash /tmp/install_python.sh 3.8.16 # TODO
-
-            python3 -m venv /tmp/venv
-            echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
-            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
-
-            /tmp/venv/bin/python -m pip install build
-
-            /tmp/venv/bin/python -m pip install -r ~/project/e2e_tests/tests/requirements.txt
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.machine-image>>
+          skip-cache: true
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
-
-      - save_cache:
-          key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
-          paths:
-            - "/tmp/venv"
-            - "/var/lib/docker" # Is this right?
-
-      - when:
-          condition: true
-          steps:
-            - install-wheel:
-                package-name: determined
-                package-location: ~/project/harness
 
       - install-devcluster
       - unless:
@@ -2140,6 +2102,12 @@ jobs:
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
+
+      - save_cache:
+          key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
+          paths:
+            - "/tmp/venv"
+            - "/var/lib/docker" # Is this right?
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
@@ -2253,7 +2221,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extra-requirements-file: "e2e_tests/tests/requirementstxt"
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - when:
           condition: <<parameters.enable-tls>>
