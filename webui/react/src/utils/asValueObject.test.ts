@@ -13,6 +13,7 @@ const jsonObjectCodec: t.Type<JsonObject> = t.recursion('JsonObject', () =>
 );
 
 const codec = t.type({
+  any: t.any,
   array: t.array(t.number),
   boolean: t.boolean,
   deepObject: jsonObjectCodec,
@@ -28,6 +29,7 @@ const codec = t.type({
 });
 
 const testVal: t.TypeOf<typeof codec> = {
+  any: '+',
   array: [1, 2, 3],
   boolean: true,
   deepObject: {
@@ -48,6 +50,8 @@ const testVal: t.TypeOf<typeof codec> = {
 const valueObj = asValueObject(codec, testVal);
 const cloneValueObj = asValueObject(codec, structuredClone(testVal));
 const other = asValueObject(codec, { ...testVal, deepObject: { number: 21 } });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const otherExtra = asValueObject(codec, { ...testVal, extra: 2 } as any);
 const map = Map({ key: valueObj });
 
 describe('asValueObject', () => {
@@ -58,6 +62,10 @@ describe('asValueObject', () => {
 
     it('returns different numbers for different value objects', () => {
       expect(valueObj.hashCode()).not.toBe(other.hashCode());
+    });
+
+    it('only includes values in the codec in the hash', () => {
+      expect(valueObj.hashCode()).toBe(otherExtra.hashCode());
     });
   });
   describe('ValueObject#equals', () => {
@@ -79,6 +87,19 @@ describe('asValueObject', () => {
 
     it('immutable.is returns false when setting to another object', () => {
       expect(is(map, map.set('key', other))).toBe(false);
+    });
+
+    it('immutable.is returns true when setting to an object with extra props', () => {
+      expect(is(map, map.set('key', otherExtra))).toBe(true);
+    });
+
+    it('immutable.is falls back to value equality on fields where typechecking is disabled', () => {
+      const sameAny = asValueObject(codec, { ...testVal, any: '+' });
+      const newAny = asValueObject(codec, { ...testVal, any: {} });
+      const newAny2 = asValueObject(codec, { ...testVal, any: {} });
+
+      expect(is(map, map.set('key', sameAny))).toBe(true);
+      expect(is(map.set('key', newAny), map.set('key', newAny2))).toBe(false);
     });
   });
 });
