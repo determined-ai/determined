@@ -2091,6 +2091,11 @@ jobs:
             echo 3.8.16 >> /tmp/cachefile
             cat /tmp/cachefile
 
+      - run:
+          name: Make conda bin directory
+          command: |
+            sudo mkdir /opt/conda/bin
+
       - restore_cache:
           keys:
             - det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
