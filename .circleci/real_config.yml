@@ -459,10 +459,15 @@ commands:
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
               tools/scripts/retry.sh pip install -r <<parameters.extra-requirements-file>>
             fi
-      - save_cache:
-          key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
-          paths:
-            - "/tmp/venv"
+
+      - unless:
+          condition: <<parameters.skip-cache>>
+          steps:
+            - save_cache:
+                key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
+                paths:
+                  - "/tmp/venv"
+
       - run: python --version
       - run: pip --version
       - run: pip freeze --all
@@ -2065,12 +2070,6 @@ jobs:
       - attach_workspace:
           at: .
 
-      #- setup-python-venv:
-      #    determined: True
-      #    extra-requirements-file: "e2e_tests/tests/requirements.txt"
-      #    executor: <<pipeline.parameters.machine-image>>
-
-      # Load cache
       - run:
           name: Write cache key
           working_directory: ~/project/e2e_tests
@@ -2090,7 +2089,7 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-          skip-cache: true
+          skip-cache: true # Use our own cache for e2e tests that caches more stuff.
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
@@ -2107,7 +2106,7 @@ jobs:
           key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
-            - "/var/lib/docker" # Is this right?
+            - "/var/lib/docker" # Is this right? TODO
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
