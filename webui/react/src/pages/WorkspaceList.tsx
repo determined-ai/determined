@@ -5,6 +5,7 @@ import Column from 'hew/Column';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
+import Section from 'hew/Section';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
@@ -345,29 +346,31 @@ const WorkspaceList: React.FC = () => {
         </Button>
       }
       title="Workspaces">
-      <Row marginBottom={16} wrap>
-        <Column>
-          <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
-            <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
-            <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
-            <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-          </Select>
-        </Column>
-        <Column align="right">
-          <Space wrap>
-            <Toggle
-              checked={settings.archived}
-              label="Show Archived"
-              onChange={switchShowArchived}
-            />
-            <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
-              <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
-              <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
+      <Section>
+        <Row wrap>
+          <Column>
+            <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
+              <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
+              <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
+              <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
             </Select>
-            {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-          </Space>
-        </Column>
-      </Row>
+          </Column>
+          <Column align="right">
+            <Space wrap>
+              <Toggle
+                checked={settings.archived}
+                label="Show Archived"
+                onChange={switchShowArchived}
+              />
+              <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+                <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
+                <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
+              </Select>
+              {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+            </Space>
+          </Column>
+        </Row>
+      </Section>
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList
