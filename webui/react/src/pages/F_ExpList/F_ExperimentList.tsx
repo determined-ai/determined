@@ -379,7 +379,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -819,7 +819,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             </ComparisonView>
             {showPagination && (
               <Row>
-                <Column align="right" width="hug">
+                <Column align="right">
                   <Pagination
                     current={page + 1}
                     pageSize={settings.pageLimit}
