@@ -54,14 +54,14 @@ class UserStore extends PollingStore {
 
   public readonly currentUser = this.#currentUser.readOnly();
 
-  public getUser(id: number) {
+  public getUser(id: number): Observable<Loadable<DetailedUser>> {
     return this.#usersById.select((map) => {
       const user = map.get(id);
       return user ? Loaded(user) : NotLoaded;
     });
   }
 
-  public getUsers() {
+  public getUsers(): Observable<Loadable<DetailedUser[]>> {
     return Observable.select([this.#userIds, this.#usersById], (loadable, usersById) => {
       const userIds = Loadable.getOrElse([], loadable);
       if (userIds.length === 0) return NotLoaded;
