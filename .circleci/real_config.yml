@@ -365,6 +365,7 @@ commands:
                   #!/bin/bash
                   PYTHON_VERSION="${1}"
 
+                  /tmp/venv/bin/python --version
                   installed_python_version=$(/tmp/venv/bin/python --version 2>&1 | awk '{print $2}')
                   if [ -x "/tmp/venv/bin/python" ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
                       echo "Python already installed, version $PYTHON_VERSION"
