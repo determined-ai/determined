@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev24nicktestconda
+    default: v1dev24nicktestconda2
   gke-version:
     type: string
     default: "1.25.10"
@@ -2116,7 +2116,7 @@ jobs:
           key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
-            - "/opt/conda/bin/python3"
+            - "/opt/conda/bin"
             - "/var/lib/docker" # Is this right? TODO
 
       - run-e2e-tests:
