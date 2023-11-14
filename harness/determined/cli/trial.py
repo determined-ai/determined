@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 import tarfile
 import tempfile
 from argparse import Namespace
@@ -186,9 +185,9 @@ def download(args: Namespace) -> None:
         path = checkpoint.download(path=args.output_dir)
     except errors.CheckpointStateException:
         print(
-            f"Invalid Checkpoint State for checkpoint {checkpoint.uuid}.\n",
-            "It's likely that this checkpoint is deleted. Please retry with a valid checkpoint UUID.",
-            sep=''
+            f"Invalid Checkpoint State for checkpoint {checkpoint.uuid}.",
+            "It's checkpoint has likely been deleted. Please retry with a valid checkpoint UUID.",
+            sep="\n",
         )
         return
     except Exception as e:
