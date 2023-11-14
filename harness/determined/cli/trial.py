@@ -186,7 +186,7 @@ def download(args: Namespace) -> None:
     except errors.CheckpointStateException:
         print(
             f"Invalid Checkpoint State for checkpoint {checkpoint.uuid}.",
-            "It's checkpoint has likely been deleted. Please retry with a valid checkpoint UUID.",
+            "This checkpoint has likely been deleted. Please retry with a valid checkpoint UUID.",
             sep="\n",
         )
         return
