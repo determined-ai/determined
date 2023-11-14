@@ -54,9 +54,9 @@ export const maxClusterSlotCapacity = (
   pools: ResourcePool[],
   agents: Agent[],
 ): { [key in ResourceType]: number } => {
-  const allPoolsStatic = pools.reduce((acc, pool) => {
-    return acc && (pool.type === V1ResourcePoolType.STATIC || pool.type === V1ResourcePoolType.K8S);
-  }, true);
+  const allPoolsStatic = pools.every(
+    ({ type }) => type === V1ResourcePoolType.STATIC || type === V1ResourcePoolType.K8S,
+  );
 
   if (allPoolsStatic) {
     return agents.reduce(
@@ -230,7 +230,7 @@ class ClusterStore extends PollingStore {
       .then(() => {
         this.#resourcePoolBindings.update((map) =>
           map.update(resourcePool, (prevWorkspaceIds) =>
-            prevWorkspaceIds ? prevWorkspaceIds.union(workspaceIds) : OrderedSet(workspaceIds),
+            (prevWorkspaceIds ?? OrderedSet()).union(workspaceIds),
           ),
         );
       })
