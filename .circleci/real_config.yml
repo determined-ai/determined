@@ -2115,7 +2115,7 @@ jobs:
 
             python3 -m pip install build
 
-            tools/scripts/retry.sh pip install -r ~/project/e2e_tests/tests/requirements.txt
+            python3 -m pip install -r ~/project/e2e_tests/tests/requirements.txt
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
