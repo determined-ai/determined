@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -109,18 +108,8 @@ func (a *apiServer) PatchMasterConfig(
 
 	for _, path := range paths {
 		switch path {
-		case "log":
-			if !isValidLogLevel(req.Config.Log.Level) {
-				panic(fmt.Sprintf("invalid log level: %s", req.Config.Log.Level))
-			}
-			a.m.config.Log.Level = req.Config.Log.Level
-			a.m.config.Log.Color = req.Config.Log.Color
-			logger.SetLogrus(a.m.config.Log)
 		case "log.level":
-			if !isValidLogLevel(req.Config.Log.Level) {
-				panic(fmt.Sprintf("invalid log level: %s", req.Config.Log.Level))
-			}
-			a.m.config.Log.Level = req.Config.Log.Level
+			a.m.config.Log.Level = logger.ProtoToLogrusLevel(req.Config.Log.Level).String()
 			logger.SetLogrus(a.m.config.Log)
 		case "log.color":
 			a.m.config.Log.Color = req.Config.Log.Color
@@ -251,13 +240,4 @@ func (a *apiServer) ResourceAllocationAggregated(
 	}
 
 	return a.m.fetchAggregatedResourceAllocation(req)
-}
-
-func isValidLogLevel(lvl string) bool {
-	switch strings.ToLower(lvl) {
-	case "fatal", "error", "warn", "info", "debug", "trace":
-		return true
-	default:
-		return false
-	}
 }
