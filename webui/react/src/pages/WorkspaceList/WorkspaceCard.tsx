@@ -38,7 +38,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.workspaceDetails(workspace.id) })}
       onDropdown={onClick}>
       <div className={workspace.archived ? css.archived : ''}>
-        <Row gap={8}>
+        <Row>
           <div className={css.icon}>
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
           </div>

@@ -441,7 +441,7 @@ const UserManagement: React.FC = () => {
       <Section className={css.usersTable}>
         <div className={css.actionBar}>
           <Row>
-            <Column>
+            <Column width="hug">
               <Row>
                 {/* input is uncontrolled */}
                 <Input
@@ -467,7 +467,7 @@ const UserManagement: React.FC = () => {
                 />
               </Row>
             </Column>
-            <Column align="right">
+            <Column align="right" width="hug">
               <Row>
                 {selectedUserIds.length > 0 && (
                   <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>

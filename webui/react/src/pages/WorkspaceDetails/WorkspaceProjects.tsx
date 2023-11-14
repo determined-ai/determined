@@ -414,7 +414,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
               <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
             </Select>
           </Column>
-          <Column align="right">
+          <Column align="right" width="hug">
             <Space wrap>
               {!workspace.archived && (
                 <Toggle

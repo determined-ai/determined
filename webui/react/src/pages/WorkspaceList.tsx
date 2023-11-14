@@ -355,7 +355,7 @@ const WorkspaceList: React.FC = () => {
               <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
             </Select>
           </Column>
-          <Column align="right">
+          <Column align="right" width="hug">
             <Space wrap>
               <Toggle
                 checked={settings.archived}

@@ -391,7 +391,7 @@ const TableActionBar: React.FC<Props> = ({
           {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
         </Space>
       </Column>
-      <Column align="right">
+      <Column align="right" width="hug">
         <Row>
           {heatmapBtnVisible && (
             <Tooltip content={'Toggle Metric Heatmap'}>

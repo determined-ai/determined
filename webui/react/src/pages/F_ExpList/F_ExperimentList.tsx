@@ -819,7 +819,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             </ComparisonView>
             {showPagination && (
               <Row>
-                <Column align="right">
+                <Column align="right" width="hug">
                   <Pagination
                     current={page + 1}
                     pageSize={settings.pageLimit}
