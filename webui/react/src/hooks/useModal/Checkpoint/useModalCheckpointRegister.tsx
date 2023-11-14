@@ -1,7 +1,7 @@
 import { ModalFuncProps, Select } from 'antd';
 import Input from 'hew/Input';
 import Tags, { tagsActionHelper } from 'hew/Tags';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -59,7 +59,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [canceler] = useState(new AbortController());
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
-
+  const { openToast } = useToast();
   const { canCreateModelVersion } = usePermissions();
 
   const handleClose = useCallback(
@@ -107,7 +107,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           if (!response) return;
 
           modalClose(ModalCloseReason.Ok);
-          makeToast({
+          openToast({
             description: `"${versionName || `Version ${selectedModelNumVersions + 1}`} registered"`,
             link: (
               <Link path={paths.modelVersionDetails(selectedModelName, response.version)}>
@@ -130,7 +130,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
             });
           }
           modalClose(ModalCloseReason.Ok);
-          makeToast({
+          openToast({
             description: `${checkpoints.length} versions registered`,
             link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
             title: 'Versions Registered',
@@ -144,7 +144,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     },
-    [modalClose, selectedModelNumVersions],
+    [modalClose, selectedModelNumVersions, openToast],
   );
 
   const handleOk = useCallback(

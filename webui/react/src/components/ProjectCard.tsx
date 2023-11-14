@@ -43,56 +43,50 @@ const ProjectCard: React.FC<Props> = ({
   if (project.archived) classnames.push(css.archived);
 
   return (
-    <>
-      <Card
-        actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
-        onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
-        onDropdown={onClick}>
-        <div className={classnames.join(' ')}>
-          <div className={css.headerContainer}>
-            <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
-              {project.name}
-            </Typography.Title>
-          </div>
-          <div className={css.workspaceContainer}>
-            {showWorkspace && project.workspaceId !== 1 && (
-              <Tooltip content={project.workspaceName}>
-                <div className={css.workspaceIcon}>
-                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
-                </div>
-              </Tooltip>
-            )}
-          </div>
-          <div className={css.footerContainer}>
-            <div className={css.experiments}>
-              <Tooltip
-                content={
-                  `${project.numExperiments.toLocaleString()}` +
-                  ` experiment${project.numExperiments === 1 ? '' : 's'}`
-                }>
-                <Icon name="experiment" size="small" title="Number of experiments" />
-                <span>{nearestCardinalNumber(project.numExperiments)}</span>
-              </Tooltip>
-            </div>
-            {project.archived ? (
-              <div className={css.archivedBadge}>Archived</div>
-            ) : (
-              project.lastExperimentStartedAt && (
-                <TimeAgo
-                  datetime={project.lastExperimentStartedAt}
-                  tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
-                />
-              )
-            )}
-          </div>
+    <Card
+      actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
+      onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
+      onDropdown={onClick}>
+      <div className={classnames.join(' ')}>
+        <div className={css.headerContainer}>
+          <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
+            {project.name}
+          </Typography.Title>
         </div>
-      </Card>
-      {/*
-        contextHolders must be outside of Card component to prevent unexpected action
-        for more info, refer PR #6185
-      */}
+        <div className={css.workspaceContainer}>
+          {showWorkspace && project.workspaceId !== 1 && (
+            <Tooltip content={project.workspaceName}>
+              <div className={css.workspaceIcon}>
+                <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
+              </div>
+            </Tooltip>
+          )}
+        </div>
+        <div className={css.footerContainer}>
+          <div className={css.experiments}>
+            <Tooltip
+              content={
+                `${project.numExperiments.toLocaleString()}` +
+                ` experiment${project.numExperiments === 1 ? '' : 's'}`
+              }>
+              <Icon name="experiment" size="small" title="Number of experiments" />
+              <span>{nearestCardinalNumber(project.numExperiments)}</span>
+            </Tooltip>
+          </div>
+          {project.archived ? (
+            <div className={css.archivedBadge}>Archived</div>
+          ) : (
+            project.lastExperimentStartedAt && (
+              <TimeAgo
+                datetime={project.lastExperimentStartedAt}
+                tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
+              />
+            )
+          )}
+        </div>
+      </div>
       {contextHolders}
-    </>
+    </Card>
   );
 };
 

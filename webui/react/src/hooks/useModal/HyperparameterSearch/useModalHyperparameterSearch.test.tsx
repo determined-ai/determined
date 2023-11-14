@@ -1,8 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import Button from 'hew/Button';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
@@ -92,7 +94,13 @@ const Container: React.FC = () => {
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = async () => {
-  const view = render(<Container />);
+  const view = render(
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <Container />
+      </ThemeProvider>
+    </UIProvider>,
+  );
   await user.click(screen.getByRole('button', { name: 'Open Modal' }));
 
   return { view };

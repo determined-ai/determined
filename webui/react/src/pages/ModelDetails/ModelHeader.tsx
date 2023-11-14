@@ -1,16 +1,16 @@
 import { Space, Typography } from 'antd';
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
+import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Nameplate from 'hew/Nameplate';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
-import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
-import InfoBox, { InfoRow } from 'components/InfoBox';
 import ModelEditModal from 'components/ModelEditModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
@@ -46,7 +46,6 @@ const ModelHeader: React.FC<Props> = ({
   onUpdateTags,
 }: Props) => {
   const loadableUsers = useObservable(userStore.getUsers());
-  const users = Loadable.getOrElse([], loadableUsers);
   const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
   const modelEditModal = useModal(ModelEditModal);
@@ -55,26 +54,32 @@ const ModelHeader: React.FC<Props> = ({
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find((user) => user.id === model.userId);
-
     return [
       {
-        content: (
-          <Space>
-            <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUsers)}>
-              <>
-                <Avatar user={user} />
-                {`${getDisplayName(user)} on
-                ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
-              </>
-            </Spinner>
-          </Space>
-        ),
         label: 'Created by',
+        value: (
+          <Spinner data={loadableUsers}>
+            {(users) => {
+              const user = users.find((user) => user.id === model.userId);
+              return (
+                <Space>
+                  <Nameplate
+                    alias={getDisplayName(user)}
+                    compact
+                    icon={<Avatar user={user} />}
+                    name={user?.username ?? 'Unavailable'}
+                  />{' '}
+                  on {formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}
+                </Space>
+              );
+            }}
+          </Spinner>
+        ),
       },
-      { content: <TimeAgo datetime={new Date(model.lastUpdatedTime)} />, label: 'Updated' },
+      { label: 'Updated', value: <TimeAgo datetime={new Date(model.lastUpdatedTime)} /> },
       {
-        content: (
+        label: 'Description',
+        value: (
           <div>
             {(model.description ?? '') || (
               <Typography.Text disabled={model.archived || !canModifyModelFlag}>
@@ -83,10 +88,10 @@ const ModelHeader: React.FC<Props> = ({
             )}
           </div>
         ),
-        label: 'Description',
       },
       {
-        content: (
+        label: 'Tags',
+        value: (
           <Tags
             disabled={model.archived || !canModifyModelFlag}
             ghost={false}
@@ -94,10 +99,9 @@ const ModelHeader: React.FC<Props> = ({
             onAction={tagsActionHelper(model.labels ?? [], onUpdateTags)}
           />
         ),
-        label: 'Tags',
       },
     ] as InfoRow[];
-  }, [canModifyModelFlag, loadableUsers, model, onUpdateTags, users]);
+  }, [canModifyModelFlag, loadableUsers, model, onUpdateTags]);
 
   const menu = useMemo(() => {
     const menuItems: MenuItem[] = [
@@ -167,7 +171,7 @@ const ModelHeader: React.FC<Props> = ({
             </Dropdown>
           </Space>
         </div>
-        <InfoBox rows={infoRows} separator={false} />
+        <Glossary content={infoRows} />
       </div>
       <deleteModelModal.Component model={model} />
       <modelMoveModal.Component model={model} />

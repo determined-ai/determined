@@ -4,7 +4,7 @@ import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
@@ -45,6 +45,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   sourceWorkspaceId,
 }: Props) => {
   const idPrefix = useId();
+  const { openToast } = useToast();
   const [disabled, setDisabled] = useState<boolean>(true);
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
@@ -72,7 +73,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
   const handleSubmit = async () => {
     if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
-      makeToast({ title: 'No changes to save.' });
+      openToast({ title: 'No changes to save.' });
       return;
     }
     const values = await form.validateFields();
@@ -97,25 +98,25 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       Loadable.getOrElse([], loadableProjects).find((p) => p.id === projId)?.name ?? '';
 
     if (numSuccesses === 0 && numFailures === 0) {
-      makeToast({
+      openToast({
         description: 'No selected experiments were eligible for moving',
         title: 'No eligible experiments',
       });
     } else if (numFailures === 0) {
-      makeToast({
+      openToast({
         closeable: true,
         description: `${results.successful.length} experiments moved to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         title: 'Move Success',
       });
     } else if (numSuccesses === 0) {
-      makeToast({
+      openToast({
         description: `Unable to move ${numFailures} experiments`,
         severity: 'Warning',
         title: 'Move Failure',
       });
     } else {
-      makeToast({
+      openToast({
         closeable: true,
         description: `${numFailures} out of ${
           numFailures + numSuccesses

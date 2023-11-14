@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import React, { useEffect, useId } from 'react';
 
 import { updateGroup } from 'services/api';
@@ -28,6 +28,8 @@ interface FormInputs {
 const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userGroups }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
+
+  const { openToast } = useToast();
 
   const groupsValue = Form.useWatch(GROUPS_NAME, form);
 
@@ -62,7 +64,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
         }
       }
     } catch (e) {
-      makeToast({ severity: 'Error', title: 'Error adding user to groups' });
+      openToast({ severity: 'Error', title: 'Error adding user to groups' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

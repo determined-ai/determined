@@ -132,7 +132,7 @@ class ManagedCluster(Cluster):
         with logged_in_user(conf.ADMIN_CREDENTIALS):
             master_config = json.loads(
                 subprocess.run(
-                    ["det", "-m", conf.make_master_url(), "master", "config", "--json"],
+                    ["det", "-m", conf.make_master_url(), "master", "config", "show", "--json"],
                     stdout=subprocess.PIPE,
                     check=True,
                 ).stdout.decode()

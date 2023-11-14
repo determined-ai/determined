@@ -5,7 +5,7 @@ import Column from 'hew/Column';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
-import { getCssVar } from 'hew/Theme';
+import { useTheme } from 'hew/Theme';
 import { notification } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
@@ -148,6 +148,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const { getThemeVar } = useTheme();
+
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
@@ -193,7 +195,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const colorMap = useGlasbey(settings.selectedExperiments);
   const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
-    containerHeight - 2 * parseInt(getCssVar('--theme-stroke-width')) - (isPagedView ? 40 : 0);
+    containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const selectedExperimentIds: Set<number> = useMemo(() => {

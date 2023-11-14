@@ -1,11 +1,11 @@
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Section from 'components/Section';
+import useUI from 'components/ThemeProvider';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -73,7 +73,7 @@ const ScatterPlots: React.FC<Props> = ({
       const isCategorical = hpLabels?.length !== 0;
       const xScaleKey = isCategorical ? 'xCategorical' : isLogarithmic ? 'xLog' : 'x';
       const xSplits = isCategorical
-        ? new Array(hpLabels.length).fill(0).map((x, i) => i)
+        ? new Array(hpLabels.length).fill(0).map((_x, i) => i)
         : undefined;
       const xValues = isCategorical ? hpLabels : undefined;
       acc[hParam] = {

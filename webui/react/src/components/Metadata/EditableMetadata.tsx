@@ -1,7 +1,7 @@
 import Form from 'hew/Form';
+import Glossary, { InfoRow } from 'hew/Glossary';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import { Metadata } from 'types';
 
@@ -21,7 +21,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
     const { rows, list } = Object.entries(metadata).reduce(
       (acc, [key, value]) => {
         const stringedValue = typeof value === 'object' ? JSON.stringify(value) : value;
-        acc.rows.push({ content: stringedValue, label: key });
+        acc.rows.push({ label: key, value: stringedValue });
         acc.list.push({ key, value });
         return acc;
       },
@@ -85,7 +85,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
           </Form.List>
         </>
       ) : (
-        <InfoBox rows={metadataRows} />
+        <Glossary content={metadataRows} />
       )}
     </Form>
   );

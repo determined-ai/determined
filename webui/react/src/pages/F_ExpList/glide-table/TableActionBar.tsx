@@ -5,7 +5,7 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -141,7 +141,7 @@ const TableActionBar: React.FC<Props> = ({
   const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
-
+  const { openToast } = useToast();
   const experimentIds = useMemo(() => Array.from(selectedExperimentIds), [selectedExperimentIds]);
 
   const experimentMap = useMemo(() => {
@@ -244,24 +244,24 @@ const TableActionBar: React.FC<Props> = ({
         const numFailures = results.failed.length;
 
         if (numSuccesses === 0 && numFailures === 0) {
-          makeToast({
+          openToast({
             description: `No selected experiments were eligible for ${action.toLowerCase()}`,
             title: 'No eligible experiments',
           });
         } else if (numFailures === 0) {
-          makeToast({
+          openToast({
             closeable: true,
             description: `${action} succeeded for ${results.successful.length} experiments`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
-          makeToast({
+          openToast({
             description: `Unable to ${action.toLowerCase()} ${numFailures} experiments`,
             severity: 'Warning',
             title: `${action} Failure`,
           });
         } else {
-          makeToast({
+          openToast({
             closeable: true,
             description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
               } eligible
@@ -286,7 +286,7 @@ const TableActionBar: React.FC<Props> = ({
         onActionComplete?.();
       }
     },
-    [sendBatchActions, onActionComplete, onActionSuccess],
+    [sendBatchActions, onActionComplete, onActionSuccess, openToast],
   );
 
   const handleBatchAction = useCallback(

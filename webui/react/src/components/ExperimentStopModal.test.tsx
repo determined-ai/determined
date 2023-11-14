@@ -2,12 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import ExperimentStopModalComponent, {
   BUTTON_TEXT,
   CHECKBOX_TEXT,
 } from 'components/ExperimentStopModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import {
   cancelExperiment as mockCancelExperiment,
   killExperiment as mockKillExperiment,
@@ -35,7 +37,12 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  render(<ModalTrigger />);
+  render(
+    <UIProvider theme={DefaultTheme.Light}>
+      <ModalTrigger />
+      <ThemeProvider />
+    </UIProvider>,
+  );
 
   await user.click(screen.getByRole('button'));
 };

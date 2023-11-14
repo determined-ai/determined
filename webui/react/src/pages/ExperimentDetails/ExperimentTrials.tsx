@@ -247,7 +247,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<TrialItem> | SorterResult<TrialItem>[],
     ) => {
       if (Array.isArray(tableSorter) || !settings) return;

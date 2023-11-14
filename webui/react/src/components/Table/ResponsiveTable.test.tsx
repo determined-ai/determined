@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React from 'react';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'types';
@@ -83,7 +83,7 @@ const columnConfig: Record<RecordKey, ColumnConfig> = {
 };
 
 const generateTableData = (entries: number): TableItem[] => {
-  return new Array(entries).fill(null).map((entry, index) => {
+  return new Array(entries).fill(null).map((_entry, index) => {
     const row: UnknownRecord = { key: index };
 
     for (const column of columns) {
@@ -144,22 +144,26 @@ const setup = (options?: { pagination?: Pagination }) => {
   });
 
   const view = render(
-    <ResponsiveTable<TableItem>
-      columns={newColumns}
-      dataSource={data}
-      pagination={paginationConfig}
-      onChange={onChange}
-    />,
+    <UIProvider theme={DefaultTheme.Light}>
+      <ResponsiveTable<TableItem>
+        columns={newColumns}
+        dataSource={data}
+        pagination={paginationConfig}
+        onChange={onChange}
+      />
+    </UIProvider>,
   );
 
   const rerender = () =>
     view.rerender(
-      <ResponsiveTable<TableItem>
-        columns={columns}
-        dataSource={data}
-        pagination={paginationConfig}
-        onChange={onChange}
-      />,
+      <UIProvider theme={DefaultTheme.Light}>
+        <ResponsiveTable<TableItem>
+          columns={columns}
+          dataSource={data}
+          pagination={paginationConfig}
+          onChange={onChange}
+        />
+      </UIProvider>,
     );
 
   const user = userEvent.setup();

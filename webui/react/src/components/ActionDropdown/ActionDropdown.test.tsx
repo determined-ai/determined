@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 
 import ActionDropdown from 'components/ActionDropdown/ActionDropdown';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { ValueOf } from 'types';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
@@ -43,9 +45,13 @@ const DropDownContainer = () => {
 
 const setup = () => {
   const view = render(
-    <ConfirmationProvider>
-      <DropDownContainer />
-    </ConfirmationProvider>,
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <ConfirmationProvider>
+          <DropDownContainer />
+        </ConfirmationProvider>
+      </ThemeProvider>
+    </UIProvider>,
   );
   return { view };
 };

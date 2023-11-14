@@ -1,9 +1,10 @@
 import { Button, Space, Typography } from 'antd';
+import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
-import { getStateColorCssVar } from 'hew/Theme';
+import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,7 +17,6 @@ import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
-import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
@@ -43,6 +43,7 @@ import {
   RunState,
   TrialItem,
 } from 'types';
+import { getStateColorThemeVar } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
@@ -126,6 +127,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
+  const { getThemeVar } = useTheme();
   const [isChangingState, setIsChangingState] = useState(false);
   const [isRunningArchive, setIsRunningArchive] = useState<boolean>(false);
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
@@ -173,10 +175,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const stateStyle = useMemo(
     () => ({
-      backgroundColor: getStateColorCssVar(experiment.state),
-      color: getStateColorCssVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
+      backgroundColor: getThemeVar(getStateColorThemeVar(experiment.state)),
+      color: getThemeVar(
+        getStateColorThemeVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
+      ),
     }),
-    [experiment.state],
+    [experiment.state, getThemeVar],
   );
 
   const disabled =
@@ -393,7 +397,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const foldableRows: InfoRow[] = useMemo(() => {
     const rows = [
       {
-        content: (
+        label: 'Description',
+        value: (
           <Typography.Paragraph
             disabled={!experiment.description}
             ellipsis={{ rows: 1, tooltip: true }}
@@ -401,59 +406,59 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {experiment.description || 'N/A'}
           </Typography.Paragraph>
         ),
-        label: 'Description',
       },
     ];
     if (experiment.forkedFrom && experiment.config.searcher.sourceTrialId) {
       rows.push({
-        content: (
+        label: 'Continued from',
+        value: (
           <Link
             className={css.link}
             path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
             Trial {experiment.config.searcher.sourceTrialId}
           </Link>
         ),
-        label: 'Continued from',
       });
     }
     if (experiment.forkedFrom && !experiment.config.searcher.sourceTrialId) {
       rows.push({
-        content: (
+        label: 'Forked from',
+        value: (
           <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
             Experiment {experiment.forkedFrom}
           </Link>
         ),
-        label: 'Forked from',
       });
     }
-    rows.push({ content: <TimeAgo datetime={experiment.startTime} long />, label: 'Started' });
+    rows.push({ label: 'Started', value: <TimeAgo datetime={experiment.startTime} long /> });
     if (experiment.endTime != null) {
       rows.push({
-        content: <TimeDuration duration={getDuration(experiment)} />,
         label: 'Duration',
+        value: <TimeDuration duration={getDuration(experiment)} />,
       });
     }
     if (experiment.jobSummary && !terminalRunStates.has(experiment.state)) {
       rows.push({
-        content: (
+        label: 'Job info',
+        value: (
           <Link className={css.link} path={paths.jobs()}>
             {jobInfoLinkText}
           </Link>
         ),
-        label: 'Job info',
       });
     }
     rows.push({
-      content: (
+      label: 'Auto restarts',
+      value: (
         <div>
           {autoRestarts}
           {maxRestarts ? `/${maxRestarts}` : ''}
         </div>
       ),
-      label: 'Auto restarts',
     });
     rows.push({
-      content: (
+      label: 'Tags',
+      value: (
         <Tags
           disabled={disabled}
           ghost={true}
@@ -464,7 +469,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           )}
         />
       ),
-      label: 'Tags',
     });
 
     return rows;
@@ -473,7 +477,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   return (
     <>
       <PageHeaderFoldable
-        foldableContent={<InfoBox rows={foldableRows} />}
+        foldableContent={<Glossary content={foldableRows} />}
         leftContent={
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>

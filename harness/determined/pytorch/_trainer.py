@@ -34,23 +34,39 @@ class Trainer:
         self._local_training = self._info is None or self._info.task_type != "TRIAL"
 
     def configure_profiler(
-        self, sync_timings: bool, enabled: bool, begin_on_batch: int, end_after_batch: int
+        self,
+        sync_timings: bool = True,
+        enabled: bool = False,
+        begin_on_batch: int = 0,
+        end_after_batch: Optional[int] = None,
     ) -> None:
         """
-        Configures the Determined profiler. This method should only be called before .fit(), and
-        only once within the scope of init(). If called multiple times, the last call's
-        configuration will be used.
+        Configures the Determined profiler. This functionality is only supported for on-cluster
+        training. For local training mode, this method is a no-op.
+
+        This method should only be called before .fit(), and only once within the scope of init().
+        If called multiple times, the last call's configuration will be used.
 
         Arguments:
-            sync_timings: Specifies whether Determined should wait for all GPU kernel streams
-                before considering a timing as ended. Defaults to ‘true’. Applies only for
+            sync_timings: (Optional) Specifies whether Determined should wait for all GPU kernel
+                streams before considering a timing as ended. Defaults to true. Applies only for
                 frameworks that collect timing metrics (currently just PyTorch).
-            enabled: Defines whether profiles should be collected or not. Defaults to false.
-            begin_on_batch: Specifies the batch on which profiling should begin.
-            end_after_batch: Specifies the batch after which profiling should end.
+            enabled: (Optional) Defines whether profiles should be collected or not. Defaults to
+                false.
+            begin_on_batch: (Optional) Specifies the batch on which profiling should begin.
+                Defaults to 0.
+            end_after_batch: (Optional) Specifies the batch after which profiling should end.
+
+        .. note::
+
+           Profiles are collected for a maximum of 5 minutes, regardless of the settings above.
+
         """
-        if self._info is None:
-            raise ValueError("Determined profiler must be run on cluster.")
+        if self._local_training:
+            self._det_profiler = profiler.DummyProfilerAgent()
+            return
+
+        assert self._info, "Determined profiler must be run on cluster."
 
         self._det_profiler = profiler.ProfilerAgent(
             trial_id=str(self._info.trial.trial_id),
@@ -95,25 +111,31 @@ class Trainer:
                 be ignored; the searcher’s ``max_length`` must be configured from the experiment
                 configuration. This is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which takes an
                 ``int``. For example, ``Epoch(1)`` would train for a maximum length of one epoch.
-                reporting_period:
+            reporting_period: The number of steps to train for before reporting metrics and
+                searcher progress. For local training mode, metrics are printed to stdout. This
+                is a ``TrainUnit`` type (``Batch`` or ``Epoch``) which can take an ``int`` or
+                instance of ``collections.abc.Container`` (list, tuple, etc.). For example,
+                ``Batch(100)`` would report every 100 batches, while ``Batch([5, 30, 45])`` would
+                report after every 5th, 30th, and 45th batch.
             checkpoint_policy: Controls how Determined performs checkpoints after validation
-            operations, if at all. Should be set to one of the following values:
+                operations, if at all. Should be set to one of the following values:
+
                     best (default): A checkpoint will be taken after every validation operation
-                    that performs better than all previous validations for this experiment.
-                    Validation metrics are compared according to the metric and smaller_is_better
-                    options in the searcher configuration. This option is only supported for
-                    on-cluster training.
+                        that performs better than all previous validations for this experiment.
+                        Validation metrics are compared according to the ``metric`` and
+                        ``smaller_is_better`` fields in the searcher configuration. This option
+                        is only supported for on-cluster training.
                     all: A checkpoint will be taken after every validation, no matter the
-                    validation performance.
+                        validation performance.
                     none: A checkpoint will never be taken due to a validation. However,
-                    even with this policy selected, checkpoints are still expected to be taken
-                    after the trial is finished training, due to cluster scheduling decisions,
-                    before search method decisions, or due to min_checkpoint_period.
+                        even with this policy selected, checkpoints are still expected to be taken
+                        after the trial is finished training, due to cluster scheduling decisions,
+                        before search method decisions, or due to ``min_checkpoint_period``.
             latest_checkpoint: Configures the checkpoint used to start or continue training.
                 This value should be set to ``det.get_cluster_info().latest_checkpoint`` for
                 standard continue training functionality.
-            step_zero_validation: Configures whether or not to perform an initial validation
-                before training.
+            step_zero_validation: Configures whether to perform an initial validation before
+                training. Defaults to false.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
                 train and validate one batch. Defaults to false.
         """

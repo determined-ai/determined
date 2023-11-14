@@ -123,6 +123,7 @@ const WebhooksView: React.FC = () => {
             </li>
           );
         }
+        return <></>;
       });
 
     return [
@@ -165,7 +166,7 @@ const WebhooksView: React.FC = () => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<Webhook> | SorterResult<Webhook>[],
     ) => {
       if (Array.isArray(tableSorter)) return;

@@ -1,7 +1,7 @@
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 
@@ -30,7 +30,7 @@ const SetUserRolesModalComponent = ({
 }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
   const knownRoles = useObservable(roleStore.roles);
-
+  const { openToast } = useToast();
   const onSubmit = async () => {
     const values = await form.validateFields();
 
@@ -38,7 +38,7 @@ const SetUserRolesModalComponent = ({
       const roleIds = Array.from(new Set(values[ROLE_NAME]));
       const params = userIds.map((userId) => ({ roleIds, userId }));
       await assignRolesToUser(params);
-      makeToast({
+      openToast({
         title: 'Successfully set roles',
       });
       clearTableSelection();
