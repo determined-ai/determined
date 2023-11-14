@@ -2071,15 +2071,17 @@ jobs:
           at: .
 
       - run:
-          name: Write cache key
+          name: Write e2e tests cache key
           working_directory: ~/project/e2e_tests
           command: |
             pip freeze --all >> /tmp/cachefile
             cat ../harness/setup.py >> /tmp/cachefile
             echo ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
             cat ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
-            echo "<<parameters.managed-devcluster>>" >> /tmp/cachefile
+            echo '<<parameters.managed-devcluster>>' >> /tmp/cachefile
+            echo '<<parameters.tf2>>' >> /tmp/cachefile
             echo 3.8.16 >> /tmp/cachefile
+            cat /tmp/cachefile
 
       - restore_cache:
           keys:
