@@ -370,7 +370,7 @@ commands:
                       echo "Python already installed, version $PYTHON_VERSION"
                       exit 0
                   fi
-                  echo "Python not installed or wrong version, installing conda and Python now
+                  echo "Python not installed or wrong version, installing conda and Python now"
 
                   CONDA_DIR="/opt/conda"
                   CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
