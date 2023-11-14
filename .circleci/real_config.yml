@@ -2095,7 +2095,7 @@ jobs:
           name: Make conda bin directory
           command: |
             sudo mkdir -p /opt/conda/bin
-            sudo chmod a+wx /opt/conda/bin # TODO narrow
+            sudo chmod a+wx /opt/conda # TODO narrow
 
       - restore_cache:
           keys:
