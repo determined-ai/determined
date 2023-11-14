@@ -33,8 +33,8 @@
 
 #. On Windows, Visual Studio Code uses CMD to run its SSH command under the hood. Therefore, we need
    to make a few modifications to the config file. First, prepend the proxy command to use WSL. In a
-   CMD shell, type `where wsl` and prepend the result to the ProxyCommand entry in your config file.
-   This should lead to a ProxyCommand that looks like this:
+   CMD shell, type ``where wsl`` and prepend the result to the ProxyCommand entry in your config
+   file. This should lead to a ProxyCommand that looks like this:
 
    .. code::
 
