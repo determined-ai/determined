@@ -67,7 +67,7 @@ class UserStore extends PollingStore {
       if (userIds.length === 0) return NotLoaded;
 
       const users = userIds
-        .map(usersById.get)
+        .map(usersById.get.bind(usersById))
         .filter((u): u is Exclude<typeof u, undefined> => u !== undefined)
         .sort(compareUser);
 

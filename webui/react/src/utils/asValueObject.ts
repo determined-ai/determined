@@ -190,7 +190,7 @@ export const asValueObject = <T extends t.HasProps>(
   const eq = mixedToEq(codec);
   let hashCode: number | null = null;
   return {
-    ...codec.encode(value),
+    ...value,
     equals: (other: unknown) => eq.equals(value, other),
     hashCode: () => (hashCode ||= hash(JSON.stringify(recursiveStripKeys(codec, value)))),
   };
