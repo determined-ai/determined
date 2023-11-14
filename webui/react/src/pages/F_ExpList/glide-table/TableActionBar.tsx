@@ -263,9 +263,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             experiments`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -354,64 +353,66 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <Row>
-      <Column>
-        <Space className={css.base}>
-          <TableFilter
-            formStore={formStore}
-            isMobile={isMobile}
-            isOpenFilter={isOpenFilter}
-            loadableColumns={projectColumns}
-            onIsOpenFilterChange={onIsOpenFilterChange}
-          />
-          <MultiSortMenu
-            columns={projectColumns}
-            isMobile={isMobile}
-            sorts={sorts}
-            onChange={onSortChange}
-          />
-          <ColumnPickerMenu
-            initialVisibleColumns={initialVisibleColumns}
-            isMobile={isMobile}
-            projectColumns={projectColumns}
-            projectId={project.id}
-            onVisibleColumnChange={onVisibleColumnChange}
-          />
-          <OptionsMenu
-            rowHeight={rowHeight}
-            tableViewMode={tableViewMode}
-            onRowHeightChange={onRowHeightChange}
-            onTableViewModeChange={onTableViewModeChange}
-          />
-          {(selectAll || selectedExperimentIds.size > 0) && (
-            <Dropdown menu={editMenuItems} onClick={handleAction}>
-              <Button hideChildren={isMobile}>Actions</Button>
-            </Dropdown>
-          )}
-          {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
-        </Space>
-      </Column>
-      <Column align="right" width="hug">
-        <Row>
-          {heatmapBtnVisible && (
-            <Tooltip content={'Toggle Metric Heatmap'}>
+    <>
+      <Row>
+        <Column>
+          <Space className={css.base}>
+            <TableFilter
+              formStore={formStore}
+              isMobile={isMobile}
+              isOpenFilter={isOpenFilter}
+              loadableColumns={projectColumns}
+              onIsOpenFilterChange={onIsOpenFilterChange}
+            />
+            <MultiSortMenu
+              columns={projectColumns}
+              isMobile={isMobile}
+              sorts={sorts}
+              onChange={onSortChange}
+            />
+            <ColumnPickerMenu
+              initialVisibleColumns={initialVisibleColumns}
+              isMobile={isMobile}
+              projectColumns={projectColumns}
+              projectId={project.id}
+              onVisibleColumnChange={onVisibleColumnChange}
+            />
+            <OptionsMenu
+              rowHeight={rowHeight}
+              tableViewMode={tableViewMode}
+              onRowHeightChange={onRowHeightChange}
+              onTableViewModeChange={onTableViewModeChange}
+            />
+            {(selectAll || selectedExperimentIds.size > 0) && (
+              <Dropdown menu={editMenuItems} onClick={handleAction}>
+                <Button hideChildren={isMobile}>Actions</Button>
+              </Dropdown>
+            )}
+            {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
+          </Space>
+        </Column>
+        <Column align="right">
+          <Row>
+            {heatmapBtnVisible && (
+              <Tooltip content={'Toggle Metric Heatmap'}>
+                <Button
+                  icon={<Icon name="heatmap" title="heatmap" />}
+                  type={heatmapOn ? 'primary' : 'default'}
+                  onClick={() => onHeatmapToggle?.(heatmapOn)}
+                />
+              </Tooltip>
+            )}
+            {!!onComparisonViewToggle && (
               <Button
-                icon={<Icon name="heatmap" title="heatmap" />}
-                type={heatmapOn ? 'primary' : 'default'}
-                onClick={() => onHeatmapToggle?.(heatmapOn)}
-              />
-            </Tooltip>
-          )}
-          {!!onComparisonViewToggle && (
-            <Button
-              hideChildren={isMobile}
-              icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
-              onClick={onComparisonViewToggle}>
-              Compare
-            </Button>
-          )}
-        </Row>
-      </Column>
+                hideChildren={isMobile}
+                icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
+                onClick={onComparisonViewToggle}>
+                Compare
+              </Button>
+            )}
+          </Row>
+        </Column>
+      </Row>
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
@@ -436,7 +437,7 @@ const TableActionBar: React.FC<Props> = ({
         selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />
-    </Row>
+    </>
   );
 };
 
