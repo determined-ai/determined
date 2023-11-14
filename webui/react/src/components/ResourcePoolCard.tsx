@@ -163,54 +163,52 @@ const ResourcePoolCard: React.FC<Props> = ({
   );
 
   return (
-    <>
-      <Card
-        actionMenu={actionMenu}
-        size="medium"
-        onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(pool.name) })}
-        onDropdown={onDropdown}>
-        <div className={css.base}>
-          <div className={css.header}>
-            <div className={css.name}>{pool.name}</div>
-            <div className={css.details}>
-              <ConditionalWrapper
-                condition={!!defaultLabel && canManageResourcePoolBindings}
-                wrapper={(children) => (
-                  <Tooltip content="You cannot bind your default resource pool to a workspace.">
-                    {children}
-                  </Tooltip>
-                )}>
-                <span>{defaultLabel}</span>
-              </ConditionalWrapper>
-              {pool.description && <Icon name="info" showTooltip title={pool.description} />}
-            </div>
+    <Card
+      actionMenu={actionMenu}
+      size="medium"
+      onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(pool.name) })}
+      onDropdown={onDropdown}>
+      <div className={css.base}>
+        <div className={css.header}>
+          <div className={css.name}>{pool.name}</div>
+          <div className={css.details}>
+            <ConditionalWrapper
+              condition={!!defaultLabel && canManageResourcePoolBindings}
+              wrapper={(children) => (
+                <Tooltip content="You cannot bind your default resource pool to a workspace.">
+                  {children}
+                </Tooltip>
+              )}>
+              <span>{defaultLabel}</span>
+            </ConditionalWrapper>
+            {pool.description && <Icon name="info" showTooltip title={pool.description} />}
           </div>
-          <Suspense fallback={<Spinner center spinning />}>
-            <div className={css.body}>
-              <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-              {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
-                <section className={css.resoucePoolBoundContainer}>
-                  <div>Bound to:</div>
-                  <div className={css.resoucePoolBoundCount}>
-                    <Icon name="lock" title="Bound Workspaces" />
-                    {resourcePoolBindings.length}{' '}
-                    {pluralizer(resourcePoolBindings.length, 'workspace')}
-                  </div>
-                </section>
-              )}
-              <JsonGlossary alignValues="right" json={shortDetails} />
-              <div />
-            </div>
-          </Suspense>
         </div>
-      </Card>
+        <Suspense fallback={<Spinner center spinning />}>
+          <div className={css.body}>
+            <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+            {rpBindingFlagOn && resourcePoolBindings.length > 0 && (
+              <section className={css.resoucePoolBoundContainer}>
+                <div>Bound to:</div>
+                <div className={css.resoucePoolBoundCount}>
+                  <Icon name="lock" title="Bound Workspaces" />
+                  {resourcePoolBindings.length}{' '}
+                  {pluralizer(resourcePoolBindings.length, 'workspace')}
+                </div>
+              </section>
+            )}
+            <JsonGlossary alignValues="right" json={shortDetails} />
+            <div />
+          </div>
+        </Suspense>
+      </div>
       <ResourcePoolBindingModal.Component
         bindings={workspaces.filter((w) => resourcePoolBindings.includes(w.id)).map((w) => w.name)}
         pool={pool.name}
         workspaces={workspaces.map((w) => w.name)}
         onSave={onSaveBindings}
       />
-    </>
+    </Card>
   );
 };
 
