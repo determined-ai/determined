@@ -152,6 +152,7 @@ def start_tensorboard(
                 # Wait for the Tensorboard process to start responding before proceeding.
                 responsive = False
                 while not responsive:
+                    print("Waiting for TensorBoard to respond.")
                     raise_if_dead(tensorboard_process)
 
                     if time.time() > tb_unresponsive_stop_time:
@@ -159,8 +160,6 @@ def start_tensorboard(
 
                     time.sleep(TICK_INTERVAL)
                     responsive = check_tensorboard_responsive()
-                    if not responsive:
-                        print(TRIGGER_WAITING_MSG, flush=True)
 
                 # Continuously loop checking for new files
                 stop_time = time.time() + MAX_WAIT_TIME
@@ -172,7 +171,6 @@ def start_tensorboard(
 
                     # Check if we have reached a timeout without downloading any files
                     if tb_fetch_manager.get_num_fetched_files() == 0:
-                        print(f"num files {tb_fetch_manager.get_num_fetched_files()}")
                         if time.time() > stop_time:
                             raise RuntimeError("No new files were fetched before the timeout.")
 
