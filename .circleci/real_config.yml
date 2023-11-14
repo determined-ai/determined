@@ -365,10 +365,12 @@ commands:
                   #!/bin/bash
                   PYTHON_VERSION="${1}"
 
-                  if [ -x "/tmp/venv/bin/python" ] && [ "$(/tmp/venv/bin/python --version | cut -d' ' -f2)" != "${PYTHON_VERSION}" ]; then
-                      echo "Python already installed"
+                  installed_python_version=$(/tmp/venv/bin/python --version 2>&1 | awk '{print $2}')
+                  if [ -x "/tmp/venv/bin/python" ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
+                      echo "Python already installed, version $PYTHON_VERSION"
                       exit 0
                   fi
+                  echo "Python not installed or wrong version, installing conda and Python now
 
                   CONDA_DIR="/opt/conda"
                   CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
@@ -430,7 +432,7 @@ commands:
                   echo <<parameters.extras-requires>> >> /tmp/cachefile
                   if [ -n <<parameters.extra-requirements-file>> ]; then
                     cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
-                    fi
+                  fi
             - restore_cache:
                 keys:
                   - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
