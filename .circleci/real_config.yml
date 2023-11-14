@@ -2094,7 +2094,7 @@ jobs:
       - run:
           name: Make conda bin directory
           command: |
-            sudo mkdir /opt/conda/bin
+            sudo mkdir -p /opt/conda/bin
 
       - restore_cache:
           keys:
