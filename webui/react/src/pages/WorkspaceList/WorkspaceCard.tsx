@@ -1,8 +1,8 @@
 import { Typography } from 'antd';
 import Avatar, { Size } from 'hew/Avatar';
 import Card from 'hew/Card';
-import { Columns } from 'hew/Columns';
 import Icon from 'hew/Icon';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import React from 'react';
@@ -38,7 +38,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.workspaceDetails(workspace.id) })}
       onDropdown={onClick}>
       <div className={workspace.archived ? css.archived : ''}>
-        <Columns gap={8}>
+        <Row>
           <div className={css.icon}>
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
           </div>
@@ -64,7 +64,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
               {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
             </div>
           </div>
-        </Columns>
+        </Row>
       </div>
       {contextHolders}
     </Card>
