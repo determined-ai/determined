@@ -437,47 +437,6 @@ def get_models(
 
 
 @_require_singleton
-def list_models(
-    sort_by: ModelSortBy = ModelSortBy.NAME,
-    order_by: OrderBy = OrderBy.ASCENDING,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    model_id: Optional[int] = None,
-    workspace_names: Optional[List[str]] = None,
-    workspace_ids: Optional[List[int]] = None,
-) -> List[Model]:
-    """Get a list of all models in the model registry.
-
-    Arguments:
-        sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
-        order_by: Whether to sort in ascending or descending order. See
-            :class:`~determined.experimental.OrderBy`.
-        name: If this parameter is set, models will be filtered to only
-            include models with names matching this parameter.
-        description: If this parameter is set, models will be filtered to
-            only include models with descriptions matching this parameter.
-        model_id: If this parameter is set, models will be filtered to
-            only include the model with this unique numeric id.
-        workspace_names: Only return models with names in this list.
-        workspace_ids: Only return models with workspace IDs in this list.
-
-    Returns:
-        A list of :class:`~determined.experimental.client.Model` objects matching any passed
-        filters.
-    """
-    assert _determined is not None
-    return _determined.list_models(
-        sort_by=sort_by,
-        order_by=order_by,
-        name=name,
-        description=description,
-        model_id=model_id,
-        workspace_names=workspace_names,
-        workspace_ids=workspace_ids,
-    )
-
-
-@_require_singleton
 def get_model_labels() -> List[str]:
     """Get a list of labels used on any models in the model registry.
 
