@@ -137,11 +137,17 @@ Install the Determined Master and Agent
 
    **Red Hat Distributions**
 
-   On Red Hat distributions, use the following command:
+   On Red Hat distributions, use the following command during the initial installation:
 
       .. code::
 
          sudo rpm -i <path to downloaded package>
+
+   When upgrading, use the following command:
+
+      .. code::
+
+         sudo rpm -U <path to downloaded package>
 
    Before running the Determined agent, :ref:`install Docker <install-docker>` on each agent
    machine. If the machine has GPUs, ensure that the :ref:`NVIDIA Container Toolkit
@@ -289,3 +295,19 @@ in one command.
 To view the logging output of a service, run ``journalctl -u <service>``.
 
 To manually stop a service, run ``sudo systemctl stop <service>``.
+
+*********************
+ Upgrade the Cluster
+*********************
+
+To upgrade, reinstall Determined. Once the upgrade is completed, reload and restart
+``determined-master.service``:
+
+.. code::
+
+   sudo systemctl daemon-reload
+   sudo restart determined-master.service
+
+.. note::
+
+   Upgrading does not interrupt jobs that are running on the cluster.
