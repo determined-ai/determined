@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev24nicktestconda222222
+    default: v1dev24nicktestconda2222222
   gke-version:
     type: string
     default: "1.25.10"
@@ -365,18 +365,19 @@ commands:
                   #!/bin/bash
                   PYTHON_VERSION="${1}"
 
-                  /tmp/venv/bin/python --version
-                  installed_python_version=$(/tmp/venv/bin/python --version 2>&1 | awk '{print $2}')
-                  if [ -x "/tmp/venv/bin/python" ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
+                  CONDA_DIR="/tmp/conda"
+                  CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
+                  CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
+                  CONDA_URL="https://repo.anaconda.com/miniconda"
+
+                  ${CONDA_DIR}/bin/python --version
+                  installed_python_version=$(${CONDA_DIR}/bin/python --version 2>&1 | awk '{print $2}')
+                  if [ -x "${CONDA_DIR}/bin/python ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
                       echo "Python already installed, version $PYTHON_VERSION"
                       exit 0
                   fi
                   echo "Python not installed or wrong version, installing conda and Python now"
 
-                  CONDA_DIR="/tmp/conda"
-                  CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
-                  CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
-                  CONDA_URL="https://repo.anaconda.com/miniconda"
 
                   mkdir -p /etc/determined/conda.d
                   mkdir -p "${CONDA_DIR}"
@@ -400,7 +401,7 @@ commands:
       - run:
           name: Setup venv
           command: |
-            python3 -m venv /tmp/venv
+            /tmp/conda/bin/python -m venv /tmp/venv
             #echo "this" && [ -L "/tmp/venv/bin/python" ] && echo "this2" && echo "this3" && rm /tmp/venv/bin/python && rm /tmp/venv/bin/python3 && echo "this4" && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python3
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
