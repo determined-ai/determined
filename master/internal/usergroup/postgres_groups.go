@@ -130,15 +130,34 @@ func SearchGroups(
 	return SearchGroupsPaginated(ctx, query, offset, limit)
 }
 
-// SearchGroupsWithoutPersonalGroups searches the database for groups.
+// SearchGroupsWithoutPersonalGroupsTx searches the database for groups.
 // userBelongsTo is "optional" in that if a value < 1 is passed in, the
 // parameter is ignored. SearchGroups does not return an error if no groups
 // are found, as that is considered a successful search.
-func SearchGroupsWithoutPersonalGroups(
-	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
-) (groups []model.Group, memberCounts []int32, tableRows int, err error) {
-	query := SearchGroupsQuery(name, userBelongsTo, false)
-	return SearchGroupsPaginated(ctx, query, offset, limit)
+func SearchGroupsWithoutPersonalGroupsTx(
+	ctx context.Context, idb bun.IDB, name string, userBelongsTo model.UserID,
+) ([]model.Group, error) {
+	var groups []model.Group
+	query := idb.NewSelect().Model(&groups).Where("groups.user_id IS NULL")
+
+	if len(name) > 0 {
+		query = query.Where("group_name = ?", name)
+	}
+
+	if userBelongsTo != 0 {
+		query = query.Where(
+			`EXISTS(SELECT 1
+			FROM user_group_membership AS m
+			WHERE m.group_id=groups.id AND m.user_id = ?)`,
+			userBelongsTo)
+	}
+
+	err := query.Scan(ctx, &groups)
+	if err != nil {
+		return nil, err
+	}
+
+	return groups, nil
 }
 
 // SearchGroupsQuery builds a query and returns it to the caller. userBelongsTo
