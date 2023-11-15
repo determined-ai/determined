@@ -123,6 +123,13 @@ const WebhooksView: React.FC = () => {
             </li>
           );
         }
+        if (t.triggerType === V1TriggerType.TASKLOG) {
+          return (
+            <li className={css.listBadge} key={t.id}>
+              <Badge>TASKLOG</Badge>
+            </li>
+          );
+        }
         return <></>;
       });
 
