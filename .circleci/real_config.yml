@@ -347,6 +347,23 @@ commands:
         type: string
         default: "3.8.18" # TODO why does conda install give 3.18???
     steps:
+      - run:
+          name: Write cache key
+          command: |
+            echo <<parameters.executor>> > /tmp/cachefile
+            pip freeze --all >> /tmp/cachefile
+            if [ "<<parameters.determined>>" = "true" ]; then
+              cat harness/setup.py >> /tmp/cachefile
+            fi
+            if [ "<<parameters.model-hub>>" = "true" ]; then
+              cat model_hub/setup.py >> /tmp/cachefile
+            fi
+            echo <<parameters.extras-requires>> >> /tmp/cachefile
+            if [ -n <<parameters.extra-requirements-file>> ]; then
+              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+            fi
+            echo '<<parameters.python-version>>' >> /tmp/cachefile
+
       - restore_cache:
           keys:
             - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
@@ -414,23 +431,6 @@ commands:
             - run:
                 name: Install pypa builder
                 command: python3 -m pip install build
-
-      - run:
-          name: Write cache key
-          command: |
-            echo <<parameters.executor>> > /tmp/cachefile
-            pip freeze --all >> /tmp/cachefile
-            if [ "<<parameters.determined>>" = "true" ]; then
-              cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.model-hub>>" = "true" ]; then
-              cat model_hub/setup.py >> /tmp/cachefile
-            fi
-            echo <<parameters.extras-requires>> >> /tmp/cachefile
-            if [ -n <<parameters.extra-requirements-file>> ]; then
-              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
-            fi
-            echo '<<parameters.python-version>>' >> /tmp/cachefile
 
       - when:
           condition: <<parameters.determined>>
