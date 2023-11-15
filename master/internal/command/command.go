@@ -76,6 +76,7 @@ type CreateGeneric struct {
 }
 
 func commandFromSnapshot(
+	logCtx detLogger.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
 	snapshot *CommandSnapshot,
@@ -100,7 +101,6 @@ func commandFromSnapshot(
 		},
 		syslog: logrus.WithFields(logrus.Fields{
 			"component": "command",
-			"taskID":    taskID,
 		}),
 	}
 	return cmd, cmd.Start(context.TODO())
@@ -261,16 +261,8 @@ func (c *Command) garbageCollect() {
 		}
 	}
 
-	jobservice.DefaultService.UnregisterJob(c.jobID)
-	DefaultCmdService.unregisterCommand(c.taskID)
-
-	if err := user.DeleteSessionByToken(
-		context.TODO(),
-		c.GenericCommandSpec.Base.UserSessionToken,
-	); err != nil {
-		c.syslog.WithError(err).Errorf(
-			"failure to delete user session for task: %v", c.taskID)
-	}
+	go jobservice.DefaultService.UnregisterJob(c.jobID)
+	go DefaultCmdService.unregisterCommand(c.taskID)
 }
 
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
