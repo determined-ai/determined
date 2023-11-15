@@ -88,6 +88,8 @@ export class BaseAPI {
         if (configuration) {
             this.configuration = configuration;
             this.basePath = configuration.basePath || this.basePath;
+        } else {
+            this.configuration = new Configuration()
         }
     }
 };
@@ -99,9 +101,10 @@ export class BaseAPI {
  * @extends {Error}
  */
 export class RequiredError extends Error {
-    name: "RequiredError"
+    override name: "RequiredError"
     constructor(public field: string, msg?: string) {
         super(msg);
+        this.name = "RequiredError"
     }
 }
 
@@ -5445,10 +5448,10 @@ export type V1LocationType = ValueOf<typeof V1LocationType>
 export interface V1LogConfig {
     /**
      * The log level for Master Config.
-     * @type {string}
+     * @type {V1LogLevel}
      * @memberof V1LogConfig
      */
-    level?: string;
+    level?: V1LogLevel;
     /**
      * The color setting for log in Master Config.
      * @type {boolean}

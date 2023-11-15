@@ -1,5 +1,5 @@
 import { render, RenderResult } from '@testing-library/react';
-import { UIProvider } from 'hew/Theme';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import usePermissions from 'hooks/usePermissions';
@@ -62,7 +62,7 @@ const PermissionRenderer: React.FC<Props> = () => {
 
 export const setup = async (): Promise<RenderResult> => {
   return await render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <PermissionRenderer workspaceId={1} />
     </UIProvider>,
   );

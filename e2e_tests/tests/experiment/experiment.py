@@ -58,6 +58,7 @@ def maybe_run_autotuning_experiment(
     model_def_file: str,
     create_args: Optional[List[str]] = None,
     search_method_name: str = "_test",
+    max_trials: int = 4,
 ) -> subprocess.CompletedProcess:
     command = [
         "python3",
@@ -66,6 +67,8 @@ def maybe_run_autotuning_experiment(
         search_method_name,
         config_file,
         model_def_file,
+        "--max-trials",
+        str(max_trials),
     ]
 
     if create_args is not None:
@@ -85,9 +88,10 @@ def run_autotuning_experiment(
     model_def_file: str,
     create_args: Optional[List[str]] = None,
     search_method_name: str = "_test",
+    max_trials: int = 4,
 ) -> int:
     completed_process = maybe_run_autotuning_experiment(
-        config_file, model_def_file, create_args, search_method_name
+        config_file, model_def_file, create_args, search_method_name, max_trials
     )
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr
@@ -782,10 +786,11 @@ def run_basic_autotuning_test(
     priority: int = -1,
     expect_client_failed: bool = False,
     search_method_name: str = "_test",
+    max_trials: int = 4,
 ) -> int:
     assert os.path.isdir(model_def_file)
     orchestrator_exp_id = run_autotuning_experiment(
-        config_file, model_def_file, create_args, search_method_name
+        config_file, model_def_file, create_args, search_method_name, max_trials
     )
     if priority != -1:
         set_priority(experiment_id=orchestrator_exp_id, priority=priority)

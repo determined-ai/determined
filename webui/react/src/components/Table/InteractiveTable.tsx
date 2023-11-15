@@ -474,7 +474,7 @@ const InteractiveTable = <
 
   const handleResize = useCallback(
     (resizeIndex: number) => {
-      return (e: Event, { x }: DraggableData) => {
+      return (_e: Event, { x }: DraggableData) => {
         if (!settingsColumns) return;
 
         if (timeout.current) clearTimeout(timeout.current);
@@ -522,7 +522,7 @@ const InteractiveTable = <
 
   const handleResizeStart = useCallback(
     (index: number) =>
-      (e: Event, { x }: DraggableData) => {
+      (_e: Event, { x }: DraggableData) => {
         if (!settingsColumns) return;
 
         setIsResizing(true);

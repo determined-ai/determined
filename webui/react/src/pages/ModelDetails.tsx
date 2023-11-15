@@ -166,7 +166,7 @@ const ModelDetails: React.FC = () => {
   );
 
   const columns = useMemo(() => {
-    const tagsRenderer = (value: string, record: ModelVersion) => (
+    const tagsRenderer = (_value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
@@ -190,7 +190,7 @@ const ModelDetails: React.FC = () => {
       <ModelVersionActionDropdown version={record} />
     );
 
-    const descriptionRenderer = (value: string, record: ModelVersion) => (
+    const descriptionRenderer = (_value: string, record: ModelVersion) => (
       <Input
         className={css.descriptionRenderer}
         defaultValue={record.comment ?? ''}
@@ -267,7 +267,7 @@ const ModelDetails: React.FC = () => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<ModelVersion> | SorterResult<ModelVersion>[],
     ) => {
       if (Array.isArray(tableSorter) || !settings.tableOffset) return;

@@ -82,7 +82,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
                   formStore.removeChild(data.filterGroup.id);
                   onHidePopOver();
                 }}>
-                Reset
+                Clear filters
               </Button>
             </div>
           </>

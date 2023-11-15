@@ -71,6 +71,7 @@ const formValuesToUpdate = async (
       return { ...update, weight };
     }
   }
+  return undefined;
 };
 
 const ManageJob: React.FC<Props> = ({

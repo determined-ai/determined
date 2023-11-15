@@ -40,7 +40,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-bf9480b
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-622d512
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev23
+    default: v1dev24
   gke-version:
     type: string
     default: "1.25.10"
@@ -226,7 +226,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-bf9480b
+            - run: docker pull determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-622d512
 
   login-docker:
     parameters:
@@ -285,11 +285,6 @@ commands:
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
-      - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
-          paths:
-            - "/home/circleci/go/"
-            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -595,9 +590,6 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
-      - upload-test-job:
-          only_on_branch: main
-          test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
     parameters:
@@ -1618,6 +1610,12 @@ jobs:
           paths:
             - "master/build"
             - "agent/build"
+      # Save cache after we build master and agent so we can have our build cache there.
+      - save_cache:
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
+          paths:
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
 
   build-proto:
     docker:
@@ -1814,7 +1812,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-bf9480b
+      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-622d512
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1835,7 +1833,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-bf9480b
+      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-622d512
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2060,16 +2058,10 @@ jobs:
       - attach_workspace:
           at: .
 
-      - reinstall-go
-
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-
-      - run:
-          name: Get master dependencies
-          command: make -C master get-deps
 
       - install-devcluster
       - unless:
@@ -2594,12 +2586,19 @@ workflows:
           requires:
             - build-react
             - build-docs
+          filters:
+            branches:
+              only:
+                - main
 
       - package-and-push-system-dev:
           requires:
             - build-react
             - build-docs
-          filters: *any-upstream
+          filters:
+            branches:
+              only:
+                - main
 
       - upload-docs-search-index:
           requires:
@@ -2613,12 +2612,16 @@ workflows:
       - test-debian-packaging:
           requires:
             - package-and-push-system-local
+          filters:
+            branches:
+              only:
+                - main
 
       - test-e2e:
           name: test-e2e-cpu
           requires:
             - build-go
-          parallelism: 4
+          parallelism: 6
           tf2: true
           mark: e2e_cpu
 
@@ -2626,7 +2629,7 @@ workflows:
           name: test-e2e-cpu-double
           requires:
             - build-go
-          parallelism: 1
+          parallelism: 3
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -2636,7 +2639,7 @@ workflows:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
-          parallelism: 2
+          parallelism: 4
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
@@ -3169,6 +3172,24 @@ workflows:
               mark: ["model_hub_mmdetection"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
+
+      # packaging tests
+      - request-packaging-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - package-and-push-system-local:
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - request-packaging-tests
+
+      - test-debian-packaging:
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local
+            - request-packaging-tests
 
       # Request AWS FS tests
       - request-aws-fs-tests:

@@ -19,8 +19,10 @@ class MNistFailable(MNistTrial):
 if __name__ == "__main__":
     info = det.get_cluster_info()
     assert info, "This test is intended to run on cluster only."
+
     # Configure logging
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+
     with pytorch.init() as train_context:
         trial = MNistFailable(context=train_context, hparams=info.trial.hparams)
         trainer = pytorch.Trainer(trial, train_context)

@@ -72,7 +72,7 @@ class DeterminedStore extends PollingStore {
     this.#info.set(Loaded({ ...response, checked: true }));
   }
 
-  protected pollCatch(): void {
+  protected override pollCatch(): void {
     this.#info.update((prev) => {
       const info = Loadable.getOrElse(initInfo, prev);
       return Loaded({ ...info, checked: true });

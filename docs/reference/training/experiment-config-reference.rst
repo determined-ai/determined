@@ -1287,7 +1287,7 @@ container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.
 ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
 -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4`` for NVIDIA GPUs.
--  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4`` for CPUs.
+-  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.26.4`` for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
@@ -1442,7 +1442,7 @@ training. Defaults to ``64``.
 ============================
 
 Optional. The delay (in milliseconds) between each tensor fusion during distributed training.
-Defaults to ``5``.
+Defaults to ``1``.
 
 ``auto_tune_tensor_fusion``
 ===========================

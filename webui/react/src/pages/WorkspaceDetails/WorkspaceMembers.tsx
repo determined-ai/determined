@@ -161,7 +161,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   }, []);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
+    const nameRenderer = (_value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
       if (isUserWithRoleInfo(record)) {
         const member: User = {
           displayName: record.displayName,
@@ -173,7 +173,7 @@ const WorkspaceMembers: React.FC<Props> = ({
       return <Nameplate icon={<Icon name="group" title="Group" />} name={record.groupName ?? ''} />;
     };
 
-    const roleRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (
+    const roleRenderer = (_value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (
       <RoleRenderer
         fetchMembers={fetchMembers}
         rolesAssignableToScope={rolesAssignableToScope}
@@ -183,7 +183,7 @@ const WorkspaceMembers: React.FC<Props> = ({
       />
     );
 
-    const actionRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
+    const actionRenderer = (_value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
       return userCanAssignRoles ? (
         <GroupOrMemberActionDropdown
           fetchMembers={fetchMembers}

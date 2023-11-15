@@ -1,9 +1,9 @@
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import { useInitApi } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useEffect } from 'react';
 
+import useUI from 'components/ThemeProvider';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';

@@ -433,8 +433,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !GetAtt MasterSecurityGroup.GroupId
-      FromPort: 9012
-      ToPort: 9012
+      FromPort: 9013
+      ToPort: 9013
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
@@ -978,10 +978,12 @@ Resources:
                 --env DB_PASSWORD=${DBPassword} \
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
-                -p 9012:9012 \
+                --env LORE_DOCKER_TAG_SUFFIX="${LoreVersion}" \
+                -p 9013:9013 \
                 -v /mnt/efs:/run/determined/workdir/shared_fs \
                 --network determined \
                 "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
+              test $? -eq 0 || ( echo "Failed to launch lore container." && exit 1 )
             fi
 
             touch /usr/local/determined/etc/master.yaml

@@ -607,6 +607,7 @@
     "tutorials/index",
     "tutorials/model-registry",
     "tutorials/notebook-tutorial",
+    "tutorials/pachyderm-cat-dog",
     "tutorials/porting-tutorial",
     "tutorials/pytorch-mnist-local-qs",
     "tutorials/pytorch-mnist-tutorial",

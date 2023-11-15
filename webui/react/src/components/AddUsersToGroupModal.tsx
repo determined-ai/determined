@@ -1,7 +1,7 @@
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
 import Select, { Option, RefSelectProps } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import UserBadge from 'components/UserBadge';
@@ -26,7 +26,7 @@ const AddUsersToGroupModalComponent: React.FC<Props> = ({ users, onClose, group 
   const [filteredUsers, setFilteredUsers] = useState<DetailedUser[]>([]);
   const [form] = Form.useForm<FormInputs>();
   const ref = useRef<RefSelectProps>(null);
-
+  const { openToast } = useToast();
   useEffect(() => {
     ref.current?.focus();
   }, []);
@@ -62,7 +62,7 @@ const AddUsersToGroupModalComponent: React.FC<Props> = ({ users, onClose, group 
       if (values) {
         form.resetFields();
         onClose?.();
-        makeToast({
+        openToast({
           severity: 'Confirm',
           title: `${values.userIds.length} users added to group.`,
         });
@@ -86,7 +86,7 @@ const AddUsersToGroupModalComponent: React.FC<Props> = ({ users, onClose, group 
         });
       }
     }
-  }, [form, group.group.groupId, onClose]);
+  }, [form, group.group.groupId, onClose, openToast]);
 
   return (
     <Modal

@@ -1,9 +1,9 @@
 import Message from 'hew/Message';
-import useUI from 'hew/Theme';
 import { useObservable } from 'micro-observables';
 import React, { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
+import useUI from 'components/ThemeProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import { RouteConfig } from 'types';

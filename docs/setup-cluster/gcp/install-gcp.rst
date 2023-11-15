@@ -407,4 +407,4 @@ This command line will spin up a cluster of up to 2 A100s in the ``us-central1-c
       --gpu-type nvidia-tesla-a100 \
       --region us-central1 --zone us-central1-c \
       --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4 \
-      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-0.26.4
+      --cpu-env-image determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.26.4

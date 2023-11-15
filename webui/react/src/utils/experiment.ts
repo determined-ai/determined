@@ -111,7 +111,7 @@ export const isExperimentModifiable = (experiment: ProjectExperiment): boolean =
 export const isExperimentForkable = (experiment: ProjectExperiment): boolean =>
   !experiment.parentArchived;
 
-export const alwaysTrueExperimentChecker = (experiment: ProjectExperiment): boolean => true;
+export const alwaysTrueExperimentChecker = (_experiment: ProjectExperiment): boolean => true;
 
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (

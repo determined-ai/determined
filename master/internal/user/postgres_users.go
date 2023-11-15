@@ -71,7 +71,7 @@ func Add(
 	var userID model.UserID
 	return userID, db.Bun().RunInTx(ctx, &sql.TxOptions{},
 		func(ctx context.Context, tx bun.Tx) error {
-			uID, err := addUser(ctx, tx, user)
+			uID, err := AddUserTx(ctx, tx, user)
 			if err != nil {
 				return err
 			}
@@ -155,9 +155,9 @@ func DeleteSessionByID(ctx context.Context, sessionID model.SessionID) error {
 	return err
 }
 
-// addUser & addAgentUserGroup are helper methods for Add & Update.
-// addUser UPSERT's the existence of a new user.
-func addUser(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID, error) {
+// AddUserTx & addAgentUserGroup are helper methods for Add & Update.
+// AddUserTx UPSERT's the existence of a new user.
+func AddUserTx(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID, error) {
 	if _, err := idb.NewInsert().Model(user).Returning("id").Exec(ctx); err != nil {
 		return 0, fmt.Errorf("error inserting user: %s", err)
 	}

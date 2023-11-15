@@ -468,7 +468,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
         key: 'workspace',
-        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
+        render: (_v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(
             workspaces.find((w) => w.id === a.workspaceId)?.name ?? '',
@@ -539,7 +539,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<CommandTask> | SorterResult<CommandTask>[],
     ) => {
       if (Array.isArray(tableSorter)) return;

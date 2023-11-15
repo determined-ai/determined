@@ -36,7 +36,7 @@ export const drawPointsPlugin = (checkpointsDict: CheckpointsDict): Plugin => {
   }
 
   // function drawPoints(u: uPlot, i, i0, i1) {
-  function drawPoints(u: uPlot, seriesIdx: number, idx0: number, idx1: number) {
+  function drawPoints(u: uPlot, seriesIdx: number, idx0: number, idx1: number): boolean {
     const { ctx } = u;
     const { scale } = u.series[seriesIdx];
 
@@ -67,11 +67,12 @@ export const drawPointsPlugin = (checkpointsDict: CheckpointsDict): Plugin => {
     if (!foundCheckpoint && u.data[seriesIdx].length === 1) {
       return true;
     }
+    return false;
   }
 
   return {
     hooks: {},
-    opts: (u, opts) => {
+    opts: (_u, opts) => {
       opts.series.forEach((s, i) => {
         if (i > 0) {
           uPlot.assign(s, {
