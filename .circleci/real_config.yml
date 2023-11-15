@@ -347,6 +347,9 @@ commands:
         type: string
         default: "3.8.18" # TODO why does conda install give 3.18???
     steps:
+      - restore_cache:
+          keys:
+            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.install-python>>
           steps:
@@ -429,9 +432,6 @@ commands:
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
 
-      - restore_cache:
-          keys:
-            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
