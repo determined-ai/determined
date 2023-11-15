@@ -348,7 +348,7 @@ commands:
         type: string
       python-version:
         type: string
-        default: "3.8.16"
+        default: "3.8.18" # TODO why does conda install give 3.18???
     steps:
       - when:
           condition: <<parameters.install-python>>
@@ -2089,7 +2089,7 @@ jobs:
             cat ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
             echo '<<parameters.managed-devcluster>>' >> /tmp/cachefile
             echo '<<parameters.tf2>>' >> /tmp/cachefile
-            echo 3.8.16 >> /tmp/cachefile
+            echo 3.8.18 >> /tmp/cachefile
             cat /tmp/cachefile
 
       - run:
