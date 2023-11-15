@@ -372,7 +372,7 @@ commands:
 
                   ${CONDA_DIR}/bin/python --version
                   installed_python_version=$(${CONDA_DIR}/bin/python --version 2>&1 | awk '{print $2}')
-                  if [ -x "${CONDA_DIR}/bin/python ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
+                  if [ -x "${CONDA_DIR}/bin/python" ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
                       echo "Python already installed, version $PYTHON_VERSION"
                       exit 0
                   fi
