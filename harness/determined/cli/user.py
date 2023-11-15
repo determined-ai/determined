@@ -45,9 +45,9 @@ FullUserNoAdmin = namedtuple(
 def list_users(args: Namespace) -> None:
     resp = bindings.get_GetMaster(setup_session(args))
     if resp.to_json().get("rbacEnabled"):
-        render.render_objects(FullUserNoAdmin, client.list_users())
+        render.render_objects(FullUserNoAdmin, client.list_users(not args.all))
     else:
-        render.render_objects(FullUser, client.list_users())
+        render.render_objects(FullUser, client.list_users(not args.all))
 
 
 @login_sdk_client
@@ -201,7 +201,14 @@ AGENT_USER_GROUP_ARGS = [
 
 args_description = [
     Cmd("u|ser", None, "manage users", [
-        Cmd("list ls", list_users, "list users", [], is_default=True),
+        Cmd("list ls", list_users, "list users", [
+            Arg(
+                "--all",
+                "-a",
+                action="store_true",
+                help="List all active and inactive users.",
+            ),
+        ], is_default=True),
         Cmd("login", log_in_user, "log in user", [
             Arg("username", nargs="?", default=None, help="name of user to log in as")
         ]),
