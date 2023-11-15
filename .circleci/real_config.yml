@@ -398,7 +398,6 @@ commands:
           name: Setup venv
           command: |
             python3 -m venv /tmp/venv
-            #echo "this" && [ -L "/tmp/venv/bin/python" ] && echo "this2" && echo "this3" && rm /tmp/venv/bin/python && rm /tmp/venv/bin/python3 && echo "this4" && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python3
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
@@ -412,7 +411,6 @@ commands:
             - run:
                 name: Install pypa builder
                 command: python3 -m pip install build
-
 
       - run:
           name: Write cache key
@@ -429,6 +427,7 @@ commands:
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
             fi
+            echo '<<parameters.python-version>>' >> /tmp/cachefile
 
       - restore_cache:
           keys:
@@ -2068,31 +2067,11 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run:
-          name: Write e2e tests cache key
-          working_directory: ~/project/e2e_tests
-          command: |
-            pip freeze --all >> /tmp/cachefile
-            cat ../harness/setup.py >> /tmp/cachefile
-            echo ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
-            cat ~/project/e2e_tests/tests/requirements.txt >> /tmp/cachefile
-            echo '<<parameters.managed-devcluster>>' >> /tmp/cachefile
-            echo '<<parameters.tf2>>' >> /tmp/cachefile
-            echo 3.8.18 >> /tmp/cachefile
-            cat /tmp/cachefile
-
-      - restore_cache:
-          keys:
-            - det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
-
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
           skip-cache: true # Use our own cache for e2e tests that caches more stuff.
-
-      - pull-task-images:
-          tf2: <<parameters.tf2>>
 
       - install-devcluster
       - unless:
@@ -2102,13 +2081,14 @@ jobs:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
 
-      # TODO hardlink /opt/conda/bin
       - save_cache:
           key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
             - "/tmp/conda"
-            - "/var/lib/docker" # Is this right? TODO
+
+      - pull-task-images:
+          tf2: <<parameters.tf2>>
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
