@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev24nicktestconda22222222
+    default: v1dev24nicktestconda222222222TODOCHANGE
   gke-version:
     type: string
     default: "1.25.10"
@@ -465,6 +465,7 @@ commands:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
+            - "/tmp/conda"
       - run: python --version
       - run: pip --version
       - run: pip freeze --all
@@ -2071,7 +2072,6 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-          skip-cache: true # Use our own cache for e2e tests that caches more stuff.
 
       - install-devcluster
       - unless:
@@ -2080,12 +2080,6 @@ jobs:
             - start-devcluster:
                 devcluster-config: <<parameters.devcluster-config>>
                 target-stage: <<parameters.target-stage>>
-
-      - save_cache:
-          key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
-          paths:
-            - "/tmp/venv"
-            - "/tmp/conda"
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
