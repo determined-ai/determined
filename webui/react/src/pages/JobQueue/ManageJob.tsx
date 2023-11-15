@@ -1,6 +1,7 @@
-import { List, Modal, Select, Typography } from 'antd';
+import { List, Modal, Typography } from 'antd';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
+import Select, { Option } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
@@ -16,7 +17,6 @@ import { useObservable } from 'utils/observable';
 import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
-const { Option } = Select;
 
 interface Props {
   initialPool: string;
