@@ -63,6 +63,7 @@ from determined.common.experimental.determined import Determined
 from determined.common.experimental.experiment import (  # noqa: F401
     Experiment,
     ExperimentOrderBy,
+    ExperimentSortBy,
     ExperimentState,
 )
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
@@ -183,6 +184,48 @@ def get_experiment(experiment_id: int) -> Experiment:
     """
     assert _determined is not None
     return _determined.get_experiment(experiment_id)
+
+
+@_require_singleton
+def list_experiments(
+    sort_by: Optional[ExperimentSortBy] = None,
+    order_by: Optional[OrderBy] = None,
+    experiment_ids: Optional[List[int]] = None,
+    labels: Optional[List[str]] = None,
+    users: Optional[List[str]] = None,
+    states: Optional[List[ExperimentState]] = None,
+    name: Optional[str] = None,
+    project_id: Optional[int] = None,
+) -> List[Experiment]:
+    """Get a list of experiments (:class:`~determined.experimental.Experiment`).
+
+    Arguments:
+        sort_by: Which field to sort by. See
+            :class:`~determined.experimental.ExperimentSortBy`.
+        order_by: Whether to sort in ascending or descending order. See
+            :class:`~determined.experimental.OrderBy`.
+        name: If this parameter is set, experiments will be filtered to only include those
+            with names matching this parameter.
+        experiment_ids: Only return experiments with these IDs.
+        labels: Only return experiments with a label in this list.
+        users: Only return experiments belonging to these users. Defaults to all users.
+        states: Only return experiments that are in these states.
+        project_id: Only return experiments associated with this project ID.
+
+    Returns:
+        A list of experiments.
+    """
+    assert _determined is not None
+    return _determined.list_experiments(
+        sort_by=sort_by,
+        order_by=order_by,
+        experiment_ids=experiment_ids,
+        labels=labels,
+        users=users,
+        states=states,
+        name=name,
+        project_id=project_id,
+    )
 
 
 @_require_singleton
