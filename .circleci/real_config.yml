@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev24nicktestconda222
+    default: v1dev24nicktestconda2222
   gke-version:
     type: string
     default: "1.25.10"
@@ -390,8 +390,6 @@ commands:
                   ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
                   ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
                   ${CONDA_DIR}/bin/conda clean --all -y
-
-                  sudo cp ${CONDA_DIR}/bin/python3.8 /tmp/venv/bin/python # TODO version # Hard link so restore cache works.
                   EOF
 
             - run:
@@ -405,6 +403,7 @@ commands:
             python3 -m venv /tmp/venv
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
+            [ -L "/tmp/venv/bin/python" ] && cp /opt/conda/bin/python3.8 /tmp/venv/bin/python
 
       # Either of make -C {harness,model_hub} build require pypa's build module.
       - when:
