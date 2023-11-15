@@ -401,7 +401,7 @@ commands:
           name: Setup venv
           command: |
             python3 -m venv /tmp/venv
-            [ -L "/tmp/venv/bin/python" ] && rm /tmp/venv/bin/python && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python
+            echo "this" && [ -L "/tmp/venv/bin/python" ] && echo "this2" && echo "this3" && rm /tmp/venv/bin/python && echo "this4" && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
