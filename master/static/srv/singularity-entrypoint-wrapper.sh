@@ -4,10 +4,9 @@
 set -eE
 trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container initialization.  See error messages above."' ERR
 
-# Controls debug logging for this method
-DEBUG=0
+LOG_DEBUG=0
 
-if [ $DET_DEBUG = "1" ]; then
+if [ "$DET_DEBUG" = "1" ]; then
     set -x
 fi
 
@@ -17,10 +16,10 @@ fi
 # options are not supported on Ubuntu which breaks the which use in the entrypoints.
 unset -f $(declare -Ffx | cut -f 3 -d ' ')
 
-# Debug log method (logged only if DEBUG=1)
+# Debug log method (logged only if LOG_DEBUG=1)
 # Args: {Level} {Message}...
 log_debug() {
-    if [ $DEBUG == 1 ]; then
+    if [ "$LOG_DEBUG" == 1 ]; then
         echo -e "$*" >&2
     fi
 }
