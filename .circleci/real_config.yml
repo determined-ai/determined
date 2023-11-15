@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev24nicktestconda2222222
+    default: v1dev24nicktestconda22222222
   gke-version:
     type: string
     default: "1.25.10"
@@ -356,7 +356,7 @@ commands:
             - run:
                 name: prepare conda PATH
                 command: |
-                  echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
+                  echo 'export PATH=/tmp/conda/bin:${PATH}' >> $BASH_ENV
 
             - run:
                 name: prepare conda install_python.sh
@@ -377,7 +377,6 @@ commands:
                       exit 0
                   fi
                   echo "Python not installed or wrong version, installing conda and Python now"
-
 
                   mkdir -p /etc/determined/conda.d
                   mkdir -p "${CONDA_DIR}"
@@ -401,7 +400,7 @@ commands:
       - run:
           name: Setup venv
           command: |
-            /tmp/conda/bin/python -m venv /tmp/venv
+            python3 -m venv /tmp/venv
             #echo "this" && [ -L "/tmp/venv/bin/python" ] && echo "this2" && echo "this3" && rm /tmp/venv/bin/python && rm /tmp/venv/bin/python3 && echo "this4" && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python3
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
@@ -2119,7 +2118,7 @@ jobs:
           key: det-e2e-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
-            - "/tmp/conda/bin"
+            - "/tmp/conda"
             - "/var/lib/docker" # Is this right? TODO
 
       - run-e2e-tests:
