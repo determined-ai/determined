@@ -1,9 +1,10 @@
 import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
 import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
+import Row from 'hew/Row';
 import { useTheme } from 'hew/Theme';
 import { notification } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
@@ -817,7 +818,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               />
             </ComparisonView>
             {showPagination && (
-              <Columns>
+              <Row>
                 <Column align="right">
                   <Pagination
                     current={page + 1}
@@ -827,7 +828,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                     onChange={onPageChange}
                   />
                 </Column>
-              </Columns>
+              </Row>
             )}
           </Space>
         )}

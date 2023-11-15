@@ -1,10 +1,11 @@
 import { SortOrder } from 'antd/es/table/interface';
 import Button from 'hew/Button';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { SelectValue } from 'hew/Select';
 import { useToast } from 'hew/Toast';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
@@ -439,9 +440,9 @@ const UserManagement: React.FC = () => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar}>
-          <Columns>
+          <Row>
             <Column>
-              <Columns>
+              <Row>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
@@ -464,10 +465,10 @@ const UserManagement: React.FC = () => {
                   width={170}
                   onChange={handleStatusFilterApply}
                 />
-              </Columns>
+              </Row>
             </Column>
             <Column align="right">
-              <Columns>
+              <Row>
                 {selectedUserIds.length > 0 && (
                   <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
                     <Button>Actions</Button>
@@ -479,9 +480,9 @@ const UserManagement: React.FC = () => {
                   onClick={CreateUserModal.open}>
                   {CREATE_USER}
                 </Button>
-              </Columns>
+              </Row>
             </Column>
-          </Columns>
+          </Row>
         </div>
         {settings ? (
           <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns>
