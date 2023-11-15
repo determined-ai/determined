@@ -45,6 +45,7 @@ follow the steps in the :ref:`install-on-slurm` document.
 -  `Apptainer <https://apptainer.org/>`__
 -  `NVIDIA Enroot <https://github.com/NVIDIA/enroot>`__
 -  `Podman <https://docs.podman.io>`__
+-  :ref:`Upgrading <upgrades>`
 
 .. toctree::
    :maxdepth: 1

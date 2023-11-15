@@ -4,7 +4,8 @@
  Install Determined Using Linux Packages
 #########################################
 
-This user guide provides step-by-step instructions for installing Determined using Linux packages.
+This user guide provides step-by-step instructions for installing and upgrading Determined using
+Linux packages.
 
 Determined releases Debian and RPM packages for installing the Determined master and agent as
 systemd services on machines running Linux.
@@ -143,11 +144,8 @@ Install the Determined Master and Agent
 
          sudo rpm -i <path to downloaded package>
 
-   When upgrading, use the following command:
-
-      .. code::
-
-         sudo rpm -U <path to downloaded package>
+   When upgrading, follow the instructions in the :ref:`upgrade section
+   <upgrade-using-linux-packages>`.
 
    Before running the Determined agent, :ref:`install Docker <install-docker>` on each agent
    machine. If the machine has GPUs, ensure that the :ref:`NVIDIA Container Toolkit
@@ -296,12 +294,26 @@ To view the logging output of a service, run ``journalctl -u <service>``.
 
 To manually stop a service, run ``sudo systemctl stop <service>``.
 
+.. _upgrade-using-linux-packages:
+
 *********************
  Upgrade the Cluster
 *********************
 
-To upgrade, reinstall Determined. Once the upgrade is completed, reload and restart
-``determined-master.service``:
+To upgrade, reinstall Determined.
+
+.. note::
+
+   **Red Hat Distributions**
+
+   When installing the Determined master and agent during the upgrade process, use the following
+   command:
+
+   .. code::
+
+      sudo rpm -U <path to downloaded package>
+
+Once the upgrade is completed, reload and restart ``determined-master.service``:
 
 .. code::
 
