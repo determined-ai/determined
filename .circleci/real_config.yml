@@ -403,7 +403,7 @@ commands:
             python3 -m venv /tmp/venv
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
-            [ -L "/tmp/venv/bin/python" ] && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python
+            [ -L "/tmp/venv/bin/python" ] && rm /tmp/venv/bin/python && cp -P /opt/conda/bin/python3.8 /tmp/venv/bin/python
 
       # Either of make -C {harness,model_hub} build require pypa's build module.
       - when:
