@@ -191,7 +191,7 @@ func (a *apiServer) CreateGenericTask(
 			StartTime:  startTime,
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
-		}); err != nil {
+		}, &genericTaskSpec.GenericTaskConfig); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
 

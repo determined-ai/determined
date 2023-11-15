@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -61,13 +62,22 @@ func (db *PgDB) AddTask(t *model.Task) error {
 // AddTask UPSERT's the existence of a task.
 func AddTask(ctx context.Context, t *model.Task) error {
 	// Since AddTaskTx is a single query, RunInTx is an overkill.
-	return AddTaskTx(ctx, Bun(), t)
+	return AddTaskTx(ctx, Bun(), t, nil)
 }
 
 // AddTaskTx UPSERT's the existence of a task in a tx.
-func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
+func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task, config *model.GenericTaskConfig) error {
+	var configStr = "{}"
+	if config != nil {
+		configBytes, err := json.Marshal(*config)
+		if err != nil {
+			return errors.Wrapf(err, "error handling experiment config %v", *config)
+		}
+		configStr = string(configBytes)
+	}
 	_, err := idb.NewInsert().Model(t).
 		Column("task_id", "task_type", "start_time", "job_id", "log_version").
+		Value("config", "?", configStr).
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
