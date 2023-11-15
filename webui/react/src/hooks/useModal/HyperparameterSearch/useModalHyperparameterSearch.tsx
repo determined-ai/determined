@@ -721,7 +721,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
         </Typography.Title>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
-        <Select aria-labelledby="type" ref={typeRef} onChange={handleTypeChange}>
+        <Select aria-labelledby="type" ref={typeRef} width={'100%'} onChange={handleTypeChange}>
           {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
             (type) => (
               <Option
