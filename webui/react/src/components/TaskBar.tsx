@@ -1,8 +1,10 @@
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import useConfirm from 'hew/useConfirm';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Loadable } from 'hew/utils/loadable';
+import React, { useCallback, useMemo } from 'react';
 
+import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getCommand, getJupyterLab, getShell, getTensorBoard, killTask } from 'services/api';
@@ -34,28 +36,16 @@ export const TaskBar: React.FC<Props> = ({
 }: Props) => {
   const { canModifyWorkspaceNSC } = usePermissions();
   const confirm = useConfirm();
-  const [task, setTask] = useState<CommandTask>();
 
-  const getTaskById = useCallback(async (taskType: CommandType, commandId: string) => {
-    switch (taskType) {
-      case 'command':
-        setTask(await getCommand({ commandId }));
-        break;
-      case 'jupyter-lab':
-        setTask(await getJupyterLab({ commandId }));
-        break;
-      case 'shell':
-        setTask(await getShell({ commandId }));
-        break;
-      case 'tensor-board':
-        setTask(await getTensorBoard({ commandId }));
-        break;
-    }
-  }, []);
-
-  useEffect(() => {
-    getTaskById(type, id);
-  }, [type, id, getTaskById]);
+  const task = useAsync(() => {
+    const call = {
+      'command': getCommand,
+      'jupyter-lab': getJupyterLab,
+      'shell': getShell,
+      'tensor-board': getTensorBoard,
+    }[type];
+    return call({ commandId: id });
+  }, [type, id]);
 
   const deleteTask = useCallback(
     (task: CommandTask) => {
@@ -85,7 +75,10 @@ export const TaskBar: React.FC<Props> = ({
   const menuItems: MenuItem[] = useMemo(
     () => [
       {
-        disabled: !task || !canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
+        disabled: Loadable.match(task, {
+          _: () => true,
+          Loaded: (t) => !canModifyWorkspaceNSC({ workspace: { id: t.workspaceId } }),
+        }),
         key: MenuKey.Kill,
         label: 'Kill',
       },
@@ -98,7 +91,10 @@ export const TaskBar: React.FC<Props> = ({
     if (!task) return;
     switch (key) {
       case MenuKey.Kill:
-        deleteTask(task);
+        Loadable.match(task, {
+          _: () => null,
+          Loaded: (t) => deleteTask(t),
+        });
         break;
       case MenuKey.ViewLogs:
         handleViewLogsClick();
