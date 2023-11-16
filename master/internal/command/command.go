@@ -11,6 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -235,9 +237,15 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	c.exitStatus = ae
 
-	if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+	var sErr status.Status
+	err := c.db.CompleteTask(c.taskID, time.Now().UTC())
+	if err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
+		if errors.As(err, &sErr) && sErr.Code() == codes.NotFound {
+			return
+		}
 	}
+
 	if err := user.DeleteSessionByToken(context.TODO(), c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 		c.syslog.WithError(err).Errorf(
 			"failure to delete user session for task: %v", c.taskID)
