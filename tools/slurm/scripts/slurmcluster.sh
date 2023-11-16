@@ -159,15 +159,26 @@ if [[ -z $DETERMINED_AGENT ]]; then
 fi
 
 # Build devcluster.yaml.
-gcloud_ssh() {
-    echo gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- $@ 2>/dev/null | tr -d '\r\n'
+
+# Execute the specified command on the dev-box filtering out stderr to avoid ssh messages.
+# The primary purpose of this method it to read variables & filenames from the dev-box
+# Excess newlines are removed.
+gcloud_ssh_stdout_only() {
+    # This method is for reading command output
     gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- $@ 2>/dev/null | tr -d '\r\n'
 }
 
-export OPT_REMOTE_UID=$(gcloud_ssh id -u)
-export OPT_REMOTE_USER=$(gcloud_ssh id -un)
-export OPT_REMOTE_GID=$(gcloud_ssh id -g)
-export OPT_REMOTE_GROUP=$(gcloud_ssh id -gn)
+# Execute the command on the dev-box.
+# The command is echoed, and all results are displayed.
+gcloud_ssh() {
+    echo gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- $@
+    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- $@
+}
+
+export OPT_REMOTE_UID=$(gcloud_ssh_stdout_only id -u)
+export OPT_REMOTE_USER=$(gcloud_ssh_stdout_only id -un)
+export OPT_REMOTE_GID=$(gcloud_ssh_stdout_only id -g)
+export OPT_REMOTE_GROUP=$(gcloud_ssh_stdout_only id -gn)
 export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
@@ -180,8 +191,8 @@ LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
 # Enroot container creation
 if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     # Find the file and assign its name to CPU_IMAGE_SQSH & CUDA_IMAGE_SQSH
-    CPU_IMAGE_SQSH=$(gcloud_ssh "ls /srv/enroot/ | grep '^determinedai+environments+py'")
-    CUDA_IMAGE_SQSH=$(gcloud_ssh "ls /srv/enroot/ | grep '^determinedai+environments+cuda'")
+    CPU_IMAGE_SQSH=$(gcloud_ssh_stdout_only "ls /srv/enroot/ | grep '^determinedai+environments+py'")
+    CUDA_IMAGE_SQSH=$(gcloud_ssh_stdout_only "ls /srv/enroot/ | grep '^determinedai+environments+cuda'")
 
     if [[ $CPU_IMAGE_SQSH != "$LOCAL_CPU_IMAGE_SQSH" ]]; then
         echo "WARNING: Local CPUImage specified in ../../master/pkg/schemas/expconf/const.go does not match the CPU Image found on existing ${OPT_WORKLOAD_MANAGER} image."
