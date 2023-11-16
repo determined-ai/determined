@@ -18,7 +18,7 @@ from tests.cluster import utils as cluster_utils
 
 
 def maybe_create_experiment(
-    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+    config_file: str, model_def_file: Optional[str] = None, create_args: Optional[List[str]] = None
 ) -> subprocess.CompletedProcess:
     command = [
         "det",
@@ -27,8 +27,10 @@ def maybe_create_experiment(
         "experiment",
         "create",
         config_file,
-        model_def_file,
     ]
+
+    if model_def_file is not None:
+        command += model_def_file
 
     if create_args is not None:
         command += create_args
@@ -42,7 +44,7 @@ def maybe_create_experiment(
 
 
 def create_experiment(
-    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+    config_file: str, model_def_file: Optional[str] = None, create_args: Optional[List[str]] = None
 ) -> int:
     completed_process = maybe_create_experiment(config_file, model_def_file, create_args)
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
