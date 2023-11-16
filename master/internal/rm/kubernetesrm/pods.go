@@ -1297,6 +1297,13 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 				}
 			}
 
+			// add default toleration so that autoscaling nodes will still be counted.
+			poolTolerations = append(poolTolerations, k8sV1.Toleration{
+				Key:               "DeletionCandidateOfClusterAutoscaler",
+				Operator:          "Exists",
+				Effect:            "PreferNoSchedule",
+				TolerationSeconds: nil,
+			})
 			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
 			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
 				poolsToNodes[poolName] = append(poolsToNodes[poolName], node)
