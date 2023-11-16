@@ -287,6 +287,34 @@ class Determined:
         )
         return [workspace.Workspace._from_bindings(w, self._session) for w in iter_workspaces]
 
+    def create_workspace(self, name: str) -> workspace.Workspace:
+        """Create a new workspace with the provided name.
+
+        Args:
+            name: The name of the workspace to create.
+
+        Returns:
+            The newly-created :class:`~determined.experimental.Workspace`.
+
+        Raises:
+            errors.APIException: If a workspace with the provided name already exists.
+        """
+        req = bindings.v1PostWorkspaceRequest(name=name)
+        resp = bindings.post_PostWorkspace(self._session, body=req)
+        return workspace.Workspace._from_bindings(resp.workspace, self._session)
+
+    def delete_workspace(self, name: str) -> None:
+        """Delete the workspace with the provided name.
+
+        Args:
+            name: The name of the workspace to delete.
+
+        Raises:
+            errors.NotFoundException: If no workspace with the provided name exists.
+        """
+        workspace_id = self.get_workspace(name).id
+        bindings.delete_DeleteWorkspace(self._session, id=workspace_id)
+
     def create_model(
         self,
         name: str,
