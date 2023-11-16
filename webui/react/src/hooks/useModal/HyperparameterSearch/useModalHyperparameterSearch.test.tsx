@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import Button from 'hew/Button';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
@@ -139,7 +139,7 @@ describe('useModalHyperparameterSearch', () => {
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     await user.click(view.getAllByRole('combobox')[0]);
-    await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Constant'));
+    await user.click((await view.findAllByText('Constant', { selector: 'div' }))[0]);
 
     expect(view.getAllByLabelText('Current')[0]).not.toBeDisabled();
     expect(view.getAllByLabelText('Min value')[0]).toBeDisabled();
@@ -152,7 +152,7 @@ describe('useModalHyperparameterSearch', () => {
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     await user.click(view.getAllByRole('combobox')[0]);
-    await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Int'));
+    await user.click((await view.findAllByText('Int'))[0]);
 
     expect(view.getAllByLabelText('Current')[0]).toBeDisabled();
     expect(view.getAllByLabelText('Min value')[0]).not.toBeDisabled();

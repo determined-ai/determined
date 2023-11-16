@@ -1,6 +1,6 @@
-import { Select } from 'antd';
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import React, { useEffect, useId } from 'react';
@@ -91,15 +91,11 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       <Spinner spinning={!groupOptions}>
         <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item name={GROUPS_NAME}>
-            <Select
-              mode="multiple"
-              optionFilterProp="children"
-              placeholder="Select Groups"
-              showSearch>
+            <Select mode="multiple" placeholder="Select Groups">
               {groupOptions.map((go) => (
-                <Select.Option key={go.group.groupId} value={go.group.groupId}>
+                <Option key={go.group.groupId} value={go.group.groupId}>
                   {go.group.name}
-                </Select.Option>
+                </Option>
               ))}
             </Select>
           </Form.Item>

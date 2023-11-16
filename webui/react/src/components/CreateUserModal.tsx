@@ -1,8 +1,9 @@
-import { Select, Switch, Typography } from 'antd';
+import { Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
@@ -187,15 +188,13 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
                   disabled={(user !== undefined && userRoles === null) || viewOnly}
                   loading={Loadable.isNotLoaded(knownRoles)}
                   mode="multiple"
-                  optionFilterProp="children"
-                  placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
-                  showSearch>
+                  placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}>
                   {Loadable.isLoaded(knownRoles) ? (
                     <>
                       {knownRoles.data.map((r: UserRole) => (
-                        <Select.Option key={r.id} value={r.id}>
+                        <Option key={r.id} value={r.id}>
                           {r.name}
-                        </Select.Option>
+                        </Option>
                       ))}
                     </>
                   ) : undefined}

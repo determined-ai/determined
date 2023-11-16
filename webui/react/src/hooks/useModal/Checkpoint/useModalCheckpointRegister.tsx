@@ -1,5 +1,6 @@
-import { ModalFuncProps, Select } from 'antd';
+import { ModalFuncProps } from 'antd';
 import Input from 'hew/Input';
+import Select, { SelectValue } from 'hew/Select';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import { useToast } from 'hew/Toast';
 import _ from 'lodash';
@@ -154,8 +155,8 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     [registerModelVersion],
   );
 
-  const updateModel = useCallback((value?: string) => {
-    setModalState((prev) => ({ ...prev, selectedModelName: value }));
+  const updateModel = useCallback((value: SelectValue) => {
+    setModalState((prev) => ({ ...prev, selectedModelName: value?.toString() }));
   }, []);
 
   const updateVersionName = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,12 +254,10 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
               <p onClick={() => launchNewModelModal(state)}>New Model</p>
             </div>
             <Select
-              optionFilterProp="label"
               options={modelOptions.map((option) => ({ label: option.name, value: option.name }))}
               placeholder="Select a model..."
-              showSearch
-              style={{ width: '100%' }}
               value={selectedModelName}
+              width={'100%'}
               onChange={updateModel}
             />
           </div>

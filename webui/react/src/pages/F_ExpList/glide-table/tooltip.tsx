@@ -1,5 +1,5 @@
 import { DataEditorProps, GridMouseEventArgs } from '@hpe.com/glide-data-grid';
-import { Tooltip } from 'antd';
+import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
@@ -78,7 +78,7 @@ export const useTableTooltip = ({
             top: tooltipProps.y,
             zIndex: 10,
           }}>
-          <Tooltip open={tooltipProps.open} placement="top" title={tooltipProps.text} />
+          <Tooltip content={tooltipProps.text} open={tooltipProps.open} placement="top" />
         </div>
       ) : null,
     [tooltipProps],

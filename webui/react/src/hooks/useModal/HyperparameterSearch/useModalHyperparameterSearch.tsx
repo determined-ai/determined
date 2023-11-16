@@ -1,4 +1,4 @@
-import { Select as AntdSelect, ModalFuncProps, Radio, Space, Typography } from 'antd';
+import { ModalFuncProps, Radio, Space, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
@@ -659,7 +659,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   const [rangeError, setRangeError] = useState<string>();
   const [countError, setCountError] = useState<string>();
 
-  const handleTypeChange = useCallback((value: HyperparameterType) => {
+  const handleTypeChange = useCallback((value: SelectValue) => {
     setActive(value !== HyperparameterType.Constant);
   }, []);
 
@@ -721,11 +721,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
         </Typography.Title>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
-        <AntdSelect
-          aria-labelledby="type"
-          getPopupContainer={(triggerNode) => triggerNode}
-          ref={typeRef}
-          onChange={handleTypeChange}>
+        <Select aria-labelledby="type" ref={typeRef} width={'100%'} onChange={handleTypeChange}>
           {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
             (type) => (
               <Option
@@ -737,7 +733,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
               </Option>
             ),
           )}
-        </AntdSelect>
+        </Select>
       </Form.Item>
       <Form.Item
         initialValue={hyperparameter.val}
