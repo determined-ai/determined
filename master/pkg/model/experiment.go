@@ -479,6 +479,13 @@ type Trial struct {
 	ExternalTrialID       *string        `db:"external_trial_id"`
 }
 
+// Run represents a row from the `trials` table.
+type Run struct {
+	bun.BaseModel `bun:"table:runs"`
+
+	*Trial
+}
+
 // TrialTaskID represents a row from the `trial_id_task_id` table.
 type TrialTaskID struct {
 	bun.BaseModel `bun:"table:trial_id_task_id"`

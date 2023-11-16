@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -354,7 +355,10 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricGroup])
 
 	addMetricCustomTime(ctx, t, trial2, time.Now())
-	runSummaryMigration(t)
+	require.NoError(t, db.withTransaction("add trial summary metrics",
+		func(tx *sqlx.Tx) error {
+			return db.fullTrialSummaryMetricsRecompute(ctx, tx, trial2)
+		}))
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
@@ -629,6 +633,7 @@ func TestDeleteExperiments(t *testing.T) {
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
 				err := AddCheckpointMetadata(ctx, &checkpoint)
 				require.NoError(t, err)
+
 				checkpointIDs = append(checkpointIDs, checkpoint.ID)
 				checkPointIndex++
 			}

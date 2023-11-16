@@ -26,8 +26,10 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
+	// TODO(nick) refactor this function.
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(trial).Returning("id").Exec(ctx); err != nil {
+		runToInsert := &model.Run{Trial: trial}
+		if _, err := tx.NewInsert().Model(runToInsert).Returning("id").Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial model: %w", err)
 		}
 
@@ -145,7 +147,7 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 		// Only the trial actor updates this row, and it does so in a serialized
 		// fashion already, so this transaction is more a matter of atomicity.
 		if err := namedExecOne(tx, fmt.Sprintf(`
-UPDATE trials
+UPDATE runs
 %v
 WHERE id = :id`, SetClause(toUpdate)), trial); err != nil {
 			return errors.Wrapf(err, "error updating (%v) in trial %v",
@@ -168,7 +170,7 @@ func (db *PgDB) UpdateTrialRunnerState(id int, state string) error {
 // UpdateTrialRunnerMetadata updates a trial's metadata about its runner.
 func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error {
 	if _, err := db.sql.Exec(`
-UPDATE trials
+UPDATE runs
 SET runner_state = $2
 WHERE id = $1`, id, md.State); err != nil {
 		return errors.Wrap(err, "saving trial runner state")
@@ -191,7 +193,7 @@ WHERE id = $1`, trialID).Scan(&runID, &restart); err != nil {
 // UpdateTrialRunID sets the trial's run ID.
 func (db *PgDB) UpdateTrialRunID(id, runID int) error {
 	if _, err := db.sql.Exec(`
-UPDATE trials
+UPDATE runs
 SET run_id = $2
 WHERE id = $1`, id, runID); err != nil {
 		return errors.Wrap(err, "updating trial run id")
@@ -202,7 +204,7 @@ WHERE id = $1`, id, runID); err != nil {
 // UpdateTrialRestarts sets the trial's restart count.
 func (db *PgDB) UpdateTrialRestarts(id, restartCount int) error {
 	if _, err := db.sql.Exec(`
-UPDATE trials
+UPDATE runs
 SET restarts = $2
 WHERE id = $1`, id, restartCount); err != nil {
 		return errors.Wrap(err, "updating trial restarts")
@@ -254,7 +256,7 @@ SELECT DISTINCT metric_group FROM metrics WHERE partition_type = 'GENERIC' AND t
 		}
 	}
 
-	if _, err := tx.ExecContext(ctx, `UPDATE trials SET summary_metrics = $1,
+	if _, err := tx.ExecContext(ctx, `UPDATE runs SET summary_metrics = $1,
 	summary_metrics_timestamp = NOW() WHERE id = $2`, updatedSummaryMetrics, trialID); err != nil {
 		return fmt.Errorf("rollback updating trial summary metrics: %w", err)
 	}
@@ -295,7 +297,7 @@ func (db *PgDB) calculateFullTrialSummaryMetrics(
 // updateLatestValidationID updates latest validation based on validations table.
 func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
-		UPDATE trials SET latest_validation_id = (
+		UPDATE runs SET latest_validation_id = (
 			SELECT validations.id
 			FROM validations
 			JOIN trials t ON validations.trial_id = t.id
@@ -314,7 +316,7 @@ func (db *PgDB) updateLatestValidationID(ctx context.Context, tx *sqlx.Tx, trial
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
 	if _, err := tx.ExecContext(ctx, `
-		UPDATE trials t
+		UPDATE runs t
 		SET total_batches = COALESCE(latest.total_batches_processed, 0)
 		FROM (
 				SELECT max(m.total_batches) AS total_batches_processed
@@ -430,7 +432,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		}
 
 		if _, err := tx.ExecContext(ctx, `
-UPDATE trials SET total_batches = GREATEST(total_batches, $2),
+UPDATE runs SET total_batches = GREATEST(total_batches, $2),
 summary_metrics = $3, summary_metrics_timestamp = NOW(),
 latest_validation_id = coalesce($4, latest_validation_id)
 WHERE id = $1;
@@ -636,7 +638,7 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	m.Size = size
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
+		if _, err := Bun().NewInsert().Model(m).Exec(context.TODO()); err != nil {
 			return errors.Wrap(err, "inserting checkpoint")
 		}
 
@@ -780,7 +782,7 @@ WITH const AS (
 	ORDER BY metric ASC
 	LIMIT 1
 )
-UPDATE trials t
+UPDATE runs t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
 searcher_metric_value_signed =

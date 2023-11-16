@@ -1,5 +1,11 @@
 ALTER TABLE trials RENAME TO runs;
 
+-- TODO unhack this. Or maybe don't.
+CREATE TABLE dummy (
+    xyz INT
+);
+INSERT INTO dummy (xyz) VALUES (1);
+
 CREATE OR REPLACE VIEW trials AS -- TODO just replace view
 SELECT
   id AS id,
@@ -26,4 +32,4 @@ SELECT
   summary_metrics_timestamp AS summary_metrics_timestamp,
   last_activity AS last_activity,
   external_trial_id AS external_trial_id
-FROM runs, cluster_id; -- FROM cluster_id is a hack to make this view not insertable.
+FROM runs, dummy; -- FROM dummy is a hack to make this view not insertable.
