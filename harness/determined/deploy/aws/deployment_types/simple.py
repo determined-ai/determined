@@ -39,5 +39,6 @@ class SimpleRDS(Simple):
 
     template_parameter_keys = base.COMMON_TEMPLATE_PARAMETER_KEYS + [
         constants.cloudformation.DB_INSTANCE_TYPE,
+        constants.cloudformation.DB_SNAPSHOT,
         constants.cloudformation.DB_SIZE,
     ]

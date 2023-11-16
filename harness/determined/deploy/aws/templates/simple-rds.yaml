@@ -99,14 +99,18 @@ Parameters:
     Type: String
     Description: Password for database (eg. "postgres")
     NoEcho: true
-  
-  DBSize:
-    Type: Number
-    Description: Initial storage size for database in GB
-  
+
   DBInstanceType:
     Type: String
     Description: Instance type for database (eg. "db.m7g.large")
+
+  DBSnapshot:
+    Type: String
+    Description: Snapshot to start database with on creation
+
+  DBSize:
+    Type: Number
+    Description: Initial storage size for database in GB
 
   MaxAuxContainersPerAgent:
     Type: Number
@@ -316,6 +320,7 @@ Conditions:
   UseTLS: !And
     - !Not [!Equals [!Ref MasterTLSCert, ""]]
     - !Not [!Equals [!Ref MasterTLSKey, ""]]
+  NoDBSnapshot: !Equals [!Ref DBSnapshot, ""]
 
 Resources:
   CheckpointBucket:
@@ -469,9 +474,13 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       DBInstanceClass: !Ref DBInstanceType
+      DBSnapshotIdentifier:
+        !If [NoDBSnapshot, !Ref "AWS::NoValue", !Ref DBSnapshot]
       Engine: postgres
-      MasterUsername: postgres
-      MasterUserPassword: !Ref DBPassword
+      MasterUsername:
+        !If [NoDBSnapshot, "postgres", !Ref "AWS::NoValue"]
+      MasterUserPassword:
+        !If [NoDBSnapshot, !Ref DBPassword, !Ref "AWS::NoValue"]
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
