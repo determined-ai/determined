@@ -148,7 +148,8 @@ export class FilterFormStore {
   ): void {
     this.#formset.update((loadableFilterSet) => {
       return Loadable.map(loadableFilterSet, (filterSet) => {
-        // keep updates to a minimum -- ids should be unique, so all following traversal should have no effect
+        // keep updates to a minimum -- only return a new filterset
+        // if a change occurred
         let hit = false;
         const traverse = (entity: FormGroup | FormField): FormGroup | FormField | undefined => {
           if (match(entity)) {
