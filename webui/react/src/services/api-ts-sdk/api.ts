@@ -2039,6 +2039,12 @@ export interface V1Container {
      * @memberof V1Container
      */
     devices?: Array<V1Device>;
+    /**
+     * User has insufficient permissions to view this container's details. If true, we obfuscate: (1) parent (2) id (4) devices
+     * @type {boolean}
+     * @memberof V1Container
+     */
+    permissionDenied?: boolean;
 }
 /**
  * Request to continue an experiment.
