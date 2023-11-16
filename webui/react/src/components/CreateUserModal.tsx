@@ -31,6 +31,8 @@ const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
 export const API_SUCCESS_MESSAGE_CREATE =
   'New user with empty password has been created, advise user to reset password as soon as possible.';
+export const API_SUCCESS_MESSAGE_CREATE_REMOTE =
+  'New remote user has been created; please configure access in IdP.';
 const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
 export const MODAL_HEADER_LABEL_CREATE = 'Add User';
@@ -38,6 +40,9 @@ const MODAL_HEADER_LABEL_VIEW = 'View User';
 const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
+const REMOTE_LABEL =
+  'Remote (prevents password sign-on and requires user to sign-on using external IdP)';
+const REMOTE_NAME = 'remote';
 const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
@@ -54,6 +59,7 @@ interface FormInputs {
   [USER_NAME_NAME]: string;
   [DISPLAY_NAME_NAME]: string;
   [ADMIN_NAME]: boolean;
+  [REMOTE_NAME]: boolean;
   [ROLE_NAME]: number[];
   [ACTIVE_NAME]: boolean;
 }
@@ -118,7 +124,10 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: uid }]);
         }
-        openToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE_CREATE });
+        openToast({
+          severity: 'Confirm',
+          title: u.user?.remote ? API_SUCCESS_MESSAGE_CREATE_REMOTE : API_SUCCESS_MESSAGE_CREATE,
+        });
         form.resetFields();
       }
       onClose?.();
@@ -178,6 +187,15 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
           </Form.Item>
           {!rbacEnabled && (
             <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+              <Switch disabled={viewOnly} />
+            </Form.Item>
+          )}
+          {rbacEnabled && canModifyPermissions && (
+            <Form.Item
+              initialValue={user?.remote}
+              label={REMOTE_LABEL}
+              name={REMOTE_NAME}
+              valuePropName="checked">
               <Switch disabled={viewOnly} />
             </Form.Item>
           )}

@@ -11,6 +11,7 @@ export const DEFAULT_COLUMN_WIDTHS = {
   isAdmin: 40,
   lastAuthAt: 50,
   modifiedAt: 50,
+  remote: 30,
 } as const satisfies Record<string, number>;
 
 export type UserColumnName = keyof typeof DEFAULT_COLUMN_WIDTHS;
@@ -20,6 +21,7 @@ export const DEFAULT_COLUMNS: UserColumnName[] = [
   'isActive',
   'lastAuthAt',
   'isAdmin',
+  'remote',
   'modifiedAt',
 ];
 
@@ -52,6 +54,7 @@ export const UserManagementSettings = t.intersection([
       [V1GetUsersRequestSortBy.USERNAME]: null,
       [V1GetUsersRequestSortBy.NAME]: null,
       [V1GetUsersRequestSortBy.LASTAUTHTIME]: null,
+      [V1GetUsersRequestSortBy.REMOTE]: null,
     }),
   }),
 ]);
