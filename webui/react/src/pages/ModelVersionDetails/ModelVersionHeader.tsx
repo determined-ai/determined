@@ -8,6 +8,7 @@ import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
+import { useTheme } from 'hew/Theme';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import ModelDownloadModal from 'components/ModelDownloadModal';
@@ -50,6 +51,10 @@ const ModelVersionHeader: React.FC<Props> = ({
   const modelVersionEditModal = useModal(ModelVersionEditModal);
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
+
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   const infoRows: InfoRow[] = useMemo(
     () => [
@@ -222,6 +227,7 @@ with det.import_from_path(path + "/code"):
         footer={null}
         open={showUseInNotebook}
         title="Use in Notebook"
+        wrapClassName={themeClass}
         onCancel={() => setShowUseInNotebook(false)}>
         <div className={css.topLine}>
           <p>Reference this model in a notebook</p>
