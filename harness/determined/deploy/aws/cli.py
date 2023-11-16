@@ -176,6 +176,13 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         if args.db_size is not None and args.db_size < 20:
             raise ValueError("--db-size must be greater than or equal to 20 GB")
 
+        if args.db_snapshot is not None and args.db_password != constants.defaults.DB_PASSWORD:
+            # this precedence is implemented in the deployment template
+            print(
+                "--db-snapshot and --db-password are mutually exclusive, "
+                "password value be ignored as snapshot would take precedence"
+            )
+
     if args.deployment_type != constants.deployment_types.GENAI:
         if args.genai_version is not None:
             raise ValueError("--genai-version can only be specified for 'genai' deployments")
@@ -240,6 +247,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
         constants.cloudformation.DB_PASSWORD: args.db_password,
         constants.cloudformation.DB_INSTANCE_TYPE: args.db_instance_type,
+        constants.cloudformation.DB_SNAPSHOT: args.db_snapshot,
         constants.cloudformation.DB_SIZE: args.db_size,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
@@ -476,6 +484,12 @@ args_description = Cmd(
                     type=str,
                     default=constants.defaults.DB_PASSWORD,
                     help="password for master database",
+                ),
+                Arg(
+                    "--db-snapshot",
+                    type=str,
+                    default=constants.defaults.DB_INSTANCE_TYPE,
+                    help="snapshot to start database with on creation",
                 ),
                 Arg(
                     "--db-instance-type",

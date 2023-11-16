@@ -18,6 +18,7 @@ class defaults:
     STACK_TAG_VALUE = "determined"
     DB_SIZE = 20
     DB_INSTANCE_TYPE = "db.m7g.large"
+    DB_SNAPSHOT = ""
 
 
 class cloudformation:
@@ -40,6 +41,7 @@ class cloudformation:
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
     DB_INSTANCE_TYPE = "DBInstanceType"
+    DB_SNAPSHOT = "DBSnapshot"
     DB_SIZE = "DBSize"
     ENABLE_CORS = "EnableCORS"
     MASTER_TLS_CERT = "MasterTLSCert"
