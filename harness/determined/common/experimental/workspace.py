@@ -79,11 +79,12 @@ class Workspace:
 
         return [resource_pool.ResourcePool(self._session, name=rp) for rp in resource_pool_names]
 
-    def create_project(self, name: str) -> project.Project:
+    def create_project(self, name: str, description: Optional[str] = None) -> project.Project:
         """Creates a new project in this workspace with the provided name.
 
         Args:
             name: The name of the project to create.
+            description: Optional description to give the new project.
 
         Returns:
             The newly-created :class:`~determined.experimental.Workspace`.
@@ -91,7 +92,7 @@ class Workspace:
         Raises:
             errors.APIException: If the project with the passed name already exists.
         """
-        req = bindings.v1PostProjectRequest(name=name, workspaceId=self.id)
+        req = bindings.v1PostProjectRequest(name=name, workspaceId=self.id, description=description)
         resp = bindings.post_PostProject(self._session, workspaceId=self.id, body=req)
         return project.Project._from_bindings(resp.project, self._session)
 
