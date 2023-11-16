@@ -345,7 +345,7 @@ commands:
         type: string
       python-version:
         type: string
-        default: "3.8.18" # TODO why does conda install give 3.18???
+        default: "3.8.18"
     steps:
       - run:
           name: Write cache key
