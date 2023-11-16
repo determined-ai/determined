@@ -2,5 +2,5 @@
 
 **New Features**
 
--  CLI: ``det users ls`` now only shows active users. New flag ``--all`` added which will show all
+-  CLI: Modify ``det users`` ls to show only active users. Add a new flag ``--all`` to show all
    users.
