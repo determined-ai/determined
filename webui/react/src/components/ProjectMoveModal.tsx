@@ -1,7 +1,8 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
 import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
@@ -16,8 +17,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './ProjectMoveModal.module.scss';
-
-const { Option } = Select;
 
 interface Props {
   onMove?: () => void;
@@ -84,8 +83,8 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
       <Select
         id="workspace"
         placeholder="Select a destination workspace."
-        style={{ width: '100%' }}
         value={destinationWorkspaceId}
+        width={'100%'}
         onSelect={handleWorkspaceSelect}>
         {workspaces.map((workspace) => {
           const disabled = workspace.archived || workspace.id === project.workspaceId;

@@ -2,6 +2,7 @@
 import { Modal } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
+import { useTheme } from 'hew/Theme';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import usePrevious from 'hooks/usePrevious';
@@ -55,6 +56,9 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
   const [modalProps, setModalProps] = useState<ModalFuncProps>();
   const prevModalProps = usePrevious(modalProps, undefined);
   const [modal, antdContextHolder] = Modal.useModal();
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   /**
    * contextHolders have keys now, so elements that contain multiple modal
@@ -132,6 +136,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
       maskClosable: true,
       open: true,
       style: { minWidth: 280 },
+      wrapClassName: themeClass,
       ...modalProps,
       onCancel: config.options?.rawCancel
         ? modalProps.onCancel
@@ -147,7 +152,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     } else {
       modalRef.current = modal.confirm(completeModalProps);
     }
-  }, [config, extendEventHandler, modal, modalProps, prevModalProps]);
+  }, [config, extendEventHandler, modal, modalProps, prevModalProps, themeClass]);
 
   /**
    * Sets componentUnmounting to true only when the parent component is unmounting so that the next
