@@ -2394,4 +2394,15 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get task config
+  rpc GetTaskConfig(GetTaskConfigRequest)
+    returns (GetTaskConfigResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/config"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
+    };
+  }
 }

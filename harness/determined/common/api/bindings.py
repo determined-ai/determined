@@ -5660,6 +5660,29 @@ class v1GetTaskResponse(Printable):
         }
         return out
 
+class v1GetTaskConfigResponse(Printable):
+    """Response to GetTaskConfigRequest."""
+
+    def __init__(
+        self,
+        *,
+        config: str,
+    ):
+        self.config = config
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+        }
+        return out
+
 class v1GetTasksResponse(Printable):
     """Response to GetTasksRequest."""
     allocationIdToSummary: "typing.Optional[typing.Dict[str, v1AllocationSummary]]" = None
@@ -13383,6 +13406,7 @@ class v1TaskType(DetEnum):
     COMMAND = "TASK_TYPE_COMMAND"
     TENSORBOARD = "TASK_TYPE_TENSORBOARD"
     CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
+    GENERIC = "TASK_TYPE_GENERIC"
 
 class v1Template(Printable):
     """Templates move settings that are shared by many experiments into a single
@@ -17911,6 +17935,30 @@ def get_GetTask(
     if _resp.status_code == 200:
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
+
+def get_GetTaskConfig(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskConfigResponse":
+    """Check the status of a requested task.
+
+    - taskId: The requested task id.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/config",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskConfigResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTaskConfig", _resp)
 
 def get_GetTaskAcceleratorData(
     session: "api.Session",

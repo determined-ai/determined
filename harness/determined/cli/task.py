@@ -142,6 +142,11 @@ def create(args: Namespace) -> None:
                 )
             )
 
+@authentication.required
+def config(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    config_resp = bindings.get_GetTaskConfig(sess, taskId=args.task_id)
+    print(config_resp.config)
 
 common_log_options: List[Any] = [
     Arg(
@@ -277,6 +282,14 @@ args_description: List[Any] = [
                         action="store_true",
                         help="follow the logs of the task that is created",
                     ),
+                ],
+            ),
+            Cmd(
+                "config",
+                config,
+                "get config for given task",
+                [
+                    Arg("task_id", type=str, help="ID of task to pull config from"),
                 ],
             ),
         ],
