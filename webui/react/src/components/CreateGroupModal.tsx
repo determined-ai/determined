@@ -1,8 +1,9 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
@@ -214,16 +215,14 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
                 <Select
                   loading={Loadable.isNotLoaded(roles)}
                   mode="multiple"
-                  optionFilterProp="children"
-                  placeholder={'Add Roles'}
-                  showSearch>
+                  placeholder={'Add Roles'}>
                   {roles
                     .getOrElse([])
                     .sort((r1, r2) => r1.id - r2.id)
                     .map((r) => (
-                      <Select.Option key={r.id} value={r.id}>
+                      <Option key={r.id} value={r.id}>
                         {r.name}
-                      </Select.Option>
+                      </Option>
                     ))}
                 </Select>
               </Form.Item>

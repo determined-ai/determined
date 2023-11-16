@@ -1,7 +1,7 @@
-import { Select } from 'antd';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
 import React, { useCallback, useId, useState } from 'react';
 
 import { paths } from 'routes/utils';
@@ -99,12 +99,12 @@ const WebhookCreateModalComponent: React.FC = () => {
           name="webhookType"
           rules={[{ message: 'Webhook type is required ', required: true }]}>
           <Select placeholder="Select type of Webhook">
-            <Select.Option key={V1WebhookType.DEFAULT} value={V1WebhookType.DEFAULT}>
+            <Option key={V1WebhookType.DEFAULT} value={V1WebhookType.DEFAULT}>
               Default
-            </Select.Option>
-            <Select.Option key={V1WebhookType.SLACK} value={V1WebhookType.SLACK}>
+            </Option>
+            <Option key={V1WebhookType.SLACK} value={V1WebhookType.SLACK}>
               Slack
-            </Select.Option>
+            </Option>
           </Select>
         </Form.Item>
         <Form.Item
@@ -112,12 +112,12 @@ const WebhookCreateModalComponent: React.FC = () => {
           name="triggerEvents"
           rules={[{ message: 'At least one trigger event is required', required: true }]}>
           <Select mode="multiple" placeholder="Select trigger event">
-            <Select.Option key={RunState.Completed} value={RunState.Completed}>
+            <Option key={RunState.Completed} value={RunState.Completed}>
               {RunState.Completed}
-            </Select.Option>
-            <Select.Option key={RunState.Error} value={RunState.Error}>
+            </Option>
+            <Option key={RunState.Error} value={RunState.Error}>
               {RunState.Error}
-            </Select.Option>
+            </Option>
           </Select>
         </Form.Item>
       </Form>
