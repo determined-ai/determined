@@ -649,10 +649,6 @@ commands:
             echo Pytest exited with $pytest_status
             exit $pytest_status
 
-      - upload-test-job:
-          only_on_branch: main
-          test_results_path: <<parameters.junit-path>>
-
   run-det-deploy-tests:
     parameters:
       mark:
