@@ -38,7 +38,7 @@
     "@hpe.com/glide-data-grid": "^5.2.1-pin-1274",
     "@uiw/react-codemirror": "^4.20.2",
     "ansi-to-html": "^0.7.2",
-    "antd": "^5.1.7",
+    "antd": "^5.11.1",
     "core-js": "3.32",
     "dayjs": "^1.11.7",
     "debug": "^4.3.4",

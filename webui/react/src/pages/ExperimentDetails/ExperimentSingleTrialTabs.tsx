@@ -1,4 +1,4 @@
-import type { TabsProps } from 'antd';
+import { TabsProps } from 'antd';
 import Button from 'hew/Button';
 import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
@@ -29,7 +29,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 import ExperimentCodeViewer from './ExperimentCodeViewer';
-import css from './ExperimentSingleTrialTabs.module.scss';
 
 const TabType = {
   Checkpoints: 'checkpoints',
@@ -350,20 +349,18 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <div className={css.pivoter}>
-        <Pivot
-          activeKey={tabKey}
-          items={tabItems}
-          tabBarExtraContent={
-            tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (
-              <div style={{ padding: 4 }}>
-                <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
-              </div>
-            ) : undefined
-          }
-          onChange={handleTabChange}
-        />
-      </div>
+      <Pivot
+        activeKey={tabKey}
+        items={tabItems}
+        tabBarExtraContent={
+          tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (
+            <div style={{ padding: 4 }}>
+              <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
+            </div>
+          ) : undefined
+        }
+        onChange={handleTabChange}
+      />
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
   );

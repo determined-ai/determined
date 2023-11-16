@@ -13,7 +13,6 @@ import { ValueOf } from 'types';
 import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
-import css from './Cluster.module.scss';
 import ClusterLogs from './ClusterLogs';
 
 const TabType = {
@@ -93,9 +92,7 @@ const Cluster: React.FC = () => {
       ]}
       id="cluster"
       title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
-      <div className={css.pivoter}>
-        <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
-      </div>
+      <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );
 };

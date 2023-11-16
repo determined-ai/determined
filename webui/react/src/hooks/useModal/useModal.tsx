@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Modal } from 'antd';
+import { Modal, ModalFuncProps } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
-import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { useTheme } from 'hew/Theme';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 

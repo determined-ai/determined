@@ -1,5 +1,4 @@
-import { Modal } from 'antd';
-import { ModalProps } from 'antd/es/modal/Modal';
+import { Modal, ModalProps } from 'antd';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useTheme } from 'hew/Theme';
