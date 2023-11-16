@@ -363,6 +363,7 @@ commands:
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
+            echo '<<parameters.install-python>>' >> /tmp/cachefile
 
       - restore_cache:
           keys:
