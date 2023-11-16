@@ -289,7 +289,7 @@ def logout() -> None:
 
 
 @_require_singleton
-def list_users(active_only:  bool) -> List[User]:
+def list_users(active_only: bool) -> List[User]:
     """Get a list of all Users."""
     assert _determined is not None
     if active_only:
