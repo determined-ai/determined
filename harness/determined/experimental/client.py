@@ -347,6 +347,37 @@ def list_workspaces() -> List[Workspace]:
 
 
 @_require_singleton
+def create_workspace(name: str) -> Workspace:
+    """Create a new workspace with the provided name.
+
+    Args:
+        name: The name of the workspace to create.
+
+    Returns:
+        The newly-created :class:`~determined.experimental.Workspace`.
+
+    Raises:
+        errors.APIException: If a workspace with the provided name already exists.
+    """
+    assert _determined is not None
+    return _determined.create_workspace(name)
+
+
+@_require_singleton
+def delete_workspace(name: str) -> None:
+    """Delete the workspace with the provided name.
+
+    Args:
+        name: The name of the workspace to delete.
+
+    Raises:
+        errors.NotFoundException: If no workspace with the provided name exists.
+    """
+    assert _determined is not None
+    return _determined.delete_workspace(name)
+
+
+@_require_singleton
 def create_model(
     name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
 ) -> Model:
