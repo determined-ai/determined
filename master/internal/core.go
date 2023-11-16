@@ -1085,7 +1085,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Wait for all NTSC services to initialize.
-	command.SetDefaultCmdService(m.db, m.rm)
+	cs, err := command.NewService(m.db, m.rm)
+	if err != nil {
+		return fmt.Errorf("initializing command service: %w", err)
+	}
+	command.SetDefaultService(cs)
+
 	// Restore any commands.
 	if err = command.DefaultCmdService.RestoreAllCommands(ctx); err != nil {
 		return err

@@ -76,7 +76,6 @@ type CreateGeneric struct {
 }
 
 func commandFromSnapshot(
-	logCtx detLogger.Context,
 	db *db.PgDB,
 	rm rm.ResourceManager,
 	snapshot *CommandSnapshot,
@@ -84,6 +83,13 @@ func commandFromSnapshot(
 	taskID := snapshot.TaskID
 	taskType := snapshot.Task.TaskType
 	jobID := snapshot.Task.Job.JobID
+
+	logCtx := logger.Context{
+		"job-id":    jobID,
+		"task-id":   taskID,
+		"task-type": taskType,
+	}
+
 	cmd := &Command{
 		db:                 db,
 		rm:                 rm,
@@ -94,14 +100,8 @@ func commandFromSnapshot(
 		jobType:            snapshot.Task.Job.JobType,
 		jobID:              jobID,
 		restored:           true,
-		logCtx: logger.Context{
-			"job-id":    jobID,
-			"task-id":   taskID,
-			"task-type": taskType,
-		},
-		syslog: logrus.WithFields(logrus.Fields{
-			"component": "command",
-		}),
+		logCtx:             logCtx,
+		syslog:             logrus.WithFields(logrus.Fields{"component": "command"}).WithFields(logCtx.Fields()),
 	}
 	return cmd, cmd.Start(context.TODO())
 }

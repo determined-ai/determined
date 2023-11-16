@@ -29,20 +29,25 @@ type CommandService struct {
 	syslog   *logrus.Entry
 }
 
-// SetDefaultCmdService initializes & returns a new CommandService.
-func SetDefaultCmdService(db *db.PgDB, rm rm.ResourceManager) {
+// NewService returns a new CommandService.
+func NewService(db *db.PgDB, rm rm.ResourceManager) (*CommandService, error) {
+	return &CommandService{
+		db:       db,
+		rm:       rm,
+		commands: make(map[model.TaskID]*Command),
+		syslog:   logrus.WithField("component", "command-service"),
+	}, nil
+}
+
+// SetDefaultService initializes & returns a new CommandService.
+func SetDefaultService(cs *CommandService) {
 	if DefaultCmdService != nil {
 		logrus.Warn(
 			"detected re-initialization of Command Service that should never occur outside of tests",
 		)
 	}
 
-	DefaultCmdService = &CommandService{
-		db:       db,
-		rm:       rm,
-		commands: make(map[model.TaskID]*Command),
-		syslog:   logrus.WithField("component", "command-service"),
-	}
+	DefaultCmdService = cs
 }
 
 // RestoreAllCommands restores all terminated commands whose end time isn't set.
@@ -91,6 +96,12 @@ func (cs *CommandService) LaunchGenericCommand(
 	req.Spec.CommandID = string(taskID)
 	req.Spec.TaskType = taskType
 
+	logCtx := logger.Context{
+		"job-id":    jobID,
+		"task-id":   taskID,
+		"task-type": taskType,
+	}
+
 	cmd := &Command{
 		db: cs.db,
 		rm: cs.rm,
@@ -102,14 +113,8 @@ func (cs *CommandService) LaunchGenericCommand(
 		jobType:          jobType,
 		jobID:            jobID,
 		contextDirectory: req.ContextDirectory,
-		logCtx: logger.Context{
-			"job-id":    jobID,
-			"task-id":   taskID,
-			"task-type": taskType,
-		},
-		syslog: logrus.WithFields(logrus.Fields{
-			"component": "command",
-		}),
+		logCtx:           logCtx,
+		syslog:           logrus.WithFields(logrus.Fields{"component": "command"}).WithFields(logCtx.Fields()),
 	}
 
 	if err := cmd.Start(context.TODO()); err != nil {
