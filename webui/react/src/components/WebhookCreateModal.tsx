@@ -2,7 +2,7 @@ import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select from 'hew/Select';
-import React, { useCallback, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
@@ -43,6 +43,12 @@ const WebhookCreateModalComponent: React.FC = () => {
     const hasError = fields.some((f) => f.errors.length);
     setDisabled(hasError);
   }, [form]);
+
+  useEffect(() => {
+    if (!(triggers || []).includes('TRIGGER_TYPE_TASK_LOG')) {
+      form.setFieldValue('regex', null);
+    }
+  }, [triggers, form]);
 
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
