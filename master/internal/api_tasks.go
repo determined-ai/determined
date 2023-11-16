@@ -498,9 +498,9 @@ func (a *apiServer) GetActiveTasksCount(
 	}
 
 	finalResp := &apiv1.GetActiveTasksCountResponse{}
-	req1 := &apiv1.GetNotebooksRequest{}
-	resp1 := &apiv1.GetNotebooksResponse{}
-	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {
+
+	resp1, err := command.DefaultCmdService.GetNotebooks(&apiv1.GetNotebooksRequest{})
+	if err != nil {
 		return nil, err
 	}
 	for _, n := range resp1.Notebooks {
@@ -509,9 +509,8 @@ func (a *apiServer) GetActiveTasksCount(
 		}
 	}
 
-	req2 := &apiv1.GetTensorboardsRequest{}
-	resp2 := &apiv1.GetTensorboardsResponse{}
-	if err = a.ask(tensorboardsAddr, req2, &resp2); err != nil {
+	resp2, err := command.DefaultCmdService.GetTensorboards(&apiv1.GetTensorboardsRequest{})
+	if err != nil {
 		return nil, err
 	}
 	for _, tb := range resp2.Tensorboards {
@@ -520,9 +519,8 @@ func (a *apiServer) GetActiveTasksCount(
 		}
 	}
 
-	req3 := &apiv1.GetCommandsRequest{}
-	resp3 := &apiv1.GetCommandsResponse{}
-	if err = a.ask(commandsAddr, req3, &resp3); err != nil {
+	resp3, err := command.DefaultCmdService.GetCommands(&apiv1.GetCommandsRequest{})
+	if err != nil {
 		return nil, err
 	}
 	for _, c := range resp3.Commands {
@@ -531,9 +529,8 @@ func (a *apiServer) GetActiveTasksCount(
 		}
 	}
 
-	req4 := &apiv1.GetShellsRequest{}
-	resp4 := &apiv1.GetShellsResponse{}
-	if err = a.ask(shellsAddr, req4, &resp4); err != nil {
+	resp4, err := command.DefaultCmdService.GetShells(&apiv1.GetShellsRequest{})
+	if err != nil {
 		return nil, err
 	}
 	for _, s := range resp4.Shells {

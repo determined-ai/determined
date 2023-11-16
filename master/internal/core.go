@@ -1084,12 +1084,17 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return err
 	}
 
-	command.RegisterAPIHandler(
-		m.system,
-		m.echo,
-		m.db,
-		m.rm,
-	)
+	// Wait for all NTSC services to initialize.
+	cs, err := command.NewService(m.db, m.rm)
+	if err != nil {
+		return fmt.Errorf("initializing command service: %w", err)
+	}
+	command.SetDefaultService(cs)
+
+	// Restore any commands.
+	if err = command.DefaultCmdService.RestoreAllCommands(ctx); err != nil {
+		return err
+	}
 
 	if err = m.closeOpenAllocations(); err != nil {
 		return err

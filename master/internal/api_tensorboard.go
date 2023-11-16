@@ -31,7 +31,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/trials"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
@@ -42,7 +41,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
@@ -53,8 +51,6 @@ const (
 	tensorboardEntrypointFile = "/run/determined/tensorboard/tensorboard-entrypoint.sh"
 	storageConfPath           = "/run/determined/tensorboard/storage_config.json"
 )
-
-var tensorboardsAddr = actor.Addr("tensorboard")
 
 func filesToArchive(files []*utilv1.File) archive.Archive {
 	filesArchive := make([]archive.Item, 0, len(files))
@@ -95,7 +91,8 @@ func (a *apiServer) GetTensorboards(
 		}
 	}
 
-	if err = a.ask(tensorboardsAddr, req, &resp); err != nil {
+	resp, err = command.DefaultCmdService.GetTensorboards(req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -113,14 +110,14 @@ func (a *apiServer) GetTensorboards(
 
 func (a *apiServer) GetTensorboard(
 	ctx context.Context, req *apiv1.GetTensorboardRequest,
-) (resp *apiv1.GetTensorboardResponse, err error) {
+) (*apiv1.GetTensorboardResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	addr := tensorboardsAddr.Child(req.TensorboardId)
-	if err := a.ask(addr, req, &resp); err != nil {
+	resp, err := command.DefaultCmdService.GetTensorboard(req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -128,7 +125,7 @@ func (a *apiServer) GetTensorboard(
 	if err := command.AuthZProvider.Get().CanGetTensorboard(
 		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId),
 		resp.Tensorboard.ExperimentIds, resp.Tensorboard.TrialIds); err != nil {
-		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("actor", fmt.Sprint(addr), true))
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("tensorboard", req.TensorboardId, true))
 	}
 	return resp, nil
 }
@@ -160,7 +157,12 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.TensorboardId, model.TaskTypeTensorboard)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.KillTensorboardResponse{Tensorboard: cmd.ToV1Tensorboard()}, nil
 }
 
 func (a *apiServer) SetTensorboardPriority(
@@ -190,7 +192,15 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
-	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(
+		req.TensorboardId,
+		int(req.Priority),
+		model.TaskTypeTensorboard)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.SetTensorboardPriorityResponse{Tensorboard: cmd.ToV1Tensorboard()}, nil
 }
 
 func (a *apiServer) LaunchTensorboard(
@@ -434,19 +444,15 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid TensorBoard config: %s", err.Error())
 	}
 
-	// Launch a TensorBoard actor.
-	var tbID model.TaskID
-	if err = a.ask(tensorboardsAddr, launchReq, &tbID); err != nil {
-		return nil, err
-	}
-
-	var tb *tensorboardv1.Tensorboard
-	if err = a.ask(tensorboardsAddr.Child(tbID), &tensorboardv1.Tensorboard{}, &tb); err != nil {
+	// Launch a TensorBoard.
+	cmd, err := command.DefaultCmdService.LaunchGenericCommand(model.TaskTypeTensorboard,
+		model.JobTypeTensorboard, launchReq)
+	if err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
-		Tensorboard: tb,
+		Tensorboard: cmd.ToV1Tensorboard(),
 		Config:      protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings:    pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, err
