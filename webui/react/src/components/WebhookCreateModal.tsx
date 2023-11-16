@@ -31,7 +31,20 @@ const typeOptions = [
     value: V1WebhookType.SLACK,
   },
 ];
-const triggerOptions = triggerEvents.map((e) => ({ label: e, value: e }));
+const triggerOptions = [
+  {
+    label: RunState.Completed,
+    value: RunState.Completed,
+  },
+  {
+    label: RunState.Error,
+    value: RunState.Error,
+  },
+  {
+    label: 'TASKLOG',
+    value: V1TriggerType.TASKLOG,
+  },
+];
 const WebhookCreateModalComponent: React.FC = () => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
