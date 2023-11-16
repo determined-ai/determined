@@ -200,8 +200,6 @@ func (s *PodmanClient) RunContainer(
 	}
 	args = append(args, "--env-file", envFilePath)
 
-	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_SHIPPER_EMIT_STDOUT_LOGS=False")
-
 	for _, env := range req.ContainerConfig.Env {
 		_, err = envFile.WriteString(env + "\n")
 		if err != nil {
