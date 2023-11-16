@@ -2,6 +2,7 @@ import { Form, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import DatePicker from 'hew/DatePicker';
 import Select, { Option } from 'hew/Select';
+import { useTheme } from 'hew/Theme';
 import React from 'react';
 
 import { handlePath, serverAddress } from 'routes/utils';
@@ -28,6 +29,10 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
   onVisibleChange,
 }: Props) => {
   const [form] = Form.useForm();
+
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   const handleOk = (event: React.MouseEvent): void => {
     const formAfterDate = form.getFieldValue('afterDate');
@@ -59,6 +64,7 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
       okText="Proceed to Download"
       open={true}
       title="Download Resource Usage Data in CSV"
+      wrapClassName={themeClass}
       onCancel={() => onVisibleChange(false)}
       onOk={handleOk}>
       <Form form={form} initialValues={{ afterDate, beforeDate, groupBy }} labelCol={{ span: 8 }}>

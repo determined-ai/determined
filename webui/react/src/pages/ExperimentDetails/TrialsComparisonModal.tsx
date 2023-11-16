@@ -2,6 +2,7 @@ import { Modal, Tag, Typography } from 'antd';
 import Message from 'hew/Message';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
+import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import usePrevious from 'hew/utils/usePrevious';
 import _ from 'lodash';
@@ -49,6 +50,9 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
   ...props
 }: ModalProps) => {
   const resize = useResize();
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   useEffect(() => {
     if (props.trialIds?.length === 0 || props.trials?.length === 0) onCancel();
@@ -66,6 +70,7 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
           : 'Trial Comparison'
       }
       width={resize.width * 0.9}
+      wrapClassName={themeClass}
       onCancel={onCancel}>
       <TrialsComparisonTable {...props} />
     </Modal>

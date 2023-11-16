@@ -8,7 +8,7 @@ import {
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import { ShirtSize } from 'hew/Theme';
+import { ShirtSize, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -109,6 +109,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
 
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
+
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -655,6 +659,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}
         `}
+        wrapClassName={themeClass}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.Medium} minItemWidth={120}>

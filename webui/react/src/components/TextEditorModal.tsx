@@ -2,6 +2,7 @@ import { Modal } from 'antd';
 import Button from 'hew/Button';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
+import { useTheme } from 'hew/Theme';
 import React, { useCallback, useId, useMemo, useState } from 'react';
 
 import css from './TextEditorModal.module.scss';
@@ -31,6 +32,10 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
     return classList.join(' ');
   }, [value]);
 
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
+
   const onShowModal = () => {
     setIsModalOpen(true);
   };
@@ -54,6 +59,7 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
         confirmLoading={isConfirmLoading}
         open={isModalOpen}
         title={title}
+        wrapClassName={themeClass}
         onCancel={onHideModal}
         onOk={onSubmit}>
         <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
