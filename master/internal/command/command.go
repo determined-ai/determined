@@ -241,7 +241,7 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 	err := c.db.CompleteTask(c.taskID, time.Now().UTC())
 	if err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
-		if errors.As(err, &sErr) && sErr.Code() == codes.NotFound {
+		if errors.As(err, &sErr) && sErr.Code() != codes.NotFound {
 			return
 		}
 	}
