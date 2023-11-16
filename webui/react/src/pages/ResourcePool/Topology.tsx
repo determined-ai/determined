@@ -34,18 +34,8 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
     <div className={css.node}>
       {shouldTruncate ? (
         <Tooltip content={name}>
-          <span className={css.nodeName}>
-            <span className={css.firstPart} style={{ maxWidth: `${containerWidth * 0.5}px` }}>
-              {name}
-            </span>
-            <span
-              className={css.lastPart}
-              style={{
-                maxWidth: `calc(${containerWidth}px - (3.3em * 0.77 * 3))`,
-                minWidth: `calc(${containerWidth * 0.3}px + (1em * 0.6))`,
-              }}>
-              {name}
-            </span>
+          <span className={css.nodeName} style={{ maxWidth: containerWidth }}>
+            {name}
           </span>
         </Tooltip>
       ) : (

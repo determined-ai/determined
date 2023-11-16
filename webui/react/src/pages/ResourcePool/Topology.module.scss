@@ -20,25 +20,14 @@
     margin-right: 30px;
 
     .nodeName {
+      display: inline-block;
       font-size: var(--single-line-size-l);
       margin-bottom: 6px;
       overflow: hidden;
+      text-overflow: ellipsis;
       text-transform: uppercase;
+      vertical-align: bottom;
       white-space: nowrap;
-
-      .firstPart,
-      .lastPart {
-        display: inline-block;
-        overflow: hidden;
-        vertical-align: bottom;
-        white-space: nowrap;
-      }
-      .firstPart {
-        text-overflow: ellipsis;
-      }
-      .lastPart {
-        direction: rtl;
-      }
     }
     .nodeCluster {
       align-items: center;
