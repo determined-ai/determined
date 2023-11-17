@@ -23,11 +23,6 @@ Version 0.26.4
 
 **New Features**
 
--  Experiments: Add an experiment continue feature via a CLI command ``det e continue
-   <experiment-id>``. This allows users to resume or recover training for an experiment whether it
-   previously succeeded or failed. This is limited to single-searcher experiments and using it may
-   prevent the user from replicating the continued experiment's results.
-
 -  Experiments: Add a ``log_policies`` configuration option to define actions when a trial's log
    matches specified patterns.
 
@@ -44,21 +39,6 @@ Version 0.26.4
    This option is also configurable at the cluster or resource pool level via task container
    defaults.
 
--  Experiments: Add a new experiment config option ``log_policies`` to allow configuring policies to
-   take after a regex is matched. There are two action types a trial can be configured to take
-
-   -  ``exclude_node``: If a trial fails and restarts, the trial will not schedule on a node that
-      reported a log that matched the regex provided. This can be used to allow trials to avoid
-      being scheduled on nodes with certain hardware issues like uncorrectable gpu ECC errors.
-
-   -  ``cancel_retries``: If a trial reports a log that matches this pattern, the trial will not be
-      restarted. This is useful for certain errors that are not transient such as too large of a
-      model that causes a CUDA out of memory error.
-
-   This can also be configured on a cluster or per resource pool option through task container
-   defaults. Please see :ref:`experiment-config-reference` and :ref:`master-config-reference` for
-   more information.
-
 -  CLI: Add a new CLI command ``det e delete-tb-files [Experiment ID]`` to delete local TensorBoard
    files associated to a given experiment.
 
@@ -67,16 +47,6 @@ Version 0.26.4
 -  Update default environment images to Python 3.9 from Python 3.8.
 
 **Bug Fixes**
-
--  Kubernetes: Support enabling and disabling agents to prevent Determined from scheduling jobs on
-   specific nodes.
-
-   Upgrading from a version before this feature to a version after this feature only on Kubernetes
-   will cause queued allocations to be killed on upgrade. Users can pause queued experiments to
-   avoid this.
-
--  Users: Fix an issue where if a user's remote was set to true through ``det user edit <username>
-   --remote=true`` that user could still login through a username and password.
 
 -  Users: Fix an issue where if a user's remote status was edited through ``det user edit <username>
    --remote=true`` that user could still login through their username and password while they were
