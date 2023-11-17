@@ -3,6 +3,7 @@
 
    Get Started <get-started/_index>
    Set Up <setup-cluster/_index>
+   Generative AI and LLMs <genai-llm/_index>
    Manage <manage/_index>
    Tutorials <tutorials/_index>
    Model Hub Library <model-hub-library/_index>
@@ -61,6 +62,13 @@ almost any deep learning model using Determined.
                <img class="tile-icon" src="_static/images/setup.png"  alt="setup icon">
                <h2 class="tile-title">Model Developer Quickstart</h2>
                <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
+            </a>
+         </div>
+         <div class="tile-container">
+            <a class="tile" href="genai-llm/_index.html">
+               <img class="tile-icon" src="_static/images/setup.png"  alt="getting started icon">
+               <h2 class="tile-title">Generative AI and LLMst</h2>
+               <p class="tile-description">Learn about Generative AI and LLM features in Determined.</p>
             </a>
          </div>
          <div class="tile-container">
