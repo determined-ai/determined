@@ -1484,7 +1484,7 @@ jobs:
       - react-get-deps
       - run: make -C webui/react check
       - store_artifacts:
-          path: /home/circleci/.npm/
+          path: /home/circleci/.npm/_logs/
 
   build-react:
     parameters:
