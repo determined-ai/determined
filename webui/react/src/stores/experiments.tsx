@@ -14,8 +14,7 @@ import {
   HyperparameterBase,
   Hyperparameters,
   HyperparameterType,
-  Json,
-  JsonObject,
+  JsonObjectC,
   RunState,
 } from 'types';
 import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
@@ -23,14 +22,6 @@ import { immutableObservable, Observable } from 'utils/observable';
 import { encodeParams } from 'utils/store';
 
 import PollingStore from './polling';
-
-// TODO: use these codecs as source for types when possible
-const jsonCodec: t.Type<Json> = t.recursion('Json', () =>
-  t.union([t.string, t.number, t.boolean, t.null, t.array(jsonCodec), jsonObjectCodec]),
-);
-const jsonObjectCodec: t.Type<JsonObject> = t.recursion('JsonObject', () =>
-  t.record(t.string, jsonCodec),
-);
 
 const primitivesCodec = t.union([t.boolean, t.number, t.string]);
 const searcherCodec = t.intersection([
@@ -137,7 +128,7 @@ const experimentItemCodec = t.intersection([
   t.type({
     archived: t.boolean,
     config: experimentConfigCodec,
-    configRaw: jsonObjectCodec,
+    configRaw: JsonObjectC,
     hyperparameters: t.record(t.string, hyperparameterCodec),
     id: t.number,
     jobId: t.string,
