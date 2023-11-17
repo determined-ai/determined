@@ -8,7 +8,7 @@
 
 Home page content.
 
-Try these tutorials....
+Check out more GenAI docs at https://at-at-scale-documentation.netlify.app/products/gen-ai.
 
 ***********************************************************
  How to Use JupyterLab to Test, Evaluate and Finetune LLMs
@@ -37,7 +37,7 @@ To help you learn how to develop LLMs with our Python library in an interactive 
 environment, we’ll walk through the following steps:
 
 -  Open a JupyterLab Instance
--
+-  Etc
 
 ***************
  Prerequisites
