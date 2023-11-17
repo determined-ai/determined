@@ -185,9 +185,9 @@ def download(args: Namespace) -> None:
         path = checkpoint.download(path=args.output_dir)
     except errors.CheckpointStateException:
         print(
-            f"Invalid Checkpoint State for checkpoint {checkpoint.uuid}. "
-            f"This checkpoint is in state {checkpoint.state}. "
-            "Please retry with a different checkpoint UUID."
+            "Failed to download checkpoint: "
+            f"Checkpoint {checkpoint.uuid} is in state {checkpoint.state}. "
+            "Try again with a different checkpoint."
         )
         return
 
