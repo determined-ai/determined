@@ -38,4 +38,10 @@ message Container {
   State state = 3;
   // A list of devices that is being used by this container.
   repeated determined.device.v1.Device devices = 4;
+  // User has insufficient permissions to view this container's details.
+  // If true, we obfuscate:
+  // (1) parent
+  // (2) id
+  // (4) devices
+  bool permission_denied = 5;
 }
