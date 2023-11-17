@@ -26,12 +26,18 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 }));
 
 vi.mock('services/api', () => ({
+  getCommand: () => {
+    return Promise.resolve({});
+  },
   getJupyterLab: () => {
     return Promise.resolve({});
   },
-  getCommand: () => {
+  getShell: () => {
     return Promise.resolve({});
-  }
+  },
+  getTensorBoard: () => {
+    return Promise.resolve({});
+  },
 }));
 
 const InteractiveTaskPageContainer: React.FC = () => {
