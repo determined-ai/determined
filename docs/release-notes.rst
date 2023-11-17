@@ -10,6 +10,48 @@
  Version 0.26
 **************
 
+Version 0.26.4
+==============
+
+**Release Date:** November 17, 2023
+
+**Breaking Changes**
+
+-  CLI: The CLI command to patch the master log config has been changed from ``det master config
+   --log --level <log_level> --color <on/off>`` to ``det master config set --log.level=<log_level>
+   --log.color=<on/off>``.
+
+**New Features**
+
+-  Experiments: Add a ``log_policies`` configuration option to define actions when a trial's log
+   matches specified patterns.
+
+   -  The ``exclude_node`` action prevents a failed trial's restart attempts (due to its
+      ``max_restarts`` policy) from being scheduled on nodes with matching error logs. This is
+      useful for bypassing nodes with hardware issues like uncorrectable GPU ECC errors.
+
+   -  The ``cancel_retries`` action prevents a trial from restarting if a trial reports a log that
+      matches the pattern, even if it has remaining ``max_restarts``. This avoids using resources
+      for retrying a trial that encounters certain failures that won't be fixed by retrying the
+      trial, such as CUDA memory issues. For details, visit :ref:`experiment-config-reference` and
+      :ref:`master-config-reference`.
+
+   This option is also configurable at the cluster or resource pool level via task container
+   defaults.
+
+-  CLI: Add a new CLI command ``det e delete-tb-files [Experiment ID]`` to delete local TensorBoard
+   files associated with a given experiment.
+
+**Improvements**
+
+-  Update default environment images to Python 3.9 from Python 3.8.
+
+**Bug Fixes**
+
+-  Users: Fix an issue where if a user's remote status was edited through ``det user edit <username>
+   --remote=true``, that user could still log in using their username and password; they should only
+   be able to log in through IdP integrations.
+
 Version 0.26.3
 ==============
 
