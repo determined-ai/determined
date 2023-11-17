@@ -27,13 +27,13 @@ Version 0.26.4
    matches specified patterns.
 
    -  The ``exclude_node`` action prevents a failed trial's restart attempts (due to its
-      ``max_restarts`` policy) from being scheduled on nodes with matching error logs. This is useful for
-      bypassing nodes with hardware issues like uncorrectable GPU ECC errors.
+      ``max_restarts`` policy) from being scheduled on nodes with matching error logs. This is
+      useful for bypassing nodes with hardware issues like uncorrectable GPU ECC errors.
 
    -  The ``cancel_retries`` action prevents a trial from restarting if a trial reports a log that
-      matches the pattern, even if it has remaining ``max_restarts``. This avoids using resources for
-      retrying a trial that encounters certain failures that won't be fixed by retrying the trial,
-      such as CUDA memory issues. For details, visit :ref:`experiment-config-reference` and
+      matches the pattern, even if it has remaining ``max_restarts``. This avoids using resources
+      for retrying a trial that encounters certain failures that won't be fixed by retrying the
+      trial, such as CUDA memory issues. For details, visit :ref:`experiment-config-reference` and
       :ref:`master-config-reference`.
 
    This option is also configurable at the cluster or resource pool level via task container
