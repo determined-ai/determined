@@ -88,13 +88,9 @@ export const TaskBar: React.FC<Props> = ({
   );
 
   const handleDropdown = (key: string) => {
-    if (!task) return;
     switch (key) {
       case MenuKey.Kill:
-        Loadable.match(task, {
-          _: () => null,
-          Loaded: (t) => deleteTask(t),
-        });
+        Loadable.forEach(task, deleteTask);
         break;
       case MenuKey.ViewLogs:
         handleViewLogsClick();
