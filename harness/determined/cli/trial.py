@@ -187,7 +187,8 @@ def download(args: Namespace) -> None:
         print(
             "Failed to download checkpoint: "
             f"Checkpoint {checkpoint.uuid} is in state {checkpoint.state}. "
-            "Try again with a different checkpoint."
+            "Try again with a different checkpoint. "
+            "See `det trial download --help` for more download options."
         )
         return
 
