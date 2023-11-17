@@ -29,6 +29,9 @@ vi.mock('services/api', () => ({
   getJupyterLab: () => {
     return Promise.resolve({});
   },
+  getCommand: () => {
+    return Promise.resolve({});
+  }
 }));
 
 const InteractiveTaskPageContainer: React.FC = () => {
