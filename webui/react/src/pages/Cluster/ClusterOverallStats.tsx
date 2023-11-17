@@ -13,6 +13,7 @@ import determinedStore from 'stores/determinedInfo';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
 import { ResourceType } from 'types';
+import { getSlotContainerStates } from 'utils/cluster';
 import { useObservable } from 'utils/observable';
 
 const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
@@ -23,7 +24,7 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 export const ClusterOverallStats: React.FC = () => {
   const agents = useObservable(clusterStore.agents);
   const resourcePools = useObservable(clusterStore.resourcePools);
-  const clusterOverview = useObservable(clusterStore.clusterOverview);
+
   const activeTasks = useObservable(taskStore.activeTasks);
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
@@ -65,13 +66,13 @@ export const ClusterOverallStats: React.FC = () => {
             NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
           })}
         </OverviewStats>
-        {Loadable.match(Loadable.all([maxTotalSlots, clusterOverview]), {
+        {Loadable.match(Loadable.all([maxTotalSlots, agents]), {
           _: () => null,
-          Loaded: ([maxTotalSlots, clusterOverview]) =>
+          Loaded: ([maxTotalSlots, agents]) =>
             [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
               maxTotalSlots[resType] > 0 ? (
                 <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
-                  {clusterOverview[resType].total - clusterOverview[resType].available}
+                  {getSlotContainerStates(agents || [], resType).length}
                   <small> / {maxTotalSlots[resType]}</small>
                 </OverviewStats>
               ) : null,
