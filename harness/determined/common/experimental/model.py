@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
 from determined.common.api import bindings
-from determined.common.experimental import checkpoint, metrics
+from determined.common.experimental import checkpoint, determined, metrics
 
 # TODO (MLG-1087): move OrderBy to experimental.client namespace
 from determined.common.experimental._util import OrderBy  # noqa: I2041
@@ -356,8 +356,15 @@ class Model:
         self.metadata = updated_metadata
 
     def move_to_workspace(self, workspace_name: str) -> None:
-        req = bindings.v1PatchModel(workspaceName=workspace_name)
+        """Moves the model to a different workspace."""
+        new_workspace_id = (
+            determined.Determined._from_session(self._session).get_workspace(workspace_name).id
+        )
+
+        req = bindings.v1PatchModel(workspaceId=new_workspace_id)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
+        self.workspace_id = new_workspace_id
 
     def set_labels(self, labels: List[str]) -> None:
         """
