@@ -1,0 +1,27 @@
+name: iris_tf_keras_adaptive_search
+data:
+  train_url: http://download.tensorflow.org/data/iris_training.csv
+  test_url: http://download.tensorflow.org/data/iris_test.csv
+hyperparameters:
+  learning_rate:
+    type: log
+    minval: -5.0
+    maxval: 1.0
+    base: 10.0
+  learning_rate_decay: 1.0e-6
+  layer1_dense_size:
+    type: int
+    minval: 4
+    maxval: 32
+  global_batch_size:
+    type: int
+    minval: 5
+    maxval: 30
+searcher:
+  name: adaptive_asha
+  metric: val_categorical_accuracy
+  smaller_is_better: false
+  max_length:
+    batches: 6400
+  max_trials: 512
+entrypoint: model_def:IrisTrial

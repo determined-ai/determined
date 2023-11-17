@@ -3304,29 +3304,6 @@ workflows:
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
 
-  nightly-quarantine:
-    when: << pipeline.parameters.do_nightly_tests >>
-    jobs:
-      - test-e2e-aws:
-          name: test-e2e-gpu-nightly-quarantine
-          context: aws
-          matrix:
-            parameters:
-              parallelism: [1]
-              cluster-id-prefix: ["nightly-quarantine"]
-              mark: ["nightly_quarantine"]
-      - test-e2e-aws:
-          name: test-e2e-gpu-distributed-quarantine
-          context: aws
-          matrix:
-            parameters:
-              # Cluster name lengths are limited by bucket name lengths in AWS.
-              cluster-id-prefix: ["dist-quarantine"]
-              mark: ["distributed_quarantine"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-
   release:
     jobs:
       - build-helm:
