@@ -23,7 +23,6 @@ setuptools.setup(
         "numpy>=1.16.2",
         "psutil",
         "pyzmq>=18.1.0",
-        "yogadl==0.1.4",
         # Common:
         "certifi",
         "filelock",
