@@ -17,6 +17,7 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import ClusterQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
+import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import {
@@ -218,6 +219,11 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
+        {!!agents.length && poolname && (
+          <Topology
+            nodes={agents.filter(({ resourcePools }) => resourcePools.includes(poolname))}
+          />
+        )}
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>
