@@ -237,13 +237,13 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	c.exitStatus = ae
 
-	var sErr status.Status
 	err := c.db.CompleteTask(c.taskID, time.Now().UTC())
 	if err != nil {
-		c.syslog.WithError(err).Error("marking task complete")
+		var sErr status.Status
 		if errors.As(err, &sErr) && sErr.Code() != codes.NotFound {
 			return
 		}
+		c.syslog.WithError(err).Error("marking task complete")
 	}
 
 	if err := user.DeleteSessionByToken(context.TODO(), c.GenericCommandSpec.Base.UserSessionToken); err != nil {
