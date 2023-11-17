@@ -67,6 +67,14 @@ following criteria:
 -  **Client-Master Connection**: Client machines should connect to the master node using the
    master's configured port.
 
+.. image:: /assets/images/_det-ai-sys-arch-network-light.png
+   :class: only-dark
+   :alt: Determined AI system architecture diagram describing network connectivity traffic in dark mode
+
+.. image:: /assets/images/_det-ai-sys-arch-network-light.png
+   :class: only-light
+   :alt: Determined AI system architecture diagram describing network connectivity traffic in light mode
+
 .. _internet-access:
 
 *****************
