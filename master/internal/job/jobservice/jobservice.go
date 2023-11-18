@@ -25,6 +25,7 @@ type Job interface {
 	SetJobPriority(priority int) error
 	SetWeight(weight float64) error
 	SetResourcePool(resourcePool string) error
+	ResourcePool() string
 }
 
 // Service manages the job service.
@@ -208,15 +209,17 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 		return j.SetResourcePool(action.ResourcePool)
 	case *jobv1.QueueControl_AheadOf:
 		return s.rm.MoveJob(sproto.MoveJob{
-			ID:     jobID,
-			Anchor: model.JobID(action.AheadOf),
-			Ahead:  true,
+			ID:           jobID,
+			Anchor:       model.JobID(action.AheadOf),
+			Ahead:        true,
+			ResourcePool: j.ResourcePool(),
 		})
 	case *jobv1.QueueControl_BehindOf:
 		return s.rm.MoveJob(sproto.MoveJob{
-			ID:     jobID,
-			Anchor: model.JobID(action.BehindOf),
-			Ahead:  false,
+			ID:           jobID,
+			Anchor:       model.JobID(action.BehindOf),
+			Ahead:        false,
+			ResourcePool: j.ResourcePool(),
 		})
 	default:
 		return fmt.Errorf("unexpected action: %v", action)
