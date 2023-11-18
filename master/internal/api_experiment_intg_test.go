@@ -38,7 +38,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -91,11 +90,11 @@ var (
 
 // pgdb can be nil to use the singleton database for testing.
 func setupExpAuthTest(t *testing.T, pgdb *db.PgDB,
-	actorFunc ...func(context *actor.Context) error,
+	altMockRM ...*mocks.ResourceManager,
 ) (
 	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, context.Context,
 ) {
-	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t, pgdb, actorFunc...)
+	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t, pgdb, altMockRM...)
 	if authZExp == nil {
 		authZExp = &mocks.ExperimentAuthZ{}
 		expauth.AuthZProvider.Register("mock", authZExp)

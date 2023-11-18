@@ -14,7 +14,6 @@ import (
 	. "github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -51,12 +50,10 @@ type mockConfig struct {
 
 type mockEnvironment struct {
 	cluster     *mockProvider
-	system      *actor.System
 	provisioner *Provisioner
 }
 
 func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Provisioner) {
-	system := actor.NewSystem(t.Name())
 	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
 	var launchErrorTimeout time.Duration
@@ -82,7 +79,6 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 
 	environment := mockEnvironment{
 		cluster:     cluster,
-		system:      system,
 		provisioner: p,
 	}
 	return &environment, p
@@ -212,7 +208,6 @@ func TestProvisionerScaleUp(t *testing.T) {
 	mock, _ := newMockEnvironment(t, setup)
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	mock.provisioner.Provision()
-	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
@@ -237,7 +232,6 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	mock, _ := newMockEnvironment(t, setup)
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 3})
 	mock.provisioner.Provision()
-	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
@@ -286,7 +280,6 @@ func TestProvisionerScaleDown(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	mock.provisioner.Provision()
 
-	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("list"),
@@ -356,8 +349,6 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	mock.provisioner.Provision()
 	mock.provisioner.Provision()
 
-	assert.NilError(t, mock.system.StopAndAwaitTermination())
-
 	// We should have exactly 1 launch call.
 	calls := 0
 	for _, call := range mock.cluster.history {
@@ -403,7 +394,6 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	mock.provisioner.Provision()
 
-	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("list"),

@@ -14,18 +14,15 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 )
 
 func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
-	system := actor.NewSystem(t.Name())
-
 	// This is required only due to the resource manager needing
 	// to authenticate users when sending echo API requests.
 	// No echo http requests are sent so it won't cause issues
 	// initializing with nil values for this test.
-	user.InitService(nil, nil, nil)
+	user.InitService(nil, nil)
 
 	// Set up one CPU resource pool and one GPU resource pool.
 	cfg := &config.ResourceConfig{
@@ -45,11 +42,11 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 		},
 	}
 	cpuPoolRef := setupResourcePool(
-		t, nil, system, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
+		t, nil, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
 		nil, nil, []*MockAgent{{ID: "agent1", Slots: 0}},
 	)
 	gpuPoolRef := setupResourcePool(
-		t, nil, system, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
+		t, nil, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
 		nil, nil, []*MockAgent{{ID: "agent2", Slots: 4}},
 	)
 	agentRM := &ResourceManager{

@@ -12,7 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -27,7 +26,6 @@ func newMaxSlot(maxSlot int) *int {
 func setupResourcePool(
 	t *testing.T,
 	db db.DB,
-	system *actor.System,
 	conf *config.ResourcePoolConfig,
 	mockTasks []*MockTask,
 	mockGroups []*MockGroup,
@@ -50,7 +48,7 @@ func setupResourcePool(
 		MakeFitFunction(conf.Scheduler.FittingPolicy), agentsRef)
 	require.NoError(t, err)
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
-		t, system, mockTasks, mockGroups, mockAgents,
+		t, mockTasks, mockGroups, mockAgents,
 	)
 	rp.saveNotifications = true
 
@@ -62,7 +60,6 @@ func setupResourcePool(
 
 func forceAddAgent(
 	t *testing.T,
-	system *actor.System,
 	agents map[agentID]*agentState,
 	agentIDStr string,
 	numSlots int,
@@ -91,7 +88,6 @@ func forceAddAgent(
 
 func newFakeAgentState(
 	t *testing.T,
-	system *actor.System,
 	id string,
 	slots int,
 	slotsUsed int,
@@ -125,16 +121,11 @@ func newFakeAgentState(
 
 func forceAddTask(
 	t *testing.T,
-	system *actor.System,
 	taskList *tasklist.TaskList,
 	taskID string,
 	numAllocated int,
 	slotsNeeded int,
 ) {
-	task := &MockTask{ID: model.AllocationID(taskID), SlotsNeeded: slotsNeeded}
-	_, created := system.ActorOf(actor.Addr(taskID), task)
-	assert.Assert(t, created)
-
 	req := &sproto.AllocateRequest{
 		AllocationID: model.AllocationID(taskID),
 		JobID:        model.JobID(taskID),
@@ -269,8 +260,7 @@ func TestJobStats(t *testing.T) {
 		expectedStats *jobv1.QueueStats,
 	) {
 		p := &priorityScheduler{}
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
@@ -285,8 +275,7 @@ func TestJobStats(t *testing.T) {
 		agents []*MockAgent,
 		expectedStats *jobv1.QueueStats,
 	) {
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
@@ -355,8 +344,7 @@ func TestJobOrder(t *testing.T) {
 		agents []*MockAgent,
 	) map[model.JobID]*sproto.RMJobInfo {
 		p := &priorityScheduler{preemptionEnabled: false}
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
@@ -368,8 +356,7 @@ func TestJobOrder(t *testing.T) {
 		groups []*MockGroup,
 		agents []*MockAgent,
 	) map[model.JobID]*sproto.RMJobInfo {
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
@@ -432,8 +419,7 @@ func TestJobOrderPriority(t *testing.T) {
 	}
 
 	p := &priorityScheduler{preemptionEnabled: false}
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 	toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	AllocateTasks(toAllocate, agentMap, taskList)
@@ -447,7 +433,7 @@ func TestJobOrderPriority(t *testing.T) {
 		{ID: "task2", JobID: "job2", SlotsNeeded: 1, Group: groups[1]},
 	}
 
-	AddUnallocatedTasks(t, newTasks, system, taskList)
+	AddUnallocatedTasks(t, newTasks, taskList)
 	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap,
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	assert.Equal(t, len(toRelease), 0)
@@ -464,7 +450,6 @@ func TestJobOrderPriority(t *testing.T) {
 
 func setupSchedulerStates(
 	t *testing.T,
-	system *actor.System,
 	mockTasks []*MockTask,
 	mockGroups []*MockGroup,
 	mockAgents []*MockAgent,
@@ -485,11 +470,7 @@ func setupSchedulerStates(
 	}
 
 	groups := make(map[model.JobID]*tasklist.Group, len(mockGroups))
-	groupActors := make(map[*MockGroup]*actor.Ref, len(mockGroups))
 	for _, mockGroup := range mockGroups {
-		ref, created := system.ActorOf(actor.Addr(mockGroup.ID), mockGroup)
-		assert.Assert(t, created)
-
 		group := &tasklist.Group{
 			JobID:    model.JobID(mockGroup.ID),
 			MaxSlots: mockGroup.MaxSlots,
@@ -497,13 +478,10 @@ func setupSchedulerStates(
 			Priority: mockGroup.Priority,
 		}
 		groups[model.JobID(mockGroup.ID)] = group
-		groupActors[mockGroup] = ref
 	}
 
 	taskList := tasklist.New()
 	for _, mockTask := range mockTasks {
-		ref, _ := system.ActorOf(actor.Addr(mockTask.ID), mockTask)
-		system.Ask(ref, actor.Ping{})
 		jobID := model.JobID(mockTask.JobID)
 		if jobID == "" {
 			if mockTask.Group != nil {
@@ -517,7 +495,7 @@ func setupSchedulerStates(
 			groups[jobID] = &tasklist.Group{JobID: jobID}
 		}
 
-		req := MockTaskToAllocateRequest(mockTask, ref)
+		req := MockTaskToAllocateRequest(mockTask)
 		taskList.AddTask(req)
 
 		if mockTask.AllocatedAgent != nil {

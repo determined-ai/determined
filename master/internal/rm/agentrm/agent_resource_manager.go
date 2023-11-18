@@ -20,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -34,7 +33,6 @@ import (
 // New returns a new ResourceManager, which manages communicating with
 // and scheduling on Determined agents.
 func New(
-	system *actor.System,
 	db *db.PgDB,
 	e *echo.Echo,
 	config *config.ResourceConfig,

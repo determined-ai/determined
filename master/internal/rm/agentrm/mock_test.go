@@ -6,9 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type (
@@ -38,57 +36,6 @@ type MockTask struct {
 	BlockedNodes []string
 }
 
-func (t *MockTask) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-	case actor.PostStop:
-		t.RPRef.ResourcesReleased(sproto.ResourcesReleased{AllocationID: t.ID})
-	case SendRequestResourcesToResourceManager:
-		t.RPRef.Allocate(sproto.AllocateRequest{
-			AllocationID:      t.ID,
-			JobID:             model.JobID(t.JobID),
-			JobSubmissionTime: t.JobSubmissionTime,
-			Name:              string(t.ID),
-			SlotsNeeded:       t.SlotsNeeded,
-			Preemptible:       !t.NonPreemptible,
-			ResourcePool:      t.ResourcePool,
-			BlockedNodes:      t.BlockedNodes,
-		})
-	case SendResourcesReleasedToResourceManager:
-		t.RPRef.ResourcesReleased(sproto.ResourcesReleased{AllocationID: t.ID})
-	case ThrowError:
-		return ErrMock
-	case ThrowPanic:
-		panic(ErrMock)
-
-	case sproto.ResourcesAllocated:
-		rank := 0
-		for _, allocation := range msg.Resources {
-			if err := allocation.Start(
-				nil,
-				tasks.TaskSpec{},
-				sproto.ResourcesRuntimeInfo{
-					Token:        "",
-					AgentRank:    rank,
-					IsMultiAgent: len(msg.Resources) > 1,
-				},
-			); err != nil {
-				ctx.Respond(err)
-				return nil
-			}
-			rank++
-		}
-	case sproto.ReleaseResources:
-		t.RPRef.ResourcesReleased(sproto.ResourcesReleased{AllocationID: t.ID})
-
-	case sproto.ResourcesStateChanged:
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
 type MockGroup struct {
 	ID       string
 	MaxSlots *int
@@ -96,20 +43,7 @@ type MockGroup struct {
 	Priority *int
 }
 
-func (g *MockGroup) Receive(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
-	case actor.PreStart:
-	case actor.PostStop:
-	case *sproto.RMJobInfo:
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func MockTaskToAllocateRequest(
-	mockTask *MockTask, allocationRef *actor.Ref,
-) *sproto.AllocateRequest {
+func MockTaskToAllocateRequest(mockTask *MockTask) *sproto.AllocateRequest {
 	jobID := mockTask.JobID
 	jobSubmissionTime := mockTask.JobSubmissionTime
 
@@ -117,7 +51,7 @@ func MockTaskToAllocateRequest(
 		jobID = string(mockTask.ID)
 	}
 	if jobSubmissionTime.IsZero() {
-		jobSubmissionTime = allocationRef.RegisteredTime()
+		jobSubmissionTime = time.Now()
 	}
 
 	req := &sproto.AllocateRequest{
@@ -155,16 +89,4 @@ func NewMockAgent(
 		MaxZeroSlotContainers: maxZeroSlotContainers,
 		ZeroSlotContainers:    zeroSlotContainers,
 	}
-}
-
-func (m *MockAgent) Receive(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
-	case actor.PreStart:
-	case actor.PostStop:
-	case sproto.StartTaskContainer:
-	case sproto.KillTaskContainer:
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
 }

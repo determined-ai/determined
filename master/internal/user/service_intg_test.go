@@ -53,7 +53,7 @@ func setup(t *testing.T) (*Service, *mocks.UserAuthZ, echo.Context) {
 	require.NoError(t, etc.SetRootPath("../../static/srv"))
 
 	externalSessions := &model.ExternalSessions{}
-	InitService(pgDB, nil, externalSessions)
+	InitService(pgDB, externalSessions)
 	return GetService(), userAuthzSingleton, ctx
 }
 
