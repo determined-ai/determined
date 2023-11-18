@@ -15,8 +15,8 @@ A Determined cluster has the following requirements.
 Software
 ========
 
--  The Determined agent and master nodes must be configured with Ubuntu 20.04 or later, CentOS 7, or
-   macOS 10.13 or later.
+-  The Determined agent and master nodes must be configured with Ubuntu 20.04 or later, AlmaLinux 8 
+   (or compatible enterprise Linux) or later, or macOS 10.13 or later.
 
 -  The agent nodes must have :ref:`Docker installed <install-docker>`.
 
@@ -68,7 +68,7 @@ Install on Linux
       sudo systemctl reload docker
       sudo usermod -aG docker $USER
 
-   On CentOS:
+   On AlmaLinux:
 
    .. code:: bash
 
@@ -94,7 +94,7 @@ Install on Linux
       sudo apt-get install -y --no-install-recommends nvidia-container-toolkit
       sudo systemctl restart docker
 
-   On CentOS:
+   On AlmaLinux:
 
    .. code:: bash
 
