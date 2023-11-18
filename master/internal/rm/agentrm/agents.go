@@ -49,7 +49,6 @@ func newAgentService(
 	opts *aproto.MasterSetAgentOptions,
 ) (*agents, *queue.Queue[agentUpdatedEvent]) {
 	agentUpdates := queue.New[agentUpdatedEvent]()
-	// REVIEWER NOTE: fine to do prestart sync because we ping ask'd the agents actor anyway.
 	a := &agents{
 		syslog:       logrus.WithField("component", "agents"),
 		agents:       tasklist.NewRegistry[agentID, *agent](),
@@ -220,8 +219,6 @@ func (a *agents) createAgent(
 		unregister,
 	), nil
 }
-
-// REVIEWER NOTE: I removed all the echo endpoints, nothing uses them.
 
 func (a *agents) summarize() model.AgentsSummary {
 	agents := a.agents.Snapshot()

@@ -7,6 +7,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
+const (
+	best  = "best"
+	worst = "worst"
+)
+
 // Hard Constraints.
 func agentPermittedSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 	return !slices.Contains(req.BlockedNodes, string(agent.id))

@@ -43,7 +43,7 @@ type slot struct {
 type agentState struct {
 	syslog *log.Entry
 
-	id               agentID // TODO(!!!): Why agentID and aproto.ID? Let's just have one or the other.
+	id               agentID // TODO(DET-9976): Why agentID and aproto.ID? Let's just have one or the other.
 	handler          *agent
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
@@ -59,7 +59,7 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-// TODO(!!!): It is error-prone that we can new up an agentState is incomplete / would cause panics.
+// TODO(DET-9977): It is error-prone that we can new up an agentState is invalid / would cause panics.
 func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		syslog:                log.WithField("component", "agent-state-state").WithField("id", id),

@@ -92,13 +92,11 @@ func newResourcePool(
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
-	// REVIEWER NOTE: PreStart wasn't sync but I decided after review it was fine to be.
 	err := rp.setupProvisioner()
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO(!!!): Do we need to store this timer and stop if; if we can "crash" we do.
 	rp.rescheduleTimer = time.AfterFunc(actionCoolDown, rp.schedulerTick)
 	return rp, nil
 }
@@ -154,7 +152,6 @@ func (rp *resourcePool) allocateRequest(msg sproto.AllocateRequest) {
 	if msg.Restore {
 		err := rp.restoreResources(&msg)
 		if err != nil {
-			// TODO(!!!): We could handle this error in-band now (without the rmevents).
 			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
@@ -360,8 +357,6 @@ func (rp *resourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.Group {
 	return g
 }
 
-// TODO(!!!): Do we even need to "crash" resource pools? Ever..?
-// TODO(!!!): Test failure domains, what happens when this panics?
 func (rp *resourcePool) schedulerTick() {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
@@ -608,9 +603,8 @@ func (rp *resourcePool) ValidateCommandResources(
 	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
 }
 
-// getResourceSummary requests a summary of the resources used by the resource pool (agents, slots, cpu containers).
-// TODO(!!!): Caps, following the convention we have going.
-func (rp *resourcePool) getResourceSummary() resourceSummary {
+// GetResourceSummary requests a summary of the resources used by the resource pool (agents, slots, cpu containers).
+func (rp *resourcePool) GetResourceSummary() resourceSummary {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
@@ -795,7 +789,6 @@ func (rp *resourcePool) GetJobQStats(msg sproto.GetJobQStats) *jobv1.QueueStats 
 	return tasklist.JobStats(rp.taskList)
 }
 
-// TODO(!!!): There are a lot of messages that really _do not_ need to cause a reschedule.
 func (rp *resourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJobInfo {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()

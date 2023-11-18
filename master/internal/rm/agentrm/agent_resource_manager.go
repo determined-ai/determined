@@ -31,11 +31,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
-const (
-	best  = "best"
-	worst = "worst"
-)
-
 // New returns a new ResourceManager, which manages communicating with
 // and scheduling on Determined agents.
 func New(
@@ -58,33 +53,6 @@ func New(
 	return newAgentResourceManager(db, config, cert, agentService, agentUpdates)
 }
 
-func (a *ResourceManager) handlePatchSlotState(
-	agentID agentID, msg patchSlotState,
-) (*model.SlotSummary, error) {
-	agent, ok := a.agentService.get(agentID)
-	if !ok {
-		return nil, api.NotFoundErrs("agent", string(agentID), true)
-	}
-	return agent.PatchSlotState(msg)
-}
-
-// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
-func (a *ResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcePoolAvailabilityRequest) (bool, error) {
-	pool, err := a.poolByName(v.Name)
-	if err != nil {
-		return false, err
-	}
-
-	resp, err := pool.CapacityCheck(sproto.CapacityCheck{
-		Slots:  v.Slots,
-		TaskID: v.TaskID,
-	})
-	if err != nil {
-		return false, err
-	}
-	return resp.CapacityExceeded, nil
-}
-
 // A ResourceManager manages many resource pools and routing requests for resources to them.
 type ResourceManager struct {
 	syslog *logrus.Entry
@@ -94,7 +62,7 @@ type ResourceManager struct {
 	cert        *tls.Certificate
 	db          *db.PgDB
 
-	agentService *agents // TODO(!!!): Rename to agents.
+	agentService *agents
 	agentUpdates *queue.Queue[agentUpdatedEvent]
 	pools        map[string]*resourcePool // immutable. cannot be made mutable without significant change.
 }
@@ -118,9 +86,9 @@ func newAgentResourceManager(
 	for ix, config := range a.poolsConfig {
 		rp, err := a.createResourcePool(a.db, a.poolsConfig[ix], a.cert)
 		if err != nil {
-			// TODO(!!!): Crash cluster or no?
+			// TODO(DET-9975): Don't panic.
 			a.syslog.WithError(err).Errorf("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
-			continue
+			panic(err)
 		}
 		a.pools[config.PoolName] = rp
 	}
@@ -156,8 +124,6 @@ func (a *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.Resource
 	}
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
-		// TODO(!!!): Post actor refactor, apply https://github.com/uber-go/guide/blob/master/style.md#handle-errors-once
-		// everywhere, but make sure we don't lose any crucial logging.
 		a.syslog.WithError(err).Error("handling an allocate request")
 		return nil, err
 	}
@@ -224,6 +190,33 @@ func (a *ResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.Enabl
 		return nil, err
 	}
 	return &apiv1.EnableSlotResponse{Slot: result.ToProto()}, nil
+}
+
+func (a *ResourceManager) handlePatchSlotState(
+	agentID agentID, msg patchSlotState,
+) (*model.SlotSummary, error) {
+	agent, ok := a.agentService.get(agentID)
+	if !ok {
+		return nil, api.NotFoundErrs("agent", string(agentID), true)
+	}
+	return agent.PatchSlotState(msg)
+}
+
+// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
+func (a *ResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcePoolAvailabilityRequest) (bool, error) {
+	pool, err := a.poolByName(v.Name)
+	if err != nil {
+		return false, err
+	}
+
+	resp, err := pool.CapacityCheck(sproto.CapacityCheck{
+		Slots:  v.Slots,
+		TaskID: v.TaskID,
+	})
+	if err != nil {
+		return false, err
+	}
+	return resp.CapacityExceeded, nil
 }
 
 // ExternalPreemptionPending implements rm.ResourceManager.
@@ -398,8 +391,6 @@ func (*ResourceManager) IsReattachableOnlyAfterStarted() bool {
 
 // MoveJob implements rm.ResourceManager.
 func (a *ResourceManager) MoveJob(msg sproto.MoveJob) error {
-	// REVIEWER NOTE: We had a bug here; if MoveJob ever returned errors (or really anything that used AskAll),
-	// then we had a reflect failure deserializing the response.
 	for _, pool := range a.pools {
 		err := pool.MoveJob(msg)
 		if err != nil {
@@ -423,7 +414,6 @@ func (a *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		a.syslog.WithError(err).Error("recovering job position")
-		// TODO(!!!): Better error handling.
 		return
 	}
 	pool.RecoverJobPosition(msg)
@@ -500,7 +490,8 @@ func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slot
 // SetAllocationName implements rm.ResourceManager.
 func (a *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
 	for _, pool := range a.pools {
-		// TODO(!!!): Was a tell before, so the `go` is to keep the same structure. Being careful at first.
+		// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
+		// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
 		go pool.SetAllocationName(msg)
 	}
 }
@@ -508,7 +499,8 @@ func (a *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
 // SetGroupMaxSlots implements rm.ResourceManager.
 func (a *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	for _, pool := range a.pools {
-		// TODO(!!!): Was a tell before, so the `go` is to keep the same structure. Careful at first...
+		// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
+		// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
 		go pool.SetGroupMaxSlots(msg)
 	}
 }
@@ -528,7 +520,6 @@ func (a *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
 // SetGroupWeight implements rm.ResourceManager.
 func (a *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 	for _, pool := range a.pools {
-		// TODO(!!!): SetGroupWeight was an ask but SetGroupMaxSlots was a tell..? Ok.
 		pool.SetGroupWeight(msg)
 	}
 	return nil
@@ -614,7 +605,6 @@ func (a *ResourceManager) createResourcePool(
 ) (*resourcePool, error) {
 	a.syslog.Infof("creating resource pool: %s", config.PoolName)
 
-	// TODO(!!!): newResourcePool can do this logic, createResourcePool can go away.
 	// We pass the config here in by value so that in the case where we replace
 	// the scheduler config with the global scheduler config (when the pool does
 	// not define one for itself) we do not modify the original data structures.
@@ -832,12 +822,11 @@ func (a *ResourceManager) createResourcePoolSummary(
 		}
 	}
 
-	// TODO(!!!): rename rp -> pool, pool -> poolConfig for consistency in file.
 	rp, err := a.poolByName(poolName)
 	if err != nil {
 		return nil, err
 	}
-	resourceSummary := rp.getResourceSummary()
+	resourceSummary := rp.GetResourceSummary()
 
 	resp.NumAgents = int32(resourceSummary.numAgents)
 	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)

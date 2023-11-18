@@ -66,8 +66,6 @@ type (
 		//    monumental clock skew), the agent manager shoos it away, telling it to restart.
 		// Because of all this, for future developers: messages must be replay-able and writes must
 		// get buffered while down.
-		// TODO(!!!): Bug, needs to be a counter or we can mix up 2 disconnects and die erroneously.
-		// TODO(!!!): Bug, we can lose messages still with this strategy, we need to do something else.
 		awaitingReconnect bool
 		// awaitingRestore tracks the restoration of agentState.containerAllocation, which must be
 		// restored after allocation refs start and register in allocationmap. It happens in during
@@ -121,7 +119,6 @@ func newAgent(
 	restoredAgentState *agentState,
 	unregister func(),
 ) *agent {
-	// REVIEWER NOTE: good to run prestart sync because the old code ping ask'd us anyways.
 	a := &agent{
 		syslog:                logrus.WithField("component", "agent").WithField("id", id),
 		id:                    id,
@@ -172,8 +169,6 @@ func (a *agent) AllocateFreeDevices(msg allocateFreeDevices) (allocateFreeDevice
 	return allocateFreeDevicesResponse{devices: devices}, nil
 }
 
-// REVIEWER NOTE: deallocate container was always a tell in earlier code but it could error and respond with that error,
-// which means it would've panicked on "sender not expecting response" or something.
 func (a *agent) DeallocateContainer(msg deallocateContainer) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -314,7 +309,6 @@ func (a *agent) HandleWebsocketConnection(msg webSocketRequest) {
 }
 
 func (a *agent) handleWebsocketConnection(msg webSocketRequest) error {
-	// REVIEWER NOTE: returning in this function was a crash previously.
 	if a.socket != nil {
 		err := errors.New("websocket already connected")
 		a.syslog.WithError(err).Error("socket not nil when WebSocketRequest received")
@@ -548,10 +542,6 @@ func (a *agent) PatchSlotState(msg patchSlotState) (*model.SlotSummary, error) {
 	return &result, nil
 }
 
-// REVIEWER NOTE: I removed patchAllSlotStates; it was unused.
-
-// REVIEWER NOTE: I removed receive aproto.SignalContainer; it was unused.
-
 // On the Determined Enterprise Edition, when the dev cluster is started with
 // "tools/slurmcluster.sh", an SSH tunnel is created between the local host and
 // the HPC cluster. Due to the way the reverse tunnel is created, all the nodes
@@ -594,8 +584,6 @@ func (a *agent) bufferForRecovery(msg any) {
 		Debugf("buffering message until agent reconnects")
 	a.reconnectBacklog = append(a.reconnectBacklog, msg)
 }
-
-// REVIEWER NOTE: I completely removed the old echo /agents/:id
 
 func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 	a.mu.Lock()
