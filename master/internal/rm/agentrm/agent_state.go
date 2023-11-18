@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -44,8 +43,8 @@ type slot struct {
 type agentState struct {
 	syslog *log.Entry
 
-	// Handler is agent actor reference.
-	Handler          *actor.Ref
+	id               agentID // TODO(DET-9976): Why agentID and aproto.ID? Let's just have one or the other.
+	handler          *agent
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
 	enabled          bool
@@ -60,10 +59,11 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
+// TODO(DET-9977): It is error-prone that we can new up an agentState is invalid / would cause panics.
+func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 	return &agentState{
-		syslog:                log.WithField("component", "agent-state").WithField("id", msg.Agent.Address().Local()),
-		Handler:               msg.Agent,
+		syslog:                log.WithField("component", "agent-state-state").WithField("id", id),
+		id:                    id,
 		Devices:               make(map[device.Device]*cproto.ID),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
@@ -75,11 +75,11 @@ func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
 }
 
 func (a *agentState) string() string {
-	return a.Handler.Address().Local()
+	return string(a.id)
 }
 
 func (a *agentState) agentID() agentID {
-	return agentID(a.string())
+	return a.id
 }
 
 // numSlots returns the total number of slots available.
@@ -197,7 +197,8 @@ func (a *agentState) deallocateContainer(id cproto.ID) {
 // deepCopy returns a copy of agentState for scheduler internals.
 func (a *agentState) deepCopy() *agentState {
 	copiedAgent := &agentState{
-		Handler:               a.Handler,
+		id:                    a.id,
+		handler:               a.handler,
 		Devices:               maps.Clone(a.Devices),
 		maxZeroSlotContainers: a.maxZeroSlotContainers,
 		enabled:               a.enabled,
@@ -497,7 +498,7 @@ func (a *agentState) persist() error {
 
 func (a *agentState) delete() error {
 	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).
-		Where("agent_id = ?", a.Handler.Address().Local()).
+		Where("agent_id = ?", a.id).
 		Exec(context.TODO())
 	return err
 }
@@ -635,6 +636,7 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 	}
 
 	result := agentState{
+		id:                    as.AgentID,
 		syslog:                log.WithField("component", "agent-state").WithField("id", as.AgentID),
 		maxZeroSlotContainers: as.MaxZeroSlotContainers,
 		resourcePoolName:      as.ResourcePoolName,

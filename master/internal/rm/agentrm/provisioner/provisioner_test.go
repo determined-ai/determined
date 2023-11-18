@@ -77,7 +77,6 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) (*mockEnvironment, *Pro
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 		launchErr:        errInfo.NewStickyError(launchErrorTimeout, setup.LaunchErrorRetries),
 		syslog:           logrus.WithField("test-provisioner", "default"),
-		system:           system,
 	}
 	go p.Run()
 

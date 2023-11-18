@@ -21,7 +21,7 @@ type (
 var ErrMock = errors.New("mock error")
 
 type MockTask struct {
-	RMRef *actor.Ref
+	RPRef *resourcePool
 
 	TaskID         model.TaskID
 	ID             model.AllocationID
@@ -42,14 +42,9 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 	case actor.PostStop:
-		task := sproto.ResourcesReleased{AllocationID: t.ID}
-		if ctx.ExpectingResponse() {
-			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
-		} else {
-			ctx.Tell(t.RMRef, task)
-		}
+		t.RPRef.ResourcesReleased(sproto.ResourcesReleased{AllocationID: t.ID})
 	case SendRequestResourcesToResourceManager:
-		task := sproto.AllocateRequest{
+		t.RPRef.Allocate(sproto.AllocateRequest{
 			AllocationID:      t.ID,
 			JobID:             model.JobID(t.JobID),
 			JobSubmissionTime: t.JobSubmissionTime,
@@ -58,19 +53,9 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			Preemptible:       !t.NonPreemptible,
 			ResourcePool:      t.ResourcePool,
 			BlockedNodes:      t.BlockedNodes,
-		}
-		if ctx.ExpectingResponse() {
-			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
-		} else {
-			ctx.Tell(t.RMRef, task)
-		}
+		})
 	case SendResourcesReleasedToResourceManager:
-		task := sproto.ResourcesReleased{AllocationID: t.ID}
-		if ctx.ExpectingResponse() {
-			ctx.Respond(ctx.Ask(t.RMRef, task).Get())
-		} else {
-			ctx.Tell(t.RMRef, task)
-		}
+		t.RPRef.ResourcesReleased(sproto.ResourcesReleased{AllocationID: t.ID})
 	case ThrowError:
 		return ErrMock
 	case ThrowPanic:
@@ -94,7 +79,7 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			rank++
 		}
 	case sproto.ReleaseResources:
-		ctx.Tell(t.RMRef, sproto.ResourcesReleased{AllocationID: t.ID})
+		t.RPRef.ResourcesReleased(sproto.ResourcesReleased{AllocationID: t.ID})
 
 	case sproto.ResourcesStateChanged:
 
