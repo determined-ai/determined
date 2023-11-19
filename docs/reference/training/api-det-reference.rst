@@ -1,4 +1,4 @@
-.. _det-reference:
+.. _pytorch-reference:
 
 #######################
  ``det`` API Reference
