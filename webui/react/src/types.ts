@@ -21,18 +21,18 @@ export type RawJson = Record<string, any>;
 
 // these codecs have types defined because recursive types like these can't be inferred
 export type JsonArray = Array<Json>;
-export const JsonArrayC: t.Type<JsonArray> = t.recursion('JsonArray', () => t.array(JsonC));
+export const JsonArray: t.Type<JsonArray> = t.recursion('JsonArray', () => t.array(Json));
 
 export interface JsonObject {
   [key: string]: Json;
 }
-export const JsonObjectC: t.Type<JsonObject> = t.recursion('JsonObject', () =>
-  t.record(t.string, JsonC),
+export const JsonObject: t.Type<JsonObject> = t.recursion('JsonObject', () =>
+  t.record(t.string, Json),
 );
 
 export type Json = string | number | boolean | null | JsonArray | JsonObject;
-export const JsonC = t.recursion<Json>('Json', () =>
-  t.union([t.string, t.number, t.boolean, t.null, JsonArrayC, JsonObjectC]),
+export const Json = t.recursion<Json>('Json', () =>
+  t.union([t.string, t.number, t.boolean, t.null, JsonArray, JsonObject]),
 );
 
 export interface Pagination {
