@@ -10,7 +10,7 @@ import {
   getResourcePools,
   overwriteResourcePoolBindings,
 } from 'services/api';
-import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { percent } from 'utils/number';
@@ -28,12 +28,17 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.UNSPECIFIED]: structuredClone(initResourceTally),
 };
 
+const flexSchedulers: Set<V1SchedulerType> = new Set([V1SchedulerType.PBS, V1SchedulerType.SLURM]);
+
 /**
- * maximum theoretcial capacity of the resource pool in terms of the advertised
+ * maximum theoretical capacity of the resource pool in terms of the advertised
  * compute slot type.
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
+  if (flexSchedulers.has(pool.schedulerType) && pool.slotsAvailable > 0) {
+    return pool.slotsAvailable; // The case for HPC Slurm & PBS clusters
+  }
   if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
     return pool.maxAgents * pool.slotsPerAgent;
   // on-premise deployments don't have dynamic agents and we don't know how many
