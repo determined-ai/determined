@@ -20,16 +20,19 @@ export type XOR<T, U> = T | U extends object ? (Without<T, U> & U) | (Without<U,
 export type RawJson = Record<string, any>;
 
 // these codecs have types defined because recursive types like these can't be inferred
-export type JsonArray = Array<Json>;
-export const JsonArray: t.Type<JsonArray> = t.recursion('JsonArray', () => t.array(Json));
+export type JsonArray = Json[];
+export const JsonArray: t.RecursiveType<t.Type<JsonArray>> = t.recursion('JsonArray', () =>
+  t.array(Json),
+);
 
-export interface JsonObject {
-  [key: string]: Json;
-}
-export const JsonObject: t.Type<JsonObject> = t.recursion('JsonObject', () =>
+export type JsonObject = {
+  [key in string]: Json;
+};
+export const JsonObject: t.RecursiveType<t.Type<JsonObject>> = t.recursion('JsonObject', () =>
   t.record(t.string, Json),
 );
 
+// export type Json = string | number | boolean | null | JsonArray | JsonObject;
 export type Json = string | number | boolean | null | JsonArray | JsonObject;
 export const Json = t.recursion<Json>('Json', () =>
   t.union([t.string, t.number, t.boolean, t.null, JsonArray, JsonObject]),
