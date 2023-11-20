@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Modal } from 'antd';
+import { ButtonProps, Modal } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
-import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { useTheme } from 'hew/Theme';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import usePrevious from 'hooks/usePrevious';
 import { RecordUnknown, ValueOf } from 'types';
@@ -16,9 +15,20 @@ export const ModalCloseReason = {
 
 export type ModalCloseReason = ValueOf<typeof ModalCloseReason>;
 
-interface ModalProps<T> extends ModalFuncProps {
+export interface ModalProps<T> {
   /** use to provide context only available at modal open time */
+  className?: string;
+  closable?: boolean;
+  content?: ReactNode;
   context?: T;
+  icon?: ReactNode;
+  maskClosable?: boolean;
+  okButtonProps?: ButtonProps;
+  okText: ReactNode;
+  onCancel: () => void;
+  onOk: () => void;
+  open?: boolean;
+  title: string;
 }
 
 export type ModalOpen<T = RecordUnknown> = (modalProps?: ModalProps<T>) => void;
@@ -53,7 +63,7 @@ interface ModalConfig {
 function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const componentUnmounting = useRef(false);
-  const [modalProps, setModalProps] = useState<ModalFuncProps>();
+  const [modalProps, setModalProps] = useState<ModalProps<T>>();
   const prevModalProps = usePrevious(modalProps, undefined);
   const [modal, antdContextHolder] = Modal.useModal();
   const {
@@ -78,7 +88,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     modalRef.current = undefined;
   }, []);
 
-  const modalOpen = useCallback((props: ModalFuncProps = {}) => {
+  const modalOpen = useCallback((props: ModalProps = {}) => {
     setModalProps(props);
   }, []);
 
@@ -132,7 +142,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     // Only render/re-render when modal props have changed.
     if (!modalProps || modalProps === prevModalProps) return;
 
-    const completeModalProps: ModalFuncProps = {
+    const completeModalProps: ModalProps = {
       maskClosable: true,
       open: true,
       style: { minWidth: 280 },

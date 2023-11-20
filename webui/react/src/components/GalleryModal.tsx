@@ -1,11 +1,11 @@
 import { Modal } from 'antd';
-import { ModalProps } from 'antd/es/modal/Modal';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useTheme } from 'hew/Theme';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import { ModalProps } from 'hooks/useModal/useModal';
 import useResize from 'hooks/useResize';
 import { isNumber } from 'utils/data';
 import { isPercent, percentToFloat } from 'utils/number';
@@ -15,14 +15,17 @@ import css from './GalleryModal.module.scss';
 interface Props extends ModalProps {
   children: React.ReactNode;
   height?: number | string;
+  onCancel?: () => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  open?: boolean;
 }
 
 const GalleryModal: React.FC<Props> = ({
   height = '80%',
   onNext,
   onPrevious,
+  open = true,
   children,
   ...props
 }: Props) => {
@@ -70,7 +73,7 @@ const GalleryModal: React.FC<Props> = ({
   }, [onNext, onPrevious]);
 
   return (
-    <Modal centered footer={null} open width={width} {...props} wrapClassName={themeClass}>
+    <Modal centered footer={null} open={open} width={width} {...props} wrapClassName={themeClass}>
       <div className={css.base} style={{ minHeight }}>
         {children}
         <div className={css.prev}>

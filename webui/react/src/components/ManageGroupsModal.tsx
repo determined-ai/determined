@@ -38,7 +38,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
   useEffect(() => {
     if (userGroups) {
       form.setFieldsValue({
-        [GROUPS_NAME]: userGroups?.map((ug) => ug.group.groupId),
+        [GROUPS_NAME]: userGroups?.map((ug) => ug.group.groupId ?? 0),
       });
     }
   }, [form, userGroups]);
