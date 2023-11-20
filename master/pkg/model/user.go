@@ -7,13 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
-
-	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
@@ -188,9 +189,9 @@ func (e *ExternalSessions) Validate(claims *JWT) error {
 		return nil
 	}
 	d := time.Unix(claims.IssuedAt, 0)
-	v := e.Invalidations.ValidFrom(claims.UserID)
+	v := e.Invalidations.GetInvalidatonTime(claims.UserID)
 	if d.Before(v) {
-		return errors.New("token has been invalidated")
+		return jwt.ErrTokenExpired
 	}
 	return nil
 }
@@ -254,18 +255,26 @@ func (e *ExternalSessions) StartInvalidationPoll(cert *tls.Certificate) {
 
 // InvalidationMap tracks times before which users should be considered invalid.
 type InvalidationMap struct {
-	DefaultTime time.Time            `json:"defaultTime"`
-	LastUpdated time.Time            `json:"lastUpdated"`
-	Overrides   map[string]time.Time `json:"overrides"`
+	DefaultTime       time.Time                       `json:"defaultTime"`
+	LastUpdated       time.Time                       `json:"lastUpdated"`
+	InvalidationTimes map[string]map[string]time.Time `json:"invalidationTimes"`
 }
 
-// ValidFrom returns the time from which tokens for the specified user are valid.
-func (im *InvalidationMap) ValidFrom(id string) time.Time {
-	ts, ok := im.Overrides[id]
-	if ok {
-		return ts
+// GetInvalidatonTime returns which the token invalidation time for the specified user.
+func (im *InvalidationMap) GetInvalidatonTime(id string) time.Time {
+	times, ok := im.InvalidationTimes[id]
+	if !ok {
+		return im.DefaultTime
 	}
-	return im.DefaultTime
+
+	var latest time.Time
+	for _, t := range times {
+		if latest.IsZero() || latest.Before(t) {
+			latest = t
+		}
+	}
+
+	return latest
 }
 
 // UserWebSetting is a record of user web setting.
