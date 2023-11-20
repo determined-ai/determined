@@ -235,11 +235,9 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	c.exitStatus = ae
 
-	err := c.db.CompleteTask(c.taskID, time.Now().UTC())
-	if err != nil {
+	if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
 	}
-
 	if err := user.DeleteSessionByToken(context.TODO(), c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 		c.syslog.WithError(err).Errorf(
 			"failure to delete user session for task: %v", c.taskID)
