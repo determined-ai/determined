@@ -38,7 +38,7 @@ experiment, run:
  Manage Trained Models
 ***********************
 
-Determined includes a built-in :ref:`model registry <organizing-models>`. to manage trained models
+Determined includes a built-in :ref:`model registry <organizing-models>` to manage trained models
 and their respective versions.
 
 .. toctree::
