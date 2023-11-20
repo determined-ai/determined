@@ -23,6 +23,10 @@ Mappings:
       Master: ami-0abbe417ed83c0b29
       Agent: ami-03ae92f69e6843980
       Bastion: ami-0abbe417ed83c0b29
+    eu-north-1:
+      Master: ami-0b9ca922f552e0a9d
+      Agent: ami-0cfc7de68b98a4c60
+      Bastion: ami-0b9ca922f552e0a9d
     eu-west-1:
       Master: ami-0e3f7dd2dc743e48a
       Agent: ami-0577e9411a5a8332a
