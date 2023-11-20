@@ -11,8 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -239,10 +237,6 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	err := c.db.CompleteTask(c.taskID, time.Now().UTC())
 	if err != nil {
-		var sErr status.Status
-		if errors.As(err, &sErr) && sErr.Code() != codes.NotFound {
-			return
-		}
 		c.syslog.WithError(err).Error("marking task complete")
 	}
 
