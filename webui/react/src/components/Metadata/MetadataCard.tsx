@@ -1,7 +1,8 @@
-import { Card, Space } from 'antd';
+import { Typography } from 'antd';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Spinner from 'hew/Spinner';
+import Surface from 'hew/Surface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Metadata } from 'types';
@@ -56,36 +57,34 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
   }, [isEditing, metadataArray.length]);
 
   return (
-    <Card
-      bodyStyle={{ padding: '16px' }}
-      extra={
-        isEditing ? (
-          <Space size="small">
-            <Button size="small" onClick={cancelEditMetadata}>
-              Cancel
-            </Button>
-            <Button size="small" type="primary" onClick={saveMetadata}>
-              Save
-            </Button>
-          </Space>
-        ) : (
-          disabled || (
-            <Button
-              icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
-              type="text"
-              onClick={editMetadata}
-            />
-          )
+    <Surface>
+      <Typography.Title level={5}>Metadata</Typography.Title>
+      {isEditing ? (
+        <>
+          <Button size="small" onClick={cancelEditMetadata}>
+            Cancel
+          </Button>
+          <Button size="small" type="primary" onClick={saveMetadata}>
+            Save
+          </Button>
+        </>
+      ) : (
+        disabled || (
+          <Button
+            icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
+            type="text"
+            onClick={editMetadata}
+          />
         )
-      }
-      headStyle={{ paddingInline: '16px' }}
-      title={'Metadata'}>
+      )}
       {showPlaceholder ? (
-        <div
-          style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
-          onClick={editMetadata}>
-          {disabled ? 'No metadata present.' : 'Add Metadata...'}
-        </div>
+        <Surface>
+          <div
+            style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
+            onClick={editMetadata}>
+            {disabled ? 'No metadata present.' : 'Add Metadata...'}
+          </div>
+        </Surface>
       ) : (
         <Spinner spinning={isLoading}>
           <EditableMetadata
@@ -95,7 +94,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
           />
         </Spinner>
       )}
-    </Card>
+    </Surface>
   );
 };
 
