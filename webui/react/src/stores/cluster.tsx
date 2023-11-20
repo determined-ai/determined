@@ -28,7 +28,7 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.UNSPECIFIED]: structuredClone(initResourceTally),
 };
 
-const flexSchedulers: V1SchedulerType[] = [V1SchedulerType.PBS, V1SchedulerType.SLURM];
+const flexSchedulers: Set<V1SchedulerType> = new Set([V1SchedulerType.PBS, V1SchedulerType.SLURM]);
 
 /**
  * maximum theoretical capacity of the resource pool in terms of the advertised
@@ -36,11 +36,7 @@ const flexSchedulers: V1SchedulerType[] = [V1SchedulerType.PBS, V1SchedulerType.
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
-  if (
-    flexSchedulers.includes(pool.schedulerType) &&
-    pool.slotsAvailable &&
-    pool.slotsAvailable > 0
-  ) {
+  if (flexSchedulers.has(pool.schedulerType) && pool.slotsAvailable > 0) {
     return pool.slotsAvailable; // The case for HPC Slurm & PBS clusters
   }
   if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
