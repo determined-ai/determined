@@ -312,6 +312,11 @@ func (c *Config) Resolve() error {
 		c.OIDC.AutoProvisionUsers = false
 	}
 
+	if c.OIDC.GroupsClaimName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
+		log.Warn("groups_claim_name requires rbac to be enabled")
+		c.OIDC.GroupsClaimName = ""
+	}
+
 	return nil
 }
 
