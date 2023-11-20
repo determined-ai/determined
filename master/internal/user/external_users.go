@@ -40,7 +40,7 @@ func ByExternalToken(tokenText string,
 	claims := token.Claims.(*model.JWT)
 
 	if ext.Validate(claims) != nil {
-		return nil, nil, errors.New("token has been invalidated")
+		return nil, nil, jwt.ErrTokenExpired
 	}
 
 	var isAdmin bool
