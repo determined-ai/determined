@@ -67,7 +67,7 @@ func (cs *CommandService) RestoreAllCommands(
 		Where("task.task_id = command_snapshot.task_id").
 		Scan(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to remake commands: %w", err)
+		cs.syslog.Errorf("failed to remake commands: %s", err)
 	}
 
 	for i := range snapshots {
