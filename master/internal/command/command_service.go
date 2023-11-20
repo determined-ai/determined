@@ -230,10 +230,7 @@ func (cs *CommandService) KillNTSC(id string, taskType model.TaskType) (*Command
 
 	if !completed {
 		err = task.DefaultService.Signal(c.allocationID, task.KillAllocation, "user requested kill")
-		if strings.Contains(err.Error(), "not found") {
-			return nil, nil
-		}
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "not found") {
 			return nil, fmt.Errorf("failed to kill allocation: %w", err)
 		}
 	}
