@@ -68,12 +68,14 @@ func (cs *CommandService) RestoreAllCommands(
 		Scan(ctx)
 	if err != nil {
 		cs.syslog.Errorf("failed to remake commands: %s", err)
+		return nil
 	}
 
 	for i := range snapshots {
 		cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
 		if err != nil {
-			return err
+			cs.syslog.Errorf("failed to restore from snapshot: %s", err)
+			continue
 		}
 		// Restore to the command service registry.
 		cs.commands[cmd.taskID] = cmd
