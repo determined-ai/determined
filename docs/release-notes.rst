@@ -75,8 +75,8 @@ Version 0.26.3
    Mixed Precision (``torch.cuda.amp``). For examples, refer to the `examples
    <https://github.com/determined-ai/determined/tree/0.26.1/harness/tests/experiment/fixtures/pytorch_amp>`_.
 
--  Images: Likewise, environment images will no longer include the Apex package in a future version
-   of Determined. If needed, users can install it from the official repository.
+-  Images: Environment images will no longer include the Apex package in a future version of
+   Determined. If needed, users can install it from the official repository.
 
 Version 0.26.2
 ==============

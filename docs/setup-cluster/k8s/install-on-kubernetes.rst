@@ -459,5 +459,5 @@ To uninstall Determined run:
  Next Steps
 ************
 
-:doc:`custom-pod-specs` :doc:`k8s-dev-guide` :doc:`setup-aks-cluster` :doc:`setup-eks-cluster`
-:doc:`setup-gke-cluster`
+:ref:`custom-pod-specs` :ref:`k8s-dev-guide` :ref:`setup-aks-cluster` :ref:`setup-eks-cluster`
+:ref:`setup-gke-cluster`

@@ -47,8 +47,8 @@ hyperparameter search, etc.
 Looking for a Basic Tutorial?
 =============================
 
-If you'd like to review how to implement the Determined APIs on simple models, visit our `Tutorials
-<https://docs.determined.ai/latest/tutorials/index.html>`_.
+If you'd like to review how to implement the Determined APIs on simple models, visit our
+:ref:`tutorials-index`.
 
 Prefer to use an Example Model?
 ===============================
