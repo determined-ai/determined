@@ -145,13 +145,16 @@ const TableActionBar: React.FC<Props> = ({
   const experimentIds = useMemo(() => Array.from(selectedExperimentIds), [selectedExperimentIds]);
 
   const experimentMap = useMemo(() => {
-    return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
-        experiment.data.experiment,
-        project,
-      );
-      return acc;
-    }, {} as Record<number, ProjectExperiment>);
+    return experiments.filter(Loadable.isLoaded).reduce(
+      (acc, experiment) => {
+        acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
+          experiment.data.experiment,
+          project,
+        );
+        return acc;
+      },
+      {} as Record<number, ProjectExperiment>,
+    );
   }, [experiments, project]);
 
   const selectedExperiments = useMemo(

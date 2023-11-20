@@ -317,10 +317,13 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   );
 
   const checkpointMap = useMemo(() => {
-    return (checkpoints ?? []).reduce((acc, checkpoint) => {
-      acc[checkpoint.uuid] = checkpoint;
-      return acc;
-    }, {} as Record<RecordKey, CoreApiGenericCheckpoint>);
+    return (checkpoints ?? []).reduce(
+      (acc, checkpoint) => {
+        acc[checkpoint.uuid] = checkpoint;
+        return acc;
+      },
+      {} as Record<RecordKey, CoreApiGenericCheckpoint>,
+    );
   }, [checkpoints]);
 
   const availableBatchActions = useMemo(() => {

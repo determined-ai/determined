@@ -104,7 +104,7 @@ const NavigationTabbar: React.FC = () => {
             label: workspace.name,
             onClick: (e: AnyMouseEvent) =>
               handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-          } as ActionItem),
+          }) as ActionItem,
       ),
   );
 

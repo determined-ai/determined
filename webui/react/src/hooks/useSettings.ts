@@ -185,7 +185,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     () =>
       ({
         ...(state ?? {}),
-      } as SettingsRecord<T>),
+      }) as SettingsRecord<T>,
     [state],
   );
 
