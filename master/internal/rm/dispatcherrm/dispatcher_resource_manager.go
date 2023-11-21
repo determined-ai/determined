@@ -26,7 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -125,7 +124,6 @@ type DispatcherResourceManager struct {
 
 // New returns a new dispatcher resource manager.
 func New(
-	system *actor.System,
 	db *db.PgDB,
 	echo *echoV4.Echo,
 	cfg *config.ResourceConfig,

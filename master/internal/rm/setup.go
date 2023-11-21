@@ -30,7 +30,7 @@ func New(
 		return kubernetesrm.New(db, config, taskContainerDefaults, opts, cert)
 	case config.ResourceManager.DispatcherRM != nil,
 		config.ResourceManager.PbsRM != nil:
-		return dispatcherrm.New(system, db, echo, config, opts, cert)
+		return dispatcherrm.New(db, echo, config, opts, cert)
 	default:
 		panic("no expected resource manager config is defined")
 	}
