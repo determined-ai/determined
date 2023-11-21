@@ -15,10 +15,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// addGroup adds a group to the database. Returns ErrDuplicateRow if a
+// AddGroupTx adds a group to the database. Returns ErrDuplicateRow if a
 // group already exists with the same name or ID. Will use db.Bun() if
 // passed nil for idb.
-func addGroup(ctx context.Context, idb bun.IDB, group model.Group) (model.Group, error) {
+func AddGroupTx(ctx context.Context, idb bun.IDB, group model.Group) (model.Group, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -33,7 +33,7 @@ func AddGroupWithMembers(ctx context.Context, group model.Group, uids ...model.U
 	[]model.User, error,
 ) {
 	if len(uids) == 0 {
-		newGroup, err := addGroup(ctx, nil, group)
+		newGroup, err := AddGroupTx(ctx, nil, group)
 		return newGroup, nil, err
 	}
 	tx, err := db.Bun().BeginTx(ctx, nil)
@@ -50,7 +50,7 @@ func AddGroupWithMembers(ctx context.Context, group model.Group, uids ...model.U
 		}
 	}()
 
-	group, err = addGroup(ctx, tx, group)
+	group, err = AddGroupTx(ctx, tx, group)
 	if err != nil {
 		return model.Group{}, nil, err
 	}
