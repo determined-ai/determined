@@ -392,7 +392,7 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	go func() {
-		if _, err := a.deleteExperiments([]*model.Experiment{e}, &curUser); err != nil {
+		if err := a.deleteExperiments([]*model.Experiment{e}, &curUser); err != nil {
 			log.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
 			if err := a.m.db.SaveExperimentState(e); err != nil {
@@ -414,45 +414,42 @@ func (a *apiServer) DeleteExperiments(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	results, experiments, err := experiment.DeleteExperiments(ctx, req.ExperimentIds,
-		req.Filters)
+	results, experiments, err := experiment.DeleteExperiments(ctx, req.ExperimentIds, req.Filters)
 
 	go func() {
-		expIDs, err := a.deleteExperiments(experiments, curUser)
+		err := a.deleteExperiments(experiments, curUser)
 		if err != nil {
 			// set experiment state to DeleteFailed
-			for _, id := range expIDs {
+			for _, id := range req.ExperimentIds {
 				log.WithError(err).Errorf("deleting experiment %d", id)
 			}
 			_, err = db.Bun().NewUpdate().
 				ModelTableExpr("experiments as e").
 				Set("state = ?", model.DeleteFailedState).
-				Where("id IN (?)", bun.In(expIDs)).
+				Where("id IN (?)", bun.In(req.ExperimentIds)).
 				Exec(ctx)
 			if err != nil {
-				for _, id := range expIDs {
+				for _, id := range req.ExperimentIds {
 					log.WithError(err).Errorf("transitioning experiment %d to %s", id,
 						model.DeleteFailedState)
 				}
 			}
-		} else {
-			for _, id := range expIDs {
-				log.WithError(err).Errorf("deleting experiment %d", id)
-			}
+			return
+		}
+		for _, id := range req.ExperimentIds {
+			log.Infof("deleted experiment %d", id)
 		}
 	}()
 
 	return &apiv1.DeleteExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
-func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model.User) ([]int,
-	error,
-) {
+// deleteExperiments synchronously tries to delete all artifacts associated with the provided experiments. An error
+// indicates all the experiments were not successfully deleted. Since all artifacts cannot be delete transactionally the
+// experiments may be in a partially deleted state, but the experiment at least row will still exist. This can be
+// safetly retried as many times as it takes to successfully delete the experiments.
+func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model.User) error {
 	taskSpec := *a.m.taskSpec
-
-	sema := make(chan struct{}, maxConcurrentDeletes)
-	g, _ := errgroup.WithContext(context.Background())
-	successfulExpIDs := make(chan int, len(exps))
 
 	var expIDs []int
 	for _, e := range exps {
@@ -460,9 +457,11 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 	}
 	workspaceIDs, err := workspace.WorkspacesIDsByExperimentIDs(context.TODO(), expIDs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	sema := make(chan struct{}, maxConcurrentDeletes)
+	g, _ := errgroup.WithContext(context.Background())
 	for i, e := range exps {
 		i := i
 		exp := e
@@ -505,40 +504,33 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				log.WithError(err).Errorf("cleaning up resource mananger resources")
 				return err
 			}
-			successfulExpIDs <- exp.ID
 			return nil
 		})
 	}
 
 	err = g.Wait()
-	close(successfulExpIDs)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to checkpoint gc")
-	}
-
-	var processExpIDs []int
-	for expID := range successfulExpIDs {
-		processExpIDs = append(processExpIDs, expID)
+		return errors.Wrapf(err, "failed to checkpoint gc")
 	}
 
 	ctx := context.Background()
-	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), processExpIDs)
+	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), expIDs)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
+		return errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
 
 	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIDs); err != nil {
-		return nil, errors.Wrapf(err, "failed to delete trial logs from backend")
+		return errors.Wrapf(err, "failed to delete trial logs from backend")
 	}
 
 	if err = a.m.taskLogBackend.DeleteTaskLogs(taskIDs); err != nil {
-		return nil, errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
+		return errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
 	}
 
-	if err = a.m.db.DeleteExperiments(ctx, processExpIDs); err != nil {
-		return nil, errors.Wrapf(err, "deleting experiments from database")
+	if err = a.m.db.DeleteExperiments(ctx, expIDs); err != nil {
+		return errors.Wrapf(err, "deleting experiments from database")
 	}
-	return processExpIDs, nil
+	return nil
 }
 
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
