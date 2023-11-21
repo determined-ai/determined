@@ -1700,7 +1700,7 @@ func TestDeleteExperiments(t *testing.T) {
 		for _, expID := range expIDs {
 			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
 			require.NoError(t, err, "expected experiment to go to DELETE_FAILED")
-			if e.Experiment.State != experimentv1.State_STATE_DELETE_FAILED {
+			if e.Experiment.State == experimentv1.State_STATE_DELETE_FAILED {
 				inDeleteFailed++
 			}
 		}
