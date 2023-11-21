@@ -391,13 +391,13 @@ class Experiment:
         while True:
             self.reload()
             if self.state in (
-                bindings.experimentv1State.COMPLETED,
-                bindings.experimentv1State.CANCELED,
-                bindings.experimentv1State.DELETED,
-                bindings.experimentv1State.ERROR,
+                ExperimentState.COMPLETED,
+                ExperimentState.CANCELED,
+                ExperimentState.DELETED,
+                ExperimentState.ERROR,
             ):
-                return ExperimentState(self.state.value)
-            elif self.state == bindings.experimentv1State.PAUSED:
+                return self.state
+            elif self.state == ExperimentState.PAUSED:
                 raise ValueError(
                     f"Experiment {self.id} is in paused state. Make sure the experiment is active."
                 )
