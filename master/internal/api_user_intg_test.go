@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/version"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -148,7 +149,31 @@ func fetchUserIds(ctx context.Context, t *testing.T, api *apiServer, req *apiv1.
 	return ids
 }
 
+func TestCreateUser(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	t.Run("cannot create a remote outside of EE", func(t *testing.T) {
+		tmp := version.IsEE
+		version.IsEE = false
+		defer func() { version.IsEE = tmp }()
+
+		username := uuid.New().String()
+		_, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+			User: &userv1.User{
+				Username: username,
+				Remote:   true,
+				Active:   true,
+			},
+		})
+		require.ErrorIs(t, err, errUserRemoteRequiresEE)
+	})
+}
+
 func TestLoginRemote(t *testing.T) {
+	tmp := version.IsEE
+	version.IsEE = true
+	defer func() { version.IsEE = tmp }()
+
 	api, _, ctx := setupAPITest(t, nil)
 
 	t.Run("created with remote", func(t *testing.T) {
