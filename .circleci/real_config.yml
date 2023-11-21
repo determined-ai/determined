@@ -2097,6 +2097,12 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
+      - when:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - run: make -C master build-race
+            - run: make -C agent build-race
+
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
@@ -2127,6 +2133,14 @@ jobs:
             - store_artifacts:
                 path: /tmp/priority_scheduler
                 destination: devcluster-priority_scheduler-logs
+
+      - when:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - run:
+                name: Check for data races
+                # See DEVCLUSTER_LOG_PATH for where this comes from.
+                command: '! grep -A 100 "WARNING: DATA RACE" /tmp/devcluster/*.log'
 
   deploy:
     parameters:
