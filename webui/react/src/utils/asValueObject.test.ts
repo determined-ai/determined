@@ -21,6 +21,7 @@ const codec = t.type({
   ),
   number: t.number,
   string: t.string,
+  union: t.union([t.literal(true), t.literal(0)]),
 });
 
 const asCodec = asValueObjectFactory(codec);
@@ -38,6 +39,7 @@ const arb = fc.record({
   }),
   number: fc.float(),
   string: fc.string(),
+  union: fc.constantFrom(true as const, 0 as const),
 });
 
 const extraArb = fc.record({

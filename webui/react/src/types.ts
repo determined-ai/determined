@@ -32,7 +32,6 @@ export const JsonObject: t.RecursiveType<t.Type<JsonObject>> = t.recursion('Json
   t.record(t.string, Json),
 );
 
-// export type Json = string | number | boolean | null | JsonArray | JsonObject;
 export type Json = string | number | boolean | null | JsonArray | JsonObject;
 export const Json = t.recursion<Json>('Json', () =>
   t.union([t.string, t.number, t.boolean, t.null, JsonArray, JsonObject]),

@@ -2,14 +2,17 @@ import { getEq as arrayEqFor, every, map, some, sort } from 'fp-ts/Array';
 import { Eq as boolEq } from 'fp-ts/boolean';
 import { Eq, fromEquals, struct as structEq } from 'fp-ts/Eq';
 import { flow, pipe, tuple, tupled } from 'fp-ts/function';
-import { Eq as numberEq } from 'fp-ts/number';
 import { contramap } from 'fp-ts/Ord';
 import { and } from 'fp-ts/Predicate';
 import { fromEntries, getEq as recordEqFor, toEntries } from 'fp-ts/Record';
 import { Eq as stringEq, Ord as stringOrd } from 'fp-ts/string';
-import { fst } from 'fp-ts/Tuple';
+import { fst, mapSnd } from 'fp-ts/Tuple';
 import { hash } from 'immutable';
 import * as t from 'io-ts';
+
+// fp-ts's equality checking for nubmers fails if both values are NaN. use the
+// SameValueZero algorithm to determine equality instead
+const numberEq = fromEquals((x: number, y: number) => [x].includes(y));
 
 export type ValueObjectOf<T> = T extends { equals?: unknown; hashCode?: unknown }
   ? never
@@ -159,7 +162,7 @@ const recursiveStripKeys = <T extends t.Mixed>(codec: T, value: t.TypeOf<T>): t.
     return pipe(
       value,
       toEntries,
-      map(([key, v]): [string, unknown] => [key, recursiveStripKeys(codec.codomain, v)]),
+      map(mapSnd((v) => recursiveStripKeys(codec.codomain, v))),
       sort(pipe(stringOrd, contramap(fst<string, unknown>))),
       fromEntries,
     );
