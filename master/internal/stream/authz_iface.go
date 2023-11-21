@@ -11,12 +11,17 @@ import (
 
 // StreamAuthZ is the interface for streaming authorization.
 type StreamAuthZ interface {
-	// GetTrialStreamableScopes returns a AccessScopeSet where the user has permission to view trials.
+	// GetTrialStreamableScopes returns an AccessScopeSet
+	// where the user has permission to view trials.
 	GetTrialStreamableScopes(ctx context.Context, curUser model.User) (model.AccessScopeSet, error)
 
-	// GetMetricStreamableScopes returns a AccessScopeSet
+	// GetMetricStreamableScopes returns an AccessScopeSet
 	// where the user has permission to view metrics.
 	GetMetricStreamableScopes(ctx context.Context, curUser model.User) (model.AccessScopeSet, error)
+
+	// GetAllocationStreamableScopes returns an AccessScopeSet
+	// where the user has permission to view allocations.
+	GetAllocationStreamableScopes(ctx context.Context, curUser model.User) (model.AccessScopeSet, error)
 
 	// GetPermissionChangeListener returns a pointer listener
 	// listening for permission change notifications if applicable.

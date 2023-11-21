@@ -27,6 +27,7 @@ const (
 	maxReconn  = 10 * time.Second
 	trialChan  = "stream_trial_chan"
 	metricChan = "stream_metric_chan"
+	allocChan  = "stream_allocation_chan"
 )
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
@@ -38,8 +39,9 @@ type PublisherSet struct {
 	Trials    *stream.Publisher[*TrialMsg]
 	Metrics   *stream.Publisher[*MetricMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
-	bootemChan chan struct{}
-	bootLock   sync.Mutex
+	Allocations *stream.Publisher[*AllocationMsg]
+	bootemChan  chan struct{}
+	bootLock    sync.Mutex
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -50,6 +52,7 @@ type SubscriptionSet struct {
 	Trials  *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
 	Metrics *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
 	// Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
+	Allocations *subscriptionState[*AllocationMsg, AllocationSubscriptionSpec]
 }
 
 // subscriptionState contains per-type subscription state.
@@ -102,7 +105,8 @@ func NewPublisherSet() *PublisherSet {
 		Trials:    stream.NewPublisher[*TrialMsg](),
 		Metrics:   stream.NewPublisher[*MetricMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
-		bootemChan: make(chan struct{}),
+		Allocations: stream.NewPublisher[*AllocationMsg](),
+		bootemChan:  make(chan struct{}),
 	}
 }
 
@@ -131,6 +135,7 @@ type KnownKeySet struct {
 	Trials  string `json:"trials"`
 	Metrics string `json:"metrics"`
 	// Experiments string `json:"experiments"`
+	Allocations string `json:"allocations"`
 }
 
 // SubscriptionSpecSet is both the type for .Add and .Drop of
@@ -140,6 +145,7 @@ type SubscriptionSpecSet struct {
 	Trials  *TrialSubscriptionSpec  `json:"trials"`
 	Metrics *MetricSubscriptionSpec `json:"metrics"`
 	// Experiments *ExperimentSubscriptionSpec `json:"experiments"`
+	Allocations *AllocationSubscriptionSpec `json:"allocations"`
 }
 
 // FilterMaker is a stateful object for building efficient filters.
@@ -175,6 +181,11 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 	eg.Go(
 		func(c context.Context) error {
 			return start(ctx, ps.DBAddress, metricChan, ps.Metrics)
+		},
+	)
+	eg.Go(
+		func(c context.Context) error {
+			return start(ctx, ps.DBAddress, allocChan, ps.Allocations)
 		},
 	)
 	// eg.Go(start(ctx, "stream_experiment_chan", ps.Experiments))
@@ -219,7 +230,6 @@ func (ps *PublisherSet) entrypoint(
 	err = socket.ReadJSON(&startupMsg)
 	// XXX: errors here don't seem to appear on the websocket side...?
 	if err != nil {
-		log.Error(errors.Wrap(err, "reading startup message"))
 		return errors.Wrap(err, "reading startup message")
 	}
 	// Use the declarative strategy to process all offline events:
@@ -258,7 +268,7 @@ func (ps *PublisherSet) entrypoint(
 			// close streamer if supervisor is down
 			streamer.Close()
 		case <-bootemChan:
-			// close this streamer if online appearance/dissapearnce occurred
+			// close this streamer if online appearance/disappearance occurred
 			streamer.Close()
 		}
 	}()
@@ -546,6 +556,16 @@ func NewSubscriptionSet(
 			MetricCollectStartupMsgs,
 			MetricCollectSubscriptionModMsgs,
 		},
+		Allocations: &subscriptionState[*AllocationMsg, AllocationSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Allocations,
+				newPermFilter(ctx, user, AllocationMakePermissionFilter, &err),
+			),
+			NewAllocationFilterMaker(),
+			AllocationCollectStartupMsgs,
+			AllocationCollectSubscriptionModMsgs,
+		},
 	}, err
 }
 
@@ -605,6 +625,11 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 		ss.Metrics, known.Metrics,
 		sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
 	)
+	err = startup(
+		ctx, user, &msgs, err,
+		ss.Allocations, known.Allocations,
+		sub.Allocations, ss.Allocations.Subscription.Streamer.PrepareFn,
+	)
 	return msgs, err
 }
 
@@ -661,12 +686,20 @@ func (ss *SubscriptionSet) SubscriptionMod(ctx context.Context, msg Subscription
 	msgs, err = subMod(ctx, msgs, err, ss.Trials, add.Trials, drop.Trials)
 	msgs, err = subMod(ctx, msgs, err, ss.Metrics, add.Metrics, drop.Metrics)
 	// msgs, err = subMod(msgs, err, ctx, ss.Experiments, add.Experiments, drop.Experiments)
+	msgs, err = subMod(ctx, msgs, err, ss.Allocations, add.Allocations, drop.Allocations)
 	return msgs, err
 }
 
 // UnsubscribeAll unsubscribes all Subscription's in the SubscriptionSet.
 func (ss *SubscriptionSet) UnsubscribeAll() {
-	ss.Trials.Subscription.Configure(nil)
-	ss.Metrics.Subscription.Configure(nil)
+	if ss.Trials != nil {
+		ss.Trials.Subscription.Configure(nil)
+	}
+	if ss.Metrics != nil {
+		ss.Metrics.Subscription.Configure(nil)
+	}
+	if ss.Allocations != nil {
+		ss.Allocations.Subscription.Configure(nil)
+	}
 	// ss.Experiments.Subscription.Configure(nil)
 }

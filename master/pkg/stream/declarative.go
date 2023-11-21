@@ -179,3 +179,32 @@ func ProcessKnown(known string, exist []int64) (string, []int64, error) {
 	}
 	return removed.Finish(), added, nil
 }
+
+// setDiff takes the set difference between two lists.
+func setDiff[T comparable](a, b []T) (diff []T) {
+	setB := make(map[T]struct{}, len(b))
+	for _, x := range b {
+		// check for duplicates
+		if _, ok := setB[x]; !ok {
+			setB[x] = struct{}{}
+		}
+	}
+	for _, x := range a {
+		if _, ok := setB[x]; !ok {
+			diff = append(diff, x)
+		}
+	}
+	return diff
+}
+
+// ProcessKnownString takes what the client reports as known keys as string values, combined with which keys the server
+// knows exist, and returns what the client should be told is deleted and which keys the client is
+// not yet aware of, which should be hydrated by querying the database.
+//
+// Does not support range-encoded string.
+func ProcessKnownString(known string, exist []string) (string, []string, error) {
+	splitKnown := strings.Split(known, ",")
+	appeared := setDiff(exist, splitKnown)
+	disappeared := setDiff(splitKnown, exist)
+	return strings.Join(disappeared, ", "), appeared, nil
+}
