@@ -122,6 +122,7 @@ def create(args: Namespace) -> None:
         config=config_text,
         contextDirectory=context_directory,
         projectId=args.project_id,
+        forkedFromId=args.fork
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")
@@ -281,6 +282,11 @@ args_description: List[Any] = [
                         "--follow",
                         action="store_true",
                         help="follow the logs of the task that is created",
+                    ),
+                    Arg(
+                        "--fork",
+                        type=str,
+                        help="id of parent task to fork from"
                     ),
                 ],
             ),

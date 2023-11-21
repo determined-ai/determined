@@ -2599,10 +2599,12 @@ class v1CreateGenericTaskRequest(Printable):
         config: str,
         contextDirectory: "typing.Sequence[v1File]",
         projectId: int,
+        forkedFromId: "typing.Optional[int]" = None
     ):
         self.config = config
         self.contextDirectory = contextDirectory
         self.projectId = projectId
+        self.forkedFromId = forkedFromId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
@@ -2610,6 +2612,7 @@ class v1CreateGenericTaskRequest(Printable):
             "config": obj["config"],
             "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
             "projectId": obj["projectId"],
+            "forkedFromId": obj["forkedFromId"]
         }
         return cls(**kwargs)
 
@@ -2618,6 +2621,7 @@ class v1CreateGenericTaskRequest(Printable):
             "config": self.config,
             "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
             "projectId": self.projectId,
+            "forkedFromId": self.forkedFromId
         }
         return out
 

@@ -26,6 +26,7 @@ message CreateGenericTaskRequest {
   optional int32 project_id = 3;
   // Unmanaged experiments are detached. Maybe?
   // optional bool unmanaged = 40;
+  optional string forked_from_id = 4;
 }
 
 // Response to CreateExperimentRequest.

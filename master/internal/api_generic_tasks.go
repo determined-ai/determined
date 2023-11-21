@@ -40,6 +40,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	contextDirectory []*utilv1.File,
 	configYAML string,
 	projectID int,
+	parentConfig []byte,
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
@@ -85,6 +86,12 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Get the full configuration.
 	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
 	workDirInDefaults := taskConfig.WorkDir
+
+	if len(parentConfig) != 0 {
+		if err := yaml.Unmarshal(parentConfig, &taskConfig); err != nil {
+			return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
+		}
+	}
 
 	if err := yaml.Unmarshal([]byte(configYAML), &taskConfig); err != nil {
 		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
@@ -157,8 +164,25 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
+	var parentConfig []byte
+	if req.ForkedFromId != nil {
+		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
+		getTaskReq := &apiv1.GetTaskRequest{
+			TaskId: *req.ForkedFromId,
+		}
+		resp, err := a.GetTask(ctx, getTaskReq)
+		if err != nil {
+			return nil, err
+		}
+
+		parentConfig, err = resp.Task.Config.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
-		ctx, req.ContextDirectory, req.Config, projectID,
+		ctx, req.ContextDirectory, req.Config, projectID, parentConfig,
 	)
 	if err != nil {
 		return nil, err
