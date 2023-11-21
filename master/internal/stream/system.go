@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -40,6 +41,8 @@ type PublisherSet struct {
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
+	readyCond  sync.Cond
+	ready      bool
 }
 
 // SubscriptionSet is a set of all subscribers for this PublisherSet.
@@ -68,15 +71,15 @@ type CollectStartupMsgsFunc[S any] func(
 	[]stream.PreparableMessage, error,
 )
 
-func newDBListener(address, channel string) (*pq.Listener, error) {
+func newDBListener(dbAddress, channel string) (*pq.Listener, error) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
+			log.Errorf("DB Address: %s", dbAddress)
 			log.Errorf("reportProblem: %v\n", err.Error())
 		}
 	}
 	listener := pq.NewListener(
-		// XXX: update this to use master config rather than hardcoded for a local db
-		address,
+		dbAddress,
 		minReconn,
 		maxReconn,
 		reportProblem,
@@ -89,13 +92,15 @@ func newDBListener(address, channel string) (*pq.Listener, error) {
 }
 
 // NewPublisherSet constructor for PublisherSet.
-func NewPublisherSet() *PublisherSet {
+func NewPublisherSet(dbAddress string) *PublisherSet {
+	lock := sync.Mutex{}
 	return &PublisherSet{
-		DBAddress: "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		DBAddress: dbAddress,
 		Trials:    stream.NewPublisher[*TrialMsg](),
 		Metrics:   stream.NewPublisher[*MetricMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
+		readyCond:  *sync.NewCond(&lock),
 	}
 }
 
@@ -133,11 +138,11 @@ type SubscriptionSpecSet struct {
 
 func start[T stream.Msg](
 	ctx context.Context,
-	pgAddress,
+	dbAddress,
 	channel string,
 	publisher *stream.Publisher[T],
 ) error {
-	return publishLoop(ctx, pgAddress, channel, publisher)
+	return publishLoop(ctx, dbAddress, channel, publisher)
 }
 
 // Start starts each Publisher in the PublisherSet.
@@ -146,15 +151,49 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 
 	eg.Go(
 		func(c context.Context) error {
-			return start(ctx, ps.DBAddress, trialChan, ps.Trials)
+			return start(c, ps.DBAddress, trialChan, ps.Trials)
 		},
 	)
+
 	eg.Go(
 		func(c context.Context) error {
-			return start(ctx, ps.DBAddress, metricChan, ps.Metrics)
+			return start(c, ps.DBAddress, metricChan, ps.Metrics)
 		},
 	)
-	// eg.Go(start(ctx, "stream_experiment_chan", ps.Experiments))
+
+	// 	eg.Go(func(c context.Context) error {
+	// 		return start(c, ps.DBAddress, metricChan, ps.Metrics)
+	// 	},
+	// )
+
+	// wait for all publishers to become ready
+	eg.Go(
+		func(c context.Context) error {
+			readyChans := []chan bool{
+				ps.Trials.ReadyChan,
+				ps.Metrics.ReadyChan,
+				// ps.Experiment.ReadyChan,
+			}
+
+			for i := range readyChans {
+				select {
+				case <-c.Done():
+					return nil
+				case publisherReady := <-readyChans[i]:
+					if !publisherReady {
+						return fmt.Errorf("publisher failed to ")
+					}
+				}
+			}
+			func() {
+				ps.readyCond.L.Lock()
+				defer ps.readyCond.L.Unlock()
+				ps.ready = true
+				ps.readyCond.Signal()
+			}()
+			return nil
+		},
+	)
 	return eg.Wait()
 }
 
@@ -226,7 +265,7 @@ func (ps *PublisherSet) processStream(
 		streamer.Cond.L.Lock()
 		defer streamer.Cond.L.Unlock()
 
-		for len(*startups) == 0 && len(streamer.Msgs) == 0 && streamer.Closed {
+		for len(*startups) == 0 && len(streamer.Msgs) == 0 && !streamer.Closed {
 			streamer.Cond.Wait()
 		}
 		// steal outputs
@@ -265,7 +304,7 @@ func (ps *PublisherSet) processStream(
 
 // Websocket is an Echo websocket endpoint.
 func (ps *PublisherSet) entrypoint(
-	ssupCtx context.Context,
+	superCtx context.Context,
 	ctx context.Context,
 	user model.User,
 	socket WebsocketLike,
@@ -277,6 +316,15 @@ func (ps *PublisherSet) entrypoint(
 		ps.bootLock.Lock()
 		defer ps.bootLock.Unlock()
 		bootemChan = ps.bootemChan
+	}()
+
+	// block until the publisher set can receive live event
+	func() {
+		ps.readyCond.L.Lock()
+		defer ps.readyCond.L.Unlock()
+		for !ps.ready {
+			ps.readyCond.Wait()
+		}
 	}()
 
 	streamer := stream.NewStreamer(prepareFunc)
@@ -320,7 +368,7 @@ func (ps *PublisherSet) entrypoint(
 		select {
 		case <-ctx.Done():
 			streamer.Close()
-		case <-ssupCtx.Done():
+		case <-superCtx.Done():
 			// close streamer if supervisor is down
 			streamer.Close()
 		case <-bootemChan:
@@ -354,7 +402,7 @@ func (ps *PublisherSet) entrypoint(
 
 // Websocket is an Echo websocket endpoint.
 func (ps *PublisherSet) Websocket(
-	ssupCtx context.Context,
+	superCtx context.Context,
 	socket *websocket.Conn,
 	c echo.Context,
 ) error {
@@ -365,7 +413,7 @@ func (ps *PublisherSet) Websocket(
 			reflect.TypeOf(c))
 	}
 	user := detCtx.MustGetUser()
-	return ps.entrypoint(ssupCtx, reqCtx, user, &WrappedWebsocket{Conn: socket},
+	return ps.entrypoint(superCtx, reqCtx, user, &WrappedWebsocket{Conn: socket},
 		prepareWebsocketMessage)
 }
 
@@ -439,11 +487,11 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 // publishLoop monitors for new events and broadcasts them to Publishers.
 func publishLoop[T stream.Msg](
 	ctx context.Context,
-	pgAddress,
+	dbAddress,
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	err := doPublishLoop(ctx, pgAddress, channelName, publisher)
+	err := doPublishLoop(ctx, dbAddress, channelName, publisher)
 	if err != nil {
 		log.Errorf("publishLoop failed: %s", err)
 		publisher.CloseAllStreamers()
@@ -454,14 +502,16 @@ func publishLoop[T stream.Msg](
 
 func doPublishLoop[T stream.Msg](
 	ctx context.Context,
-	pgAddress,
+	dbAddress,
 	channelName string,
 	publisher *stream.Publisher[T],
 ) error {
-	listener, err := newDBListener(pgAddress, channelName)
+	listener, err := newDBListener(dbAddress, channelName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen: %v", channelName)
 	}
+	// let the publisher set know the publisher is ready
+	publisher.ReadyChan <- true // XXX (corban): should we close the channel instead?
 	// clean up listener
 	defer func() {
 		err := listener.Close()
@@ -562,8 +612,11 @@ func NewSubscriptionSet(
 	spec SubscriptionSpecSet,
 ) (SubscriptionSet, error) {
 	var err error
-	return SubscriptionSet{
-		Trials: &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
+	var trialSubscriptionState *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
+	var metricSubscriptionState *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
+
+	if spec.Trials != nil {
+		trialSubscriptionState = &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
 			stream.NewSubscription(
 				streamer,
 				ps.Trials,
@@ -571,8 +624,11 @@ func NewSubscriptionSet(
 				newFilter(spec.Trials, TrialMakeFilter, &err),
 			),
 			TrialCollectStartupMsgs,
-		},
-		Metrics: &subscriptionState[*MetricMsg, MetricSubscriptionSpec]{
+		}
+	}
+
+	if spec.Metrics != nil {
+		metricSubscriptionState = &subscriptionState[*MetricMsg, MetricSubscriptionSpec]{
 			stream.NewSubscription(
 				streamer,
 				ps.Metrics,
@@ -580,7 +636,12 @@ func NewSubscriptionSet(
 				newFilter(spec.Metrics, MetricMakeFilter, &err),
 			),
 			MetricCollectStartupMsgs,
-		},
+		}
+	}
+
+	return SubscriptionSet{
+		Trials:  trialSubscriptionState,
+		Metrics: metricSubscriptionState,
 	}, err
 }
 
@@ -625,16 +686,29 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 
 	var msgs []interface{}
 	var err error
-	err = startup(
-		ctx, user, &msgs, err,
-		ss.Trials, known.Trials,
-		sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn,
-	)
-	err = startup(
-		ctx, user, &msgs, err,
-		ss.Metrics, known.Metrics,
-		sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
-	)
+	if ss.Trials != nil {
+		err = startup(
+			ctx, user, &msgs, err,
+			ss.Trials, known.Trials,
+			sub.Trials, ss.Trials.Subscription.Streamer.PrepareFn,
+		)
+	}
+	if ss.Metrics != nil {
+		err = startup(
+			ctx, user, &msgs, err,
+			ss.Metrics, known.Metrics,
+			sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
+		)
+	}
+	/*
+		if ss.Experiments != nil {
+			err = startup(
+				ctx, user, &msgs, err,
+				ss.Experiments, known.Experiments,
+				sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
+			)
+		}
+	*/
 	return msgs, err
 }
 

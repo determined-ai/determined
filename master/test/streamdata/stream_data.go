@@ -5,6 +5,8 @@ package streamdata
 
 import (
 	"context"
+	"database/sql"
+
 	// embed is only used in comments.
 	_ "embed"
 	"strconv"
@@ -66,12 +68,15 @@ type Trial struct {
 	Seq           int64          `bun:"seq"`
 }
 
-// ModTrial is a convenience function for modifying rows of a trial.
-func ModTrial(
-	ctx context.Context, newTrial Trial,
-) error {
-	_, err := db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID).Exec(ctx)
-	return err
+// ExecutableQuery an interface that requires queries of this type to have an exec function.
+type ExecutableQuery interface {
+	bun.Query
+	Exec(ctx context.Context, dest ...interface{}) (sql.Result, error)
+}
+
+// GetUpdateTrialQuery constructs a query for modifying rows of a trial.
+func GetUpdateTrialQuery(newTrial Trial) ExecutableQuery {
+	return db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID)
 }
 
 func queryTrials(ctx context.Context) ([]Trial, error) {
@@ -85,11 +90,13 @@ func queryTrials(ctx context.Context) ([]Trial, error) {
 	return trials, nil
 }
 
-// AddTrial adds everything necessary to create a new trial under the given experimentID.
-func AddTrial(ctx context.Context, experimentID int) error {
+// GetAddTrialQueries constructs the necessary queries
+// to create a new trial under the given experimentID.
+func GetAddTrialQueries(ctx context.Context, experimentID int) ([]ExecutableQuery, error) {
+	queries := []ExecutableQuery{}
 	trials, err := queryTrials(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	nextSeq := int64(0)
@@ -106,42 +113,38 @@ func AddTrial(ctx context.Context, experimentID int) error {
 
 	newTaskID := strconv.Itoa(experimentID) + strconv.Itoa(numRelevantTrials+1)
 	newJobID := testJob + strconv.Itoa(experimentID)
-	_, err = db.Bun().NewInsert().Model(
-		&model.Task{
-			TaskID:    model.TaskID(newTaskID),
-			TaskType:  "TRIAL",
-			StartTime: time.Now(),
-			JobID:     (*model.JobID)(&newJobID),
-		}).Exec(ctx)
-	if err != nil {
-		return err
-	}
+	queries = append(queries,
+		db.Bun().NewInsert().Model(
+			&model.Task{
+				TaskID:    model.TaskID(newTaskID),
+				TaskType:  "TRIAL",
+				StartTime: time.Now(),
+				JobID:     (*model.JobID)(&newJobID),
+			},
+		),
+	)
 
-	startTime := time.Now()
 	// Insert into tasks, trials, and task id trial id
-	_, err = db.Bun().NewInsert().Model(
-		&Trial{
-			ID:           int(nextSeq + 1),
-			ExperimentID: experimentID,
-			HParams:      map[string]any{},
-			State:        "ERROR",
-			StartTime:    startTime,
-			Seq:          nextSeq + 1,
-		}).Exec(ctx)
-
-	if err != nil {
-		return err
-	}
+	startTime := time.Now()
+	queries = append(queries,
+		db.Bun().NewInsert().Model(
+			&Trial{
+				ID:           int(nextSeq + 1),
+				ExperimentID: experimentID,
+				HParams:      map[string]any{},
+				State:        "ERROR",
+				StartTime:    startTime,
+				Seq:          nextSeq + 1,
+			},
+		),
+	)
 
 	insertMap := map[string]interface{}{
 		"trial_id": nextSeq + 1,
 		"task_id":  newTaskID,
 	}
-	_, err = db.Bun().NewInsert().Model(&insertMap).Table("trial_id_task_id").Exec(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	queries = append(queries, db.Bun().NewInsert().Model(&insertMap).Table("trial_id_task_id"))
+	return queries, nil
 }
 
 // Experiment contains a subset of actual determined experiment fields and is used to test
@@ -158,37 +161,41 @@ type Experiment struct {
 	OwnerID              *model.UserID        `bun:"owner_id"`
 }
 
-// AddExperiment adds everything necessary to add an experiment to the db.
-func AddExperiment(pgDB *db.PgDB, experiment *Experiment) (int, error) {
+// GetAddExperimentQueries constructs the necessary queries
+// to create a new experiment to the db.
+func GetAddExperimentQueries(experiment *Experiment) (
+	queries []ExecutableQuery,
+	experimentID int,
+	err error,
+) {
 	ctx := context.TODO()
 	var ids []int
-	err := db.Bun().NewSelect().
+	err = db.Bun().NewSelect().
 		Table("experiments").
 		Column("ID").
 		Order("id DESC").
 		Scan(ctx, &ids)
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	newJobID := testJob + strconv.Itoa(ids[0]+1)
 	ownerID := model.UserID(1)
-	_, err = db.Bun().NewInsert().Model(
-		&model.Job{
-			JobID:   model.JobID(newJobID),
-			JobType: "EXPERIMENT",
-			OwnerID: &ownerID,
-		}).Exec(ctx)
-
-	if err != nil {
-		return 0, err
-	}
+	queries = append(queries,
+		db.Bun().NewInsert().Model(
+			&model.Job{
+				JobID:   model.JobID(newJobID),
+				JobType: "EXPERIMENT",
+				OwnerID: &ownerID,
+			},
+		),
+	)
 
 	// we have to control id and jobId generation
 	experiment.ID = ids[0] + 1
 	experiment.JobID = newJobID
 
-	_, err = db.Bun().NewInsert().Model(experiment).Exec(ctx)
+	queries = append(queries, db.Bun().NewInsert().Model(experiment))
 	// XXX (eliu): example experiment:
 	// Experiment{
 	//			ID:                   ids[0] + 1,
@@ -201,9 +208,5 @@ func AddExperiment(pgDB *db.PgDB, experiment *Experiment) (int, error) {
 	//			OwnerID:              &ownerID,
 	//		}
 
-	if err != nil {
-		return 0, err
-	}
-
-	return ids[0] + 1, nil
+	return queries, ids[0] + 1, nil
 }

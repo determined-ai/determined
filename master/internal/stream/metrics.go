@@ -29,6 +29,7 @@ type MetricMsg struct {
 	bun.BaseModel `bun:"table:metrics"`
 
 	// immutable attributes
+	// XXX (corban): if this gets removed, what happens to delete msg?
 	ID            int                    `bun:"id,pk" json:"id"`
 	TrialID       int                    `bun:"trial_id" json:"trial_id"`
 	TrialRunID    int                    `bun:"trial_run_id" json:"trial_run_id"`
@@ -37,7 +38,9 @@ type MetricMsg struct {
 	TotalBatches  int                    `bun:"total_batches" json:"total_batches"`
 	MetricGroup   string                 `bun:"metric_group" json:"metric_group"`
 	PartitionType db.MetricPartitionType `bun:"partition_type" json:"partition_type"`
-	Archived      bool                   `bun:"archived" json:"archived"`
+
+	// mutable attributes
+	Archived bool `bun:"archived" json:"archived"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
@@ -74,7 +77,6 @@ func (mm *MetricMsg) DeleteMsg() stream.DeleteMsg {
 // MetricSubscriptionSpec is what a user submits to define a Metric subscription.
 // determined:streamable
 type MetricSubscriptionSpec struct {
-	MetricIds     []int `json:"metric_ids"`
 	TrialIds      []int `json:"trial_ids"`
 	ExperimentIds []int `json:"experiment_ids"`
 	Since         int64 `json:"since"`
@@ -111,7 +113,7 @@ func MetricCollectStartupMsgs(
 ) {
 	var out []stream.PreparableMessage
 
-	if len(spec.MetricIds) == 0 && len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
+	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		// empty subscription: everything known should be returned as deleted
 		out = append(out, stream.DeleteMsg{
 			Key:     MetricsDeleteKey,
@@ -151,9 +153,6 @@ func MetricCollectStartupMsgs(
 
 	// Ignore mmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
-	if len(spec.MetricIds) > 0 {
-		ws.Include("metrics.id in (?)", bun.In(spec.MetricIds))
-	}
 	if len(spec.TrialIds) > 0 {
 		ws.Include("trial_id in (?)", bun.In(spec.TrialIds))
 	}
@@ -202,29 +201,22 @@ func MetricCollectStartupMsgs(
 // MetricMakeFilter creates a MetricMsg filter based on the given MetricSubscriptionSpec.
 func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, error) {
 	// Should this filter even run?
-	if len(spec.MetricIds) == 0 && len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
+	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
 		return nil, fmt.Errorf(
-			"invalid subscription spec arguments: %v %v %v",
-			spec.MetricIds, spec.TrialIds, spec.ExperimentIds,
+			"invalid subscription spec arguments: %v %v",
+			spec.TrialIds, spec.ExperimentIds,
 		)
 	}
 
 	// Make a copy of the map, because the filter must run safely off-thread.
-	metricIds := make(map[int]struct{})
 	trialIds := make(map[int]struct{})
-	experimentIds := make(map[int]struct{})
-	for _, id := range spec.MetricIds {
-		if id <= 0 {
-			return nil, fmt.Errorf("invalid metric id: %d", id)
-		}
-		metricIds[id] = struct{}{}
-	}
 	for _, id := range spec.TrialIds {
 		if id <= 0 {
 			return nil, fmt.Errorf("invalid trial id: %d", id)
 		}
 		trialIds[id] = struct{}{}
 	}
+	experimentIds := make(map[int]struct{})
 	for _, id := range spec.ExperimentIds {
 		if id <= 0 {
 			return nil, fmt.Errorf("invalid experiment id: %d", id)
@@ -234,9 +226,6 @@ func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, erro
 
 	// return a closure around our copied map
 	return func(msg *MetricMsg) bool {
-		if _, ok := metricIds[msg.ID]; ok {
-			return true
-		}
 		if _, ok := trialIds[msg.ID]; ok {
 			return true
 		}

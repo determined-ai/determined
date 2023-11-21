@@ -143,11 +143,14 @@ type Publisher[T Msg] struct {
 	Lock          sync.Mutex
 	Subscriptions []*Subscription[T]
 	WakeupID      int64
+	ReadyChan     chan bool
 }
 
 // NewPublisher creates a new Publisher for message type T.
 func NewPublisher[T Msg]() *Publisher[T] {
-	return &Publisher[T]{}
+	return &Publisher[T]{
+		ReadyChan: make(chan bool),
+	}
 }
 
 // CloseAllStreamers closes all streamers associated with this Publisher.

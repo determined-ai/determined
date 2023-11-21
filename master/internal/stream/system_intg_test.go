@@ -5,11 +5,8 @@ package stream
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 
@@ -22,54 +19,10 @@ import (
 	"github.com/determined-ai/determined/master/test/streamdata"
 )
 
-// simpleUpsert is for testing and just returns the preparable message that the streamer sends.
-func simpleUpsert(i stream.PreparableMessage) interface{} {
-	return i
-}
-
-// startupReadWriter implements WebsocketLike and stores all messages received from streaming.
-type startupReadWriter struct {
-	Data           []interface{}
-	StartupMessage *StartupMsg
-	Msg            *SubscriptionModMsg
-	EarlyTerminate bool
-}
-
-// ReadJSON sends the StartupMessage first, then send any Msg that is set.
-func (s *startupReadWriter) ReadJSON(data interface{}) error {
-	if s.StartupMessage != nil {
-		targetMsg, ok := data.(*StartupMsg)
-		if !ok {
-			return fmt.Errorf("target message type is not a pointer to StartupMsg")
-		}
-		targetMsg.Known = s.StartupMessage.Known
-		targetMsg.Subscribe = s.StartupMessage.Subscribe
-		s.StartupMessage = nil
-		return nil
-	}
-	if s.Msg != nil {
-		targetMsg, ok := data.(*SubscriptionModMsg)
-		if !ok {
-			return fmt.Errorf("target message type is not a pointer to SubscriptionModMsg")
-		}
-		targetMsg.Add = s.Msg.Add
-		targetMsg.Drop = s.Msg.Drop
-	}
-	if s.EarlyTerminate {
-		return fmt.Errorf("no messages left to send")
-	}
-	return nil
-}
-
-// Write appends the data to the internal cache.
-func (s *startupReadWriter) Write(data interface{}) error {
-	s.Data = append(s.Data, data)
-	return nil
-}
-
-func TestStartupReadWriter(t *testing.T) {
-	startupMessage := StartupMsg{
-		Known: KnownKeySet{Trials: "1,2,3"},
+func TestMockSocket(t *testing.T) {
+	expectedMsg := StartupMsg{
+		SyncID: uuid.NewString(),
+		Known:  KnownKeySet{Trials: "1,2,3"},
 		Subscribe: SubscriptionSpecSet{
 			Trials: &TrialSubscriptionSpec{
 				ExperimentIds: []int{1},
@@ -78,260 +31,401 @@ func TestStartupReadWriter(t *testing.T) {
 		},
 	}
 
-	trw := startupReadWriter{
-		StartupMessage: &startupMessage,
-	}
-
-	emptyMsg := StartupMsg{}
-	err := trw.ReadJSON(&emptyMsg)
+	// test WriteOutbound
+	socket := newMockSocket()
+	err := socket.WriteOutbound(&expectedMsg)
 	require.NoError(t, err)
-	require.Equal(t, emptyMsg.Known, startupMessage.Known)
-	require.Equal(t, emptyMsg.Subscribe, startupMessage.Subscribe)
-	require.True(t, trw.StartupMessage == nil)
 
-	err = trw.Write("test")
+	// test ReadJSON
+	actualMsg := StartupMsg{}
+	err = socket.ReadJSON(&actualMsg)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(trw.Data))
-	dataStr, ok := trw.Data[0].(string)
+	require.Equal(t, actualMsg.Known, expectedMsg.Known)
+	require.Equal(t, actualMsg.Subscribe, expectedMsg.Subscribe)
+	require.Equal(t, actualMsg.SyncID, expectedMsg.SyncID)
+	require.Equal(t, 0, len(socket.outbound))
+	require.True(t, len(socket.outbound) == 0)
+
+	// test write
+	err = socket.Write("test")
+	require.NoError(t, err)
+
+	// test read incoming
+	var data interface{}
+	err = socket.ReadIncoming(&data)
+	require.NoError(t, err)
+	dataStr, ok := data.(string)
 	require.True(t, ok)
 	require.Equal(t, "test", dataStr)
+
+	// test ReadUntil
+	err = socket.Write("test")
+	require.NoError(t, err)
+	err = socket.Write(SyncMsg{SyncID: "1"})
+	require.NoError(t, err)
+	var msgs []interface{}
+	err = socket.ReadUntil(&msgs, SyncMsg{SyncID: "1"})
+	require.NoError(t, err)
+	require.Equal(t, 2, len(msgs))
+	testStr, ok := msgs[0].(string)
+	require.True(t, ok)
+	require.Equal(t, "test", testStr)
+	syncMsg, ok := msgs[1].(SyncMsg)
+	require.True(t, ok)
+	require.Equal(t, SyncMsg{SyncID: "1"}, syncMsg)
 }
 
-// setup sets up all the entities we need to test with and simplifies actual test fn code.
-func setup(t *testing.T, startupMsg StartupMsg) (
-	context.Context, model.User, *PublisherSet, startupReadWriter, errgroupx.Group, *db.PgDB, func(),
+// setupStreamTest creates and sets up all the entities needed for testing streaming updates.
+func setupStreamTest(t *testing.T) (
+	superCtx, ctx context.Context,
+	testUser model.User,
+	ps *PublisherSet,
+	socket *mockSocket,
+	pgDB *db.PgDB,
+	dbCleanup func(),
 ) {
-	ctx := context.TODO()
+	superCtx = context.TODO()
+	ctx = context.TODO()
+	testUser = model.User{Username: uuid.New().String()}
+	pgDB, dbCleanup = db.MustResolveNewPostgresDatabase(t)
+	ps = NewPublisherSet(pgDB.URL)
+	socket = newMockSocket()
 
-	testUser := model.User{Username: uuid.New().String()}
-
-	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
-	ps := NewPublisherSet()
-	ps.DBAddress = pgDB.URL
-
-	testReadWriter := startupReadWriter{
-		StartupMessage: &startupMsg,
-	}
-
-	errgrp := errgroupx.WithContext(ctx)
-
-	return ctx, testUser, ps, testReadWriter, errgrp, pgDB, cleanup
+	return superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup
 }
 
-func TestStartup(t *testing.T) {
-	startupMessage := StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,3",
-		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1}, // trials 1,2,3 exist
-				Since:         0,
+type startupTestCase[M stream.Msg] struct {
+	description       string
+	startupMsg        StartupMsg
+	expectedSync      SyncMsg
+	expectedUpserts   []M
+	expectedDeletions []string
+}
+
+func TestTrialStartup(t *testing.T) {
+	testCases := []startupTestCase[*TrialMsg]{
+		{
+			description: "trial subscription with experiment id and known trials",
+			startupMsg: StartupMsg{
+				SyncID: "1",
+				Known: KnownKeySet{
+					Trials: "1,2,3",
+				},
+				Subscribe: SubscriptionSpecSet{
+					Trials: &TrialSubscriptionSpec{
+						ExperimentIds: []int{1}, // trials 1,2,3 exist in experiment 1
+						Since:         0,
+					},
+				},
 			},
+			expectedSync:      SyncMsg{SyncID: "1"},
+			expectedUpserts:   []*TrialMsg{},
+			expectedDeletions: []string{""},
+		},
+		{
+			description: "trial subscription with experiment id and incomplete known trials",
+			startupMsg: StartupMsg{
+				SyncID: "2",
+				Known: KnownKeySet{
+					Trials: "1,2,4", // 3 is not known, and 4 does not exist
+				},
+				Subscribe: SubscriptionSpecSet{
+					Trials: &TrialSubscriptionSpec{
+						ExperimentIds: []int{1},
+						Since:         0,
+					},
+				},
+			},
+			expectedSync:      SyncMsg{SyncID: "2"},
+			expectedUpserts:   []*TrialMsg{{ID: 3, ExperimentID: 1, State: model.ErrorState}},
+			expectedDeletions: []string{"4"},
+		},
+		{
+			description: "trial subscription with trial ids and known trials",
+			startupMsg: StartupMsg{
+				SyncID: "3",
+				Known: KnownKeySet{
+					Trials: "1,2,3,4",
+				},
+				Subscribe: SubscriptionSpecSet{
+					Trials: &TrialSubscriptionSpec{
+						TrialIds: []int{1, 2, 3, 4}, // Subscribe to all known trials, but 4 doesn't exist
+						Since:    0,
+					},
+				},
+			},
+			expectedSync:      SyncMsg{SyncID: "3"},
+			expectedUpserts:   []*TrialMsg{},
+			expectedDeletions: []string{"4"},
+		},
+		{
+			description: "trial subscription with trial ids and incomplete known trials",
+			startupMsg: StartupMsg{
+				SyncID: "4",
+				Known: KnownKeySet{
+					Trials: "1,2,4", // 3 is not known, and 4 does not exist
+				},
+				Subscribe: SubscriptionSpecSet{
+					Trials: &TrialSubscriptionSpec{
+						TrialIds: []int{1, 2, 3, 4},
+						Since:    0,
+					},
+				},
+			},
+			expectedSync:      SyncMsg{SyncID: "4"},
+			expectedUpserts:   []*TrialMsg{{ID: 3, ExperimentID: 1, State: model.ErrorState}},
+			expectedDeletions: []string{"4"},
+		},
+		{
+			description: "trial subscription with divergent known set",
+			startupMsg: StartupMsg{
+				SyncID: "5",
+				Known: KnownKeySet{
+					Trials: "1,2",
+				},
+				Subscribe: SubscriptionSpecSet{
+					Trials: &TrialSubscriptionSpec{
+						TrialIds: []int{3},
+					},
+				},
+			},
+			expectedSync:      SyncMsg{SyncID: "5"},
+			expectedUpserts:   []*TrialMsg{{ID: 3, ExperimentID: 1, State: model.ErrorState}},
+			expectedDeletions: []string{"1-2"},
 		},
 	}
 
-	ssupCtx := context.TODO()
-	ctx, testUser, publisherSet, tester, _, pgDB, cleanup := setup(t, startupMessage)
-	tester.EarlyTerminate = true
-	defer cleanup()
+	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
+	defer dbCleanup()
+	errgrp := errgroupx.WithContext(ctx)
 
 	trials := streamdata.GenerateStreamTrials()
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
-	err := publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
-	require.NoError(t, err)
+	// start publisher set and connect as testUser
+	errgrp.Go(ps.Start)
+	errgrp.Go(func(ctx context.Context) error {
+		return ps.entrypoint(superCtx, ctx, testUser, socket, simpleUpsert)
+	})
 
-	deletions, trialMsgs, err := splitDeletionsAndTrials(tester.Data)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	require.Equal(t, "", deletions[0], "expected deleted trials to be empty, not %s", deletions[0])
-	require.Equal(t, 0, len(trialMsgs), "received unexpected trial message")
-	tester.Data = []interface{}{}
-
-	// don't know about trial 3, and trial 4 doesn't exist
-	startupMessage = StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,4",
-		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1},
-				Since:         0,
-			},
-		},
-	}
-	tester.StartupMessage = &startupMessage
-	publisherSet = NewPublisherSet()
-	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
-	require.NoError(t, err)
-	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.Data)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
-	require.Equal(t, 1, len(trialMsgs), "received unexpected trial message")
-	require.Equal(t, 3, trialMsgs[0].ID, "expected trialMsg with ID 3, received ID %d",
-		trialMsgs[0].ID)
-	tester.Data = []interface{}{}
-
-	// Subscribe to all known trials, but 4 doesn't exist
-	startupMessage = StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,3,4",
-		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				TrialIds: []int{1, 2, 3, 4},
-				Since:    0,
-			},
-		},
-	}
-	tester.StartupMessage = &startupMessage
-	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
-	require.NoError(t, err)
-	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.Data)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
-	require.Equal(t, 0, len(trialMsgs), "received unexpected trial message")
-	tester.Data = []interface{}{}
-
-	// 3 is not known, and 4 does not exist
-	startupMessage = StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,4",
-		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				TrialIds: []int{1, 2, 3, 4},
-				Since:    0,
-			},
-		},
-	}
-	tester.StartupMessage = &startupMessage
-	err = publisherSet.entrypoint(ssupCtx, ctx, testUser, &tester, simpleUpsert)
-	require.NoError(t, err)
-	deletions, trialMsgs, err = splitDeletionsAndTrials(tester.Data)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(deletions), "did not receive 1 deletion message")
-	require.Equal(t, "4", deletions[0], "expected deleted trials to be 4, not %s", deletions[0])
-	require.Equal(t, 1, len(trialMsgs), "received unexpected trial message")
-	require.Equal(t, 3, trialMsgs[0].ID, "expected trialMsg with ID 3, received ID %d",
-		trialMsgs[0].ID)
-
-	// TODO: add test that tests for diverging known key sets and subscriptions
-}
-
-func splitDeletionsAndTrials(messages []interface{}) ([]string, []*TrialMsg, error) {
-	var deletions []string
-	var trialMsgs []*TrialMsg
-	for _, msg := range messages {
-		if deletion, ok := msg.(stream.DeleteMsg); ok {
-			deletions = append(deletions, deletion.Deleted)
-		} else if upsert, ok := msg.(stream.UpsertMsg); ok {
-			trialMsg, ok := upsert.Msg.(*TrialMsg)
-			if !ok {
-				return nil, nil, fmt.Errorf("expected a trial message, but received %t",
-					reflect.TypeOf(upsert.Msg))
-			}
-			trialMsgs = append(trialMsgs, trialMsg)
-		} else {
-			return nil, nil, fmt.Errorf("expected a string or *TrialMsg, but received %t",
-				reflect.TypeOf(msg))
+	// handles each provided test case
+	testBody := func(ctx context.Context, testCase startupTestCase[*TrialMsg]) error {
+		// write startup message
+		if err := socket.WriteOutbound(&testCase.startupMsg); err != nil {
+			return fmt.Errorf("%s: %s", testCase.description, err)
 		}
+
+		// read messages collected during startup + sync msg
+		var data []interface{}
+		if err := socket.ReadUntil(&data, testCase.expectedSync); err != nil {
+			return fmt.Errorf("%s: %s", testCase.description, err)
+		}
+		deletions, upserts, syncs, err := splitMsgs[*TrialMsg](data)
+		if err != nil {
+			return fmt.Errorf("%s: %s", testCase.description, err)
+		}
+		if len(syncs) != 1 {
+			return fmt.Errorf("%s: did not receive expected number of upsert messages: expected %d, actual: %d",
+				testCase.description,
+				1,
+				len(syncs),
+			)
+		}
+
+		// confirm these messages are the expected results
+		err = validateMsgs(
+			syncs[0],
+			testCase.expectedSync,
+			upserts,
+			testCase.expectedUpserts,
+			deletions,
+			testCase.expectedDeletions,
+		)
+		if err != nil {
+			return fmt.Errorf("%s: %s", testCase.description, err)
+		}
+
+		return nil
 	}
-	return deletions, trialMsgs, nil
+
+	errgrp.Go(func(ctx context.Context) error {
+		// clean up socket & errgroup
+		defer func() {
+			socket.Close()
+			errgrp.Cancel()
+		}()
+
+		for i := range testCases {
+			err := testBody(ctx, testCases[i])
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	},
+	)
+	require.NoError(t, errgrp.Wait())
 }
 
-func preparableMsgToMap(message interface{}) (map[string]interface{}, error) {
-	_, ok := message.(stream.PreparableMessage)
-
-	if !ok {
-		return nil, fmt.Errorf("provided message is not a preparable message")
-	}
-
-	bytes, err := json.Marshal(message)
-	if err != nil {
-		return nil, err
-	}
-
-	output := map[string]interface{}{}
-	err = json.Unmarshal(bytes, &output)
-	if err != nil {
-		return nil, err
-	}
-
-	return output, nil
+type updateTestCase[M stream.Msg] struct {
+	startupCase       startupTestCase[M]
+	description       string
+	queries           []streamdata.ExecutableQuery
+	expectedSync      SyncMsg
+	expectedUpserts   []M
+	expectedDeletions []string
+	terminationMsg    interface{}
 }
 
 func TestTrialUpdate(t *testing.T) {
-	startupMessage := StartupMsg{
-		Known: KnownKeySet{
-			Trials: "1,2,3",
+	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
+	defer dbCleanup()
+	errgrp := errgroupx.WithContext(ctx)
+
+	baseStartupCase := startupTestCase[*TrialMsg]{
+		startupMsg: StartupMsg{
+			SyncID: "1",
+			Known: KnownKeySet{
+				Trials: "1,2,3",
+			},
+			Subscribe: SubscriptionSpecSet{
+				Trials: &TrialSubscriptionSpec{
+					ExperimentIds: []int{1},
+					Since:         0,
+				},
+			},
 		},
-		Subscribe: SubscriptionSpecSet{
-			Trials: &TrialSubscriptionSpec{
-				ExperimentIds: []int{1},
-				Since:         0,
+		expectedSync:      SyncMsg{SyncID: "1"},
+		expectedUpserts:   []*TrialMsg{},
+		expectedDeletions: []string{""},
+	}
+
+	canceledTrial := streamdata.Trial{
+		ID:           1,
+		ExperimentID: 1,
+		State:        model.CanceledState,
+	}
+
+	testCases := []updateTestCase[*TrialMsg]{
+		{
+			startupCase:  baseStartupCase,
+			description:  "update trial while subscribed to its events",
+			queries:      []streamdata.ExecutableQuery{streamdata.GetUpdateTrialQuery(canceledTrial)},
+			expectedSync: SyncMsg{SyncID: "1"},
+			expectedUpserts: []*TrialMsg{
+				{
+					ID:           canceledTrial.ID,
+					ExperimentID: canceledTrial.ExperimentID,
+					State:        canceledTrial.State,
+				},
+			},
+			expectedDeletions: []string{},
+			terminationMsg: stream.UpsertMsg{
+				Msg: &TrialMsg{
+					ID:           canceledTrial.ID,
+					ExperimentID: canceledTrial.ExperimentID,
+					State:        canceledTrial.State,
+				},
 			},
 		},
 	}
 
-	_, testUser, ps, tester, errgrp, pgDB, cleanup := setup(t, startupMessage)
-	defer func() {
-		cleanup()
-	}()
-
+	// run migrations
 	trials := streamdata.GenerateStreamTrials()
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
+	// start publisher set and connect as testUser
 	errgrp.Go(ps.Start)
-	// run the entrypoint against our tester
 	errgrp.Go(func(ctx context.Context) error {
-		// rb is not sure if the test should care which ctx to use, since in testing
-		// the publisher set is 1:1 with a single connection
-		return ps.entrypoint(context.Background(), ctx, testUser, &tester, simpleUpsert)
+		return ps.entrypoint(superCtx, ctx, testUser, socket, simpleUpsert)
 	})
 
-	// Now we can write our test as if we are the client talking to a websocket
-	testBody := func(ctx context.Context) error {
-		for len(tester.Data) == 0 {
-			time.Sleep(time.Second) // perhaps a shorter time for a wait loop?
-		}
-		deletions, trialMsgs, err := splitDeletionsAndTrials(tester.Data)
-		require.NoError(t, err)
-		if len(deletions) != 1 || deletions[0] != "" {
-			return fmt.Errorf("received unexpected deletion message")
-		}
-		if len(trialMsgs) != 0 {
-			return fmt.Errorf("received unexpected trial message")
+	testBody := func(ctx context.Context, testCase updateTestCase[*TrialMsg]) error {
+		// write startup message
+		if err := socket.WriteOutbound(&testCase.startupCase.startupMsg); err != nil {
+			return err
 		}
 
-		// send messages, check responses
-		err = streamdata.ModTrial(ctx, streamdata.Trial{
-			ID:           1,
-			ExperimentID: 1,
-			State:        "CANCELED",
-		})
+		// read messages collected during startup + sync msg
+		var data []interface{}
+		if err := socket.ReadUntil(&data, testCase.startupCase.expectedSync); err != nil {
+			return fmt.Errorf("%s: %s", testCase.description, err)
+		}
+		deletions, upserts, syncs, err := splitMsgs[*TrialMsg](data)
+		if err != nil {
+			return fmt.Errorf("%s: %s", testCase.description, err)
+		}
+		if len(syncs) != 1 {
+			return fmt.Errorf("%s: did not receive expected number of sync messages: expected %d, actual: %d",
+				testCase.description,
+				1,
+				len(syncs),
+			)
+		}
+
+		// validate messages collected at startup
+		err = validateMsgs[*TrialMsg](
+			syncs[0],
+			testCase.startupCase.expectedSync,
+			upserts,
+			testCase.startupCase.expectedUpserts,
+			deletions,
+			testCase.startupCase.expectedDeletions,
+		)
 		if err != nil {
 			return err
 		}
 
-		for len(tester.Data) < 2 {
-			time.Sleep(time.Second)
+		// execute provided queries on the db
+		for i := range testCase.queries {
+			_, err := testCase.queries[i].Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("%s: %v failed to execute", testCase.description, testCase.queries)
+			}
 		}
-		msgMap, err := preparableMsgToMap(tester.Data[1])
+
+		// read until we received the expected message
+		data = []interface{}{}
+		err = socket.ReadUntil(&data, testCase.terminationMsg)
 		if err != nil {
 			return err
 		}
-		if msg, ok := msgMap["Msg"].(map[string]interface{}); !ok || msg["state"] != "CANCELED" {
-			return fmt.Errorf("updated state should be canceled, not %s", msg["state"])
+		deletions, upserts, _, err = splitMsgs[*TrialMsg](data)
+		if err != nil {
+			return err
 		}
 
-		// cancel the whole error group when the test succeeds
-		errgrp.Cancel()
+		// validate messages collected at startup
+		err = validateMsgs[*TrialMsg](
+			syncs[0],
+			testCase.expectedSync,
+			upserts,
+			testCase.expectedUpserts,
+			deletions,
+			testCase.expectedDeletions,
+		)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
-	errgrp.Go(testBody)
+
+	errgrp.Go(
+		func(ctx context.Context) error {
+			// clean up socket & errgroup
+			defer func() {
+				socket.Close()
+				errgrp.Cancel()
+			}()
+
+			for i := range testCases {
+				err := testBody(ctx, testCases[i])
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
 	require.NoError(t, errgrp.Wait())
 }

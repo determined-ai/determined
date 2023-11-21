@@ -40,21 +40,26 @@ func alwaysTrue(msg TestMsg) bool {
 	return true
 }
 
+func alwaysFalse(msg TestMsg) bool {
+	return false
+}
+
 func prepareNothing(message PreparableMessage) interface{} {
 	return message
 }
 
 func TestConfigureSubscription(t *testing.T) {
-	streamer := NewStreamer(prepareNothing)
-	publisher := NewPublisher[TestMsg]()
-	sub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
-	require.True(t, sub.filter == nil, "subscription filter is non nil after instantiation")
-	require.True(t, len(publisher.Subscriptions) == 0,
-		"publisher's subscriptions are non-nil after instantiation")
 	dummyFilter := func(msg TestMsg) bool {
 		return true
 	}
-	sub.Configure(dummyFilter)
+	streamer := NewStreamer(prepareNothing)
+	publisher := NewPublisher[TestMsg]()
+	sub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue, dummyFilter)
+	require.True(t, sub.filter != nil, "subscription filter is nil after instantiation")
+	require.True(t, len(publisher.Subscriptions) == 0,
+		"publisher's subscriptions are non-nil after instantiation")
+
+	sub.Register()
 	require.True(t, sub.filter != nil, "subscription filter is nil after configuration")
 	require.True(t, sub.filter(TestMsg{}), "set filter does not work")
 	require.True(t, len(publisher.Subscriptions) == 1,
@@ -62,11 +67,10 @@ func TestConfigureSubscription(t *testing.T) {
 	require.True(t, publisher.Subscriptions[0].filter(TestMsg{}),
 		"publisher's subscription has the wrong filter")
 
-	sub2 := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
-	require.True(t, sub2.filter == nil, "subscription filter is non nil after instantiation")
-	sub2.Configure(func(msg TestMsg) bool {
-		return false
-	})
+	sub2 := NewSubscription[TestMsg](streamer, publisher, alwaysTrue, alwaysFalse)
+	require.True(t, sub2.filter != nil, "subscription filter is nil after instantiation")
+
+	sub2.Register()
 	require.True(t, sub2.filter != nil, "subscription filter is nil after configuration")
 	require.False(t, sub2.filter(TestMsg{}), "set filter does not work")
 	require.True(t, len(publisher.Subscriptions) == 2,
@@ -74,33 +78,20 @@ func TestConfigureSubscription(t *testing.T) {
 	require.False(t, publisher.Subscriptions[1].filter(TestMsg{}),
 		"publisher's subscription has the wrong filter")
 
-	sub.Configure(nil)
-	require.True(t, sub.filter == nil, "subscription filter is not nil after deletion")
+	sub.Unregister()
 	require.True(t, len(publisher.Subscriptions) == 1,
 		"publisher's still has subscriptions after deletion")
 	require.False(t, publisher.Subscriptions[0].filter(TestMsg{}),
 		"publisher removed the wrong subscription")
-
-	sub2.Configure(func(msg TestMsg) bool {
-		return true
-	})
-	require.True(t, len(publisher.Subscriptions) == 1,
-		"publisher should have replaced the subscription filter")
-	require.True(t, publisher.Subscriptions[0].filter(TestMsg{}),
-		"filter still set to the old filter")
 }
 
 func TestBroadcast(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
 	publisher := NewPublisher[TestMsg]()
-	trueSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
-	falseSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue)
-	trueSub.Configure(func(msg TestMsg) bool {
-		return true
-	})
-	falseSub.Configure(func(msg TestMsg) bool {
-		return false
-	})
+	trueSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue, alwaysTrue)
+	falseSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue, alwaysFalse)
+	trueSub.Register()
+	falseSub.Register()
 	afterMsg := TestMsg{
 		Seq: 0,
 		ID:  0,
