@@ -142,7 +142,6 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.1 // indirect
 	go.opentelemetry.io/otel/trace v1.6.1 // indirect
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sys v0.13.0
 	golang.org/x/term v0.13.0 // indirect

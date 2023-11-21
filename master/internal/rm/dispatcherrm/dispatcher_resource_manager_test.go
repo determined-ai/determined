@@ -10,7 +10,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -210,7 +209,6 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 
 func Test_summarizeResourcePool(t *testing.T) {
 	type args struct {
-		ctx              *actor.Context
 		wlmType          wlmType
 		launcherPoolName string
 	}
@@ -290,7 +288,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "One resource pool test",
 			partitions: []hpcPartitionDetails{p1},
 			args: args{
-				ctx:     &actor.Context{},
 				wlmType: slurmSchedulerType,
 			},
 			want: want{
@@ -312,7 +309,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "One resource pool test, with one launcher-provided resource pool",
 			partitions: []hpcPartitionDetails{p1},
 			args: args{
-				ctx:              &actor.Context{},
 				wlmType:          slurmSchedulerType,
 				launcherPoolName: "launcher-pool",
 			},
@@ -343,7 +339,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "Two resource pool test; WLM is PBS",
 			partitions: []hpcPartitionDetails{p1, p2},
 			args: args{
-				ctx:     &actor.Context{},
 				wlmType: pbsSchedulerType,
 			},
 			want: want{
@@ -374,7 +369,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "Three resource pool test",
 			partitions: []hpcPartitionDetails{p1, p2, p3},
 			args: args{
-				ctx:     &actor.Context{},
 				wlmType: "mystery",
 			},
 			want: want{
@@ -411,7 +405,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "Available nodes with no allocated nodes",
 			partitions: []hpcPartitionDetails{p4},
 			args: args{
-				ctx:     &actor.Context{},
 				wlmType: "mystery",
 			},
 			want: want{
@@ -434,7 +427,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "Allocated nodes with no available nodes",
 			partitions: []hpcPartitionDetails{p5},
 			args: args{
-				ctx:     &actor.Context{},
 				wlmType: "mystery",
 			},
 			want: want{
@@ -457,7 +449,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 			name:       "No allocated nodes and no available nodes",
 			partitions: []hpcPartitionDetails{p6},
 			args: args{
-				ctx:     &actor.Context{},
 				wlmType: "mystery",
 			},
 			want: want{
