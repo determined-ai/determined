@@ -1,6 +1,5 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { Map } from 'immutable';
-import _ from 'lodash';
+import { Map, OrderedSet } from 'immutable';
 
 import {
   addResourcePoolBindings,
@@ -14,7 +13,7 @@ import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { percent } from 'utils/number';
-import { Observable, observable, WritableObservable } from 'utils/observable';
+import { deepObservable, immutableObservable, Observable } from 'utils/observable';
 
 import 'core-js/actual/structured-clone'; // TODO: investigate why structuredClone is breaking if we remove this import.
 import PollingStore from './polling';
@@ -55,9 +54,9 @@ export const maxClusterSlotCapacity = (
   pools: ResourcePool[],
   agents: Agent[],
 ): { [key in ResourceType]: number } => {
-  const allPoolsStatic = pools.reduce((acc, pool) => {
-    return acc && (pool.type === V1ResourcePoolType.STATIC || pool.type === V1ResourcePoolType.K8S);
-  }, true);
+  const allPoolsStatic = pools.every(
+    ({ type }) => type === V1ResourcePoolType.STATIC || type === V1ResourcePoolType.K8S,
+  );
 
   if (allPoolsStatic) {
     return agents.reduce(
@@ -98,17 +97,16 @@ const clusterStatusText = (
   )}%`;
 };
 
-const updateIfChanged = <T, V extends WritableObservable<T>>(o: V, next: T) =>
-  o.update((prev) => (_.isEqual(prev, next) ? prev : next));
-
 class ClusterStore extends PollingStore {
-  #agents: WritableObservable<Loadable<Agent[]>> = observable(NotLoaded);
-  #resourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
-  #unboundResourcePools: WritableObservable<Loadable<ResourcePool[]>> = observable(NotLoaded);
-  #resourcePoolBindings: WritableObservable<Map<string, number[]>> = observable(Map());
+  #agents = deepObservable<Loadable<Agent[]>>(NotLoaded);
+  #resourcePools = deepObservable<Loadable<ResourcePool[]>>(NotLoaded);
+  #unboundResourcePools = deepObservable<Loadable<ResourcePool[]>>(NotLoaded);
+  #resourcePoolBindings = immutableObservable<Map<string, OrderedSet<number>>>(Map());
 
   public readonly agents = this.#agents.readOnly();
-  public readonly resourcePoolBindings = this.#resourcePoolBindings.readOnly();
+  public readonly resourcePoolBindings = this.#resourcePoolBindings.select((bindings) =>
+    bindings.map((workspaceIds) => workspaceIds.toJS()),
+  );
 
   public readonly resourcePools = this.#resourcePools.select((loadable) => {
     return Loadable.map(loadable, (pools) => {
@@ -162,7 +160,7 @@ class ClusterStore extends PollingStore {
 
     getAgents({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        updateIfChanged(this.#agents, Loaded(response));
+        this.#agents.set(Loaded(response));
       })
       .catch(handleError);
 
@@ -174,7 +172,7 @@ class ClusterStore extends PollingStore {
 
     getResourcePools({}, { signal: signal ?? canceler.signal })
       .then((response) => {
-        updateIfChanged(this.#resourcePools, Loaded(response));
+        this.#resourcePools.set(Loaded(response));
       })
       .catch(handleError);
 
@@ -186,7 +184,7 @@ class ClusterStore extends PollingStore {
 
     getResourcePools({ unbound: true }, { signal: signal ?? canceler.signal })
       .then((response) => {
-        updateIfChanged(this.#unboundResourcePools, Loaded(response));
+        this.#unboundResourcePools.set(Loaded(response));
       })
       .catch(handleError);
 
@@ -197,8 +195,8 @@ class ClusterStore extends PollingStore {
     const agentRequest = getAgents({}, { signal: this.canceler?.signal });
     const poolsRequest = getResourcePools({}, { signal: this.canceler?.signal });
     const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
-    updateIfChanged(this.#resourcePools, Loaded(resourcePools));
-    updateIfChanged(this.#agents, Loaded(agents));
+    this.#resourcePools.set(Loaded(resourcePools));
+    this.#agents.set(Loaded(agents));
   }
 
   public readonly boundWorkspaces = (resourcePool: string) =>
@@ -210,7 +208,7 @@ class ClusterStore extends PollingStore {
     getResourcePoolBindings({ resourcePoolName }, { signal: signal ?? canceler.signal })
       .then((response) => {
         this.#resourcePoolBindings.update((map) =>
-          map.set(resourcePoolName, response.workspaceIds ?? []),
+          map.set(resourcePoolName, OrderedSet(response.workspaceIds ?? [])),
         );
       })
       .catch(handleError);
@@ -232,7 +230,7 @@ class ClusterStore extends PollingStore {
       .then(() => {
         this.#resourcePoolBindings.update((map) =>
           map.update(resourcePool, (prevWorkspaceIds) =>
-            prevWorkspaceIds ? [...new Set([...prevWorkspaceIds, ...workspaceIds])] : workspaceIds,
+            (prevWorkspaceIds ?? OrderedSet()).union(workspaceIds),
           ),
         );
       })
@@ -276,7 +274,7 @@ class ClusterStore extends PollingStore {
       { signal: signal ?? canceler.signal },
     )
       .then(() => {
-        this.#resourcePoolBindings.update((map) => map.set(resourcePool, workspaceIds));
+        this.#resourcePoolBindings.update((map) => map.set(resourcePool, OrderedSet(workspaceIds)));
       })
       .catch(handleError);
 

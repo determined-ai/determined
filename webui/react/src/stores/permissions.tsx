@@ -1,47 +1,45 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import { getPermissionsSummary } from 'services/api';
-import { UserAssignment, UserRole } from 'types';
+import { PermissionsSummary } from 'types';
 import handleError from 'utils/error';
+import { DeepObservable, deepObservable } from 'utils/observable';
 
 import PollingStore from './polling';
 
 class PermissionStore extends PollingStore {
-  #myAssignments: WritableObservable<Loadable<UserAssignment[]>> = observable(NotLoaded);
-  #myRoles: WritableObservable<Loadable<UserRole[]>> = observable(NotLoaded);
+  #permissionSummary: DeepObservable<Loadable<PermissionsSummary>> = deepObservable(NotLoaded);
 
-  public readonly permissions = Observable.select(
-    [this.#myAssignments, this.#myRoles],
-    (assignments, roles) => Loadable.all([assignments, roles]),
+  public readonly permissions = this.#permissionSummary.select((p) =>
+    Loadable.map(p, (ps) => [ps.assignments, ps.roles]),
   );
-  public readonly myAssignments = this.#myAssignments.readOnly();
-  public readonly myRoles = this.#myRoles.readOnly();
+  public readonly myAssignments = this.#permissionSummary.select((p) =>
+    Loadable.map(p, (ps) => ps.assignments),
+  );
+  public readonly myRoles = this.#permissionSummary.select((p) =>
+    Loadable.map(p, (ps) => ps.roles),
+  );
 
   // On login, fetching my user's assignments and roles in one API call.
   public fetch(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
-    getPermissionsSummary({ signal: signal ?? canceler.signal })
-      .then(({ assignments, roles }) => {
-        this.#myAssignments.set(Loaded(assignments));
-        this.#myRoles.set(Loaded(roles));
-      })
-      .catch(handleError);
+    this.getPermissionsSummary(signal ?? canceler.signal).catch(handleError);
 
     return () => canceler.abort();
   }
 
   // On logout, clear old user roles and assignments until new user login.
   public reset(): void {
-    this.#myAssignments.set(NotLoaded);
-    this.#myRoles.set(NotLoaded);
+    this.#permissionSummary.set(NotLoaded);
   }
 
-  protected async poll() {
-    const { assignments, roles } = await getPermissionsSummary({ signal: this.canceler?.signal });
-    this.#myAssignments.set(Loaded(assignments));
-    this.#myRoles.set(Loaded(roles));
+  protected async getPermissionsSummary(signal?: AbortSignal): Promise<void> {
+    this.#permissionSummary.set(Loaded(await getPermissionsSummary({ signal })));
+  }
+
+  protected poll() {
+    return this.getPermissionsSummary(this.canceler?.signal);
   }
 }
 

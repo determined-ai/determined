@@ -1,3 +1,4 @@
+import * as t from 'io-ts';
 import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
@@ -18,11 +19,23 @@ export type XOR<T, U> = T | U extends object ? (Without<T, U> & U) | (Without<U,
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
-export type JsonArray = Array<Json>;
-export interface JsonObject {
-  [key: string]: Json;
-}
+// these codecs have types defined because recursive types like these can't be inferred
+export type JsonArray = Json[];
+export const JsonArray: t.RecursiveType<t.Type<JsonArray>> = t.recursion('JsonArray', () =>
+  t.array(Json),
+);
+
+export type JsonObject = {
+  [key in string]: Json;
+};
+export const JsonObject: t.RecursiveType<t.Type<JsonObject>> = t.recursion('JsonObject', () =>
+  t.record(t.string, Json),
+);
+
 export type Json = string | number | boolean | null | JsonArray | JsonObject;
+export const Json = t.recursion<Json>('Json', () =>
+  t.union([t.string, t.number, t.boolean, t.null, JsonArray, JsonObject]),
+);
 
 export interface Pagination {
   limit: number;
