@@ -13,7 +13,7 @@ import React from 'react';
  * Observable that does a deep equality check before changing values
  */
 export class DeepObservable<T> extends WritableObservable<T> {
-  set(v: T | Observable<T>): void {
+  override set(v: T | Observable<T>): void {
     const newValue = v instanceof Observable ? v.get() : v;
     if (!isEqual(newValue, this._valInput?.get())) super.set(v);
   }
@@ -25,7 +25,7 @@ export class DeepObservable<T> extends WritableObservable<T> {
 export class ImmutableObservable<
   T extends Collection<unknown, unknown>,
 > extends WritableObservable<T> {
-  set(v: T | Observable<T>): void {
+  override set(v: T | Observable<T>): void {
     const newValue = v instanceof Observable ? v.get() : v;
     if (!is(newValue, this._valInput?.get())) super.set(v);
   }
