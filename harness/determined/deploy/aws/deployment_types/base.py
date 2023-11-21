@@ -31,7 +31,6 @@ COMMON_TEMPLATE_PARAMETER_KEYS = [
     constants.cloudformation.CPU_ENV_IMAGE,
     constants.cloudformation.GPU_ENV_IMAGE,
     constants.cloudformation.LOG_GROUP_PREFIX,
-    constants.cloudformation.RETAIN_LOG_GROUP,
     constants.cloudformation.IMAGE_REPO_PREFIX,
     constants.cloudformation.MASTER_CONFIG_TEMPLATE,
     constants.cloudformation.AGENT_REATTACH_ENABLED,
