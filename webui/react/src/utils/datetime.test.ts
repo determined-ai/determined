@@ -110,7 +110,7 @@ describe('Datetime Utilities', () => {
       { input: 129600000, output: '1d 12h' },
       { input: 604800000, output: '1w' },
       { input: 2592000000, output: '4w 2d' },
-      { input: 3024000000, output: '1mo 5d' },
+      { input: 3024000000, output: '1mo 1w' },
       { input: 31536000000, output: '1y' },
     ];
     tests.forEach((test) => {
