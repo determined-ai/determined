@@ -19,7 +19,6 @@ import (
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -91,14 +90,13 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 // Service describes a user manager.
 type Service struct {
 	db        *db.PgDB
-	system    *actor.System
 	extConfig *model.ExternalSessions
 }
 
 // InitService creates the user service singleton.
-func InitService(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) {
+func InitService(db *db.PgDB, extConfig *model.ExternalSessions) {
 	once.Do(func() {
-		userService = &Service{db, system, extConfig}
+		userService = &Service{db, extConfig}
 	})
 }
 

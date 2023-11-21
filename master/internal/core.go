@@ -60,8 +60,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -94,11 +92,10 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs   *logger.LogBuffer
-	system *actor.System
-	echo   *echo.Echo
-	db     *db.PgDB
-	rm     rm.ResourceManager
+	logs *logger.LogBuffer
+	echo *echo.Echo
+	db   *db.PgDB
+	rm   rm.ResourceManager
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  TaskLogBackend
@@ -923,33 +920,6 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	go m.cleanUpExperimentSnapshots()
 
-	// Actor structure:
-	// master system
-	// +- Agent Group (actors.Group: agents)
-	//     +- Agent (internal.agent: <agent-id>)
-	//         +- Websocket (actors.WebSocket: <remote-address>)
-	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
-	// Exactly one of the resource managers is enabled at a time.
-	// +- AgentResourceManager (resourcemanagers.AgentResourceManager: agentRM)
-	//     +- Resource Pool (resourcemanagers.ResourcePool: <resource-pool-name>)
-	//         +- Provisioner (provisioner.Provisioner: provisioner)
-	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
-	// +- Service Proxy (proxy.Proxy: proxy)
-	// +- Telemetry (telemetry.telemetry: telemetry)
-	// +- TrialLogger (internal.trialLogger: trialLogger)
-	// +- Experiments (actors.Group: experiments)
-	//     +- Experiment (internal.experiment: <experiment-id>)
-	//         +- Trial (internal.trial: <trial-request-id>)
-	//             +- Websocket (actors.WebSocket: <remote-address>)
-	m.system = actor.NewSystemWithRoot("master", actor.ActorFunc(root))
-
-	ctx, cancel := context.WithCancel(ctx)
-	go func() {
-		sErr := m.system.Ref.AwaitTermination()
-		log.WithError(sErr).Error("actor system exited")
-		cancel()
-	}()
-
 	switch {
 	case m.config.Logging.DefaultLoggingConfig != nil:
 		m.trialLogBackend = m.db
@@ -966,7 +936,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	tasklogger.SetDefaultLogger(tasklogger.New(m.taskLogBackend))
 
-	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
+	user.InitService(m.db, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 
 	proxy.InitProxy(processProxyAuthentication)
@@ -1054,7 +1024,6 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	// Resource Manager.
 	m.rm = rm.New(
-		m.system,
 		m.db,
 		m.echo,
 		&m.config.ResourceConfig,
@@ -1069,8 +1038,6 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
-
-	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	if err = m.restoreNonTerminalExperiments(); err != nil {
 		return err
@@ -1252,7 +1219,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	user.RegisterAPIHandler(m.echo, userService)
 
 	telemetry.Init(m.ClusterID, m.config.Telemetry)
-	go telemetry.PeriodicallyReportMasterTick(m.db, m.rm, m.system)
+	go telemetry.PeriodicallyReportMasterTick(m.db, m.rm)
 
 	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
 		return err

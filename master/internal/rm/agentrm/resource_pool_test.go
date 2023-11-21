@@ -12,24 +12,23 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// A lot of these tests don't make sense anymore post actor. I refactored them shoddily because I know what the
+// test is already covered by allocation tests. We should circle back and write better tests.
+
 func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
-	taskRef := system.Get(actor.Addr("task"))
-	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
+	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	system.Ask(taskRef, ThrowError{})
-	assert.ErrorType(t, taskRef.StopAndAwaitTermination(), ErrMock)
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -40,18 +39,15 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 }
 
 func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
-	taskRef := system.Get(actor.Addr("task"))
-	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
+	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	system.Ask(taskRef, ThrowPanic{})
-	assert.ErrorType(t, taskRef.StopAndAwaitTermination(), ErrMock)
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -62,17 +58,15 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 }
 
 func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
-	taskRef := system.Get(actor.Addr("task"))
-	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
+	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	assert.NilError(t, taskRef.StopAndAwaitTermination())
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -83,24 +77,21 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 }
 
 func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{{ID: "agent", Slots: 1}}
 	tasks := []*MockTask{{ID: "task", SlotsNeeded: 1}}
-	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
-	taskRef := system.Get(actor.Addr("task"))
-	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
+	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	system.Ask(taskRef, sproto.ReleaseResources{}).Get()
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	rp.stop()
 	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
 }
 
 func TestScalingInfoAgentSummary(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	agents := []*MockAgent{
 		{ID: "agent1", Slots: 1},
 		{ID: "agent2", Slots: 1},
@@ -127,7 +118,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 		{ID: "unallocated-gpu-task4", SlotsNeeded: 1},
 		{ID: "unallocated-gpu-task5", SlotsNeeded: 5},
 	}
-	rp := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
+	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 	rp.slotsPerInstance = 4
 
 	// Test basic.
@@ -142,8 +133,8 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	})
 
 	// Test adding agents.
-	agent3 := forceAddAgent(t, system, rp.agentStatesCache, "agent3", 4, 0, 0)
-	forceAddAgent(t, system, rp.agentStatesCache, "agent4", 4, 1, 0)
+	agent3 := forceAddAgent(t, rp.agentStatesCache, "agent3", 4, 0, 0)
+	forceAddAgent(t, rp.agentStatesCache, "agent4", 4, 1, 0)
 	updated = rp.updateScalingInfo()
 	assert.Check(t, updated)
 	assert.DeepEqual(t, *rp.scalingInfo, sproto.ScalingInfo{
@@ -192,7 +183,6 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 }
 
 func TestSettingGroupPriority(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
 	config := config.ResourcePoolConfig{
 		Scheduler: &config.SchedulerConfig{
@@ -203,7 +193,7 @@ func TestSettingGroupPriority(t *testing.T) {
 		},
 	}
 
-	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, &config, nil, nil, nil)
 
 	// Test setting a non-default priority for a group.
 	updatedPriority := 22
@@ -229,7 +219,6 @@ func TestSettingGroupPriority(t *testing.T) {
 }
 
 func setupRPSamePriority(t *testing.T) *resourcePool {
-	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
 	config := config.ResourcePoolConfig{
 		Scheduler: &config.SchedulerConfig{
@@ -240,7 +229,7 @@ func setupRPSamePriority(t *testing.T) *resourcePool {
 		},
 	}
 
-	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, &config, nil, nil, nil)
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
 		"job1": decimal.New(100, 1000),
@@ -347,7 +336,6 @@ func TestMoveMessagesDemoteTail(t *testing.T) {
 }
 
 func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
 	config := config.ResourcePoolConfig{
 		Scheduler: &config.SchedulerConfig{
@@ -358,7 +346,7 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 		},
 	}
 
-	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, &config, nil, nil, nil)
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
 		"job1": decimal.New(100, 1000),
@@ -405,7 +393,6 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 }
 
 func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
 	config := config.ResourcePoolConfig{
 		Scheduler: &config.SchedulerConfig{
@@ -416,7 +403,7 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 		},
 	}
 
-	rp := setupResourcePool(t, nil, system, &config, nil, nil, nil)
+	rp := setupResourcePool(t, nil, &config, nil, nil, nil)
 
 	rp.queuePositions = map[model.JobID]decimal.Decimal{
 		"job1": decimal.New(100, 1000),
