@@ -14,7 +14,7 @@ import {
   HyperparameterBase,
   Hyperparameters,
   HyperparameterType,
-  JsonObjectC,
+  JsonObject,
   RunState,
 } from 'types';
 import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
@@ -128,7 +128,7 @@ const experimentItemCodec = t.intersection([
   t.type({
     archived: t.boolean,
     config: experimentConfigCodec,
-    configRaw: JsonObjectC,
+    configRaw: JsonObject,
     hyperparameters: t.record(t.string, hyperparameterCodec),
     id: t.number,
     jobId: t.string,
