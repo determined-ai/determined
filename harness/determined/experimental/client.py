@@ -289,13 +289,10 @@ def logout() -> None:
 
 
 @_require_singleton
-def list_users(active_only: bool) -> List[User]:
+def list_users(active: Optional[bool] = None) -> List[User]:
     """Get a list of all Users."""
     assert _determined is not None
-    if active_only:
-        return _determined.list_users(active=True)
-    else:
-        return _determined.list_users()
+    return _determined.list_users(active=active)
 
 
 @_require_singleton
