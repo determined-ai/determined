@@ -475,12 +475,18 @@ func (a *apiServer) PostTaskLogs(
 		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
 	}
 
-	if err := webhooks.ScanLogs(ctx, logs); err != nil {
+	switch err := webhooks.ScanLogs(ctx, logs); {
+	case err != nil && errors.Is(err, context.Canceled):
+		return nil, err
+	case err != nil:
 		log.Errorf("scanning logs for webhook triggers: %v", err)
 	}
 
-	if err := a.monitor(ctx, model.TaskID(taskID), logs); err != nil {
-		log.Errorf("moniter logs against log pattern policies: %s", err)
+	switch err := a.monitor(ctx, model.TaskID(taskID), logs); {
+	case err != nil && errors.Is(err, context.Canceled):
+		return nil, err
+	case err != nil:
+		log.Errorf("monitor logs against log pattern policies: %s", err)
 	}
 
 	return &apiv1.PostTaskLogsResponse{}, nil
