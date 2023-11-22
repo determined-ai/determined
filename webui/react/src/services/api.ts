@@ -767,6 +767,30 @@ export const killTensorBoard = generateDetApi<
   void
 >(Config.killTensorBoard);
 
+export const getJupyterLab = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetNotebookResponse,
+  Type.CommandTask
+>(Config.getJupyterLab);
+
+export const getShell = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetShellResponse,
+  Type.CommandTask
+>(Config.getShell);
+
+export const getTensorBoard = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetTensorboardResponse,
+  Type.CommandTask
+>(Config.getTensorBoard);
+
+export const getCommand = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetCommandResponse,
+  Type.CommandTask
+>(Config.getCommand);
+
 export const getTaskTemplates = generateDetApi<
   Service.GetTemplatesParams,
   Api.V1GetTemplatesResponse,

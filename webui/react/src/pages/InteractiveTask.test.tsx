@@ -20,10 +20,25 @@ vi.mock('react-router-dom', async (importOriginal) => ({
     taskId: 'task-id',
     taskName: TASK_NAME,
     taskResourcePool: TASK_RESOURCE_POOL,
-    taskType: 'JupyterLab',
+    taskType: 'jupyter-lab',
     taskUrl: 'http://taskUrl.com',
   }),
   useRouteMatch: () => ({ url: '/company/company-id1/team/team-id1' }),
+}));
+
+vi.mock('services/api', () => ({
+  getCommand: () => {
+    return Promise.resolve({});
+  },
+  getJupyterLab: () => {
+    return Promise.resolve({});
+  },
+  getShell: () => {
+    return Promise.resolve({});
+  },
+  getTensorBoard: () => {
+    return Promise.resolve({});
+  },
 }));
 
 const InteractiveTaskPageContainer: React.FC = () => {
