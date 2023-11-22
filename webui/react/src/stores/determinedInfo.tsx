@@ -2,7 +2,7 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 
 import { getInfo } from 'services/api';
 import { ValueOf } from 'types';
-import { observable, WritableObservable } from 'utils/observable';
+import { deepObservable } from 'utils/observable';
 
 import PollingStore from './polling';
 
@@ -54,7 +54,7 @@ const initInfo: DeterminedInfo = {
 };
 
 class DeterminedStore extends PollingStore {
-  #info: WritableObservable<Loadable<DeterminedInfo>> = observable(NotLoaded);
+  #info = deepObservable<Loadable<DeterminedInfo>>(NotLoaded);
 
   public readonly loadableInfo = this.#info.readOnly();
 

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/stretchr/testify/mock"
@@ -30,7 +30,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -42,29 +41,46 @@ import (
 var (
 	thePgDB   *db.PgDB
 	authzUser *mocks.UserAuthZ
-	system    *actor.System
-	mockRM    *actorrm.ResourceManager
 )
+
+// MockRM returns a mock resource manager that basically returns OK on every call. We should update this to an
+// RM that makes sure callers uphold expected invariants (release, kill not called before allocate, release not
+// called twice for the same resource, etc).
+func MockRM() *mocks.ResourceManager {
+	var mockRM mocks.ResourceManager
+	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
+		return sproto.EmptyDeleteJobResponse()
+	}, nil)
+	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything).Return(
+		func(name string, _, _ int) string {
+			return name
+		},
+		nil,
+	)
+	mockRM.On("ValidateResources", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(
+		func(name string, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
+			return def
+		},
+		nil,
+	)
+	mockRM.On("ValidateResourcePoolAvailability", mock.Anything).Return(nil, nil)
+	mockRM.On("SetGroupMaxSlots", mock.Anything).Return()
+	mockRM.On("SetGroupWeight", mock.Anything).Return(nil)
+	mockRM.On("Allocate", mock.Anything).Return(func(msg sproto.AllocateRequest) *sproto.ResourcesSubscription {
+		return rmevents.Subscribe(msg.AllocationID)
+	}, nil)
+	return &mockRM
+}
 
 // pgdb can be nil to use the singleton database for testing.
 func setupAPITest(t *testing.T, pgdb *db.PgDB,
-	actorFunc ...func(context *actor.Context) error,
+	altMockRM ...*mocks.ResourceManager,
 ) (*apiServer, model.User, context.Context) {
-	system = actor.NewSystem("mock")
-	require.LessOrEqual(t, len(actorFunc), 1)
-	if len(actorFunc) == 0 {
-		actorFunc = append(actorFunc, func(context *actor.Context) error {
-			switch context.Message().(type) {
-			case sproto.DeleteJob:
-				context.Respond(sproto.EmptyDeleteJobResponse())
-			}
-			return nil
-		})
+	mockRM := MockRM()
+	if len(altMockRM) == 1 {
+		mockRM = altMockRM[0]
 	}
-
-	system = actor.NewSystem(uuid.New().String())
-	ref, _ := system.ActorOf(sproto.K8sRMAddr, actor.ActorFunc(actorFunc[0]))
-	mockRM = actorrm.Wrap(ref)
 
 	if pgdb == nil {
 		if thePgDB == nil {
@@ -86,7 +102,6 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 	api := &apiServer{
 		m: &Master{
 			trialLogBackend: pgdb,
-			system:          system,
 			db:              pgdb,
 			taskLogBackend:  pgdb,
 			rm:              mockRM,
@@ -514,9 +529,9 @@ func TestRenameUserThenReuseName(t *testing.T) {
 // pgdb can be nil to use the singleton database for testing.
 func setupUserAuthzTest(
 	t *testing.T, pgdb *db.PgDB,
-	actorFunc ...func(context *actor.Context) error,
+	altMockRM ...*mocks.ResourceManager,
 ) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
-	api, curUser, ctx := setupAPITest(t, pgdb, actorFunc...)
+	api, curUser, ctx := setupAPITest(t, pgdb, altMockRM...)
 
 	if authzUser == nil {
 		authzUser = &mocks.UserAuthZ{}

@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.26.4-dev0
+    default: 0.26.5-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev24
+    default: v1dev25
   gke-version:
     type: string
     default: "1.25.10"
@@ -345,15 +345,36 @@ commands:
         type: string
       python-version:
         type: string
-        default: "3.8.16"
+        default: "3.8.18"
     steps:
+      - run:
+          name: Write cache key
+          command: |
+            echo <<parameters.executor>> > /tmp/cachefile
+            pip freeze --all >> /tmp/cachefile
+            if [ "<<parameters.determined>>" = "true" ]; then
+              cat harness/setup.py >> /tmp/cachefile
+            fi
+            if [ "<<parameters.model-hub>>" = "true" ]; then
+              cat model_hub/setup.py >> /tmp/cachefile
+            fi
+            echo <<parameters.extras-requires>> >> /tmp/cachefile
+            if [ -n <<parameters.extra-requirements-file>> ]; then
+              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+            fi
+            echo '<<parameters.python-version>>' >> /tmp/cachefile
+            echo '<<parameters.install-python>>' >> /tmp/cachefile
+
+      - restore_cache:
+          keys:
+            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.install-python>>
           steps:
             - run:
                 name: prepare conda PATH
                 command: |
-                  echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
+                  echo 'export PATH=/tmp/conda/bin:${PATH}' >> $BASH_ENV
 
             - run:
                 name: prepare conda install_python.sh
@@ -362,10 +383,18 @@ commands:
                   #!/bin/bash
                   PYTHON_VERSION="${1}"
 
-                  CONDA_DIR="/opt/conda"
+                  CONDA_DIR="/tmp/conda"
                   CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
                   CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
                   CONDA_URL="https://repo.anaconda.com/miniconda"
+
+                  ${CONDA_DIR}/bin/python --version
+                  installed_python_version=$(${CONDA_DIR}/bin/python --version 2>&1 | awk '{print $2}')
+                  if [ -x "${CONDA_DIR}/bin/python" ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
+                      echo "Python already installed, version $PYTHON_VERSION"
+                      exit 0
+                  fi
+                  echo "Python not installed or wrong version, installing conda and Python now"
 
                   mkdir -p /etc/determined/conda.d
                   mkdir -p "${CONDA_DIR}"
@@ -404,25 +433,6 @@ commands:
                 name: Install pypa builder
                 command: python3 -m pip install build
 
-      - run:
-          name: Write cache key
-          command: |
-            echo <<parameters.executor>> > /tmp/cachefile
-            pip freeze --all >> /tmp/cachefile
-            if [ "<<parameters.determined>>" = "true" ]; then
-              cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.model-hub>>" = "true" ]; then
-              cat model_hub/setup.py >> /tmp/cachefile
-            fi
-            echo <<parameters.extras-requires>> >> /tmp/cachefile
-            if [ -n <<parameters.extra-requirements-file>> ]; then
-              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
-            fi
-
-      - restore_cache:
-          keys:
-            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -456,6 +466,7 @@ commands:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
+            - "/tmp/conda"
       - run: python --version
       - run: pip --version
       - run: pip freeze --all
@@ -710,6 +721,7 @@ commands:
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
               --deployment-type <<parameters.deployment-type>> \
+              --retain-log-group \
               --yes
 
   terminate-aws-cluster:
@@ -1465,13 +1477,15 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
       - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react check
+      - store_artifacts:
+          path: /home/circleci/.npm/_logs/
 
   build-react:
     parameters:
@@ -1479,7 +1493,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1499,7 +1513,7 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1518,7 +1532,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1538,7 +1552,7 @@ jobs:
 
   test-unit-react-quarantined:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
         environment:
           CI: "true"
     steps:
@@ -1550,7 +1564,7 @@ jobs:
 
   test-intg-downstream:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared

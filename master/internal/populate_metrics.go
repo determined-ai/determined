@@ -11,9 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -189,23 +186,12 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivialMetrics bool,
 	batches int,
 ) error {
-	system := actor.NewSystem("mock")
-	ref, _ := system.ActorOf(sproto.AgentRMAddr, actor.ActorFunc(
-		func(context *actor.Context) error {
-			switch context.Message().(type) {
-			case sproto.DeleteJob:
-				context.Respond(sproto.EmptyDeleteJobResponse())
-			}
-			return nil
-		}))
-	mockRM := actorrm.Wrap(ref)
 	api := &apiServer{
 		m: &Master{
 			trialLogBackend: pgdb,
-			system:          system,
 			db:              pgdb,
 			taskLogBackend:  pgdb,
-			rm:              mockRM,
+			rm:              nil,
 			config:          masterConfig,
 			taskSpec:        &tasks.TaskSpec{},
 		},

@@ -5,13 +5,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -25,12 +26,11 @@ func newMaxSlot(maxSlot int) *int {
 func setupResourcePool(
 	t *testing.T,
 	db db.DB,
-	system *actor.System,
 	conf *config.ResourcePoolConfig,
 	mockTasks []*MockTask,
 	mockGroups []*MockGroup,
 	mockAgents []*MockAgent,
-) (*resourcePool, *actor.Ref) {
+) *resourcePool {
 	if conf == nil {
 		conf = &config.ResourcePoolConfig{PoolName: "pool"}
 	}
@@ -41,35 +41,33 @@ func setupResourcePool(
 		}
 	}
 
-	rp := newResourcePool(
+	agentsRef, _ := newAgentService([]config.ResourcePoolConfig{*conf}, &aproto.MasterSetAgentOptions{})
+
+	rp, err := newResourcePool(
 		conf, db, nil, MakeScheduler(conf.Scheduler),
-		MakeFitFunction(conf.Scheduler.FittingPolicy))
+		MakeFitFunction(conf.Scheduler.FittingPolicy), agentsRef)
+	require.NoError(t, err)
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
-		t, system, mockTasks, mockGroups, mockAgents,
+		t, mockTasks, mockGroups, mockAgents,
 	)
 	rp.saveNotifications = true
-	ref, created := system.ActorOf(actor.Addr(rp.config.PoolName), rp)
-	assert.Assert(t, created)
-	system.Ask(ref, actor.Ping{}).Get()
 
 	for _, task := range mockTasks {
-		task.RMRef = ref
+		task.RPRef = rp
 	}
-	return rp, ref
+	return rp
 }
 
 func forceAddAgent(
 	t *testing.T,
-	system *actor.System,
-	agents map[*actor.Ref]*agentState,
-	agentID string,
+	agents map[agentID]*agentState,
+	agentIDStr string,
 	numSlots int,
 	numUsedSlots int,
 	numZeroSlotContainers int,
 ) *agentState {
-	ref, created := system.ActorOf(actor.Addr(agentID), &MockAgent{ID: agentID, Slots: numSlots})
-	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref}, 100)
+	state := newAgentState(agentID(agentIDStr), 100)
+	state.handler = &agent{}
 	for i := 0; i < numSlots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -84,22 +82,20 @@ func forceAddAgent(
 		_, err := state.allocateFreeDevices(0, cproto.NewID())
 		assert.NilError(t, err)
 	}
-	agents[state.Handler] = state
+	agents[state.id] = state
 	return state
 }
 
 func newFakeAgentState(
 	t *testing.T,
-	system *actor.System,
 	id string,
 	slots int,
 	slotsUsed int,
 	maxZeroSlotContainers int,
 	zeroSlotContainers int,
 ) *agentState {
-	ref, created := system.ActorOf(actor.Addr(id), &MockAgent{ID: id, Slots: slots})
-	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref}, maxZeroSlotContainers)
+	state := newAgentState(agentID(id), maxZeroSlotContainers)
+	state.handler = &agent{}
 	for i := 0; i < slots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -125,16 +121,11 @@ func newFakeAgentState(
 
 func forceAddTask(
 	t *testing.T,
-	system *actor.System,
 	taskList *tasklist.TaskList,
 	taskID string,
 	numAllocated int,
 	slotsNeeded int,
 ) {
-	task := &MockTask{ID: model.AllocationID(taskID), SlotsNeeded: slotsNeeded}
-	_, created := system.ActorOf(actor.Addr(taskID), task)
-	assert.Assert(t, created)
-
 	req := &sproto.AllocateRequest{
 		AllocationID: model.AllocationID(taskID),
 		JobID:        model.JobID(taskID),
@@ -269,8 +260,7 @@ func TestJobStats(t *testing.T) {
 		expectedStats *jobv1.QueueStats,
 	) {
 		p := &priorityScheduler{}
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
@@ -285,8 +275,7 @@ func TestJobStats(t *testing.T) {
 		agents []*MockAgent,
 		expectedStats *jobv1.QueueStats,
 	) {
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
@@ -355,8 +344,7 @@ func TestJobOrder(t *testing.T) {
 		agents []*MockAgent,
 	) map[model.JobID]*sproto.RMJobInfo {
 		p := &priorityScheduler{preemptionEnabled: false}
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
@@ -368,8 +356,7 @@ func TestJobOrder(t *testing.T) {
 		groups []*MockGroup,
 		agents []*MockAgent,
 	) map[model.JobID]*sproto.RMJobInfo {
-		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
@@ -432,8 +419,7 @@ func TestJobOrderPriority(t *testing.T) {
 	}
 
 	p := &priorityScheduler{preemptionEnabled: false}
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 	toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	AllocateTasks(toAllocate, agentMap, taskList)
@@ -447,7 +433,7 @@ func TestJobOrderPriority(t *testing.T) {
 		{ID: "task2", JobID: "job2", SlotsNeeded: 1, Group: groups[1]},
 	}
 
-	AddUnallocatedTasks(t, newTasks, system, taskList)
+	AddUnallocatedTasks(t, newTasks, taskList)
 	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap,
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	assert.Equal(t, len(toRelease), 0)
@@ -464,36 +450,27 @@ func TestJobOrderPriority(t *testing.T) {
 
 func setupSchedulerStates(
 	t *testing.T,
-	system *actor.System,
 	mockTasks []*MockTask,
 	mockGroups []*MockGroup,
 	mockAgents []*MockAgent,
 ) (
 	*tasklist.TaskList,
 	map[model.JobID]*tasklist.Group,
-	map[*actor.Ref]*agentState,
+	map[agentID]*agentState,
 ) {
-	agents := make(map[*actor.Ref]*agentState, len(mockAgents))
+	agents := make(map[agentID]*agentState, len(mockAgents))
 	for _, mockAgent := range mockAgents {
-		ref, created := system.ActorOf(actor.Addr(mockAgent.ID), mockAgent)
-		assert.Assert(t, created)
-
-		agent := newAgentState(sproto.AddAgent{
-			Agent: ref,
-		}, mockAgent.MaxZeroSlotContainers)
+		state := newAgentState(agentID(mockAgent.ID), mockAgent.MaxZeroSlotContainers)
+		state.handler = &agent{}
 
 		for i := 0; i < mockAgent.Slots; i++ {
-			agent.Devices[device.Device{ID: device.ID(i)}] = nil
+			state.Devices[device.Device{ID: device.ID(i)}] = nil
 		}
-		agents[ref] = agent
+		agents[agentID(mockAgent.ID)] = state
 	}
 
 	groups := make(map[model.JobID]*tasklist.Group, len(mockGroups))
-	groupActors := make(map[*MockGroup]*actor.Ref, len(mockGroups))
 	for _, mockGroup := range mockGroups {
-		ref, created := system.ActorOf(actor.Addr(mockGroup.ID), mockGroup)
-		assert.Assert(t, created)
-
 		group := &tasklist.Group{
 			JobID:    model.JobID(mockGroup.ID),
 			MaxSlots: mockGroup.MaxSlots,
@@ -501,13 +478,10 @@ func setupSchedulerStates(
 			Priority: mockGroup.Priority,
 		}
 		groups[model.JobID(mockGroup.ID)] = group
-		groupActors[mockGroup] = ref
 	}
 
 	taskList := tasklist.New()
 	for _, mockTask := range mockTasks {
-		ref, _ := system.ActorOf(actor.Addr(mockTask.ID), mockTask)
-		system.Ask(ref, actor.Ping{})
 		jobID := model.JobID(mockTask.JobID)
 		if jobID == "" {
 			if mockTask.Group != nil {
@@ -521,13 +495,12 @@ func setupSchedulerStates(
 			groups[jobID] = &tasklist.Group{JobID: jobID}
 		}
 
-		req := MockTaskToAllocateRequest(mockTask, ref)
+		req := MockTaskToAllocateRequest(mockTask)
 		taskList.AddTask(req)
 
 		if mockTask.AllocatedAgent != nil {
 			assert.Assert(t, mockTask.AllocatedAgent.Slots >= mockTask.SlotsNeeded)
-			agentRef := system.Get(actor.Addr(mockTask.AllocatedAgent.ID))
-			agentState := agents[agentRef]
+			agentState := agents[agentID(mockTask.AllocatedAgent.ID)]
 			containerID := cproto.NewID()
 
 			devices := make([]device.Device, 0)
@@ -556,7 +529,6 @@ func setupSchedulerStates(
 				ID: req.AllocationID,
 				Resources: map[sproto.ResourcesID]sproto.Resources{
 					sproto.ResourcesID(containerID): &containerResources{
-						system:      system,
 						req:         req,
 						agent:       agentState,
 						containerID: containerID,

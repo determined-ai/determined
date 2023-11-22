@@ -347,6 +347,37 @@ def list_workspaces() -> List[Workspace]:
 
 
 @_require_singleton
+def create_workspace(name: str) -> Workspace:
+    """Create a new workspace with the provided name.
+
+    Args:
+        name: The name of the workspace to create.
+
+    Returns:
+        The newly-created :class:`~determined.experimental.Workspace`.
+
+    Raises:
+        errors.APIException: If a workspace with the provided name already exists.
+    """
+    assert _determined is not None
+    return _determined.create_workspace(name)
+
+
+@_require_singleton
+def delete_workspace(name: str) -> None:
+    """Delete the workspace with the provided name.
+
+    Args:
+        name: The name of the workspace to delete.
+
+    Raises:
+        errors.NotFoundException: If no workspace with the provided name exists.
+    """
+    assert _determined is not None
+    return _determined.delete_workspace(name)
+
+
+@_require_singleton
 def create_model(
     name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
 ) -> Model:
@@ -434,6 +465,47 @@ def get_models(
     """
     assert _determined is not None
     return _determined.get_models(sort_by, order_by, name, description)
+
+
+@_require_singleton
+def list_models(
+    sort_by: ModelSortBy = ModelSortBy.NAME,
+    order_by: OrderBy = OrderBy.ASCENDING,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    model_id: Optional[int] = None,
+    workspace_names: Optional[List[str]] = None,
+    workspace_ids: Optional[List[int]] = None,
+) -> List[Model]:
+    """Get a list of all models in the model registry.
+
+    Arguments:
+        sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
+        order_by: Whether to sort in ascending or descending order. See
+            :class:`~determined.experimental.OrderBy`.
+        name: If this parameter is set, models will be filtered to only
+            include models with names matching this parameter.
+        description: If this parameter is set, models will be filtered to
+            only include models with descriptions matching this parameter.
+        model_id: If this parameter is set, models will be filtered to
+            only include the model with this unique numeric id.
+        workspace_names: Only return models with names in this list.
+        workspace_ids: Only return models with workspace IDs in this list.
+
+    Returns:
+        A list of :class:`~determined.experimental.client.Model` objects matching any passed
+        filters.
+    """
+    assert _determined is not None
+    return _determined.list_models(
+        sort_by=sort_by,
+        order_by=order_by,
+        name=name,
+        description=description,
+        model_id=model_id,
+        workspace_names=workspace_names,
+        workspace_ids=workspace_ids,
+    )
 
 
 @_require_singleton

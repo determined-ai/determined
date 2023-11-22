@@ -39,7 +39,7 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
 Before installing Determined on a Kubernetes cluster, please ensure that the following prerequisites
 are satisfied:
 
--  The Kubernetes cluster should be running Kubernetes version >= 1.19 and <= 1.21, though later
+-  The Kubernetes cluster should be running Kubernetes version >= 1.21 and <= 1.25, though later
    versions may work.
 
 -  You should have access to the cluster via `kubectl
@@ -459,5 +459,8 @@ To uninstall Determined run:
  Next Steps
 ************
 
-:doc:`custom-pod-specs` :doc:`k8s-dev-guide` :doc:`setup-aks-cluster` :doc:`setup-eks-cluster`
-:doc:`setup-gke-cluster`
+-  :ref:`custom-pod-specs`
+-  :ref:`k8s-dev-guide`
+-  :ref:`setup-aks-cluster`
+-  :ref:`setup-eks-cluster`
+-  :ref:`setup-gke-cluster`

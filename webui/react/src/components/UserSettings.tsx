@@ -164,7 +164,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   onSubmit={handleSaveDisplayName}>
                   <Input autoFocus maxLength={32} placeholder="Add display name" />
                 </InlineForm>
-                {info.userManagementEnabled && (
+                {currentUser?.remote && (
+                  <label>Remote user cannot change password from WebUI</label>
+                )}
+                {info.userManagementEnabled && !currentUser?.remote && (
                   <>
                     <InlineForm<string>
                       initialValue={newPassword}

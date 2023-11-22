@@ -76,3 +76,15 @@ func (r *Registry[K, V]) OnDelete(key K, callback func()) {
 		callback()
 	}()
 }
+
+// Snapshot returns a shallow copy of the underlying map.
+func (r *Registry[K, V]) Snapshot() map[K]V {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	resp := make(map[K]V, len(r.data))
+	for key, entry := range r.data {
+		resp[key] = entry.value
+	}
+	return resp
+}

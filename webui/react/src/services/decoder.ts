@@ -18,6 +18,7 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
     isAdmin: data.admin,
     lastAuthAt: data.lastAuthAt ? new Date(data.lastAuthAt).getTime() : undefined,
     modifiedAt: new Date(data.modifiedAt || 1).getTime(),
+    remote: data.remote,
     username: data.username,
   };
 };

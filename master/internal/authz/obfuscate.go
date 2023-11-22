@@ -32,6 +32,7 @@ func ObfuscateContainer(container *containerv1.Container) error {
 	}
 	container.Id = hiddenString
 	container.Parent = hiddenString
+	container.PermissionDenied = true
 	for _, device := range container.Devices {
 		if err := ObfuscateDevice(device); err != nil {
 			return err

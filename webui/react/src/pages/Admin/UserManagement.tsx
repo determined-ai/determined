@@ -400,6 +400,15 @@ const UserManagement: React.FC = () => {
         title: 'Role',
       },
       {
+        dataIndex: 'remote',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['remote'],
+        key: V1GetUsersRequestSortBy.REMOTE,
+        onCell: onRightClickableCell,
+        render: (value: boolean): React.ReactNode => (value ? 'Remote' : 'Local'),
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(b.remote, a.remote),
+        title: 'Remote',
+      },
+      {
         dataIndex: 'modifiedAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
@@ -433,7 +442,9 @@ const UserManagement: React.FC = () => {
         title: '',
       },
     ];
-    return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
+    return rbacEnabled
+      ? columns.filter((c) => c.dataIndex !== 'isAdmin')
+      : columns.filter((c) => c.dataIndex !== 'remote');
   }, [fetchUsers, groups, info.userManagementEnabled, rbacEnabled, settings]);
 
   return (

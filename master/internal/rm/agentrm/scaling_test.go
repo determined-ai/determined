@@ -6,13 +6,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
 	"gotest.tools/assert"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestCalculatingDesiredInstanceNum(t *testing.T) {
-	system := actor.NewSystem(t.Name())
-
 	// Test tasks with groups with maxSlots
 	agents := []*MockAgent{}
 	groups := []*MockGroup{
@@ -33,7 +29,7 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 		{ID: "task9", SlotsNeeded: 10, Group: groups[2]},
 	}
 
-	taskList, groupMap, _ := setupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, _ := setupSchedulerStates(t, tasks, groups, agents)
 
 	// task 1, task 2, task 3 are in a group with maxSlots = 1 and total slots needed = 5
 	// task 4, task 5 are in a group with maxSlots = 2 and total slots needed = 5
@@ -44,13 +40,12 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	// ceil(26/5) = 6
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, groupMap, 5, 10), 6)
 
-	system = actor.NewSystem(t.Name())
 	taskList = tasklist.New()
 
 	// Test one-slot allocated and pending tasks.
 
-	forceAddTask(t, system, taskList, "task1", 1, 1)
-	forceAddTask(t, system, taskList, "task2", 0, 1)
+	forceAddTask(t, taskList, "task1", 1, 1)
+	forceAddTask(t, taskList, "task2", 0, 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 100), 0)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 1, 100), 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 100), 1)
@@ -65,8 +60,8 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 2), 1)
 
 	// Test more one-slot allocated and pending tasks.
-	forceAddTask(t, system, taskList, "task3", 0, 1)
-	forceAddTask(t, system, taskList, "task4", 1, 1)
+	forceAddTask(t, taskList, "task3", 0, 1)
+	forceAddTask(t, taskList, "task4", 1, 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 100), 0)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 1, 100), 2)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 100), 1)
@@ -97,8 +92,8 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 2), 1)
 
 	// Test zero slot tasks.
-	forceAddTask(t, system, taskList, "task5", 0, 0)
-	forceAddTask(t, system, taskList, "task6", 1, 0)
+	forceAddTask(t, taskList, "task5", 0, 0)
+	forceAddTask(t, taskList, "task6", 1, 0)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 100), 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 1, 100), 2)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 100), 1)
@@ -113,8 +108,8 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 2), 1)
 
 	// Test distributed training tasks.
-	forceAddTask(t, system, taskList, "task7", 0, 4)
-	forceAddTask(t, system, taskList, "task8", 1, 4)
+	forceAddTask(t, taskList, "task7", 0, 4)
+	forceAddTask(t, taskList, "task8", 1, 4)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 100), 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 1, 100), 6)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 100), 3)
@@ -129,8 +124,8 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 2), 3)
 
 	// Test unschedulable distributed training tasks.
-	forceAddTask(t, system, taskList, "task9", 0, 3)
-	forceAddTask(t, system, taskList, "task10", 1, 3)
+	forceAddTask(t, taskList, "task9", 0, 3)
+	forceAddTask(t, taskList, "task10", 1, 3)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 100), 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 1, 100), 9)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 100), 3)

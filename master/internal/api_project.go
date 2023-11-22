@@ -631,7 +631,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	}
 
 	log.Debugf("deleting project %d experiments", projectID)
-	if _, err = a.deleteExperiments(expList, user); err != nil {
+	if err = a.deleteExperiments(expList, user); err != nil {
 		log.WithError(err).Errorf("failed to delete experiments")
 		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 		return err

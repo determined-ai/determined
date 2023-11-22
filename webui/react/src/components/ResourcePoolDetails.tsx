@@ -1,4 +1,5 @@
 import { Divider, Modal } from 'antd';
+import { useTheme } from 'hew/Theme';
 import React, { Fragment } from 'react';
 
 import JsonGlossary from 'components/JsonGlossary';
@@ -17,6 +18,10 @@ interface Props {
 
 const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
   const { details, ...mainSection } = pool;
+
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   for (const key in details) {
     if (details[key as keyof V1ResourcePoolDetail] === null) {
@@ -39,6 +44,7 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       open={props.visible}
       style={{ minWidth: '600px' }}
       title={title}
+      wrapClassName={themeClass}
       onCancel={props.finally}
       onOk={props.finally}>
       <JsonGlossary

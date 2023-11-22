@@ -38,6 +38,8 @@ message GetUsersRequest {
     SORT_BY_NAME = 6;
     // Returns users sorted by last authenticated time.
     SORT_BY_LAST_AUTH_TIME = 7;
+    // Returns users sorted by local or remote auth.
+    SORT_BY_REMOTE = 8;
   }
   // Sort users by the given field.
   SortBy sort_by = 1;

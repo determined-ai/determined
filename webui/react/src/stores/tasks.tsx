@@ -1,13 +1,13 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { observable, WritableObservable } from 'micro-observables';
 
 import { getActiveTasks } from 'services/api';
 import { TaskCounts } from 'types';
+import { deepObservable } from 'utils/observable';
 
 import PollingStore from './polling';
 
 class TaskStore extends PollingStore {
-  #activeTasks: WritableObservable<Loadable<TaskCounts>> = observable(NotLoaded);
+  #activeTasks = deepObservable<Loadable<TaskCounts>>(NotLoaded);
 
   public readonly activeTasks = this.#activeTasks.readOnly();
 

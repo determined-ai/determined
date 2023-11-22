@@ -22,7 +22,10 @@ const (
 
 func TestAddAndRemoveBindings(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	pgDB, cleanup := MustResolveNewPostgresDatabase(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	user := RequireMockUser(t, pgDB)
