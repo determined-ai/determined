@@ -30,50 +30,13 @@ For a successful TLS setup during installation, follow these guidelines:
       ``DET_MASTER_CERT_NAME`` and ``DET_MASTER_CERT_FILE``. Alternatively, they can adopt a
       trust-on-first-use approach.
 
-.. _firewall-rules:
-
-.. _port-reference:
-
 **********************
  Network Connectivity
 **********************
 
-Ensure your firewall rules allow traffic to and from the master and agents according to the
-following criteria:
-
--  **Master-Compute Connection**: Compute nodes must connect to the master node on the master's
-   configured port.
-
--  **Inter-Compute Connection**: Compute nodes should connect to each other on any port.
-
--  **Master-Compute Reverse Connection**: The master node must establish a connection to compute
-   nodes on any port.
-
--  **Docker Image Access**: Compute nodes should either:
-
-   -  Access the Docker image repository.
-   -  Already contain the relevant pre-downloaded images.
-
--  **Checkpoint Storage Access**:
-
-   -  Both compute nodes and the master node should access the desired checkpoint storage.
-   -  Optionally, client nodes having checkpoint storage access can lead to better performance.
-
--  **Database Access**: The master node should connect to PostgreSQL.
-
--  **User Task Resources**: Compute nodes must reach any network resources necessary for user tasks,
-   such as fetching packages from PyPI.
-
--  **Client-Master Connection**: Client machines should connect to the master node using the
-   master's configured port.
-
-.. image:: /assets/images/_det-ai-sys-arch-network-light.png
-   :class: only-dark
-   :alt: Determined AI system architecture diagram describing network connectivity traffic in dark mode
-
-.. image:: /assets/images/_det-ai-sys-arch-network-light.png
-   :class: only-light
-   :alt: Determined AI system architecture diagram describing network connectivity traffic in light mode
+Ensure your firewall rules allow traffic to and from the master and agents according to the criteria
+described by the :ref:`system architecture diagram <system-architecture>` and :ref:`network
+connectivity rules <firewall-rules>`.
 
 .. _internet-access:
 
