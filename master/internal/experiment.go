@@ -322,6 +322,11 @@ func (e *internalExperiment) TrialCompleteOperation(msg experiment.TrialComplete
 		return api.AsValidationError("received op %v which was previously completed", msg.Op)
 	}
 
+	defer func() {
+		ops, err := e.searcher.ValidationCompleted(msg.RequestID, msg.Metric, msg.Op)
+		e.processOperations(ops, err)
+	}()
+
 	state.Complete = true
 	e.TrialSearcherState[msg.Op.RequestID] = state
 
@@ -335,9 +340,6 @@ func (e *internalExperiment) TrialCompleteOperation(msg experiment.TrialComplete
 		e.syslog.WithError(err).Error("patching trial search state")
 		return err
 	}
-
-	ops, err := e.searcher.ValidationCompleted(msg.RequestID, msg.Metric, msg.Op)
-	e.processOperations(ops, err)
 
 	return nil
 }
@@ -670,6 +672,12 @@ func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, rea
 		e.syslog.WithField("requestID", requestID).Error("trial has no searcher state on early exit")
 		return
 	}
+
+	defer func() {
+		ops, err := e.searcher.TrialExitedEarly(requestID, reason)
+		e.processOperations(ops, err)
+	}()
+
 	state.Complete = true
 	state.Closed = true
 	e.TrialSearcherState[requestID] = state
@@ -683,11 +691,7 @@ func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, rea
 	err := t.PatchSearcherState(state)
 	if err != nil {
 		e.syslog.WithError(err).Error("patching trial search state")
-		return
 	}
-
-	ops, err := e.searcher.TrialExitedEarly(requestID, reason)
-	e.processOperations(ops, err)
 }
 
 func (e *internalExperiment) trialCreated(t *trial) {
