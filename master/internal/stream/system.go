@@ -153,8 +153,9 @@ func start[T stream.Msg](
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) error {
 	readyChannels := map[interface{}]chan bool{
-		ps.Trials:  make(chan bool),
-		ps.Metrics: make(chan bool),
+		ps.Trials:      make(chan bool),
+		ps.Metrics:     make(chan bool),
+		ps.Experiments: make(chan bool),
 		// ps.Experiments:make(chan bool),
 	}
 
@@ -670,8 +671,9 @@ func NewSubscriptionSet(
 	}
 
 	return SubscriptionSet{
-		Trials:  trialSubscriptionState,
-		Metrics: metricSubscriptionState,
+		Trials:      trialSubscriptionState,
+		Metrics:     metricSubscriptionState,
+		Experiments: experimentSubscriptionState,
 	}, err
 }
 
