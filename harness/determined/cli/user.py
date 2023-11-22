@@ -45,10 +45,10 @@ FullUserNoAdmin = namedtuple(
 def list_users(args: Namespace) -> None:
     resp = bindings.get_GetMaster(setup_session(args))
     users_list = client.list_users(active=None if args.all else True)
+    renderer = FullUser  # type: Any
     if resp.to_json().get("rbacEnabled"):
-        render.render_objects(FullUserNoAdmin, users_list)
-    else:
-        render.render_objects(FullUser, users_list)
+        renderer = FullUserNoAdmin
+    render.render_objects(renderer, users_list)
 
 
 @login_sdk_client
