@@ -9,9 +9,9 @@ fi
 # get latest environments commit
 export ENVS_HASH="$(git ls-remote https://github.com/determined-ai/environments.git -h HEAD -q | cut -f1)"
 # update bumpenvs yaml with the given hash
-python3 update-bumpenvs-yaml.py tools/scripts/bumpenvs.yaml ENVS_HASH
+python3 tools/scripts/update-bumpenvs-yaml.py tools/scripts/bumpenvs.yaml ENVS_HASH
 # run the bumpenvs procedure
-python3 bumpenvs.py tools/scripts/bumpenvs.yaml
+python3 tools/scripts/bumpenvs.py tools/scripts/bumpenvs.yaml
 
 # check to see if bumpenvs.py published resulted in any file changes or not
 if [[ -z "$(git status --porcelain)" ]]; then
