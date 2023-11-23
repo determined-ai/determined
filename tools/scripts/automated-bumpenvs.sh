@@ -34,7 +34,7 @@ fi
 if [[ -z $ENVS_HASH ]]; then
     # get latest environments commit
     ENVS_HASH="$(git ls-remote https://github.com/determined-ai/environments.git -h HEAD -q | cut -f1)"
-    echo "nah"
+    echo "using latest envs commit: $ENVS_HASH"
 fi
 
 # update bumpenvs yaml with the given hash
