@@ -57,7 +57,7 @@ if [[ -z $ENVS_HASH ]]; then
 fi
 
 # update bumpenvs yaml with the given hash
-python3 tools/scripts/update-bumpenvs-yaml.py tools/scripts/bumpenvs.yaml ENVS_HASH DEV_FLAG NO_CLOUD_IMAGES_FLAG
+python3 tools/scripts/update-bumpenvs-yaml.py tools/scripts/bumpenvs.yaml $ENVS_HASH $DEV_FLAG $NO_CLOUD_IMAGES_FLAG
 
 # run the bumpenvs procedure
 python3 tools/scripts/bumpenvs.py tools/scripts/bumpenvs.yaml
