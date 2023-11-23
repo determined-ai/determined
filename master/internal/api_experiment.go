@@ -1635,7 +1635,7 @@ func (a *apiServer) ContinueExperiment(
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
+	user, session, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -1669,6 +1669,12 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, err
 	}
+
+	taskSpec.ExtraEnvVars, err = a.getOIDCPachydermEnvVars(session)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
