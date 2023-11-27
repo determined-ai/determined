@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Insert an entry into the version dropdown json file
+Insert an entry into the version dropdown json file.
 
-Usage: add_version_dropdown.py your.version.here
+Usage: insert-version-url.py your.version.here
 """
 
 import json
@@ -11,20 +11,9 @@ import os
 import sys
 
 
-def create_url_entry(version):
-    url = f"https://docs.determined.ai/{version}/"
-
-    entry = {"version": version, "url": url}
-
-    return entry
-
-
 def insert_entry(json_file, entry):
-    """
-    The current dev version comes first and all released versions are in reverse chronological
-    order, so the latest release always goes in index 1.
-    """
-
+    # The current dev version comes first and all released versions are in reverse chronological
+    # order, so the latest release always goes in index 1.
     entry_position = 1
     with open(json_file, "rb") as f:
         all_urls = json.load(f)
@@ -37,8 +26,7 @@ def insert_entry(json_file, entry):
 
 
 def insert_version_url(json_file, version):
-    new_entry = create_url_entry(version)
-    insert_entry(json_file, new_entry)
+    insert_entry(json_file, {"version": version, "url": f"https://docs.determined.ai/{version}/"})
 
     print(f"Added dropdown link for version {version}")
 
