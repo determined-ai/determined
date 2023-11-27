@@ -3,8 +3,10 @@ import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
+import valueof from 'utils/valueof';
 
-export type Primitive = boolean | number | string;
+export const Primitive = t.union([t.boolean, t.number, t.string]);
+export type Primitive = t.TypeOf<typeof Primitive>;
 export type RecordKey = string | number | symbol;
 export type UnknownRecord = Record<RecordKey, unknown>;
 export type NullOrUndefined<T = undefined> = T | null | undefined;
@@ -128,21 +130,38 @@ interface WithPagination {
 }
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
-export interface User {
-  displayName?: string;
-  id: number;
-  modifiedAt?: number;
-  username: string;
-  lastAuthAt?: number;
-}
+export const User = t.intersection([
+  t.partial({
+    displayName: t.string,
+    lastAuthAt: t.number,
+    modifiedAt: t.number,
+  }),
+  t.type({
+    id: t.number,
+    username: t.string,
+  }),
+]);
+export type User = t.TypeOf<typeof User>;
 
-export interface DetailedUser extends User {
-  agentUserGroup?: V1AgentUserGroup;
-  id: number;
-  isActive: boolean;
-  isAdmin: boolean;
-  remote?: boolean;
-}
+const AgentUserGroup: t.Type<V1AgentUserGroup> = t.partial({
+  agentGid: t.number,
+  agentGroup: t.string,
+  agentUid: t.number,
+  agentUser: t.string,
+});
+
+export const DetailedUser = t.intersection([
+  User,
+  t.partial({
+    agentUserGroup: AgentUserGroup,
+    remote: t.boolean,
+  }),
+  t.type({
+    isActive: t.boolean,
+    isAdmin: t.boolean,
+  }),
+]);
+export type DetailedUser = t.TypeOf<typeof DetailedUser>;
 
 export interface DetailedUserList extends WithPagination {
   users: DetailedUser[];
@@ -308,15 +327,20 @@ export const CheckpointStorageType = {
 
 export type CheckpointStorageType = ValueOf<typeof CheckpointStorageType>;
 
-interface CheckpointStorage {
-  bucket?: string;
-  hostPath?: string;
-  saveExperimentBest: number;
-  saveTrialBest: number;
-  saveTrialLatest: number;
-  storagePath?: string;
-  type?: CheckpointStorageType;
-}
+export const CheckpointStorage = t.intersection([
+  t.partial({
+    bucket: t.string,
+    hostPath: t.string,
+    storagePath: t.string,
+    type: valueof(CheckpointStorageType),
+  }),
+  t.type({
+    saveExperimentBest: t.number,
+    saveTrialBest: t.number,
+    saveTrialLatest: t.number,
+  }),
+]);
+export type CheckpointStorage = t.TypeOf<typeof CheckpointStorage>;
 
 export const HyperparameterType = {
   Categorical: 'categorical',
@@ -328,24 +352,51 @@ export const HyperparameterType = {
 
 export type HyperparameterType = ValueOf<typeof HyperparameterType>;
 
-export interface HyperparameterBase {
-  base?: number;
-  count?: number;
-  maxval?: number;
-  minval?: number;
-  type?: HyperparameterType;
-  val?: Primitive | Hyperparameters;
-  vals?: Primitive[];
-}
-
-export interface Hyperparameter extends Omit<HyperparameterBase, 'type' | 'val'> {
-  type: HyperparameterType;
-  val?: Primitive;
-}
+const HyperparametersType = valueof(HyperparameterType);
 
 export type Hyperparameters = {
   [keys: string]: Hyperparameters | HyperparameterBase;
 };
+const Hyperparameters: t.Type<Hyperparameters> = t.recursion('Hyperparameters', () =>
+  t.record(t.string, t.union([Hyperparameters, HyperparameterBase])),
+);
+
+// io-ts doesn't have an Omit type, so we have to build iteratively instead
+interface HyperparameterBaseBase {
+  base?: number;
+  count?: number;
+  maxval?: number;
+  minval?: number;
+  vals?: Primitive[];
+}
+const HyperparameterBaseBase = t.recursion<HyperparameterBaseBase>('HyperparametersBase', () =>
+  t.partial({
+    base: t.number,
+    count: t.number,
+    maxval: t.number,
+    minval: t.number,
+    vals: t.array(Primitive),
+  }),
+);
+export const HyperparameterBase = t.intersection([
+  HyperparameterBaseBase,
+  t.partial({
+    type: HyperparametersType,
+    val: t.union([Primitive, Hyperparameters]),
+  }),
+]);
+export type HyperparameterBase = t.TypeOf<typeof HyperparameterBase>;
+
+export const Hyperparameter = t.intersection([
+  HyperparameterBaseBase,
+  t.partial({
+    val: Primitive,
+  }),
+  t.type({
+    type: valueof(HyperparameterType),
+  }),
+]);
+export type Hyperparameter = t.TypeOf<typeof Hyperparameter>;
 
 /*
  * Flattened type for nested hyperparameters for easier WebUI usage and consumption.
@@ -372,29 +423,43 @@ export const ExperimentSearcherName = {
 
 export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 
-export interface ExperimentConfig {
-  checkpointPolicy: string;
-  checkpointStorage?: CheckpointStorage;
-  description?: string;
-  hyperparameters: Hyperparameters;
-  labels?: string[];
-  maxRestarts: number;
-  name: string;
-  profiling?: {
-    enabled: boolean;
-  };
-  resources: {
-    maxSlots?: number;
-  };
-  searcher: {
-    max_length?: Record<'batches' | 'records' | 'epochs', number>;
-    max_trials?: number;
-    metric: string;
-    name: ExperimentSearcherName;
-    smallerIsBetter: boolean;
-    sourceTrialId?: number;
-  };
-}
+const Searcher = t.intersection([
+  t.partial({
+    max_length: t.record(
+      t.union([t.literal('batches'), t.literal('records'), t.literal('epochs')]),
+      t.number,
+    ),
+    max_trials: t.number,
+    sourceTrialId: t.number,
+  }),
+  t.type({
+    metric: t.string,
+    name: valueof(ExperimentSearcherName),
+    smallerIsBetter: t.boolean,
+  }),
+]);
+
+export const ExperimentConfig = t.intersection([
+  t.partial({
+    checkpointStorage: CheckpointStorage,
+    description: t.string,
+    labels: t.array(t.string),
+    profiling: t.type({
+      enabled: t.boolean,
+    }),
+  }),
+  t.type({
+    checkpointPolicy: t.string,
+    hyperparameters: Hyperparameters,
+    maxRestarts: t.number,
+    name: t.string,
+    resources: t.partial({
+      maxSlots: t.number,
+    }),
+    searcher: Searcher,
+  }),
+]);
+export type ExperimentConfig = t.TypeOf<typeof ExperimentConfig>;
 
 /* Experiment */
 
@@ -653,41 +718,53 @@ export interface TrialSummary extends TrialItem {
   metrics: MetricContainer[];
 }
 
-export interface ExperimentItem {
-  archived: boolean;
-  checkpoints?: number;
-  checkpointSize?: number;
-  config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
-  description?: string;
-  duration?: number;
-  endTime?: string;
-  externalExperimentId?: string;
-  externalTrialId?: string;
-  forkedFrom?: number;
-  hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar
-  id: number;
-  jobId: string;
-  jobSummary?: JobSummary;
-  labels: string[];
-  name: string;
-  notes?: string;
-  numTrials: number;
-  progress?: number;
-  projectId: number;
-  projectName?: string;
-  resourcePool: string;
-  searcherMetricValue?: number;
-  searcherType: string;
-  startTime: string;
-  state: CompoundRunState;
-  trialIds?: number[];
-  userId: number;
-  workspaceId?: number;
-  workspaceName?: string;
-  modelDefinitionSize?: number;
-  unmanaged?: boolean;
-}
+// we're declaring the type here so if/when the types drift we know to fix it
+export const JobSummary: t.Type<Api.V1JobSummary> = t.type({
+  jobsAhead: t.number,
+  state: valueof(Api.Jobv1State),
+});
+export type JobSummary = t.TypeOf<typeof JobSummary>;
+
+export const ExperimentItem = t.intersection([
+  t.partial({
+    checkpoints: t.number,
+    checkpointSize: t.number,
+    description: t.string,
+    duration: t.number,
+    endTime: t.string,
+    externalExperimentId: t.string,
+    externalTrialId: t.string,
+    forkedFrom: t.number,
+    jobSummary: JobSummary,
+    modelDefinitionSize: t.number,
+    notes: t.string,
+    progress: t.number,
+    projectName: t.string,
+    searcherMetricValue: t.number,
+    trialIds: t.array(t.number),
+    unmanaged: t.boolean,
+    workspaceId: t.number,
+    workspaceName: t.string,
+  }),
+  t.type({
+    archived: t.boolean,
+    config: ExperimentConfig,
+    configRaw: JsonObject,
+    hyperparameters: t.record(t.string, Hyperparameter),
+    id: t.number,
+    jobId: t.string,
+    labels: t.array(t.string),
+    name: t.string,
+    numTrials: t.number,
+    projectId: t.number,
+    resourcePool: t.string,
+    searcherType: t.string,
+    startTime: t.string,
+    state: t.union([valueof(RunState), valueof(Api.Jobv1State)]),
+    userId: t.number,
+  }),
+]);
+export type ExperimentItem = t.TypeOf<typeof ExperimentItem>;
 
 export interface ExperimentWithTrial {
   experiment: ExperimentItem;
@@ -924,7 +1001,6 @@ export const JobType = Api.Jobv1Type;
 export type JobType = Api.Jobv1Type;
 export const JobState = Api.Jobv1State;
 export type JobState = Api.Jobv1State;
-export type JobSummary = Api.V1JobSummary;
 export type RPStats = Api.V1RPQueueStat;
 
 export const JobAction = {
