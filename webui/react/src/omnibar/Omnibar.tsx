@@ -1,4 +1,5 @@
 import { matchesShortcut } from 'hew/InputShortcut';
+import { Modal, useModal } from 'hew/Modal';
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -9,6 +10,7 @@ import { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { useSettings } from 'hooks/useSettings';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
+import { helpContent } from 'omnibar/tree-extension/trees/actions';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
 import handleError from 'utils/error';
@@ -28,6 +30,8 @@ const Omnibar: React.FC = () => {
   const {
     settings: { omnibar: omnibarShortcut },
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
+
+  const HelpModal = useModal(() => <Modal title="Help">{helpContent()}</Modal>);
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
@@ -56,6 +60,10 @@ const Omnibar: React.FC = () => {
       if (!input) return;
       if (isTreeNode(item)) {
         try {
+          if (item.title === 'help') {
+            HelpModal.open();
+            return;
+          }
           await Tree.onAction(input, item, query);
           if (item.closeBar) {
             hideBar();
@@ -65,7 +73,7 @@ const Omnibar: React.FC = () => {
         }
       }
     },
-    [hideBar],
+    [hideBar, HelpModal],
   );
 
   useEffect(() => {
@@ -79,19 +87,22 @@ const Omnibar: React.FC = () => {
   }, [showing]);
 
   return (
-    <div className={css.base} style={{ display: showing ? 'unset' : 'none' }}>
-      <div className={css.backdrop} onClick={hideBar} />
-      <div className={css.bar} id="omnibar">
-        <OmnibarNpm<BaseNode>
-          autoFocus={true}
-          extensions={[Tree.extension]}
-          maxResults={7}
-          placeholder='Type a command or "help" for more info.'
-          render={TreeNode}
-          onAction={onAction}
-        />
+    <>
+      <div className={css.base} style={{ display: showing ? 'unset' : 'none' }}>
+        <div className={css.backdrop} onClick={hideBar} />
+        <div className={css.bar} id="omnibar">
+          <OmnibarNpm<BaseNode>
+            autoFocus={true}
+            extensions={[Tree.extension]}
+            maxResults={7}
+            placeholder='Type a command or "help" for more info.'
+            render={TreeNode}
+            onAction={onAction}
+          />
+        </div>
       </div>
-    </div>
+      <HelpModal.Component />
+    </>
   );
 };
 
