@@ -350,34 +350,26 @@ export const HyperparameterType = {
   Log: 'log',
 } as const;
 
-export type HyperparameterType = ValueOf<typeof HyperparameterType>;
-
 const HyperparametersType = valueof(HyperparameterType);
+export type HyperparameterType = t.TypeOf<typeof HyperparametersType>;
 
 export type Hyperparameters = {
   [keys: string]: Hyperparameters | HyperparameterBase;
 };
-const Hyperparameters: t.Type<Hyperparameters> = t.recursion('Hyperparameters', () =>
-  t.record(t.string, t.union([Hyperparameters, HyperparameterBase])),
+const Hyperparameters: t.RecursiveType<t.Type<Hyperparameters>> = t.recursion(
+  'Hyperparameters',
+  () => t.record(t.string, t.union([Hyperparameters, HyperparameterBase])),
 );
 
 // io-ts doesn't have an Omit type, so we have to build iteratively instead
-interface HyperparameterBaseBase {
-  base?: number;
-  count?: number;
-  maxval?: number;
-  minval?: number;
-  vals?: Primitive[];
-}
-const HyperparameterBaseBase = t.recursion<HyperparameterBaseBase>('HyperparametersBase', () =>
-  t.partial({
-    base: t.number,
-    count: t.number,
-    maxval: t.number,
-    minval: t.number,
-    vals: t.array(Primitive),
-  }),
-);
+const HyperparameterBaseBase = t.partial({
+  base: t.number,
+  count: t.number,
+  maxval: t.number,
+  minval: t.number,
+  vals: t.array(Primitive),
+});
+
 export const HyperparameterBase = t.intersection([
   HyperparameterBaseBase,
   t.partial({
