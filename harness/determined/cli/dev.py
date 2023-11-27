@@ -319,7 +319,6 @@ def call_bindings(args: Namespace) -> None:
     except (api_errors.BadRequestException, api_errors.APIException) as e:
         raise errors.CliError(
             "Received an API error:" + f"\n\n{str(e)}",
-            e,
         )
 
 
