@@ -326,7 +326,7 @@ args_description = [
         [
             Cmd("auth-token", token, "print the active user's auth token", []),
             Cmd(
-                "curl",
+                "c|url",
                 curl,
                 "invoke curl",
                 [
@@ -357,7 +357,7 @@ args_description = [
                         is_default=True,
                     ),
                     Cmd(
-                        "call",
+                        "c|all",
                         call_bindings,
                         "call a function from bindings",
                         [
