@@ -279,9 +279,12 @@ commands:
   go-get-deps:
     steps:
       - install-protoc
+      - run:
+          name: Generate day cache key
+          command: echo "$(date +"%m-%d-%y")" > /tmp/cache-day-key
       - restore_cache:
           keys:
-            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}-{{ date +"%m-%d-%y" }}
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum "/tmp/cache-day-key" }}
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
