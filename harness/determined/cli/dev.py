@@ -266,7 +266,12 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     """
     if fn_name in available_calls:
         return fn_name
-    matches = [n for n in available_calls if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
+    simplified_name = re.sub(r"[^a-zA-Z]", "", fn_name)
+    matches = [
+        n
+        for n in available_calls
+        if re.match(f".*({fn_name}|{simplified_name}).*", n, re.IGNORECASE)
+    ]
     if not matches:
         raise errors.CliError(f"no such binding found: {fn_name}")
     if not sys.stdout.isatty():
