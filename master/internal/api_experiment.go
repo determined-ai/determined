@@ -1544,7 +1544,7 @@ func (a *apiServer) ContinueExperiment(
 					"experiment has been completed, cannot continue this experiment")
 			}
 		} else if isSingle && len(trialsResp.Trials) > 0 {
-			if _, err := tx.NewUpdate().Model(&model.Trial{}).
+			if _, err := tx.NewUpdate().Table("runs").
 				Set("state = ?", model.PausedState).
 				Where("id = ?", trialsResp.Trials[0].Id).
 				Exec(ctx); err != nil {
@@ -1592,7 +1592,7 @@ func (a *apiServer) ContinueExperiment(
 			trialIDs = append(trialIDs, t.Id)
 		}
 		if len(trialIDs) > 0 {
-			if _, err := tx.NewUpdate().Model(&model.Trial{}).
+			if _, err := tx.NewUpdate().Table("runs").
 				Set("restarts = 0").
 				Set("end_time = null").
 				Where("id IN (?)", bun.In(trialIDs)).
@@ -2831,7 +2831,7 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 		return nil, errors.New("only unmanaged trials are supported")
 	}
 
-	obj := trials.Trial{
+	obj := model.Run{
 		ID:           trialID,
 		LastActivity: ptrs.Ptr(time.Now()),
 	}

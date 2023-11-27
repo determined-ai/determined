@@ -122,8 +122,8 @@ func TestCheckpointsOnArchivedSteps(t *testing.T) {
 	trial, task := createTestTrial(t, api, curUser)
 	for _, shouldArchive := range []bool{false, true} {
 		if shouldArchive {
-			_, err := db.Bun().NewUpdate().Table("trials").
-				Set("run_id = 1").
+			_, err := db.Bun().NewUpdate().Table("runs").
+				Set("restart_id = 1").
 				Where("id = ?", trial.ID).
 				Exec(ctx)
 			require.NoError(t, err)

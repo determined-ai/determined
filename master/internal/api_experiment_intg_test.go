@@ -776,7 +776,7 @@ func TestSearchExperiments(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 	// Set restarts super high so it gets reduced to config number.
-	_, err = db.Bun().NewUpdate().Table("trials").
+	_, err = db.Bun().NewUpdate().Table("runs").
 		Set("restarts = ?", 31415).
 		Where("id = ?", metricTrial.ID).
 		Exec(ctx)

@@ -79,7 +79,7 @@ func TestMarkLostTrials(t *testing.T) {
 
 			trialID := trial.ID
 			lastActivity := time.Now().Add(-20 * time.Minute)
-			_, err := db.Bun().NewUpdate().Model((*Trial)(nil)).
+			_, err := db.Bun().NewUpdate().Table("runs").
 				Where("id = ?", trialID).
 				Set("state = ?", cases[i].StartingTrialStates[j]).
 				Set("last_activity = ?", lastActivity).
@@ -98,7 +98,7 @@ func TestMarkLostTrials(t *testing.T) {
 			trialIds = append(trialIds, trs...)
 		}
 
-		_, err := db.Bun().NewDelete().Model((*Trial)(nil)).
+		_, err := db.Bun().NewDelete().Table("runs").
 			Where("id in (?)", bun.In(trialIds)).
 			Exec(ctx)
 
