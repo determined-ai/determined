@@ -331,6 +331,11 @@ purposes of this documentation, you can consider all references to Singularity t
 Apptainer. The Determined launcher interacts with Apptainer/Singularity using the ``singularity``
 command.
 
+.. note::
+
+   In addition to the core Apptainer/Singularity installation package, the ``apptainer-suid`` or
+   ``singularity-suid`` component is also required for full Determined functionality.
+
 Singularity has numerous options that may be customized in the ``singularity.conf`` file. Determined
 has been verified using the default values and therefore does not require any special configuration
 on the compute nodes of the cluster.
