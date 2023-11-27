@@ -1628,8 +1628,11 @@ jobs:
             - "master/build"
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
+      - run:
+          name: Generate day cache key
+          command: echo "$(date +"%m-%d-%y")" > /tmp/cache-day-key
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum "/tmp/cache-day-key" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"
