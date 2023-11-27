@@ -16,6 +16,10 @@ export class ValueOfType<D extends { [key: string]: unknown }> extends Type<Valu
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ValueOfC<D extends { [key: string]: unknown }> extends ValueOfType<D> {}
 
+/**
+ * Generate a codec describing a union type comprising an object's values. Like the
+ * `keyof` function from io-ts, but for values instead of keys.
+ */
 export const valueof = <D extends { [key: string]: unknown }>(
   values: D,
   name: string = Object.values(values)
