@@ -35,7 +35,7 @@ const ComparisonView: React.FC<Props> = ({
   const hasPinnedColumns = fixedColumnsCount > 1;
   const isMobile = useMobile();
 
-  const minWidths = useMemo(() => {
+  const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
   }, [fixedColumnsCount, scrollbarWidth]);
 
