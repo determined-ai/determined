@@ -4,6 +4,8 @@
  User Accounts
 ###############
 
+:ref:`users-temp`
+
 Initially, a Determined installation has two user accounts: ``admin`` and ``determined``. Both of
 these accounts have blank passwords by default.
 
