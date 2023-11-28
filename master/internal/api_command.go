@@ -356,6 +356,10 @@ func (a *apiServer) SetCommandPriority(
 func (a *apiServer) getOIDCPachydermEnvVars(
 	session *model.UserSession,
 ) (map[string]string, error) {
+	if session == nil { // Can happen with allocation token.
+		return map[string]string{}, nil
+	}
+
 	envVars := make(map[string]string)
 
 	if val, ok := session.InheritedClaims["OIDCRawIDToken"]; ok {
