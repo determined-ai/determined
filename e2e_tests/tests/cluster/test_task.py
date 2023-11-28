@@ -19,10 +19,7 @@ def test_task_get_config() -> None:
         config_text = util.yaml_safe_dump(config)
         context_directory = context.read_v1_context(Path("e2e_tests"), [])
         req = bindings.v1CreateGenericTaskRequest(
-            config=config_text,
-            contextDirectory=context_directory,
-            projectId=None,
-            forkedFrom=None
+            config=config_text, contextDirectory=context_directory, projectId=None, forkedFrom=None
         )
         task_resp = bindings.post_CreateGenericTask(sess, body=req)
         assert len(task_resp.taskId) > 0
@@ -75,6 +72,7 @@ def test_task_get_config() -> None:
         )
         assert sorted(expected.items()) == sorted(result.items())
 
+
 @pytest.mark.e2e_cpu
 def test_task_fork() -> None:
     sess = api_utils.determined_test_session()
@@ -83,15 +81,12 @@ def test_task_fork() -> None:
         config_text = util.yaml_safe_dump(config)
         context_directory = context.read_v1_context(Path("e2e_tests"), [])
         req = bindings.v1CreateGenericTaskRequest(
-            config=config_text,
-            contextDirectory=context_directory,
-            projectId=None,
-            forkedFrom=None
+            config=config_text, contextDirectory=context_directory, projectId=None, forkedFrom=None
         )
         task_resp = bindings.post_CreateGenericTask(sess, body=req)
         assert len(task_resp.taskId) > 0
         config_file.close()
-    
+
         with open(conf.fixtures_path("configuration/test_config_fork.yaml"), "r") as config_file:
             config = command.parse_config(config_file, None, [], [])
             config_text = util.yaml_safe_dump(config)
@@ -100,7 +95,7 @@ def test_task_fork() -> None:
                 config=config_text,
                 contextDirectory=context_directory,
                 projectId=None,
-                forkedFrom=task_resp.taskId
+                forkedFrom=task_resp.taskId,
             )
             fork_task_resp = bindings.post_CreateGenericTask(sess, body=req)
             assert len(fork_task_resp.taskId) > 0
