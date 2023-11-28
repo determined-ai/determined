@@ -76,8 +76,9 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task, config *model.Ge
 		configStr = string(configBytes)
 	}
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version").
+		Column("task_id", "task_type", "start_time", "job_id", "log_version", "forked_from").
 		Value("config", "?", configStr).
+		Value("forked_from", "?", t.ForkedFrom).
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
