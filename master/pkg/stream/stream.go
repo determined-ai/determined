@@ -105,55 +105,43 @@ func NewSubscription[T Msg](
 	streamer *Streamer,
 	publisher *Publisher[T],
 	permFilter func(T) bool,
+	filterFn func(T) bool,
 ) Subscription[T] {
 	return Subscription[T]{
 		Streamer:         streamer,
 		Publisher:        publisher,
 		permissionFilter: permFilter,
+		filter:           filterFn,
 	}
 }
 
-// Configure updates a Subscription's filters and updates the associated Publisher
-// in the event of creating or deleting a Subscription.
-func (s *Subscription[T]) Configure(filter func(T) bool) {
-	if filter == nil && s.filter == nil {
-		// no change, no synchronization needed
-		return
-	}
-	// Changes must be synchronized with our respective publisher.
+// Register a Subscription with its Publisher.
+func (s *Subscription[T]) Register() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	if s.filter == nil {
-		// We weren't connected to the publisher before, but now we are.
-		s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
-	} else if filter == nil {
-		// Delete an existing registration.
-		for i, sub := range s.Publisher.Subscriptions {
-			if sub != s {
-				continue
-			}
-			last := len(s.Publisher.Subscriptions) - 1
-			s.Publisher.Subscriptions[i] = s.Publisher.Subscriptions[last]
-			s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
-			break
-		}
-	} // else modify an existing registration, update subscription filter
+	s.Publisher.Subscriptions[s] = struct{}{}
+}
 
-	// Remember the new filter.
-	s.filter = filter
+// Unregister removes a Subscription from its Publisher.
+func (s *Subscription[T]) Unregister() {
+	s.Publisher.Lock.Lock()
+	defer s.Publisher.Lock.Unlock()
+	delete(s.Publisher.Subscriptions, s)
 }
 
 // Publisher is responsible for publishing messages of type T
 // to streamers associate with active subscriptions.
 type Publisher[T Msg] struct {
 	Lock          sync.Mutex
-	Subscriptions []*Subscription[T]
+	Subscriptions map[*Subscription[T]]struct{}
 	WakeupID      int64
 }
 
 // NewPublisher creates a new Publisher for message type T.
 func NewPublisher[T Msg]() *Publisher[T] {
-	return &Publisher[T]{}
+	return &Publisher[T]{
+		Subscriptions: map[*Subscription[T]]struct{}{},
+	}
 }
 
 // CloseAllStreamers closes all streamers associated with this Publisher.
@@ -161,7 +149,7 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	seenStreamersSet := make(map[*Streamer]struct{})
-	for _, sub := range p.Subscriptions {
+	for sub := range p.Subscriptions {
 		if _, ok := seenStreamersSet[sub.Streamer]; !ok {
 			sub.Streamer.Close()
 			seenStreamersSet[sub.Streamer] = struct{}{}
@@ -182,7 +170,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	wakeupID := p.WakeupID
 
 	// check each event against each subscription
-	for _, sub := range p.Subscriptions {
+	for sub := range p.Subscriptions {
 		func() {
 			for _, ev := range events {
 				var msg interface{}

@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -43,18 +44,18 @@ func (ksi *keySetIter) Next() (bool, int64, error) {
 		// it's a single value
 		n, err := strconv.ParseInt(subs[0], 10, 64)
 		if err != nil {
-			return false, 0, errors.Wrapf(err, "invalid number (%v)", val)
+			return false, 0, fmt.Errorf("invalid number (%v): %s", val, err.Error())
 		}
 		return true, n, nil
 	} else if len(subs) == 2 {
 		// it's a range
 		start, err := strconv.ParseInt(subs[0], 10, 64)
 		if err != nil {
-			return false, 0, errors.Wrapf(err, "invalid range (%v)", val)
+			return false, 0, fmt.Errorf("invalid range (%v): %s", val, err.Error())
 		}
 		end, err := strconv.ParseInt(subs[1], 10, 64)
 		if err != nil {
-			return false, 0, errors.Wrapf(err, "invalid range (%v)", val)
+			return false, 0, fmt.Errorf("invalid range (%v): %s", val, err.Error())
 		}
 		if start >= end {
 			return false, 0, errors.Errorf("invalid range (%v)", val)

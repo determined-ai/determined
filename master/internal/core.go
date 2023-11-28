@@ -1239,8 +1239,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	webhooks.Init()
 	defer webhooks.Deinit()
-
-	ssup := stream.NewSupervisor()
+	ssup := stream.NewSupervisor(m.db.URL)
 	go func() {
 		_ = ssup.Run(context.Background())
 	}()

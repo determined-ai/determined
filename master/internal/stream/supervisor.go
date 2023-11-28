@@ -14,19 +14,24 @@ import (
 
 // Supervisor manages the context for underlying PublisherSet.
 type Supervisor struct {
-	lock sync.Mutex
+	lock      sync.Mutex
+	dbAddress string
 	// these things change each restart of the PublisherSet
 	subctx context.Context
 	ps     *PublisherSet
 }
 
 // NewSupervisor creates a new Supervisor.
-func NewSupervisor() *Supervisor {
+func NewSupervisor(dbAddress string) *Supervisor {
 	// initialize with a valid publisher set and canceled supervisor context,
 	// so connections prior to runOne() can at least send startup messages.
 	ctx, cancelFn := context.WithCancel(context.Background())
 	cancelFn()
-	return &Supervisor{ps: NewPublisherSet(), subctx: ctx}
+	return &Supervisor{
+		dbAddress: dbAddress,
+		ps:        NewPublisherSet(dbAddress),
+		subctx:    ctx,
+	}
 }
 
 func (ssup *Supervisor) runOne(ctx context.Context) error {
@@ -36,7 +41,7 @@ func (ssup *Supervisor) runOne(ctx context.Context) error {
 		ssup.lock.Lock()
 		defer ssup.lock.Unlock()
 		ssup.subctx = subctx
-		ssup.ps = NewPublisherSet()
+		ssup.ps = NewPublisherSet(ssup.dbAddress)
 
 		// start monitoring permissions
 		group.Go(
