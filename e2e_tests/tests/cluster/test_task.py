@@ -7,13 +7,14 @@ from determined.cli import command
 from determined.common import context, util
 from determined.common.api import bindings
 from tests import api_utils
+from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
 def test_task_get_config() -> None:
     # create generic task
     sess = api_utils.determined_test_session(admin=True)
-    with open("e2e_tests/test_config.yaml", "r") as config_file:
+    with open(conf.fixtures_path("configuration/test_config.yaml"), "r") as config_file:
         config = command.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
         context_directory = context.read_v1_context(Path("e2e_tests"), [])
