@@ -8,12 +8,13 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from termcolor import colored
 
-from determined import cli, errors
-from determined.cli import render
+from determined import cli
+from determined.cli import errors, render
 from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group, string_to_bool
+from determined.common.experimental.checkpoint import CheckpointState
 from determined.experimental import client
 
 from .checkpoint import render_checkpoint
@@ -175,22 +176,19 @@ def download(args: Namespace) -> None:
         checkpoints = det.get_trial(args.trial_id).list_checkpoints(
             sort_by=sort_by,
             order_by=order_by,
-            max_results=1,
         )
         if not checkpoints:
             raise ValueError(f"No checkpoints found for trial {args.trial_id}")
-        checkpoint = checkpoints[0]
 
-    try:
-        path = checkpoint.download(path=args.output_dir)
-    except errors.CheckpointStateException:
-        print(
-            "Failed to download checkpoint: "
-            f"Checkpoint {checkpoint.uuid} is in state {checkpoint.state}. "
-            "Try again with a different checkpoint. "
-            "See `det trial download --help` for more download options."
-        )
-        return
+        valid_states = [CheckpointState.COMPLETED, CheckpointState.PARTIALLY_DELETED]
+        while len(checkpoints) > 0:
+            checkpoint = checkpoints.pop()
+            if checkpoint.state in valid_states:
+                break
+        if len(checkpoints) == 0:
+            raise errors.CliError("Download failed:  No downloadable checkpoint found")
+
+    path = checkpoint.download(path=args.output_dir)
 
     if args.quiet:
         print(path)
