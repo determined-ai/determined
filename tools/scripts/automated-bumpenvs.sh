@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
 : '
+One line wrapper for bumpenvs.
 This script is primarily intended for environments main branch,
 but can be run by devs as well. This script will default to the latest
 main bumpenvs commit.

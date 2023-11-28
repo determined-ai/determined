@@ -18,9 +18,9 @@ export IMAGES=$(grep -o -P "(?<=new: ).*(?=,)" tools/scripts/bumpenvs.yaml | gre
 # update tags on dockerhub
 for OLD_TAG in $IMAGES; do
     NEW_TAG="$(echo $OLD_TAG | grep -o '.*-')$NEW_VERSION"
-    echo "Adding $OLD_TAG (clone of $NEW_TAG) to docker repo"
+    echo "Adding $NEW_TAG (clone of $OLD_TAG) to docker repo"
     docker buildx create OLD_TAG --tag NEW_TAG
-    echo "Replacing $OLD_TAG to $NEW_TAG in bumpenvs.yaml"
+    echo "Replacing $OLD_TAG with $NEW_TAG in bumpenvs.yaml"
     sed -i -e "s@$OLD_TAG@$NEW_TAG@" tools/scripts/bumpenvs.yaml
 done
 
