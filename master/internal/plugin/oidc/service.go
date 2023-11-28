@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v4"
@@ -100,7 +101,7 @@ func New(db *db.PgDB, config config.OIDCConfig) (*Service, error) {
 func (s *Service) callback(c echo.Context) error {
 	oauth2token, err := s.getOauthToken(c)
 	if err != nil {
-		return errors.Wrap(err, "failed to exchange oauth2 token")
+		return fmt.Errorf("failed to exchange oauth2 token: %w", err)
 	}
 
 	rawIDToken, ok := oauth2token.Extra("id_token").(string)
@@ -109,7 +110,7 @@ func (s *Service) callback(c echo.Context) error {
 	}
 	userInfo, err := s.provider.UserInfo(c.Request().Context(), oauth2.StaticTokenSource(oauth2token))
 	if err != nil {
-		return errors.Wrap(err, "failed to get user info from oidc provider")
+		return fmt.Errorf("failed to get user info from oidc provider: %w", err)
 	}
 
 	claims, err := s.toIDTokenClaim(userInfo)
@@ -173,27 +174,28 @@ func (s *Service) callback(c echo.Context) error {
 func (s *Service) getOauthToken(c echo.Context) (*oauth2.Token, error) {
 	state, err := c.Cookie(cookieName)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not retrieve state cookie")
+		return nil, fmt.Errorf("could not retrieve state cookie: %w", err)
 	}
 	if c.QueryParam("state") != state.Value {
-		return nil, errors.New("oidc state did not match")
+		return nil, fmt.Errorf("oidc state did not match")
 	}
 
-	relayParam := c.QueryParam("relayState")
-	// Tolerate older CLI versions (<=0.19.5)
-	if relayParam == cliRelayState || relayParam == deprecatedCliRelayState {
-		configCopy := s.oauth2Config
-		configCopy.RedirectURL = fmt.Sprintf("%s?relayState=%s", configCopy.RedirectURL, relayParam)
-		return configCopy.Exchange(c.Request().Context(), c.QueryParam("code"))
+	tok, err := s.oauth2Config.Exchange(c.Request().Context(), c.QueryParam("code"))
+	if err != nil {
+		if strings.Contains(err.Error(), "The authorization code is invalid or has expired.") {
+			return nil, fmt.Errorf("access denied, please check user assignments. %s", err.Error())
+		}
+		return nil, fmt.Errorf("could not exchange auth token: %w", err)
 	}
-	return s.oauth2Config.Exchange(c.Request().Context(), c.QueryParam("code"))
+
+	return tok, nil
 }
 
 // toIDTokenClaim takes the user info & parses out the claims into an IDTokenClaim struct.
 func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error) {
 	var cs map[string]interface{}
 	if err := userInfo.Claims(&cs); err != nil {
-		return nil, errors.Wrap(err, "failed to extract OIDC claims")
+		return nil, fmt.Errorf("failed to extract OIDC claims: %w", err)
 	}
 
 	c := IDTokenClaims{}
