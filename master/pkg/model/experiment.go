@@ -481,7 +481,7 @@ type Trial struct {
 	LastActivity          *time.Time     `db:"last_activity"`
 }
 
-// ToRun converts a trial to a run.
+// ToRunAndTrialV2 converts a trial to a run.
 func (t *Trial) ToRunAndTrialV2() (*Run, *TrialV2) {
 	r := &Run{
 		ID:                    t.ID,
