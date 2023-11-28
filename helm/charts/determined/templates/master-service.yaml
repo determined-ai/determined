@@ -1,3 +1,4 @@
+{{- $clusterip := false -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,6 +12,15 @@ spec:
   - port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
     targetPort: {{- include "determined.masterPort" . | indent 1 }}
     protocol: TCP
+{{- if .Values.openshiftRoute }}
+{{- if .Values.openshiftRoute.enabled  }}
+{{- $clusterip =  true }}
+{{- end }}
+{{- end }}
+{{- if $clusterip }}
+  type: ClusterIP
+{{- else }}
   type: {{ if (.Values.useNodePortForMaster | default false) }}NodePort{{ else }}LoadBalancer{{ end }}
+{{- end }}
   selector:
     app: determined-master-{{ .Release.Name }}
