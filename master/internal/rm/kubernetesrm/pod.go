@@ -52,6 +52,8 @@ type podStatusUpdate struct {
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
+//
+// TODO(DET-10011): Give this literal a more intuitive name.
 type pod struct {
 	mu sync.Mutex
 
@@ -59,7 +61,7 @@ type pod struct {
 
 	clusterID    string
 	allocationID model.AllocationID
-	clientSet    *k8sClient.Clientset
+	clientSet    k8sClient.Interface
 	namespace    string
 	masterIP     string
 	masterPort   int32
@@ -81,7 +83,7 @@ type pod struct {
 	podName       string
 	configMap     *k8sV1.ConfigMap
 	configMapName string
-	// TODO: Drop this manufactured container obj all together.
+	// TODO(DET-10013) : Remove container field from pod struct.
 	container        cproto.Container
 	ports            []int
 	resourcesDeleted atomic.Bool
@@ -102,7 +104,7 @@ type podNodeInfo struct {
 func newPod(
 	msg StartTaskPod,
 	clusterID string,
-	clientSet *k8sClient.Clientset,
+	clientSet k8sClient.Interface,
 	namespace string,
 	masterIP string,
 	masterPort int32,
