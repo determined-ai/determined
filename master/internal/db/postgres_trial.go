@@ -27,10 +27,16 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run := trial.ToRun()
+		run, v2 := trial.ToRunAndTrialV2()
 		if _, err := tx.NewInsert().Model(run).Returning("id").Exec(ctx); err != nil {
-			return fmt.Errorf("inserting trial model: %w", err)
+			return fmt.Errorf("inserting trial run model: %w", err)
 		}
+
+		v2.RunID = run.ID
+		if _, err := tx.NewInsert().Model(v2).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting trial v2 model: %w", err)
+		}
+
 		trial.ID = run.ID // We need to mutate trial.ID.
 
 		trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
@@ -55,13 +61,21 @@ func UpsertTrialByExternalIDTx(
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
-	run := trial.ToRun()
+	run, v2 := trial.ToRunAndTrialV2()
 	if _, err := tx.NewInsert().Model(run).
 		On("CONFLICT (experiment_id, external_run_id) DO UPDATE").
 		Set("hparams = EXCLUDED.hparams").
 		Returning("id").Exec(ctx); err != nil {
-		return fmt.Errorf("upserting trial model: %w", err)
+		return fmt.Errorf("upserting trial run model: %w", err)
 	}
+
+	v2.RunID = run.ID
+	if _, err := tx.NewInsert().Model(run).
+		On("CONFLICT (run_id) DO NOTHING").
+		Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial v2 model: %w", err)
+	}
+
 	trial.ID = run.ID // We need to mutate trial.ID.
 
 	trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
