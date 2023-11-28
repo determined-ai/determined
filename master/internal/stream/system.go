@@ -161,7 +161,7 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 
 	eg.Go(
 		func(c context.Context) error {
-			return start(c, ps.DBAddress, metricChan, ps.Metrics, readyChannels[ps.Trials])
+			return start(c, ps.DBAddress, metricChan, ps.Metrics, readyChannels[ps.Metrics])
 		},
 	)
 
