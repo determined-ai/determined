@@ -252,8 +252,9 @@ class ClusterStore extends PollingStore {
     )
       .then(() => {
         this.#resourcePoolBindings.update((map) =>
-          map.update(resourcePool, (oldWorkspaceIds) =>
-            oldWorkspaceIds?.filter((id) => !workspaceIds.includes(id)),
+          map.update(
+            resourcePool,
+            (oldWorkspaceIds) => oldWorkspaceIds?.filter((id) => !workspaceIds.includes(id)),
           ),
         );
       })

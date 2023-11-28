@@ -145,10 +145,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
-    return (experiments || []).reduce((acc, experiment) => {
-      acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
-      return acc;
-    }, {} as Record<RecordKey, ProjectExperiment>);
+    return (experiments || []).reduce(
+      (acc, experiment) => {
+        acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
+        return acc;
+      },
+      {} as Record<RecordKey, ProjectExperiment>,
+    );
   }, [experiments, project]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);

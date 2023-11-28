@@ -41,11 +41,14 @@ const MetricSelect: React.FC<Props> = ({
   const selectRef = useRef<RefSelectProps>(null);
 
   const metricsByType = useMemo(() => {
-    const groups = metrics.reduce((acc, metric) => {
-      acc[metric.group] = acc[metric.group] || [];
-      acc[metric.group].push(metric.name);
-      return acc;
-    }, {} as Record<string, string[]>);
+    const groups = metrics.reduce(
+      (acc, metric) => {
+        acc[metric.group] = acc[metric.group] || [];
+        acc[metric.group].push(metric.name);
+        return acc;
+      },
+      {} as Record<string, string[]>,
+    );
     return Object.keys(groups).map((key) => {
       return { metrics: groups[key], type: key };
     });

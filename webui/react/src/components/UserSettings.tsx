@@ -55,10 +55,13 @@ interface Props {
   onClose: () => void;
 }
 
-const rowHeightLabels = rowHeightItems.reduce((acc, { rowHeight, label }) => {
-  acc[rowHeight] = label;
-  return acc;
-}, {} as Record<RowHeight, string>);
+const rowHeightLabels = rowHeightItems.reduce(
+  (acc, { rowHeight, label }) => {
+    acc[rowHeight] = label;
+    return acc;
+  },
+  {} as Record<RowHeight, string>,
+);
 
 const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));

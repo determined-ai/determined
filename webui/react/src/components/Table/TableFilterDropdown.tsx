@@ -70,10 +70,13 @@ const TableFilterDropdown: React.FC<Props> = ({
         if (multiple) {
           // Support for using CMD + Click to select every option EXCEPT the selected option.
           if (e.metaKey && filters) {
-            return filters.reduce((acc, filter) => {
-              if (filter.value !== value) acc[filter.value as string] = true;
-              return acc;
-            }, {} as Record<string, boolean>);
+            return filters.reduce(
+              (acc, filter) => {
+                if (filter.value !== value) acc[filter.value as string] = true;
+                return acc;
+              },
+              {} as Record<string, boolean>,
+            );
           } else {
             const newMap = { ...prev };
             if (newMap[value]) delete newMap[value];
@@ -129,10 +132,13 @@ const TableFilterDropdown: React.FC<Props> = ({
 
       const valuesAsList = Array.isArray(values) ? values : [values];
       setSelectedMap(
-        valuesAsList.reduce((acc, value) => {
-          acc[value] = true;
-          return acc;
-        }, {} as Record<string, boolean>),
+        valuesAsList.reduce(
+          (acc, value) => {
+            acc[value] = true;
+            return acc;
+          },
+          {} as Record<string, boolean>,
+        ),
       );
 
       setTimeout(() => {
