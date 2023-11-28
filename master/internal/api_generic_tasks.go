@@ -66,8 +66,12 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, err
 	}
 
+	configBytes := []byte(configYAML)
+	if len(configYAML) == 0 {
+		configBytes = parentConfig
+	}
 	// Validate the resource configuration.
-	resources := model.ParseJustResources([]byte(configYAML))
+	resources := model.ParseJustResources(configBytes)
 
 	if resources.SlotsPerTask == nil {
 		resources.SlotsPerTask = ptrs.Ptr(1)
@@ -87,13 +91,13 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
 	workDirInDefaults := taskConfig.WorkDir
 
-	if len(parentConfig) != 0 {
+	if len(parentConfig) != 0 && len(configYAML) != 0 {
 		if err := yaml.Unmarshal(parentConfig, &taskConfig); err != nil {
 			return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
 		}
 	}
 
-	if err := yaml.Unmarshal([]byte(configYAML), &taskConfig); err != nil {
+	if err := yaml.Unmarshal(configBytes, &taskConfig); err != nil {
 		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
 	}
 
@@ -165,6 +169,7 @@ func (a *apiServer) CreateGenericTask(
 	}
 
 	var parentConfig []byte
+	var parentContextDirectory []byte
 	if req.ForkedFrom != nil {
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		getTaskReq := &apiv1.GetTaskRequest{
@@ -179,11 +184,29 @@ func (a *apiServer) CreateGenericTask(
 		if err != nil {
 			return nil, err
 		}
+
+		if len(req.ContextDirectory) == 0 {
+			contextDirectoryResp, err := a.GetTaskContextDirectory(ctx, &apiv1.GetTaskContextDirectoryRequest{
+				TaskId: resp.Task.TaskId,
+			})
+			if err != nil {
+				return nil, err
+			}
+			parentContextDirectory = []byte(contextDirectoryResp.B64Tgz)
+
+		}
+
 	}
 
+	if len(parentConfig) == 0 && len(req.Config) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "No config file nor parent task provided")
+	}
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
 		ctx, req.ContextDirectory, req.Config, projectID, parentConfig,
 	)
+	if len(contextDirectoryBytes) == 0 {
+		contextDirectoryBytes = parentContextDirectory
+	}
 	if err != nil {
 		return nil, err
 	}
