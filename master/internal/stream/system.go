@@ -536,7 +536,9 @@ func doPublishLoop[T stream.Msg](
 			pingErrChan := make(chan error)
 			go func() {
 				err = listener.Ping()
-				pingErrChan <- fmt.Errorf("no active connection: %s", err.Error())
+				if err != nil {
+					pingErrChan <- fmt.Errorf("no active connection: %s", err.Error())
+				}
 			}()
 			if err := <-pingErrChan; err != nil {
 				return err
