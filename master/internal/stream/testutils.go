@@ -3,6 +3,7 @@ package stream
 import (
 	"fmt"
 	"reflect"
+	"testing"
 
 	"github.com/gorilla/websocket"
 
@@ -82,27 +83,33 @@ func (s *mockSocket) ReadIncoming(data *interface{}) error {
 }
 
 // ReadUntil reads until the terminationMsg has been read.
-func (s *mockSocket) ReadUntil(data *[]interface{}, terminationMsg interface{}) error {
+func (s *mockSocket) ReadUntil(
+	t *testing.T,
+	testCaseDescription string, // XXX (corban): we should use subtests instead, this won't be necessary
+	data *[]interface{},
+	terminationMsg interface{},
+) {
 	var msg interface{}
+ReadLoop:
 	for {
 		if reflect.TypeOf(msg) == reflect.TypeOf(terminationMsg) {
 			switch typedMsg := msg.(type) {
 			case stream.UpsertMsg:
 				if err := validateUpsertMsg(typedMsg.Msg, terminationMsg.(stream.UpsertMsg).Msg); err == nil {
-					return nil
+					break ReadLoop
 				}
 			case string:
 				if typedMsg == terminationMsg.(string) {
-					return nil
+					break ReadLoop
 				}
 			case SyncMsg:
 				if typedMsg.SyncID == terminationMsg.(SyncMsg).SyncID {
-					return nil
+					break ReadLoop
 				}
 			}
 		}
 		if err := s.ReadIncoming(&msg); err != nil {
-			return err
+			t.Errorf("%s: %s", testCaseDescription, err)
 		}
 		*data = append(*data, msg)
 	}
@@ -113,83 +120,95 @@ func (s *mockSocket) Close() {
 	close(s.closed)
 }
 
-func splitMsgs[M stream.Msg](messages []interface{}) (
+func splitMsgs[M stream.Msg](
+	t *testing.T,
+	testCaseDescription string,
+	messages []interface{},
+) (
 	deletions []string,
 	upserts []stream.Msg,
 	syncs []SyncMsg,
-	err error,
 ) {
 	typeHolder := new(M)
 	for _, msg := range messages {
-		if deletion, ok := msg.(stream.DeleteMsg); ok {
-			deletions = append(deletions, deletion.Deleted)
-		} else if upsert, ok := msg.(stream.UpsertMsg); ok {
-			upsertM, ok := upsert.Msg.(M)
+		switch typedMsg := msg.(type) {
+		case stream.DeleteMsg:
+			deletions = append(deletions, typedMsg.Deleted)
+		case stream.UpsertMsg:
+			upsertM, ok := typedMsg.Msg.(M)
 			if !ok {
-				return nil, nil, nil, fmt.Errorf("expected %T, but received %T", *typeHolder, upsert.Msg)
+				t.Errorf("%s: expected %T, but received %T", testCaseDescription, typeHolder, typedMsg.Msg)
 			}
 			upserts = append(upserts, upsertM)
-		} else if syncMsg, ok := msg.(SyncMsg); ok {
-			syncs = append(syncs, syncMsg)
-		} else {
-			return nil, nil, nil, fmt.Errorf("expected a string or %T, but received %T", *typeHolder,
-				reflect.TypeOf(msg).Name())
+		case SyncMsg:
+			syncs = append(syncs, typedMsg)
+		default:
+			t.Errorf("%s: expected a string or %T, but received %T",
+				testCaseDescription,
+				typeHolder,
+				reflect.TypeOf(msg).Name(),
+			)
 		}
 	}
-	return deletions, upserts, syncs, nil
+	return deletions, upserts, syncs
 }
 
 func validateMsgs[M stream.Msg](
+	t *testing.T,
+	testCaseDescription string,
 	sync SyncMsg,
 	expectedSync SyncMsg,
 	upserts []stream.Msg,
 	expectedUpserts []M,
 	deletions []string,
 	expectedDeletions []string,
-) error {
+) {
 	switch {
 	// check if we received the correct number of trial messages
 	case len(upserts) != len(expectedUpserts):
-		return fmt.Errorf(
-			"did not receive expected number of upsert messages: expected %d, actual: %d",
+		t.Errorf(
+			"%s: did not receive expected number of upsert messages: expected %d, actual: %d",
+			testCaseDescription,
 			len(expectedUpserts),
 			len(upserts),
 		)
 	// check if we received the correct number of deletion messages
 	case len(deletions) != len(expectedDeletions):
-		return fmt.Errorf(
-			"did not receive expected number of deletion messages: expected %v, actual: %v",
+		t.Errorf(
+			"%s: did not receive expected number of deletion messages: expected %v, actual: %v",
+			testCaseDescription,
 			len(expectedDeletions),
 			len(deletions),
 		)
+	// check if we receieved the correct SyncMsg
+	case sync.SyncID != expectedSync.SyncID:
+		t.Errorf(
+			"%s: did not receive expected sync message: expected: %v, actual: %v",
+			testCaseDescription,
+			expectedSync,
+			sync,
+		)
 	// check if content of messages is correct
 	default:
-		if sync.SyncID != expectedSync.SyncID {
-			return fmt.Errorf(
-				"did not receive expected sync message: expected: %v, actual: %v",
-				expectedSync,
-				sync,
-			)
-		}
 		// XXX: this expects messages to be sent in a deterministic order, is this actually enforced?
 		// should msgs be sorted then?
 		for i := range upserts {
 			if err := validateUpsertMsg(upserts[i], expectedUpserts[i]); err != nil {
-				return err
+				t.Errorf("%s: %s", testCaseDescription, err.Error())
 			}
 		}
 		// XXX: this expects messages to be sent in a deterministic order, is this actually enforced?
 		// should deletions be sorted then?
 		for i := range deletions {
 			if deletions[i] != expectedDeletions[i] {
-				return fmt.Errorf(
-					"did not receive expected deletion messages: expected: %v, actual: %v",
+				t.Errorf(
+					"%s: did not receive expected deletion messages: expected: %v, actual: %v",
+					testCaseDescription,
 					expectedDeletions,
 					deletions,
 				)
 			}
 		}
-		return nil
 	}
 }
 
@@ -197,7 +216,8 @@ func validateUpsertMsg(upsert stream.Msg, expectedUpsert stream.Msg) error {
 	switch msg := upsert.(type) {
 	case *TrialMsg:
 		expectedMsg := expectedUpsert.(*TrialMsg)
-		// XXX: improve the completeness of this validation.
+		// XXX (corban): improve the completeness of this validation.
+		// creating a `testString()` for each of for these upsert messages would be a good idea
 		if msg.ID != expectedMsg.ID || msg.ExperimentID != expectedMsg.ExperimentID || msg.State != expectedMsg.State {
 			return fmt.Errorf(
 				"did not receive expected trial message: expected: %v, actual: %v",
@@ -208,7 +228,7 @@ func validateUpsertMsg(upsert stream.Msg, expectedUpsert stream.Msg) error {
 		return nil
 	case *MetricMsg:
 		expectedMsg := expectedUpsert.(*MetricMsg)
-		// XXX: improve the completeness of this validation.
+		// XXX (corban): improve the completeness of this validation.
 		if msg.ID != expectedMsg.ID || msg.ExperimentID != expectedMsg.ExperimentID {
 			return fmt.Errorf(
 				"did not receive expected metric message: expected: %v, actual: %v",

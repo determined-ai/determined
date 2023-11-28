@@ -29,7 +29,7 @@ type MetricMsg struct {
 	bun.BaseModel `bun:"table:metrics"`
 
 	// immutable attributes
-	// XXX (corban): if this gets removed, what happens to delete msg?
+	// XXX (corban): if ID gets removed, what happens to delete msg?
 	ID            int                    `bun:"id,pk" json:"id"`
 	TrialID       int                    `bun:"trial_id" json:"trial_id"`
 	TrialRunID    int                    `bun:"trial_run_id" json:"trial_run_id"`

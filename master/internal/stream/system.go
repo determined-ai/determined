@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	detContext "github.com/determined-ai/determined/master/internal/context"
@@ -74,8 +73,7 @@ type CollectStartupMsgsFunc[S any] func(
 func newDBListener(dbAddress, channel string) (*pq.Listener, error) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
-			log.Errorf("DB Address: %s", dbAddress)
-			log.Errorf("reportProblem: %v\n", err.Error())
+			log.Errorf("listener on (%s) reported problem: %s", dbAddress, err.Error())
 		}
 	}
 	listener := pq.NewListener(
@@ -141,23 +139,29 @@ func start[T stream.Msg](
 	dbAddress,
 	channel string,
 	publisher *stream.Publisher[T],
+	readyChan chan bool,
 ) error {
-	return publishLoop(ctx, dbAddress, channel, publisher)
+	return publishLoop(ctx, dbAddress, channel, publisher, readyChan)
 }
 
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) error {
-	eg := errgroupx.WithContext(ctx)
+	readyChannels := map[interface{}]chan bool{
+		ps.Trials:  make(chan bool),
+		ps.Metrics: make(chan bool),
+		// ps.Experiments:make(chan bool),
+	}
 
+	eg := errgroupx.WithContext(ctx)
 	eg.Go(
 		func(c context.Context) error {
-			return start(c, ps.DBAddress, trialChan, ps.Trials)
+			return start(c, ps.DBAddress, trialChan, ps.Trials, readyChannels[ps.Trials])
 		},
 	)
 
 	eg.Go(
 		func(c context.Context) error {
-			return start(c, ps.DBAddress, metricChan, ps.Metrics)
+			return start(c, ps.DBAddress, metricChan, ps.Metrics, readyChannels[ps.Trials])
 		},
 	)
 
@@ -169,20 +173,12 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 	// wait for all publishers to become ready
 	eg.Go(
 		func(c context.Context) error {
-			readyChans := []chan bool{
-				ps.Trials.ReadyChan,
-				ps.Metrics.ReadyChan,
-				// ps.Experiment.ReadyChan,
-			}
-
-			for i := range readyChans {
+			for i := range readyChannels {
 				select {
 				case <-c.Done():
 					return nil
-				case publisherReady := <-readyChans[i]:
-					if !publisherReady {
-						return fmt.Errorf("publisher failed to ")
-					}
+				case <-readyChannels[i]:
+					continue
 				}
 			}
 			func() {
@@ -225,7 +221,7 @@ func (ps *PublisherSet) processStream(
 	// create new subscription set
 	ss, err := NewSubscriptionSet(ctx, streamer, ps, user, startupMsg.Subscribe)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating subscription set")
+		return nil, fmt.Errorf("creating subscription set: %s", err.Error())
 	}
 	defer ss.UnregisterAll()
 
@@ -233,7 +229,7 @@ func (ps *PublisherSet) processStream(
 	msgs := []interface{}{}
 	offlineMsgs, err := ss.Startup(ctx, user, startupMsg)
 	if err != nil {
-		return nil, errors.Wrapf(err, "gathering startup messages")
+		return nil, fmt.Errorf("gathering startup messages: %s", err.Error())
 	}
 	msgs = append(msgs, offlineMsgs...)
 
@@ -246,9 +242,9 @@ func (ps *PublisherSet) processStream(
 	if err != nil {
 		// don't log broken pipe errors
 		if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-			log.Debugf("unable to handle startup message: %s", err)
+			log.Errorf("unable to handle startup message: %s", err.Error())
 		}
-		return nil, errors.Wrapf(err, "error handling startup message")
+		return nil, fmt.Errorf("error handling startup message: %s", err.Error())
 	}
 
 	// startup done, begin streaming supported online events:
@@ -295,9 +291,9 @@ func (ps *PublisherSet) processStream(
 		err = writeAll(socket, msgs)
 		if err != nil {
 			if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-				log.Debugf("unable to handle startup message: %s", err)
+				log.Errorf("unable to handle startup message: %s", err.Error())
 			}
-			return nil, errors.Wrapf(err, "error writing to socket")
+			return nil, fmt.Errorf("error writing to socket: %s", err.Error())
 		}
 	}
 }
@@ -333,7 +329,7 @@ func (ps *PublisherSet) entrypoint(
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
-		return errors.Wrapf(err, "error while reading initial startup message")
+		return fmt.Errorf("error while reading initial startup message: %s", err.Error())
 	}
 
 	// startups is where we collect StartupMsg
@@ -349,7 +345,7 @@ func (ps *PublisherSet) entrypoint(
 				if websocket.IsUnexpectedCloseError(
 					err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure,
 				) {
-					log.Errorf("unexpected close error: %v", err)
+					log.Errorf("unexpected close error: %s", err.Error())
 				}
 				break
 			}
@@ -367,12 +363,15 @@ func (ps *PublisherSet) entrypoint(
 	go func() {
 		select {
 		case <-ctx.Done():
+			log.Tracef("context canceled, closing streamer: %v", streamer)
 			streamer.Close()
 		case <-superCtx.Done():
 			// close streamer if supervisor is down
+			log.Tracef("supervisor context canceled, closing streamer: %v", streamer)
 			streamer.Close()
 		case <-bootemChan:
 			// close this streamer if online appearance/disappearance occurred
+			log.Tracef("permission scope detected, closing streamer: %v", streamer)
 			streamer.Close()
 		}
 	}()
@@ -420,12 +419,12 @@ func (ps *PublisherSet) Websocket(
 func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
 	jbytes, err := json.Marshal(obj)
 	if err != nil {
-		log.Errorf("error marshaling message for streaming: %v", err.Error())
+		log.Errorf("error marshaling message for streaming: %s", err.Error())
 		return nil
 	}
 	msg, err := websocket.NewPreparedMessage(websocket.TextMessage, jbytes)
 	if err != nil {
-		log.Errorf("error preparing message for streaming: %v", err.Error())
+		log.Errorf("error preparing message for streaming: %s", err.Error())
 		return nil
 	}
 	return msg
@@ -444,7 +443,7 @@ func (ps *PublisherSet) bootStreamers() {
 func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
 	if err != nil {
-		log.Errorf("unable to get permission change listener: %s", err)
+		log.Errorf("unable to get permission change listener: %s", err.Error())
 		return err
 	}
 	if permListener == nil {
@@ -454,7 +453,7 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 	defer func() {
 		err := permListener.Close()
 		if err != nil {
-			log.Debugf("error occurred while closing permission listener: %s", err)
+			log.Debugf("error occurred while closing permission listener: %s", err.Error())
 		}
 	}()
 
@@ -462,7 +461,7 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 		select {
 		// did permissions change?
 		case <-permListener.Notify:
-			log.Debugf("permission change detected, booting streamers")
+			log.Tracef("permission change detected, booting streamers")
 			func() {
 				ps.bootStreamers()
 			}()
@@ -471,10 +470,10 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 			pingErrChan := make(chan error)
 			go func() {
 				err = permListener.Ping()
-				pingErrChan <- errors.Wrap(err, "no active connection")
+				pingErrChan <- fmt.Errorf("no active connection: %s", err.Error())
 			}()
 			if err := <-pingErrChan; err != nil {
-				log.Errorf("permission listener failed %s", err)
+				log.Errorf("permission listener failed %s", err.Error())
 				return err
 			}
 		// are we canceled?
@@ -490,10 +489,11 @@ func publishLoop[T stream.Msg](
 	dbAddress,
 	channelName string,
 	publisher *stream.Publisher[T],
+	readyChan chan bool,
 ) error {
-	err := doPublishLoop(ctx, dbAddress, channelName, publisher)
+	err := doPublishLoop(ctx, dbAddress, channelName, publisher, readyChan)
 	if err != nil {
-		log.Errorf("publishLoop failed: %s", err)
+		log.Errorf("publishLoop failed: %s", err.Error())
 		publisher.CloseAllStreamers()
 		return err
 	}
@@ -505,18 +505,21 @@ func doPublishLoop[T stream.Msg](
 	dbAddress,
 	channelName string,
 	publisher *stream.Publisher[T],
+	readyChan chan bool,
 ) error {
 	listener, err := newDBListener(dbAddress, channelName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to listen: %v", channelName)
+		return fmt.Errorf("failed to listen to %s: %s", channelName, err.Error())
 	}
-	// let the publisher set know the publisher is ready
-	publisher.ReadyChan <- true // XXX (corban): should we close the channel instead?
+
+	// let the PublisherSet know this Publisher is ready
+	close(readyChan)
+
 	// clean up listener
 	defer func() {
 		err := listener.Close()
 		if err != nil {
-			log.Debugf("error while cleaning up %s event listener: %s", channelName, err)
+			log.Debugf("error while cleaning up %s event listener: %s", channelName, err.Error())
 		}
 	}()
 
@@ -533,7 +536,7 @@ func doPublishLoop[T stream.Msg](
 			pingErrChan := make(chan error)
 			go func() {
 				err = listener.Ping()
-				pingErrChan <- errors.Wrap(err, "no active connection")
+				pingErrChan <- fmt.Errorf("no active connection: %s", err.Error())
 			}()
 			if err := <-pingErrChan; err != nil {
 				return err

@@ -44,7 +44,6 @@ func TestMockSocket(t *testing.T) {
 	require.Equal(t, actualMsg.Subscribe, expectedMsg.Subscribe)
 	require.Equal(t, actualMsg.SyncID, expectedMsg.SyncID)
 	require.Equal(t, 0, len(socket.outbound))
-	require.True(t, len(socket.outbound) == 0)
 
 	// test write
 	err = socket.Write("test")
@@ -64,7 +63,7 @@ func TestMockSocket(t *testing.T) {
 	err = socket.Write(SyncMsg{SyncID: "1"})
 	require.NoError(t, err)
 	var msgs []interface{}
-	err = socket.ReadUntil(&msgs, SyncMsg{SyncID: "1"})
+	socket.ReadUntil(t, "testing ReadUntil", &msgs, SyncMsg{SyncID: "1"})
 	require.NoError(t, err)
 	require.Equal(t, 2, len(msgs))
 	testStr, ok := msgs[0].(string)
@@ -217,13 +216,8 @@ func TestTrialStartup(t *testing.T) {
 
 		// read messages collected during startup + sync msg
 		var data []interface{}
-		if err := socket.ReadUntil(&data, testCase.expectedSync); err != nil {
-			return fmt.Errorf("%s: %s", testCase.description, err)
-		}
-		deletions, upserts, syncs, err := splitMsgs[*TrialMsg](data)
-		if err != nil {
-			return fmt.Errorf("%s: %s", testCase.description, err)
-		}
+		socket.ReadUntil(t, testCase.description, &data, testCase.expectedSync)
+		deletions, upserts, syncs := splitMsgs[*TrialMsg](t, testCase.description, data)
 		if len(syncs) != 1 {
 			return fmt.Errorf("%s: did not receive expected number of upsert messages: expected %d, actual: %d",
 				testCase.description,
@@ -233,7 +227,9 @@ func TestTrialStartup(t *testing.T) {
 		}
 
 		// confirm these messages are the expected results
-		err = validateMsgs(
+		validateMsgs(
+			t,
+			testCase.description,
 			syncs[0],
 			testCase.expectedSync,
 			upserts,
@@ -241,10 +237,6 @@ func TestTrialStartup(t *testing.T) {
 			deletions,
 			testCase.expectedDeletions,
 		)
-		if err != nil {
-			return fmt.Errorf("%s: %s", testCase.description, err)
-		}
-
 		return nil
 	}
 
@@ -348,13 +340,8 @@ func TestTrialUpdate(t *testing.T) {
 
 		// read messages collected during startup + sync msg
 		var data []interface{}
-		if err := socket.ReadUntil(&data, testCase.startupCase.expectedSync); err != nil {
-			return fmt.Errorf("%s: %s", testCase.description, err)
-		}
-		deletions, upserts, syncs, err := splitMsgs[*TrialMsg](data)
-		if err != nil {
-			return fmt.Errorf("%s: %s", testCase.description, err)
-		}
+		socket.ReadUntil(t, testCase.description, &data, testCase.startupCase.expectedSync)
+		deletions, upserts, syncs := splitMsgs[*TrialMsg](t, testCase.description, data)
 		if len(syncs) != 1 {
 			return fmt.Errorf("%s: did not receive expected number of sync messages: expected %d, actual: %d",
 				testCase.description,
@@ -364,7 +351,9 @@ func TestTrialUpdate(t *testing.T) {
 		}
 
 		// validate messages collected at startup
-		err = validateMsgs[*TrialMsg](
+		validateMsgs[*TrialMsg](
+			t,
+			testCase.description,
 			syncs[0],
 			testCase.startupCase.expectedSync,
 			upserts,
@@ -372,9 +361,6 @@ func TestTrialUpdate(t *testing.T) {
 			deletions,
 			testCase.startupCase.expectedDeletions,
 		)
-		if err != nil {
-			return err
-		}
 
 		// execute provided queries on the db
 		for i := range testCase.queries {
@@ -386,17 +372,13 @@ func TestTrialUpdate(t *testing.T) {
 
 		// read until we received the expected message
 		data = []interface{}{}
-		err = socket.ReadUntil(&data, testCase.terminationMsg)
-		if err != nil {
-			return err
-		}
-		deletions, upserts, _, err = splitMsgs[*TrialMsg](data)
-		if err != nil {
-			return err
-		}
+		socket.ReadUntil(t, testCase.description, &data, testCase.terminationMsg)
+		deletions, upserts, _ = splitMsgs[*TrialMsg](t, testCase.description, data)
 
 		// validate messages collected at startup
-		err = validateMsgs[*TrialMsg](
+		validateMsgs[*TrialMsg](
+			t,
+			testCase.description,
 			syncs[0],
 			testCase.expectedSync,
 			upserts,
@@ -404,9 +386,6 @@ func TestTrialUpdate(t *testing.T) {
 			deletions,
 			testCase.expectedDeletions,
 		)
-		if err != nil {
-			return err
-		}
 		return nil
 	}
 
