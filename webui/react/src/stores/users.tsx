@@ -1,6 +1,5 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
-import * as t from 'io-ts';
 import { Observable } from 'micro-observables';
 
 import { getCurrentUser, getUsers, patchUser } from 'services/api';
@@ -18,33 +17,7 @@ function compareUser(a: DetailedUser, b: DetailedUser): number {
   return aName.localeCompare(bName);
 }
 
-const asValueOfUser = asValueObjectFactory(
-  t.intersection(
-    [
-      t.partial({
-        agentUserGroup: t.partial(
-          {
-            agentGid: t.number,
-            agentGroup: t.string,
-            agentUid: t.number,
-            agentUser: t.string,
-          },
-          'AgentUserGroup',
-        ),
-        displayName: t.string,
-        lastAuthAt: t.number,
-        modifiedAt: t.number,
-      }),
-      t.type({
-        id: t.number,
-        isActive: t.boolean,
-        isAdmin: t.boolean,
-        username: t.string,
-      }),
-    ],
-    'DetailedUser',
-  ),
-);
+const asValueOfUser = asValueObjectFactory(DetailedUser);
 
 class UserStore extends PollingStore {
   // TODO: investigate replacing userIds + usersById with OrderedMap
