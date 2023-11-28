@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -215,7 +214,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	user, session, err := grpcutil.GetUser(ctx)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -281,12 +280,6 @@ func (a *apiServer) LaunchTensorboard(
 		"TF_CPP_MIN_LOG_LEVEL": "3",
 		"DET_TASK_TYPE":        string(model.TaskTypeTensorboard),
 	}
-
-	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
-	if err != nil {
-		return nil, err
-	}
-	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
 
 	if launchReq.Spec.Config.Debug {
 		uniqEnvVars["DET_DEBUG"] = "true"

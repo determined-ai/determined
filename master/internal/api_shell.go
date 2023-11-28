@@ -10,7 +10,6 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 
-	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -183,7 +182,7 @@ func (a *apiServer) SetShellPriority(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	user, session, err := grpcutil.GetUser(ctx)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -246,12 +245,6 @@ func (a *apiServer) LaunchShell(
 	}
 
 	launchReq.Spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeShell)}
-
-	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
-	if err != nil {
-		return nil, err
-	}
-	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
 
 	var passphrase *string
 	if len(req.Data) > 0 {

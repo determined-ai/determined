@@ -46,9 +46,6 @@ resource_pools:
       max_agent_starting_period: 30s
     task_container_defaults:
       dtrain_network_interface: if0
-integrations:
-  pachyderm:
-    address: foo
 `
 	expected := Config{
 		Log: logger.Config{
@@ -93,11 +90,6 @@ integrations:
 					},
 					AgentReconnectWait: model.Duration(aproto.AgentReconnectWait),
 				},
-			},
-		},
-		Integrations: IntegrationsConfig{
-			Pachyderm: PachydermConfig{
-				Address: "foo",
 			},
 		},
 	}

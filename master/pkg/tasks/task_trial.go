@@ -124,13 +124,7 @@ func (s TrialSpec) ToTaskSpec() TaskSpec {
 		envVars["DET_LATEST_CHECKPOINT"] = s.LatestCheckpoint.UUID.String()
 	}
 
-	if res.ExtraEnvVars != nil {
-		for k, v := range envVars {
-			res.ExtraEnvVars[k] = v
-		}
-	} else {
-		res.ExtraEnvVars = envVars
-	}
+	res.ExtraEnvVars = envVars
 
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)
