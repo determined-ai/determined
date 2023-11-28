@@ -4,16 +4,16 @@
 # get current environments hash and parse version args
 export OLD_VERSION="$1"
 export NEW_VERSION="$2"
-ENVS_HASH="$(git ls-remote https://github.com/determined-ai/environments.git -h HEAD -q | cut -f1)"
 
-# get list of tags to replace via latest commit hash
-export IMAGES=`wget -q -O - "https://hub.docker.com/v2/repositories/determinedai/environments/tags" | \
-grep -o '"name": *"[^"]*' | grep -o '[^"]*$' | grep $OLD_VERSION`
+# get list of tags to replace via OLD_VERSION in bumpenvs.yaml
+export IMAGES=`grep -o -P "(?<=new: ).*(?=,)" tools/scripts/bumpenvs.yaml | grep $OLD_VERSION`
 
 # update tags on dockerhub
-for IMAGE_TAG in $IMAGES
+for OLD_TAG in $IMAGES
 do
-  NEW_TAG=`echo IMAGE_TAG | grep -o '.*-'`NEW_VERSION
-  echo "Updating $IMAGE_TAG to $NEW_TAG"
-  docker buildx create IMAGE_TAG --tag NEW_TAG
+  NEW_TAG=`echo OLD_TAG | grep -o '.*-'`NEW_VERSION
+  echo "Adding $OLD_TAG (clone of $NEW_TAG) to docker repo"
+  #docker buildx create OLD_TAG --tag NEW_TAG
+  echo "Replacing $OLD_TAG to $NEW_TAG in bumpenvs.yaml"
+  perl 's/$OLD_TAG/$NEW_TAG/g' tools/scripts/bumpenvs.yaml
 done
