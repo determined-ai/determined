@@ -20,8 +20,8 @@ SELECT
   -- metadata fields
   state AS state,
   tags AS tags,
-  external_run_id AS external_trial_id, -- TODO rename
-  restart_id AS run_id, -- TODO rename
+  external_run_id AS external_trial_id,
+  restart_id AS run_id,
   last_activity AS last_activity,
   start_time AS start_time,
   end_time AS end_time,
