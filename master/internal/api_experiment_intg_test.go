@@ -1694,6 +1694,23 @@ func TestDeleteExperiments(t *testing.T) {
 	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
 	require.NoError(t, err)
 
+	// Try delete experiments again using a filter
+	for i := 0; i < 3; i++ {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().Table("experiments").
+			Set("state = ?", model.CompletedState).
+			Where("id = ?", exp.ID).Exec(ctx)
+		require.NoError(t, err)
+		expIDs = append(expIDs, int32(exp.ID))
+	}
+
+	t.Log("if DeleteExperiment with filter fails, all experiments become DELETE_FAILED")
+	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
+		ExperimentIds: expIDs,
+		Filters:       &apiv1.BulkExperimentFilters{ProjectId: 1},
+	})
+	require.NoError(t, err)
+
 	var success bool
 	for i := 0; i < 15; i++ {
 		var inDeleteFailed int
