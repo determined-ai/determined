@@ -486,8 +486,8 @@ func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, er
 	return users, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d info", gid)
 }
 
-// UpdateUserGroupMembership takes in slice of groups, and updates a user's membership in those groups.
-func UpdateUserGroupMembership(ctx context.Context, tx bun.IDB, u *model.User, groups []string) error {
+// UpdateUserGroupMembershipTx takes in slice of groups, and updates a user's membership in those groups.
+func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User, groups []string) error {
 	// Get a list of groups a user is in.
 	currentGroups, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, "", u.ID)
 	if err != nil {
