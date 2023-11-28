@@ -168,6 +168,11 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"--db-size cannot be specified for deployment types other than "
                 f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
             )
+        if args.db_snapshot != constants.defaults.DB_SNAPSHOT:
+            raise ValueError(
+                f"--db-snapshot cannot be specified for deployment types other than "
+                f"{constants.deployment_types.SIMPLE_RDS} got {args.deployment_type}"
+            )
     else:
         if args.db_size is not None and args.db_size < 20:
             raise ValueError("--db-size must be greater than or equal to 20 GB")
