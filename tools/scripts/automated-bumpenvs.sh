@@ -1,10 +1,11 @@
 #!/bin/bash -ex
 
 : '
-This script wraps the entire bumpenvs procedure.
-It is primarily intended for release-party, but can be
-run by devs as well. This script will default to the latest
+This script is primarily intended for environments main branch,
+but can be run by devs as well. This script will default to the latest
 main bumpenvs commit.
+
+tools/scripts/automated-bumepnvs.sh
 
 Optional arguments:
 -h <string>
