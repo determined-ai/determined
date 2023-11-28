@@ -122,7 +122,7 @@ def create(args: Namespace) -> None:
         config=config_text,
         contextDirectory=context_directory,
         projectId=args.project_id,
-        forkedFromId=args.fork
+        forkedFrom=args.fork
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")

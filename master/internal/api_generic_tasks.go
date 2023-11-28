@@ -165,10 +165,10 @@ func (a *apiServer) CreateGenericTask(
 	}
 
 	var parentConfig []byte
-	if req.ForkedFromId != nil {
+	if req.ForkedFrom != nil {
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		getTaskReq := &apiv1.GetTaskRequest{
-			TaskId: *req.ForkedFromId,
+			TaskId: *req.ForkedFrom,
 		}
 		resp, err := a.GetTask(ctx, getTaskReq)
 		if err != nil {
