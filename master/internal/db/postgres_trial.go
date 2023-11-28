@@ -70,7 +70,7 @@ func UpsertTrialByExternalIDTx(
 	}
 
 	v2.RunID = run.ID
-	if _, err := tx.NewInsert().Model(run).
+	if _, err := tx.NewInsert().Model(v2).
 		On("CONFLICT (run_id) DO NOTHING").
 		Exec(ctx); err != nil {
 		return fmt.Errorf("upserting trial v2 model: %w", err)
