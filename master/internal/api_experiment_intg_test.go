@@ -1694,7 +1694,8 @@ func TestDeleteExperiments(t *testing.T) {
 	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
 	require.NoError(t, err)
 
-	// Try delete experiments again using a filter
+	// Try delete experiments again using a filter, this tests the branch condition
+	// where we have a filter for the experiment delete request.
 	for i := 0; i < 3; i++ {
 		exp := createTestExp(t, api, curUser)
 		_, err := db.Bun().NewUpdate().Table("experiments").
