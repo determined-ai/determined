@@ -473,7 +473,7 @@ args_description = Cmd(
                     "--db-snapshot",
                     type=str,
                     default=constants.defaults.DB_INSTANCE_TYPE,
-                    help="snapshot to start database with on creation",
+                    help="ARN of RDS snapshot to start database with on creation",
                 ),
                 Arg(
                     "--db-instance-type",
