@@ -119,35 +119,29 @@ func NewSubscription[T Msg](
 func (s *Subscription[T]) Register() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
+	s.Publisher.Subscriptions[s] = struct{}{}
 }
 
 // Unregister removes a Subscription from its Publisher.
 func (s *Subscription[T]) Unregister() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	for i, sub := range s.Publisher.Subscriptions {
-		if sub != s {
-			continue
-		}
-		last := len(s.Publisher.Subscriptions) - 1
-		s.Publisher.Subscriptions[i] = s.Publisher.Subscriptions[last]
-		s.Publisher.Subscriptions = s.Publisher.Subscriptions[:last]
-		break
-	}
+	delete(s.Publisher.Subscriptions, s)
 }
 
 // Publisher is responsible for publishing messages of type T
 // to streamers associate with active subscriptions.
 type Publisher[T Msg] struct {
 	Lock          sync.Mutex
-	Subscriptions []*Subscription[T]
+	Subscriptions map[*Subscription[T]]struct{}
 	WakeupID      int64
 }
 
 // NewPublisher creates a new Publisher for message type T.
 func NewPublisher[T Msg]() *Publisher[T] {
-	return &Publisher[T]{}
+	return &Publisher[T]{
+		Subscriptions: map[*Subscription[T]]struct{}{},
+	}
 }
 
 // CloseAllStreamers closes all streamers associated with this Publisher.
@@ -155,7 +149,7 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	seenStreamersSet := make(map[*Streamer]struct{})
-	for _, sub := range p.Subscriptions {
+	for sub := range p.Subscriptions {
 		if _, ok := seenStreamersSet[sub.Streamer]; !ok {
 			sub.Streamer.Close()
 			seenStreamersSet[sub.Streamer] = struct{}{}
@@ -176,7 +170,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	wakeupID := p.WakeupID
 
 	// check each event against each subscription
-	for _, sub := range p.Subscriptions {
+	for sub := range p.Subscriptions {
 		func() {
 			for _, ev := range events {
 				var msg interface{}

@@ -64,8 +64,10 @@ func TestConfigureSubscription(t *testing.T) {
 	require.True(t, sub.filter(TestMsg{}), "set filter does not work")
 	require.True(t, len(publisher.Subscriptions) == 1,
 		"publisher's subscriptions are nil after configuration")
-	require.True(t, publisher.Subscriptions[0].filter(TestMsg{}),
-		"publisher's subscription has the wrong filter")
+	for subscription := range publisher.Subscriptions {
+		require.True(t, subscription.filter(TestMsg{}),
+			"publisher's subscription has the wrong filter")
+	}
 
 	sub2 := NewSubscription[TestMsg](streamer, publisher, alwaysTrue, alwaysFalse)
 	require.True(t, sub2.filter != nil, "subscription filter is nil after instantiation")
@@ -75,14 +77,15 @@ func TestConfigureSubscription(t *testing.T) {
 	require.False(t, sub2.filter(TestMsg{}), "set filter does not work")
 	require.True(t, len(publisher.Subscriptions) == 2,
 		"publisher's subscriptions are nil after configuration")
-	require.False(t, publisher.Subscriptions[1].filter(TestMsg{}),
-		"publisher's subscription has the wrong filter")
+
+	_, ok := publisher.Subscriptions[&sub2]
+	require.True(t, ok, "publisher has correct new subscription")
 
 	sub.Unregister()
 	require.True(t, len(publisher.Subscriptions) == 1,
 		"publisher's still has subscriptions after deletion")
-	require.False(t, publisher.Subscriptions[0].filter(TestMsg{}),
-		"publisher removed the wrong subscription")
+	_, ok = publisher.Subscriptions[&sub]
+	require.False(t, ok, "publisher removed the wrong subscription")
 }
 
 func TestBroadcast(t *testing.T) {
