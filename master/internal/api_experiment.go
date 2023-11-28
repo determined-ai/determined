@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -1670,10 +1671,11 @@ func (a *apiServer) CreateExperiment(
 		return nil, err
 	}
 
-	taskSpec.ExtraEnvVars, err = a.getOIDCPachydermEnvVars(session)
+	pachyEnvVars, err := a.getOIDCPachydermEnvVars(session)
 	if err != nil {
 		return nil, err
 	}
+	maps.Copy(taskSpec.ExtraEnvVars, pachyEnvVars)
 
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
