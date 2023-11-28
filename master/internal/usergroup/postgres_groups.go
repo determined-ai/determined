@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
@@ -494,20 +495,20 @@ func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User,
 		return fmt.Errorf("finding current user groups: %w", err)
 	}
 
-	var groupsToRemove []int
+	groupsToRemove := set.New[int]()
 	// Remove the user from any groups no longer included in the slice.
 	for _, g := range currentGroups {
 		if !slices.Contains(groups, g.Name) {
-			groupsToRemove = append(groupsToRemove, g.ID)
+			groupsToRemove.Insert(g.ID)
 		}
 	}
 	if len(groupsToRemove) != 0 {
-		if err := RemoveUsersFromGroupsTx(ctx, tx, groupsToRemove, u.ID); err != nil {
+		if err := RemoveUsersFromGroupsTx(ctx, tx, groupsToRemove.ToSlice(), u.ID); err != nil {
 			return fmt.Errorf("failed to remove user from group: %w", err)
 		}
 	}
 
-	var groupsToAdd []int
+	groupsToAdd := set.New[int]()
 	// Add the user to groups included in the slice.
 	for _, g := range groups {
 		// Check if the group already exists, regardless of if the user belongs to it.
@@ -521,15 +522,15 @@ func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User,
 			if err != nil {
 				return fmt.Errorf("failed to add usergroup: %w", err)
 			}
-			groupsToAdd = append(groupsToAdd, newGroup.ID)
+			groupsToAdd.Insert(newGroup.ID)
 		} else if !slices.Contains(currentGroups, gps[0]) {
 			// gps should be a slice of length 1 since group name is unique.
-			groupsToAdd = append(groupsToAdd, gps[0].ID)
+			groupsToAdd.Insert(gps[0].ID)
 		}
 	}
 
 	if len(groupsToAdd) != 0 {
-		if err := AddUsersToGroupsTx(ctx, tx, groupsToAdd, true, u.ID); err != nil {
+		if err := AddUsersToGroupsTx(ctx, tx, groupsToAdd.ToSlice(), true, u.ID); err != nil {
 			return fmt.Errorf("error adding user to group: %s", err)
 		}
 	}
