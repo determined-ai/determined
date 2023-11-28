@@ -3,9 +3,9 @@
 -- reasons to use a an id that won't have gaps in the sequence.
 -- My only issue is then a field called id could be mistaked for trial id.
 CREATE TABLE trials_v2 (
-    run_id integer PRIMARY KEY REFERENCES runs(id),
+    run_id integer PRIMARY KEY REFERENCES runs(id) ON DELETE CASCADE,
     request_id text,
-    runner_state text NOT NULL,
+    runner_state text NOT NULL DEFAULT 'UNSPECIFIED',
     seed integer NOT NULL DEFAULT 0
 );
 
