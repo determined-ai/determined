@@ -1,9 +1,6 @@
 import { makeToast } from 'hew/Toast';
-import { ReactElement } from 'react';
 
-import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
-import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
 import { routeToReactUrl } from 'utils/routes';
 /** generates a handler that alerts when called */
 export const alertAction =
@@ -14,32 +11,3 @@ export const alertAction =
 export const visitAction = (url: string) => (): void => routeToReactUrl(url);
 export const noOp = (): void => undefined;
 export const parseIds = (input: string): number[] => input.split(',').map((i) => parseInt(i));
-
-export const helpContent = (): ReactElement => {
-  const commands = dfsStaticRoutes([], [], root)
-    .map((path) => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
-    .map((addr) => addr.replace('root ', ''))
-    .sort();
-
-  const keymap = [
-    '"Enter" to select and auto complete an option.',
-    '"Tab", "Up", or "Down" arrow keys to cycle through suggestions.',
-    '"Escape" to close the bar.',
-  ];
-  return (
-    <>
-      <p>Keyboard shortcuts:</p>
-      <ul>
-        {keymap.map((el, idx) => (
-          <li key={idx}>{el}</li>
-        ))}
-      </ul>
-      <p>Available commands:</p>
-      <ul>
-        {commands.map((el, idx) => (
-          <li key={idx}>{el}</li>
-        ))}
-      </ul>
-    </>
-  );
-};

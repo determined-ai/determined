@@ -1,8 +1,9 @@
 import { matchesShortcut } from 'hew/InputShortcut';
-import { Modal, useModal } from 'hew/Modal';
+import { useModal } from 'hew/Modal';
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import HelpModalComponent from 'components/HelpModal';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
@@ -10,7 +11,6 @@ import { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { useSettings } from 'hooks/useSettings';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
-import { helpContent } from 'omnibar/tree-extension/trees/actions';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
 import handleError from 'utils/error';
@@ -31,8 +31,6 @@ const Omnibar: React.FC = () => {
     settings: { omnibar: omnibarShortcut },
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
-  const HelpModal = useModal(() => <Modal title="Help">{helpContent()}</Modal>);
-
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
       if (matchesShortcut(e, omnibarShortcut)) {
@@ -52,6 +50,8 @@ const Omnibar: React.FC = () => {
   const hideBar = useCallback(() => {
     setShowing(false);
   }, []);
+
+  const HelpModal = useModal(HelpModalComponent);
 
   const onAction = useCallback(
     async (item: unknown, query: (inputEl: string) => void) => {
