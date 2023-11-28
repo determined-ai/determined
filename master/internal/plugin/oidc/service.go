@@ -103,6 +103,10 @@ func (s *Service) callback(c echo.Context) error {
 		return errors.Wrap(err, "failed to exchange oauth2 token")
 	}
 
+	rawIDToken, ok := oauth2token.Extra("id_token").(string)
+	if !ok {
+		return errors.Wrap(err, "failed to get raw ID token from oauth2token")
+	}
 	userInfo, err := s.provider.UserInfo(c.Request().Context(), oauth2.StaticTokenSource(oauth2token))
 	if err != nil {
 		return errors.Wrap(err, "failed to get user info from oidc provider")
@@ -144,8 +148,7 @@ func (s *Service) callback(c echo.Context) error {
 	if !u.Active {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is inactive")
 	}
-
-	token, err := user.StartSession(ctx, u)
+	token, err := user.StartSession(ctx, u, user.WithInheritedClaims(map[string]string{"OIDCRawIDToken": rawIDToken}))
 	if err != nil {
 		return err
 	}
