@@ -2888,10 +2888,6 @@ workflows:
           requires:
             - build-react
             - build-docs
-      - package-and-push-system-dev:
-          requires:
-            - build-react
-            - build-docs
 
       - test-stress:
           name: test-stress
@@ -2903,20 +2899,6 @@ workflows:
               parallelism: [1]
               mark: ["stress_test"]
               det-version: [$CIRCLE_SHA1]
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-single-quarantined
-          context: aws
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu"]
-              enable-tls: [true]
-              mark: ["e2e_gpu_quarantine"]
 
       - test-det-deploy:
           name: test-det-deploy-local
