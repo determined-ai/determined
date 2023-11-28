@@ -7,13 +7,14 @@ from determined.cli import command
 from determined.common import context, util
 from determined.common.api import bindings
 from tests import api_utils
+from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
 def test_task_get_config() -> None:
     # create generic task
     sess = api_utils.determined_test_session(admin=True)
-    with open("e2e_tests/test_config.yaml", "r") as config_file:
+    with open(conf.fixtures_path("configuration/test_config.yaml"), "r") as config_file:
         config = command.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
         context_directory = context.read_v1_context(Path("e2e_tests"), [])
@@ -21,7 +22,7 @@ def test_task_get_config() -> None:
             config=config_text,
             contextDirectory=context_directory,
             projectId=None,
-            forkedFromId=None
+            forkedFrom=None
         )
         task_resp = bindings.post_CreateGenericTask(sess, body=req)
         assert len(task_resp.taskId) > 0
@@ -76,8 +77,8 @@ def test_task_get_config() -> None:
 
 @pytest.mark.e2e_cpu
 def test_task_fork() -> None:
-    sess = api_utils.determined_test_session(admin=True)
-    with open("e2e_tests/test_config.yaml", "r") as config_file:
+    sess = api_utils.determined_test_session()
+    with open(conf.fixtures_path("configuration/test_config.yaml"), "r") as config_file:
         config = command.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
         context_directory = context.read_v1_context(Path("e2e_tests"), [])
@@ -85,13 +86,13 @@ def test_task_fork() -> None:
             config=config_text,
             contextDirectory=context_directory,
             projectId=None,
-            forkedFromId=None
+            forkedFrom=None
         )
         task_resp = bindings.post_CreateGenericTask(sess, body=req)
         assert len(task_resp.taskId) > 0
         config_file.close()
     
-        with open("e2e_tests/test_config_fork.yaml", "r") as config_file:
+        with open(conf.fixtures_path("configuration/test_config_fork.yaml"), "r") as config_file:
             config = command.parse_config(config_file, None, [], [])
             config_text = util.yaml_safe_dump(config)
             context_directory = context.read_v1_context(Path("e2e_tests"), [])
@@ -99,7 +100,7 @@ def test_task_fork() -> None:
                 config=config_text,
                 contextDirectory=context_directory,
                 projectId=None,
-                forkedFromId=task_resp.taskId
+                forkedFrom=task_resp.taskId
             )
             fork_task_resp = bindings.post_CreateGenericTask(sess, body=req)
             assert len(fork_task_resp.taskId) > 0
