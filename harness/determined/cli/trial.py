@@ -14,7 +14,6 @@ from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group, string_to_bool
-from determined.common.experimental.checkpoint import CheckpointState
 from determined.experimental import client
 
 from .checkpoint import render_checkpoint
@@ -180,10 +179,13 @@ def download(args: Namespace) -> None:
         if not checkpoints:
             raise ValueError(f"No checkpoints found for trial {args.trial_id}")
 
-        valid_states = [CheckpointState.COMPLETED, CheckpointState.PARTIALLY_DELETED]
+        downloadable_states = [
+            client.CheckpointState.COMPLETED,
+            client.CheckpointState.PARTIALLY_DELETED,
+        ]
         while len(checkpoints) > 0:
             checkpoint = checkpoints.pop()
-            if checkpoint.state in valid_states:
+            if checkpoint.state in downloadable_states:
                 break
         if len(checkpoints) == 0:
             raise errors.CliError("Download failed:  No downloadable checkpoint found")
