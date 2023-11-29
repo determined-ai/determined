@@ -517,7 +517,7 @@ func (k *kubernetesResourcePool) assignResources(
 				WithField("allocation-id", req.AllocationID).
 				WithError(err).Error("unable to restore allocation")
 			unknownExit := sproto.ExitCode(-1)
-			rmevents.Publish(req.AllocationID, &sproto.ResourcesFailureError{
+			rmevents.Publish(req.AllocationID, &sproto.ResourcesRestoreError{
 				FailureType: sproto.ResourcesMissing,
 				ErrMsg:      errors.Wrap(err, "unable to restore allocation").Error(),
 				ExitCode:    &unknownExit,

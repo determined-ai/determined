@@ -86,8 +86,8 @@ export class FilterFormStore {
           child.kind === FormKind.Group
             ? countFields(child)
             : !field || field === child.columnName
-            ? 1
-            : 0;
+              ? 1
+              : 0;
       }
       return count;
     };

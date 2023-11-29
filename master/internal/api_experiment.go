@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -1544,10 +1545,10 @@ func (a *apiServer) ContinueExperiment(
 					"experiment has been completed, cannot continue this experiment")
 			}
 		} else if isSingle && len(trialsResp.Trials) > 0 {
-			if _, err := tx.NewUpdate().Model(&model.Trial{}).
-				Set("state = ?", model.PausedState).
-				Where("id = ?", trialsResp.Trials[0].Id).
-				Exec(ctx); err != nil {
+			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.
+									Set("state = ?", model.PausedState).
+									Where("id = ?", trialsResp.Trials[0].Id).
+									Exec(ctx); err != nil {
 				return fmt.Errorf("changing trial state to PAUSED: %w", err)
 			}
 		}
@@ -1592,11 +1593,11 @@ func (a *apiServer) ContinueExperiment(
 			trialIDs = append(trialIDs, t.Id)
 		}
 		if len(trialIDs) > 0 {
-			if _, err := tx.NewUpdate().Model(&model.Trial{}).
-				Set("restarts = 0").
-				Set("end_time = null").
-				Where("id IN (?)", bun.In(trialIDs)).
-				Exec(ctx); err != nil {
+			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.
+									Set("restarts = 0").
+									Set("end_time = null").
+									Where("id IN (?)", bun.In(trialIDs)).
+									Exec(ctx); err != nil {
 				return fmt.Errorf("zeroing out trial restarts: %w", err)
 			}
 		}
@@ -1635,7 +1636,7 @@ func (a *apiServer) ContinueExperiment(
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
+	user, session, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -1669,6 +1670,13 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, err
 	}
+
+	pachyEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	if err != nil {
+		return nil, err
+	}
+	maps.Copy(taskSpec.ExtraEnvVars, pachyEnvVars)
+
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
@@ -2831,7 +2839,7 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 		return nil, errors.New("only unmanaged trials are supported")
 	}
 
-	obj := trials.Trial{
+	obj := model.Run{
 		ID:           trialID,
 		LastActivity: ptrs.Ptr(time.Now()),
 	}

@@ -75,10 +75,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
   const hyperparameters = useMemo(() => {
-    return fullHParams.reduce((acc, key) => {
-      acc[key] = experiment.hyperparameters[key];
-      return acc;
-    }, {} as Record<string, Hyperparameter>);
+    return fullHParams.reduce(
+      (acc, key) => {
+        acc[key] = experiment.hyperparameters[key];
+        return acc;
+      },
+      {} as Record<string, Hyperparameter>,
+    );
   }, [experiment.hyperparameters, fullHParams]);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
@@ -99,10 +102,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
     if (!chartData) return;
 
     // Initialize a new trial id filter map.
-    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
-      acc[trialId] = true;
-      return acc;
-    }, {} as Record<number, boolean>);
+    const newFilteredTrialIdMap = chartData.trialIds.reduce(
+      (acc, trialId) => {
+        acc[trialId] = true;
+        return acc;
+      },
+      {} as Record<number, boolean>,
+    );
 
     // Figure out which trials are filtered out based on user filters.
     Object.entries(hermesCreatedFilters).forEach(([key, list]) => {

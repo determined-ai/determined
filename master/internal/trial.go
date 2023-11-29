@@ -171,6 +171,7 @@ func newTrial(
 		"trial-id":     t.id,
 		"trial-run-id": t.runID,
 	})
+	t.syslog = t.syslog.WithFields(t.logCtx.Fields())
 
 	err = t.maybeAllocateTask()
 	if err != nil {

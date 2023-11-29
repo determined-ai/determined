@@ -88,6 +88,7 @@ class DoneMsg(NamedTuple):
     exit_code: Optional[int] = None
 
 
+# Duplicated in wrap_rank.py.  If you find a bug here, fix it there too.
 def read_newlines_or_carriage_returns(fd: io.RawIOBase) -> Iterator[str]:
     r"""
     Read lines, delineated by either '\n' or '\r.

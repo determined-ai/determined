@@ -747,13 +747,16 @@ func (a *agent) gatherContainersToReattach() []aproto.ContainerReattach {
 	for _, container := range a.agentState.containerState {
 		result = append(result, aproto.ContainerReattach{Container: *container})
 	}
-
+	a.syslog.Infof("going to try to reattach containers (%v)", result)
 	return result
 }
 
 func (a *agent) handleContainersReattached(agentStarted *aproto.AgentStarted) error {
-	a.syslog.Debugf("agent ContainersRestored ip: %v , reattached: %v, containers: %v",
-		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))
+	a.syslog.WithField("ip", a.address).
+		Debugf(
+			"reattached containers: actual: %v, expected: %v",
+			agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState),
+		)
 
 	recovered := map[cproto.ID]aproto.ContainerReattachAck{}
 	doomed := map[cproto.ID]aproto.ContainerReattachAck{}
@@ -835,6 +838,22 @@ func (a *agent) clearNonReattachedContainers(
 			Container:        *containerState,
 			ContainerStopped: &stopped,
 		})
+
+		// One of the reasons we can fail to recover a container is if there is no allocation awaiting it (e.g.,
+		// if the allocation has already run "purgeRestoreableResources" and crashed). In this case, sending
+		// aproto.ContainerStateChanged does nothing since the allocation isn't there to handle it, so we send an
+		// extra SIGKILL to make sure we don't oversubscribe the agent since we are about to clear it from the agent
+		// state and those slots will become reschedulable.
+		//
+		// To me, this is a hack to make up for an architectural deficiency. I think this problem and others would go
+		// away if we merged task.AllocationService and ResourceManagers into a single entity. There is too much shared
+		// responsibility between them.
+		a.socket.Outbox <- aproto.AgentMessage{
+			SignalContainer: &aproto.SignalContainer{
+				ContainerID: cID,
+				Signal:      syscall.SIGKILL,
+			},
+		}
 	}
 
 	return a.agentState.clearUnlessRecovered(recovered)

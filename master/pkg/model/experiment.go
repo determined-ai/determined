@@ -477,6 +477,46 @@ type Trial struct {
 	Seed                  int64          `db:"seed"`
 	TotalBatches          int            `db:"total_batches"`
 	ExternalTrialID       *string        `db:"external_trial_id"`
+	RunID                 int            `db:"run_id"` // run_id as in restart_id not "runs" id.
+	LastActivity          *time.Time     `db:"last_activity"`
+}
+
+// ToRun converts a trial to a run.
+func (t *Trial) ToRun() *Run {
+	return &Run{
+		ID:                    t.ID,
+		RequestID:             t.RequestID,
+		ExperimentID:          t.ExperimentID,
+		State:                 t.State,
+		StartTime:             t.StartTime,
+		EndTime:               t.EndTime,
+		HParams:               t.HParams,
+		WarmStartCheckpointID: t.WarmStartCheckpointID,
+		Seed:                  t.Seed,
+		TotalBatches:          t.TotalBatches,
+		ExternalRunID:         t.ExternalTrialID,
+		RestartID:             t.RunID,
+		LastActivity:          t.LastActivity,
+	}
+}
+
+// Run represents a row from the `runs` table.
+type Run struct {
+	bun.BaseModel `bun:"table:runs"`
+
+	ID                    int            `db:"id" bun:",pk,autoincrement"`
+	RequestID             *RequestID     `db:"request_id"`
+	ExperimentID          int            `db:"experiment_id"`
+	State                 State          `db:"state"`
+	StartTime             time.Time      `db:"start_time"`
+	EndTime               *time.Time     `db:"end_time"`
+	HParams               map[string]any `db:"hparams" bun:"hparams"`
+	WarmStartCheckpointID *int           `db:"warm_start_checkpoint_id"`
+	Seed                  int64          `db:"seed"`
+	TotalBatches          int            `db:"total_batches"`
+	ExternalRunID         *string        `db:"external_trial_id"`
+	RestartID             int            `db:"restart_id"`
+	LastActivity          *time.Time     `db:"last_activity"`
 }
 
 // TrialTaskID represents a row from the `trial_id_task_id` table.

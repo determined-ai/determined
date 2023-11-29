@@ -61,15 +61,17 @@ func (a *TrialsAPIServer) StartTrial(
 			}
 		}
 
-		_, err := tx.NewUpdate().Model(&obj).WherePK().
-			Set("run_id = run_id + 1").
+		run := model.Run{ID: trialID} // TODO(nick-runs) call runs package.
+		_, err := tx.NewUpdate().Model(&run).WherePK().
+			Set("restart_id = restart_id + 1").
 			Set("state = ?", model.RunningState).
 			Set("last_activity = ?", time.Now()).
-			Returning("run_id").
+			Returning("restart_id").
 			Exec(ctx)
 		if err != nil {
 			return err
 		}
+		obj.RunID = run.RestartID
 
 		return UpdateUnmanagedExperimentStatesTx(ctx, tx, []*model.Experiment{exp})
 	})

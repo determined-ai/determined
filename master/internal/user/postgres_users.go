@@ -22,11 +22,25 @@ const SessionDuration = 7 * 24 * time.Hour
 // PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
 const PersonalGroupPostfix = "DeterminedPersonalGroup"
 
+// UserSessionOption is the return type for WithInheritedClaims helper function.
+type UserSessionOption func(f *model.UserSession)
+
+// WithInheritedClaims function will add the specified inherited claims to the user session.
+func WithInheritedClaims(claims map[string]string) UserSessionOption {
+	return func(s *model.UserSession) {
+		s.InheritedClaims = claims
+	}
+}
+
 // StartSession creates a row in the user_sessions table.
-func StartSession(ctx context.Context, user *model.User) (string, error) {
+func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOption) (string, error) {
 	userSession := &model.UserSession{
 		UserID: user.ID,
 		Expiry: time.Now().Add(SessionDuration),
+	}
+
+	for _, opt := range opts {
+		opt(userSession)
 	}
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

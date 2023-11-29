@@ -811,6 +811,18 @@ func convertDBErrorsToNotFound(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// convertCtxErrsToTimeout helps reduce boilerplate in our handlers and reduce
+// spurious logs by classifying context.Canceled as 408 (>=500 is logged).
+func convertCtxErrsToTimeout(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		err := next(c)
+		if errors.Is(err, context.Canceled) {
+			return echo.NewHTTPError(http.StatusRequestTimeout, err.Error())
+		}
+		return err
+	}
+}
+
 func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 	t := time.NewTicker(10 * time.Minute)
 	defer t.Stop()
@@ -992,6 +1004,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	})
 
 	m.echo.Use(convertDBErrorsToNotFound)
+	m.echo.Use(convertCtxErrsToTimeout)
 
 	if m.config.InternalConfig.AuditLoggingEnabled {
 		m.echo.Use(auditLogMiddleware())

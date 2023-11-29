@@ -659,9 +659,9 @@ func (a *agentState) restoreContainersField() error {
 	if err != nil {
 		return err
 	}
-	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(res))
 	a.containerAllocation = res
 
+	a.syslog.Debugf("restored %d/%d container to allocation mappings", len(res), len(containerIDs))
 	return nil
 }
 

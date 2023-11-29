@@ -11,6 +11,7 @@ Deteremined AI uses [Playwright 🎭](https://playwright.dev/).
   - `PW_USER_NAME`: user name for determined account
   - `PW_PASSWORD`: password for determined account
   - `PW_SERVER_ADDRESS`: API server address
+- Run `npx playwright install`
 - Run `SERVER_ADDRESS={set server address} npm run build` in `webui/react`
   - It is `SERVER_ADDRESS` here. not `PW_SERVER_ADDRESS`, but the both values should be the same
 - Run `npm run e2e` in `webui/react`

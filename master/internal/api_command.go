@@ -14,6 +14,7 @@ import (
 
 	k8sV1 "k8s.io/api/core/v1"
 
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -352,10 +353,29 @@ func (a *apiServer) SetCommandPriority(
 	return &apiv1.SetCommandPriorityResponse{Command: cmd.ToV1Command()}, nil
 }
 
+func (a *apiServer) getOIDCPachydermEnvVars(
+	session *model.UserSession,
+) (map[string]string, error) {
+	if session == nil { // Can happen with allocation token.
+		return map[string]string{}, nil
+	}
+
+	envVars := make(map[string]string)
+
+	if val, ok := session.InheritedClaims["OIDCRawIDToken"]; ok {
+		envVars["DEX_TOKEN"] = val
+	}
+
+	if a.m.config.Integrations.Pachyderm.Address != "" {
+		envVars["PACHD_ADDRESS"] = a.m.config.Integrations.Pachyderm.Address
+	}
+	return envVars, nil
+}
+
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
+	user, session, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -402,9 +422,16 @@ func (a *apiServer) LaunchCommand(
 			err.Error(),
 		)
 	}
+
 	launchReq.Spec.Base.ExtraEnvVars = map[string]string{
 		"DET_TASK_TYPE": string(model.TaskTypeCommand),
 	}
+
+	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	if err != nil {
+		return nil, err
+	}
+	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
 
 	// Launch a command.
 	cmd, err := command.DefaultCmdService.LaunchGenericCommand(

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -225,7 +226,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
+	user, session, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -277,12 +278,20 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot marshal notebook config: %s", err.Error())
 	}
+
 	launchReq.Spec.Base.ExtraEnvVars = map[string]string{
 		"NOTEBOOK_PORT":      strconv.Itoa(port),
 		"NOTEBOOK_CONFIG":    string(configBytes),
 		"NOTEBOOK_IDLE_TYPE": launchReq.Spec.Config.NotebookIdleType,
 		"DET_TASK_TYPE":      string(model.TaskTypeNotebook),
 	}
+
+	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	if err != nil {
+		return nil, err
+	}
+	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
+
 	launchReq.Spec.Base.ExtraProxyPorts = append(launchReq.Spec.Base.ExtraProxyPorts,
 		expconf.ProxyPort{
 			RawProxyPort:        port,

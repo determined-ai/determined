@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -209,11 +210,17 @@ func (c *awsCluster) launchOnDemand(instanceNum int) error {
 	if instanceNum <= 0 {
 		return nil
 	}
+
 	instances, err := c.launchInstances(instanceNum, false)
-	if err != nil {
+	switch {
+	case err != nil && strings.Contains(err.Error(), "InsufficientInstanceCapacity"):
+		c.syslog.WithError(err).Warn("cannot launch EC2 instances right now")
+		return err
+	case err != nil:
 		c.syslog.WithError(err).Error("cannot launch EC2 instances")
 		return err
 	}
+
 	launched := c.newInstances(instances.Instances)
 	c.syslog.Infof(
 		"launched %d/%d EC2 instances: %s",

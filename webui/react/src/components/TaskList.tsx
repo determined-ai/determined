@@ -132,10 +132,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   }, [loadedTasks, settings, users]);
 
   const taskMap = useMemo(() => {
-    return (loadedTasks || []).reduce((acc, task) => {
-      acc[task.id] = task;
-      return acc;
-    }, {} as Record<string, CommandTask>);
+    return (loadedTasks || []).reduce(
+      (acc, task) => {
+        acc[task.id] = task;
+        return acc;
+      },
+      {} as Record<string, CommandTask>,
+    );
   }, [loadedTasks]);
 
   const selectedTasks = useMemo(() => {
