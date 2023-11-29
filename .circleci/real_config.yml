@@ -384,6 +384,7 @@ commands:
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
             echo '<<parameters.install-python>>' >> /tmp/cachefile
+            date -u '+%y/%m/%d' >> /tmp/cachefile
 
       - restore_cache:
           keys:
