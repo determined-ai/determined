@@ -100,7 +100,10 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
       }
     }
 
-    if (canActionExperiment(ExperimentAction.HyperparameterSearch, experiment, trial)) {
+    if (
+      canActionExperiment(ExperimentAction.HyperparameterSearch, experiment, trial) &&
+      !experiment.unmanaged
+    ) {
       options.push({
         key: Action.HyperparameterSearch,
         label: 'Hyperparameter Search',
