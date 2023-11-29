@@ -1,7 +1,3 @@
--- Is this run_id a bad idea as a primary key?
--- Would it make sense for "possible performance"
--- reasons to use a an id that won't have gaps in the sequence.
--- My only issue is then a field called id could be mistaked for trial id.
 CREATE TABLE trials_v2 (
     run_id integer PRIMARY KEY REFERENCES runs(id) ON DELETE CASCADE,
     request_id text,
@@ -9,7 +5,6 @@ CREATE TABLE trials_v2 (
     seed integer NOT NULL DEFAULT 0
 );
 
--- TODO how expensive will this be? (Likely not that expesive???)
 INSERT INTO trials_v2 (run_id, request_id, runner_state, seed)
 SELECT id, request_id, runner_state, seed
 FROM runs;
