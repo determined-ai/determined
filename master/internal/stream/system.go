@@ -96,7 +96,7 @@ func newDBListener(dbAddress, channel string) (*pq.Listener, error) {
 func NewPublisherSet(dbAddress string) *PublisherSet {
 	lock := sync.Mutex{}
 	return &PublisherSet{
-		DBAddress:   "postgresql://postgres:postgres@localhost/determined?sslmode=disable",
+		DBAddress:   dbAddress,
 		Trials:      stream.NewPublisher[*TrialMsg](),
 		Metrics:     stream.NewPublisher[*MetricMsg](),
 		Experiments: stream.NewPublisher[*ExperimentMsg](),
