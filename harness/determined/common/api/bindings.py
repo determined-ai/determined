@@ -15748,7 +15748,7 @@ def post_CreateGenericTask(
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/generic-task",
+        path="/api/v1/generic-tasks",
         params=_params,
         json=body.to_json(True),
         data=None,
