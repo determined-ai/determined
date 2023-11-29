@@ -263,8 +263,8 @@ class Checkpoint:
         try:
             self._download_direct(checkpoint_storage, local_ckpt_dir)
 
-        except errors.NoDirectStorageAccess:
-            if checkpoint_storage["type"] != "s3" and checkpoint_storage["type"] != "gcs":
+        except (errors.NoDirectStorageAccess, FileNotFoundError):
+            if checkpoint_storage["type"] == "azure":
                 raise
 
             logger.info("Unable to download directly, proxying download through master")

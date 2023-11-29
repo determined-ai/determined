@@ -2,6 +2,7 @@ package expconf
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -120,6 +121,16 @@ func (s SharedFSConfigV0) PathInContainer() string {
 		return filepath.Join(DefaultSharedFSContainerPath, relPath)
 	}
 	return filepath.Join(DefaultSharedFSContainerPath, *s.RawStoragePath)
+}
+
+// PathInContainerOrHost returns the PathInContainer if it exists,
+// otherwise returns RawHostPath if available.
+func (s SharedFSConfigV0) PathInContainerOrHost() string {
+	path := s.PathInContainer()
+	if _, err := os.Stat(path); os.IsNotExist(err) && s.RawHostPath != nil {
+		return *s.RawHostPath
+	}
+	return path
 }
 
 // S3ConfigV0 configures storing checkpoints on S3.

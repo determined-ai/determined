@@ -97,6 +97,7 @@ func (d *GCSDownloader) Close() error {
 
 // NewGCSDownloader returns a new GCSDownloader.
 func NewGCSDownloader(aw archive.ArchiveWriter, bucket string, prefix string) *GCSDownloader {
+	prefix = strings.TrimLeft(prefix, "/")
 	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}

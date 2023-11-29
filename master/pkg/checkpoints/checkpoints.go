@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/gcs"
+	"github.com/determined-ai/determined/master/pkg/checkpoints/local"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -36,20 +36,34 @@ func NewDownloader(
 		return nil, err
 	}
 
-	prefix := ""
+	idPrefix := func(prefix string) string {
+		return prefix + "/" + id
+	}
+	idPrefixRef := func(prefixRef *string) string {
+		prefix := ""
+		if prefixRef != nil {
+			prefix = *prefixRef
+		}
+		return idPrefix(prefix)
+	}
+
 	switch storage := storageConfig.GetUnionMember().(type) {
 	case expconf.S3Config:
-		if storage.Prefix() != nil {
-			prefix = *storage.Prefix()
-		}
-		return s3.NewS3Downloader(
-			aw, storage.Bucket(), strings.TrimLeft(prefix+"/"+id, "/")), nil
+		prefix := idPrefixRef(storage.Prefix())
+		return s3.NewS3Downloader(aw, storage.Bucket(), prefix), nil
+
 	case expconf.GCSConfig:
-		if storage.Prefix() != nil {
-			prefix = *storage.Prefix()
-		}
-		return gcs.NewGCSDownloader(
-			aw, storage.Bucket(), strings.TrimLeft(prefix+"/"+id, "/")), nil
+		prefix := idPrefixRef(storage.Prefix())
+		return gcs.NewGCSDownloader(aw, storage.Bucket(), prefix), nil
+
+	case expconf.SharedFSConfig:
+		prefix := idPrefix(storage.PathInContainerOrHost())
+		return local.NewLocalDownloader(aw, prefix), nil
+
+	case expconf.DirectoryConfig:
+		prefix := idPrefix(storage.ContainerPath())
+		return local.NewLocalDownloader(aw, prefix), nil
+
 	default:
 		return nil,
 			fmt.Errorf("checkpoint download via master is not supported for %s",

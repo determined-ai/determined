@@ -125,6 +125,7 @@ func (d *S3Downloader) Close() error {
 
 // NewS3Downloader returns a new S3Downloader.
 func NewS3Downloader(aw archive.ArchiveWriter, bucket string, prefix string) *S3Downloader {
+	prefix = strings.TrimLeft(prefix, "/")
 	return &S3Downloader{
 		aw:     aw,
 		bucket: bucket,
