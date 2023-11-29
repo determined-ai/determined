@@ -52,6 +52,7 @@ class Trial:
     Attributes:
         trial_id: ID of trial.
         session: HTTP request session.
+        experiment_id: (Mutable, Optional[int]) ID of the experiment this trial belongs to.
         hparams: (Mutable, Optional[Dict]) Dict[name, value] of the trial's hyperparameters.
             This is an instance of the hyperparameter space defined by the experiment.
         state: (Mutable, Optional[TrialState]) Trial state (ex: ACTIVE, PAUSED, COMPLETED).
