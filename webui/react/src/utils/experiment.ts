@@ -119,7 +119,6 @@ export const alwaysTrueExperimentChecker = (_experiment: ProjectExperiment): boo
 
 const resumableSearcherTypes: ExperimentSearcherName[] = [
   ExperimentSearcherName.Grid,
-  ExperimentSearcherName.Single,
   ExperimentSearcherName.Random,
 ];
 
