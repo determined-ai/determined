@@ -358,7 +358,7 @@ service Determined {
   rpc CreateGenericTask(CreateGenericTaskRequest)
       returns (CreateGenericTaskResponse) {
     option (google.api.http) = {
-      post: "/api/v1/generic-task"
+      post: "/api/v1/generic-tasks"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
