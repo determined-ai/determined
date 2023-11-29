@@ -1565,6 +1565,7 @@ func (x *GetAllocationResponse) GetAllocation() *taskv1.Allocation {
 	return nil
 }
 
+// Gets task configuration JSON
 type GetTaskConfigRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1613,6 +1614,7 @@ func (x *GetTaskConfigRequest) GetTaskId() string {
 	return ""
 }
 
+// Response to GetTaskConfigRequest
 type GetTaskConfigResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

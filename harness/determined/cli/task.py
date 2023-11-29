@@ -142,11 +142,13 @@ def create(args: Namespace) -> None:
                 )
             )
 
+
 @authentication.required
 def config(args: Namespace) -> None:
     sess = cli.setup_session(args)
     config_resp = bindings.get_GetTaskConfig(sess, taskId=args.task_id)
     print(config_resp.config)
+
 
 common_log_options: List[Any] = [
     Arg(

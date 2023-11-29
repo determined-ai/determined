@@ -2396,8 +2396,7 @@ service Determined {
   }
 
   // Get task config
-  rpc GetTaskConfig(GetTaskConfigRequest)
-    returns (GetTaskConfigResponse) {
+  rpc GetTaskConfig(GetTaskConfigRequest) returns (GetTaskConfigResponse) {
     option (google.api.http) = {
       get: "/api/v1/tasks/{task_id}/config"
     };

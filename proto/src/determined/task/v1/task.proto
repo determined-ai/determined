@@ -79,7 +79,13 @@ message Allocation {
 message Task {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "task_id", "task_type", "allocations", "start_time", "config" ]
+      required: [
+        "task_id",
+        "task_type",
+        "allocations",
+        "start_time",
+        "config"
+      ]
     }
   };
   // Unique ID of task.

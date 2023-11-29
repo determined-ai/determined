@@ -35,7 +35,7 @@ message CreateGenericTaskResponse {
   };
   // The created generic taskID.
   string task_id = 1;
-    // List of any related warnings.
+  // List of any related warnings.
   repeated LaunchWarning warnings = 2;
 }
 
@@ -275,14 +275,16 @@ message GetAllocationResponse {
   determined.task.v1.Allocation allocation = 1;
 }
 
+// Gets task configuration JSON
 message GetTaskConfigRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "task_id" ] }
   };
   // The id of the task.
-  string task_id = 1; 
+  string task_id = 1;
 }
 
+// Response to GetTaskConfigRequest
 message GetTaskConfigResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "config" ] }

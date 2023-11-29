@@ -2598,7 +2598,7 @@ class v1CreateGenericTaskRequest(Printable):
         *,
         config: str,
         contextDirectory: "typing.Sequence[v1File]",
-        projectId: int,
+        projectId: "typing.Optional[int]" = None,
     ):
         self.config = config
         self.contextDirectory = contextDirectory
