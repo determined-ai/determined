@@ -28,6 +28,14 @@ func (a *StreamAuthZBasic) GetMetricStreamableScopes(
 	return model.AccessScopeSet{model.GlobalAccessScopeID: true}, nil
 }
 
+// GetExperimentStreamableScopes always returns an AccessScopeSet with global permission and a nil error.
+func (a *StreamAuthZBasic) GetExperimentStreamableScopes(
+	ctx context.Context,
+	curUser model.User,
+) (model.AccessScopeSet, error) {
+	return model.AccessScopeSet{model.GlobalAccessScopeID: true}, nil
+}
+
 // GetPermissionChangeListener always returns a nil pointer and a nil error.
 func (a *StreamAuthZBasic) GetPermissionChangeListener() (*pq.Listener, error) {
 	return nil, nil

@@ -23,10 +23,11 @@ import (
 type JSONB interface{}
 
 const (
-	minReconn  = 1 * time.Second
-	maxReconn  = 10 * time.Second
-	trialChan  = "stream_trial_chan"
-	metricChan = "stream_metric_chan"
+	minReconn      = 1 * time.Second
+	maxReconn      = 10 * time.Second
+	trialChan      = "stream_trial_chan"
+	metricChan     = "stream_metric_chan"
+	experimentChan = "stream_experiment_chan"
 )
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
@@ -34,9 +35,10 @@ const (
 //
 // There is one PublisherSet for the whole process.  It has one Publisher per streamable type.
 type PublisherSet struct {
-	DBAddress string
-	Trials    *stream.Publisher[*TrialMsg]
-	Metrics   *stream.Publisher[*MetricMsg]
+	DBAddress   string
+	Trials      *stream.Publisher[*TrialMsg]
+	Metrics     *stream.Publisher[*MetricMsg]
+	Experiments *stream.Publisher[*ExperimentMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
@@ -49,8 +51,9 @@ type PublisherSet struct {
 // There is one SubscriptionSet for each websocket connection.  It has one SubscriptionManager per
 // streamable type.
 type SubscriptionSet struct {
-	Trials  *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
-	Metrics *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
+	Trials      *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
+	Metrics     *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
+	Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 	// Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 }
 
@@ -93,9 +96,10 @@ func newDBListener(dbAddress, channel string) (*pq.Listener, error) {
 func NewPublisherSet(dbAddress string) *PublisherSet {
 	lock := sync.Mutex{}
 	return &PublisherSet{
-		DBAddress: dbAddress,
-		Trials:    stream.NewPublisher[*TrialMsg](),
-		Metrics:   stream.NewPublisher[*MetricMsg](),
+		DBAddress:   dbAddress,
+		Trials:      stream.NewPublisher[*TrialMsg](),
+		Metrics:     stream.NewPublisher[*MetricMsg](),
+		Experiments: stream.NewPublisher[*ExperimentMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
 		readyCond:  *sync.NewCond(&lock),
@@ -122,15 +126,17 @@ type StartupMsg struct {
 //
 // Each field of a KnownKeySet is a comma-separated list of int64s and ranges like "a,b-c,d".
 type KnownKeySet struct {
-	Trials  string `json:"trials"`
-	Metrics string `json:"metrics"`
+	Trials      string `json:"trials"`
+	Metrics     string `json:"metrics"`
+	Experiments string `json:"experiments"`
 	// Experiments string `json:"experiments"`
 }
 
 // SubscriptionSpecSet is the set of subscription specs that can be sent in startup message.
 type SubscriptionSpecSet struct {
-	Trials  *TrialSubscriptionSpec  `json:"trials"`
-	Metrics *MetricSubscriptionSpec `json:"metrics"`
+	Trials      *TrialSubscriptionSpec      `json:"trials"`
+	Metrics     *MetricSubscriptionSpec     `json:"metrics"`
+	Experiments *ExperimentSubscriptionSpec `json:"experiments"`
 	// Experiments *ExperimentSubscriptionSpec `json:"experiments"`
 }
 
@@ -147,8 +153,9 @@ func start[T stream.Msg](
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) error {
 	readyChannels := map[interface{}]chan bool{
-		ps.Trials:  make(chan bool),
-		ps.Metrics: make(chan bool),
+		ps.Trials:      make(chan bool),
+		ps.Metrics:     make(chan bool),
+		ps.Experiments: make(chan bool),
 		// ps.Experiments:make(chan bool),
 	}
 
@@ -162,6 +169,12 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 	eg.Go(
 		func(c context.Context) error {
 			return start(c, ps.DBAddress, metricChan, ps.Metrics, readyChannels[ps.Metrics])
+		},
+	)
+
+	eg.Go(
+		func(ctx context.Context) error {
+			return start(ctx, ps.DBAddress, experimentChan, ps.Experiments, readyChannels[ps.Experiments])
 		},
 	)
 
@@ -619,6 +632,7 @@ func NewSubscriptionSet(
 	var err error
 	var trialSubscriptionState *subscriptionState[*TrialMsg, TrialSubscriptionSpec]
 	var metricSubscriptionState *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
+	var experimentSubscriptionState *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 
 	if spec.Trials != nil {
 		trialSubscriptionState = &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
@@ -644,9 +658,22 @@ func NewSubscriptionSet(
 		}
 	}
 
+	if spec.Experiments != nil {
+		experimentSubscriptionState = &subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Experiments,
+				newPermFilter(ctx, user, ExperimentMakePermissionFilter, &err),
+				newFilter(spec.Experiments, ExperimentMakeFilter, &err),
+			),
+			ExperimentCollectStartupMsgs,
+		}
+	}
+
 	return SubscriptionSet{
-		Trials:  trialSubscriptionState,
-		Metrics: metricSubscriptionState,
+		Trials:      trialSubscriptionState,
+		Metrics:     metricSubscriptionState,
+		Experiments: experimentSubscriptionState,
 	}, err
 }
 
@@ -705,15 +732,24 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 			sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
 		)
 	}
+	if ss.Experiments != nil {
+		err = startup(
+			ctx, user, &msgs, err,
+			ss.Experiments, known.Experiments,
+			sub.Experiments, ss.Experiments.Subscription.Streamer.PrepareFn,
+		)
+	}
+
 	/*
 		if ss.Experiments != nil {
 			err = startup(
 				ctx, user, &msgs, err,
 				ss.Experiments, known.Experiments,
-				sub.Metrics, ss.Metrics.Subscription.Streamer.PrepareFn,
+				sub.Experiments, ss.Experiments.Subscription.Streamer.PrepareFn,
 			)
 		}
 	*/
+
 	return msgs, err
 }
 
@@ -724,6 +760,9 @@ func (ss *SubscriptionSet) UnregisterAll() {
 	}
 	if ss.Metrics != nil {
 		ss.Metrics.Subscription.Unregister()
+	}
+	if ss.Experiments != nil {
+		ss.Experiments.Subscription.Unregister()
 	}
 	// ss.Experiments.Subscription.Unregister()
 }

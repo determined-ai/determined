@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	latestMigration = 20230830174810
+	latestMigration = 20231116170431
 	testJob         = "test_job"
 )
 
@@ -151,9 +151,9 @@ func GetAddTrialQueries(ctx context.Context, experimentID int) ([]ExecutableQuer
 // streaming code without importing anything from determined/internal.
 type Experiment struct {
 	bun.BaseModel        `bun:"table:experiments"`
-	ID                   int                  `bun:"id, pk"`
+	ID                   int                  `bun:"id,pk"`
 	JobID                string               `bun:"job_id"`
-	State                string               `bun:"state"`
+	State                model.State          `bun:"state"`
 	Notes                string               `bun:"notes"`
 	Config               expconf.LegacyConfig `bun:"config"`
 	ModelDefinitionBytes []byte               `bun:"model_definition"`
@@ -209,4 +209,10 @@ func GetAddExperimentQueries(experiment *Experiment) (
 	//		}
 
 	return queries, ids[0] + 1, nil
+}
+
+// ModExperiment modifies an experiment in the experiment table.
+func ModExperiment(ctx context.Context, newExp Experiment) error {
+	_, err := db.Bun().NewUpdate().Model(&newExp).OmitZero().WherePK().Exec(ctx)
+	return err
 }

@@ -131,13 +131,6 @@ func TrialCollectStartupMsgs(
 		}
 	}
 
-	permFilter := func(q *bun.SelectQuery) *bun.SelectQuery {
-		if accessMap[model.GlobalAccessScopeID] {
-			return q
-		}
-		return q.Where("workspace_id in (?)", bun.In(accessScopes))
-	}
-
 	// step 1: calculate all ids matching this subscription
 	q := db.Bun().
 		NewSelect().
@@ -146,7 +139,7 @@ func TrialCollectStartupMsgs(
 		Join("JOIN experiments e ON trials.experiment_id = e.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		OrderExpr("trials.id ASC")
-	q = permFilter(q)
+	q = permFilter(q, accessMap, accessScopes)
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
@@ -176,7 +169,7 @@ func TrialCollectStartupMsgs(
 	if len(appeared) > 0 {
 		query := getTrialMsgsWithWorkspaceID(trialMsgs).
 			Where("trial_msg.id in (?)", bun.In(appeared))
-		query = permFilter(query)
+		query = permFilter(query, accessMap, accessScopes)
 		err := query.Scan(ctx, &trialMsgs)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
 			log.Errorf("error: %v\n", err)
