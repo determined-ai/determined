@@ -24,7 +24,7 @@ import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
-import { paths } from 'routes/utils';
+import { isGenAIDeployed, paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -116,6 +116,7 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [genAIUrl, setGenAIUrl] = useState<string | undefined>(undefined);
 
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
@@ -142,6 +143,14 @@ const NavigationSideBar: React.FC = () => {
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
+
+  useEffect(() => {
+    const getGenAIUrl = async () => {
+      const genAIUrl = await isGenAIDeployed();
+      if (genAIUrl) setGenAIUrl(genAIUrl);
+    };
+    getGenAIUrl();
+  }, []);
 
   interface MenuItemProps {
     icon: IconName;
@@ -171,27 +180,36 @@ const NavigationSideBar: React.FC = () => {
         path: paths.webhooks(),
       });
     }
+
+    const bottomItems: MenuItemProps[] = [
+      { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
+      {
+        external: true,
+        icon: 'cloud',
+        label: 'API (Beta)',
+        path: paths.docs('/rest-api/'),
+        popout: true,
+      },
+      {
+        external: true,
+        icon: 'pencil',
+        label: 'Feedback',
+        path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
+        popout: true,
+      },
+    ];
+
+    if (genAIUrl) {
+      bottomItems.push(
+        // TODO: pick a better icon.
+        { external: true, icon: 'cloud', label: 'GenAI', path: genAIUrl, popout: true },
+      );
+    }
     return {
-      bottom: [
-        { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
-        {
-          external: true,
-          icon: 'cloud',
-          label: 'API (Beta)',
-          path: paths.docs('/rest-api/'),
-          popout: true,
-        },
-        {
-          external: true,
-          icon: 'pencil',
-          label: 'Feedback',
-          path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
-          popout: true,
-        },
-      ],
+      bottom: bottomItems,
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding, genAIUrl]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });

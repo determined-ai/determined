@@ -239,3 +239,19 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
       return routeRegex.test(pathname);
     });
 };
+
+/**
+ * isGenAIDeployed checks to see if the GenAI is deployed alongside MLDE.
+ * This is first pass at building this check that's avialable to web users
+ * we'll probably want to leave this determination to the backend.
+ * Returns: the url if deployed.
+ */
+export const isGenAIDeployed = async (): Promise<string> => {
+  const possiblesPaths = ['/genai', '/lore'];
+  for (const path of possiblesPaths) {
+    const url = serverAddress(path);
+    const response = await fetch(url, { method: 'HEAD' });
+    if (response.ok) return url;
+  }
+  return '';
+};
