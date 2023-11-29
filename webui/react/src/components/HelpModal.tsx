@@ -1,4 +1,5 @@
 import { Modal } from 'hew/Modal';
+import React from 'react';
 
 import root from 'omnibar/tree-extension/trees';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
