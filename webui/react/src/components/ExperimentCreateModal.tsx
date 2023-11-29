@@ -1,9 +1,11 @@
+import { InputNumber } from 'antd';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
+import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
@@ -12,7 +14,7 @@ import React, { useCallback, useEffect, useId, useState } from 'react';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { ExperimentBase, RawJson, TrialHyperparameters, TrialItem, ValueOf } from 'types';
+import { ExperimentBase, RawJson, RunState, TrialHyperparameters, TrialItem, ValueOf } from 'types';
 import handleError, {
   DetError,
   ErrorLevel,
@@ -119,7 +121,7 @@ const ExperimentCreateModalComponent = ({
 
   const isFork = type === CreateExperimentType.Fork;
 
-  const titleLabel = isFork ? `Fork Experiment ${experiment.id}` : `Continue Trial ${trial?.id}`;
+  const titleLabel = isFork ? 'Reactivate Current Trial' : 'Continue Trial in New Experiment';
 
   const requiredFields = [EXPERIMENT_NAME, MAX_LENGTH];
 
@@ -350,17 +352,27 @@ const ExperimentCreateModalComponent = ({
 
   if (!experiment || (!isFork && !trial)) return <></>;
 
+  const hideSimpleConfig = isFork && experiment.state !== RunState.Completed;
+
   return (
     <Modal
       cancel
       icon="fork"
-      size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
+      size={
+        !hideSimpleConfig
+          ? modalState.isAdvancedMode
+            ? isFork
+              ? 'medium'
+              : 'large'
+            : 'small'
+          : 'large'
+      }
       submit={{
         disabled,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: type,
+        text: !isFork ? 'Launch Experiment' : 'Reactivate Trial',
       }}
       title={titleLabel}
       onClose={handleModalClose}>
@@ -369,7 +381,7 @@ const ExperimentCreateModalComponent = ({
         {modalState.configError && modalState.isAdvancedMode && (
           <Message icon="error" title={modalState.configError} />
         )}
-        {modalState.isAdvancedMode && (
+        {(modalState.isAdvancedMode || hideSimpleConfig) && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
               file={Loaded(modalState.configString)}
@@ -380,6 +392,9 @@ const ExperimentCreateModalComponent = ({
             />
           </React.Suspense>
         )}
+        {!isFork && (
+          <Body>Start a new experiment from the current trial&rsquo;s latest checkpoint.</Body>
+        )}
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}
@@ -387,16 +402,18 @@ const ExperimentCreateModalComponent = ({
           labelCol={{ span: 8 }}
           name="basic"
           onFieldsChange={handleFieldsChange}>
-          <Form.Item
-            initialValue={experiment.name}
-            label="Experiment name"
-            name={EXPERIMENT_NAME}
-            rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
-            <Input />
-          </Form.Item>
           {!isFork && (
             <Form.Item
-              label={`Max ${getMaxLengthType(modalState.config) || 'length'}`}
+              initialValue={experiment.name}
+              label="Experiment name"
+              name={EXPERIMENT_NAME}
+              rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
+              <Input />
+            </Form.Item>
+          )}
+          {!isFork && (
+            <Form.Item
+              label={'Max Batches'}
               name={MAX_LENGTH}
               rules={[
                 {
@@ -412,11 +429,32 @@ const ExperimentCreateModalComponent = ({
               <Input type="number" />
             </Form.Item>
           )}
+          {isFork && !hideSimpleConfig && (
+            <Form.Item
+              label={'Additional Batches'}
+              name={MAX_LENGTH}
+              rules={[
+                {
+                  required: false,
+                  validator: (_rule, value) => {
+                    let errorMessage = '';
+                    if (value < 0) errorMessage = 'Additional batches must be at least 0.';
+                    if (value && !Number.isInteger(value))
+                      errorMessage = 'Additional batches must be an integer.';
+                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
+                  },
+                },
+              ]}>
+              <InputNumber style={{ width: '100%' }} type="number" />
+            </Form.Item>
+          )}
         </Form>
         <div>
-          <Button onClick={toggleMode}>
-            {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
-          </Button>
+          {!hideSimpleConfig && (
+            <Button onClick={toggleMode}>
+              {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
+            </Button>
+          )}
         </div>
       </>
     </Modal>

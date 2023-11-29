@@ -16,6 +16,7 @@ export interface Option {
   label: React.ReactNode;
   onClick?: (ev: React.MouseEvent) => void;
   tooltip?: string;
+  content?: React.ReactNode;
 }
 
 interface Props {
@@ -77,18 +78,22 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
             />
           )}
           <div className={css.optionsButtons}>
-            {options?.slice(0, 3).map((option) => (
-              <div className={css.optionsMainButton} key={option.key}>
-                <Button
-                  disabled={option.disabled || !option.onClick}
-                  icon={option?.icon}
-                  key={option.key}
-                  loading={option.isLoading}
-                  onClick={option.onClick}>
-                  {renderOptionLabel(option)}
-                </Button>
-              </div>
-            ))}
+            {options?.slice(0, 3).map((option) =>
+              option?.content ? (
+                option?.content
+              ) : (
+                <div className={css.optionsMainButton} key={option.key}>
+                  <Button
+                    disabled={option.disabled || !option.onClick}
+                    icon={option?.icon}
+                    key={option.key}
+                    loading={option.isLoading}
+                    onClick={option.onClick}>
+                    {renderOptionLabel(option)}
+                  </Button>
+                </div>
+              ),
+            )}
           </div>
           {menu.length !== 0 && (
             <Dropdown menu={menu} placement="bottomRight" onClick={handleDropdown}>

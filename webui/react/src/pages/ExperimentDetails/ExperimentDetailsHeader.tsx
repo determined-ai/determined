@@ -1,4 +1,5 @@
 import { Button, Space, Typography } from 'antd';
+import Dropdown from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -254,14 +255,27 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       [Action.ContinueTrial]: {
-        disabled: experiment.unmanaged,
-        key: 'continue-trial',
-        label: experiment.unmanaged ? (
-          <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
-        ) : (
-          'Continue Trial'
+        content: (
+          <Dropdown
+            menu={[
+              {
+                key: 'Create New Experiment',
+                label: 'Create New Experiment...',
+              },
+              {
+                key: 'Reactivate Current Trial',
+                label: 'Reactivate Current Trial...',
+              },
+            ]}
+            onClick={(key: string) => {
+              if (key === 'Create New Experiment') ContinueTrialModal.open();
+              if (key === 'Reactivate Current Trial') ForkModal.open();
+            }}>
+            <Button>Continue Trial</Button>
+          </Dropdown>
         ),
-        onClick: ContinueTrialModal.open,
+        key: 'Continue Trial',
+        label: 'Coninue Trial',
       },
       [Action.Delete]: {
         isLoading: isRunningDelete,
