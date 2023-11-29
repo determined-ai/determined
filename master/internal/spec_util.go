@@ -22,7 +22,6 @@ import (
 )
 
 func (a *apiServer) ResolveResources(resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
-
 	poolName, err := a.m.rm.ResolveResourcePool(
 		resourcePool, workspaceID, slots)
 	if err != nil {
