@@ -5,9 +5,7 @@ package stream
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"

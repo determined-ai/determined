@@ -174,7 +174,7 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 
 	eg.Go(
 		func(ctx context.Context) error {
-			return start(ctx, ps.DBAddress, experimentChan, ps.Experiments)
+			return start(ctx, ps.DBAddress, experimentChan, ps.Experiments, readyChannels[ps.Experiments])
 		},
 	)
 
@@ -740,13 +740,15 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 		)
 	}
 
-	//if ss.Experiments != nil {
-	//	err = startup(
-	//		ctx, user, &msgs, err,
-	//		ss.Experiments, known.Experiments,
-	//		sub.Experiments, ss.Experiments.Subscription.Streamer.PrepareFn,
-	//	)
-	//}
+	/*
+		if ss.Experiments != nil {
+			err = startup(
+				ctx, user, &msgs, err,
+				ss.Experiments, known.Experiments,
+				sub.Experiments, ss.Experiments.Subscription.Streamer.PrepareFn,
+			)
+		}
+	*/
 
 	return msgs, err
 }
