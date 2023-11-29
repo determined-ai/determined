@@ -72,12 +72,12 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		resources.Slots = 1
 	}
 
-	poolName, launchWarnings, err := a.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
+	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	// Get the base TaskSpec.
-	taskSpec, err := a.fillTaskSpec(poolName, agentUserGroup, userModel)
+	taskSpec, err := a.m.fillTaskSpec(poolName, agentUserGroup, userModel)
 	if err != nil {
 		return nil, nil, nil, err
 	}

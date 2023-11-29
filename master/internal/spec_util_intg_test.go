@@ -41,7 +41,7 @@ func TestResolveResources(t *testing.T) {
 	slots := 1
 	workspaceID := 0
 
-	poolName, _, err := api.ResolveResources(resourcePool, slots, workspaceID)
+	poolName, _, err := api.m.ResolveResources(resourcePool, slots, workspaceID)
 
 	require.NoError(t, err, "Error in ResolveResources()")
 	require.Equal(t, expectedPoolName, poolName)
@@ -68,7 +68,7 @@ func TestFillTaskSpec(t *testing.T) {
 		AgentUserGroup: agentUserGroup,
 		Owner:          userModel,
 	}
-	taskSpec, err := api.fillTaskSpec(poolName, agentUserGroup, userModel)
+	taskSpec, err := api.m.fillTaskSpec(poolName, agentUserGroup, userModel)
 	require.NoError(t, err, "Error in fillTaskSpec()")
 	require.Equal(t, expectedTaskSpec, taskSpec)
 

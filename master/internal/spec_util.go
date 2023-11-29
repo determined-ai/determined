@@ -21,17 +21,17 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 )
 
-func (a *apiServer) ResolveResources(resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
-	poolName, err := a.m.rm.ResolveResourcePool(
+func (m *Master) ResolveResources(resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
+	poolName, err := m.rm.ResolveResourcePool(
 		resourcePool, workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = a.m.rm.ValidateResources(poolName, slots, true); err != nil {
+	if err = m.rm.ValidateResources(poolName, slots, true); err != nil {
 		return "nil", nil, fmt.Errorf("validating resources: %v", err)
 	}
 
-	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
+	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
 		&sproto.ValidateResourcePoolAvailabilityRequest{
 			Name:  poolName,
 			Slots: slots,
@@ -40,8 +40,8 @@ func (a *apiServer) ResolveResources(resourcePool string, slots int, workspaceID
 	if err != nil {
 		return "", launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
 	}
-	if a.m.config.ResourceManager.AgentRM != nil &&
-		a.m.config.LaunchError &&
+	if m.config.ResourceManager.AgentRM != nil &&
+		m.config.LaunchError &&
 		len(launchWarnings) > 0 {
 		return "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
@@ -49,15 +49,15 @@ func (a *apiServer) ResolveResources(resourcePool string, slots int, workspaceID
 	return poolName, launchWarnings, nil
 }
 
-func (a *apiServer) fillTaskSpec(poolName string, agentUserGroup *model.AgentUserGroup, userModel *model.User) (tasks.TaskSpec, error) {
-	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
+func (m *Master) fillTaskSpec(poolName string, agentUserGroup *model.AgentUserGroup, userModel *model.User) (tasks.TaskSpec, error) {
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
-		a.m.config.TaskContainerDefaults,
+		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
 		return tasks.TaskSpec{}, fmt.Errorf("getting TaskContainerDefaults: %v", err)
 	}
-	taskSpec := *a.m.taskSpec
+	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = userModel
