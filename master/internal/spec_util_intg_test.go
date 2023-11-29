@@ -96,7 +96,7 @@ func TestFillTaskConfigPodSpec(t *testing.T) {
 	env := &model.Environment{
 		PodSpec: &k8sV1.Pod{},
 	}
-	fillTaskConfig(&resourcePoolDest, poolName, &resourceSlotsDest, slots, taskSpec, env)
+	fillTaskConfig(slots, taskSpec, env)
 	require.Equal(t, cpu_spec.TypeMeta.Kind, env.PodSpec.TypeMeta.Kind)
 	require.Equal(t, poolName, *resourcePoolDest)
 	require.Equal(t, slots, *resourceSlotsDest)
@@ -105,7 +105,7 @@ func TestFillTaskConfigPodSpec(t *testing.T) {
 	env = &model.Environment{
 		PodSpec: &k8sV1.Pod{},
 	}
-	fillTaskConfig(&resourcePoolDest, poolName, &resourceSlotsDest, slots, taskSpec, env)
+	fillTaskConfig(slots, taskSpec, env)
 	require.Equal(t, gpu_spec.TypeMeta.Kind, env.PodSpec.TypeMeta.Kind)
 }
 
