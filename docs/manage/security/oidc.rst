@@ -83,13 +83,13 @@ clicking the 'Sign in with Okta' button on the sign-in page.
    authorization code is invalid or expired, an error message displays reminding users to check
    their user assignments.
 
-**********************************
- Manually provision user for OIDC
-**********************************
+***********************************
+ Manual User Provisioning for OIDC
+***********************************
 
-If SCIM is not used, users can be manually provisioned into Determined through the CLI. This
-requires Determined admin privileges. Note the remote option is required for users to be able to
-login through OIDC.
+If users are not provisioned via SCIM, you can manually provision users into Determined using the
+Command Line Interface (CLI) or WebUI. This action requires you to have Determined admin privileges.
+The --remote option is required for users to sign in via OIDC.
 
 .. code:: bash
 

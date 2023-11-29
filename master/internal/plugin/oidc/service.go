@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"gopkg.in/guregu/null.v3"
 
@@ -271,7 +270,7 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenCl
 				}
 			}
 			if s.config.GroupsClaimName != "" {
-				if err := s.updateUserGroupMembership(ctx, tx, u, claims.Groups); err != nil {
+				if err := usergroup.UpdateUserGroupMembershipTx(ctx, tx, u, claims.Groups); err != nil {
 					return fmt.Errorf("could not update user group membership: %s", err)
 				}
 			}
@@ -302,7 +301,7 @@ func (s *Service) provisionUser(
 				return errNotProvisioned
 			}
 			if s.config.GroupsClaimName != "" {
-				if err := s.updateUserGroupMembership(ctx, tx, &u, groups); err != nil {
+				if err := usergroup.UpdateUserGroupMembershipTx(ctx, tx, &u, groups); err != nil {
 					return fmt.Errorf("could not update user group membership: %s", err)
 				}
 			}
@@ -311,52 +310,6 @@ func (s *Service) provisionUser(
 		return nil, err
 	}
 	return user.ByUsername(ctx, username)
-}
-
-func (s *Service) updateUserGroupMembership(ctx context.Context, tx bun.IDB, u *model.User, groups []string) error {
-	// Get a list of groups a user is in.
-	currentGroups, err := usergroup.SearchGroupsWithoutPersonalGroupsTx(ctx, tx, "", u.ID)
-	if err != nil {
-		return fmt.Errorf("finding current user groups: %w", err)
-	}
-
-	var groupsToRemove []int
-	// Remove the user from any groups no longer included in the claim.
-	for _, g := range currentGroups {
-		if !slices.Contains(groups, g.Name) {
-			groupsToRemove = append(groupsToRemove, g.ID)
-		}
-	}
-	if len(groupsToRemove) != 0 {
-		if err := usergroup.RemoveUsersFromGroupsTx(ctx, tx, groupsToRemove, u.ID); err != nil {
-			return fmt.Errorf("failed to remove user from group: %w", err)
-		}
-	}
-
-	var groupsToAdd []int
-	// Add the user to groups included in the claim.
-	for _, g := range groups {
-		// Check if the group already exists, regardless of if the user belongs to it.
-		gps, err := usergroup.SearchGroupsWithoutPersonalGroupsTx(ctx, tx, g, model.UserID(0))
-		if err != nil {
-			return fmt.Errorf("failed to find usergroup: %w", err)
-		}
-		if len(gps) == 0 {
-			continue // TODO DET-9937
-		}
-		// If the group exists in the system but isn't part of the user's registered groups, update.
-		// gps should be a slice of length 1 since group name is unique.
-		if !slices.Contains(currentGroups, gps[0]) {
-			groupsToAdd = append(groupsToAdd, gps[0].ID)
-		}
-	}
-	if len(groupsToAdd) != 0 {
-		if err := usergroup.AddUsersToGroupsTx(ctx, tx, groupsToAdd, true, u.ID); err != nil {
-			return fmt.Errorf("error adding user to group: %s", err)
-		}
-	}
-
-	return nil
 }
 
 // initiate saves a random string as a cookie and redirects the user to the

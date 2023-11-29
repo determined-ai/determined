@@ -308,8 +308,9 @@ func (c *Config) Resolve() error {
 	}
 
 	if c.OIDC.AutoProvisionUsers && c.Scim.Enabled {
-		log.Warn("scim enabled will override OIDC AutoProvisionUsers.")
+		log.Warn("scim enabled will override OIDC user & group provisions")
 		c.OIDC.AutoProvisionUsers = false
+		c.OIDC.GroupsClaimName = ""
 	}
 
 	if c.OIDC.GroupsClaimName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
