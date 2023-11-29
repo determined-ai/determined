@@ -61,7 +61,7 @@ func (a *TrialsAPIServer) StartTrial(
 			}
 		}
 
-		run := model.Run{ID: trialID}
+		run := model.Run{ID: trialID} // TODO(nick-runs) call runs package.
 		_, err := tx.NewUpdate().Model(&run).WherePK().
 			Set("restart_id = restart_id + 1").
 			Set("state = ?", model.RunningState).

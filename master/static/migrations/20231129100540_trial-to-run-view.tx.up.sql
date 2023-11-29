@@ -2,11 +2,6 @@ ALTER TABLE trials RENAME TO runs;
 ALTER TABLE runs RENAME COLUMN run_id TO restart_id;
 ALTER TABLE runs RENAME COLUMN external_trial_id TO external_run_id;
 
-CREATE TABLE dummy (
-  xyz INT
-);
-INSERT INTO dummy (xyz) VALUES (1);
-
 CREATE VIEW trials AS
 SELECT
   id AS id,
@@ -48,4 +43,4 @@ SELECT
 
   -- warm_start_checkpoint_id will eventually be in the runs to checkpoint MTM.
   warm_start_checkpoint_id AS warm_start_checkpoint_id
-FROM runs, dummy; -- FROM dummy is a hack to make this view not insertable.
+FROM runs;

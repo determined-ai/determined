@@ -1544,10 +1544,10 @@ func (a *apiServer) ContinueExperiment(
 					"experiment has been completed, cannot continue this experiment")
 			}
 		} else if isSingle && len(trialsResp.Trials) > 0 {
-			if _, err := tx.NewUpdate().Table("runs").
-				Set("state = ?", model.PausedState).
-				Where("id = ?", trialsResp.Trials[0].Id).
-				Exec(ctx); err != nil {
+			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.
+									Set("state = ?", model.PausedState).
+									Where("id = ?", trialsResp.Trials[0].Id).
+									Exec(ctx); err != nil {
 				return fmt.Errorf("changing trial state to PAUSED: %w", err)
 			}
 		}
@@ -1592,11 +1592,11 @@ func (a *apiServer) ContinueExperiment(
 			trialIDs = append(trialIDs, t.Id)
 		}
 		if len(trialIDs) > 0 {
-			if _, err := tx.NewUpdate().Table("runs").
-				Set("restarts = 0").
-				Set("end_time = null").
-				Where("id IN (?)", bun.In(trialIDs)).
-				Exec(ctx); err != nil {
+			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.
+									Set("restarts = 0").
+									Set("end_time = null").
+									Where("id IN (?)", bun.In(trialIDs)).
+									Exec(ctx); err != nil {
 				return fmt.Errorf("zeroing out trial restarts: %w", err)
 			}
 		}
