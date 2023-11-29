@@ -6,7 +6,6 @@ package usergroup
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -357,9 +356,6 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("test UpdateUserGroupMembership", func(t *testing.T) {
-		var wg sync.WaitGroup
-		wg.Add(1)
-
 		ctx := context.TODO()
 		tmpUser := db.RequireMockUser(t, pgDB)
 
@@ -367,31 +363,25 @@ func TestUserGroups(t *testing.T) {
 		name2 := uuid.NewString()
 		name3 := uuid.NewString()
 
-		go func() {
-			defer wg.Done()
+		_, err := AddGroupTx(ctx, db.Bun(), model.Group{Name: name1})
+		require.NoError(t, err, "failed to add %s group", name1)
 
-			_, err := AddGroupTx(ctx, db.Bun(), model.Group{Name: name1})
-			require.NoError(t, err, "failed to add %s group", name1)
-
-			_, _, err = AddGroupWithMembers(ctx, model.Group{Name: name2}, tmpUser.ID)
-			require.NoError(t, err, "failed to add %s group", name2)
-
-			gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
-			require.NoError(t, err, "failed to search groups")
-			require.Equal(t, len(gps), 1, "failed to start with original group assignments.")
-			require.Equal(t, gps[0].Name, name2, "failed to start with %s group assignment.", name2)
-		}()
-
-		err := UpdateUserGroupMembershipTx(ctx, db.Bun(), &tmpUser, []string{name1, name3})
-		require.NoError(t, err, "failed to update user-group membership")
+		_, _, err = AddGroupWithMembers(ctx, model.Group{Name: name2}, tmpUser.ID)
+		require.NoError(t, err, "failed to add %s group", name2)
 
 		gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
 		require.NoError(t, err, "failed to search groups")
-		require.Equal(t, len(gps), 2, "failed to end with two group assignments.")
-		require.Equal(t, gps[0].Name, name1, "failed to end with %s group assignment.", name1)
-		require.Equal(t, gps[1].Name, name3, "failed to end with %s group assignment.", name3)
+		require.Equal(t, len(gps), 1, "failed to start with original group assignments.")
+		require.Equal(t, gps[0].Name, name2, "failed to start with %s group assignment.", name2)
 
-		wg.Wait()
+		err = UpdateUserGroupMembershipTx(ctx, db.Bun(), &tmpUser, []string{name1, name3})
+		require.NoError(t, err, "failed to update user-group membership")
+
+		gps, err = SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
+		require.NoError(t, err, "failed to search groups")
+		require.Equal(t, len(gps), 2, "failed to end with two group assignments.")
+		require.ElementsMatch(t, []string{gps[0].Name, gps[1].Name}, []string{name1, name3},
+			"failed to end with %s group assignment.", name1)
 	})
 }
 
