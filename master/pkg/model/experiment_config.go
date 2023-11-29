@@ -85,7 +85,6 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 type ResourcesConfig struct {
 	Slots int `json:"slots"`
 
-	SlotsPerTask   *int         `json:"slots_per_task"`
 	MaxSlots       *int         `json:"max_slots,omitempty"`
 	Weight         float64      `json:"weight"`
 	NativeParallel bool         `json:"native_parallel,omitempty"`
