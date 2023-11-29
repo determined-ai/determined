@@ -2,7 +2,7 @@ import * as t from 'io-ts';
 import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
-import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
+import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Slot, V1Trigger } from 'services/api-ts-sdk';
 import { valueof, ValueOf } from 'utils/valueof';
 
 export type { ValueOf } from 'utils/valueof';
@@ -233,10 +233,13 @@ export interface Resource {
   uuid?: string;
 }
 
+export type Slot = { [k: string]: V1Slot };
+
 export interface Agent {
   id: string;
   registeredTime: number;
   resourcePools: string[];
+  slots?: Slot;
   resources: Resource[];
 }
 
