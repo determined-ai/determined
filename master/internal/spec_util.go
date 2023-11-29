@@ -100,10 +100,9 @@ func fillContextDir(configWorkDirDest **string, defaultWorkDir *string, contextD
 }
 
 func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, error) {
-	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
 	var token string
 	var err error
-	if extConfig.Enabled() {
+	if config.GetMasterConfig().InternalConfig.ExternalSessions.Enabled() {
 		token, err = grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
 			return "", status.Errorf(codes.Internal,

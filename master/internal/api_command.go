@@ -139,8 +139,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		return nil, nil, err
 	}
 
-	var token string
-	token, err = getTaskSessionToken(ctx, userModel)
+	token, err := getTaskSessionToken(ctx, userModel)
 	if err != nil {
 		return nil, nil, err
 	}
