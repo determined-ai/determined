@@ -65,10 +65,7 @@ func (a *apiServer) fillTaskSpec(poolName string, agentUserGroup *model.AgentUse
 	return taskSpec, nil
 }
 
-func fillTaskConfig(resourcePoolDest **string, poolName string, resourceSlotsDest **int, slots int, taskSpec tasks.TaskSpec, environment *model.Environment) {
-	*resourcePoolDest = &poolName
-	*resourceSlotsDest = &slots
-
+func fillTaskConfig(slots int, taskSpec tasks.TaskSpec, environment *model.Environment) {
 	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
 	if slots == 0 {
 		taskContainerPodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec

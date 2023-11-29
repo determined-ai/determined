@@ -32,7 +32,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -130,7 +129,9 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		}
 	}
 	// Copy discovered (default) resource pool name and slot count.
-	fillTaskConfig(ptrs.Ptr(&config.Resources.ResourcePool), poolName, ptrs.Ptr(&config.Resources.Slots), resources.Slots, taskSpec, &config.Environment)
+	fillTaskConfig(resources.Slots, taskSpec, &config.Environment)
+	config.Resources.ResourcePool = poolName
+	config.Resources.Slots = resources.Slots
 
 	var contextDirectory []byte
 	contextDirectory, err = fillContextDir(&config.WorkDir, workDirInDefaults, req.Files)
