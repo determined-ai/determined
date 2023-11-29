@@ -28,7 +28,6 @@ import (
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -68,11 +67,11 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Validate the resource configuration.
 	resources := model.ParseJustResources([]byte(configYAML))
 
-	if resources.SlotsPerTask == nil {
-		resources.SlotsPerTask = ptrs.Ptr(1)
+	if resources.Slots < 1 {
+		resources.Slots = 1
 	}
 
-	poolName, launchWarnings, err := a.ResolveResources(resources.ResourcePool, *resources.SlotsPerTask, int(proj.WorkspaceId))
+	poolName, launchWarnings, err := a.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -92,9 +91,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	// Copy discovered (default) resource pool name and slot count.
 
-	fillTaskConfig(*resources.SlotsPerTask, taskSpec, &taskConfig.Environment)
+	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
 	taskConfig.Resources.RawResourcePool = &poolName
-	taskConfig.Resources.RawSlotsPerTask = resources.SlotsPerTask
+	taskConfig.Resources.RawSlots = &resources.Slots
 
 	var contextDirectoryBytes []byte
 	contextDirectoryBytes, err = fillContextDir(&taskConfig.WorkDir, workDirInDefaults, contextDirectory)
@@ -232,7 +231,7 @@ func (a *apiServer) CreateGenericTask(
 		IsUserVisible:     true,
 		Name:              fmt.Sprintf("Generic Task %s", taskID),
 
-		SlotsNeeded:  genericTaskSpec.GenericTaskConfig.Resources.SlotsPerTask(),
+		SlotsNeeded:  *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
 		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
