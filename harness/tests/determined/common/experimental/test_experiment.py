@@ -54,16 +54,16 @@ def test_await_waits_for_first_trial_to_start(
 @pytest.mark.parametrize(
     "terminal_state",
     [
-        bindings.experimentv1State.CANCELED,
-        bindings.experimentv1State.COMPLETED,
-        bindings.experimentv1State.DELETED,
-        bindings.experimentv1State.ERROR,
+        experiment.ExperimentState.CANCELED,
+        experiment.ExperimentState.COMPLETED,
+        experiment.ExperimentState.DELETED,
+        experiment.ExperimentState.ERROR,
     ],
 )
 @responses.activate
 def test_wait_waits_until_terminal_state(
     make_expref: Callable[[int], experiment.Experiment],
-    terminal_state: bindings.experimentv1State,
+    terminal_state: experiment.ExperimentState,
 ) -> None:
     expref = make_expref(1)
 
