@@ -188,7 +188,7 @@ func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadat
 	if _, err := db.sql.Exec(`
 UPDATE trials_v2
 SET runner_state = $2
-WHERE id = $1`, id, md.State); err != nil {
+WHERE run_id = $1`, id, md.State); err != nil {
 		return errors.Wrap(err, "saving trial runner state")
 	}
 	return nil

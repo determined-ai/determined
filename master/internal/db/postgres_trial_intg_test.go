@@ -1107,6 +1107,30 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	require.Equal(t, 1, len(returnedMetrics))
 }
 
+func TestUpdateTrialRunnerMetadata(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+	trialID := RequireMockTrialID(t, db, exp)
+
+	require.NoError(t, db.UpdateTrialRunnerMetadata(trialID, &trialv1.TrialRunnerMetadata{
+		State: "expectedState",
+	}))
+
+	actual := struct {
+		bun.BaseModel `bun:"table:trials_v2"`
+		RunnerState   string
+	}{}
+	require.NoError(t, Bun().NewSelect().Model(&actual).
+		Where("run_id = ?", trialID).
+		Scan(ctx, &actual))
+	require.Equal(t, "expectedState", actual.RunnerState)
+}
+
 func TestGenericMetricsIO(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
