@@ -254,6 +254,10 @@ export interface CreateExperimentParams {
   projectId?: number;
 }
 
+export interface ContinueExperimentParams {
+  id: number;
+}
+
 export interface PatchExperimentParams extends ExperimentIdParams {
   body: Partial<{
     description: string;

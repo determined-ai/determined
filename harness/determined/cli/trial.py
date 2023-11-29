@@ -9,7 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 from termcolor import colored
 
 from determined import cli
-from determined.cli import render
+from determined.cli import errors, render
 from determined.cli.master import format_log_entry
 from determined.common import api
 from determined.common.api import authentication, bindings
@@ -175,11 +175,20 @@ def download(args: Namespace) -> None:
         checkpoints = det.get_trial(args.trial_id).list_checkpoints(
             sort_by=sort_by,
             order_by=order_by,
-            max_results=1,
         )
         if not checkpoints:
             raise ValueError(f"No checkpoints found for trial {args.trial_id}")
-        checkpoint = checkpoints[0]
+
+        downloadable_states = [
+            client.CheckpointState.COMPLETED,
+            client.CheckpointState.PARTIALLY_DELETED,
+        ]
+        while len(checkpoints) > 0:
+            checkpoint = checkpoints.pop()
+            if checkpoint.state in downloadable_states:
+                break
+        if len(checkpoints) == 0:
+            raise errors.CliError("Download failed:  No downloadable checkpoint found")
 
     path = checkpoint.download(path=args.output_dir)
 

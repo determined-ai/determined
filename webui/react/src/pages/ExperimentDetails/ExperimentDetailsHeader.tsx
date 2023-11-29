@@ -7,6 +7,7 @@ import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
+import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge from 'components/Badge';
@@ -32,6 +33,7 @@ import { handlePath, paths } from 'routes/utils';
 import {
   activateExperiment,
   archiveExperiment,
+  continueExperiment,
   openOrCreateTensorBoard,
   pauseExperiment,
   unarchiveExperiment,
@@ -111,6 +113,7 @@ interface Props {
 }
 
 const headerActions = [
+  Action.Retry,
   Action.Fork,
   Action.ContinueTrial,
   Action.Move,
@@ -136,6 +139,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [isRunningDelete, setIsRunningDelete] = useState<boolean>(
     experiment.state === RunState.Deleting,
   );
+  const confirm = useConfirm();
   const classes = [css.state];
 
   const maxRestarts = experiment.config.maxRestarts;
@@ -301,6 +305,25 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
       },
+      [Action.Retry]: {
+        disabled: experiment.unmanaged,
+        icon: <Icon decorative name="reset" />,
+        key: 'retry',
+        label: 'Retry',
+        onClick: () => {
+          confirm({
+            content:
+              'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
+            okText: 'Retry',
+            onConfirm: async () => {
+              await continueExperiment({ id: experiment.id });
+              await fetchExperimentDetails();
+            },
+            onError: handleError,
+            title: 'Retry Experiment',
+          });
+        },
+      },
       [Action.Fork]: {
         disabled: experiment.unmanaged,
         icon: <Icon name="fork" size="small" title={Action.Fork} />,
@@ -375,6 +398,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningUnarchive,
     experiment,
     fetchExperimentDetails,
+    confirm,
   ]);
 
   const jobInfoLinkText = useMemo(() => {

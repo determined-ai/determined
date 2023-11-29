@@ -276,7 +276,7 @@ commands:
           target-stage: elastic
           devcluster-config: elastic-base.devcluster.yaml
 
-  go-get-deps:
+  go-get-deps: # Build Go doesn't use this because it doesn't need it.
     steps:
       - install-protoc
       - restore_cache:
@@ -285,6 +285,11 @@ commands:
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
+      - save_cache:
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
+          paths:
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -364,6 +369,7 @@ commands:
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
             echo '<<parameters.install-python>>' >> /tmp/cachefile
+            date -u '+%y/%m/%d' >> /tmp/cachefile
 
       - restore_cache:
           keys:
@@ -1616,8 +1622,9 @@ jobs:
       - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
-      - go-get-deps
-      - run: make -C proto build
+      - restore_cache:
+          keys:
+            - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -1627,7 +1634,7 @@ jobs:
             - "agent/build"
       # Save cache after we build master and agent so we can have our build cache there.
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "proto/get-deps.sh" }}
+          key: det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
           paths:
             - "/home/circleci/go/"
             - "/home/circleci/.cache/go-build/"

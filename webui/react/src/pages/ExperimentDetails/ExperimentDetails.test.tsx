@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { ConfirmationProvider } from 'hew/useConfirm';
 import { HelmetProvider } from 'react-helmet-async';
 
 import { ThemeProvider } from 'components/ThemeProvider';
@@ -55,13 +56,15 @@ vi.mock('./ExperimentVisualization', () => ({
 const setup = () => {
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
-      <ThemeProvider>
-        <HelmetProvider>
-          <BrowserRouter>
-            <ExperimentDetails />
-          </BrowserRouter>
-        </HelmetProvider>
-      </ThemeProvider>
+      <ConfirmationProvider>
+        <ThemeProvider>
+          <HelmetProvider>
+            <BrowserRouter>
+              <ExperimentDetails />
+            </BrowserRouter>
+          </HelmetProvider>
+        </ThemeProvider>
+      </ConfirmationProvider>
     </UIProvider>,
   );
   return { view };

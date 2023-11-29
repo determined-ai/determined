@@ -1,6 +1,7 @@
 import {
   cancellableRunStates,
   deletableRunStates,
+  erroredRunStates,
   killableRunStates,
   pausableRunStates,
   terminalRunStates,
@@ -116,6 +117,11 @@ export const isExperimentForkable = (experiment: ProjectExperiment): boolean =>
 
 export const alwaysTrueExperimentChecker = (_experiment: ProjectExperiment): boolean => true;
 
+const resumableSearcherTypes: ExperimentSearcherName[] = [
+  ExperimentSearcherName.Grid,
+  ExperimentSearcherName.Random,
+];
+
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
@@ -149,6 +155,10 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.HyperparameterSearch]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.Fork]: isExperimentForkable,
+
+  [ExperimentAction.Retry]: (experiment) =>
+    erroredRunStates.has(experiment.state) &&
+    resumableSearcherTypes.includes(experiment.config.searcher.name),
 
   [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
 
@@ -188,6 +198,7 @@ export const getActionsForExperiment = (
         case ExperimentAction.ContinueTrial:
         case ExperimentAction.Fork:
         case ExperimentAction.HyperparameterSearch:
+        case ExperimentAction.Retry:
           return (
             permissions.canViewExperimentArtifacts({ workspace }) &&
             permissions.canCreateExperiment({ workspace }) &&
