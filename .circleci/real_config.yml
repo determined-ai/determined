@@ -590,8 +590,6 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
-      - store_artifacts:
-          path: <<parameters.junit-path>>
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
