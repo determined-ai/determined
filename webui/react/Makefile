@@ -24,7 +24,6 @@ node_modules/done.stamp: package-lock.json
 
 .PHONY: get-deps
 get-deps: node_modules/done.stamp
-	git submodule update --init
 
 .PHONY: build
 build: build/done.stamp
