@@ -186,7 +186,7 @@ func (db *PgDB) UpdateTrialRunnerState(id int, state string) error {
 // UpdateTrialRunnerMetadata updates a trial's metadata about its runner.
 func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error {
 	if _, err := db.sql.Exec(`
-UPDATE runs
+UPDATE trials_v2
 SET runner_state = $2
 WHERE id = $1`, id, md.State); err != nil {
 		return errors.Wrap(err, "saving trial runner state")
