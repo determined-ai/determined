@@ -333,6 +333,12 @@ export const createExperiment = generateDetApi<
   Type.CreateExperimentResponse
 >(Config.createExperiment);
 
+export const continueExperiment = generateDetApi<
+  Service.ContinueExperimentParams,
+  Api.V1ContinueExperimentResponse,
+  void
+>(Config.continueExperiment);
+
 export const archiveExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1ArchiveExperimentResponse,

@@ -469,6 +469,7 @@ export const ExperimentAction = {
   Move: 'Move',
   OpenTensorBoard: 'View in TensorBoard',
   Pause: 'Pause',
+  Retry: 'Retry',
   SwitchPin: 'Switch Pin',
   Unarchive: 'Unarchive',
   ViewLogs: 'View Logs',
