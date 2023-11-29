@@ -19833,7 +19833,7 @@ var (
 
 	pattern_Determined_DisableSlot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"api", "v1", "agents", "agent_id", "slots", "slot_id", "disable"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_CreateGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "generic-task"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_CreateGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "generic-tasks"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_CreateExperiment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "experiments"}, "", runtime.AssumeColonVerbOpt(true)))
 

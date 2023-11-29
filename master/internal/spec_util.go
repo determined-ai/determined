@@ -21,7 +21,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 )
 
-func ResolveResources(a *apiServer, resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
+func (a *apiServer) ResolveResources(resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
 
 	poolName, err := a.m.rm.ResolveResourcePool(
 		resourcePool, workspaceID, slots)
@@ -50,7 +50,7 @@ func ResolveResources(a *apiServer, resourcePool string, slots int, workspaceID 
 	return poolName, launchWarnings, nil
 }
 
-func fillTaskSpec(a *apiServer, poolName string, agentUserGroup *model.AgentUserGroup, userModel *model.User) (tasks.TaskSpec, error) {
+func (a *apiServer) fillTaskSpec(poolName string, agentUserGroup *model.AgentUserGroup, userModel *model.User) (tasks.TaskSpec, error) {
 	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
 		poolName,
 		a.m.config.TaskContainerDefaults,
