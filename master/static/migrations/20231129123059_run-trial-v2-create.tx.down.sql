@@ -20,12 +20,6 @@ ALTER TABLE runs
 
 DROP TABLE trials_v2;
 
-CREATE TABLE dummy (
-  xyz INT
-);
-INSERT INTO dummy (xyz) VALUES (1);
-
--- TODO lift this from previous migration
 CREATE VIEW trials AS
 SELECT
   id AS id,
@@ -39,8 +33,8 @@ SELECT
   -- metadata fields
   state AS state,
   tags AS tags,
-  external_run_id AS external_trial_id, -- TODO rename
-  restart_id AS run_id, -- TODO rename
+  external_run_id AS external_trial_id,
+  restart_id AS run_id,
   last_activity AS last_activity,
   start_time AS start_time,
   end_time AS end_time,
@@ -67,4 +61,4 @@ SELECT
 
   -- warm_start_checkpoint_id will eventually be in the runs to checkpoint MTM.
   warm_start_checkpoint_id AS warm_start_checkpoint_id
-FROM runs, dummy; -- FROM dummy is a hack to make this view not insertable.
+FROM runs;

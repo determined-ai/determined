@@ -15,12 +15,12 @@ SELECT id, request_id, runner_state, seed
 FROM runs;
 
 DROP VIEW trials;
-DROP TABLE dummy;
 
 ALTER TABLE public.runs
   DROP COLUMN request_id,
   DROP COLUMN runner_state,
   DROP COLUMN seed;
+
 
 CREATE VIEW trials AS
 SELECT
