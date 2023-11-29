@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	"github.com/pkg/errors"
@@ -223,6 +224,16 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
+	onAllocationExit := func(ae *task.AllocationExited) {
+		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
+		if err := a.m.db.CompleteTask(taskID, time.Now().UTC()); err != nil {
+			syslog.WithError(err).Error("marking generic task complete")
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+			syslog.WithError(err).Error("deleting group priority change registry")
+		}
+	}
+
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
 		TaskID:            taskID,
@@ -250,5 +261,3 @@ func (a *apiServer) CreateGenericTask(
 		Warnings: pkgCommand.LaunchWarningToProto(warnings),
 	}, nil
 }
-
-func onAllocationExit(ae *task.AllocationExited) {}
