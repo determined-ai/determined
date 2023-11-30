@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/uptrace/bun"
-
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -42,15 +40,6 @@ WHERE job_id = $1
 		return nil, errors.Wrap(err, "querying job")
 	}
 	return &j, nil
-}
-
-// AddJobTx persists the existence of a job from a tx.
-func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
-	_, err := idb.NewInsert().Model(j).Exec(ctx)
-	if err != nil {
-		return errors.Wrap(err, "adding job")
-	}
-	return nil
 }
 
 // UpdateJobPosition propagates the new queue position to the job.

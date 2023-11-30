@@ -12,8 +12,6 @@ import (
 	pstruct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 
-	k8sV1 "k8s.io/api/core/v1"
-
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
