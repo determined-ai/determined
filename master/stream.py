@@ -15,7 +15,7 @@ print(f"Logged in as: {client._determined._session._auth.session.username}")
 token = client._determined._session._auth.session.token
 
 
-def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
+def create_payload(trials=None, experiments=None) -> bytes:
     sync_id = uuid.uuid4()
     payload_template = Template(
         """
@@ -29,7 +29,6 @@ def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
             },
             "metrics": {
                 "trial_ids":      [$trial_ids],
-                "experiment_ids": [$experiment_ids],
                 "since": 0
             },
             "experiments": {
@@ -39,7 +38,6 @@ def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
         },
         "known": {
             "trials":  "$trial_ids",
-            "metrics": "$metric_ids",
             "experiments": "$experiment_ids"
         }
     }
@@ -48,8 +46,6 @@ def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
 
     if trials is None:
         trials = input("Submit trials to subscribe to (default: 1,2,3): ") or "1,2,3"
-    if metrics is None:
-        metrics = input("Submit metrics to subscribe to (default: 1,2,3): ") or "1,2,3"
     if experiments is None:
         experiments = (
             input("Submit experiments to subscribe to (default: 1,2,3): ") or "1,2,3"
@@ -58,7 +54,6 @@ def create_payload(trials=None, metrics=None, experiments=None) -> bytes:
     startupMsg = payload_template.substitute(
         sync_id=sync_id,
         trial_ids=trials,
-        metric_ids=metrics,
         experiment_ids=experiments,
     )
     print(f"startupMsg ({sync_id}) created")

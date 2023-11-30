@@ -337,12 +337,12 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	streamer := stream.NewStreamer(prepareFunc)
-
 	// read first startup message
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
-		return fmt.Errorf("error while reading initial startup message: %s", err.Error())
+		log.Errorf("error while reading initial startup message: %s", err.Error())
+		return nil
 	}
 
 	// startups is where we collect StartupMsg
@@ -559,7 +559,7 @@ func doPublishLoop[T stream.Msg](
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
-			// fmt.Printf("Notify: %v\n", notification.Extra)
+			fmt.Printf("Notify: %v\n", notification.Extra)
 			var event stream.Event[T]
 			err = json.Unmarshal([]byte(notification.Extra), &event)
 			if err != nil {
