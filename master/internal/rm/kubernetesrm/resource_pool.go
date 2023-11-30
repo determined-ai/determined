@@ -175,7 +175,7 @@ func (k *kubernetesResourcePool) SetGroupWeight(msg sproto.SetGroupWeight) error
 	defer k.mu.Unlock()
 	k.reschedule = true
 
-	return rmerrors.ErrUnsupported("set group weight is unsupported in k8s")
+	return rmerrors.UnsupportedError("set group weight is unsupported in k8s")
 }
 
 func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) error {
@@ -189,7 +189,7 @@ func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) e
 	for it := k.reqList.Iterator(); it.Next(); {
 		if it.Value().JobID == msg.JobID {
 			if req := it.Value(); !req.Preemptible {
-				return rmerrors.ErrUnsupported(fmt.Sprintf(
+				return rmerrors.UnsupportedError(fmt.Sprintf(
 					"priority is immutable for %s in k8s because it may be destructive",
 					req.Name,
 				))
@@ -517,7 +517,7 @@ func (k *kubernetesResourcePool) assignResources(
 				WithField("allocation-id", req.AllocationID).
 				WithError(err).Error("unable to restore allocation")
 			unknownExit := sproto.ExitCode(-1)
-			rmevents.Publish(req.AllocationID, &sproto.ResourcesFailure{
+			rmevents.Publish(req.AllocationID, &sproto.ResourcesRestoreError{
 				FailureType: sproto.ResourcesMissing,
 				ErrMsg:      errors.Wrap(err, "unable to restore allocation").Error(),
 				ExitCode:    &unknownExit,

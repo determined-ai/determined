@@ -84,79 +84,66 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - deadcode
-    - exhaustive
-    - exhaustivestruct
-    - funlen
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - gocyclo
-    - godox
-    - goerr113
-    - gofumpt
-    - golint
-    - gomnd
-    - maligned
-    - nestif
-    - noctx
-    - scopelint
-    - testpackage
-    - unparam
-    - wsl
-    - varcheck
-
+    # Linters that need triaging. Put all linters here if you upgrade.
     # Below here are new linters from upgrading to 1.43.0. Since we enable all and disable
     # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
     # golangci-lint can tell you which linters are enabled:
     #   golangci-lint linters | sed -n '/Enabled/,/Disabled/p'
     # To maintain the same set us linters, disable those in the new set that are not in the old:
     #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
-    - bidichk
-    - contextcheck
-    - cyclop
-    - durationcheck
-    - errname
-    - errorlint
-    - forcetypeassert
-    - gci
-    - gomoddirectives
-    - ifshort
-    - importas
-    - ireturn
-    - makezero
-    - nilerr
-    - nilnil
-    - nlreturn
-    - paralleltest
+
+    # Linters that we should probably enable. Please give each a ticket.
+    - cyclop          # TODO(DET-9951)
+    - errorlint       # TODO(DET-9952)
+    - forcetypeassert # TODO(DET-9953)
+    - wrapcheck       # TODO(DET-9954)
+    - maintidx        # TODO(DET-9956)
+    - gocyclo         # TODO(DET-9957)
+    - gocognit        # TODO(DET-9958)
+    - funlen          # TODO(DET-9959)
+    - nestif          # TODO(DET-9960)
+
+    # Toss up linters.
     - predeclared
     - promlinter
-    - tagliatelle
-    - tenv
     - thelper
-    - tparallel
-    - varnamelen
-    - wastedassign
-    - wrapcheck
-
-    # Below here are new linters from upgrading to 1.45.0. Since we enable all and disable
-    # selectively, when we upgrade we get a ton of new linters.
-    - maintidx
-    - containedctx
-    - decorder
-    - errchkjson
-    - grouper
-
-    # Below here are new linters from upgrading to 1.51.1.
+    - tagliatelle
+    - nilnil
+    - ireturn
+    - contextcheck
     - nonamedreturns
-    - nosnakecase
-    - musttag
     - interfacebloat
-    - gosimple 
-    - prealloc
-    - interfacer
-    - structcheck
-    - nolintlint
-    - usestdlibvars
-    - exhaustruct
+    - wsl
+    - godox
+    - gochecknoinits
+    - goerr113
+    - gomnd
+
+    # Linters that we should probably keep disabled.
+    - errchkjson       # Requiring us to ignore errors (even if they won't be non nil) feels strange.
+    - musttag          # Really buggy now.
+    - prealloc         # Nick thinks this is premature optimization.
+    - varnamelen       # This is overally opinionated.
+    - paralleltest     # I don't understand this linter.
+    - gomoddirectives  # Seems unneeded and just going to make us make exceptions when we need to.
+    - gci              # We aren't using the gci tool.
+    - nolintlint       # Ideally should enable, but gofumpt adds leading space to // nolint for funcs.
+    - nlreturn         # This is overally opinionated.
+    - testpackage      # We don't use seperate test packages.
+    - unparam          # We have a lot of unused parameters.
+    - gochecknoglobals # We have globals currently and don't have an issue with too many.
+    - exhaustive       # We often use switch statements as if statements.
+
+    # Linters that are deprecated / replaced / removed.
+    - nosnakecase      # Replaced by revive(var-naming).
+    - ifshort          # The repository of the linter has been deprecated by the owner.
+    - interfacer       # Linter archived since it can give bad suggestions.
+    - wastedassign     # We already have ineffassign.
+    - scopelint        # Replaced by exportloopref.
+    - exhaustivestruct # Replaced by exhaustruct.
+    - structcheck      # Replaced by unusued.
+    - varcheck         # Replaced by unusued.
+    - deadcode         # Replaced by unusued.
+    - maligned         # Replaced by govet 'fieldalignment'.
+    - golint           # Replaced by revive.
 

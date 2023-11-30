@@ -14,6 +14,8 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 
 	"github.com/uptrace/bun"
@@ -38,7 +40,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -53,6 +55,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
+//nolint:containedctx
 type mockStream[T any] struct {
 	mu   sync.Mutex
 	ctx  context.Context
@@ -90,11 +93,11 @@ var (
 
 // pgdb can be nil to use the singleton database for testing.
 func setupExpAuthTest(t *testing.T, pgdb *db.PgDB,
-	actorFunc ...func(context *actor.Context) error,
+	altMockRM ...*mocks.ResourceManager,
 ) (
 	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, context.Context,
 ) {
-	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t, pgdb, actorFunc...)
+	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t, pgdb, altMockRM...)
 	if authZExp == nil {
 		authZExp = &mocks.ExperimentAuthZ{}
 		expauth.AuthZProvider.Register("mock", authZExp)
@@ -123,7 +126,7 @@ func minExpConfToYaml(t *testing.T) string {
 	return string(bytes)
 }
 
-// nolint: exhaustivestruct
+// nolint: exhaustruct
 var minExpConfig = expconf.ExperimentConfig{
 	RawResources: &expconf.ResourcesConfig{
 		RawResourcePool: ptrs.Ptr("kubernetes"),
@@ -337,7 +340,7 @@ searcher:
 		"override config is provided and experiment is not single searcher, got 'random' instead")
 }
 
-// nolint: exhaustivestruct
+// nolint: exhaustruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
@@ -437,7 +440,7 @@ checkpoint_storage:
 	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
 }
 
-// nolint: exhaustivestruct
+// nolint: exhaustruct
 func TestGetExperiments(t *testing.T) {
 	// Setup.
 	api, _, ctx := setupAPITest(t, nil)
@@ -773,7 +776,7 @@ func TestSearchExperiments(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 	// Set restarts super high so it gets reduced to config number.
-	_, err = db.Bun().NewUpdate().Table("trials").
+	_, err = db.Bun().NewUpdate().Table("runs").
 		Set("restarts = ?", 31415).
 		Where("id = ?", metricTrial.ID).
 		Exec(ctx)
@@ -863,7 +866,7 @@ func TestLegacyExperiments(t *testing.T) {
 
 var res *apiv1.GetExperimentsResponse // Avoid compiler optimizing res out.
 
-// nolint: exhaustivestruct
+// nolint: exhaustruct
 func benchmarkGetExperiments(b *testing.B, n int) {
 	// This should be fine as long as no error happens. For some
 	// reason passing nil gives an error. In addition this
@@ -942,7 +945,7 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
-// nolint: exhaustivestruct
+// nolint: exhaustruct
 func createTestExpWithProjectID(
 	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
 ) *model.Experiment {
@@ -1663,4 +1666,151 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, fmt.Sprintf(`SELECT * WHERE %v`, c[1]), q.String())
 	}
+}
+
+func TestDeleteExperiments(t *testing.T) {
+	var mockRM mocks.ResourceManager
+	// Need _anything_ to error to check the error flow leaves things in DELETE_FAILED and that they are delete-able
+	// still after that.
+	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
+		errC := make(chan error, 1)
+		errC <- errors.New("something real bad")
+		return sproto.DeleteJobResponse{Err: errC}
+	}, nil)
+
+	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
+
+	var expIDs []int32
+	for i := 0; i < 3; i++ {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().Table("experiments").
+			Set("state = ?", model.CompletedState).
+			Where("id = ?", exp.ID).Exec(ctx)
+		require.NoError(t, err)
+		expIDs = append(expIDs, int32(exp.ID))
+	}
+
+	t.Log("if DeleteExperiment fails, all experiments become DELETE_FAILED")
+	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	require.NoError(t, err)
+
+	var success bool
+	for i := 0; i < 15; i++ {
+		var inDeleteFailed int
+		for _, expID := range expIDs {
+			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
+			require.NoError(t, err, "expected experiment to go to DELETE_FAILED")
+			if e.Experiment.State == experimentv1.State_STATE_DELETE_FAILED {
+				inDeleteFailed++
+			}
+		}
+		if len(expIDs) == inDeleteFailed {
+			success = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if !success {
+		t.Error("expected experiments to move to DELETE_FAILED after 15 seconds and they did not")
+	}
+
+	t.Log("and if the RM then succeeds, the experiments are then successfully deleted")
+	api.m.rm = MockRM()
+	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	require.NoError(t, err)
+
+	// Delete is async so we need to retry until it completes.
+	for i := 0; i < 15; i++ {
+		var deleted int
+		for _, expID := range expIDs {
+			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
+			if err != nil {
+				require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(expID), true), err)
+				deleted++
+				continue
+			}
+			require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+		}
+		if len(expIDs) == deleted {
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
+	t.Error("expected experiments to delete after 15 seconds and they did not")
+}
+
+func TestDeleteExperimentsFiltered(t *testing.T) {
+	var mockRM mocks.ResourceManager
+	// Need _anything_ to error to check the error flow leaves things in DELETE_FAILED and that they are delete-able
+	// still after that.
+	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
+		errC := make(chan error, 1)
+		errC <- errors.New("something real bad")
+		return sproto.DeleteJobResponse{Err: errC}
+	}, nil)
+
+	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
+
+	var expIDs []int32
+	for i := 0; i < 3; i++ {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().Table("experiments").
+			Set("state = ?", model.CompletedState).
+			Where("id = ?", exp.ID).Exec(ctx)
+		require.NoError(t, err)
+		expIDs = append(expIDs, int32(exp.ID))
+	}
+
+	t.Log("if DeleteExperiment with filter fails, all experiments become DELETE_FAILED")
+	// Try delete experiments using a filter, this tests the branch condition
+	// where we have a filter with the experiment delete request.
+	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
+		ExperimentIds: expIDs,
+		Filters:       &apiv1.BulkExperimentFilters{ProjectId: 1},
+	})
+	require.NoError(t, err)
+
+	var success bool
+	for i := 0; i < 15; i++ {
+		var inDeleteFailed int
+		for _, expID := range expIDs {
+			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
+			require.NoError(t, err, "expected experiment to go to DELETE_FAILED")
+			if e.Experiment.State == experimentv1.State_STATE_DELETE_FAILED {
+				inDeleteFailed++
+			}
+		}
+		if len(expIDs) == inDeleteFailed {
+			success = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if !success {
+		t.Error("expected experiments to move to DELETE_FAILED after 15 seconds and they did not")
+	}
+
+	t.Log("and if the RM then succeeds, the experiments are then successfully deleted")
+	api.m.rm = MockRM()
+	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	require.NoError(t, err)
+
+	// Delete is async so we need to retry until it completes.
+	for i := 0; i < 15; i++ {
+		var deleted int
+		for _, expID := range expIDs {
+			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
+			if err != nil {
+				require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(expID), true), err)
+				deleted++
+				continue
+			}
+			require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+		}
+		if len(expIDs) == deleted {
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
+	t.Error("expected experiments to delete after 15 seconds and they did not")
 }

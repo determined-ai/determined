@@ -104,6 +104,11 @@ export class DetError extends Error implements DetErrorOptions {
     const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
+    this.logger = DEFAULT_LOGGER;
+    this.silent = false;
+    this.level = ErrorLevel.Error;
+    this.isUserTriggered = false;
+    this.type = ErrorType.Unknown;
 
     const eOpts: Partial<DetErrorOptions> = {};
     if (isObject(e)) {

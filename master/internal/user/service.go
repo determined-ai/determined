@@ -19,7 +19,6 @@ import (
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -91,14 +90,13 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 // Service describes a user manager.
 type Service struct {
 	db        *db.PgDB
-	system    *actor.System
 	extConfig *model.ExternalSessions
 }
 
 // InitService creates the user service singleton.
-func InitService(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) {
+func InitService(db *db.PgDB, extConfig *model.ExternalSessions) {
 	once.Do(func() {
-		userService = &Service{db, system, extConfig}
+		userService = &Service{db, extConfig}
 	})
 }
 
@@ -234,6 +232,10 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "user not found")
 	default:
 		return nil, err
+	}
+
+	if user.Remote { // We can't return a more specific error for informational leak reasons.
+		return nil, echo.NewHTTPError(http.StatusForbidden, "invalid credentials")
 	}
 
 	// The user must be active.

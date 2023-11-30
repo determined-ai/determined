@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -354,7 +355,10 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricGroup])
 
 	addMetricCustomTime(ctx, t, trial2, time.Now())
-	runSummaryMigration(t)
+	require.NoError(t, db.withTransaction("add trial summary metrics",
+		func(tx *sqlx.Tx) error {
+			return db.fullTrialSummaryMetricsRecompute(ctx, tx, trial2)
+		}))
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
@@ -591,6 +595,7 @@ func TestDeleteExperiments(t *testing.T) {
 		numChkpts  = 2 // Checkpoints per trial
 		numMtrsRaw = 2 // Training metrics per trial
 		numMtrsVal = 1 // Validation metrics per trial
+		numMtrsGen = 2 // Generic metrics per trial
 		numExptSns = 1 // Experiment snapshots per experiment
 	)
 
@@ -645,9 +650,19 @@ func TestDeleteExperiments(t *testing.T) {
 			mValidation := createMetric(12, 0.95, tr.ID)
 			err = db.AddValidationMetrics(ctx, mValidation)
 			require.NoError(t, err)
+
+			// generic metrics (generic_metrics)
+			mGeneric1 := createMetric(5, 0.8, tr.ID)
+			err = db.AddTrialMetrics(ctx, mGeneric1, model.MetricGroup(GenericMetric))
+			require.NoError(t, err)
+
+			mGeneric2 := createMetric(2, 0.9, tr.ID)
+			err = db.AddTrialMetrics(ctx, mGeneric2, model.MetricGroup(GenericMetric))
+			require.NoError(t, err)
 		}
 
 		// Create experiment snapshot
+		//nolint:exhaustruct
 		config := expconf.SearcherConfig{
 			RawCustomConfig: &expconf.CustomConfig{},
 		}
@@ -669,6 +684,7 @@ func TestDeleteExperiments(t *testing.T) {
 		numCheckpoints         int
 		numMetricsRaw          int
 		numMetricsValidation   int
+		numMetricsGeneric      int
 		numExperimentSnapshots int
 	}
 
@@ -692,6 +708,7 @@ func TestDeleteExperiments(t *testing.T) {
 		verifyNumAndElems("checkpoints_v2", "id", removedCheckpointIDs, e.numCheckpoints)
 		verifyNumAndElems("raw_steps", "trial_id", removedTrialIDs, e.numMetricsRaw)
 		verifyNumAndElems("raw_validations", "trial_id", removedTrialIDs, e.numMetricsValidation)
+		verifyNumAndElems("generic_metrics", "trial_id", removedTrialIDs, e.numMetricsGeneric)
 		verifyNumAndElems("experiment_snapshots", "experiment_id", removedExperimentIDs,
 			e.numExperimentSnapshots)
 	}
@@ -711,6 +728,7 @@ func TestDeleteExperiments(t *testing.T) {
 		e.numCheckpoints -= amt * numChkpts * numTrs
 		e.numMetricsRaw -= amt * numMtrsRaw * numTrs
 		e.numMetricsValidation -= amt * numMtrsVal * numTrs
+		e.numMetricsGeneric -= amt * numMtrsGen * numTrs
 		e.numExperimentSnapshots -= amt * numExptSns
 		return e
 	}
@@ -731,6 +749,9 @@ func TestDeleteExperiments(t *testing.T) {
 	currMetricsVal, err := Bun().NewSelect().Table("raw_validations").Count(ctx)
 	require.NoError(t, err)
 
+	currMetricsGen, err := Bun().NewSelect().Table("generic_metrics").Count(ctx)
+	require.NoError(t, err)
+
 	currExptSns, err := Bun().NewSelect().Table("experiment_snapshots").Count(ctx)
 	require.NoError(t, err)
 
@@ -740,7 +761,7 @@ func TestDeleteExperiments(t *testing.T) {
 	e := expected{
 		numExperiments: currExpts, numTrials: currTrials, numCheckpoints: currChkpts,
 		numMetricsRaw: currMetricsRaw, numMetricsValidation: currMetricsVal,
-		numExperimentSnapshots: currExptSns,
+		numMetricsGeneric: currMetricsGen, numExperimentSnapshots: currExptSns,
 	}
 
 	verifyData(e)

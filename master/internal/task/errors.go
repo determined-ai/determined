@@ -7,81 +7,81 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
-// ErrTimeoutExceeded is return, with a bit of detail, when a timeout is exceeded.
-type ErrTimeoutExceeded struct {
+// TimeoutExceededError is return, with a bit of detail, when a timeout is exceeded.
+type TimeoutExceededError struct {
 	Message string
 }
 
-func (e ErrTimeoutExceeded) Error() string {
+func (e TimeoutExceededError) Error() string {
 	return fmt.Sprintf("timeout exceeded: %s", e.Message)
 }
 
-// ErrNoAllocation is returned an operation is tried without a requested allocation.
-type ErrNoAllocation struct {
+// NoAllocationError is returned an operation is tried without a requested allocation.
+type NoAllocationError struct {
 	Action string
 }
 
-func (e ErrNoAllocation) Error() string {
+func (e NoAllocationError) Error() string {
 	return fmt.Sprintf("%s not valid without requested allocation", e.Action)
 }
 
-// ErrAllocationUnfulfilled is returned an operation is tried without an active allocation.
-type ErrAllocationUnfulfilled struct {
+// AllocationUnfulfilledError is returned an operation is tried without an active allocation.
+type AllocationUnfulfilledError struct {
 	Action string
 }
 
-func (e ErrAllocationUnfulfilled) Error() string {
+func (e AllocationUnfulfilledError) Error() string {
 	return fmt.Sprintf("%s not valid without active allocation", e.Action)
 }
 
-// ErrStaleResourcesReceived is returned the scheduler gives an allocation resources between
+// StaleResourcesReceivedError is returned the scheduler gives an allocation resources between
 // when it requests them and it deciding, for some reason or another, they are not needed.
-type ErrStaleResourcesReceived struct{}
+type StaleResourcesReceivedError struct{}
 
-func (e ErrStaleResourcesReceived) Error() string {
+func (e StaleResourcesReceivedError) Error() string {
 	return "allocation no longer needs these resources"
 }
 
-// ErrStaleContainer is returned when an operation was attempted by a stale container.
-type ErrStaleContainer struct {
+// StaleContainerError is returned when an operation was attempted by a stale container.
+type StaleContainerError struct {
 	ID cproto.ID
 }
 
-func (e ErrStaleContainer) Error() string {
+func (e StaleContainerError) Error() string {
 	return fmt.Sprintf("stale container %s", e.ID)
 }
 
-// ErrStaleResources is returned when an operation was attempted by a stale resources.
-type ErrStaleResources struct {
+// StaleResourcesError is returned when an operation was attempted by a stale resources.
+type StaleResourcesError struct {
 	ID sproto.ResourcesID
 }
 
-func (e ErrStaleResources) Error() string {
+func (e StaleResourcesError) Error() string {
 	return fmt.Sprintf("stale resources %s", e.ID)
 }
 
-// ErrBehaviorDisabled is returned an operation is tried without the behavior being enabled.
-type ErrBehaviorDisabled struct {
+// BehaviorDisabledError is returned an operation is tried without the behavior being enabled.
+type BehaviorDisabledError struct {
 	Behavior string
 }
 
-func (e ErrBehaviorDisabled) Error() string {
+func (e BehaviorDisabledError) Error() string {
 	return fmt.Sprintf("%s not enabled for this allocation", e.Behavior)
 }
 
-// ErrBehaviorUnsupported is returned an operation is tried without the behavior being supported.
-type ErrBehaviorUnsupported struct {
+// BehaviorUnsupportedError is returned an operation is tried without the behavior being supported.
+type BehaviorUnsupportedError struct {
 	Behavior string
 }
 
-func (e ErrBehaviorUnsupported) Error() string {
+func (e BehaviorUnsupportedError) Error() string {
 	return fmt.Sprintf("%s not supported for this allocation or resource manager", e.Behavior)
 }
 
-// ErrAlreadyCancelled is returned to the allocation when it tries to take an action but has an
+// AlreadyCancelledError is returned to the allocation when it tries to take an action but has an
 // unread cancellation in its inbox.
-type ErrAlreadyCancelled struct{}
+type AlreadyCancelledError struct{}
 
-func (e ErrAlreadyCancelled) Error() string {
+func (e AlreadyCancelledError) Error() string {
 	return "the allocation was canceled while this message was waiting"
 }

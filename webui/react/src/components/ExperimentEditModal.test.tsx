@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
 import ExperimentEditModalComponent, {
@@ -9,6 +10,7 @@ import ExperimentEditModalComponent, {
   DESCRIPTION_LABEL,
   NAME_LABEL,
 } from 'components/ExperimentEditModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { patchExperiment as mockPatchExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
@@ -38,7 +40,13 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  render(<ModalTrigger />);
+  render(
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <ModalTrigger />
+      </ThemeProvider>
+    </UIProvider>,
+  );
 
   await user.click(screen.getByRole('button'));
 };

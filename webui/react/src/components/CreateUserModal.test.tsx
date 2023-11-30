@@ -2,9 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { postUser as mockCreateUser } from 'services/api';
 
 import CreateUserModalComponent, {
@@ -38,7 +40,11 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <BrowserRouter>
-      <Container />
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <Container />
+        </ThemeProvider>
+      </UIProvider>
     </BrowserRouter>,
   );
 

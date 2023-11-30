@@ -1,10 +1,5 @@
 name: mnist_pytorch_dist_random_search
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
-resources:
-  slots_per_trial: 2
 hyperparameters:
-  global_batch_size: 64
   learning_rate:
     type: double
     minval: .0001
@@ -31,5 +26,7 @@ searcher:
   smaller_is_better: true
   max_trials: 2
   max_length:
-    batches: 937 #60,000 training images with batch size 64
-entrypoint: model_def:MNistTrial                           
+    epochs: 1
+resources:
+  slots_per_trial: 1
+entrypoint: python3 -m determined.launch.torch_distributed python3 train.py

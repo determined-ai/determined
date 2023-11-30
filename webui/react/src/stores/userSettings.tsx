@@ -213,10 +213,13 @@ export class UserSettingsStore extends PollingStore {
          */
         const value = map.get(key);
         const resetValue = isObject(value)
-          ? Object.keys(value as object).reduce((acc, settingsKey) => {
-              acc[settingsKey] = undefined;
-              return acc;
-            }, {} as Record<string, undefined>)
+          ? Object.keys(value as object).reduce(
+              (acc, settingsKey) => {
+                acc[settingsKey] = undefined;
+                return acc;
+              },
+              {} as Record<string, undefined>,
+            )
           : null;
         this.updateUserSetting(key, resetValue);
 

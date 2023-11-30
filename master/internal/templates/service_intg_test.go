@@ -52,6 +52,7 @@ func TestUnmarshalTemplateConfig(t *testing.T) {
 		require.NoError(t, err)
 		requireToJSONEq(t, input, resp.Template)
 
+		//nolint:exhaustruct
 		fakeConfig := schemas.WithDefaults(expconf.ExperimentConfigV0{
 			RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 				RawSharedFSConfig: &expconf.SharedFSConfigV0{

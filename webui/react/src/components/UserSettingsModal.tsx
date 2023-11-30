@@ -1,12 +1,12 @@
 import { Alert } from 'antd';
 import CodeEditor from 'hew/CodeEditor';
 import { Modal } from 'hew/Modal';
-import useUI, { Mode } from 'hew/Theme';
 import { Loadable, Loaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import { useMemoizedObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import useUI, { Mode } from 'components/ThemeProvider';
 import userSettings from 'stores/userSettings';
 import { Json } from 'types';
 import { isJsonObject, isObject } from 'utils/data';

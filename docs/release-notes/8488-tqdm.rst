@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Fix an issue where the determined.launch.wrap_rank module, often used by custom launch layers,
+   was improperly buffering multiple lines separated by a carriage return, such as logs emitted from
+   the popular TQDM library. TQDM logs will pass now through without undue buffering.

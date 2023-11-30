@@ -2,13 +2,13 @@ import { type TabsProps } from 'antd';
 import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Link from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import { paths } from 'routes/utils';
@@ -145,7 +145,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     [storagePath],
   );
 
-  const getDefaultMetrics = useCallback(() => {
+  const getDefaultMetrics = useCallback((): Metric | undefined => {
     const activeMetricFound = metrics.find(
       (metric) =>
         metric.group === searcherMetric.current.group &&
@@ -155,6 +155,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       return searcherMetric.current;
     } else if (metrics.length > 0) {
       return metrics[0];
+    } else {
+      return undefined;
     }
   }, [metrics]);
 

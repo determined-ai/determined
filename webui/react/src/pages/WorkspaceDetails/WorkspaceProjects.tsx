@@ -1,10 +1,12 @@
 import { Space } from 'antd';
 import Button from 'hew/Button';
 import Card from 'hew/Card';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
+import Section from 'hew/Section';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
@@ -403,43 +405,45 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   return (
     <>
-      <Columns page>
-        <Column>
-          <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
-            <Option value={WhoseProjects.All}>All Projects</Option>
-            <Option value={WhoseProjects.Mine}>My Projects</Option>
-            <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-          </Select>
-        </Column>
-        <Column align="right">
-          <Space wrap>
-            {!workspace.archived && (
-              <Toggle
-                checked={settings.archived}
-                label="Show Archived"
-                onChange={switchShowArchived}
-              />
-            )}
-            <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
-              <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
-              <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-                Last Updated
-              </Option>
-              <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-                Newest to Oldest
-              </Option>
+      <Section>
+        <Row wrap>
+          <Column>
+            <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
+              <Option value={WhoseProjects.All}>All Projects</Option>
+              <Option value={WhoseProjects.Mine}>My Projects</Option>
+              <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
             </Select>
-            {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-            <div className={css.headerButton}>
-              {!workspace.immutable &&
-                !workspace.archived &&
-                canCreateProject({ workspace: workspace }) && (
-                  <Button onClick={handleProjectCreateClick}>New Project</Button>
-                )}
-            </div>
-          </Space>
-        </Column>
-      </Columns>
+          </Column>
+          <Column align="right">
+            <Space wrap>
+              {!workspace.archived && (
+                <Toggle
+                  checked={settings.archived}
+                  label="Show Archived"
+                  onChange={switchShowArchived}
+                />
+              )}
+              <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+                <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
+                <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
+                  Last Updated
+                </Option>
+                <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
+                  Newest to Oldest
+                </Option>
+              </Select>
+              {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+              <div className={css.headerButton}>
+                {!workspace.immutable &&
+                  !workspace.archived &&
+                  canCreateProject({ workspace: workspace }) && (
+                    <Button onClick={handleProjectCreateClick}>New Project</Button>
+                  )}
+              </div>
+            </Space>
+          </Column>
+        </Row>
+      </Section>
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList

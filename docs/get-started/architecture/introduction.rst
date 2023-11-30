@@ -124,8 +124,7 @@ detailed information about the model. There will also be a list of every version
 selected model, and you can go to the Version Details page to view and edit that version's
 information.
 
-For more information about how to use the model registry, see `Organizing Models in the Model
-Registry <../post-training/model-registry.html>`_
+For more information about how to use the model registry, visit :ref:`organizing-models`.
 
 Notebooks
 =========

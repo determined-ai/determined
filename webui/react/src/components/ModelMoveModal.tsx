@@ -1,7 +1,7 @@
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
 import Select from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useId } from 'react';
@@ -29,6 +29,7 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { canMoveModel } = usePermissions();
+  const { openToast } = useToast();
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
   const handleOk = async () => {
@@ -40,7 +41,7 @@ const ModelMoveModal = ({ model }: Props): JSX.Element => {
         values.workspaceId === 1
           ? paths.modelList()
           : paths.workspaceDetails(values.workspaceId, WorkspaceDetailsTab.ModelRegistry);
-      makeToast({
+      openToast({
         description: `${model.name} moved to workspace ${workspaceName}`,
         link: <Link path={path}>View Workspace</Link>,
         severity: 'Confirm',

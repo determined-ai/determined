@@ -5,7 +5,7 @@ import Toggle from 'hew/Toggle';
 import { TypeOf } from 'io-ts';
 import { useMemo } from 'react';
 
-import { valueof } from 'ioTypes';
+import { valueof } from 'utils/valueof';
 
 import { TableViewMode } from './GlideTable';
 import css from './OptionsMenu.module.scss';

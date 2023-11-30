@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useCallback, useEffect } from 'react';
 
 import { setUserPassword as mockSetUserPassword } from 'services/api';
@@ -82,7 +82,7 @@ const Container: React.FC = () => {
 
 const setup = async () => {
   const view = render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <Container />
     </UIProvider>,
   );

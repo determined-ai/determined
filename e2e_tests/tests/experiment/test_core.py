@@ -160,7 +160,7 @@ def test_end_to_end_adaptive() -> None:
         None,
     )
 
-    wait_for_gc_to_finish(experiment_id=exp_id)
+    wait_for_gc_to_finish(experiment_ids=[exp_id])
 
     # Check that validation accuracy look sane (more than 93% on MNIST).
     trials = exp.experiment_trials(exp_id)

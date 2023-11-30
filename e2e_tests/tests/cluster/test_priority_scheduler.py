@@ -52,7 +52,7 @@ def test_priortity_scheduler_noop_command(
 def test_slots_list_command(managed_cluster_priority_scheduler: ManagedCluster) -> None:
     managed_cluster_priority_scheduler.ensure_agent_ok()
     assert str(conf.MASTER_PORT) == "8082"
-    command = ["det", "slot", "list"]
+    command = ["det", "-m", conf.make_master_url(), "slot", "list"]
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )

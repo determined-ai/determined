@@ -1,6 +1,4 @@
-import { Select } from 'antd';
-import { RawValueType } from 'rc-select/lib/BaseSelect';
-import { LabelInValueType } from 'rc-select/lib/Select';
+import Select, { Option, SelectValue } from 'hew/Select';
 import React, { useState } from 'react';
 
 import {
@@ -13,8 +11,6 @@ import { V1Role } from 'services/api-ts-sdk';
 import { UserOrGroupWithRoleInfo } from 'types';
 import handleError from 'utils/error';
 import { isUserWithRoleInfo } from 'utils/user';
-
-import css from './RoleRenderer.module.scss';
 
 interface Props {
   fetchMembers: () => void;
@@ -37,10 +33,10 @@ const RoleRenderer: React.FC<Props> = ({
 
   return (
     <Select
-      className={css.base}
       disabled={!userCanAssignRoles || !userOrGroupWithRoleInfo.roleAssignment.scopeWorkspaceId}
       value={memberRoleId}
-      onSelect={async (value: RawValueType | LabelInValueType) => {
+      width={'clamp(150px, 100%, 200px)'}
+      onSelect={async (value: SelectValue) => {
         const roleIdValue = value as number;
         const userOrGroupId = isUserWithRoleInfo(userOrGroupWithRoleInfo)
           ? userOrGroupWithRoleInfo.userId
@@ -95,9 +91,9 @@ const RoleRenderer: React.FC<Props> = ({
         }
       }}>
       {rolesAssignableToScope.map((role) => (
-        <Select.Option key={role.roleId} value={role.roleId}>
+        <Option key={role.roleId} value={role.roleId}>
           {role.name}
-        </Select.Option>
+        </Option>
       ))}
     </Select>
   );

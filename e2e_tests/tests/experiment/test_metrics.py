@@ -1,5 +1,6 @@
 import json
 import multiprocessing as mp
+import multiprocessing.pool
 import subprocess
 from typing import Dict, List, Set, Union
 
@@ -156,7 +157,7 @@ def validate_hparam_types(hparams: dict) -> Union[None, str]:
     for hparam in ["dropout1", "dropout2", "learning_rate"]:
         if type(hparams[hparam]) != float:
             return "hparam %s of unexpected type" % hparam
-    for hparam in ["global_batch_size", "n_filters1", "n_filters2"]:
+    for hparam in ["n_filters1", "n_filters2"]:
         if type(hparams[hparam]) != int:
             return "hparam %s of unexpected type" % hparam
     return None

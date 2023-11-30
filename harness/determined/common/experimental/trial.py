@@ -226,6 +226,9 @@ class Trial:
         if sort_by and not isinstance(sort_by, (checkpoint.CheckpointSortBy, str)):
             raise ValueError("sort_by must be of type CheckpointSortBy or str")
 
+        if not sort_by:
+            sort_by = checkpoint.CheckpointSortBy.SEARCHER_METRIC
+
         def get_trial_checkpoints(offset: int) -> bindings.v1GetTrialCheckpointsResponse:
             return bindings.get_GetTrialCheckpoints(
                 self._session,

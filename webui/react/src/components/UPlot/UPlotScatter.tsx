@@ -155,7 +155,7 @@ const UPlotScatter: React.FC<Props> = ({
               const [minValue, maxValue] = ranges.current[FILL_INDEX];
               return getColor(value, minValue, maxValue, colorScaleDistribution);
             },
-            size: (u, seriesIndex) => {
+            size: (_u, seriesIndex) => {
               return seriesIndex === hRect.current?.seriesIndex
                 ? hRect.current.w / devicePixelRatio
                 : 0;

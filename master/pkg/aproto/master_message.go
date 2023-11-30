@@ -50,7 +50,7 @@ type ContainerReattach struct {
 // ContainerReattachAck is a struct describing containers reattachment success.
 type ContainerReattachAck struct {
 	Container cproto.Container
-	Failure   *ContainerFailure
+	Failure   *ContainerFailureError
 }
 
 // FromContainerStateChanged forms a container reattach ack from a state change message.
@@ -160,7 +160,7 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 
 // ContainerStopped notifies the master that a container was stopped on the agent.
 type ContainerStopped struct {
-	Failure *ContainerFailure
+	Failure *ContainerFailureError
 }
 
 func (c ContainerStopped) String() string {

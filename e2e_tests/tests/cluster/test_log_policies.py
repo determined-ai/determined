@@ -14,7 +14,7 @@ from tests import experiment as exp
 def test_log_policy_cancel_retries(should_match: bool) -> None:
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
-        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+        regex = r"(.*) this should not match (.*)"
 
     config = conf.load_config(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
     config["log_policies"] = [

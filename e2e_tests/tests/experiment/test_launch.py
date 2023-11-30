@@ -16,7 +16,7 @@ def test_launch_layer_mnist(collect_trial_profiles: Callable[[int], None]) -> No
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.horovod --autohorovod --trial model_def:MNistTrial"
+        config, "python3 -m determined.launch.horovod --autohorovod python3 train.py"
     )
 
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -36,9 +36,7 @@ def test_launch_layer_mnist(collect_trial_profiles: Callable[[int], None]) -> No
 @pytest.mark.e2e_pbs
 def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    config = conf.set_entrypoint(
-        config, "python3 -m nonexistent_launch_module model_def:MNistTrial"
-    )
+    config = conf.set_entrypoint(config, "python3 -m nonexistent_launch_module python3 train.py")
     config["max_restarts"] = 0
 
     experiment_id = exp.run_failure_test_with_temp_config(

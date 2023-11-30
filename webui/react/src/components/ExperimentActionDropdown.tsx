@@ -3,7 +3,7 @@ import Button from 'hew/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
@@ -86,6 +86,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const confirm = useConfirm();
+  const { openToast } = useToast();
+
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -230,7 +232,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           case Action.Copy:
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             await copyToClipboard((cell as any).displayData || cell?.copyData);
-            makeToast({
+            openToast({
               severity: 'Confirm',
               title: 'Value has been copied to clipboard.',
             });
@@ -259,6 +261,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onComplete,
       onLink,
       onVisibleChange,
+      openToast,
       cell,
     ],
   );

@@ -1,30 +1,31 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import React, { useCallback } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'utils/dom';
 
 const AuthToken: React.FC = () => {
+  const { openToast } = useToast();
   const token = globalStorage.authToken || 'Auth token not found.';
 
   const handleCopyToClipboard = useCallback(async () => {
     try {
       await copyToClipboard(token);
-      makeToast({
+      openToast({
         description: 'Auth token copied to the clipboard.',
         title: 'Auth Token Copied',
       });
     } catch (e) {
-      makeToast({
+      openToast({
         description: (e as Error)?.message,
         severity: 'Warning',
         title: 'Unable to Copy to Clipboard',
       });
     }
-  }, [token]);
+  }, [token, openToast]);
 
   return (
     <Message
