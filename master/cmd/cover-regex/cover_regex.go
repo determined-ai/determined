@@ -1,6 +1,7 @@
-// Heavily inspired from https://github.com/golang/go/blob/aae7734658e5f302c0e3a10f6c5c596fd384dbd7/src/cmd/cover/html.go
-
+//nolint:all
 package main
+
+// Heavily inspired from https://github.com/golang/go/blob/aae7734658e5f302c0e3a10f6c5c596fd384dbd7/src/cmd/cover/html.go
 
 import (
 	"bytes"
