@@ -379,7 +379,7 @@ func TestUserGroups(t *testing.T) {
 
 		gps, err = SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
 		require.NoError(t, err, "failed to search groups")
-		require.Equal(t, gps, 2, "failed to end with two group assignments.")
+		require.Len(t, gps, 2, "failed to end with two group assignments.")
 		require.ElementsMatch(t, []string{name1, name3}, []string{gps[0].Name, gps[1].Name},
 			"failed to end with %s group assignment.", name1)
 	})
