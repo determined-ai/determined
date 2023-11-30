@@ -46,10 +46,11 @@ func TestResolveResources(t *testing.T) {
 
 	for test_case, test_vars := range tests {
 		t.Run(test_case, func(t *testing.T) {
-			m: &Master{
-				rm:     getMockResourceManager(test_vars.expectedPoolName),
-				config: config.DefaultConfig(),
-			},
+			m :=
+				&Master{
+					rm:     getMockResourceManager(test_vars.expectedPoolName),
+					config: config.DefaultConfig(),
+				}
 			poolName, _, err := m.ResolveResources(test_vars.resourcePool, test_vars.slots, test_vars.workspaceID)
 
 			require.NoError(t, err, "Error in ResolveResources()")
@@ -79,7 +80,7 @@ func TestFillTaskSpec(t *testing.T) {
 				rm:       rm,
 				config:   config.DefaultConfig(),
 				taskSpec: &tasks.TaskSpec{},
-			},
+			}
 			expectedTaskSpec := tasks.TaskSpec{
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{
 					WorkDir: &test_vars.workDir,
