@@ -2,7 +2,6 @@ package stream
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 )
 
@@ -175,7 +174,6 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 		func() {
 			for _, ev := range events {
 				var msg interface{}
-				fmt.Printf("Attempting to broadcast:\n\t%v\n\n\n", ev)
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					// update, insert, or fallin: send the record to the client.

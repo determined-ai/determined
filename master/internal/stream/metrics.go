@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -176,8 +175,6 @@ func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, erro
 	if len(spec.TrialIds) == 0 {
 		return nil, fmt.Errorf("invalid subscription spec arguments: %v", spec.TrialIds)
 	}
-
-	logrus.Debug("Spec.TrialIDs: %d", spec.TrialIds)
 	// Make a copy of the map, because the filter must run safely off-thread.
 	trialIds := make(map[int]struct{})
 	for _, id := range spec.TrialIds {
@@ -186,14 +183,10 @@ func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, erro
 		}
 		trialIds[id] = struct{}{}
 	}
-	logrus.Debug("TrialIDs:%v", trialIds)
 
 	// return a closure around our copied map
 	return func(msg *MetricMsg) bool {
-		logrus.Errorf("MetricMsg.TrialID: %d", msg.TrialID)
-		logrus.Errorf("trialIds: %v", trialIds)
 		_, ok := trialIds[msg.TrialID]
-		logrus.Errorf("Did it pass?: %t", ok)
 		return ok
 	}, nil
 }

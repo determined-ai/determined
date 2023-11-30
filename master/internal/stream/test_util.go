@@ -34,11 +34,10 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 			)
 		case *MetricMsg:
 			return fmt.Sprintf(
-				"key: %s, metric_id: %d, archieved: %t, experiment_id: %d, workspace_id: %d",
+				"key: %s, trial_id: %d, archived: %t, workspace_id: %d",
 				MetricsUpsertKey,
-				typedMsg.ID,
+				typedMsg.TrialID,
 				typedMsg.Archived,
-				typedMsg.ExperimentID,
 				typedMsg.WorkspaceID,
 			)
 			// case *ExperimentMsg:
@@ -162,7 +161,6 @@ func splitMsgs(
 	}
 	deleteKeys := []string{
 		TrialsDeleteKey,
-		MetricsDeleteKey,
 		// ExperimentDeleteKey,
 	}
 
