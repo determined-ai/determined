@@ -1,17 +1,18 @@
 # Determined Examples
 
+This directory only contains examples that are routinely tested on our CI platform.
+
+More examples are located in our community-sourced
+[determined-ai/determined-examples](https://github.com/determined-ai/determined-examples/) repo.
+
+
+
 ## Tutorials
 
 | Example                                                       | Dataset          | Framework             |
 |:-------------------------------------------------------------:|:----------------:|:---------------------:|
 | [mnist\_pytorch](tutorials/mnist_pytorch)                     | MNIST            | PyTorch               |
 | [core\_api](tutorials/core_api)                               | Core API         | -                     |
-
-## Computer Vision
-
-| Example                                                                      | Dataset                      | Framework                                |
-|:----------------------------------------------------------------------------:|:----------------------------:|:----------------------------------------:|
-| [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
 
 ## Diffusion
 
