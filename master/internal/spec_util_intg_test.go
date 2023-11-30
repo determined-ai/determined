@@ -46,13 +46,11 @@ func TestResolveResources(t *testing.T) {
 
 	for test_case, test_vars := range tests {
 		t.Run(test_case, func(t *testing.T) {
-			api := &apiServer{
-				m: &Master{
-					rm:     getMockResourceManager(test_vars.expectedPoolName),
-					config: config.DefaultConfig(),
-				},
-			}
-			poolName, _, err := api.m.ResolveResources(test_vars.resourcePool, test_vars.slots, test_vars.workspaceID)
+			m: &Master{
+				rm:     getMockResourceManager(test_vars.expectedPoolName),
+				config: config.DefaultConfig(),
+			},
+			poolName, _, err := m.ResolveResources(test_vars.resourcePool, test_vars.slots, test_vars.workspaceID)
 
 			require.NoError(t, err, "Error in ResolveResources()")
 			require.Equal(t, test_vars.expectedPoolName, poolName)
@@ -77,13 +75,11 @@ func TestFillTaskSpec(t *testing.T) {
 	for test_case, test_vars := range tests {
 		t.Run(test_case, func(t *testing.T) {
 			rm := getMockResourceManager(test_vars.poolName)
-			api := &apiServer{
-				m: &Master{
-					rm:       rm,
-					config:   config.DefaultConfig(),
-					taskSpec: &tasks.TaskSpec{},
-				},
-			}
+			m := &Master{
+				rm:       rm,
+				config:   config.DefaultConfig(),
+				taskSpec: &tasks.TaskSpec{},
+			},
 			expectedTaskSpec := tasks.TaskSpec{
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{
 					WorkDir: &test_vars.workDir,
@@ -91,8 +87,8 @@ func TestFillTaskSpec(t *testing.T) {
 				AgentUserGroup: test_vars.agentUserGroup,
 				Owner:          test_vars.userModel,
 			}
-			rm.On("TaskContainerDefaults", test_vars.poolName, api.m.config.TaskContainerDefaults).Return(model.TaskContainerDefaultsConfig{WorkDir: &test_vars.workDir}, nil)
-			taskSpec, err := api.m.fillTaskSpec(test_vars.poolName, test_vars.agentUserGroup, test_vars.userModel)
+			rm.On("TaskContainerDefaults", test_vars.poolName, m.config.TaskContainerDefaults).Return(model.TaskContainerDefaultsConfig{WorkDir: &test_vars.workDir}, nil)
+			taskSpec, err := m.fillTaskSpec(test_vars.poolName, test_vars.agentUserGroup, test_vars.userModel)
 			require.NoError(t, err, "Error in fillTaskSpec()")
 			require.Equal(t, expectedTaskSpec, taskSpec)
 		})
