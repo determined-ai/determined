@@ -153,14 +153,14 @@ func TestFillContextDir(t *testing.T) {
 	}
 	for test_case, test_vars := range tests {
 		t.Run(test_case, func(t *testing.T) {
-			var configWorkDirDest *string
+			var configWorkDir *string
 
 			userFiles := filesToArchive(test_vars.contextDirectory)
 			expectedBytes, err := archive.ToTarGz(userFiles)
 			require.NoError(t, err, "Error in ToTarGz() for TestFillContexxtDir")
 
 			var contextDirectoryBytes []byte
-			contextDirectoryBytes, err = fillContextDir(&configWorkDirDest, &test_vars.defaultWorkDir, test_vars.contextDirectory)
+			configWorkDir, contextDirectoryBytes, err = fillContextDir(configWorkDir, &test_vars.defaultWorkDir, test_vars.contextDirectory)
 			require.NoError(t, err, "Error in fillContextDir()")
 			require.Equal(t, expectedBytes, contextDirectoryBytes)
 		})

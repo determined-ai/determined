@@ -75,27 +75,28 @@ func fillTaskConfig(slots int, taskSpec tasks.TaskSpec, environment *model.Envir
 	))
 }
 
-func fillContextDir(configWorkDirDest **string, defaultWorkDir *string, contextDirectory []*utilv1.File) ([]byte, error) {
+func fillContextDir(configWorkDir *string, defaultWorkDir *string, contextDirectory []*utilv1.File) (*string, []byte, error) {
 	var contextDirectoryBytes []byte
 	if len(contextDirectory) > 0 {
 		userFiles := filesToArchive(contextDirectory)
 
-		workdirSetInReq := *configWorkDirDest != nil &&
-			(defaultWorkDir == nil || *defaultWorkDir != **configWorkDirDest)
+		workdirSetInReq := configWorkDir != nil &&
+			(defaultWorkDir == nil || *defaultWorkDir != *configWorkDir)
 		if workdirSetInReq {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, nil, status.Errorf(codes.InvalidArgument,
 				"cannot set work_dir and context directory at the same time")
 		}
-		*configWorkDirDest = nil
 
 		var err error
 		contextDirectoryBytes, err = archive.ToTarGz(userFiles)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, nil, status.Errorf(codes.InvalidArgument,
 				fmt.Errorf("compressing files context files: %w", err).Error())
 		}
+		return nil, contextDirectoryBytes, nil
+	} else {
+		return configWorkDir, contextDirectoryBytes, nil
 	}
-	return contextDirectoryBytes, nil
 }
 
 func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, error) {

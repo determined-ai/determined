@@ -131,7 +131,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	config.Resources.Slots = resources.Slots
 
 	var contextDirectory []byte
-	contextDirectory, err = fillContextDir(&config.WorkDir, workDirInDefaults, req.Files)
+	config.WorkDir, contextDirectory, err = fillContextDir(config.WorkDir, workDirInDefaults, req.Files)
 	if err != nil {
 		return nil, nil, err
 	}
