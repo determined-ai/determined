@@ -25,12 +25,19 @@ import (
 )
 
 var regexesAndMessages = [][]string{
-	{`.*Scan\(`, "Bun 'Scan()' queries must be covered by an integration test"},
-	{`.*Exec\(`, "Bun 'Exec()' queries must be covered by an integration test"},
+	{`.*Scan\(ctx`, "Bun 'Scan()' queries must be covered by an integration test"},
+	{`.*Exec\(ctx`, "Bun 'Exec()' queries must be covered by an integration test"},
+}
+
+type regexWithInfo struct {
+	regex           *regexp.Regexp
+	regexString     string
+	humanReadable   string
+	coveredCount    int
+	unconveredCount int
 }
 
 func main() {
-	// fmt.Println(os.Getwd())
 	profile := "./master/coverage.out"
 	if err := htmlOutput(profile, ""); err != nil {
 		panic(err)
@@ -46,11 +53,13 @@ func htmlOutput(profile, outfile string) error {
 		return err
 	}
 
-	var regexes []*regexp.Regexp
-	var humanReadable []string
+	var regexWithInfos []*regexWithInfo
 	for _, r := range regexesAndMessages {
-		regexes = append(regexes, regexp.MustCompile(r[0]))
-		humanReadable = append(humanReadable, r[1])
+		regexWithInfos = append(regexWithInfos, &regexWithInfo{
+			regex:         regexp.MustCompile(r[0]),
+			regexString:   r[0],
+			humanReadable: r[1],
+		})
 	}
 
 	var d templateData
@@ -76,116 +85,83 @@ func htmlOutput(profile, outfile string) error {
 
 		bounds := profile.Boundaries(src)
 
-		err = regexGen(file, src, bounds, humanReadable, regexes)
-		if err != nil {
-			return err
-		}
-
-		/*
-			d.Files = append(d.Files, &templateFile{
-				Name:     fn,
-				Body:     template.HTML(buf.String()),
-				Coverage: percentCovered(profile),
-			})
-		*/
-
+		regexGen(file, src, bounds, regexWithInfos)
 	}
 
-	/*
-			var out *os.File
-			if outfile == "" {
-				var dir string
-				dir, err = os.MkdirTemp("", "cover")
-				if err != nil {
-					return err
-				}
-				out, err = os.Create(filepath.Join(dir, "coverage.html"))
-			} else {
-				out, err = os.Create(outfile)
-			}
-			if err != nil {
-				return err
-			}
+	fmt.Println("=====================================")
+	fmt.Println("Summaries")
+	fmt.Println("=====================================\n")
 
-		err = htmlTemplate.Execute(out, d)
-		if err2 := out.Close(); err == nil {
-			err = err2
+	shouldFail := false
+	for _, r := range regexWithInfos {
+		passOrFail := "PASS"
+		if r.unconveredCount > 0 {
+			passOrFail = "FAIL"
+			shouldFail = true
 		}
-		if err != nil {
-			return err
-		}
-	*/
+
+		fmt.Printf(`%s Regex:"%s" %s CoveredLines (%d) / Total Lines (%d) Percent "%.2f%%`+"\n",
+			passOrFail, r.regexString, r.humanReadable, r.coveredCount,
+			r.coveredCount+r.unconveredCount,
+			100.0*float64(r.coveredCount)/float64(r.coveredCount+r.unconveredCount))
+	}
+
+	fmt.Println("\n=====================================")
+	fmt.Println("Result")
+	fmt.Println("=====================================")
+
+	if shouldFail {
+		fmt.Println("FAILED exiting with 1")
+		os.Exit(1)
+	} else {
+		fmt.Println("PASSED exiting with 0")
+		os.Exit(1)
+	}
 
 	return nil
-}
-
-// percentCovered returns, as a percentage, the fraction of the statements in
-// the profile covered by the test run.
-// In effect, it reports the coverage of a given source file.
-func percentCovered(p *cover.Profile) float64 {
-	var total, covered int64
-	for _, b := range p.Blocks {
-		total += int64(b.NumStmt)
-		if b.Count > 0 {
-			covered += int64(b.NumStmt)
-		}
-	}
-	if total == 0 {
-		return 0
-	}
-	return float64(covered) / float64(total) * 100
 }
 
 func regexGen(
 	fileName string,
 	src []byte,
 	boundaries []cover.Boundary,
-	humanReadable []string,
-	regexes []*regexp.Regexp,
-) error {
-	coveredCount := 0
-	uncoveredCount := 0
-
+	regexWithInfos []*regexWithInfo,
+) {
 	lineIndex := 0
-	line := ""
 	covered := false
+
+	boundText := ""
 	for i := range src {
-		// TODO use boundraries to determined coverage
 		for len(boundaries) > 0 && boundaries[0].Offset == i {
 			b := boundaries[0]
-			covered = b.Count > 0
-			/*
-				if b.Start {
-					if b.Count > 0 {
-						covered = true
+
+			if b.Start {
+				for _, r := range regexWithInfos {
+					if r.regex.MatchString(boundText) {
+						if covered {
+							r.coveredCount++
+						} else {
+							r.unconveredCount++
+							fmt.Printf("%s %s:%d\n%s\n\n",
+								r.humanReadable, fileName, lineIndex,
+								strings.ReplaceAll(">>>"+boundText, "\n", "\n>>>"))
+						}
 					}
-				} else {
-					covered = false
-				}*/
+				}
+
+				// Needs to go after since the bounds applies to next.
+				covered = b.Count > 0
+				boundText = ""
+			}
+
 			boundaries = boundaries[1:]
 		}
 
-		if src[i] == '\n' || i == len(src) {
-			for i, r := range regexes {
-				if r.MatchString(line) {
-					if covered {
-						coveredCount++
-					} else {
-						uncoveredCount++
-						fmt.Println(humanReadable[i], "\n", fileName, lineIndex, line, "\n")
-					}
-				}
-			}
-			line = ""
+		boundText += string(src[i])
+		if src[i] == '\n' {
 			lineIndex++
-		} else {
-			line += string(src[i])
 		}
 	}
-
-	fmt.Println(coveredCount, uncoveredCount)
-
-	return nil
 }
 
 // htmlGen generates an HTML coverage report with the provided filename,
