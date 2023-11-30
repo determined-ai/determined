@@ -100,13 +100,16 @@ func newAgentService(
 }
 
 // list implements agentService.
-func (a *agents) list() map[agentID]*agentState {
+func (a *agents) list(resourcePoolName string) map[agentID]*agentState {
 	agents := a.agents.Snapshot()
 	result := make(map[agentID]*agentState, len(agents))
 	for id, a := range agents {
 		state, err := a.State()
 		if err != nil {
 			a.syslog.WithError(err).Warnf("failed to get agent state for agent %s", id)
+			continue
+		}
+		if state.resourcePoolName != resourcePoolName {
 			continue
 		}
 		result[state.id] = state
