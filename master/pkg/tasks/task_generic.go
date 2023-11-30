@@ -8,6 +8,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // GenericTaskSpec is the generic task spec.
@@ -67,7 +69,9 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 // not right on the generic task spec.
 
 // ToV1Job todo.
-func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) { return nil, nil }
+func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
+	return nil, status.Error(codes.Unimplemented, "ToV1Job not implemented for Generic Tasks")
+}
 
 // SetJobPriority todo.
 func (s GenericTaskSpec) SetJobPriority(priority int) error { return nil }
