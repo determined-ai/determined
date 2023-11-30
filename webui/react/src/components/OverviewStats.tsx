@@ -1,5 +1,5 @@
-import { Typography } from 'antd';
 import Card from 'hew/Card';
+import { Body, Label } from 'hew/Typography';
 import React from 'react';
 
 import css from './OverviewStats.module.scss';
@@ -18,13 +18,11 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
   return (
     <Card onClick={props.onClick}>
       <div className={css.base}>
-        <Typography.Title className={css.title} ellipsis={{ rows: 1, tooltip: true }} level={5}>
-          {props.title}
-        </Typography.Title>
+        <div className={css.title}>
+          <Label truncate={{ rows: 1, tooltip: true }}>{props.title}</Label>
+        </div>
         <strong className={childClasses.join(' ')}>
-          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-            {props.children}
-          </Typography.Paragraph>
+          <Body truncate={{ rows: 1, tooltip: true }}>{props.children}</Body>
         </strong>
       </div>
     </Card>

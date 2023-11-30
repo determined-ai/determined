@@ -1,8 +1,8 @@
-import { Typography } from 'antd';
 import Avatar, { Size } from 'hew/Avatar';
 import Card from 'hew/Card';
 import Icon from 'hew/Icon';
 import Tooltip from 'hew/Tooltip';
+import { Title, TypographySize } from 'hew/Typography';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
@@ -48,10 +48,10 @@ const ProjectCard: React.FC<Props> = ({
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
-        <div className={css.headerContainer}>
-          <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
+        <div className={`${css.headerContainer} ${css.name}`}>
+          <Title size={TypographySize.S} truncate={{ rows: 3, tooltip: true }}>
             {project.name}
-          </Typography.Title>
+          </Title>
         </div>
         <div className={css.workspaceContainer}>
           {showWorkspace && project.workspaceId !== 1 && (

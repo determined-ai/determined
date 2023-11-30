@@ -1,9 +1,9 @@
-import { Typography } from 'antd';
 import Avatar, { Size } from 'hew/Avatar';
 import Card from 'hew/Card';
 import Icon from 'hew/Icon';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
+import { Title, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React from 'react';
 
@@ -43,13 +43,10 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
           </div>
           <div className={css.info}>
-            <div className={css.nameRow}>
-              <Typography.Title
-                className={css.name}
-                ellipsis={{ rows: 1, tooltip: true }}
-                level={5}>
+            <div className={`${css.nameRow} ${css.name}`}>
+              <Title size={TypographySize.S} truncate={{ rows: 1, tooltip: true }}>
                 {workspace.name}
-              </Typography.Title>
+              </Title>
               {workspace.pinned && <Icon name="pin" title="Pinned" />}
             </div>
             <p className={css.projects}>

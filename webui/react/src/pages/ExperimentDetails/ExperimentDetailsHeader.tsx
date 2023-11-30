@@ -1,4 +1,4 @@
-import { Button as AntdButton, Space, Typography } from 'antd';
+import { Button as AntdButton, Space } from 'antd';
 import Button from 'hew/Button';
 import Dropdown from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
@@ -8,6 +8,7 @@ import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
+import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -584,12 +585,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {
         label: 'Description',
         value: (
-          <Typography.Paragraph
-            disabled={!experiment.description}
-            ellipsis={{ rows: 1, tooltip: true }}
-            style={{ margin: 0 }}>
+          <Body
+            // disabled={!experiment.description}
+            truncate={{ rows: 1, tooltip: true }}>
             {experiment.description || 'N/A'}
-          </Typography.Paragraph>
+          </Body>
         ),
       },
     ];

@@ -1,4 +1,4 @@
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
@@ -9,6 +9,7 @@ import Progress from 'hew/Progress';
 import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
 import Toggle from 'hew/Toggle';
+import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -406,8 +407,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const columns = useMemo(() => {
     const tagsRenderer = (_value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
-        <Typography.Text
-          ellipsis={{
+        <Body
+          truncate={{
             tooltip: <Tags disabled tags={record.labels} />,
           }}>
           <div>
@@ -418,7 +419,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
               onAction={experimentTags.handleTagListChange(record.id, record.labels)}
             />
           </div>
-        </Typography.Text>
+        </Body>
       </div>
     );
 

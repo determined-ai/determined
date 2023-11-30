@@ -1,10 +1,10 @@
-import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
+import { Label } from 'hew/Typography';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -168,8 +168,8 @@ const ModelDetails: React.FC = () => {
   const columns = useMemo(() => {
     const tagsRenderer = (_value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
-        <Typography.Text
-          ellipsis={{
+        <Label
+          truncate={{
             tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
@@ -182,7 +182,7 @@ const ModelDetails: React.FC = () => {
               )}
             />
           </div>
-        </Typography.Text>
+        </Label>
       </div>
     );
 

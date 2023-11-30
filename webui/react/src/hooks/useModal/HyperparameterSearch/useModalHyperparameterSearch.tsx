@@ -1,4 +1,4 @@
-import { ModalFuncProps, Radio, Space, Typography } from 'antd';
+import { ModalFuncProps, Radio, Space } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
@@ -8,6 +8,7 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import Select, { Option, SelectValue } from 'hew/Select';
+import { Title, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -716,9 +717,9 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>
+        <Title size={TypographySize.S} truncate={{ rows: 1, tooltip: true }}>
           {name}
-        </Typography.Title>
+        </Title>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
         <Select aria-labelledby="type" ref={typeRef} width={'100%'} onChange={handleTypeChange}>
