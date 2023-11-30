@@ -46,7 +46,7 @@ func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error
 	metadata := TaskMetadata{}
 	if err := Bun().NewSelect().Model(&metadata).
 		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
-		ColumnExpr("generic_command_spec->'TaskType' as task_type").
+		ColumnExpr("generic_command_spec->>'TaskType' as task_type").
 		ColumnExpr("generic_command_spec->'Metadata'->'experiment_ids' as experiment_ids").
 		ColumnExpr("generic_command_spec->'Metadata'->'trial_ids' as trial_ids").
 		Where("task_id = ?", taskID).
