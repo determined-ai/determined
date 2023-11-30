@@ -17,11 +17,17 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
 	"golang.org/x/tools/cover"
 )
+
+var regexesAndMessages = [][]string{
+	{`.*Scan\(`, "Bun 'Scan()' queries must be covered by an integration test"},
+	{`.*Exec\(`, "Bun 'Exec()' queries must be covered by an integration test"},
+}
 
 func main() {
 	// fmt.Println(os.Getwd())
@@ -38,6 +44,13 @@ func htmlOutput(profile, outfile string) error {
 	profiles, err := cover.ParseProfiles(profile)
 	if err != nil {
 		return err
+	}
+
+	var regexes []*regexp.Regexp
+	var humanReadable []string
+	for _, r := range regexesAndMessages {
+		regexes = append(regexes, regexp.MustCompile(r[0]))
+		humanReadable = append(humanReadable, r[1])
 	}
 
 	var d templateData
@@ -62,9 +75,8 @@ func htmlOutput(profile, outfile string) error {
 		}
 
 		bounds := profile.Boundaries(src)
-		fmt.Println(bounds)
 
-		err = regexGen(src, bounds)
+		err = regexGen(file, src, bounds, humanReadable, regexes)
 		if err != nil {
 			return err
 		}
@@ -77,7 +89,6 @@ func htmlOutput(profile, outfile string) error {
 			})
 		*/
 
-		break
 	}
 
 	/*
@@ -125,48 +136,55 @@ func percentCovered(p *cover.Profile) float64 {
 	return float64(covered) / float64(total) * 100
 }
 
-func regexGen(src []byte, boundaries []cover.Boundary) error {
+func regexGen(
+	fileName string,
+	src []byte,
+	boundaries []cover.Boundary,
+	humanReadable []string,
+	regexes []*regexp.Regexp,
+) error {
+	coveredCount := 0
+	uncoveredCount := 0
+
+	lineIndex := 0
 	line := ""
+	covered := false
 	for i := range src {
 		// TODO use boundraries to determined coverage
 		for len(boundaries) > 0 && boundaries[0].Offset == i {
 			b := boundaries[0]
-			if b.Start {
-				// fmt.Print("!")
-				if b.Count > 0 {
-					// USED
-				}
-
-				// fmt.Fprintf(dst, `<span class="cov%v" title="%v">`, n, b.Count)
-			} else {
-				// dst.WriteString("</span>")
-			}
+			covered = b.Count > 0
+			/*
+				if b.Start {
+					if b.Count > 0 {
+						covered = true
+					}
+				} else {
+					covered = false
+				}*/
 			boundaries = boundaries[1:]
 		}
 
-		if src[i] == '\n' {
-			// TODO regex match here
-			fmt.Println(line)
+		if src[i] == '\n' || i == len(src) {
+			for i, r := range regexes {
+				if r.MatchString(line) {
+					if covered {
+						coveredCount++
+					} else {
+						uncoveredCount++
+						fmt.Println(humanReadable[i], "\n", fileName, lineIndex, line, "\n")
+					}
+				}
+			}
 			line = ""
+			lineIndex++
 		} else {
 			line += string(src[i])
 		}
-
-		/*
-			switch b := src[i]; b {
-			case '>':
-				dst.WriteString("&gt;")
-			case '<':
-				dst.WriteString("&lt;")
-			case '&':
-				dst.WriteString("&amp;")
-			case '\t':
-				dst.WriteString("        ")
-			default:
-				dst.WriteByte(b)
-			}
-		*/
 	}
+
+	fmt.Println(coveredCount, uncoveredCount)
+
 	return nil
 }
 
