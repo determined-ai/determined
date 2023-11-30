@@ -341,8 +341,7 @@ func (ps *PublisherSet) entrypoint(
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
-		log.Errorf("error while reading initial startup message: %s", err.Error())
-		return nil
+		return fmt.Errorf("error while reading initial startup message: %s", err.Error())
 	}
 
 	// startups is where we collect StartupMsg
