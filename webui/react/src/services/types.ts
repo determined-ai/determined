@@ -81,16 +81,16 @@ export interface GetExperimentsParams extends PaginationParams {
   options?: never;
   projectId?: number;
   sortBy?:
-  | 'SORT_BY_UNSPECIFIED'
-  | 'SORT_BY_ID'
-  | 'SORT_BY_DESCRIPTION'
-  | 'SORT_BY_START_TIME'
-  | 'SORT_BY_END_TIME'
-  | 'SORT_BY_STATE'
-  | 'SORT_BY_NUM_TRIALS'
-  | 'SORT_BY_PROGRESS'
-  | 'SORT_BY_USER'
-  | 'SORT_BY_NAME';
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_ID'
+    | 'SORT_BY_DESCRIPTION'
+    | 'SORT_BY_START_TIME'
+    | 'SORT_BY_END_TIME'
+    | 'SORT_BY_STATE'
+    | 'SORT_BY_NUM_TRIALS'
+    | 'SORT_BY_PROGRESS'
+    | 'SORT_BY_USER'
+    | 'SORT_BY_NAME';
   states?: Array<`STATE_${RunState}`>;
   userIds?: Array<number>;
   users?: Array<string>;
@@ -115,13 +115,13 @@ export interface GetExperimentParams {
 export interface getExperimentCheckpointsParams extends PaginationParams {
   id: number;
   sortBy?:
-  | 'SORT_BY_UNSPECIFIED'
-  | 'SORT_BY_UUID'
-  | 'SORT_BY_TRIAL_ID'
-  | 'SORT_BY_BATCH_NUMBER'
-  | 'SORT_BY_END_TIME'
-  | 'SORT_BY_STATE'
-  | 'SORT_BY_SEARCHER_METRIC';
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_UUID'
+    | 'SORT_BY_TRIAL_ID'
+    | 'SORT_BY_BATCH_NUMBER'
+    | 'SORT_BY_END_TIME'
+    | 'SORT_BY_STATE'
+    | 'SORT_BY_SEARCHER_METRIC';
   states?: Array<
     'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'
   >;
@@ -133,11 +133,11 @@ export interface ExperimentLabelsParams {
 
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   sortBy?:
-  | 'SORT_BY_UNSPECIFIED'
-  | 'SORT_BY_ID'
-  | 'SORT_BY_START_TIME'
-  | 'SORT_BY_END_TIME'
-  | 'SORT_BY_STATE';
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_ID'
+    | 'SORT_BY_START_TIME'
+    | 'SORT_BY_END_TIME'
+    | 'SORT_BY_STATE';
   states?: Array<
     | 'STATE_UNSPECIFIED'
     | 'STATE_ACTIVE'
@@ -167,12 +167,12 @@ export interface GetModelsParams extends PaginationParams {
   labels?: string[];
   name?: string;
   sortBy?:
-  | 'SORT_BY_UNSPECIFIED'
-  | 'SORT_BY_NAME'
-  | 'SORT_BY_DESCRIPTION'
-  | 'SORT_BY_CREATION_TIME'
-  | 'SORT_BY_LAST_UPDATED_TIME'
-  | 'SORT_BY_NUM_VERSIONS';
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_NAME'
+    | 'SORT_BY_DESCRIPTION'
+    | 'SORT_BY_CREATION_TIME'
+    | 'SORT_BY_LAST_UPDATED_TIME'
+    | 'SORT_BY_NUM_VERSIONS';
   users?: string[];
   workspaceIds?: number[];
 }
@@ -319,8 +319,8 @@ export interface GetTensorBoardsParams extends FetchOptions, PaginationParams {
 export interface GetResourceAllocationAggregatedParams {
   endDate: Dayjs;
   period:
-  | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
-  | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY';
+    | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
+    | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY';
   startDate: Dayjs;
 }
 
@@ -461,11 +461,11 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   id: number;
   name?: string;
   sortBy?:
-  | 'SORT_BY_UNSPECIFIED'
-  | 'SORT_BY_CREATION_TIME'
-  | 'SORT_BY_LAST_EXPERIMENT_START_TIME'
-  | 'SORT_BY_NAME'
-  | 'SORT_BY_DESCRIPTION';
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_CREATION_TIME'
+    | 'SORT_BY_LAST_EXPERIMENT_START_TIME'
+    | 'SORT_BY_NAME'
+    | 'SORT_BY_DESCRIPTION';
   users?: string[];
 }
 

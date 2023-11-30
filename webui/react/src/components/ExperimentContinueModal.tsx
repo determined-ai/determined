@@ -1,6 +1,7 @@
-import { InputNumber } from 'antd';
+import { InputNumber, Space } from 'antd';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
+import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
@@ -25,26 +26,28 @@ import handleError, {
 } from 'utils/error';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/experiment';
 import { routeToReactUrl } from 'utils/routes';
+import { capitalizeWord } from 'utils/string';
 
 export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
-const FORM_ID = 'create-experiment-form';
+const FORM_ID = 'continue-experiment-form';
 
-export const CreateExperimentType = {
-  ContinueTrial: 'Continue Experiment',
-  ReactivateExperiment: 'Reactivate Experiment',
+export const ContinueExperimentType = {
+  Continue: 'Continue Trial in New Experiment',
+  Reactivate: 'Reactivate Current Trial',
 } as const;
 
-export type CreateExperimentType = ValueOf<typeof CreateExperimentType>;
+export type ContinueExperimentType = ValueOf<typeof ContinueExperimentType>;
 
 const EXPERIMENT_NAME = 'name';
 const MAX_LENGTH = 'maxLength';
+const ADDITIONAL_LENGTH = 'additionalLength';
 
 interface Props {
   onClose?: () => void;
   experiment: ExperimentBase;
   trial?: TrialItem;
-  type: CreateExperimentType;
+  type: ContinueExperimentType;
 }
 
 interface ModalState {
@@ -56,7 +59,7 @@ interface ModalState {
   isAdvancedMode: boolean;
   open: boolean;
   trial?: TrialItem;
-  type: CreateExperimentType;
+  type: ContinueExperimentType;
 }
 
 const getExperimentName = (config: RawJson) => {
@@ -105,7 +108,7 @@ const DEFAULT_MODAL_STATE = {
   configString: '',
   isAdvancedMode: false,
   open: false,
-  type: CreateExperimentType.Fork,
+  type: ContinueExperimentType.Continue,
 };
 
 const ExperimentContinueModalComponent = ({
@@ -118,10 +121,10 @@ const ExperimentContinueModalComponent = ({
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
+  const [originalConfig, setOriginalConfig] = useState(upgradeConfig(experiment.configRaw));
+  const isReactivate = type === ContinueExperimentType.Reactivate;
 
-  const isFork = type === CreateExperimentType.Fork;
-
-  const titleLabel = isFork ? 'Reactivate Current Trial' : 'Continue Trial in New Experiment';
+  useEffect(() => setOriginalConfig(upgradeConfig(experiment.configRaw)), [experiment]);
 
   const requiredFields = [EXPERIMENT_NAME, MAX_LENGTH];
 
@@ -139,12 +142,22 @@ const ExperimentContinueModalComponent = ({
       if (!prev.isAdvancedMode) {
         prev.config.name = values[EXPERIMENT_NAME];
       }
-      if (values[MAX_LENGTH]) {
+      if (!isReactivate && values[MAX_LENGTH]) {
         const maxLengthType = getMaxLengthType(prev.config);
         if (maxLengthType) {
-          prev.config.searcher.max_length[maxLengthType] = prev.config.searcher.max_length + parseInt(values[MAX_LENGTH]);
+          prev.config.searcher.max_length[maxLengthType] = parseInt(values[MAX_LENGTH]);
         } else {
-          prev.config.searcher.max_length = prev.config.searcher.max_length + parseInt(values[MAX_LENGTH]);
+          prev.config.searcher.max_length = parseInt(values[MAX_LENGTH]);
+        }
+      }
+      if (isReactivate && values[ADDITIONAL_LENGTH] && parseInt(values[MAX_LENGTH]) >= 0) {
+        const maxLengthType = getMaxLengthType(prev.config);
+        if (maxLengthType) {
+          prev.config.searcher.max_length[maxLengthType] =
+            originalConfig.searcher.max_length[maxLengthType] + parseInt(values[ADDITIONAL_LENGTH]);
+        } else {
+          prev.config.searcher.max_length =
+            originalConfig.searcher.max_length + parseInt(values[ADDITIONAL_LENGTH]);
         }
       }
       prev.configString = yaml.dump(prev.config);
@@ -191,24 +204,47 @@ const ExperimentContinueModalComponent = ({
       };
     });
     // avoid calling form.setFields inside setModalState:
+    const maxLengthType = getMaxLengthType(prev.config);
     if (modalState.isAdvancedMode && form) {
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
-        const isFork = modalState.type === CreateExperimentType.Fork;
+        const isReactivate = modalState.type === ContinueExperimentType.Reactivate;
+        const originalLength = maxLengthType
+          ? originalConfig.searcher.max_length[maxLengthType]
+          : originalConfig.searcher.max_length;
+        let additionalLength;
+        try {
+          const newLength = maxLengthType
+            ? newConfig.searcher.max_length[maxLengthType]
+            : newConfig.searcher.max_length;
+          const lengthDifference = newLength - originalLength;
+          if (
+            originalLength &&
+            lengthDifference &&
+            Number.isInteger(originalLength) &&
+            Number.isInteger(lengthDifference) &&
+            lengthDifference > 0
+          ) {
+            additionalLength = lengthDifference;
+          }
+        } catch {
+          additionalLength = undefined;
+        }
 
         form.setFields([
           { name: 'name', value: getExperimentName(newConfig) },
           {
             name: 'maxLength',
-            value: !isFork ? getMaxLengthValue(newConfig) : undefined,
+            value: isReactivate ? getMaxLengthValue(newConfig) : undefined,
           },
+          { name: 'additionalLength', value: additionalLength },
         ]);
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });
       }
     }
     await form.validateFields();
-  }, [form, modalState]);
+  }, [form, modalState, originalConfig.searcher.max_length]);
 
   const getConfigFromForm = useCallback(
     (config: RawJson) => {
@@ -233,9 +269,9 @@ const ExperimentContinueModalComponent = ({
 
   const submitExperiment = useCallback(
     async (newConfig: string) => {
-      const isFork = modalState.type === CreateExperimentType.Fork;
-      if (!modalState.experiment || (!isFork && !modalState.trial)) return;
-      if (!isFork) {
+      const isReactivate = modalState.type === ContinueExperimentType.Reactivate;
+      if (!modalState.experiment || (!isReactivate && !modalState.trial)) return;
+      if (!isReactivate) {
         try {
           const { experiment: newExperiment, warnings } = await createExperiment({
             activate: true,
@@ -271,13 +307,11 @@ const ExperimentContinueModalComponent = ({
           // We throw an error to prevent the modal from closing.
           throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
         }
-      }
-      else {
-
+      } else {
         try {
           await continueExperiment({
-            overrideConfig: newConfig,
             id: modalState.experiment.id,
+            overrideConfig: newConfig,
           });
         } catch (e) {
           let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
@@ -327,7 +361,7 @@ const ExperimentContinueModalComponent = ({
   useEffect(() => {
     let config = upgradeConfig(experiment.configRaw);
 
-    if (!isFork && trial) {
+    if (!isReactivate && trial) {
       config = trialContinueConfig(
         config,
         trial.hyperparameters,
@@ -338,7 +372,7 @@ const ExperimentContinueModalComponent = ({
       config.description =
         `Continuation of trial ${trial.id}, experiment ${experiment.id}` +
         (config.description ? ` (${config.description})` : '');
-    } else if (isFork) {
+    } else if (isReactivate) {
       if (config.description) config.description = `Fork of ${config.description}`;
     }
 
@@ -369,11 +403,13 @@ const ExperimentContinueModalComponent = ({
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
     setDisabled(!experiment.name); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [experiment, trial, type, isFork, form]);
+  }, [experiment, trial, type, isReactivate, form]);
 
-  if (!experiment || (!isFork && !trial)) return <></>;
+  if (!experiment || (!isReactivate && !trial)) return <></>;
 
-  const hideSimpleConfig = isFork && experiment.state !== RunState.Completed;
+  const hideSimpleConfig = isReactivate && experiment.state !== RunState.Completed;
+
+  const maxLengthType = capitalizeWord(getMaxLengthType(modalState.config) || 'length');
 
   return (
     <Modal
@@ -381,7 +417,7 @@ const ExperimentContinueModalComponent = ({
       size={
         !hideSimpleConfig
           ? modalState.isAdvancedMode
-            ? isFork
+            ? isReactivate
               ? 'medium'
               : 'large'
             : 'small'
@@ -392,9 +428,9 @@ const ExperimentContinueModalComponent = ({
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: !isFork ? 'Launch Experiment' : 'Reactivate Trial',
+        text: isReactivate ? 'Reactivate Trial' : 'Launch Experiment',
       }}
-      title={titleLabel}
+      title={type}
       onClose={handleModalClose}>
       <>
         {modalState.error && <Message icon="error" title={modalState.error} />}
@@ -412,7 +448,7 @@ const ExperimentContinueModalComponent = ({
             />
           </React.Suspense>
         )}
-        {!isFork && (
+        {!isReactivate && (
           <Body>Start a new experiment from the current trial&rsquo;s latest checkpoint.</Body>
         )}
         <Form
@@ -422,7 +458,7 @@ const ExperimentContinueModalComponent = ({
           labelCol={{ span: 8 }}
           name="basic"
           onFieldsChange={handleFieldsChange}>
-          {!isFork && (
+          {!isReactivate && (
             <Form.Item
               initialValue={experiment.name}
               label="Experiment name"
@@ -431,17 +467,17 @@ const ExperimentContinueModalComponent = ({
               <Input />
             </Form.Item>
           )}
-          {!isFork && (
+          {!isReactivate && (
             <Form.Item
-              label={'Max Batches'}
+              label={`Max ${maxLengthType}`}
               name={MAX_LENGTH}
               rules={[
                 {
                   required: true,
                   validator: (_rule, value) => {
                     let errorMessage = '';
-                    if (!value) errorMessage = 'Please provide a max length.';
-                    if (value < 1) errorMessage = 'Max length must be at least 1.';
+                    if (!value) errorMessage = `Please provide a max ${maxLengthType}.`;
+                    if (value < 1) errorMessage = `Max ${maxLengthType} must be at least 1.`;
                     return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
                   },
                 },
@@ -449,18 +485,27 @@ const ExperimentContinueModalComponent = ({
               <Input type="number" />
             </Form.Item>
           )}
-          {isFork && !hideSimpleConfig && (
+          {isReactivate && !hideSimpleConfig && (
             <Form.Item
-              label={'Additional Batches'}
-              name={MAX_LENGTH}
+              label={
+                <Space>
+                  {`Additional ${maxLengthType}`}
+                  <Icon
+                    name="info"
+                    showTooltip
+                    title="Add additional training to the current trial."
+                  />
+                </Space>
+              }
+              name={ADDITIONAL_LENGTH}
               rules={[
                 {
                   required: false,
                   validator: (_rule, value) => {
                     let errorMessage = '';
-                    if (value < 0) errorMessage = 'Additional batches must be at least 0.';
+                    if (value < 0) errorMessage = `Additional ${maxLengthType} must be at least 0.`;
                     if (value && !Number.isInteger(value))
-                      errorMessage = 'Additional batches must be an integer.';
+                      errorMessage = `Additional ${maxLengthType} must be an integer.`;
                     return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
                   },
                 },
