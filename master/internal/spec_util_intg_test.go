@@ -30,98 +30,141 @@ func getMockResourceManager(poolName string) *mocks.ResourceManager {
 }
 
 func TestResolveResources(t *testing.T) {
-	expectedPoolName := "poolName"
-	api := &apiServer{
-		m: &Master{
-			rm:     getMockResourceManager(expectedPoolName),
-			config: config.DefaultConfig(),
+	tests := map[string]struct {
+		expectedPoolName string
+		resourcePool     string
+		slots            int
+		workspaceID      int
+	}{
+		"basicTestCase": {
+			expectedPoolName: "poolName",
+			resourcePool:     "/",
+			slots:            1,
+			workspaceID:      0,
 		},
 	}
-	resourcePool := "/"
-	slots := 1
-	workspaceID := 0
 
-	poolName, _, err := api.m.ResolveResources(resourcePool, slots, workspaceID)
+	for test_case, test_vars := range tests {
+		t.Run(test_case, func(t *testing.T) {
+			api := &apiServer{
+				m: &Master{
+					rm:     getMockResourceManager(test_vars.expectedPoolName),
+					config: config.DefaultConfig(),
+				},
+			}
+			poolName, _, err := api.m.ResolveResources(test_vars.resourcePool, test_vars.slots, test_vars.workspaceID)
 
-	require.NoError(t, err, "Error in ResolveResources()")
-	require.Equal(t, expectedPoolName, poolName)
+			require.NoError(t, err, "Error in ResolveResources()")
+			require.Equal(t, test_vars.expectedPoolName, poolName)
+		})
+	}
 }
 
 func TestFillTaskSpec(t *testing.T) {
-	poolName := "poolName"
-	rm := getMockResourceManager(poolName)
-	api := &apiServer{
-		m: &Master{
-			rm:       rm,
-			config:   config.DefaultConfig(),
-			taskSpec: &tasks.TaskSpec{},
+	tests := map[string]struct {
+		poolName       string
+		agentUserGroup *model.AgentUserGroup
+		userModel      *model.User
+		workDir        string
+	}{
+		"basicTestCase": {
+			poolName:       "poolName",
+			agentUserGroup: &model.AgentUserGroup{},
+			userModel:      &model.User{},
+			workDir:        "/",
 		},
 	}
-	workDir := "/"
-	rm.On("TaskContainerDefaults", poolName, api.m.config.TaskContainerDefaults).Return(model.TaskContainerDefaultsConfig{WorkDir: &workDir}, nil)
-	agentUserGroup := &model.AgentUserGroup{}
-	userModel := &model.User{}
-	expectedTaskSpec := tasks.TaskSpec{
-		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-			WorkDir: &workDir,
-		},
-		AgentUserGroup: agentUserGroup,
-		Owner:          userModel,
+	for test_case, test_vars := range tests {
+		t.Run(test_case, func(t *testing.T) {
+			rm := getMockResourceManager(test_vars.poolName)
+			api := &apiServer{
+				m: &Master{
+					rm:       rm,
+					config:   config.DefaultConfig(),
+					taskSpec: &tasks.TaskSpec{},
+				},
+			}
+			expectedTaskSpec := tasks.TaskSpec{
+				TaskContainerDefaults: model.TaskContainerDefaultsConfig{
+					WorkDir: &test_vars.workDir,
+				},
+				AgentUserGroup: test_vars.agentUserGroup,
+				Owner:          test_vars.userModel,
+			}
+			rm.On("TaskContainerDefaults", test_vars.poolName, api.m.config.TaskContainerDefaults).Return(model.TaskContainerDefaultsConfig{WorkDir: &test_vars.workDir}, nil)
+			taskSpec, err := api.m.fillTaskSpec(test_vars.poolName, test_vars.agentUserGroup, test_vars.userModel)
+			require.NoError(t, err, "Error in fillTaskSpec()")
+			require.Equal(t, expectedTaskSpec, taskSpec)
+		})
 	}
-	taskSpec, err := api.m.fillTaskSpec(poolName, agentUserGroup, userModel)
-	require.NoError(t, err, "Error in fillTaskSpec()")
-	require.Equal(t, expectedTaskSpec, taskSpec)
-
 }
 
 func TestFillTaskConfigPodSpec(t *testing.T) {
-	poolName := "poolName"
-	slots := 0
-
-	var resourcePoolDest *string
-	var resourceSlotsDest *int
-
-	cpu_spec := &k8sV1.Pod{
-		TypeMeta: metaV1.TypeMeta{Kind: "cpu"},
-	}
-	gpu_spec := &k8sV1.Pod{
-		TypeMeta: metaV1.TypeMeta{Kind: "gpu"},
-	}
 	taskSpec := tasks.TaskSpec{
 		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-			CPUPodSpec: cpu_spec,
-			GPUPodSpec: gpu_spec,
+			CPUPodSpec: &k8sV1.Pod{
+				TypeMeta: metaV1.TypeMeta{Kind: "cpu"},
+			},
+			GPUPodSpec: &k8sV1.Pod{
+				TypeMeta: metaV1.TypeMeta{Kind: "gpu"},
+			},
 		},
 	}
-	env := &model.Environment{
-		PodSpec: &k8sV1.Pod{},
+	tests := map[string]struct {
+		poolName            string
+		slots               int
+		taskSpec            tasks.TaskSpec
+		expectedPodSpecKind string
+	}{
+		"CPUPodSpec": {
+			poolName:            "poolName",
+			slots:               0,
+			taskSpec:            taskSpec,
+			expectedPodSpecKind: "cpu",
+		},
+		"GPUPodSpec": {
+			poolName:            "poolName",
+			slots:               2,
+			taskSpec:            taskSpec,
+			expectedPodSpecKind: "gpu",
+		},
 	}
-	fillTaskConfig(slots, taskSpec, env)
-	require.Equal(t, cpu_spec.TypeMeta.Kind, env.PodSpec.TypeMeta.Kind)
-	require.Equal(t, poolName, *resourcePoolDest)
-	require.Equal(t, slots, *resourceSlotsDest)
 
-	slots = 2
-	env = &model.Environment{
-		PodSpec: &k8sV1.Pod{},
+	for test_case, test_vars := range tests {
+		t.Run(test_case, func(t *testing.T) {
+			env := &model.Environment{
+				PodSpec: &k8sV1.Pod{},
+			}
+			fillTaskConfig(test_vars.slots, test_vars.taskSpec, env)
+			require.Equal(t, test_vars.expectedPodSpecKind, env.PodSpec.TypeMeta.Kind)
+		})
 	}
-	fillTaskConfig(slots, taskSpec, env)
-	require.Equal(t, gpu_spec.TypeMeta.Kind, env.PodSpec.TypeMeta.Kind)
 }
 
 func TestFillContextDir(t *testing.T) {
-	var configWorkDirDest *string
-	defaultWorkDir := "/"
-	contextDirectory := []*utilv1.File{{Content: []byte{1}}}
+	tests := map[string]struct {
+		defaultWorkDir   string
+		contextDirectory []*utilv1.File
+	}{
+		"basicTestCase": {
+			defaultWorkDir:   "/",
+			contextDirectory: []*utilv1.File{{Content: []byte{1}}},
+		},
+	}
+	for test_case, test_vars := range tests {
+		t.Run(test_case, func(t *testing.T) {
+			var configWorkDirDest *string
 
-	userFiles := filesToArchive(contextDirectory)
-	expectedBytes, err := archive.ToTarGz(userFiles)
-	require.NoError(t, err, "Error in ToTarGz() for TestFillContexxtDir")
+			userFiles := filesToArchive(test_vars.contextDirectory)
+			expectedBytes, err := archive.ToTarGz(userFiles)
+			require.NoError(t, err, "Error in ToTarGz() for TestFillContexxtDir")
 
-	var contextDirectoryBytes []byte
-	contextDirectoryBytes, err = fillContextDir(&configWorkDirDest, &defaultWorkDir, contextDirectory)
-	require.NoError(t, err, "Error in fillContextDir()")
-	require.Equal(t, expectedBytes, contextDirectoryBytes)
+			var contextDirectoryBytes []byte
+			contextDirectoryBytes, err = fillContextDir(&configWorkDirDest, &test_vars.defaultWorkDir, test_vars.contextDirectory)
+			require.NoError(t, err, "Error in fillContextDir()")
+			require.Equal(t, expectedBytes, contextDirectoryBytes)
+		})
+	}
 }
 
 func TestGetTaskSessionToken(t *testing.T) {
