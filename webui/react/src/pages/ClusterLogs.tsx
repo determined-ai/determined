@@ -1,6 +1,7 @@
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
 import React, { useCallback } from 'react';
 
+import useResize from 'hooks/useResize';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
@@ -10,6 +11,7 @@ import handleError from 'utils/error';
 import css from './ClusterLogs.module.scss';
 
 const ClusterLogs: React.FC = () => {
+  const pageSize = useResize();
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
     const offsetId = isNumber(config.offsetLog?.id) ? config.offsetLog?.id ?? 0 : 0;
@@ -35,6 +37,7 @@ const ClusterLogs: React.FC = () => {
     <div className={css.base}>
       <LogViewer
         decoder={jsonToClusterLog}
+        height={pageSize.height - 200}
         serverAddress={serverAddress}
         sortKey="id"
         onError={handleError}

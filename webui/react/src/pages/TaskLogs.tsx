@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
+import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { paths, serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -36,6 +37,7 @@ export const TaskLogsWrapper: React.FC = () => {
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const [searchParams] = useSearchParams();
+  const pageSize = useResize();
 
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
   const title = `${searchParams.has('id') ? `${searchParams.get('id')} ` : ''}Logs`;
@@ -159,6 +161,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       <LogViewer
         decoder={mapV1LogsResponse}
         handleCloseLogs={onCloseLogs}
+        height={pageSize.height - 120}
         serverAddress={serverAddress}
         title={logFilters}
         onError={handleError}

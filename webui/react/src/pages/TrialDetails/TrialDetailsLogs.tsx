@@ -7,6 +7,7 @@ import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useUI from 'components/ThemeProvider';
+import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -29,6 +30,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const confirm = useConfirm();
+  const pageSize = useResize();
   const canceler = useRef(new AbortController());
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
@@ -185,6 +187,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}
+          height={pageSize.height - 260}
           serverAddress={serverAddress}
           title={logFilters}
           onDownload={handleDownloadLogs}
