@@ -3,6 +3,7 @@ package model
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -191,7 +192,7 @@ func (e *ExternalSessions) Validate(claims *JWT) error {
 	d := time.Unix(claims.IssuedAt, 0)
 	v := e.Invalidations.GetInvalidatonTime(claims.UserID)
 	if d.Before(v) {
-		return jwt.ErrTokenExpired
+		return fmt.Errorf("%w since it has been invalidated", jwt.ErrTokenExpired)
 	}
 	return nil
 }
