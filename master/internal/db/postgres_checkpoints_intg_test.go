@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -305,4 +306,104 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 	}
 
 	require.NoError(t, MarkCheckpointsDeleted(ctx, checkpoints))
+}
+
+func TestPgDB_GroupCheckpointUUIDsByExperimentID(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	// Setup some fake data for us to work with.
+	expToCkptUUIDs := make(map[int][]uuid.UUID)
+	user := RequireMockUser(t, db)
+	for i := 0; i < 3; i++ {
+		exp := RequireMockExperiment(t, db, user)
+		_, tk := RequireMockTrial(t, db, exp)
+
+		var ids []uuid.UUID
+		for j := 0; j < 3; j++ {
+			id := uuid.New()
+			err := AddCheckpointMetadata(context.TODO(), &model.CheckpointV2{
+				UUID:   id,
+				TaskID: tk.TaskID,
+			})
+			require.NoError(t, err)
+			ids = append(ids, id)
+		}
+
+		expToCkptUUIDs[exp.ID] = ids
+	}
+
+	type testCase struct {
+		name     string
+		toDelete []uuid.UUID
+		want     map[int][]uuid.UUID
+		wantErr  bool
+	}
+
+	tests := []testCase{
+		{
+			name:     "empty is ok",
+			toDelete: []uuid.UUID{},
+			want:     make(map[int][]uuid.UUID),
+		},
+		{
+			// TODO: A missing checkpoint probably shouldn't be silently removed from the grouping.
+			name:     "missing checkpoint returns an error (but it doesn't, yet)",
+			toDelete: []uuid.UUID{uuid.New()},
+			want:     make(map[int][]uuid.UUID),
+		},
+	}
+
+	expID := maps.Keys(expToCkptUUIDs)[0]
+	ckptUUIDs := expToCkptUUIDs[expID]
+	tests = append(tests, testCase{
+		name:     "grouping checkpoints but they all belong to one experiment",
+		toDelete: expToCkptUUIDs[expID],
+		want:     map[int][]uuid.UUID{expID: ckptUUIDs},
+	})
+
+	tests = append(tests, testCase{
+		name:     "grouping checkpoints across many experiments",
+		toDelete: flatten(maps.Values(expToCkptUUIDs)),
+		want:     expToCkptUUIDs,
+	})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			groupings, err := db.GroupCheckpointUUIDsByExperimentID(tt.toDelete)
+			if tt.wantErr {
+				require.Error(t, err)
+			}
+			require.NoError(t, err)
+
+			// Unpack the response into a sane format---this API just isn't very usable.
+			got := make(map[int][]uuid.UUID)
+			for _, g := range groupings {
+				ckptStrs := strings.Split(g.CheckpointUUIDSStr, ",")
+				var ckpts []uuid.UUID
+				for _, ckptStr := range ckptStrs {
+					ckpt, err := uuid.Parse(ckptStr)
+					if err != nil {
+						require.NoError(t, err)
+					}
+					ckpts = append(ckpts, ckpt)
+				}
+				got[g.ExperimentID] = append(got[g.ExperimentID], ckpts...)
+			}
+
+			require.ElementsMatch(t, maps.Keys(tt.want), maps.Keys(got))
+			for wantID, wantCkpts := range tt.want {
+				require.ElementsMatch(t, wantCkpts, got[wantID])
+			}
+		})
+	}
+}
+
+func flatten[T any](in [][]T) []T {
+	var out []T
+	for _, i := range in {
+		out = append(out, i...)
+	}
+	return out
 }
