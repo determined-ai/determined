@@ -121,10 +121,10 @@ const ExperimentContinueModalComponent = ({
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
-  const [originalConfig, setOriginalConfig] = useState(upgradeConfig(experiment.configRaw));
+  const [originalConfig, setOriginalConfig] = useState(experiment.configRaw);
   const isReactivate = type === ContinueExperimentType.Reactivate;
 
-  useEffect(() => setOriginalConfig(upgradeConfig(experiment.configRaw)), [experiment]);
+  useEffect(() => setOriginalConfig(experiment.configRaw), [experiment]);
 
   const requiredFields = [EXPERIMENT_NAME, MAX_LENGTH];
 
@@ -204,10 +204,10 @@ const ExperimentContinueModalComponent = ({
       };
     });
     // avoid calling form.setFields inside setModalState:
-    const maxLengthType = getMaxLengthType(prev.config);
     if (modalState.isAdvancedMode && form) {
       try {
         const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
+        const maxLengthType = getMaxLengthType(newConfig);
         const isReactivate = modalState.type === ContinueExperimentType.Reactivate;
         const originalLength = maxLengthType
           ? originalConfig.searcher.max_length[maxLengthType]
@@ -354,6 +354,14 @@ const ExperimentContinueModalComponent = ({
       fullConfig = userConfig;
     }
 
+    if (isReactivate) {
+      const { workspace, project, ...restConfig } = fullConfig;
+      fullConfig = {
+        project: undefined,
+        workspace: undefined,
+        ...restConfig,
+      };
+    }
     const configString = isAdvancedMode ? yaml.dump(fullConfig) : getConfigFromForm(fullConfig);
     await submitExperiment(configString);
   };
