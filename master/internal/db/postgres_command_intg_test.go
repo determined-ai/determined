@@ -56,7 +56,7 @@ func TestIdentifyTask(t *testing.T) {
 	// Tensorboard.
 	exp0 := RequireMockExperiment(t, db, user)
 	t0, trialTask := RequireMockTrial(t, db, exp0)
-	t1, trialTask := RequireMockTrial(t, db, exp0)
+	t1, _ := RequireMockTrial(t, db, exp0)
 	exp1 := RequireMockExperiment(t, db, user)
 
 	expIDs := []int{exp0.ID, exp1.ID}
