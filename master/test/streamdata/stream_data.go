@@ -65,6 +65,7 @@ type Trial struct {
 	HParams       map[string]any `bun:"hparams"`
 	State         model.State    `bun:"state"`
 	StartTime     time.Time      `bun:"start_time"`
+	WorkspaceID   int            `bun:"-"`
 	Seq           int64          `bun:"seq"`
 }
 

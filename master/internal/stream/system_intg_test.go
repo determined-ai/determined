@@ -5,7 +5,6 @@ package stream
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/stream"
 	"github.com/determined-ai/determined/master/test/streamdata"
 )
 
@@ -33,12 +31,11 @@ func TestMockSocket(t *testing.T) {
 
 	// test WriteOutbound
 	socket := newMockSocket()
-	err := socket.WriteOutbound(&expectedMsg)
-	require.NoError(t, err)
+	socket.WriteOutbound(t, &expectedMsg)
 
 	// test ReadJSON
 	actualMsg := StartupMsg{}
-	err = socket.ReadJSON(&actualMsg)
+	err := socket.ReadJSON(&actualMsg)
 	require.NoError(t, err)
 	require.Equal(t, actualMsg.Known, expectedMsg.Known)
 	require.Equal(t, actualMsg.Subscribe, expectedMsg.Subscribe)
@@ -50,28 +47,21 @@ func TestMockSocket(t *testing.T) {
 	require.NoError(t, err)
 
 	// test read incoming
-	var data interface{}
-	err = socket.ReadIncoming(&data)
-	require.NoError(t, err)
-	dataStr, ok := data.(string)
-	require.True(t, ok)
-	require.Equal(t, "test", dataStr)
+	var data string
+	socket.ReadIncoming(t, &data)
+	require.Equal(t, "test", data)
 
 	// test ReadUntil
 	err = socket.Write("test")
 	require.NoError(t, err)
-	err = socket.Write(SyncMsg{SyncID: "1"})
+	err = socket.Write("final")
 	require.NoError(t, err)
-	var msgs []interface{}
-	socket.ReadUntil(t, "testing ReadUntil", &msgs, SyncMsg{SyncID: "1"})
+	var msgs []string
+	socket.ReadUntil(t, &msgs, "final")
 	require.NoError(t, err)
 	require.Equal(t, 2, len(msgs))
-	testStr, ok := msgs[0].(string)
-	require.True(t, ok)
-	require.Equal(t, "test", testStr)
-	syncMsg, ok := msgs[1].(SyncMsg)
-	require.True(t, ok)
-	require.Equal(t, SyncMsg{SyncID: "1"}, syncMsg)
+	require.Equal(t, "test", msgs[0])
+	require.Equal(t, "final", msgs[1])
 }
 
 // setupStreamTest creates and sets up all the entities needed for testing streaming updates.
@@ -93,16 +83,39 @@ func setupStreamTest(t *testing.T) (
 	return superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup
 }
 
-type startupTestCase[M stream.Msg] struct {
+type startupTestCase struct {
 	description       string
 	startupMsg        StartupMsg
-	expectedSync      SyncMsg
-	expectedUpserts   []M
+	expectedSync      string
+	expectedUpserts   []string
 	expectedDeletions []string
 }
 
+// basicStartupTest sends a startup message and validates the result against the test case.
+func basicStartupTest(t *testing.T, testCase startupTestCase, socket *mockSocket) {
+	// write startup message
+	socket.WriteOutbound(t, &testCase.startupMsg)
+
+	// read messages collected during startup + sync msg
+	var data []string
+	socket.ReadUntil(t, &data, testCase.expectedSync)
+	deletions, upserts, syncs := splitMsgs(t, data)
+	require.Len(t, syncs, 1)
+
+	// confirm these messages are the expected results
+	validateMsgs(
+		t,
+		syncs[0],
+		testCase.expectedSync,
+		upserts,
+		testCase.expectedUpserts,
+		deletions,
+		testCase.expectedDeletions,
+	)
+}
+
 func TestTrialStartup(t *testing.T) {
-	testCases := []startupTestCase[*TrialMsg]{
+	testCases := []startupTestCase{
 		{
 			description: "trial subscription with experiment id and known trials",
 			startupMsg: StartupMsg{
@@ -117,9 +130,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      SyncMsg{SyncID: "1"},
-			expectedUpserts:   []*TrialMsg{},
-			expectedDeletions: []string{""},
+			expectedSync:      "key: sync_msg, sync_id: 1",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: trials_deleted, deleted: "},
 		},
 		{
 			description: "trial subscription with experiment id and incomplete known trials",
@@ -135,9 +148,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      SyncMsg{SyncID: "2"},
-			expectedUpserts:   []*TrialMsg{{ID: 3, ExperimentID: 1, State: model.ErrorState}},
-			expectedDeletions: []string{"4"},
+			expectedSync:      "key: sync_msg, sync_id: 2",
+			expectedUpserts:   []string{"key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with trial ids and known trials",
@@ -153,9 +166,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      SyncMsg{SyncID: "3"},
-			expectedUpserts:   []*TrialMsg{},
-			expectedDeletions: []string{"4"},
+			expectedSync:      "key: sync_msg, sync_id: 3",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with trial ids and incomplete known trials",
@@ -171,9 +184,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      SyncMsg{SyncID: "4"},
-			expectedUpserts:   []*TrialMsg{{ID: 3, ExperimentID: 1, State: model.ErrorState}},
-			expectedDeletions: []string{"4"},
+			expectedSync:      "key: sync_msg, sync_id: 4",
+			expectedUpserts:   []string{"key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with divergent known set",
@@ -188,137 +201,121 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      SyncMsg{SyncID: "5"},
-			expectedUpserts:   []*TrialMsg{{ID: 3, ExperimentID: 1, State: model.ErrorState}},
-			expectedDeletions: []string{"1-2"},
+			expectedSync:      "key: sync_msg, sync_id: 5",
+			expectedUpserts:   []string{"key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 1-2"},
 		},
 	}
 
+	// setup test environment
 	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
-	defer dbCleanup()
+	t.Cleanup(dbCleanup)
 	errgrp := errgroupx.WithContext(ctx)
-
 	trials := streamdata.GenerateStreamTrials()
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
 	// start publisher set and connect as testUser
 	errgrp.Go(ps.Start)
 	errgrp.Go(func(ctx context.Context) error {
-		return ps.entrypoint(superCtx, ctx, testUser, socket, simpleUpsert)
+		return ps.entrypoint(superCtx, ctx, testUser, socket, testPrepareFunc)
 	})
 
-	// handles each provided test case
-	testBody := func(ctx context.Context, testCase startupTestCase[*TrialMsg]) error {
-		// write startup message
-		if err := socket.WriteOutbound(&testCase.startupMsg); err != nil {
-			return fmt.Errorf("%s: %s", testCase.description, err)
-		}
-
-		// read messages collected during startup + sync msg
-		var data []interface{}
-		socket.ReadUntil(t, testCase.description, &data, testCase.expectedSync)
-		deletions, upserts, syncs := splitMsgs[*TrialMsg](t, testCase.description, data)
-		if len(syncs) != 1 {
-			return fmt.Errorf("%s: did not receive expected number of upsert messages: expected %d, actual: %d",
-				testCase.description,
-				1,
-				len(syncs),
-			)
-		}
-
-		// confirm these messages are the expected results
-		validateMsgs(
-			t,
-			testCase.description,
-			syncs[0],
-			testCase.expectedSync,
-			upserts,
-			testCase.expectedUpserts,
-			deletions,
-			testCase.expectedDeletions,
-		)
-		return nil
-	}
-
-	errgrp.Go(func(ctx context.Context) error {
+	func() {
 		// clean up socket & errgroup
 		defer func() {
 			socket.Close()
 			errgrp.Cancel()
 		}()
 
+	TestLoop:
 		for i := range testCases {
-			err := testBody(ctx, testCases[i])
-			if err != nil {
-				return err
+			select {
+			case <-ctx.Done():
+				break TestLoop
+			default:
+				t.Run(testCases[i].description, func(t *testing.T) {
+					basicStartupTest(t, testCases[i], socket)
+				})
 			}
 		}
-		return nil
-	},
-	)
+	}()
+
 	require.NoError(t, errgrp.Wait())
 }
 
-type updateTestCase[M stream.Msg] struct {
-	startupCase       startupTestCase[M]
+type updateTestCase struct {
+	startupCase       startupTestCase
 	description       string
 	queries           []streamdata.ExecutableQuery
-	expectedSync      SyncMsg
-	expectedUpserts   []M
+	expectedUpserts   []string
 	expectedDeletions []string
-	terminationMsg    interface{}
+	terminationMsg    string
+}
+
+// basicUpdateTest runs startup case, executed provided queries, and validates the results.
+func basicUpdateTest(
+	ctx context.Context,
+	t *testing.T,
+	testCase updateTestCase,
+	socket *mockSocket,
+) {
+	t.Run(testCase.startupCase.description, func(t *testing.T) {
+		basicStartupTest(t, testCase.startupCase, socket)
+	})
+	// execute provided queries on the db
+	for i := range testCase.queries {
+		_, err := testCase.queries[i].Exec(ctx)
+		if err != nil {
+			t.Errorf("%v failed to execute", testCase.queries)
+		}
+	}
+
+	// read until we received the expected message
+	data := []string{}
+	socket.ReadUntil(t, &data, testCase.terminationMsg)
+	deletions, upserts, _ := splitMsgs(t, data)
+
+	// validate messages collected at startup
+	validateMsgs(
+		t, "", "", // no sync message expected
+		upserts,
+		testCase.expectedUpserts,
+		deletions,
+		testCase.expectedDeletions,
+	)
 }
 
 func TestTrialUpdate(t *testing.T) {
 	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
-	defer dbCleanup()
-	errgrp := errgroupx.WithContext(ctx)
+	t.Cleanup(dbCleanup)
 
-	baseStartupCase := startupTestCase[*TrialMsg]{
-		startupMsg: StartupMsg{
-			SyncID: "1",
-			Known: KnownKeySet{
-				Trials: "1,2,3",
-			},
-			Subscribe: SubscriptionSpecSet{
-				Trials: &TrialSubscriptionSpec{
-					ExperimentIds: []int{1},
-					Since:         0,
-				},
-			},
-		},
-		expectedSync:      SyncMsg{SyncID: "1"},
-		expectedUpserts:   []*TrialMsg{},
-		expectedDeletions: []string{""},
-	}
-
-	canceledTrial := streamdata.Trial{
-		ID:           1,
-		ExperimentID: 1,
-		State:        model.CanceledState,
-	}
-
-	testCases := []updateTestCase[*TrialMsg]{
+	testCases := []updateTestCase{
 		{
-			startupCase:  baseStartupCase,
-			description:  "update trial while subscribed to its events",
-			queries:      []streamdata.ExecutableQuery{streamdata.GetUpdateTrialQuery(canceledTrial)},
-			expectedSync: SyncMsg{SyncID: "1"},
-			expectedUpserts: []*TrialMsg{
-				{
-					ID:           canceledTrial.ID,
-					ExperimentID: canceledTrial.ExperimentID,
-					State:        canceledTrial.State,
+			startupCase: startupTestCase{
+				description: "startup case for: update trial while subscribed to its events",
+				startupMsg: StartupMsg{
+					SyncID: "1",
+					Known: KnownKeySet{
+						Trials: "1,2,3",
+					},
+					Subscribe: SubscriptionSpecSet{
+						Trials: &TrialSubscriptionSpec{
+							ExperimentIds: []int{1},
+							Since:         0,
+						},
+					},
 				},
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: trials_deleted, deleted: "},
 			},
-			expectedDeletions: []string{},
-			terminationMsg: stream.UpsertMsg{
-				Msg: &TrialMsg{
-					ID:           canceledTrial.ID,
-					ExperimentID: canceledTrial.ExperimentID,
-					State:        canceledTrial.State,
-				},
+			description: "update trial while subscribed to its events",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewRaw("UPDATE trials SET state = 'CANCELED' WHERE id = 1"),
 			},
+			expectedUpserts:   []string{"key: trial, trial_id: 1, state: CANCELED, experiment_id: 1, workspace_id: 0"},
+			expectedDeletions: []string{}, // we don't expect any deletion messages after startup
+			terminationMsg:    "key: trial, trial_id: 1, state: CANCELED, experiment_id: 1, workspace_id: 0",
 		},
 	}
 
@@ -327,84 +324,28 @@ func TestTrialUpdate(t *testing.T) {
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
 	// start publisher set and connect as testUser
+	errgrp := errgroupx.WithContext(ctx)
 	errgrp.Go(ps.Start)
 	errgrp.Go(func(ctx context.Context) error {
-		return ps.entrypoint(superCtx, ctx, testUser, socket, simpleUpsert)
+		return ps.entrypoint(superCtx, ctx, testUser, socket, testPrepareFunc)
 	})
 
-	testBody := func(ctx context.Context, testCase updateTestCase[*TrialMsg]) error {
-		// write startup message
-		if err := socket.WriteOutbound(&testCase.startupCase.startupMsg); err != nil {
-			return err
-		}
+	func() {
+		// clean up socket & errgroup
+		defer func() {
+			socket.Close()
+			errgrp.Cancel()
+		}()
 
-		// read messages collected during startup + sync msg
-		var data []interface{}
-		socket.ReadUntil(t, testCase.description, &data, testCase.startupCase.expectedSync)
-		deletions, upserts, syncs := splitMsgs[*TrialMsg](t, testCase.description, data)
-		if len(syncs) != 1 {
-			return fmt.Errorf("%s: did not receive expected number of sync messages: expected %d, actual: %d",
-				testCase.description,
-				1,
-				len(syncs),
+		for i := range testCases {
+			t.Run(
+				testCases[i].description,
+				func(t *testing.T) {
+					basicUpdateTest(ctx, t, testCases[i], socket)
+				},
 			)
 		}
+	}()
 
-		// validate messages collected at startup
-		validateMsgs[*TrialMsg](
-			t,
-			testCase.description,
-			syncs[0],
-			testCase.startupCase.expectedSync,
-			upserts,
-			testCase.startupCase.expectedUpserts,
-			deletions,
-			testCase.startupCase.expectedDeletions,
-		)
-
-		// execute provided queries on the db
-		for i := range testCase.queries {
-			_, err := testCase.queries[i].Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("%s: %v failed to execute", testCase.description, testCase.queries)
-			}
-		}
-
-		// read until we received the expected message
-		data = []interface{}{}
-		socket.ReadUntil(t, testCase.description, &data, testCase.terminationMsg)
-		deletions, upserts, _ = splitMsgs[*TrialMsg](t, testCase.description, data)
-
-		// validate messages collected at startup
-		validateMsgs[*TrialMsg](
-			t,
-			testCase.description,
-			syncs[0],
-			testCase.expectedSync,
-			upserts,
-			testCase.expectedUpserts,
-			deletions,
-			testCase.expectedDeletions,
-		)
-		return nil
-	}
-
-	errgrp.Go(
-		func(ctx context.Context) error {
-			// clean up socket & errgroup
-			defer func() {
-				socket.Close()
-				errgrp.Cancel()
-			}()
-
-			for i := range testCases {
-				err := testBody(ctx, testCases[i])
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-	)
 	require.NoError(t, errgrp.Wait())
 }

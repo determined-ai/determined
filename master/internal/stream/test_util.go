@@ -2,7 +2,9 @@ package stream
 
 import (
 	"fmt"
-	"reflect"
+	"regexp"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -12,10 +14,47 @@ import (
 
 const (
 	channelBufferSize = 10
+	syncKey           = "sync_msg"
 )
 
-// simpleUpsert is for testing and just returns the preparable message that the streamer sends.
-func simpleUpsert(i stream.PreparableMessage) interface{} {
+// testPrepareFunc returns a string representation of known messages;
+// otherwise, returns the preparable message that the streamer sends.
+func testPrepareFunc(i stream.PreparableMessage) interface{} {
+	switch msg := i.(type) {
+	case stream.UpsertMsg:
+		switch typedMsg := msg.Msg.(type) {
+		case *TrialMsg:
+			return fmt.Sprintf(
+				"key: %s, trial_id: %d, state: %s, experiment_id: %d, workspace_id: %d",
+				TrialsUpsertKey,
+				typedMsg.ID,
+				typedMsg.State,
+				typedMsg.ExperimentID,
+				typedMsg.WorkspaceID,
+			)
+		case *MetricMsg:
+			return fmt.Sprintf(
+				"key: %s, metric_id: %d, archieved: %t, experiment_id: %d, workspace_id: %d",
+				MetricsUpsertKey,
+				typedMsg.ID,
+				typedMsg.Archived,
+				typedMsg.ExperimentID,
+				typedMsg.WorkspaceID,
+			)
+			// case *ExperimentMsg:
+			// 	return fmt.Sprintf(
+			// 		"%d: %s %d %d",
+			// 		typedMsg.ID,
+			// 		typedMsg.State,
+			// 		typedMsg.ProjectID,
+			// 		typedMsg.WorkspaceID,
+			// 	)
+		}
+	case stream.DeleteMsg:
+		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
+	case SyncMsg:
+		return fmt.Sprintf("key: %s, sync_id: %s", syncKey, msg.SyncID)
+	}
 	return i
 }
 
@@ -36,12 +75,12 @@ func newMockSocket() *mockSocket {
 }
 
 // WriteOut synchrounously appends the StartupMsg to outbound messages.
-func (s *mockSocket) WriteOutbound(startup *StartupMsg) error {
+func (s *mockSocket) WriteOutbound(t *testing.T, startup *StartupMsg) {
 	select {
 	case <-s.closed:
-		return &websocket.CloseError{Code: websocket.CloseAbnormalClosure}
+		t.Error(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
 	case s.outbound <- startup:
-		return nil
+		break
 	}
 }
 
@@ -72,46 +111,34 @@ func (s *mockSocket) Write(data interface{}) error {
 }
 
 // ReadData synchrounously reads an inbound message off the mockSocket.
-func (s *mockSocket) ReadIncoming(data *interface{}) error {
+func (s *mockSocket) ReadIncoming(t *testing.T, data *string) {
 	select {
 	case <-s.closed:
-		return &websocket.CloseError{Code: websocket.CloseAbnormalClosure}
+		t.Error(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
 	case msg := <-s.inbound:
-		*data = msg
-		return nil
+		stringMsg, ok := msg.(string)
+		if !ok {
+			t.Errorf("read unexpected message, likely due to type not being added to testPrepareFunc: %#v", msg)
+		}
+		*data = stringMsg
 	}
 }
 
 // ReadUntil reads until the terminationMsg has been read.
 func (s *mockSocket) ReadUntil(
 	t *testing.T,
-	testCaseDescription string, // XXX (corban): we should use subtests instead, this won't be necessary
-	data *[]interface{},
-	terminationMsg interface{},
+	data *[]string,
+	terminationMsg string,
 ) {
-	var msg interface{}
-ReadLoop:
+	msg := ""
 	for {
-		if reflect.TypeOf(msg) == reflect.TypeOf(terminationMsg) {
-			switch typedMsg := msg.(type) {
-			case stream.UpsertMsg:
-				if err := validateUpsertMsg(typedMsg.Msg, terminationMsg.(stream.UpsertMsg).Msg); err == nil {
-					break ReadLoop
-				}
-			case string:
-				if typedMsg == terminationMsg.(string) {
-					break ReadLoop
-				}
-			case SyncMsg:
-				if typedMsg.SyncID == terminationMsg.(SyncMsg).SyncID {
-					break ReadLoop
-				}
-			}
-		}
-		if err := s.ReadIncoming(&msg); err != nil {
-			t.Errorf("%s: %s", testCaseDescription, err)
-		}
+		s.ReadIncoming(t, &msg)
 		*data = append(*data, msg)
+		if msg == terminationMsg {
+			break
+		} else {
+			t.Logf("ReadUntil()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, terminationMsg)
+		}
 	}
 }
 
@@ -120,135 +147,120 @@ func (s *mockSocket) Close() {
 	close(s.closed)
 }
 
-func splitMsgs[M stream.Msg](
+func splitMsgs(
 	t *testing.T,
-	testCaseDescription string,
-	messages []interface{},
+	messages []string,
 ) (
 	deletions []string,
-	upserts []stream.Msg,
-	syncs []SyncMsg,
+	upserts []string,
+	syncs []string,
 ) {
-	typeHolder := new(M)
+	upsertKeys := []string{
+		TrialsUpsertKey,
+		MetricsUpsertKey,
+		// ExperimentUpsertKey,
+	}
+	deleteKeys := []string{
+		TrialsDeleteKey,
+		MetricsDeleteKey,
+		// ExperimentDeleteKey,
+	}
+
+	for i := range upsertKeys {
+		upsertKeys[i] = "^key: " + upsertKeys[i]
+	}
+
+	for i := range deleteKeys {
+		deleteKeys[i] = "^key: " + deleteKeys[i]
+	}
+
+	upsertPattern := regexp.MustCompile(
+		strings.Join(upsertKeys, "|"),
+	)
+	deletePattern := regexp.MustCompile(
+		strings.Join(deleteKeys, "|"),
+	)
+	syncPattern := regexp.MustCompile("^key: " + syncKey)
+
 	for _, msg := range messages {
-		switch typedMsg := msg.(type) {
-		case stream.DeleteMsg:
-			deletions = append(deletions, typedMsg.Deleted)
-		case stream.UpsertMsg:
-			upsertM, ok := typedMsg.Msg.(M)
-			if !ok {
-				t.Errorf("%s: expected %T, but received %T", testCaseDescription, typeHolder, typedMsg.Msg)
-			}
-			upserts = append(upserts, upsertM)
-		case SyncMsg:
-			syncs = append(syncs, typedMsg)
+		switch {
+		case deletePattern.MatchString(msg):
+			deletions = append(deletions, msg)
+		case upsertPattern.MatchString(msg):
+			upserts = append(upserts, msg)
+		case syncPattern.MatchString(msg):
+			syncs = append(syncs, msg)
 		default:
-			t.Errorf("%s: expected a string or %T, but received %T",
-				testCaseDescription,
-				typeHolder,
-				reflect.TypeOf(msg).Name(),
-			)
+			t.Errorf("unknown message type: %q", msg)
 		}
 	}
 	return deletions, upserts, syncs
 }
 
-func validateMsgs[M stream.Msg](
+func validateMsgs(
 	t *testing.T,
-	testCaseDescription string,
-	sync SyncMsg,
-	expectedSync SyncMsg,
-	upserts []stream.Msg,
-	expectedUpserts []M,
+	sync string,
+	expectedSync string,
+	upserts []string,
+	expectedUpserts []string,
 	deletions []string,
 	expectedDeletions []string,
 ) {
+	// sort expected & actual messages
+	sort.Slice(upserts, func(i, j int) bool {
+		return upserts[i] < upserts[j]
+	})
+	sort.Slice(expectedUpserts, func(i, j int) bool {
+		return expectedUpserts[i] < expectedUpserts[j]
+	})
+	sort.Slice(expectedDeletions, func(i, j int) bool {
+		return expectedUpserts[i] < expectedUpserts[j]
+	})
+	sort.Slice(deletions, func(i, j int) bool {
+		return deletions[i] < deletions[j]
+	})
+
 	switch {
 	// check if we received the correct number of trial messages
 	case len(upserts) != len(expectedUpserts):
 		t.Errorf(
-			"%s: did not receive expected number of upsert messages: expected %d, actual: %d",
-			testCaseDescription,
+			"did not receive expected number of upsert messages:\n\texpected %d\n\tactual: %d",
 			len(expectedUpserts),
 			len(upserts),
 		)
 	// check if we received the correct number of deletion messages
 	case len(deletions) != len(expectedDeletions):
 		t.Errorf(
-			"%s: did not receive expected number of deletion messages: expected %v, actual: %v",
-			testCaseDescription,
+			"did not receive expected number of deletion messages:\n\texpected %v\n\tactual: %v",
 			len(expectedDeletions),
 			len(deletions),
 		)
 	// check if we receieved the correct SyncMsg
-	case sync.SyncID != expectedSync.SyncID:
+	case sync != expectedSync:
 		t.Errorf(
-			"%s: did not receive expected sync message: expected: %v, actual: %v",
-			testCaseDescription,
+			"did not receive expected sync message:\n\texpected: %#v\n\tactual: %v",
 			expectedSync,
 			sync,
 		)
 	// check if content of messages is correct
 	default:
-		// XXX: this expects messages to be sent in a deterministic order, is this actually enforced?
-		// should msgs be sorted then?
 		for i := range upserts {
-			if err := validateUpsertMsg(upserts[i], expectedUpserts[i]); err != nil {
-				t.Errorf("%s: %s", testCaseDescription, err.Error())
-			}
-		}
-		// XXX: this expects messages to be sent in a deterministic order, is this actually enforced?
-		// should deletions be sorted then?
-		for i := range deletions {
-			if deletions[i] != expectedDeletions[i] {
+			if upserts[i] != expectedUpserts[i] {
 				t.Errorf(
-					"%s: did not receive expected deletion messages: expected: %v, actual: %v",
-					testCaseDescription,
-					expectedDeletions,
-					deletions,
+					"did not received unxpected upsert message:\n\texpected: %#v\n\tactual: %q",
+					expectedUpserts,
+					upserts[i],
 				)
 			}
 		}
-	}
-}
-
-func validateUpsertMsg(upsert stream.Msg, expectedUpsert stream.Msg) error {
-	switch msg := upsert.(type) {
-	case *TrialMsg:
-		expectedMsg := expectedUpsert.(*TrialMsg)
-		// XXX (corban): improve the completeness of this validation.
-		// creating a `testString()` for each of for these upsert messages would be a good idea
-		if msg.ID != expectedMsg.ID || msg.ExperimentID != expectedMsg.ExperimentID || msg.State != expectedMsg.State {
-			return fmt.Errorf(
-				"did not receive expected trial message: expected: %v, actual: %v",
-				expectedMsg,
-				msg,
-			)
+		for i := range deletions {
+			if deletions[i] != expectedDeletions[i] {
+				t.Errorf(
+					"did not received unxpected deletion message:\n\texpected: %#v\n\tactual: %q",
+					expectedDeletions,
+					deletions[i],
+				)
+			}
 		}
-		return nil
-	case *MetricMsg:
-		expectedMsg := expectedUpsert.(*MetricMsg)
-		// XXX (corban): improve the completeness of this validation.
-		if msg.ID != expectedMsg.ID || msg.ExperimentID != expectedMsg.ExperimentID {
-			return fmt.Errorf(
-				"did not receive expected metric message: expected: %v, actual: %v",
-				expectedMsg,
-				msg,
-			)
-		}
-		return nil
-	// case *ExperimentMsg:
-	// 	msg := upsert.(*ExperimentMsg)
-	// 	expectedMsg := expectedUpsert.(*ExperimentMsg)
-	// 	if msg.ID != expectedMsg.ID || msg.WorkspaceID != expectedMsg.WorkspaceID {
-	// 		return fmt.Errorf(
-	//			"did not receive expected metric message: expected %v, actual: %v",
-	//			expectedMsg,
-	//			msg,
-	// 		)
-	// 	}
-	// 	return nil
-	default:
-		return fmt.Errorf("upsert msg is not a valid type: %v", upsert)
 	}
 }
