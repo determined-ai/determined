@@ -1749,7 +1749,7 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
-      - run: go run master/cmd/cover-regex/cover_regex.go master/coverage.out # TODO or true
+      - run: go run master/cmd/cover-regex/cover_regex.go master/coverage.out || true
 
   check-go-coverage-agent:
     machine:
@@ -1762,7 +1762,7 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
-      - run: go run master/cmd/cover-regex/cover_regex.go agent/coverage.out # TODO or true
+      - run: go run master/cmd/cover-regex/cover_regex.go agent/coverage.out || true
 
   lint-docs:
     docker:

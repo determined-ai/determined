@@ -103,11 +103,11 @@ func doLinter(profile string) error {
 	fmt.Println("=====================================")
 
 	if shouldFail {
-		fmt.Println("FAILED exiting with 1")
+		fmt.Println("FAILED")
 		os.Exit(1)
 	} else {
-		fmt.Println("PASSED exiting with 0")
-		os.Exit(1)
+		fmt.Println("PASSED")
+		os.Exit(0)
 	}
 
 	return nil
