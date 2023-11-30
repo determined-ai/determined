@@ -130,9 +130,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      "sync_msg: 1",
+			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"trials_deleted: "},
+			expectedDeletions: []string{"key: trials_deleted, deleted: "},
 		},
 		{
 			description: "trial subscription with experiment id and incomplete known trials",
@@ -148,9 +148,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      "sync_msg: 2",
-			expectedUpserts:   []string{"trial (3): ERROR 1 1"},
-			expectedDeletions: []string{"trials_deleted: 4"},
+			expectedSync:      "key: sync_msg, sync_id: 2",
+			expectedUpserts:   []string{"key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with trial ids and known trials",
@@ -166,9 +166,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      "sync_msg: 3",
+			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"trials_deleted: 4"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with trial ids and incomplete known trials",
@@ -184,9 +184,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      "sync_msg: 4",
-			expectedUpserts:   []string{"trial (3): ERROR 1 1"},
-			expectedDeletions: []string{"trials_deleted: 4"},
+			expectedSync:      "key: sync_msg, sync_id: 4",
+			expectedUpserts:   []string{"key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with divergent known set",
@@ -201,9 +201,9 @@ func TestTrialStartup(t *testing.T) {
 					},
 				},
 			},
-			expectedSync:      "sync_msg: 5",
-			expectedUpserts:   []string{"trial (3): ERROR 1 1"},
-			expectedDeletions: []string{"trials_deleted: 1-2"},
+			expectedSync:      "key: sync_msg, sync_id: 5",
+			expectedUpserts:   []string{"key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 1-2"},
 		},
 	}
 
@@ -259,8 +259,9 @@ func basicUpdateTest(
 	testCase updateTestCase,
 	socket *mockSocket,
 ) {
-	basicStartupTest(t, testCase.startupCase, socket)
-
+	t.Run(testCase.startupCase.description, func(t *testing.T) {
+		basicStartupTest(t, testCase.startupCase, socket)
+	})
 	// execute provided queries on the db
 	for i := range testCase.queries {
 		_, err := testCase.queries[i].Exec(ctx)
@@ -291,6 +292,7 @@ func TestTrialUpdate(t *testing.T) {
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
+				description: "startup case for: update trial while subscribed to its events",
 				startupMsg: StartupMsg{
 					SyncID: "1",
 					Known: KnownKeySet{
@@ -303,17 +305,17 @@ func TestTrialUpdate(t *testing.T) {
 						},
 					},
 				},
-				expectedSync:      "sync_msg: 1",
+				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
-				expectedDeletions: []string{"trials_deleted: "},
+				expectedDeletions: []string{"key: trials_deleted, deleted: "},
 			},
 			description: "update trial while subscribed to its events",
 			queries: []streamdata.ExecutableQuery{
 				db.Bun().NewRaw("UPDATE trials SET state = 'CANCELED' WHERE id = 1"),
 			},
-			expectedUpserts:   []string{"trial (1): CANCELED 1 0"},
+			expectedUpserts:   []string{"key: trial, trial_id: 1, state: CANCELED, experiment_id: 1, workspace_id: 0"},
 			expectedDeletions: []string{}, // we don't expect any deletion messages after startup
-			terminationMsg:    "trial (1): CANCELED 1 0",
+			terminationMsg:    "key: trial, trial_id: 1, state: CANCELED, experiment_id: 1, workspace_id: 0",
 		},
 	}
 

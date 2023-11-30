@@ -3,6 +3,7 @@ package stream
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 
@@ -24,7 +25,7 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 		switch typedMsg := msg.Msg.(type) {
 		case *TrialMsg:
 			return fmt.Sprintf(
-				"%s (%d): %s %d %d",
+				"key: %s, trial_id: %d, state: %s, experiment_id: %d, workspace_id: %d",
 				TrialsUpsertKey,
 				typedMsg.ID,
 				typedMsg.State,
@@ -33,7 +34,7 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 			)
 		case *MetricMsg:
 			return fmt.Sprintf(
-				"%s (%d): %t %d %d",
+				"key: %s, metric_id: %d, archieved: %t, experiment_id: %d, workspace_id: %d",
 				MetricsUpsertKey,
 				typedMsg.ID,
 				typedMsg.Archived,
@@ -50,9 +51,9 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 			// 	)
 		}
 	case stream.DeleteMsg:
-		return fmt.Sprintf("%s: %s", msg.Key, msg.Deleted)
+		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
 	case SyncMsg:
-		return fmt.Sprintf("%s: %s", syncKey, msg.SyncID)
+		return fmt.Sprintf("key: %s, sync_id: %s", syncKey, msg.SyncID)
 	}
 	return i
 }
@@ -117,7 +118,7 @@ func (s *mockSocket) ReadIncoming(t *testing.T, data *string) {
 	case msg := <-s.inbound:
 		stringMsg, ok := msg.(string)
 		if !ok {
-			t.Errorf("read unexpected message, likely due to type not being added to testPrepareFunc: %v", msg)
+			t.Errorf("read unexpected message, likely due to type not being added to testPrepareFunc: %#v", msg)
 		}
 		*data = stringMsg
 	}
@@ -135,6 +136,8 @@ func (s *mockSocket) ReadUntil(
 		*data = append(*data, msg)
 		if msg == terminationMsg {
 			break
+		} else {
+			t.Logf("ReadUntil()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, terminationMsg)
 		}
 	}
 }
@@ -164,11 +167,11 @@ func splitMsgs(
 	}
 
 	for i := range upsertKeys {
-		upsertKeys[i] = "^" + upsertKeys[i]
+		upsertKeys[i] = "^key: " + upsertKeys[i]
 	}
 
 	for i := range deleteKeys {
-		deleteKeys[i] = "^" + deleteKeys[i]
+		deleteKeys[i] = "^key: " + deleteKeys[i]
 	}
 
 	upsertPattern := regexp.MustCompile(
@@ -177,7 +180,7 @@ func splitMsgs(
 	deletePattern := regexp.MustCompile(
 		strings.Join(deleteKeys, "|"),
 	)
-	syncPattern := regexp.MustCompile("^" + syncKey)
+	syncPattern := regexp.MustCompile("^key: " + syncKey)
 
 	for _, msg := range messages {
 		switch {
@@ -188,18 +191,10 @@ func splitMsgs(
 		case syncPattern.MatchString(msg):
 			syncs = append(syncs, msg)
 		default:
-			t.Errorf("unknown message type: %s", msg)
+			t.Errorf("unknown message type: %q", msg)
 		}
 	}
 	return deletions, upserts, syncs
-}
-
-func listToSet(l []string) map[string]struct{} {
-	set := make(map[string]struct{}, len(l))
-	for _, val := range l {
-		set[val] = struct{}{}
-	}
-	return set
 }
 
 func validateMsgs(
@@ -211,8 +206,19 @@ func validateMsgs(
 	deletions []string,
 	expectedDeletions []string,
 ) {
-	expectedUpsertSet := listToSet(expectedUpserts)
-	expectedDeletionSet := listToSet(expectedDeletions)
+	// sort expected & actual messages
+	sort.Slice(upserts, func(i, j int) bool {
+		return upserts[i] < upserts[j]
+	})
+	sort.Slice(expectedUpserts, func(i, j int) bool {
+		return expectedUpserts[i] < expectedUpserts[j]
+	})
+	sort.Slice(expectedDeletions, func(i, j int) bool {
+		return expectedUpserts[i] < expectedUpserts[j]
+	})
+	sort.Slice(deletions, func(i, j int) bool {
+		return deletions[i] < deletions[j]
+	})
 
 	switch {
 	// check if we received the correct number of trial messages
@@ -232,25 +238,25 @@ func validateMsgs(
 	// check if we receieved the correct SyncMsg
 	case sync != expectedSync:
 		t.Errorf(
-			"did not receive expected sync message:\n\texpected: %v\n\tactual: %v",
+			"did not receive expected sync message:\n\texpected: %#v\n\tactual: %v",
 			expectedSync,
 			sync,
 		)
 	// check if content of messages is correct
 	default:
 		for i := range upserts {
-			if _, ok := expectedUpsertSet[upserts[i]]; !ok {
+			if upserts[i] != expectedUpserts[i] {
 				t.Errorf(
-					"did not received unxpected upsert message:\n\texpected: %v\n\tactual: %v",
+					"did not received unxpected upsert message:\n\texpected: %#v\n\tactual: %q",
 					expectedUpserts,
 					upserts[i],
 				)
 			}
 		}
 		for i := range deletions {
-			if _, ok := expectedDeletionSet[deletions[i]]; !ok {
+			if deletions[i] != expectedDeletions[i] {
 				t.Errorf(
-					"did not received unxpected deletion message:\n\texpected: %s\n\tactual: %s",
+					"did not received unxpected deletion message:\n\texpected: %#v\n\tactual: %q",
 					expectedDeletions,
 					deletions[i],
 				)
