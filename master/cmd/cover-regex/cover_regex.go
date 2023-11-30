@@ -81,7 +81,7 @@ func doLinter(profile string) error {
 
 	fmt.Println("=====================================")
 	fmt.Println("Summaries")
-	fmt.Println("=====================================\n")
+	fmt.Print("=====================================\n\n")
 
 	shouldFail := false
 	for _, r := range regexWithInfos {
