@@ -7,7 +7,7 @@ import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,

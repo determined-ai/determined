@@ -17,7 +17,7 @@ import {
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
-import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
+import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';

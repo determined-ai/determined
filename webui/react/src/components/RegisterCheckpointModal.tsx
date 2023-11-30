@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
@@ -19,7 +18,7 @@ import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 import { pluralizer } from 'utils/string';
 
-import css from './useModalCheckpointRegister.module.scss';
+import css from './RegisterCheckpointModal.module.scss';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[]) => void;
@@ -56,35 +55,23 @@ const INITIAL_MODAL_STATE = {
   visible: false,
 };
 
-const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
-  const [canceler] = useState(new AbortController());
-  const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
-  const prevModalState = usePrevious(modalState, undefined);
+const CheckpointModalComponent: React.FC<ModalProps> = () => {
   const { openToast } = useToast();
   const { canCreateModelVersion } = usePermissions();
-
-  const handleClose = useCallback(
-    (reason?: ModalCloseReason) => {
-      setModalState(INITIAL_MODAL_STATE);
-      onClose?.(reason);
-    },
-    [onClose],
-  );
-
-  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleClose });
+  const models = useState<Loadable<ModelItem[]>>(NotLoaded);
 
   const selectedModelNumVersions = useMemo(() => {
     return (
-      modalState.models.find((model) => model.name === modalState.selectedModelName)?.numVersions ??
+      models.find((model) => model.name === modalState.selectedModelName)?.numVersions ??
       0
     );
-  }, [modalState.models, modalState.selectedModelName]);
+  }, [models, selectedModelName]);
 
   const modelOptions = useMemo(() => {
-    return modalState.models
+    return models
       .filter((model) => canCreateModelVersion({ model }))
       .map((model) => ({ id: model.id, name: model.name }));
-  }, [modalState.models, canCreateModelVersion]);
+  }, [models, canCreateModelVersion]);
 
   const registerModelVersion = useCallback(
     async (state: ModalState) => {
@@ -201,9 +188,9 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         },
         { signal: canceler.signal },
       );
-      setModalState((prev) => {
-        if (_.isEqual(prev.models, response.models)) return prev;
-        return { ...prev, models: response.models };
+      setModels((prev) => {
+        if (_.isEqual(prev, response.models)) return prev;
+        return response.models;
       });
     } catch (e) {
       handleError(e, {
@@ -214,156 +201,71 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     }
   }, [canceler.signal, modalState.visible]);
 
-  const modalOpen = useCallback(
-    async ({ checkpoints, selectedModelName }: ModalOpenProps) => {
-      setModalState({
-        ...INITIAL_MODAL_STATE,
-        visible: true,
-      });
-      await fetchModels();
-      setModalState((prev) => ({
-        ...prev,
-        checkpoints: Array.isArray(checkpoints) ? checkpoints : [checkpoints],
-        selectedModelName,
-      }));
-    },
-    [fetchModels],
-  );
-
-  const handleCancel = useCallback(() => modalClose(), [modalClose]);
-
-  const getModalContent = useCallback(
-    (state: ModalState): React.ReactNode => {
-      const {
-        selectedModelName,
-        versionDescription,
-        tags,
-        metadata,
-        versionName,
-        expandDetails,
-        checkpoints,
-      } = state;
-
-      // We always render the form regardless of mode to provide a reference to it.
-      return (
-        <div className={css.base}>
-          <p className={css.directions}>Save this checkpoint to the Model Registry</p>
+  return (
+    <div className={css.base}>
+      <p className={css.directions}>Save this checkpoint to the Model Registry</p>
+      <div>
+        <div className={css.selectModelRow}>
+          <h2>Select Model</h2>
+          <p onClick={() => launchNewModelModal(state)}>New Model</p>
+        </div>
+        <Select
+          options={modelOptions.map((option) => ({ label: option.name, value: option.name }))}
+          placeholder="Select a model..."
+          value={selectedModelName}
+          width={'100%'}
+          onChange={updateModel}
+        />
+      </div>
+      {selectedModelName && (
+        <>
+          <div className={css.separator} />
           <div>
-            <div className={css.selectModelRow}>
-              <h2>Select Model</h2>
-              <p onClick={() => launchNewModelModal(state)}>New Model</p>
-            </div>
-            <Select
-              options={modelOptions.map((option) => ({ label: option.name, value: option.name }))}
-              placeholder="Select a model..."
-              value={selectedModelName}
-              width={'100%'}
-              onChange={updateModel}
+            <h2>Version Name</h2>
+            <Input
+              disabled={checkpoints?.length != null && checkpoints.length > 1}
+              placeholder={`Version ${selectedModelNumVersions + 1}`}
+              value={versionName}
+              onChange={updateVersionName}
             />
+            {checkpoints?.length != null && checkpoints.length > 1 && (
+              <p>Cannot specify version name when batch registering.</p>
+            )}
           </div>
-          {selectedModelName && (
+          <div>
+            <h2>
+              Description <span>(optional)</span>
+            </h2>
+            <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
+          </div>
+          {expandDetails ? (
             <>
-              <div className={css.separator} />
               <div>
-                <h2>Version Name</h2>
-                <Input
-                  disabled={checkpoints?.length != null && checkpoints.length > 1}
-                  placeholder={`Version ${selectedModelNumVersions + 1}`}
-                  value={versionName}
-                  onChange={updateVersionName}
+                <h2>
+                  Metadata <span>(optional)</span>
+                </h2>
+                <EditableMetadata
+                  editing={true}
+                  metadata={metadata}
+                  updateMetadata={updateMetadata}
                 />
-                {checkpoints?.length != null && checkpoints.length > 1 && (
-                  <p>Cannot specify version name when batch registering.</p>
-                )}
               </div>
               <div>
                 <h2>
-                  Description <span>(optional)</span>
+                  Tags <span>(optional)</span>
                 </h2>
-                <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
+                <Tags tags={tags} onAction={tagsActionHelper(tags, updateTags)} />
               </div>
-              {expandDetails ? (
-                <>
-                  <div>
-                    <h2>
-                      Metadata <span>(optional)</span>
-                    </h2>
-                    <EditableMetadata
-                      editing={true}
-                      metadata={metadata}
-                      updateMetadata={updateMetadata}
-                    />
-                  </div>
-                  <div>
-                    <h2>
-                      Tags <span>(optional)</span>
-                    </h2>
-                    <Tags tags={tags} onAction={tagsActionHelper(tags, updateTags)} />
-                  </div>
-                </>
-              ) : (
-                <p className={css.expandDetails} onClick={openDetails}>
-                  Add More Details...
-                </p>
-              )}
             </>
+          ) : (
+            <p className={css.expandDetails} onClick={openDetails}>
+              Add More Details...
+            </p>
           )}
-        </div>
-      );
-    },
-    [
-      launchNewModelModal,
-      modelOptions,
-      openDetails,
-      selectedModelNumVersions,
-      updateMetadata,
-      updateModel,
-      updateTags,
-      updateVersionDescription,
-      updateVersionName,
-    ],
+        </>
+      )}
+    </div>
   );
-
-  const getModalProps = useCallback(
-    (state: ModalState): Partial<ModalFuncProps> => {
-      const { selectedModelName } = state;
-
-      const modalProps = {
-        className: css.base,
-        closable: true,
-        content: getModalContent(state),
-        icon: null,
-        maskClosable: true,
-        okButtonProps: { disabled: selectedModelName == null },
-        okText: 'Register Checkpoint',
-        onCancel: handleCancel,
-        onOk: () => handleOk(state),
-        title: 'Register Checkpoint',
-      };
-
-      return modalProps;
-    },
-    [getModalContent, handleCancel, handleOk],
-  );
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
-
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
-
-  /**
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal.
-   */
-  useEffect(() => {
-    if (_.isEqual(modalState, prevModalState) || !modalState.visible) return;
-    openOrUpdate(getModalProps(modalState));
-  }, [getModalProps, modalState, openOrUpdate, prevModalState]);
-
-  return { modalClose, modalOpen, ...modalHook };
 };
 
-export default useModalCheckpointRegister;
+export default RegisterCheckpointModal;

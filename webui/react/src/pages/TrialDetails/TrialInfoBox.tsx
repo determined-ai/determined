@@ -7,7 +7,7 @@ import ModelCreateModal from 'components/ModelCreateModal';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
-import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
+import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
