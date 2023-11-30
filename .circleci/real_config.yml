@@ -1738,6 +1738,32 @@ jobs:
           path: go-coverage
           destination: go-coverage
 
+  check-go-coverage-master:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: go run master/cmd/cover-regex/cover_regex.go master/coverage.out # TODO or true
+
+  check-go-coverage-agent:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: go run master/cmd/cover-regex/cover_regex.go agent/coverage.out # TODO or true
+
   lint-docs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2582,6 +2608,12 @@ workflows:
           requires:
             - test-intg-master
             - test-intg-agent
+      - check-go-coverage-master:
+          requires:
+            - go-coverage
+      - check-go-coverage-agent:
+          requires:
+            - go-coverage
 
   test-e2e:
     jobs:
