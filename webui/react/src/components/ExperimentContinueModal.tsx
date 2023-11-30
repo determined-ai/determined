@@ -1,18 +1,20 @@
+import { InputNumber } from 'antd';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
+import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import { paths } from 'routes/utils';
-import { createExperiment } from 'services/api';
+import { continueExperiment, createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { ExperimentBase, RawJson, TrialHyperparameters, TrialItem, ValueOf } from 'types';
+import { ExperimentBase, RawJson, RunState, TrialHyperparameters, TrialItem, ValueOf } from 'types';
 import handleError, {
   DetError,
   ErrorLevel,
@@ -29,8 +31,8 @@ export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
 const FORM_ID = 'create-experiment-form';
 
 export const CreateExperimentType = {
-  ContinueTrial: 'Continue Trial',
-  Fork: 'Fork',
+  ContinueTrial: 'Continue Experiment',
+  ReactivateExperiment: 'Reactivate Experiment',
 } as const;
 
 export type CreateExperimentType = ValueOf<typeof CreateExperimentType>;
@@ -106,7 +108,7 @@ const DEFAULT_MODAL_STATE = {
   type: CreateExperimentType.Fork,
 };
 
-const ExperimentCreateModalComponent = ({
+const ExperimentContinueModalComponent = ({
   onClose,
   experiment,
   trial,
@@ -119,7 +121,7 @@ const ExperimentCreateModalComponent = ({
 
   const isFork = type === CreateExperimentType.Fork;
 
-  const titleLabel = isFork ? `Fork Experiment ${experiment.id}` : `Continue Trial ${trial?.id}`;
+  const titleLabel = isFork ? 'Reactivate Current Trial' : 'Continue Trial in New Experiment';
 
   const requiredFields = [EXPERIMENT_NAME, MAX_LENGTH];
 
@@ -140,9 +142,9 @@ const ExperimentCreateModalComponent = ({
       if (values[MAX_LENGTH]) {
         const maxLengthType = getMaxLengthType(prev.config);
         if (maxLengthType) {
-          prev.config.searcher.max_length[maxLengthType] = parseInt(values[MAX_LENGTH]);
+          prev.config.searcher.max_length[maxLengthType] = prev.config.searcher.max_length + parseInt(values[MAX_LENGTH]);
         } else {
-          prev.config.searcher.max_length = parseInt(values[MAX_LENGTH]);
+          prev.config.searcher.max_length = prev.config.searcher.max_length + parseInt(values[MAX_LENGTH]);
         }
       }
       prev.configString = yaml.dump(prev.config);
@@ -233,41 +235,62 @@ const ExperimentCreateModalComponent = ({
     async (newConfig: string) => {
       const isFork = modalState.type === CreateExperimentType.Fork;
       if (!modalState.experiment || (!isFork && !modalState.trial)) return;
-
-      try {
-        const { experiment: newExperiment, warnings } = await createExperiment({
-          activate: true,
-          experimentConfig: newConfig,
-          parentId: modalState.experiment.id,
-        });
-        const currentSlotsExceeded = warnings
-          ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
-          : false;
-        if (currentSlotsExceeded) {
-          handleWarning({
-            level: ErrorLevel.Warn,
-            publicMessage:
-              'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
-            publicSubject: 'Current Slots Exceeded',
-            silent: false,
-            type: ErrorType.Server,
+      if (!isFork) {
+        try {
+          const { experiment: newExperiment, warnings } = await createExperiment({
+            activate: true,
+            experimentConfig: newConfig,
+            parentId: modalState.experiment.id,
           });
-        }
-        // Route to reload path to forcibly remount experiment page.
-        const newPath = paths.experimentDetails(newExperiment.id);
-        routeToReactUrl(paths.reload(newPath));
-      } catch (e) {
-        let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
-        if (isError(e) && e.name === 'YAMLException') {
-          errorMessage = e.message;
-        } else if (isDetError(e)) {
-          errorMessage = e.publicMessage || e.message;
-        }
+          const currentSlotsExceeded = warnings
+            ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
+            : false;
+          if (currentSlotsExceeded) {
+            handleWarning({
+              level: ErrorLevel.Warn,
+              publicMessage:
+                'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
+              publicSubject: 'Current Slots Exceeded',
+              silent: false,
+              type: ErrorType.Server,
+            });
+          }
+          // Route to reload path to forcibly remount experiment page.
+          const newPath = paths.experimentDetails(newExperiment.id);
+          routeToReactUrl(paths.reload(newPath));
+        } catch (e) {
+          let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
+          if (isError(e) && e.name === 'YAMLException') {
+            errorMessage = e.message;
+          } else if (isDetError(e)) {
+            errorMessage = e.publicMessage || e.message;
+          }
 
-        setModalState((prev) => ({ ...prev, error: errorMessage }));
+          setModalState((prev) => ({ ...prev, error: errorMessage }));
 
-        // We throw an error to prevent the modal from closing.
-        throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
+          // We throw an error to prevent the modal from closing.
+          throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
+        }
+      }
+      else {
+
+        try {
+          await continueExperiment({
+            overrideConfig: newConfig,
+            id: modalState.experiment.id,
+          });
+        } catch (e) {
+          let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
+          if (isError(e) && e.name === 'YAMLException') {
+            errorMessage = e.message;
+          } else if (isDetError(e)) {
+            errorMessage = e.publicMessage || e.message;
+          }
+          setModalState((prev) => ({ ...prev, error: errorMessage }));
+
+          // We throw an error to prevent the modal from closing.
+          throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
+        }
       }
     },
     [modalState],
@@ -350,17 +373,26 @@ const ExperimentCreateModalComponent = ({
 
   if (!experiment || (!isFork && !trial)) return <></>;
 
+  const hideSimpleConfig = isFork && experiment.state !== RunState.Completed;
+
   return (
     <Modal
       cancel
-      icon="fork"
-      size={modalState.isAdvancedMode ? (isFork ? 'medium' : 'large') : 'small'}
+      size={
+        !hideSimpleConfig
+          ? modalState.isAdvancedMode
+            ? isFork
+              ? 'medium'
+              : 'large'
+            : 'small'
+          : 'large'
+      }
       submit={{
         disabled,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: type,
+        text: !isFork ? 'Launch Experiment' : 'Reactivate Trial',
       }}
       title={titleLabel}
       onClose={handleModalClose}>
@@ -369,7 +401,7 @@ const ExperimentCreateModalComponent = ({
         {modalState.configError && modalState.isAdvancedMode && (
           <Message icon="error" title={modalState.configError} />
         )}
-        {modalState.isAdvancedMode && (
+        {(modalState.isAdvancedMode || hideSimpleConfig) && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
               file={Loaded(modalState.configString)}
@@ -380,6 +412,9 @@ const ExperimentCreateModalComponent = ({
             />
           </React.Suspense>
         )}
+        {!isFork && (
+          <Body>Start a new experiment from the current trial&rsquo;s latest checkpoint.</Body>
+        )}
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}
@@ -387,16 +422,18 @@ const ExperimentCreateModalComponent = ({
           labelCol={{ span: 8 }}
           name="basic"
           onFieldsChange={handleFieldsChange}>
-          <Form.Item
-            initialValue={experiment.name}
-            label="Experiment name"
-            name={EXPERIMENT_NAME}
-            rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
-            <Input />
-          </Form.Item>
           {!isFork && (
             <Form.Item
-              label={`Max ${getMaxLengthType(modalState.config) || 'length'}`}
+              initialValue={experiment.name}
+              label="Experiment name"
+              name={EXPERIMENT_NAME}
+              rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
+              <Input />
+            </Form.Item>
+          )}
+          {!isFork && (
+            <Form.Item
+              label={'Max Batches'}
               name={MAX_LENGTH}
               rules={[
                 {
@@ -412,15 +449,36 @@ const ExperimentCreateModalComponent = ({
               <Input type="number" />
             </Form.Item>
           )}
+          {isFork && !hideSimpleConfig && (
+            <Form.Item
+              label={'Additional Batches'}
+              name={MAX_LENGTH}
+              rules={[
+                {
+                  required: false,
+                  validator: (_rule, value) => {
+                    let errorMessage = '';
+                    if (value < 0) errorMessage = 'Additional batches must be at least 0.';
+                    if (value && !Number.isInteger(value))
+                      errorMessage = 'Additional batches must be an integer.';
+                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
+                  },
+                },
+              ]}>
+              <InputNumber style={{ width: '100%' }} type="number" />
+            </Form.Item>
+          )}
         </Form>
         <div>
-          <Button onClick={toggleMode}>
-            {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
-          </Button>
+          {!hideSimpleConfig && (
+            <Button onClick={toggleMode}>
+              {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
+            </Button>
+          )}
         </div>
       </>
     </Modal>
   );
 };
 
-export default ExperimentCreateModalComponent;
+export default ExperimentContinueModalComponent;

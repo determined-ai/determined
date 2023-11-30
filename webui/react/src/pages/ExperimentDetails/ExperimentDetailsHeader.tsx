@@ -49,10 +49,11 @@ import {
 import { getStateColorThemeVar } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
+import { canActionExperiment, getActionsForExperiment, isSingleTrialExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
+import ExperimentContinueModalComponent from 'components/ExperimentContinueModal';
 
 // Actionable means that user can take an action, such as pause, stop
 const isActionableIcon = (state: CompoundRunState): boolean => {
@@ -169,7 +170,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const ExperimentStopModal = useModal(ExperimentStopModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentDeleteModal = useModal(ExperimentDeleteModalComponent);
-  const ContinueTrialModal = useModal(ExperimentCreateModalComponent);
+  const ReactivateExperimentModal = useModal(ExperimentContinueModalComponent);
+  const ContinueExperimentModal = useModal(ExperimentContinueModalComponent);
   const ForkModal = useModal(ExperimentCreateModalComponent);
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
 
@@ -242,6 +244,35 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
 
+  const continueExperimentOption = isSingleTrialExperiment(experiment) ? {
+    disabled: experiment.unmanaged,
+    key: 'continue-trial',
+    label: experiment.unmanaged ? (
+      <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+    ) : (
+      'Continue Trial'
+    ),
+    onClick: ContinueExperimentModal.open,
+  } : {
+    content: (<Dropdown
+      menu={[
+        {
+          key: 'Create New Experiment',
+          label: 'Create New Experiment...',
+        },
+        {
+          key: 'Reactivate Current Trial',
+          label: 'Reactivate Current Trial...',
+        },
+      ]}
+      onClick={(key: string) => {
+        if (key === 'Create New Experiment') ContinueExperimentModal.open();
+        if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
+      }}>
+      <Button disabled={experiment.unmanaged}>Continue Trial</Button>
+    </Dropdown>
+    )
+  }
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
       [Action.Unarchive]: {
@@ -259,27 +290,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       [Action.ContinueTrial]: {
-        content: (
-          <Dropdown
-            menu={[
-              {
-                key: 'Create New Experiment',
-                label: 'Create New Experiment...',
-              },
-              {
-                key: 'Reactivate Current Trial',
-                label: 'Reactivate Current Trial...',
-              },
-            ]}
-            onClick={(key: string) => {
-              if (key === 'Create New Experiment') ContinueTrialModal.open();
-              if (key === 'Reactivate Current Trial') ForkModal.open();
-            }}>
-            <Button>Continue Trial</Button>
-          </Dropdown>
+        ...continueExperimentOption,
+        key: 'continue-trial',
+        label: experiment.unmanaged ? (
+          <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+        ) : (
+          'Continue Trial'
         ),
-        key: 'Continue Trial',
-        label: 'Coninue Trial',
       },
       [Action.Delete]: {
         isLoading: isRunningDelete,
@@ -387,7 +404,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   }, [
     expPermissions,
     isRunningArchive,
-    ContinueTrialModal,
+    ContinueExperimentModal,
+    ReactivateExperimentModal,
     isRunningDelete,
     ExperimentDeleteModal,
     handleHyperparameterSearch,
@@ -584,12 +602,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         options={headerOptions}
       />
       <ExperimentHeaderProgress experiment={experiment} />
-      <ContinueTrialModal.Component
+      <ReactivateExperimentModal.Component
         experiment={experiment}
-        trial={trial}
         type={CreateExperimentType.ContinueTrial}
       />
-      <ForkModal.Component experiment={experiment} type={CreateExperimentType.Fork} />
+      <ContinueExperimentModal.Component
+        experiment={experiment}
+        type={CreateExperimentType.ContinueTrial}
+      />
       <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
         experimentIds={isMovable ? [experiment.id] : []}
