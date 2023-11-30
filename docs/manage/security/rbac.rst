@@ -14,8 +14,8 @@
 
 .. warning::
 
-   If you are looking to enable RBAC on an existing Determined installation, please see the
-   :ref:`migration guide below <rbac-migrate-existing>`.
+   If you want to enable RBAC on an existing Determined installation, consult the :ref:`migration
+   guide <rbac-migrate-existing>`.
 
 By default, a Determined installation comes with role-based access control disabled. To enable RBAC,
 set the following option in the master config:
@@ -140,6 +140,8 @@ engineers will only have access to the experiments in their respective workspace
    det -u mle-stop-00 experiment list --all
    det -u mle-traffic-00 experiment list --all
 
+.. _manage-rbac:
+
 *************
  Manage RBAC
 *************
@@ -149,6 +151,12 @@ Inspecting the Setup
 
 CLI
 ---
+
+To get help with the ``user`` command:
+
+.. code::
+
+   det user -h
 
 To get the current user's permission list:
 
@@ -177,6 +185,12 @@ To list existing users, group and their membership:
    det user-group list
    det user-group describe GROUP_NAME
 
+To create a new :ref:`remote user <remote-users>`:
+
+.. code:: bash
+
+   det -u admin user create <username> --remote
+
 To list the role assignments for a user or a group:
 
 .. code:: bash
@@ -184,35 +198,45 @@ To list the role assignments for a user or a group:
    det rbac list-groups-roles GROUP_NAME
    det rbac list-users-roles USER_NAME
 
+.. _manage-users-groups-webui:
+
 WebUI
 -----
 
-To see the user and group management UI,
+To manage users and groups via the WebUI:
 
-#. Click on your username in the upper left corner.
-#. Click "Settings"
-#. See "User Management" and "Group Management" tabs at the top.
+#. View **Admin Settings** by selecting your profile in the upper left corner and then choosing
+   **Admin**.
 
-To create new users, use "New User" button at the "User Management" screen.
+Admin Settings displays the **Users** and **Groups** lists.
 
-To see or modify user roles assigned at the global scope,
+To create new users, select **Add User**. To set the user as a :ref:`remote user <remote-users>`:,
+select the **Remote** option.
+
+.. note::
+
+   You can edit any existing user and set them as a remote user to prevent password sign-on and
+   requiring the user to sign on via the organization's IdP.
+
+To manage user roles assigned at the global scope:
 
 #. Click triple-dot icon on the right of the user entry.
-#. Select "Edit" option in the dropdown.
+#. Choose **Edit User**.
 
-To see or modify group roles assigned at the global scope,
+To manage group roles assigned at the global scope:
 
 #. Click triple-dot icon on the right of the group entry.
-#. Select "Add Roles" option in the dropdown.
+#. Select **Edit Group**.
+#. Click inside **Select Global Roles** and add or remove roles.
 
-To see group membership, click on the plus icon on the left of the group entry.
+To manage group membership, expand the group by selecting the plus icon.
 
-To remove member users, open group membership list and "Remove" button next to the user entry.
+To remove member users, open the group membership list and select **Remove** next to the user entry.
 
 To add member users,
 
 #. Click triple-dot icon on the right of the group entry.
-#. Select "Edit/Add Users" option in the dropdown.
+#. Choose **Add Members to Group**.
 
 Managing User Groups
 ====================
@@ -253,20 +277,20 @@ WebUI
 
 .. attention::
 
-   Only users with the ClusterAdmin role can add/remove users and groups.
+   Only users with the ClusterAdmin role can add or remove users and groups.
 
-To see user group management UI,
+To manage user groups via the WebUI:
 
-#. Click on your username in the upper left corner.
-#. Click "Admin".
-#. Click the "Groups" tab at the top.
+#. View **Admin Settings** by selecting your profile in the upper left corner and then choosing
+   **Admin**.
+#. Select the **Groups** tab.
 
-To create new groups, use "New Group" button at the "Groups" screen.
+To create new groups, select **New Group**.
 
-To delete a group,
+To delete a group:
 
-#. Click triple-dot icon on the right of the group entry.
-#. Select "Delete" option in the dropdown.
+#. Select the triple-dot icon on the right of the group entry.
+#. Choose **Delete Group**.
 
 Managing Role Assignments
 =========================
@@ -296,29 +320,30 @@ WORKSPACE_NAME`` switch:
 WebUI
 -----
 
-To assign or unassign a role for a user or a group globally, first go to user or group management
-UI:
+To assign or unassign a role for a user or a group globally, navigate to user or group management in
+the WeUI:
 
 .. attention::
 
    Only users with the ClusterAdmin role can add/edit global role assignments for users and groups
    from the "Admin" menu as described immediately below.
 
-#. Click on your username in the upper left corner.
-#. Click "Admin".
-#. See "Users" and "Groups" tabs at the top.
+#. View **Admin Settings** by selecting your profile in the upper left corner and then choosing
+   **Admin**.
+
+Admin Settings displays the **Users** and **Groups** lists.
 
 Then, for users:
 
 #. Click triple-dot icon on the right of the user entry.
-#. Select "Edit" option in the dropdown.
+#. Choose **Edit User**.
 
 For groups:
 
 #. Click triple-dot icon on the right of the group entry.
-#. Select "Add Roles" option in the dropdown.
+#. Choose **Edit Group**.
 
-To assign or unassign a role for a user or a group on a particular workspace,
+To assign or unassign a role for a user or a group on a particular workspace:
 
 .. attention::
 
@@ -326,12 +351,11 @@ To assign or unassign a role for a user or a group on a particular workspace,
    and groups.
 
 #. Go to the workspaces page, select the target workspace.
-#. Click "Members" tab at the top.
-#. To create new role assignments, click the "Add Members" button at the top right.
+#. Select the **Members** tab.
+#. To create new role assignments, click **Add Members**.
 #. To remove existing role assignments, click the triple-dot menu for a user/group and select
-   "Remove".
-#. To edit the role, click on the dropdown in the role column for a user/group and make your
-   selection.
+   **Remove**.
+#. To edit the role, click on the dropdown in the role column for a user/group and choose a role.
 
 .. _rbac-concepts:
 

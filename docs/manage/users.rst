@@ -4,39 +4,59 @@
  User Accounts
 ###############
 
-:ref:`users-temp`
+*******
+ About
+*******
 
-Initially, a Determined installation has two user accounts: ``admin`` and ``determined``. Both of
-these accounts have blank passwords by default.
+Only the ``admin`` user can create users, change users' passwords, and activate or deactivate users.
+Upon initial installation, the admin should set an admin password.
 
-The ``admin`` user has the sole privilege to create users, change other users' passwords, and
-activate/deactivate users.
+Default Accounts
+================
 
-Use ``det user change-password`` via the CLI to set a password for the ``admin`` user. This is
-highly encouraged for new installs.
+Initially, there are two accounts:
+
+-  ``admin`` (full privileges)
+-  ``determined`` (for single-user installations)
+
+Both have blank passwords by default.
+
+Setting the Admin Password
+==========================
+
+Use the following CLI command to set the admin password:
 
 .. code::
 
    det -u admin user change-password
 
-The ``determined`` user is designed for ease of use on a single-user installation. However, teams
-will benefit from creating a Determined user account for each individual. Namely, having individual
-user accounts provides clearer authorship and improved filtering of entities. To create users in a
-Determined installation, use the ``admin`` user to create user accounts for each individual that
-would like to use Determined:
+Creating Individual User Accounts
+=================================
+
+You can add, edit, and manage users manually via the CLI or the WebUI.
+
+To create users via the CLI, use the following command:
 
 .. code::
 
    det -u admin user create <username>
 
-Then, the ``determined`` user can be deactivated:
+To ensure that no one can access the Determined cluster as the ``determined`` user, deactivate it.
+Deactivating the ``determined`` user does not remove any objects created by the user.
+
+To deactivate the ``determined`` user, run the following command:
 
 .. code::
 
    det -u admin user deactivate determined
 
-This ensures that no one can access the Determined cluster as the ``determined`` user (any objects
-that were created by this user will remain).
+Creating Remote Users
+=====================
+
+Admins can configure Determined to auto-provision users who have been added to your IdP. These users
+are known as remote users.
+
+To find out more, visit :ref:`remote-users`.
 
 ****************
  Authentication
