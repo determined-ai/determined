@@ -43,8 +43,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
           </div>
           <div className={css.info}>
-            <div className={`${css.nameRow} ${css.name}`}>
-              <Title size={TypographySize.S} truncate={{ rows: 1, tooltip: true }}>
+            <div className={css.nameRow}>
+              <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
                 {workspace.name}
               </Title>
               {workspace.pinned && <Icon name="pin" title="Pinned" />}

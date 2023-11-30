@@ -1,5 +1,5 @@
 import Card from 'hew/Card';
-import { Body, Label } from 'hew/Typography';
+import { Body, Title, TypographySize } from 'hew/Typography';
 import React from 'react';
 
 import css from './OverviewStats.module.scss';
@@ -19,7 +19,7 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
     <Card onClick={props.onClick}>
       <div className={css.base}>
         <div className={css.title}>
-          <Label truncate={{ rows: 1, tooltip: true }}>{props.title}</Label>
+          <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>{props.title}</Title>
         </div>
         <strong className={childClasses.join(' ')}>
           <Body truncate={{ rows: 1, tooltip: true }}>{props.children}</Body>

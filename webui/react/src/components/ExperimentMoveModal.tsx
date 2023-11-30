@@ -174,7 +174,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                   title={workspace.name}
                   value={workspace.id}>
                   <div>
-                    <Title truncate={{tooltip: true}}>{workspace.name}</Title>
+                    <Title size={TypographySize.XS} truncate={{ tooltip: true }}>{workspace.name}</Title>
                     {workspace.archived && <Icon name="archive" title="Archived" />}
                   </div>
                 </Option>
@@ -202,7 +202,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                       title={project.name}
                       value={project.id}>
                       <div>
-                        <Title size={TypographySize.S} truncate={{ tooltip: true }}>
+                        <Title size={TypographySize.XS} truncate={{ tooltip: true }}>
                           {project.name}
                         </Title>
                         {project.archived && <Icon name="archive" title="Archived" />}
