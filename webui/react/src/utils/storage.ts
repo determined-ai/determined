@@ -11,6 +11,7 @@ export class MemoryStore implements Storage {
   private store: Record<string, string>;
 
   constructor() {
+    this.length = 0;
     this.store = {};
   }
 
@@ -91,10 +92,13 @@ export class StorageManager {
   }
 
   toString(): string {
-    const inMemoryRecord = this.keys().reduce((acc, key) => {
-      acc[key] = this.get(key);
-      return acc;
-    }, {} as Record<string, unknown>);
+    const inMemoryRecord = this.keys().reduce(
+      (acc, key) => {
+        acc[key] = this.get(key);
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    );
 
     return JSON.stringify(inMemoryRecord);
   }

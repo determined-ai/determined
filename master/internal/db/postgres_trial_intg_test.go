@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -165,14 +164,6 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 		},
 	}
 	_, err = Bun().NewInsert().Model(&baseMetric).Exec(ctx)
-	require.NoError(t, err)
-}
-
-func runSummaryMigration(t *testing.T) {
-	bytes, err := os.ReadFile("../../static/migrations/20230503144448_add-summary-metrics.tx.up.sql")
-	require.NoError(t, err)
-
-	_, err = Bun().Exec(string(bytes))
 	require.NoError(t, err)
 }
 
@@ -435,55 +426,6 @@ func TestSummaryMetricsInsertRollback(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	trialIDs, expectedTrain, expectedVal := generateSummaryMetricsTestCases(ctx, t, db, true)
-
-	for i := 0; i < len(trialIDs); i++ {
-		validateSummaryMetrics(ctx, t, trialIDs[i], expectedTrain[i], expectedVal[i])
-	}
-}
-
-func TestSummaryMetricsMigration(t *testing.T) {
-	ctx := context.Background()
-	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-	trialIDs, expectedTrain, expectedVal := generateSummaryMetricsTestCases(ctx, t, db, false)
-
-	_, err := Bun().NewUpdate().Table("trials").
-		Set("summary_metrics = '{}'").
-		Set("summary_metrics_timestamp = NULL").
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(ctx)
-	require.NoError(t, err)
-
-	runSummaryMigration(t)
-
-	for i := 0; i < len(trialIDs); i++ {
-		validateSummaryMetrics(ctx, t, trialIDs[i], expectedTrain[i], expectedVal[i])
-	}
-
-	// Add a metric with an older endtime to ensure metric isn't computed.
-	addMetricCustomTime(ctx, t, trialIDs[0], time.Now().AddDate(0, 0, -1))
-
-	// Verify metric is recomputed with new metrics added.
-	addMetricCustomTime(ctx, t, trialIDs[1], time.Now())
-	expectedTrain[1] = map[string]summaryMetrics{
-		"a": {
-			Min: 1.0, Max: 2.0, Sum: 1.0 + 1.5 + 2.0, Mean: (1.0 + 1.5 + 2.0) / 3,
-			Count: 3, Type: "number",
-		},
-		"b": {
-			Min: -1.0, Max: 0.0, Sum: -1.0 + -0.5 + 0.0, Mean: (-1.0 + -0.5 + 0.0) / 3,
-			Count: 3, Last: "-1", Type: "number",
-		},
-	}
-	expectedVal[1] = map[string]summaryMetrics{
-		"val_loss": {
-			Min: 1.5, Max: 3.0, Sum: 1.5 + 3.0, Mean: (1.5 + 3.0) / 2,
-			Count: 2, Last: "3", Type: "number",
-		},
-	}
-
-	runSummaryMigration(t)
 
 	for i := 0; i < len(trialIDs); i++ {
 		validateSummaryMetrics(ctx, t, trialIDs[i], expectedTrain[i], expectedVal[i])
@@ -849,6 +791,45 @@ func TestTrialByTaskID(t *testing.T) {
 
 	_, err = TrialByTaskID(ctx, model.TaskID("taskIDnotFound"))
 	require.ErrorIs(t, err, sql.ErrNoRows)
+}
+
+func TestUpsertTrialByExternalIDTx(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+	task := RequireMockTask(t, db, exp.OwnerID)
+
+	// Add trial.
+	trial := &model.Trial{
+		HParams:         map[string]any{"test": "orig"},
+		ExternalTrialID: ptrs.Ptr("123"),
+		State:           model.CompletedState,
+		ExperimentID:    exp.ID,
+	}
+	require.NoError(t, Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return UpsertTrialByExternalIDTx(ctx, tx, trial, task.TaskID)
+	}))
+
+	actualTrial, err := TrialByID(ctx, trial.ID)
+	require.NoError(t, err)
+	require.Equal(t, trial.HParams, actualTrial.HParams)
+	require.Equal(t, trial.ExternalTrialID, actualTrial.ExternalTrialID)
+
+	// Test upserting it.
+	trial.ID = 0
+	trial.HParams = map[string]any{"test": "updated"}
+	require.NoError(t, Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return UpsertTrialByExternalIDTx(ctx, tx, trial, task.TaskID)
+	}))
+
+	actualTrial, err = TrialByID(ctx, trial.ID)
+	require.NoError(t, err)
+	require.Equal(t, trial.HParams, actualTrial.HParams)
+	require.Equal(t, trial.ExternalTrialID, actualTrial.ExternalTrialID)
 }
 
 func TestProtoGetTrial(t *testing.T) {

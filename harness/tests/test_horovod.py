@@ -6,7 +6,7 @@ from determined import constants, horovod
 @pytest.mark.parametrize("debug", [True, False])
 @pytest.mark.parametrize("auto_tune", [True, False])
 @pytest.mark.parametrize("tensor_fusion_threshold", [64, 128, 512])
-@pytest.mark.parametrize("tensor_fusion_cycle_time", [5, 20])
+@pytest.mark.parametrize("tensor_fusion_cycle_time", [1, 5])
 def test_create_run_command(
     debug: bool, auto_tune: bool, tensor_fusion_threshold: int, tensor_fusion_cycle_time: int
 ) -> None:

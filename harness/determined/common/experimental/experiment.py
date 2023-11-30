@@ -124,7 +124,7 @@ class Experiment:
 
         # These properties may be mutable and will be set by _hydrate()
         self.config: Optional[Dict[str, Any]] = None
-        self.state: Optional[bindings.experimentv1State] = None
+        self.state: Optional[ExperimentState] = None
         self.labels: Optional[Set[str]] = None
         self.archived: Optional[bool] = None
         self.name: Optional[str] = None
@@ -140,7 +140,7 @@ class Experiment:
 
     def _hydrate(self, exp: bindings.v1Experiment) -> None:
         self.config = exp.config
-        self.state = exp.state
+        self.state = ExperimentState(exp.state.value)
         self.archived = exp.archived
         self.name = exp.name
         self.progress = exp.progress
@@ -391,13 +391,13 @@ class Experiment:
         while True:
             self.reload()
             if self.state in (
-                bindings.experimentv1State.COMPLETED,
-                bindings.experimentv1State.CANCELED,
-                bindings.experimentv1State.DELETED,
-                bindings.experimentv1State.ERROR,
+                ExperimentState.COMPLETED,
+                ExperimentState.CANCELED,
+                ExperimentState.DELETED,
+                ExperimentState.ERROR,
             ):
-                return ExperimentState(self.state.value)
-            elif self.state == bindings.experimentv1State.PAUSED:
+                return self.state
+            elif self.state == ExperimentState.PAUSED:
                 raise ValueError(
                     f"Experiment {self.id} is in paused state. Make sure the experiment is active."
                 )
@@ -482,6 +482,9 @@ class Experiment:
 
         if sort_by and not isinstance(sort_by, (checkpoint.CheckpointSortBy, str)):
             raise ValueError("sort_by must be of type CheckpointSortBy or str")
+
+        if not sort_by:
+            sort_by = checkpoint.CheckpointSortBy.SEARCHER_METRIC
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
             return bindings.get_GetExperimentCheckpoints(
@@ -600,6 +603,21 @@ class Experiment:
                 t_ids.add(training.trial_id)
 
         return checkpoint_refs[:limit]
+
+    def delete_tensorboard_files(self) -> None:
+        """Delete tensorboard files for this experiment.
+
+        This will remove the directory:
+            /<root>/tensorboard/experiment/<id>
+        from
+            /<root>/tensorboard/experiment
+
+        for the id of this experiment.
+        """
+        bindings.delete_DeleteTensorboardFiles(
+            self._session,
+            experimentId=self._id,
+        )
 
     def __repr__(self) -> str:
         return "Experiment(id={})".format(self.id)

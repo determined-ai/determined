@@ -56,7 +56,7 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 				saveTrialLatest = ptrs.Ptr(int(i))
 			}
 
-			// nolint: exhaustivestruct
+			// nolint: exhaustruct
 			dummyHDFSSharedFS := schemas.WithDefaults(CheckpointStorageConfig{
 				RawSharedFSConfig: &SharedFSConfig{
 					RawHostPath: ptrs.Ptr("/legacy-hdfs-checkpoint-path"),

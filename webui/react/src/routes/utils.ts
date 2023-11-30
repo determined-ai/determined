@@ -61,10 +61,13 @@ export const linkPath = (aPath: string, external = false): string => {
   return path;
 };
 
-const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
-  acc[cur.id] = cur;
-  return acc;
-}, {} as Record<string, RouteConfig>);
+const routeById: Record<string, RouteConfig> = routes.reduce(
+  (acc, cur) => {
+    acc[cur.id] = cur;
+    return acc;
+  },
+  {} as Record<string, RouteConfig>,
+);
 
 export const paths = {
   admin: (tab = ''): string => {

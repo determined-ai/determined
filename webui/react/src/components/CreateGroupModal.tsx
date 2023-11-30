@@ -1,10 +1,11 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
+import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -73,6 +74,8 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
   const isCreateModal = !group;
   const messages = isCreateModal ? CREATE_VALUES : EDIT_VALUES;
 
+  const { openToast } = useToast();
+
   const roles = useObservable(roleStore.roles);
   const groupName = Form.useWatch(GROUP_NAME_NAME, form);
 
@@ -97,10 +100,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
         const roles = await getGroupRoles({ groupId: group.group.groupId });
         const groupRoles = roles.filter((r) => r.scopeCluster);
         setGroupRoles(groupRoles);
-        form.setFieldValue(
-          GROUP_ROLE_NAME,
-          groupRoles?.map((r) => r.id),
-        );
+        form.setFieldValue(GROUP_ROLE_NAME, groupRoles?.map((r) => r.id));
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this group's roles." });
       }
@@ -128,7 +128,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
           groupRoles.map((r) => r.id),
         );
         if (!nameUpdated && !rolesUpdated) {
-          makeToast({ title: 'No changes to save.' });
+          openToast({ title: 'No changes to save.' });
           return;
         }
 
@@ -171,11 +171,11 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
           }
         }
       }
-      makeToast({ severity: 'Confirm', title: messages.API_SUCCESS_MESSAGE });
+      openToast({ severity: 'Confirm', title: messages.API_SUCCESS_MESSAGE });
       form.resetFields();
       onClose?.();
     } catch (e) {
-      makeToast({ severity: 'Error', title: messages.API_FAILURE_MESSAGE });
+      openToast({ severity: 'Error', title: messages.API_FAILURE_MESSAGE });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
@@ -212,16 +212,14 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
                 <Select
                   loading={Loadable.isNotLoaded(roles)}
                   mode="multiple"
-                  optionFilterProp="children"
-                  placeholder={'Add Roles'}
-                  showSearch>
+                  placeholder={'Add Roles'}>
                   {roles
                     .getOrElse([])
                     .sort((r1, r2) => r1.id - r2.id)
                     .map((r) => (
-                      <Select.Option key={r.id} value={r.id}>
+                      <Option key={r.id} value={r.id}>
                         {r.name}
-                      </Select.Option>
+                      </Option>
                     ))}
                 </Select>
               </Form.Item>

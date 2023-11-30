@@ -276,6 +276,7 @@ func (as *allocationService) WatchPreemption(
 	_, err := as.waitForRestore(context.TODO(), id)
 	if err != nil {
 		// HACK: Swallow the error since contexts with an instant timeout still expect a status.
+		//nolint: nilerr
 		return false, nil
 	}
 

@@ -1,9 +1,6 @@
 name: mnist_pytorch_adaptive
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
-entrypoint: model_def:MNistTrial
+entrypoint: python3 train.py
 hyperparameters:
-  global_batch_size: 64
   learning_rate:
     type: double
     minval: .0001

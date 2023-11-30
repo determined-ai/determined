@@ -1,7 +1,5 @@
 name: mnist_pytorch_const
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
-entrypoint: model_def:MNistTrial
+entrypoint: python3 train.py
 hyperparameters:
   learning_rate: 0.001
   dropout: 0.5

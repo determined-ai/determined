@@ -8,7 +8,7 @@ import {
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import { ShirtSize } from 'hew/Theme';
+import { ShirtSize, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -110,6 +110,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
+
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
   const filteredTasks = useMemo(() => {
@@ -128,10 +132,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   }, [loadedTasks, settings, users]);
 
   const taskMap = useMemo(() => {
-    return (loadedTasks || []).reduce((acc, task) => {
-      acc[task.id] = task;
-      return acc;
-    }, {} as Record<string, CommandTask>);
+    return (loadedTasks || []).reduce(
+      (acc, task) => {
+        acc[task.id] = task;
+        return acc;
+      },
+      {} as Record<string, CommandTask>,
+    );
   }, [loadedTasks]);
 
   const selectedTasks = useMemo(() => {
@@ -468,7 +475,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
         key: 'workspace',
-        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
+        render: (_v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(
             workspaces.find((w) => w.id === a.workspaceId)?.name ?? '',
@@ -539,7 +546,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<CommandTask> | SorterResult<CommandTask>[],
     ) => {
       if (Array.isArray(tableSorter)) return;
@@ -655,6 +662,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}
         `}
+        wrapClassName={themeClass}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.Medium} minItemWidth={120}>

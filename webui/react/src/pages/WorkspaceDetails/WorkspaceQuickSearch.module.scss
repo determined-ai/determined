@@ -5,8 +5,7 @@
 }
 .modalBody {
   height: 60vh;
-  overflow-x: hidden;
-  overflow-y: scroll;
+  overflow: hidden scroll;
   width: 100%;
 }
 .ellipsis {

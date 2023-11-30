@@ -188,3 +188,23 @@ func LogrusLevelToProto(l logrus.Level) logv1.LogLevel {
 		panic("invalid logrus log level")
 	}
 }
+
+// ProtoToLogrusLevel translates our protobuf log level to a logrus level.
+func ProtoToLogrusLevel(l logv1.LogLevel) logrus.Level {
+	switch l {
+	case logv1.LogLevel_LOG_LEVEL_TRACE:
+		return logrus.TraceLevel
+	case logv1.LogLevel_LOG_LEVEL_DEBUG:
+		return logrus.DebugLevel
+	case logv1.LogLevel_LOG_LEVEL_INFO:
+		return logrus.InfoLevel
+	case logv1.LogLevel_LOG_LEVEL_WARNING:
+		return logrus.WarnLevel
+	case logv1.LogLevel_LOG_LEVEL_ERROR:
+		return logrus.ErrorLevel
+	case logv1.LogLevel_LOG_LEVEL_CRITICAL:
+		return logrus.FatalLevel
+	default:
+		panic("invalid logrus log level")
+	}
+}

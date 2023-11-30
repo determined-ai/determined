@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -92,11 +93,11 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
-		groups, _, count, err := SearchGroupsWithoutPersonalGroups(ctx, "", testUser.ID, 0, 0)
+		groups, err := SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", testUser.ID)
 		require.NoError(t, err, "failed to search for groups that user belongs to")
 
 		index := groupsContain(groups, testGroup.ID)
-		require.Equal(t, 2, count, "group search returned wrong count")
+		require.Equal(t, 2, len(groups), "group search returned wrong count")
 		require.NotEqual(t, -1, index,
 			"Group user was added to not found when searching by user membership")
 	})
@@ -264,13 +265,13 @@ func TestUserGroups(t *testing.T) {
 	t.Run("update groups and memberships", func(t *testing.T) {
 		updateTestUser1 := model.User{
 			ID:       9861724,
-			Username: fmt.Sprintf("IntegrationTest#{9861724}"),
+			Username: "IntegrationTest#{9861724}",
 			Admin:    false,
 			Active:   false,
 		}
 		updateTestUser2 := model.User{
 			ID:       16780345,
-			Username: fmt.Sprintf("IntegrationTest#{16780345}"),
+			Username: "IntegrationTest#{16780345}",
 			Admin:    false,
 			Active:   false,
 		}
@@ -352,6 +353,35 @@ func TestUserGroups(t *testing.T) {
 		// Personal group still returns no error for UsersInGroupTx.
 		_, err = UsersInGroupTx(ctx, nil, personalGroup.ID)
 		require.NoError(t, err)
+	})
+
+	t.Run("test UpdateUserGroupMembership", func(t *testing.T) {
+		ctx := context.TODO()
+		tmpUser := db.RequireMockUser(t, pgDB)
+
+		// Define two existing test groups.
+		name1 := uuid.NewString()
+		_, err := AddGroupTx(ctx, db.Bun(), model.Group{Name: name1})
+		require.NoError(t, err, "failed to add %s group", name1)
+
+		name2 := uuid.NewString()
+		_, _, err = AddGroupWithMembers(ctx, model.Group{Name: name2}, tmpUser.ID)
+		require.NoError(t, err, "failed to add %s group", name2)
+
+		gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
+		require.NoError(t, err, "failed to search groups")
+		require.Equal(t, len(gps), 1, "failed to start with original group assignments.")
+		require.Equal(t, gps[0].Name, name2, "failed to start with %s group assignment.", name2)
+
+		name3 := uuid.NewString()
+		err = UpdateUserGroupMembershipTx(ctx, db.Bun(), &tmpUser, []string{name1, name3})
+		require.NoError(t, err, "failed to update user-group membership")
+
+		gps, err = SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
+		require.NoError(t, err, "failed to search groups")
+		require.Equal(t, len(gps), 2, "failed to end with two group assignments.")
+		require.Equal(t, gps[0].Name, name1, "failed to end with %s group assignment.", name1)
+		require.Equal(t, gps[1].Name, name3, "failed to end with %s group assignment.", name3)
 	})
 }
 

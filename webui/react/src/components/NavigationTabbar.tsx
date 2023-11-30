@@ -2,13 +2,13 @@ import Avatar from 'hew/Avatar';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import Link, { Props as LinkProps } from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
@@ -104,7 +104,7 @@ const NavigationTabbar: React.FC = () => {
             label: workspace.name,
             onClick: (e: AnyMouseEvent) =>
               handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-          } as ActionItem),
+          }) as ActionItem,
       ),
   );
 

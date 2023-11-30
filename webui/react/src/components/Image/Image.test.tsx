@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { DarkLight } from 'hew/Theme';
 
 import { ImageAlert, ImageEmpty, ImageWarning, type Props } from './Image';
 
@@ -35,7 +34,7 @@ describe('Image', () => {
     });
 
     it('should display ImageAlert with explicit props, Light Mode', () => {
-      const { view } = setupImageAlert({ darkLight: DarkLight.Light });
+      const { view } = setupImageAlert({ isDarkMode: false });
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Alert')).toBeInTheDocument();
       expect(view.container.firstChild).toHaveClass('alert');
@@ -49,7 +48,7 @@ describe('Image', () => {
     });
 
     it('should display ImageAlert with explicit props, Dark Mode', () => {
-      const { view } = setupImageAlert({ darkLight: DarkLight.Dark });
+      const { view } = setupImageAlert({ isDarkMode: true });
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Alert')).toBeInTheDocument();
       expect(view.container.firstChild).toHaveClass(...['alert', 'dark']);
@@ -93,7 +92,7 @@ describe('Image', () => {
     });
 
     it('should display ImageWarning with explicit props, Light Mode', () => {
-      const { view } = setupImageWarning({ darkLight: DarkLight.Light });
+      const { view } = setupImageWarning({ isDarkMode: false });
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Warning')).toBeInTheDocument();
       expect(view.container.firstChild).toHaveClass('warning');
@@ -107,7 +106,7 @@ describe('Image', () => {
     });
 
     it('should display ImageWarning with explicit props, Dark Mode', () => {
-      const { view } = setupImageWarning({ darkLight: DarkLight.Dark });
+      const { view } = setupImageWarning({ isDarkMode: true });
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Warning')).toBeInTheDocument();
       expect(view.container.firstChild).toHaveClass(...['warning', 'dark']);

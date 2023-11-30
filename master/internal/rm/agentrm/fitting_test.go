@@ -8,19 +8,17 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestIsViable(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	req := &sproto.AllocateRequest{SlotsNeeded: 2}
 
 	assert.Assert(t, isViable(req,
-		newFakeAgentState(t, system, "agent1", 4, 0, 100, 0), slotsSatisfied))
+		newFakeAgentState(t, "agent1", 4, 0, 100, 0), slotsSatisfied))
 	assert.Assert(t, !isViable(req,
-		newFakeAgentState(t, system, "agent2", 1, 0, 100, 0), slotsSatisfied))
+		newFakeAgentState(t, "agent2", 1, 0, 100, 0), slotsSatisfied))
 	assert.Assert(t, !isViable(req,
-		newFakeAgentState(t, system, "agent4", 1, 0, 100, 0), slotsSatisfied))
+		newFakeAgentState(t, "agent4", 1, 0, 100, 0), slotsSatisfied))
 }
 
 func TestFindFits(t *testing.T) {
@@ -308,12 +306,10 @@ func TestFindFits(t *testing.T) {
 		tc := testCases[idx]
 
 		t.Run(tc.Name, func(t *testing.T) {
-			system := actor.NewSystem(t.Name())
 			agents := []*agentState{}
 			for _, agent := range tc.Agents {
 				agents = append(agents, newFakeAgentState(
 					t,
-					system,
 					agent.ID,
 					agent.Slots,
 					agent.SlotsUsed,
@@ -321,7 +317,7 @@ func TestFindFits(t *testing.T) {
 					agent.ZeroSlotContainers,
 				))
 			}
-			agentsByHandler, agentsByIndex := byHandler(agents...)
+			agentsByHandler, agentsByIndex := byID(agents...)
 			fits := findFits(&tc.Task, agentsByHandler, tc.FittingMethod, false)
 			assert.Assert(t, len(fits) > 0)
 			assert.Equal(t, fits[0].Agent, agentsByIndex[tc.ExpectedAgentFit])
@@ -330,8 +326,6 @@ func TestFindFits(t *testing.T) {
 }
 
 func TestFindDedicatedAgentFits(t *testing.T) {
-	system := actor.NewSystem(t.Name())
-
 	type testCase struct {
 		Name                string
 		SlotsNeeded         int
@@ -431,7 +425,6 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 					index,
 					newFakeAgentState(
 						t,
-						system,
 						fmt.Sprintf("%s-agent-%d", tc.Name, i),
 						capacity,
 						0,
@@ -440,7 +433,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 					),
 				)
 			}
-			agents, index := byHandler(index...)
+			agents, index := byID(index...)
 			agentIndex := make(map[*agentState]int)
 			for idx, agent := range index {
 				agentIndex[agent] = idx
@@ -473,12 +466,11 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 }
 
 func TestFindFitDisallowedNodes(t *testing.T) {
-	system := actor.NewSystem(t.Name())
 	agents := []*agentState{
-		newFakeAgentState(t, system, "agent1", 4, 0, 100, 0),
-		newFakeAgentState(t, system, "agent2", 4, 0, 100, 0),
+		newFakeAgentState(t, "agent1", 4, 0, 100, 0),
+		newFakeAgentState(t, "agent2", 4, 0, 100, 0),
 	}
-	agentsByHandler, _ := byHandler(agents...)
+	agentsByHandler, _ := byID(agents...)
 
 	task := &sproto.AllocateRequest{
 		BlockedNodes: []string{"agent1", "agent2"},
@@ -510,13 +502,13 @@ func TestFindFitDisallowedNodes(t *testing.T) {
 	assert.Equal(t, fits[0].Agent, agents[0])
 }
 
-func byHandler(
+func byID(
 	handlers ...*agentState,
-) (map[*actor.Ref]*agentState, []*agentState) {
-	agents := make(map[*actor.Ref]*agentState, len(handlers))
+) (map[agentID]*agentState, []*agentState) {
+	agents := make(map[agentID]*agentState, len(handlers))
 	index := make([]*agentState, 0, len(handlers))
 	for _, agent := range handlers {
-		agents[agent.Handler] = agent
+		agents[agent.id] = agent
 		index = append(index, agent)
 	}
 	return agents, index

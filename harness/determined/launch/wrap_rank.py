@@ -14,20 +14,90 @@ nodes to the chief node over the network.  This may be disabled with the
 """
 import argparse
 import contextlib
+import io
 import os
+import re
 import subprocess
 import sys
 import threading
-from typing import BinaryIO, List
+from typing import BinaryIO, Iterator, List
 
 import determined as det
 from determined import constants
 
+lineend = re.compile(rb"[\r\n]")
 
-def forward_stream(src_stream: BinaryIO, dst_stream: BinaryIO, rank: str) -> None:
-    for line in iter(src_stream.readline, b""):
-        line = f"[rank={rank}] ".encode() + line
-        os.write(dst_stream.fileno(), line)
+
+# Duplicated in ship_logs.py.  If you find a bug here, fix it there too.
+def read_newlines_or_carriage_returns(fd: io.RawIOBase) -> Iterator[str]:
+    r"""
+    Read lines, delineated by either '\n' or '\r.
+
+    Unlike the default io.BufferedReader used in subprocess.Popen(bufsize=-1), we read until we
+    encounter either '\n' or \r', and treat that as one line.
+
+    Specifically, io.BufferedReader doesn't handle tqdm progress bar outputs very well; it treats
+    all of the '\r' outputs as one enormous line.
+
+    Args:
+        fd: an unbuffered stdout or stderr from a subprocess.Popen.
+
+    Yields:
+        A series of str, one per line.  Each line always ends with a '\n'.  Each line will be
+        broken to length io.DEFAULT_BUFFER_SIZE, even if the underlying io didn't have a linebreak.
+    """
+    # Ship lines of length of DEFAULT_BUFFER_SIZE, including the terminating newline.
+    limit = io.DEFAULT_BUFFER_SIZE - 1
+    nread = 0
+    chunks: List[bytes] = []
+
+    def oneline() -> str:
+        nonlocal nread
+        nonlocal chunks
+        out = b"".join(chunks).decode("utf8")
+        chunks = []
+        nread = 0
+        return out
+
+    while True:
+        buf = fd.read(limit - nread)
+        if not buf:
+            # EOF.
+            break
+
+        # Extract all the lines from this buffer.
+        while buf:
+            m = lineend.search(buf)
+            if m is None:
+                # No line break here; just append to chunks.
+                chunks.append(buf)
+                nread += len(buf)
+                break
+
+            # Line break found!
+            start, end = m.span()
+            chunks.append(buf[:start])
+            # Even if we matched a '\r', emit a '\n'.
+            chunks.append(b"\n")
+            yield oneline()
+            # keep checking the rest of buf
+            buf = buf[end:]
+
+        # Detect if we reached our buffer limit.
+        if nread >= limit:
+            # Pretend we got a line anyway.
+            chunks.append(b"\n")
+            yield oneline()
+
+    # One last line, maybe.
+    if chunks:
+        chunks.append(b"\n")
+        yield oneline()
+
+
+def forward_stream(src_stream: io.RawIOBase, dst_stream: BinaryIO, rank: str) -> None:
+    for line in read_newlines_or_carriage_returns(src_stream):
+        os.write(dst_stream.fileno(), f"[rank={rank}] {line}".encode("utf8"))
 
 
 def run_all(ts: List[threading.Thread]) -> None:
@@ -92,7 +162,7 @@ def main() -> int:
     if cwd.endswith("/run/determined/workdir"):
         os.chdir("/run/determined/workdir")
 
-    proc = subprocess.Popen(args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
     with det.util.forward_signals(proc):
         with contextlib.ExitStack() as exit_stack:
             if os.path.exists(constants.CONTAINER_STDOUT) and not args.no_redirect_stdio:
@@ -101,6 +171,8 @@ def main() -> int:
             else:
                 stdout = sys.stdout
                 stderr = sys.stderr
+            # Just for mypy.
+            assert isinstance(proc.stdout, io.RawIOBase) and isinstance(proc.stderr, io.RawIOBase)
             run_all(
                 [
                     threading.Thread(target=forward_stream, args=(proc.stdout, stdout, rank)),

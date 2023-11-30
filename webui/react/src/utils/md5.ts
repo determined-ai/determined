@@ -141,7 +141,6 @@ const add32 = (a: number, b: number): number => {
 };
 
 const md51 = (s: string): number[] => {
-  let txt = '';
   let n = s.length,
     state = [1732584193, -271733879, -1732584194, 271733878],
     i;

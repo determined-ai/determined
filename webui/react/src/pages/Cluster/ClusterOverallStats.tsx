@@ -13,6 +13,7 @@ import determinedStore from 'stores/determinedInfo';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
 import { ResourceType } from 'types';
+import { getSlotContainerStates } from 'utils/cluster';
 import { useObservable } from 'utils/observable';
 
 const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
@@ -23,7 +24,7 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 export const ClusterOverallStats: React.FC = () => {
   const agents = useObservable(clusterStore.agents);
   const resourcePools = useObservable(clusterStore.resourcePools);
-  const clusterOverview = useObservable(clusterStore.clusterOverview);
+
   const activeTasks = useObservable(taskStore.activeTasks);
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
@@ -65,13 +66,13 @@ export const ClusterOverallStats: React.FC = () => {
             NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
           })}
         </OverviewStats>
-        {Loadable.match(Loadable.all([maxTotalSlots, clusterOverview]), {
+        {Loadable.match(Loadable.all([maxTotalSlots, agents]), {
           _: () => null,
-          Loaded: ([maxTotalSlots, clusterOverview]) =>
+          Loaded: ([maxTotalSlots, agents]) =>
             [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
               maxTotalSlots[resType] > 0 ? (
                 <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
-                  {clusterOverview[resType].total - clusterOverview[resType].available}
+                  {getSlotContainerStates(agents || [], resType).length}
                   <small> / {maxTotalSlots[resType]}</small>
                 </OverviewStats>
               ) : null,
@@ -84,41 +85,45 @@ export const ClusterOverallStats: React.FC = () => {
         )}
         {(usePermissions().canAdministrateUsers || !rbacEnabled) && (
           <>
-            <OverviewStats title="Active Experiments">
-              {Loadable.match(activeExperiments, {
-                Failed: () => null,
-                Loaded: (activeExperiments) => activeExperiments.pagination?.total ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
-              })}
-            </OverviewStats>
-            <OverviewStats title="Active JupyterLabs">
-              {Loadable.match(activeTasks, {
-                Failed: () => null,
-                Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
-              })}
-            </OverviewStats>
-            <OverviewStats title="Active TensorBoards">
-              {Loadable.match(activeTasks, {
-                Failed: () => null,
-                Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
-              })}
-            </OverviewStats>
-            <OverviewStats title="Active Shells">
-              {Loadable.match(activeTasks, {
-                Failed: () => null,
-                Loaded: (activeTasks) => activeTasks.shells ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
-              })}
-            </OverviewStats>
-            <OverviewStats title="Active Commands">
-              {Loadable.match(activeTasks, {
-                Failed: () => null,
-                Loaded: (activeTasks) => activeTasks.commands ?? 0,
-                NotLoaded: (): ReactNode => <Spinner spinning />, // TODO correctly handle error state
-              })}
-            </OverviewStats>
+            {Loadable.match(activeExperiments, {
+              _: () => null,
+              Loaded: (activeExperiments) =>
+                (activeExperiments.pagination?.total ?? 0) > 0 && (
+                  <OverviewStats title="Active Experiments">
+                    {activeExperiments.pagination?.total}
+                  </OverviewStats>
+                ),
+            })}
+            {Loadable.match(activeTasks, {
+              _: () => null,
+              Loaded: (activeTasks) =>
+                activeTasks.notebooks > 0 && (
+                  <OverviewStats title="Active JupyterLabs">{activeTasks.notebooks}</OverviewStats>
+                ),
+            })}
+            {Loadable.match(activeTasks, {
+              _: () => null,
+              Loaded: (activeTasks) =>
+                activeTasks.tensorboards > 0 && (
+                  <OverviewStats title="Active TensorBoards">
+                    {activeTasks.tensorboards}
+                  </OverviewStats>
+                ),
+            })}
+            {Loadable.match(activeTasks, {
+              _: () => null,
+              Loaded: (activeTasks) =>
+                activeTasks.shells > 0 && (
+                  <OverviewStats title="Active Shells">{activeTasks.shells}</OverviewStats>
+                ),
+            })}
+            {Loadable.match(activeTasks, {
+              _: () => null,
+              Loaded: (activeTasks) =>
+                activeTasks.commands > 0 && (
+                  <OverviewStats title="Active Commands">{activeTasks.commands}</OverviewStats>
+                ),
+            })}
           </>
         )}
       </Card.Group>

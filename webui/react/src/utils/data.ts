@@ -55,17 +55,20 @@ export const flattenObject = <T = Primitive>(
   const continueFn = options?.continueFn ?? isObject;
   const delimiter = options?.delimiter ?? '.';
   const keys = options?.keys ?? [];
-  return Object.keys(object).reduce((acc, key) => {
-    const value = object[key] as UnknownRecord;
-    const newKeys = [...keys, key];
-    if (continueFn(value)) {
-      acc = { ...acc, ...flattenObject<T>(value, { continueFn, delimiter, keys: newKeys }) };
-    } else {
-      const keyPath = newKeys.join(delimiter);
-      acc[keyPath] = value as T;
-    }
-    return acc;
-  }, {} as Record<RecordKey, T>);
+  return Object.keys(object).reduce(
+    (acc, key) => {
+      const value = object[key] as UnknownRecord;
+      const newKeys = [...keys, key];
+      if (continueFn(value)) {
+        acc = { ...acc, ...flattenObject<T>(value, { continueFn, delimiter, keys: newKeys }) };
+      } else {
+        const keyPath = newKeys.join(delimiter);
+        acc[keyPath] = value as T;
+      }
+      return acc;
+    },
+    {} as Record<RecordKey, T>,
+  );
 };
 
 export const unflattenObject = <T = unknown>(

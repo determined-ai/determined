@@ -12,13 +12,14 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// addGroup adds a group to the database. Returns ErrDuplicateRow if a
+// AddGroupTx adds a group to the database. Returns ErrDuplicateRow if a
 // group already exists with the same name or ID. Will use db.Bun() if
 // passed nil for idb.
-func addGroup(ctx context.Context, idb bun.IDB, group model.Group) (model.Group, error) {
+func AddGroupTx(ctx context.Context, idb bun.IDB, group model.Group) (model.Group, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -33,7 +34,7 @@ func AddGroupWithMembers(ctx context.Context, group model.Group, uids ...model.U
 	[]model.User, error,
 ) {
 	if len(uids) == 0 {
-		newGroup, err := addGroup(ctx, nil, group)
+		newGroup, err := AddGroupTx(ctx, nil, group)
 		return newGroup, nil, err
 	}
 	tx, err := db.Bun().BeginTx(ctx, nil)
@@ -50,7 +51,7 @@ func AddGroupWithMembers(ctx context.Context, group model.Group, uids ...model.U
 		}
 	}()
 
-	group, err = addGroup(ctx, tx, group)
+	group, err = AddGroupTx(ctx, tx, group)
 	if err != nil {
 		return model.Group{}, nil, err
 	}
@@ -130,15 +131,34 @@ func SearchGroups(
 	return SearchGroupsPaginated(ctx, query, offset, limit)
 }
 
-// SearchGroupsWithoutPersonalGroups searches the database for groups.
+// SearchGroupsWithoutPersonalGroupsTx searches the database for groups.
 // userBelongsTo is "optional" in that if a value < 1 is passed in, the
 // parameter is ignored. SearchGroups does not return an error if no groups
 // are found, as that is considered a successful search.
-func SearchGroupsWithoutPersonalGroups(
-	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
-) (groups []model.Group, memberCounts []int32, tableRows int, err error) {
-	query := SearchGroupsQuery(name, userBelongsTo, false)
-	return SearchGroupsPaginated(ctx, query, offset, limit)
+func SearchGroupsWithoutPersonalGroupsTx(
+	ctx context.Context, idb bun.IDB, name string, userBelongsTo model.UserID,
+) ([]model.Group, error) {
+	var groups []model.Group
+	query := idb.NewSelect().Model(&groups).Where("groups.user_id IS NULL")
+
+	if len(name) > 0 {
+		query = query.Where("group_name = ?", name)
+	}
+
+	if userBelongsTo != 0 {
+		query = query.Where(
+			`EXISTS(SELECT 1
+			FROM user_group_membership AS m
+			WHERE m.group_id=groups.id AND m.user_id = ?)`,
+			userBelongsTo)
+	}
+
+	err := query.Scan(ctx, &groups)
+	if err != nil {
+		return nil, err
+	}
+
+	return groups, nil
 }
 
 // SearchGroupsQuery builds a query and returns it to the caller. userBelongsTo
@@ -465,4 +485,55 @@ func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, er
 		Scan(ctx)
 
 	return users, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d info", gid)
+}
+
+// UpdateUserGroupMembershipTx takes in slice of groups, and updates a user's membership in those groups.
+func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User, groups []string) error {
+	// Get a list of groups a user is in.
+	currentGroups, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, "", u.ID)
+	if err != nil {
+		return fmt.Errorf("finding current user groups: %w", err)
+	}
+
+	groupsToRemove := set.New[int]()
+	// Remove the user from any groups no longer included in the slice.
+	for _, g := range currentGroups {
+		if !slices.Contains(groups, g.Name) {
+			groupsToRemove.Insert(g.ID)
+		}
+	}
+	if len(groupsToRemove) != 0 {
+		if err := RemoveUsersFromGroupsTx(ctx, tx, groupsToRemove.ToSlice(), u.ID); err != nil {
+			return fmt.Errorf("failed to remove user from group: %w", err)
+		}
+	}
+
+	groupsToAdd := set.New[int]()
+	// Add the user to groups included in the slice.
+	for _, g := range groups {
+		// Check if the group already exists, regardless of if the user belongs to it.
+		gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, g, model.UserID(0))
+		if err != nil {
+			return fmt.Errorf("failed to find usergroup: %w", err)
+		}
+
+		if len(gps) == 0 {
+			newGroup, err := AddGroupTx(ctx, tx, model.Group{Name: g})
+			if err != nil {
+				return fmt.Errorf("failed to add usergroup: %w", err)
+			}
+			groupsToAdd.Insert(newGroup.ID)
+		} else if !slices.Contains(currentGroups, gps[0]) {
+			// gps should be a slice of length 1 since group name is unique.
+			groupsToAdd.Insert(gps[0].ID)
+		}
+	}
+
+	if len(groupsToAdd) != 0 {
+		if err := AddUsersToGroupsTx(ctx, tx, groupsToAdd.ToSlice(), true, u.ID); err != nil {
+			return fmt.Errorf("error adding user to group: %s", err)
+		}
+	}
+
+	return nil
 }

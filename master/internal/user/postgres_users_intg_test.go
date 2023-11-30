@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun/schema"
@@ -160,6 +161,28 @@ func TestUserStartSession(t *testing.T) {
 	token, err := StartSession(context.TODO(), user)
 	require.NoError(t, err)
 	require.NotNil(t, token)
+
+	exists, err := db.Bun().NewSelect().Table("user_sessions").
+		Where("user_id = ?", user.ID).Exists(context.TODO())
+	require.True(t, exists)
+	require.NoError(t, err)
+}
+
+func TestUserStartSessionTokenHasClaims(t *testing.T) {
+	user, err := addTestUser(nil)
+	require.NoError(t, err)
+
+	// Add a session with inherited claims.
+	claims := map[string]string{"test_key": "test_val"}
+	token, err := StartSession(context.TODO(), user, WithInheritedClaims(claims))
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	var restoredSession model.UserSession
+	v2 := paseto.NewV2()
+	err = v2.Verify(token, db.GetTokenKeys().PublicKey, &restoredSession, nil)
+	require.NoError(t, err)
+	require.Equal(t, restoredSession.InheritedClaims, claims)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
 		Where("user_id = ?", user.ID).Exists(context.TODO())

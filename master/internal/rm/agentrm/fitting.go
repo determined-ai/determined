@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 )
 
@@ -61,7 +60,7 @@ func (c candidateList) Less(i, j int) bool {
 		return false
 	default:
 		// As a final tiebreaker, compare the agent IDs in string order.
-		return a.Agent.Handler.Address().String() < b.Agent.Handler.Address().String()
+		return a.Agent.id < b.Agent.id
 	}
 }
 
@@ -70,7 +69,7 @@ func (c candidateList) Swap(i, j int) {
 }
 
 func findFits(
-	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest, agents map[agentID]*agentState, fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
@@ -105,7 +104,7 @@ func isViable(
 }
 
 func findDedicatedAgentFits(
-	req *sproto.AllocateRequest, agentStates map[*actor.Ref]*agentState,
+	req *sproto.AllocateRequest, agentStates map[agentID]*agentState,
 	fittingMethod SoftConstraint, allowHeterogeneousFits bool,
 ) []*fittingState {
 	if len(agentStates) == 0 {
@@ -220,7 +219,7 @@ func findDedicatedAgentFits(
 }
 
 func findSharedAgentFit(
-	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest, agents map[agentID]*agentState, fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
@@ -253,5 +252,5 @@ func stringHashNumber(s string) uint64 {
 
 func hashDistance(req *sproto.AllocateRequest, agent *agentState) uint64 {
 	return stringHashNumber(string(req.AllocationID)) -
-		stringHashNumber(agent.Handler.Address().String())
+		stringHashNumber(string(agent.id))
 }

@@ -10,7 +10,6 @@ import (
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -22,10 +21,10 @@ import (
 
 func TestTelemetry(t *testing.T) {
 	// Mock out the telemetry actor & client interface.
-	client, rm, db, system := initMockedTelemetry(t)
+	client, rm, db := initMockedTelemetry(t)
 
 	// Should receive one master_tick event and identify initially, reset queue after check.
-	reportMasterTick(db, rm, system)
+	reportMasterTick(db, rm)
 	assert.Equal(t, []string{"identify", "master_tick"}, client.getQueue(), "queue didn't receive initial master tick")
 	client.resetQueue()
 
@@ -39,7 +38,7 @@ func TestTelemetry(t *testing.T) {
 	client.resetQueue()
 
 	// Test out all Reports.
-	reportMasterTick(db, rm, system)
+	reportMasterTick(db, rm)
 	ReportProvisionerTick([]*model.Instance{}, "test-instance")
 	ReportExperimentCreated(1, schemas.WithDefaults(createExpConfig()))
 	ReportAllocationTerminal(db, model.Allocation{}, &device.Device{})
@@ -89,7 +88,7 @@ func (m *mockClient) resetQueue() {
 }
 
 // initMockedTelemetry() does what Init() does, but for tests.
-func initMockedTelemetry(t *testing.T) (*mockClient, *mocks.ResourceManager, *mocks.DB, *actor.System) {
+func initMockedTelemetry(t *testing.T) (*mockClient, *mocks.ResourceManager, *mocks.DB) {
 	mockRM := &mocks.ResourceManager{}
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
 		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
@@ -99,19 +98,18 @@ func initMockedTelemetry(t *testing.T) (*mockClient, *mocks.ResourceManager, *mo
 	mockDB.On("PeriodicTelemetryInfo").Return([]byte(`{"master_version": 1}`), nil)
 	mockDB.On("CompleteAllocationTelemetry", mock.Anything).Return([]byte(`{"allocation_id": 1}`), nil)
 
-	system := actor.NewSystem("Testing")
-
 	client := &mockClient{}
 	telemeter, err := newTelemeter(client, "1")
 	require.NoError(t, err)
 	defaultTelemeter = telemeter
 
-	return client, mockRM, mockDB, system
+	return client, mockRM, mockDB
 }
 
 // Helper function for ReportExperimentCreated.
 func createExpConfig() expconf.ExperimentConfig {
 	maxLength := expconf.NewLengthInBatches(100)
+	//nolint:exhaustruct
 	activeConfig := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
 			RawMetric: ptrs.Ptr("loss"),

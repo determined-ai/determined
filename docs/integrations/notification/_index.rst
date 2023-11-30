@@ -138,7 +138,10 @@ At the modal input:
 -  URL: webhook URL.
 -  Type: ``Default`` or ``Slack``. The ``Slack`` type can automatically format message content for
    better readability on Slack.
--  Trigger: the experiment state change you want to monitor, either ``Completed`` or ``Error``.
+-  Trigger: the experiment state change you want to monitor, either ``Completed``, ``Error``, or
+   ``Tasklog``.
+-  Regex: If the webhook is configured to trigger on Tasklog, define a regex using `Golang Regex
+   Syntax <https://pkg.go.dev/regexp/syntax>`
 
 .. image:: /assets/images/webhook_modal.png
    :width: 100%

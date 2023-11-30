@@ -2,8 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { DEFAULT_CANCEL_LABEL, useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { ExperimentAction as Action, ExperimentAction } from 'types';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
@@ -33,7 +35,13 @@ const ModalTrigger: React.FC<Props> = ({ action }) => {
 const user = userEvent.setup();
 
 const setup = async (action: ExperimentAction) => {
-  render(<ModalTrigger action={action} />);
+  render(
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <ModalTrigger action={action} />
+      </ThemeProvider>
+    </UIProvider>,
+  );
 
   await user.click(screen.getByRole('button'));
 };

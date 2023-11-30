@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.master.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/masterv1";
 
+import "determined/log/v1/log.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -97,7 +98,7 @@ message LogConfig {
     json_schema: { required: [] }
   };
   // The log level for Master Config.
-  string level = 1;
+  determined.log.v1.LogLevel level = 1;
   // The color setting for log in Master Config.
   bool color = 2;
 }

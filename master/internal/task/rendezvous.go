@@ -68,7 +68,7 @@ func newRendezvous(
 
 func (r *rendezvous) watch(rID sproto.ResourcesID) (RendezvousWatcher, error) {
 	if _, ok := r.resources[rID]; !ok {
-		err := ErrStaleResources{ID: rID}
+		err := StaleResourcesError{ID: rID}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
 	} else if _, ok := r.watchers[rID]; ok {
 		return RendezvousWatcher{}, apiutils.AsValidationError("resources already rendezvoused: %s", rID)
@@ -153,7 +153,7 @@ func (r *rendezvous) checkTimeout() error {
 
 	exceededTimeout := time.Now().After(r.lastWatchTime.Add(r.timeout))
 	if exceededTimeout {
-		return ErrTimeoutExceeded{
+		return TimeoutExceededError{
 			Message: "some containers are taking a long time to " +
 				"connect to master; when running on kubernetes this may happen " +
 				"because only some of the pods have been scheduled; it is possible " +

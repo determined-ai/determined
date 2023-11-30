@@ -1,9 +1,8 @@
 import { Space, Typography } from 'antd';
 import Avatar from 'hew/Avatar';
 import Icon from 'hew/Icon';
-import Progress from 'hew/Progress';
 import Spinner from 'hew/Spinner';
-import { getStateColorCssVar, StateOfUnion } from 'hew/Theme';
+import { StateOfUnion } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
@@ -161,7 +160,7 @@ export const taskTypeRenderer: TaskRenderer = (_, record) => (
   </Tooltip>
 );
 
-export const taskNameRenderer: TaskRenderer = (id, record) => (
+export const taskNameRenderer: TaskRenderer = (_id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
@@ -221,20 +220,6 @@ export const experimentNameRenderer = (
   </Typography.Text>
 );
 
-export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  const color = getStateColorCssVar(record.state);
-  return typeof record.progress !== 'undefined' ? (
-    <Progress
-      parts={[
-        {
-          color,
-          percent: record.progress,
-        },
-      ]}
-    />
-  ) : null;
-};
-
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
@@ -253,7 +238,7 @@ export const modelVersionNameRenderer = (value: string, record: ModelVersion): R
 );
 
 export const modelVersionNumberRenderer = (
-  value: string,
+  _value: string,
   record: ModelVersion,
 ): React.ReactNode => (
   <Link

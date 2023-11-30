@@ -1,15 +1,14 @@
-import { DarkLight } from 'hew/Theme';
 import React from 'react';
 
 import css from './Image.module.scss';
 
 export interface Props {
-  darkLight?: DarkLight;
+  isDarkMode?: boolean;
 }
 
-export const ImageAlert: React.FC<Props> = ({ darkLight }) => {
+export const ImageAlert: React.FC<Props> = ({ isDarkMode }) => {
   const classes = [css.alert];
-  if (darkLight === DarkLight.Dark) classes.push(css.dark);
+  if (isDarkMode) classes.push(css.dark);
   return (
     <svg
       className={classes.join(' ')}
@@ -61,9 +60,9 @@ export const ImageEmpty: React.FC<Props> = () => (
   </svg>
 );
 
-export const ImageWarning: React.FC<Props> = ({ darkLight }) => {
+export const ImageWarning: React.FC<Props> = ({ isDarkMode }) => {
   const classes = [css.warning];
-  if (darkLight === DarkLight.Dark) classes.push(css.dark);
+  if (isDarkMode) classes.push(css.dark);
   return (
     <svg
       className={classes.join(' ')}

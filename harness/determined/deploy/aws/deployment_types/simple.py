@@ -38,6 +38,10 @@ class SimpleRDS(Simple):
     deployment_type = constants.deployment_types.SIMPLE_RDS
 
     template_parameter_keys = base.COMMON_TEMPLATE_PARAMETER_KEYS + [
+        constants.cloudformation.PREEMPTION_ENABLED,
+        constants.cloudformation.RETAIN_LOG_GROUP,
+        constants.cloudformation.SCHEDULER_TYPE,
+        constants.cloudformation.SUBNET_ID_KEY,
         constants.cloudformation.DB_INSTANCE_TYPE,
         constants.cloudformation.DB_SIZE,
     ]
