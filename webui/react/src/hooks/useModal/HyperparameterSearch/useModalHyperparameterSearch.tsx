@@ -497,7 +497,7 @@ const useModalHyperparameterSearch = ({
             name="slots_per_trial"
             rules={[{ max: maxSlots, min: 1, required: true, type: 'number' }]}
             validateStatus={
-              formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 0
+              formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 1
                 ? 'error'
                 : 'success'
             }>
