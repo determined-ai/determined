@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import warnings
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -78,6 +79,11 @@ def open_shell(args: Namespace) -> None:
 
 @authentication.required
 def show_ssh_command(args: Namespace) -> None:
+    if "WSL" in os.uname().release:
+        print(
+            f"WARNING: WSL remote-ssh integration is not supported in VSCode. "
+            "For Windows VSCode integration, rerun this command in a Windows shell."
+        )
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(

@@ -20,9 +20,6 @@
 
       det shell show_ssh_command <SHELL UUID>
 
-   If you are using Windows with WSL, do not to run these commands in your WSL shell. Use a Windows
-   installation of `determined`.
-
 #. Copy the SSH command, then select ``Remote-SSH: Add new SSH Host...`` from the **Command
    Palette** in VS Code, and paste the copied SSH command when prompted. Finally, you'll be asked to
    pick a config file to use. The default option should work for most users.
