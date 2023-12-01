@@ -48,7 +48,7 @@ const ProjectCard: React.FC<Props> = ({
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
-        <div className={`${css.headerContainer} ${css.name}`}>
+        <div className={css.headerContainer}>
           <Title size={TypographySize.XS} truncate={{ rows: 3, tooltip: true }}>
             {project.name}
           </Title>

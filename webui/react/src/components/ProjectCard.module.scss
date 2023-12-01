@@ -9,11 +9,11 @@
 
   .headerContainer {
     grid-area: header;
-  }
-  .name {
-    font-size: 13px;
-    margin-bottom: 0;
-    width: fit-content;
+
+    & > h1 {
+      margin-bottom: 0;
+      width: fit-content;
+    }
   }
   .workspaceContainer {
     grid-area: workspace;

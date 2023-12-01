@@ -11,15 +11,14 @@
 
   .nameRow {
     align-items: center;
-    color: var(--theme-surface-on-strong);
     display: flex;
     gap: 6px;
     height: min-content;
     justify-content: space-between;
     min-width: 0;
 
-    & .ant-typography-ellipsis-single-line {
-      margin: 0;
+    h1 {
+      margin-bottom: 10px;
     }
   }
   .projects {
