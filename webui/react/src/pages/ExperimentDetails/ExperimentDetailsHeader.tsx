@@ -304,7 +304,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         ...continueExperimentOption,
         key: 'continue-trial',
         label: experiment.unmanaged ? (
-          <Tooltip content={UNMANAGED_MESSAGE}>Continue Trialss</Tooltip>
+          <Tooltip content={UNMANAGED_MESSAGE}>Continue Trials</Tooltip>
         ) : (
           'Continue Trial'
         ),
