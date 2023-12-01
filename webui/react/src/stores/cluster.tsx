@@ -9,7 +9,7 @@ import {
   getResourcePools,
   overwriteResourcePoolBindings,
 } from 'services/api';
-import {V1ResourcePoolType, V1SchedulerType} from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { percent } from 'utils/number';
