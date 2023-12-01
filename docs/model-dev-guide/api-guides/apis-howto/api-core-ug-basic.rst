@@ -18,7 +18,7 @@ Learn how to get started with the Core API by incrementing a single integer in a
 +------------------------------------------------------------------+
 
 With the Core API you can train arbitrary models on the Determined platform with seamless access to
-the the following capabilities:
+the following capabilities:
 
 -  metrics tracking
 -  checkpoint tracking and preemption support
