@@ -17566,7 +17566,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createGenericTask.');
             }
-            const localVarPath = `/api/v1/generic-task`;
+            const localVarPath = `/api/v1/generic-tasks`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;

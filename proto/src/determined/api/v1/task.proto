@@ -35,7 +35,7 @@ message CreateGenericTaskResponse {
   };
   // The created generic taskID.
   string task_id = 1;
-    // List of any related warnings.
+  // List of any related warnings.
   repeated LaunchWarning warnings = 2;
 }
 
