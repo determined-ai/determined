@@ -318,6 +318,8 @@ const ExperimentContinueModalComponent = ({
             id: modalState.experiment.id,
             overrideConfig: newConfig,
           });
+          const newPath = paths.experimentDetails(experiment.id);
+          routeToReactUrl(paths.reload(newPath));
         } catch (e) {
           let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
           if (isError(e) && e.name === 'YAMLException') {
@@ -332,7 +334,7 @@ const ExperimentContinueModalComponent = ({
         }
       }
     },
-    [modalState],
+    [experiment.id, modalState],
   );
 
   const handleSubmit = async () => {
