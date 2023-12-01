@@ -71,11 +71,7 @@ const WebhooksView: React.FC = () => {
     }
   }, [canceler.signal]);
 
-  const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchWebhooks()]);
-  }, [fetchWebhooks]);
-
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  usePolling(fetchWebhooks, { rerunOnNewFn: true });
 
   /**
    * Get new webhooks based on changes to the pagination and sorter.
