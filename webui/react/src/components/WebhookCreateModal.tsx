@@ -11,9 +11,14 @@ import { RunState } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
+interface Props {
+  onSuccess?: () => void;
+}
+
 const FORM_ID = 'create-webhook-form';
 
 const triggerEvents = [RunState.Completed, RunState.Error, V1TriggerType.TASKLOG] as const;
+
 interface FormInputs {
   regex?: string;
   triggerEvents: (typeof triggerEvents)[number][];
@@ -45,7 +50,7 @@ const triggerOptions = [
     value: V1TriggerType.TASKLOG,
   },
 ];
-const WebhookCreateModalComponent: React.FC = () => {
+const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
@@ -84,6 +89,7 @@ const WebhookCreateModalComponent: React.FC = () => {
           url: values.url,
           webhookType: values.webhookType,
         });
+        onSuccess?.();
         routeToReactUrl(paths.webhooks());
         form.resetFields();
       }
@@ -106,7 +112,7 @@ const WebhookCreateModalComponent: React.FC = () => {
         });
       }
     }
-  }, [form]);
+  }, [form, onSuccess]);
 
   return (
     <Modal

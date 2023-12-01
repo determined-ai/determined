@@ -242,8 +242,8 @@ const WebhooksView: React.FC = () => {
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-      <WebhookCreateModal.Component />
-      <WebhookDeleteModal.Component webhook={selectedWebhook} />
+      <WebhookCreateModal.Component onSuccess={() => fetchWebhooks()} />
+      <WebhookDeleteModal.Component webhook={selectedWebhook} onSuccess={() => fetchWebhooks()} />
     </Page>
   );
 };
