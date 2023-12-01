@@ -26,6 +26,7 @@ Set the Auto Provision Option
 The first step is to configure the :ref:`master configuration file <master-config-reference>` to
 enable auto provisioning users and the remote management of any information attached to the users.
 
+-  Enable OIDC.
 -  Set ``oidc.auto_provision_users`` option to ``true`` in your :ref:`master configuration file
    <master-config-reference>`.
 
@@ -46,7 +47,7 @@ For example:
        client_secret: "xx0xx0"
        auto_provision_users: true
 
-Determined sets the username of the user to the IdP username. You cannot set the username
+Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
 
 Set the Groups Claim Name Option
@@ -82,8 +83,8 @@ Then, Determined creates the following user:
    }
 
 Each time the authenticated user accesses Determined, their information is passed to Determined, and
-the changes are made. For example, when a user is assigned to a new group via your IdP, that
-information is updated in Determined.
+group memberships are updated. For example, when a user is assigned to a new group via your IdP,
+that information is updated in Determined.
 
 Complete the Auto Provision Process
 ===================================
