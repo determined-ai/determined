@@ -49,7 +49,7 @@ const ProjectCard: React.FC<Props> = ({
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
         <div className={css.headerContainer}>
-          <Title size={TypographySize.XS} truncate={{ rows: 3, tooltip: true }}>
+          <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
             {project.name}
           </Title>
         </div>
