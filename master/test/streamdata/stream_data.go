@@ -160,60 +160,20 @@ type Experiment struct {
 	ModelDefinitionBytes []byte               `bun:"model_definition"`
 	StartTime            time.Time            `bun:"start_time"`
 	OwnerID              *model.UserID        `bun:"owner_id"`
+	ProjectID            int                  `bin:"project_id"`
 }
 
-// GetAddExperimentQueries constructs the necessary queries
-// to create a new experiment to the db.
-func GetAddExperimentQueries(experiment *Experiment) (
-	queries []ExecutableQuery,
-	experimentID int,
-	err error,
-) {
-	ctx := context.TODO()
-	var ids []int
-	err = db.Bun().NewSelect().
-		Table("experiments").
-		Column("ID").
-		Order("id DESC").
-		Scan(ctx, &ids)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	newJobID := testJob + strconv.Itoa(ids[0]+1)
-	ownerID := model.UserID(1)
-	queries = append(queries,
-		db.Bun().NewInsert().Model(
-			&model.Job{
-				JobID:   model.JobID(newJobID),
-				JobType: "EXPERIMENT",
-				OwnerID: &ownerID,
-			},
-		),
-	)
-
-	// we have to control id and jobId generation
-	experiment.ID = ids[0] + 1
-	experiment.JobID = newJobID
-
-	queries = append(queries, db.Bun().NewInsert().Model(experiment))
-	// XXX (eliu): example experiment:
-	// Experiment{
-	//			ID:                   ids[0] + 1,
-	//			JobID:                newJobID,
-	//			State:                "ERROR",
-	//			Notes:                "",
-	//			Config:               expconf.LegacyConfig{},
-	//			ModelDefinitionBytes: nil,
-	//			StartTime:            time.Now(),
-	//			OwnerID:              &ownerID,
-	//		}
-
-	return queries, ids[0] + 1, nil
+// GetAddExperimentQuery constructs the query to create a new experiment in the db.
+func GetAddExperimentQuery(experiment *Experiment) ExecutableQuery {
+	return db.Bun().NewInsert().Model(experiment)
 }
 
-// ModExperiment modifies an experiment in the experiment table.
-func ModExperiment(ctx context.Context, newExp Experiment) error {
-	_, err := db.Bun().NewUpdate().Model(&newExp).OmitZero().WherePK().Exec(ctx)
-	return err
+// GetUpdateExperimentQuery constructs a query to update an experiment in the db.
+func GetUpdateExperimentQuery(newExp Experiment) ExecutableQuery {
+	return db.Bun().NewUpdate().Model(&newExp).OmitZero().Where("id = ?", newExp.ID)
+}
+
+// GetDeleteExperimentQuery constructs a query to delete an experiment with the specified id.
+func GetDeleteExperimentQuery(id int) ExecutableQuery {
+	return db.Bun().NewDelete().Table("experiments").Where("id = ?", id)
 }

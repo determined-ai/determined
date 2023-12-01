@@ -1,8 +1,15 @@
 -- Trials to insert for test
-INSERT INTO jobs (job_id, job_type, owner_id) VALUES ('test_job1', 'EXPERIMENT', 1);
+INSERT INTO workspaces (name) VALUES ('test_workspace1');
 
-INSERT INTO experiments (state, config, model_definition, start_time, owner_id, notes, job_id)
-VALUES ('ERROR', '{}', '', '2023-07-25 16:44:21.610081+00', 1, '', 'test_job1');
+INSERT INTO projects (name, workspace_id) VALUES ('test_project1', 2);
+
+INSERT INTO jobs (job_id, job_type, owner_id) VALUES ('test_job1', 'EXPERIMENT', 1);
+INSERT INTO jobs (job_id, job_type, owner_id) VALUES ('test_job2', 'EXPERIMENT', 1);
+
+INSERT INTO experiments (state, config, model_definition, start_time, owner_id, notes, job_id, project_id)
+VALUES ('ERROR', '{}', '', '2023-07-25 16:44:21.610081+00', 1, '', 'test_job1', 2);
+INSERT INTO experiments (state, config, model_definition, start_time, owner_id, notes, job_id, project_id)
+VALUES ('ERROR', '{}', '', '2023-07-25 16:44:21.610081+00', 1, '', 'test_job2', 2);
 
 INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.1', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job1');
 INSERT INTO tasks (task_id, task_type, start_time, job_id) VALUES ('1.2', 'TRIAL', '2023-07-25 16:44:21.610081+00', 'test_job1');
