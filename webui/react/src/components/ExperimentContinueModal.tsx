@@ -141,25 +141,35 @@ const ExperimentContinueModalComponent = ({
     setDisabled(hasError || missingRequiredFields);
   };
 
-  const handleEditorChange = useCallback((newConfigString: string) => {
-    // Update config string and config error upon each keystroke change.
-    setModalState((prev) => {
-      if (!prev) return prev;
+  const handleEditorChange = useCallback(
+    (newConfigString: string) => {
+      // Update config string and config error upon each keystroke change.
+      setModalState((prev) => {
+        if (!prev) return prev;
 
-      const newModalState = { ...prev, configString: newConfigString };
+        const newModalState = { ...prev, configString: newConfigString };
 
-      // Validate the yaml syntax by attempting to load it.
-      try {
-        newModalState.config = yaml.load(newConfigString) as RawJson;
-        newModalState.configError = undefined;
-        newModalState.error = undefined;
-      } catch (e) {
-        if (isError(e)) newModalState.configError = e.message;
-      }
+        // Validate the yaml syntax by attempting to load it.
+        try {
+          newModalState.config = yaml.load(newConfigString) as RawJson;
+          newModalState.configError = undefined;
+          if (isReactivate) {
+            if (newModalState.config.workspace !== originalConfig.workspace) {
+              newModalState.configError = 'Cannot change workspace';
+            } else if (newModalState.config.project !== originalConfig.project) {
+              newModalState.configError = 'Cannot change project';
+            }
+          }
+          newModalState.error = undefined;
+        } catch (e) {
+          if (isError(e)) newModalState.configError = e.message;
+        }
 
-      return newModalState;
-    });
-  }, []);
+        return newModalState;
+      });
+    },
+    [isReactivate, originalConfig.project, originalConfig.workspace],
+  );
 
   const toggleMode = useCallback(async () => {
     setModalState((prev) => {
@@ -389,7 +399,7 @@ const ExperimentContinueModalComponent = ({
   const hideSimpleConfig = isReactivate && experiment.state !== RunState.Completed;
 
   const maxLengthType = capitalizeWord(getMaxLengthType(modalState.config) || 'length');
-  const hideModalText = modalState.isAdvancedMode || hideSimpleConfig;
+  const modalIsInAdvancedMode = modalState.isAdvancedMode || hideSimpleConfig;
   return (
     <Modal
       cancel
@@ -413,10 +423,10 @@ const ExperimentContinueModalComponent = ({
       onClose={handleModalClose}>
       <>
         {modalState.error && <Message icon="error" title={modalState.error} />}
-        {modalState.configError && modalState.isAdvancedMode && (
+        {modalState.configError && modalIsInAdvancedMode && (
           <Message icon="error" title={modalState.configError} />
         )}
-        {(modalState.isAdvancedMode || hideSimpleConfig) && (
+        {modalIsInAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
             <CodeEditor
               file={Loaded(modalState.configString)}
@@ -427,10 +437,10 @@ const ExperimentContinueModalComponent = ({
             />
           </React.Suspense>
         )}
-        {!isReactivate && !hideModalText && (
+        {!isReactivate && !modalIsInAdvancedMode && (
           <Body>Start a new experiment from the current trial&rsquo;s latest checkpoint.</Body>
         )}
-        {isReactivate && !hideModalText && (
+        {isReactivate && !modalIsInAdvancedMode && (
           <Body>Reactivate and continue the current trial from the latest checkpoint.</Body>
         )}
         <Form
