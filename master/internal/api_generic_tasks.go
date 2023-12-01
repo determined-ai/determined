@@ -97,7 +97,11 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	taskConfig.Resources.RawSlots = &resources.Slots
 
 	var contextDirectoryBytes []byte
-	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(taskConfig.WorkDir, workDirInDefaults, contextDirectory)
+	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(
+		taskConfig.WorkDir,
+		workDirInDefaults,
+		contextDirectory,
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}

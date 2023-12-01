@@ -6,6 +6,10 @@ package internal
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -13,9 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
-	"github.com/stretchr/testify/require"
-	k8sV1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func getMockResourceManager(poolName string) *mocks.ResourceManager {
@@ -44,17 +45,16 @@ func TestResolveResources(t *testing.T) {
 		},
 	}
 
-	for test_case, test_vars := range tests {
-		t.Run(test_case, func(t *testing.T) {
-			m :=
-				&Master{
-					rm:     getMockResourceManager(test_vars.expectedPoolName),
-					config: config.DefaultConfig(),
-				}
-			poolName, _, err := m.ResolveResources(test_vars.resourcePool, test_vars.slots, test_vars.workspaceID)
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			m := &Master{
+				rm:     getMockResourceManager(testVars.expectedPoolName),
+				config: config.DefaultConfig(),
+			}
+			poolName, _, err := m.ResolveResources(testVars.resourcePool, testVars.slots, testVars.workspaceID)
 
 			require.NoError(t, err, "Error in ResolveResources()")
-			require.Equal(t, test_vars.expectedPoolName, poolName)
+			require.Equal(t, testVars.expectedPoolName, poolName)
 		})
 	}
 }
@@ -73,9 +73,9 @@ func TestFillTaskSpec(t *testing.T) {
 			workDir:        "/",
 		},
 	}
-	for test_case, test_vars := range tests {
-		t.Run(test_case, func(t *testing.T) {
-			rm := getMockResourceManager(test_vars.poolName)
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			rm := getMockResourceManager(testVars.poolName)
 			m := &Master{
 				rm:       rm,
 				config:   config.DefaultConfig(),
@@ -83,13 +83,16 @@ func TestFillTaskSpec(t *testing.T) {
 			}
 			expectedTaskSpec := tasks.TaskSpec{
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-					WorkDir: &test_vars.workDir,
+					WorkDir: &testVars.workDir,
 				},
-				AgentUserGroup: test_vars.agentUserGroup,
-				Owner:          test_vars.userModel,
+				AgentUserGroup: testVars.agentUserGroup,
+				Owner:          testVars.userModel,
 			}
-			rm.On("TaskContainerDefaults", test_vars.poolName, m.config.TaskContainerDefaults).Return(model.TaskContainerDefaultsConfig{WorkDir: &test_vars.workDir}, nil)
-			taskSpec, err := m.fillTaskSpec(test_vars.poolName, test_vars.agentUserGroup, test_vars.userModel)
+			rm.On("TaskContainerDefaults",
+				testVars.poolName,
+				m.config.TaskContainerDefaults,
+			).Return(model.TaskContainerDefaultsConfig{WorkDir: &testVars.workDir}, nil)
+			taskSpec, err := m.fillTaskSpec(testVars.poolName, testVars.agentUserGroup, testVars.userModel)
 			require.NoError(t, err, "Error in fillTaskSpec()")
 			require.Equal(t, expectedTaskSpec, taskSpec)
 		})
@@ -127,13 +130,13 @@ func TestFillTaskConfigPodSpec(t *testing.T) {
 		},
 	}
 
-	for test_case, test_vars := range tests {
-		t.Run(test_case, func(t *testing.T) {
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
 			env := &model.Environment{
 				PodSpec: &k8sV1.Pod{},
 			}
-			fillTaskConfig(test_vars.slots, test_vars.taskSpec, env)
-			require.Equal(t, test_vars.expectedPodSpecKind, env.PodSpec.TypeMeta.Kind)
+			fillTaskConfig(testVars.slots, testVars.taskSpec, env)
+			require.Equal(t, testVars.expectedPodSpecKind, env.PodSpec.TypeMeta.Kind)
 		})
 	}
 }
@@ -148,16 +151,20 @@ func TestFillContextDir(t *testing.T) {
 			contextDirectory: []*utilv1.File{{Content: []byte{1}}},
 		},
 	}
-	for test_case, test_vars := range tests {
-		t.Run(test_case, func(t *testing.T) {
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
 			var configWorkDir *string
 
-			userFiles := filesToArchive(test_vars.contextDirectory)
+			userFiles := filesToArchive(testVars.contextDirectory)
 			expectedBytes, err := archive.ToTarGz(userFiles)
 			require.NoError(t, err, "Error in ToTarGz() for TestFillContexxtDir")
 
 			var contextDirectoryBytes []byte
-			configWorkDir, contextDirectoryBytes, err = fillContextDir(configWorkDir, &test_vars.defaultWorkDir, test_vars.contextDirectory)
+			_, contextDirectoryBytes, err = fillContextDir(
+				configWorkDir,
+				&testVars.defaultWorkDir,
+				testVars.contextDirectory,
+			)
 			require.NoError(t, err, "Error in fillContextDir()")
 			require.Equal(t, expectedBytes, contextDirectoryBytes)
 		})

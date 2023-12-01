@@ -6,10 +6,11 @@ package tasks
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/stretchr/testify/require"
 )
 
 func TestToTaskSpec(t *testing.T) {
@@ -33,15 +34,16 @@ func TestToTaskSpec(t *testing.T) {
 		},
 	}
 
-	for test_case, test_vars := range tests {
-		t.Run(test_case, func(t *testing.T) {
-			etc.SetRootPath("../../static/srv/")
-			res := test_vars.taskSpec.ToTaskSpec()
-			require.Equal(t, test_vars.expectedDescription, res.Description)
-			require.Equal(t, test_vars.expectedSlots, *res.ResourcesConfig.RawSlots)
-			require.Equal(t, test_vars.expectedIsSingleNode, *res.ResourcesConfig.RawIsSingleNode)
-			require.Equal(t, test_vars.expectedEntrypoint, res.Entrypoint[0])
-			require.Equal(t, test_vars.expectedType, res.TaskType)
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			err := etc.SetRootPath("../../static/srv/")
+			require.NoError(t, err)
+			res := testVars.taskSpec.ToTaskSpec()
+			require.Equal(t, testVars.expectedDescription, res.Description)
+			require.Equal(t, testVars.expectedSlots, *res.ResourcesConfig.RawSlots)
+			require.Equal(t, testVars.expectedIsSingleNode, *res.ResourcesConfig.RawIsSingleNode)
+			require.Equal(t, testVars.expectedEntrypoint, res.Entrypoint[0])
+			require.Equal(t, testVars.expectedType, res.TaskType)
 		})
 	}
 }

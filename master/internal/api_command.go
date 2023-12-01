@@ -95,7 +95,11 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		resources.Slots = 0
 	}
-	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(cmdSpec.Metadata.WorkspaceID))
+	poolName, launchWarnings, err := a.m.ResolveResources(
+		resources.ResourcePool,
+		resources.Slots,
+		int(cmdSpec.Metadata.WorkspaceID),
+	)
 	if err != nil {
 		return nil, nil, err
 	}

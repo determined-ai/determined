@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	k8sV1 "k8s.io/api/core/v1"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -15,13 +20,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	k8sV1 "k8s.io/api/core/v1"
 )
 
-func (m *Master) ResolveResources(resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
+// ResolveResources - Validate ResoucePool and check for availability.
+func (m *Master) ResolveResources(
+	resourcePool string,
+	slots int,
+	workspaceID int,
+) (string, []pkgCommand.LaunchWarning, error) {
 	poolName, err := m.rm.ResolveResourcePool(
 		resourcePool, workspaceID, slots)
 	if err != nil {
@@ -49,7 +55,12 @@ func (m *Master) ResolveResources(resourcePool string, slots int, workspaceID in
 	return poolName, launchWarnings, nil
 }
 
-func (m *Master) fillTaskSpec(poolName string, agentUserGroup *model.AgentUserGroup, userModel *model.User) (tasks.TaskSpec, error) {
+// Fill and return TaskSpec.
+func (m *Master) fillTaskSpec(
+	poolName string,
+	agentUserGroup *model.AgentUserGroup,
+	userModel *model.User,
+) (tasks.TaskSpec, error) {
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
 		m.config.TaskContainerDefaults,
@@ -75,7 +86,11 @@ func fillTaskConfig(slots int, taskSpec tasks.TaskSpec, environment *model.Envir
 	))
 }
 
-func fillContextDir(configWorkDir *string, defaultWorkDir *string, contextDirectory []*utilv1.File) (*string, []byte, error) {
+func fillContextDir(
+	configWorkDir *string,
+	defaultWorkDir *string,
+	contextDirectory []*utilv1.File,
+) (*string, []byte, error) {
 	var contextDirectoryBytes []byte
 	if len(contextDirectory) > 0 {
 		userFiles := filesToArchive(contextDirectory)
@@ -94,9 +109,8 @@ func fillContextDir(configWorkDir *string, defaultWorkDir *string, contextDirect
 				fmt.Errorf("compressing files context files: %w", err).Error())
 		}
 		return nil, contextDirectoryBytes, nil
-	} else {
-		return configWorkDir, contextDirectoryBytes, nil
 	}
+	return configWorkDir, contextDirectoryBytes, nil
 }
 
 func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, error) {

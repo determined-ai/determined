@@ -12,8 +12,16 @@ func DefaultConfigGenericTaskConfig(
 ) GenericTaskConfig {
 	out := GenericTaskConfig{
 		Resources: expconf.ResourcesConfig{
-			RawSlots:        ptrs.Ptr(1),
-			RawIsSingleNode: ptrs.Ptr(true),
+			RawSlots:          ptrs.Ptr(1),
+			RawIsSingleNode:   ptrs.Ptr(true),
+			RawMaxSlots:       nil,
+			RawSlotsPerTrial:  nil,
+			RawWeight:         nil,
+			RawNativeParallel: nil,
+			RawShmSize:        nil,
+			RawResourcePool:   nil,
+			RawPriority:       nil,
+			RawDevices:        expconf.DevicesConfigV0{},
 		},
 		Environment: DefaultEnvConfig(taskContainerDefaults),
 	}
