@@ -392,7 +392,7 @@ const ExperimentContinueModalComponent = ({
   const hideSimpleConfig = isReactivate && experiment.state !== RunState.Completed;
 
   const maxLengthType = capitalizeWord(getMaxLengthType(modalState.config) || 'length');
-
+  const hideModalText = modalState.isAdvancedMode || hideSimpleConfig;
   return (
     <Modal
       cancel
@@ -430,8 +430,11 @@ const ExperimentContinueModalComponent = ({
             />
           </React.Suspense>
         )}
-        {!isReactivate && (
+        {!isReactivate && !hideModalText && (
           <Body>Start a new experiment from the current trial&rsquo;s latest checkpoint.</Body>
+        )}
+        {isReactivate && !hideModalText && (
+          <Body>Reactivate and continue the current trial from the latest checkpoint.</Body>
         )}
         <Form
           form={form}

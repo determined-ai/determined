@@ -80,7 +80,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) =>
               option?.content ? (
-                option?.content
+                option.content
               ) : (
                 <div className={css.optionsMainButton} key={option.key}>
                   <Button
