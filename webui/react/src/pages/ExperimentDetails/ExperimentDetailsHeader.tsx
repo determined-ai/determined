@@ -37,10 +37,12 @@ import {
   activateExperiment,
   archiveExperiment,
   continueExperiment,
+  getExpTrials,
   openOrCreateTensorBoard,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
+import { Experimentv1State } from 'services/api-ts-sdk';
 import {
   ExperimentAction as Action,
   CompoundRunState,
@@ -52,7 +54,12 @@ import {
 import { getStateColorThemeVar } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
+import {
+  canActionExperiment,
+  getActionsForExperiment,
+  isSingleTrialExperiment,
+} from 'utils/experiment';
+import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -142,6 +149,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [isRunningDelete, setIsRunningDelete] = useState<boolean>(
     experiment.state === RunState.Deleting,
   );
+  const [erroredTrialCount, setErroredTrialCount] = useState<number>();
+  const [canceler] = useState(new AbortController());
   const confirm = useConfirm();
   const classes = [css.state];
 
@@ -238,6 +247,20 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
 
+  const fetchErroredTrial = useCallback(async () => {
+    // No need to fetch errored trial count if it's single trial experiment or experiment is not completed.
+    if (isSingleTrialExperiment(experiment) || experiment.state !== RunState.Completed) return;
+    const res = await getExpTrials(
+      {
+        id: experiment.id,
+        limit: 1,
+        states: [Experimentv1State.ERROR],
+      },
+      { signal: canceler.signal },
+    );
+    setErroredTrialCount(res.pagination.total);
+  }, [experiment, canceler]);
+
   useEffect(() => {
     setIsRunningArchive(false);
     setIsRunningUnarchive(false);
@@ -283,6 +306,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           },
     [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal],
   );
+
+  useEffect(() => {
+    fetchErroredTrial();
+  }, [fetchErroredTrial]);
 
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
@@ -337,11 +364,16 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         disabled: experiment.unmanaged,
         icon: <Icon decorative name="reset" />,
         key: 'retry',
-        label: 'Retry',
+        label: erroredTrialCount ?? 0 > 0 ? `Retry Errored (${erroredTrialCount})` : 'Retry',
         onClick: () => {
           confirm({
             content:
-              'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
+              erroredTrialCount && erroredTrialCount > 0
+                ? `Retry will attempt to complete ${erroredTrialCount} errored ${pluralizer(
+                    erroredTrialCount,
+                    'trial',
+                  )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
+                : 'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
             okText: 'Retry',
             onConfirm: async () => {
               await continueExperiment({ id: experiment.id });
@@ -409,7 +441,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
 
-    const availableActions = getActionsForExperiment(experiment, headerActions, expPermissions);
+    const availableActions = getActionsForExperiment(
+      experiment,
+      headerActions,
+      expPermissions,
+      erroredTrialCount,
+    );
 
     return availableActions.map((action) => options[action]) as Option[];
   }, [
@@ -427,6 +464,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     experiment,
     fetchExperimentDetails,
     confirm,
+    erroredTrialCount,
   ]);
 
   const jobInfoLinkText = useMemo(() => {

@@ -607,6 +607,9 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
+      - upload-test-job:
+          only_on_branch: main
+          test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
     parameters:
@@ -3300,29 +3303,6 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
-
-  nightly-quarantine:
-    when: << pipeline.parameters.do_nightly_tests >>
-    jobs:
-      - test-e2e-aws:
-          name: test-e2e-gpu-nightly-quarantine
-          context: aws
-          matrix:
-            parameters:
-              parallelism: [1]
-              cluster-id-prefix: ["nightly-quarantine"]
-              mark: ["nightly_quarantine"]
-      - test-e2e-aws:
-          name: test-e2e-gpu-distributed-quarantine
-          context: aws
-          matrix:
-            parameters:
-              # Cluster name lengths are limited by bucket name lengths in AWS.
-              cluster-id-prefix: ["dist-quarantine"]
-              mark: ["distributed_quarantine"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
 
   release:
     jobs:
