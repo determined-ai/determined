@@ -41,7 +41,6 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 	res.SlurmConfig = s.GenericTaskConfig.Slurm
 
 	res.ExtraArchives = []cproto.RunArchive{commandEntryArchive}
-	res.TaskType = s.Base.TaskType
 	res.Environment = s.GenericTaskConfig.Environment.ToExpconf()
 
 	res.WorkDir = DefaultWorkDir
