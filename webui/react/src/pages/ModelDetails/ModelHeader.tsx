@@ -16,7 +16,6 @@ import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import usePermissions from 'hooks/usePermissions';
-import { paths } from 'routes/utils';
 import userStore from 'stores/users';
 import { ModelItem, Workspace } from 'types';
 import { formatDatetime } from 'utils/datetime';
@@ -149,12 +148,6 @@ const ModelHeader: React.FC<Props> = ({
     [deleteModelModal, modelEditModal, modelMoveModal, onSwitchArchive],
   );
 
-  const listPath = useMemo(
-    () =>
-      model.workspaceId ? paths.workspaceDetails(model.workspaceId, 'models') : paths.modelList(),
-    [model.workspaceId],
-  );
-
   return (
     <header className={css.base}>
       {model.archived && (
@@ -180,7 +173,7 @@ const ModelHeader: React.FC<Props> = ({
         </div>
         <Glossary content={infoRows} />
       </div>
-      <deleteModelModal.Component listPath={listPath} model={model} />
+      <deleteModelModal.Component model={model} redirectOnDelete />
       <modelMoveModal.Component model={model} />
       <modelEditModal.Component fetchModel={fetchModel} model={model} />
     </header>

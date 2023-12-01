@@ -1,20 +1,27 @@
 import { Modal } from 'hew/Modal';
 
+import { paths } from 'routes/utils';
 import { deleteModel } from 'services/api';
 import { ModelItem } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
 interface Props {
-  listPath?: string;
   model: ModelItem;
+  redirectOnDelete?: boolean;
 }
 
-const DeleteModelModal = ({ listPath, model }: Props): JSX.Element => {
+const DeleteModelModal = ({ model, redirectOnDelete = false }: Props): JSX.Element => {
   const handleOk = async () => {
     try {
       await deleteModel({ modelName: model.name });
-      if (listPath) routeToReactUrl(listPath);
+      if (redirectOnDelete) {
+        routeToReactUrl(
+          model.workspaceId
+            ? paths.workspaceDetails(model.workspaceId, 'models')
+            : paths.modelList(),
+        );
+      }
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
