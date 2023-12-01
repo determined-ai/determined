@@ -1,8 +1,9 @@
-import { InputNumber, Space } from 'antd';
+import { Space } from 'antd';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
+import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
@@ -36,6 +37,7 @@ import {
 import { routeToReactUrl } from 'utils/routes';
 import { capitalizeWord } from 'utils/string';
 
+import css from './ExperimentContinueModal.module.scss';
 const FORM_ID = 'continue-experiment-form';
 
 export const ContinueExperimentType = {
@@ -90,11 +92,6 @@ const ExperimentContinueModalComponent = ({
   const [disabled, setDisabled] = useState<boolean>(true);
   const [originalConfig, setOriginalConfig] = useState(experiment.configRaw);
   const isReactivate = type === ContinueExperimentType.Reactivate;
-  const inputRef = useCallback((input: HTMLInputElement) => {
-    if (input) {
-      input.focus();
-    }
-  }, []);
 
   useEffect(() => setOriginalConfig(experiment.configRaw), [experiment]);
 
@@ -495,7 +492,7 @@ const ExperimentContinueModalComponent = ({
                   },
                 },
               ]}>
-              <InputNumber ref={inputRef} style={{ width: '100%' }} type="number" />
+              <InputNumber className={css.fullWidth} />
             </Form.Item>
           )}
         </Form>
