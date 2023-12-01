@@ -66,7 +66,7 @@ The crawler sets the `version` tag on all results, which it extracts from the
 URL path it is crawling.
 
 Since Algolia doesn't allow filtering by arbitrary tags, we also added the
-`version` tag to `determined` Algoila index's `attributesForFaceting` setting,
+`version` tag to `determined` Algolia index's `attributesForFaceting` setting,
 as a "filter-only" facet.
 
 To actually filter by version during a search, we need to know which version of
@@ -77,7 +77,7 @@ the same `rel=root` link mentioned above.
 
 Determined has some users whose clusters do not have internet access. For
 those users, Algolia's search-as-a-service model will never work. When we
-detect that we are unable to load resources from aloglia, we fall back to the
+detect that we are unable to load resources from algolia, we fall back to the
 default Sphinx search. See the JavaScript for implementation.
 
 ### Dev Builds
