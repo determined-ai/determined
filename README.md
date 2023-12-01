@@ -97,7 +97,7 @@ pip install determined
 
 Then use `det deploy` to start the Determined cluster locally, or on cloud services like AWS and GCP.
 
-For installation details, visit the the cluster deployment guide for your environment:
+For installation details, visit the cluster deployment guide for your environment:
 
 - [Local (on-prem)](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/on-prem/overview.html)
 - [AWS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/aws/overview.html)
