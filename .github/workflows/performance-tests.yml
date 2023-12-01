@@ -2,7 +2,7 @@
 name: Run performance tests using latest published docker image
 on:
   # uncomment to iterate on workflow during PR
-  # pull_request: {}
+  pull_request: {}
   schedule:
     - cron: '0 2 * * 0-4'
 
@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -37,12 +39,24 @@ jobs:
           python-version: 3.10.13
           cache: pip
 
-      - name: Install pip dependencies
+      # TODO(danh): switch to actually checking CircleCI builds
+      - name: Get version for latest master image
+        id: master-version
+        run: |
+          git checkout main
+          git rev-parse HEAD > .master-image-version
+          echo "Looking for master image version $(cat .master-image-version)"
+          docker pull "determinedai/determined-master:$(cat .master-image-version)"
+          echo "text=$(cat .master-image-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Print python toolchain versions
         run: |
           python --version
-          python -m pip install --upgrade pip
           pip --version
-          pip install determined
+
+      - name: Install local CLI version
+        run: |
+          make -C harness install
           det -v
 
       - name: Deploy cluster
@@ -54,7 +68,11 @@ jobs:
         id: tests
         if: steps.deploy.outcome == 'success'
         continue-on-error: true
-        run: make -C performance run
+        env:
+          VERSION: ${{ steps.master-version.outputs.text }}
+        run: |
+          echo "Running with version $VERSION"
+          make -C performance run
 
       - name: Persist cluster if failure noticed
         if: steps.deploy.outcome == 'success' && steps.tests.outcome != 'success'
