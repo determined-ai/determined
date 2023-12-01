@@ -15,7 +15,7 @@ import React, { useCallback, useEffect, useId, useState } from 'react';
 import { paths } from 'routes/utils';
 import { continueExperiment, createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import { ExperimentBase, RawJson, RunState, TrialHyperparameters, TrialItem, ValueOf } from 'types';
+import { ExperimentBase, RawJson, RunState, TrialItem, ValueOf } from 'types';
 import handleError, {
   DetError,
   ErrorLevel,
@@ -24,12 +24,18 @@ import handleError, {
   isDetError,
   isError,
 } from 'utils/error';
-import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/experiment';
+import {
+  FULL_CONFIG_BUTTON_TEXT,
+  getExperimentName,
+  getMaxLengthType,
+  getMaxLengthValue,
+  SIMPLE_CONFIG_BUTTON_TEXT,
+  trialContinueConfig,
+  upgradeConfig,
+} from 'utils/experiment';
 import { routeToReactUrl } from 'utils/routes';
 import { capitalizeWord } from 'utils/string';
 
-export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
-export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
 const FORM_ID = 'continue-experiment-form';
 
 export const ContinueExperimentType = {
@@ -61,45 +67,6 @@ interface ModalState {
   trial?: TrialItem;
   type: ContinueExperimentType;
 }
-
-const getExperimentName = (config: RawJson) => {
-  return config.name || '';
-};
-
-// For unitless searchers, this will return undefined.
-const getMaxLengthType = (config: RawJson) => {
-  return (Object.keys(config.searcher?.max_length || {}) || [])[0];
-};
-
-const getMaxLengthValue = (config: RawJson) => {
-  const value = (Object.keys(config.searcher?.max_length || {}) || [])[0];
-  return value
-    ? parseInt(config.searcher?.max_length[value])
-    : parseInt(config.searcher?.max_length);
-};
-
-const trialContinueConfig = (
-  experimentConfig: RawJson,
-  trialHparams: TrialHyperparameters,
-  trialId: number,
-  workspaceName: string,
-  projectName: string,
-): RawJson => {
-  const newConfig = structuredClone(experimentConfig);
-  return {
-    ...newConfig,
-    hyperparameters: trialHParamsToExperimentHParams(trialHparams),
-    project: projectName,
-    searcher: {
-      max_length: experimentConfig.searcher.max_length,
-      metric: experimentConfig.searcher.metric,
-      name: 'single',
-      smaller_is_better: experimentConfig.searcher.smaller_is_better,
-      source_trial_id: trialId,
-    },
-    workspace: workspaceName,
-  };
-};
 
 const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
@@ -237,12 +204,12 @@ const ExperimentContinueModalComponent = ({
         }
 
         form.setFields([
-          { name: 'name', value: getExperimentName(newConfig) },
+          { name: EXPERIMENT_NAME, value: getExperimentName(newConfig) },
           {
-            name: 'maxLength',
+            name: MAX_LENGTH,
             value: !isReactivate ? getMaxLengthValue(newConfig) : undefined,
           },
-          { name: 'additionalLength', value: additionalLength },
+          { name: ADDITIONAL_LENGTH, value: additionalLength },
         ]);
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });

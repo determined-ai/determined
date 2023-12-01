@@ -36,6 +36,9 @@ type ExperimentPermissionSet = {
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
 };
 
+export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
+export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
+
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
   return 'config' in obj && 'archived' in obj;
@@ -51,18 +54,15 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 export const trialHParamsToExperimentHParams = (
   trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
-  const hParams = Object.keys(trialHParams).reduce(
-    (acc, key) => {
-      return {
-        ...acc,
-        [key]: {
-          type: HyperparameterType.Constant,
-          val: trialHParams[key] as number,
-        },
-      };
-    },
-    {} as Record<keyof TrialHyperparameters, unknown>,
-  );
+  const hParams = Object.keys(trialHParams).reduce((acc, key) => {
+    return {
+      ...acc,
+      [key]: {
+        type: HyperparameterType.Constant,
+        val: trialHParams[key] as number,
+      },
+    };
+  }, {} as Record<keyof TrialHyperparameters, unknown>);
   return unflattenObject(hParams) as Hyperparameters;
 };
 
@@ -264,7 +264,7 @@ export const getProjectExperimentForExperimentItem = (
     projectOwnerId: project?.userId ?? 0,
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
-  }) as ProjectExperiment;
+  } as ProjectExperiment);
 
 const runStateSortOrder: RunState[] = [
   RunState.Active,
@@ -291,4 +291,43 @@ export const runStateSortValues: Map<RunState, number> = new Map(
 
 export const runStateSorter = (a: RunState, b: RunState): number => {
   return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
+};
+
+export const getExperimentName = (config: RawJson): string => {
+  return config.name || '';
+};
+
+// For unitless searchers, this will return undefined.
+export const getMaxLengthType = (config: RawJson): string | undefined => {
+  return (Object.keys(config.searcher?.max_length || {}) || [])[0];
+};
+
+export const getMaxLengthValue = (config: RawJson): number => {
+  const value = (Object.keys(config.searcher?.max_length || {}) || [])[0];
+  return value
+    ? parseInt(config.searcher?.max_length[value])
+    : parseInt(config.searcher?.max_length);
+};
+
+export const trialContinueConfig = (
+  experimentConfig: RawJson,
+  trialHparams: TrialHyperparameters,
+  trialId: number,
+  workspaceName: string,
+  projectName: string,
+): RawJson => {
+  const newConfig = structuredClone(experimentConfig);
+  return {
+    ...newConfig,
+    hyperparameters: trialHParamsToExperimentHParams(trialHparams),
+    project: projectName,
+    searcher: {
+      max_length: experimentConfig.searcher.max_length,
+      metric: experimentConfig.searcher.metric,
+      name: 'single',
+      smaller_is_better: experimentConfig.searcher.smaller_is_better,
+      source_trial_id: trialId,
+    },
+    workspace: workspaceName,
+  };
 };
