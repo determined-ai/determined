@@ -240,7 +240,7 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 // lookupUser: First try finding user in our users.scim table.
 // If we don't find them there and the scim attribute is userName & look in the user table.
 func (s *Service) lookupUser(ctx context.Context, claimValue string) (*model.User, error) {
-	u, err := s.db.UserBySCIMAttribute(s.config.SCIMAuthenticationAttribute, claimValue)
+	u, err := user.UserBySCIMAttribute(ctx, s.config.SCIMAuthenticationAttribute, claimValue)
 	if errors.Is(err, db.ErrNotFound) {
 		if s.config.SCIMAuthenticationAttribute != "userName" {
 			return nil, errNotProvisioned

@@ -68,8 +68,8 @@ func ByExternalToken(ctx context.Context, tokenText string,
 	scimLock.Lock()
 	defer scimLock.Unlock()
 
-	scimUser, err := db.SingleDB().SCIMUserByAttribute("user_id", claims.UserID)
-	var user *model.User
+	scimUser, err := scimUserByAttribute(ctx, "user_id", claims.UserID)
+	var u *model.User
 	if err != nil {
 		if !errors.Is(err, db.ErrNotFound) {
 			return nil, nil, err
@@ -88,24 +88,24 @@ func ByExternalToken(ctx context.Context, tokenText string,
 		}
 
 		// Check for the temporary case where their email exists in users but no SCIM user exists
-		user, err = ByUsername(context.TODO(), claims.Email)
+		u, err = ByUsername(ctx, claims.Email)
 		if err != nil {
 			if err != db.ErrNotFound {
 				return nil, nil, err
 			}
 
 			// Legacy user was not found, so creating...
-			_, err = db.SingleDB().AddSCIMUser(scimUser)
+			_, err = AddSCIMUser(ctx, scimUser)
 			if err != nil {
 				return nil, nil, errors.WithStack(err)
 			}
-			user, err = db.SingleDB().UserBySCIMAttribute("user_id", claims.UserID)
+			u, err = UserBySCIMAttribute(ctx, "user_id", claims.UserID)
 			if err != nil {
 				return nil, nil, errors.WithStack(err)
 			}
 		} else {
 			// Legacy user was found, so retrofit it...
-			_, err = db.SingleDB().RetrofitSCIMUser(scimUser, user.ID)
+			_, err = retrofitSCIMUser(ctx, scimUser, u.ID)
 			if err != nil {
 				return nil, nil, errors.WithStack(err)
 			}
@@ -113,7 +113,7 @@ func ByExternalToken(ctx context.Context, tokenText string,
 	} else {
 		// Existing SCIM user was found: retrieve or update all details.
 
-		user, err = db.SingleDB().UserBySCIMAttribute("user_id", claims.UserID)
+		u, err = UserBySCIMAttribute(ctx, "user_id", claims.UserID)
 		if err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
@@ -122,23 +122,23 @@ func ByExternalToken(ctx context.Context, tokenText string,
 		scimUser.Name = model.SCIMNameFromJWT(claims)
 		scimUser.Username = claims.Email
 
-		_, err = db.SingleDB().SetSCIMUser(scimUser.ID.String(), scimUser)
+		_, err = SetSCIMUser(ctx, scimUser.ID.String(), scimUser)
 		if err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
 
-		user.Username = claims.Email
-		user.Admin = isAdmin
-		user.Active = true
+		u.Username = claims.Email
+		u.Admin = isAdmin
+		u.Active = true
 
-		err = Update(context.TODO(), user, []string{"username", "admin", "active"}, nil)
+		err = Update(ctx, u, []string{"username", "admin", "active"}, nil)
 		if err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
 	}
 
-	user = &model.User{
-		ID:           user.ID,
+	u = &model.User{
+		ID:           u.ID,
 		Username:     claims.Email,
 		PasswordHash: null.NewString("", false),
 		Admin:        isAdmin,
@@ -146,10 +146,10 @@ func ByExternalToken(ctx context.Context, tokenText string,
 	}
 
 	session := &model.UserSession{
-		ID:     model.SessionID(user.ID),
-		UserID: user.ID,
+		ID:     model.SessionID(u.ID),
+		UserID: u.ID,
 		Expiry: time.Unix(claims.ExpiresAt, 0),
 	}
 
-	return user, session, nil
+	return u, session, nil
 }
