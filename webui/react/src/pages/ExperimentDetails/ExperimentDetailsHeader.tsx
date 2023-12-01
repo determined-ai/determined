@@ -52,11 +52,7 @@ import {
 import { getStateColorThemeVar } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import {
-  canActionExperiment,
-  getActionsForExperiment,
-  isSingleTrialExperiment,
-} from 'utils/experiment';
+import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -253,7 +249,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const continueExperimentOption = useMemo(
     () =>
-      isSingleTrialExperiment(experiment)
+      experiment?.config.searcher.name === 'single'
         ? {
             content: (
               <Dropdown

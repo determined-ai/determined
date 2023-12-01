@@ -123,6 +123,11 @@ const ExperimentContinueModalComponent = ({
   const [disabled, setDisabled] = useState<boolean>(true);
   const [originalConfig, setOriginalConfig] = useState(experiment.configRaw);
   const isReactivate = type === ContinueExperimentType.Reactivate;
+  const inputRef = useCallback((input: HTMLInputElement) => {
+    if (input) {
+      input.focus();
+    }
+  }, []);
 
   useEffect(() => setOriginalConfig(experiment.configRaw), [experiment]);
 
@@ -150,7 +155,7 @@ const ExperimentContinueModalComponent = ({
           prev.config.searcher.max_length = parseInt(values[MAX_LENGTH]);
         }
       }
-      if (isReactivate && values[ADDITIONAL_LENGTH] && parseInt(values[MAX_LENGTH]) >= 0) {
+      if (isReactivate && values[ADDITIONAL_LENGTH] && parseInt(values[ADDITIONAL_LENGTH]) >= 0) {
         const maxLengthType = getMaxLengthType(prev.config);
         if (maxLengthType) {
           prev.config.searcher.max_length[maxLengthType] =
@@ -235,7 +240,7 @@ const ExperimentContinueModalComponent = ({
           { name: 'name', value: getExperimentName(newConfig) },
           {
             name: 'maxLength',
-            value: isReactivate ? getMaxLengthValue(newConfig) : undefined,
+            value: !isReactivate ? getMaxLengthValue(newConfig) : undefined,
           },
           { name: 'additionalLength', value: additionalLength },
         ]);
@@ -518,7 +523,7 @@ const ExperimentContinueModalComponent = ({
                   },
                 },
               ]}>
-              <InputNumber style={{ width: '100%' }} type="number" />
+              <InputNumber ref={inputRef} style={{ width: '100%' }} type="number" />
             </Form.Item>
           )}
         </Form>
