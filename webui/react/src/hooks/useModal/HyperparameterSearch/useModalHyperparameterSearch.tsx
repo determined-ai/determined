@@ -8,7 +8,7 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import Select, { Option, SelectValue } from 'hew/Select';
-import { Title, TypographySize } from 'hew/Typography';
+import { Label, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -717,9 +717,9 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Title size={TypographySize.S} truncate={{ rows: 1, tooltip: true }}>
+        <Label size={TypographySize.L} truncate={{ rows: 1, tooltip: true }}>
           {name}
-        </Title>
+        </Label>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
         <Select aria-labelledby="type" ref={typeRef} width={'100%'} onChange={handleTypeChange}>

@@ -4,7 +4,7 @@ import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
-import { Title, TypographySize } from 'hew/Typography';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
@@ -174,7 +174,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                   title={workspace.name}
                   value={workspace.id}>
                   <div>
-                    <Title size={TypographySize.XS} truncate={{ tooltip: true }}>{workspace.name}</Title>
+                    <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
                     {workspace.archived && <Icon name="archive" title="Archived" />}
                   </div>
                 </Option>
@@ -202,9 +202,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                       title={project.name}
                       value={project.id}>
                       <div>
-                        <Title size={TypographySize.XS} truncate={{ tooltip: true }}>
-                          {project.name}
-                        </Title>
+                        <Label truncate={{ tooltip: true }}>{project.name}</Label>
                         {project.archived && <Icon name="archive" title="Archived" />}
                       </div>
                     </Option>

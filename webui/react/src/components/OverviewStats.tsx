@@ -19,7 +19,9 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
     <Card onClick={props.onClick}>
       <div className={css.base}>
         <div className={css.title}>
-          <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>{props.title}</Title>
+          <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
+            {props.title}
+          </Title>
         </div>
         <strong className={childClasses.join(' ')}>
           <Body truncate={{ rows: 1, tooltip: true }}>{props.children}</Body>

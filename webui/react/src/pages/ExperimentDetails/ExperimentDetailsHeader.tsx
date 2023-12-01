@@ -585,11 +585,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {
         label: 'Description',
         value: (
-          <Body
-            // disabled={!experiment.description}
-            truncate={{ rows: 1, tooltip: true }}>
-            {experiment.description || 'N/A'}
-          </Body>
+          <div className={css.nomargin}>
+            <Body truncate={{ rows: 1, tooltip: true }}>{experiment.description || 'N/A'}</Body>
+          </div>
         ),
       },
     ];

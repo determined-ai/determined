@@ -3,7 +3,7 @@ import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import { useToast } from 'hew/Toast';
-import { Title, TypographySize } from 'hew/Typography';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
@@ -91,9 +91,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
           return (
             <Option disabled={disabled} key={workspace.id} value={workspace.id}>
               <div className={disabled ? css.workspaceOptionDisabled : ''}>
-                <Title size={TypographySize.S} truncate={{ tooltip: true }}>
-                  {workspace.name}
-                </Title>
+                <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
                 {workspace.archived && <Icon name="archive" title="Archived" />}
                 {workspace.id === project.workspaceId && (
                   <Icon name="checkmark" title="Project's current workspace" />
