@@ -345,7 +345,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             break
 
     cs_type = checkpoint_storage["type"]
-    if cs_type == "s3" or cs_type == "gcs":
+    if cs_type != "azure":
         assert type(last_checkpoint_uuid) == str
         run_command_master_checkpoint_download(str(last_checkpoint_uuid))
 
