@@ -127,8 +127,10 @@ func (s SharedFSConfigV0) PathInContainer() string {
 // otherwise returns RawHostPath if available.
 func (s SharedFSConfigV0) PathInContainerOrHost() string {
 	path := s.PathInContainer()
-	if _, err := os.Stat(path); os.IsNotExist(err) && s.RawHostPath != nil {
-		return *s.RawHostPath
+	if s.RawHostPath != nil {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return *s.RawHostPath
+		}
 	}
 	return path
 }
