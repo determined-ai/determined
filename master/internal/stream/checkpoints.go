@@ -5,18 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/stream"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
 const (
@@ -31,27 +30,27 @@ const (
 type CheckpointMsg struct {
 	bun.BaseModel `bun:"table:checkpoints_v2"`
 	// immutable attributes
-	ID           int
-	UUID         string
-	TaskID       string
-	AllocationID *string
-	ReportTime   *timestamp.Timestamp
-	State        checkpointv1.State
-	Resources    JSONB
-	Metadata     JSONB
-	Size         int
+	ID           int         `bun:"id,pk" json:"id"`
+	UUID         string      `bun:"uuid" json:"uuid"`
+	TaskID       string      `bun:"task_id" json:"task_id"`
+	AllocationID *string     `bun:"allocation_id" json:"allocation_id"`
+	ReportTime   time.Time   `bun:"report_time" json:"report_time"`
+	State        model.State `bun:"state" json:"state"`
+	Resources    JSONB       `bun:"resources" json:"resources"`
+	Metadata     JSONB       `bun:"metadata" json:"metadata"`
+	Size         int         `bun:"size" json:"size"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
 
 	// permission scope
-	WorkspaceID int `json:"-"`
+	WorkspaceID int `json:"workspace_id"`
 
 	// TrialID
-	TrialID int `json:"-"`
+	TrialID int `json:"trial_id"`
 
 	// ExperimentID
-	ExperimentID int `json:"-"`
+	ExperimentID int `json:"experiment_id"`
 }
 
 // SeqNum returns the sequence number of a CheckpointMsg.
@@ -182,7 +181,7 @@ func CheckpointCollectStartupMsgs(
 	var checkpointMsgs []*CheckpointMsg
 	if len(appeared) > 0 {
 		query := getCheckpointMsgsWithWorkspaceID(checkpointMsgs).
-			Where("trial_msg.id in (?)", bun.In(appeared))
+			Where("trials.id in (?)", bun.In(appeared))
 		query = permFilter(query)
 		err := query.Scan(ctx, &checkpointMsgs)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -197,7 +196,7 @@ func CheckpointCollectStartupMsgs(
 		Deleted: missing,
 	})
 	for _, msg := range checkpointMsgs {
-		out = append(out, stream.UpsertMsg{JSONKey: CheckpointsUpsertKey, Msg: msg})
+		out = append(out, msg.UpsertMsg())
 	}
 	return out, nil
 }

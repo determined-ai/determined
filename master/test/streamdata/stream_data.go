@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	latestMigration = 20231116170431
+	latestMigration = 20231126215150
 	testJob         = "test_job"
 )
 
@@ -38,8 +38,8 @@ type StreamTrialsData struct {
 	TrialIDs    []int
 }
 
-// GenerateStreamTrials fills the database with dummy experiment, trials, jobs, and tasks.
-func GenerateStreamTrials() StreamTrialsData {
+// GenerateStreamData fills the database with dummy experiment, trials, jobs, and tasks.
+func GenerateStreamData() StreamTrialsData {
 	mustMigrate := func(t *testing.T, pgdb *db.PgDB, migrationsPath string) {
 		extra := migrationutils.MigrationExtra{
 			When: latestMigration,
@@ -216,4 +216,19 @@ func GetAddExperimentQueries(experiment *Experiment) (
 func ModExperiment(ctx context.Context, newExp Experiment) error {
 	_, err := db.Bun().NewUpdate().Model(&newExp).OmitZero().WherePK().Exec(ctx)
 	return err
+}
+
+// Checkpoint contains a subset of checkpoint_v2 fields and is used to test streaming code
+// without importing anything from determined/master/internal.
+type Checkpoint struct {
+	bun.BaseModel `bun:"table:checkpoints_v2"`
+	ID            int         `bun:"id,pk"`
+	TaskID        string      `bun:"task_id"`
+	State         model.State `bun:"state"`
+	ReportTime    time.Time   `bun:"report_time"`
+}
+
+// GetUpdateCheckpointQuery constructs a query for updating a checkpoint.
+func GetUpdateCheckpointQuery(checkpoint Checkpoint) ExecutableQuery {
+	return db.Bun().NewUpdate().Model(&checkpoint).OmitZero().WherePK()
 }

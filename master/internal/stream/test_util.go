@@ -40,6 +40,15 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 				typedMsg.Archived,
 				typedMsg.WorkspaceID,
 			)
+		case *CheckpointMsg:
+			return fmt.Sprintf(
+				"key: %s, checkpoint_id: %d, state: %s, experiment_id: %d, workspace_id: %d",
+				CheckpointsUpsertKey,
+				typedMsg.ID,
+				typedMsg.State,
+				typedMsg.ExperimentID,
+				typedMsg.WorkspaceID,
+			)
 			// case *ExperimentMsg:
 			// 	return fmt.Sprintf(
 			// 		"%d: %s %d %d",
@@ -157,10 +166,12 @@ func splitMsgs(
 	upsertKeys := []string{
 		TrialsUpsertKey,
 		MetricsUpsertKey,
+		CheckpointsUpsertKey,
 		// ExperimentUpsertKey,
 	}
 	deleteKeys := []string{
 		TrialsDeleteKey,
+		CheckpointsDeleteKey,
 		// ExperimentDeleteKey,
 	}
 

@@ -21,22 +21,28 @@ CREATE TRIGGER stream_checkpoint_trigger_seq
 
 -- helper function to create a checkpoint jsonb object for streaming
 CREATE OR REPLACE FUNCTION stream_checkpoint_notify(
-    before jsonb, beforework integer, after jsonb, afterwork integer
+    before jsonb, beforework integer, after jsonb, afterwork integer, trialid integer, expid integer
 ) RETURNS integer AS $$
 DECLARE
 output jsonb = NULL;
     temp jsonb = NULL;
+    temptrial jsonb = NULL;
+    tempexp jsonb = NULL;
 BEGIN
     IF before IS NOT NULL THEN
         temp = before || jsonb_object_agg('workspace_id', beforework);
-        output = jsonb_object_agg('before', temp);
+        temptrial = temp || jsonb_build_object('trial_id', trialid);
+        tempexp = temp || jsonb_build_object('experiment_id', expid);
+        output = jsonb_object_agg('before', tempexp);
     END IF;
     IF after IS NOT NULL THEN
         temp = after || jsonb_object_agg('workspace_id', afterwork);
+        temptrial = temp || jsonb_build_object('trial_id', trialid);
+        tempexp = temp || jsonb_build_object('experiment_id', expid);
         IF output IS NULL THEN
-            output = jsonb_object_agg('after', temp);
+            output = jsonb_object_agg('after', tempexp);
         ELSE
-            output = output || jsonb_object_agg('after', temp);
+            output = output || jsonb_object_agg('after', tempexp);
     END IF;
 END IF;
     PERFORM pg_notify('stream_checkpoint_chan', output::text);
@@ -58,19 +64,19 @@ BEGIN
         exp = experiment_id from trials where trials.id = trialid;
         proj = project_id from experiments where experiments.id = exp;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_checkpoint_notify(NULL, NULL, to_jsonb(NEW), work);
+        PERFORM stream_checkpoint_notify(NULL, NULL, to_jsonb(NEW), work, trialid, exp);
     ELSEIF (TG_OP = 'UPDATE') THEN
         trialid = trial_id from trial_id_task_id where trial_id_task_id.task_id = NEW.task_id;
         exp = experiment_id from trials where trials.id = trialid;
         proj = project_id from experiments where experiments.id = exp;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_checkpoint_notify(to_jsonb(OLD), work, to_jsonb(NEW), work);
+        PERFORM stream_checkpoint_notify(to_jsonb(OLD), work, to_jsonb(NEW), work, trialid, exp);
     ELSEIF (TG_OP = 'DELETE') THEN
         trialid = trial_id from trial_id_task_id where trial_id_task_id.task_id = OLD.task_id;
         exp = experiment_id from trials where trials.id = trialid;
         proj = project_id from experiments where experiments.id = exp;
         work = workspace_id from projects where projects.id = proj;
-        PERFORM stream_checkpoint_notify(to_jsonb(OLD), work,  NULL, NULL);
+        PERFORM stream_checkpoint_notify(to_jsonb(OLD), work,  NULL, NULL, trialid, exp);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
 return OLD;
 END IF;
