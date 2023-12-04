@@ -192,7 +192,7 @@ func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 		StartTime:  c.registeredTime,
 		JobID:      &c.jobID,
 		LogVersion: model.CurrentTaskLogVersion,
-	}); err != nil {
+	}, nil); err != nil {
 		return fmt.Errorf("persisting task %v: %w", c.taskID, err)
 	}
 	return nil
