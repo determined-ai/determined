@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -377,6 +378,82 @@ func TestMetricNames(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricGroup("inference")])
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
+}
+
+func TestExperimentByIDs(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	externalID := uuid.New().String()
+	exp := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		ExternalExperimentID: &externalID,
+	})
+	trial, task := RequireMockTrial(t, db, exp)
+
+	for _, c := range []struct {
+		funcName string
+		f        func(IsNotFoundCase bool) (*model.Experiment, error)
+	}{
+		{"ExperimentByID", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByID(ctx, -1)
+			}
+
+			return ExperimentByID(ctx, exp.ID)
+		}},
+		{"ExperimentByTrialID", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByTrialID(ctx, -1)
+			}
+
+			return ExperimentByTrialID(ctx, trial.ID)
+		}},
+		{"ExperimentByTaskID", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByTaskID(ctx, model.TaskID(uuid.New().String()))
+			}
+
+			return ExperimentByTaskID(ctx, task.TaskID)
+		}},
+		{"ExperimentByExternalIDTx", func(isNotFoundCase bool) (*model.Experiment, error) {
+			var e *model.Experiment
+			err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+				if isNotFoundCase {
+					if _, err := ExperimentByExternalIDTx(ctx, tx, uuid.New().String()); err != nil {
+						return err
+					}
+
+					return nil
+				}
+
+				var err error
+				e, err = ExperimentByExternalIDTx(ctx, tx, externalID)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+
+			return e, err
+		}},
+	} {
+		t.Run(c.funcName+"-notFound", func(t *testing.T) {
+			_, err := c.f(true)
+			require.ErrorIs(t, err, ErrNotFound)
+		})
+
+		t.Run(c.funcName, func(t *testing.T) {
+			e, err := c.f(false)
+			require.NoError(t, err)
+
+			require.Equal(t, e, exp)
+		})
+	}
 }
 
 func TestExperimentBestSearcherValidation(t *testing.T) {
