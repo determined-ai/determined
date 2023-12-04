@@ -42,6 +42,10 @@ Version 0.26.4
 -  CLI: Add a new CLI command ``det e delete-tb-files [Experiment ID]`` to delete local TensorBoard
    files associated with a given experiment.
 
+-  Authentication: In the enterprise edition of Determined, add the ability to auto-provision OIDC
+   users upon their first login. To configure, set the ``oidc.auto_provision_users`` option to
+   ``True``. If SCIM is enabled as well, ``auto_provision_users`` must be False.
+
 **Improvements**
 
 -  Update default environment images to Python 3.9 from Python 3.8.
