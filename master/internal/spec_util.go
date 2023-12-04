@@ -114,22 +114,21 @@ func fillContextDir(
 }
 
 func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, error) {
-	var token string
-	var err error
 	if config.GetMasterConfig().InternalConfig.ExternalSessions.Enabled() {
-		token, err = grpcutil.GetUserExternalToken(ctx)
+		token, err := grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
 			return "", status.Errorf(codes.Internal,
 				errors.Wrapf(err,
 					"unable to get external user token").Error())
 		}
-	} else {
-		token, err = user.StartSession(ctx, userModel)
-		if err != nil {
-			return "", status.Errorf(codes.Internal,
-				errors.Wrapf(err,
-					"unable to create user session inside task").Error())
-		}
+        return token, nil
 	}
-	return token, nil
+
+    token, err := user.StartSession(ctx, userModel)
+    if err != nil {
+        return "", status.Errorf(codes.Internal,
+            errors.Wrapf(err,
+                "unable to create user session inside task").Error())
+    }
+    return token, nil
 }
