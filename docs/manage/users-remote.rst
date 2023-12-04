@@ -26,26 +26,57 @@ Set the Auto Provision Option
 The first step is to configure the :ref:`master configuration file <master-config-reference>` to
 enable auto provisioning users and the remote management of any information attached to the users.
 
--  Enable OIDC.
--  Set ``oidc.auto_provision_users`` option to ``true`` in your :ref:`master configuration file
-   <master-config-reference>`.
+.. tabs::
 
-.. note::
+   .. tab::
 
-   If ``scim_enabled`` is ``true``, then ``oidc.auto_provision_users`` must be ``false``.
+      OIDC
 
-For example:
+      -  Enable OIDC.
+      -  Set ``oidc.auto_provision_users`` option to ``true`` in your :ref:`master configuration
+         file <master-config-reference>`.
 
-.. code:: yaml
+      .. note::
 
-   oidc:
-       enabled: true
-       provider: "Okta"
-       idp_recipient_url: "https://determined.example.com"
-       idp_sso_url: "https://dev-00000000.okta.com"
-       client_id: "xx0xx0"
-       client_secret: "xx0xx0"
-       auto_provision_users: true
+         If ``scim_enabled`` is ``true``, then ``oidc.auto_provision_users`` must be ``false``.
+
+      For example:
+
+      .. code:: yaml
+
+         oidc:
+             enabled: true
+             provider: "Okta"
+             idp_recipient_url: "https://determined.example.com"
+             idp_sso_url: "https://dev-00000000.okta.com"
+             client_id: "xx0xx0"
+             client_secret: "xx0xx0"
+             auto_provision_users: true
+
+   .. tab::
+
+      SAML
+
+      -  Enable SAML.
+      -  Set ``saml.auto_provision_users`` option to ``true`` in your :ref:`master configuration
+         file <master-config-reference>`.
+
+      .. note::
+
+         If ``scim_enabled`` is ``true``, then ``saml.auto_provision_users`` must be ``false``.
+
+      For example:
+
+      .. code:: yaml
+
+         samle:
+             enabled: true
+             provider: "Okta"
+             idp_recipient_url: "https://determined.example.com"
+             idp_sso_url: "https://dev-00000000.okta.com"
+             client_id: "xx0xx0"
+             client_secret: "xx0xx0"
+             auto_provision_users: true
 
 Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
