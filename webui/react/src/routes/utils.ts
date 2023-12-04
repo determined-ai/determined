@@ -250,7 +250,7 @@ export const isGenAIDeployed = async (): Promise<string> => {
   const possiblesPaths = ['/genai', '/lore'];
   for (const path of possiblesPaths) {
     const url = serverAddress(path);
-    const response = await fetch(url, { method: 'HEAD' });
+    const response = await fetch(url, { method: 'GET' });
     if (response.ok) return url;
   }
   return '';
