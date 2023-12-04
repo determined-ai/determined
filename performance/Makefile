@@ -90,23 +90,6 @@ run:
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
-run-local:
-	docker run \
-		--name perf-tests \
-		$(IMAGE) run \
-		-e DET_MASTER=$(DET_MASTER) \
-		$(K6_FLAGS) \
-		/test_scripts/api_performance_tests.js; \
-	TEST_STATUS=$$?; \
-	docker cp \
-		perf-tests:/home/k6/junit.xml \
-		reports/local-$$(date +%s).junit.xml; \
-	docker cp \
-		perf-tests:/home/k6/results.txt \
-		reports/local-$$(date +%s).results.txt; \
-	docker rm perf-tests; \
-	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
-
 clean:
 	docker image rm $(IMAGE)
 	rm -f .up.out .det.url
