@@ -18,7 +18,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
 
 
 @authentication.required
@@ -78,13 +78,6 @@ def open_shell(args: Namespace) -> None:
 
 @authentication.required
 def show_ssh_command(args: Namespace) -> None:
-    if "WSL" in os.uname().release:
-        cli.warn(
-            "WSL remote-ssh integration is not supported in VSCode, which "
-            "uses Windows openssh. For Windows VSCode integration, rerun this "
-            "command in a Windows shell. For PyCharm users, configure the Pycharm "
-            "ssh command to target the WSL ssh command."
-        )
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
@@ -95,6 +88,15 @@ def show_ssh_command(args: Namespace) -> None:
         retain_keys_and_print=True,
         print_only=True,
     )
+
+
+@authentication.required
+def show_ssh_cmd_legacy(args: Namespace) -> None:
+    cli.warn(
+        "DEPRECATION WARNING: show_ssh_command is being deprecated in favor"
+        "of show-ssh-command"
+    )
+    show_ssh_command(args)
 
 
 def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], str]:
@@ -210,7 +212,7 @@ def _open_shell(
         ]
 
         if retain_keys_and_print:
-            print(colored(subprocess.list2cmdline(cmd), "yellow"))
+            print(colored(subprocess.list2cmdline(cmd), "green"))
             if print_only:
                 return
 
@@ -267,7 +269,11 @@ args_description = [
             Arg("--show-ssh-command", action="store_true",
                 help="show ssh command (e.g. for use in IDE) when starting the shell"),
         ]),
-        Cmd("show_ssh_command", show_ssh_command, "print the ssh command", [
+        Cmd("show_ssh_command", show_ssh_cmd_legacy, "print the ssh command", [
+            Arg("shell_id", help="shell ID"),
+            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
+        ]),
+        Cmd("show-ssh-command", show_ssh_command, "print the ssh command", [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
