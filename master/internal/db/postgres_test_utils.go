@@ -234,7 +234,7 @@ func RequireMockTensorboardID(
 		TaskID:       task.TaskID,
 		AllocationID: alloc.AllocationID,
 		GenericCommandSpec: map[string]any{
-			"TaskType": model.TaskTypeCommand,
+			"TaskType": model.TaskTypeTensorboard,
 			"Metadata": map[string]any{
 				"workspace_id":   1,
 				"experiment_ids": expIDs,

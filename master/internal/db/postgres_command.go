@@ -1,5 +1,6 @@
 package db
 
+// TODO(DET-10003) move this file to internal/command.
 import (
 	"context"
 	"database/sql"
@@ -46,7 +47,9 @@ func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error
 	metadata := TaskMetadata{}
 	if err := Bun().NewSelect().Model(&metadata).
 		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
-		ColumnExpr("generic_command_spec->>'TaskType' as task_type").
+		// TODO(DET-10004) TaskType needs
+		// to have ->> instead of -> so task_type doesn't get surrounded by double quotes.
+		ColumnExpr("generic_command_spec->'TaskType' as task_type").
 		ColumnExpr("generic_command_spec->'Metadata'->'experiment_ids' as experiment_ids").
 		ColumnExpr("generic_command_spec->'Metadata'->'trial_ids' as trial_ids").
 		Where("task_id = ?", taskID).

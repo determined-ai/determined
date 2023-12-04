@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -50,7 +51,8 @@ func TestIdentifyTask(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, TaskMetadata{
 		WorkspaceID: 1,
-		TaskType:    model.TaskTypeCommand,
+		// TODO(DET-10004) remove these double quotes.
+		TaskType: model.TaskType(fmt.Sprintf(`"%s"`, model.TaskTypeCommand)),
 	}, meta)
 
 	// Tensorboard.
@@ -66,15 +68,16 @@ func TestIdentifyTask(t *testing.T) {
 	meta, err = IdentifyTask(ctx, tensorboardID)
 	require.NoError(t, err)
 	require.Equal(t, TaskMetadata{
-		WorkspaceID:   1,
-		TaskType:      model.TaskTypeCommand,
+		WorkspaceID: 1,
+		// TODO(DET-10004) remove these double quotes.
+		TaskType:      model.TaskType(fmt.Sprintf(`"%s"`, model.TaskTypeTensorboard)),
 		ExperimentIDs: []int32{int32(expIDs[0]), int32(expIDs[1])},
 		TrialIDs:      []int32{int32(trialIDs[0]), int32(trialIDs[1])},
 	}, meta)
 
 	// Experiment task.
 	// This always is not found and is probably a footgun from function name / comment.
-	// TODO(!!!) remove this footgun.
+	// TODO(DET-10005) remove this footgun.
 	_, err = IdentifyTask(ctx, trialTask.TaskID)
 	require.ErrorIs(t, err, ErrNotFound)
 }
