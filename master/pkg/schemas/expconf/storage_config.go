@@ -128,7 +128,10 @@ func (s SharedFSConfigV0) PathInContainer() string {
 func (s SharedFSConfigV0) PathInContainerOrHost() string {
 	path := s.PathInContainer()
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return s.HostPath()
+		path = s.HostPath()
+	}
+	if storagePath := s.StoragePath(); storagePath != nil {
+		path = filepath.Join(path, *storagePath)
 	}
 	return path
 }

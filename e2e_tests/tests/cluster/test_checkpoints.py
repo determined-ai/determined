@@ -6,6 +6,7 @@ import tempfile
 import time
 from typing import Any, Dict, List, Set, Tuple
 
+import pexpect
 import pytest
 
 from determined import errors
@@ -115,8 +116,11 @@ def run_command_master_checkpoint_download(uuid: str) -> None:
         ]
 
         child = det_spawn(command)
+        child.expect(pexpect.EOF)
         child.wait()
         child.close()
+        if child.exitstatus != 0:
+            print(child.before.decode("ascii"), file=sys.stderr)
         assert child.exitstatus == 0
         assert os.path.exists(outdir + "/metadata.json")
 
