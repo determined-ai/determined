@@ -19,13 +19,26 @@ export interface Option {
   content?: React.ReactNode;
 }
 
+interface HeaderOption {
+  content: React.ReactNode;
+  menuOption: Option;
+}
+export interface MenuOption {
+  disabled?: boolean;
+  key: string;
+  label: React.ReactNode;
+  onClick?: (ev: React.MouseEvent) => void;
+  content: React.ReactNode;
+  tooltip?: string;
+}
+
 interface Props {
   foldableContent?: React.ReactNode;
   leftContent: React.ReactNode;
-  options?: Option[];
+  options?: HeaderOption[];
 }
 
-const renderOptionLabel = (option: Option): React.ReactNode => {
+export const renderOptionLabel = (option: Option): React.ReactNode => {
   return option.tooltip ? (
     <Tooltip content={option.tooltip}>
       <span>{option.label}</span>
@@ -45,15 +58,15 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
 
   const menu: MenuItem[] = (options ?? []).map((option) => ({
     className: css.optionsDropdownItem,
-    disabled: option.disabled || !option.onClick,
-    key: option.key,
-    label: renderOptionLabel(option),
+    disabled: option.menuOption.disabled || !option.menuOption.onClick,
+    key: option.menuOption.key,
+    label: renderOptionLabel(option.menuOption),
   }));
 
   const handleDropdown = useCallback(
     (key: string, e: DropdownEvent) => {
-      const option = options?.find((option) => option.key === key);
-      if (isMouseEvent(e)) option?.onClick?.(e);
+      const option = options?.find((option) => option.menuOption.key === key);
+      if (isMouseEvent(e)) option?.menuOption.onClick?.(e);
     },
     [options],
   );
@@ -78,22 +91,11 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
             />
           )}
           <div className={css.optionsButtons}>
-            {options?.slice(0, 3).map((option) =>
-              option?.content ? (
-                option.content
-              ) : (
-                <div className={css.optionsMainButton} key={option.key}>
-                  <Button
-                    disabled={option.disabled || !option.onClick}
-                    icon={option?.icon}
-                    key={option.key}
-                    loading={option.isLoading}
-                    onClick={option.onClick}>
-                    {renderOptionLabel(option)}
-                  </Button>
-                </div>
-              ),
-            )}
+            {options?.slice(0, 3).map((option) => (
+              <div className={css.optionsMainButton} key={option.menuOption.key}>
+                {option.content}
+              </div>
+            ))}
           </div>
           {menu.length !== 0 && (
             <Dropdown menu={menu} placement="bottomRight" onClick={handleDropdown}>

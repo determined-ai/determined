@@ -23,7 +23,7 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import Link from 'components/Link';
-import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import PageHeaderFoldable, { Option, renderOptionLabel } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { UNMANAGED_MESSAGE } from 'constant';
@@ -647,7 +647,21 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             ) : null}
           </Space>
         }
-        options={headerOptions}
+        options={headerOptions.map((option) => ({
+          content: option.content ? (
+            option.content
+          ) : (
+            <Button
+              disabled={option.disabled || !option.onClick}
+              icon={option?.icon}
+              key={option.key}
+              loading={option.isLoading}
+              onClick={option.onClick}>
+              {renderOptionLabel(option)}
+            </Button>
+          ),
+          menuOption: option,
+        }))}
       />
       <ExperimentHeaderProgress experiment={experiment} />
       <ForkModal.Component experiment={experiment} type={CreateExperimentType.Fork} />

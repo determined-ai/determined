@@ -1,3 +1,4 @@
+import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -5,7 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
-import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import PageHeaderFoldable, { Option, renderOptionLabel } from 'components/PageHeaderFoldable';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -126,7 +127,19 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     <>
       <PageHeaderFoldable
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
-        options={headerOptions}
+        options={headerOptions.map((option) => ({
+          content: (
+            <Button
+              disabled={option.disabled || !option.onClick}
+              icon={option?.icon}
+              key={option.key}
+              loading={option.isLoading}
+              onClick={option.onClick}>
+              {renderOptionLabel(option)}
+            </Button>
+          ),
+          menuOption: option,
+        }))}
       />
       <ExperimentCreateModal.Component
         experiment={experiment}
