@@ -315,11 +315,49 @@ Non-Root Containers
 ===================
 
 You can enhance security and limit potential malicious activity by running containers as non-root
-users. To find out more, visit :ref:`run-as-user` and :ref:`run-unprivileged-tasks`.
+users. Determined allows you to :ref:`run tasks as specific agent users <run-as-user>` and :ref:`run
+unprivileged tasks by default <run-unprivileged-tasks>`.
 
 .. important::
 
-   Red Hat OpenShift users should not configure non-root containers.
+   Red Hat® OpenShift® users should not follow these instructions for configuring non-root
+   containers, as OpenShift's configuration conflicts with the approach described here.
+
+To run containers as non-root users, you'll first need to set up your non-root user:
+
+-  Choose a Determined user for configuration, preferably one who has not undergone the ``det user
+   link-with-agent-user`` process and one you plan to eventually link with an agent user. If no
+   suitable Determined user exists, consider creating a test user for this purpose, one which can be
+   disabled afterwards.
+
+-  Link this user to the actual username/UID and groupname/GID. One way to do this is to use the
+   following command (you can also use the WebUI):
+
+   .. code:: bash
+
+      det user link-with-agent-user \
+         --agent-user $THE_USER \
+         --agent-uid $THE_UID \
+         --agent-group $THE_GROUP \
+         --agent-gid $THE_GID \
+         $THE_DETERMINED_USER
+
+-  Start a shell as the specified user:
+
+   .. code:: bash
+
+      det -u $THE_DETERMINED_USER shell start
+
+-  In the shell, verify the username/UID and groupname/GID with ``id -a``.
+
+-  After confirming the non-root containers are operational, you'll need to perform a test run of
+   each training job you normally run as the modified Determined user. This ensures the training
+   jobs run successfully without root privileges.
+
+.. note::
+
+   For Kubernetes deployments, configure the security context for running containers as a non-root
+   user.
 
 Configure Role-Based Access Control (RBAC)
 ==========================================

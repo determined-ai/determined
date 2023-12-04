@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 
 import InteractiveTask from './InteractiveTask';
@@ -19,10 +20,25 @@ vi.mock('react-router-dom', async (importOriginal) => ({
     taskId: 'task-id',
     taskName: TASK_NAME,
     taskResourcePool: TASK_RESOURCE_POOL,
-    taskType: 'JupyterLab',
+    taskType: 'jupyter-lab',
     taskUrl: 'http://taskUrl.com',
   }),
   useRouteMatch: () => ({ url: '/company/company-id1/team/team-id1' }),
+}));
+
+vi.mock('services/api', () => ({
+  getCommand: () => {
+    return Promise.resolve({});
+  },
+  getJupyterLab: () => {
+    return Promise.resolve({});
+  },
+  getShell: () => {
+    return Promise.resolve({});
+  },
+  getTensorBoard: () => {
+    return Promise.resolve({});
+  },
 }));
 
 const InteractiveTaskPageContainer: React.FC = () => {
@@ -36,12 +52,14 @@ const InteractiveTaskPageContainer: React.FC = () => {
 const InteractiveTaskContainer: React.FC = () => {
   return (
     <BrowserRouter>
-      <UIProvider>
-        <HelmetProvider>
-          <ConfirmationProvider>
-            <InteractiveTaskPageContainer />
-          </ConfirmationProvider>
-        </HelmetProvider>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <HelmetProvider>
+            <ConfirmationProvider>
+              <InteractiveTaskPageContainer />
+            </ConfirmationProvider>
+          </HelmetProvider>
+        </ThemeProvider>
       </UIProvider>
     </BrowserRouter>
   );

@@ -8,10 +8,10 @@
 
 .. warning::
 
-   There are occasionally incompatible changes introduced in new versions of Determined -- for
-   example, the format of the :ref:`master and agent configuration files <cluster-configuration>`
-   might change. While we try to preserve backward compatibility whenever possible, you should read
-   the :ref:`release-notes` for a description of recent changes before upgrading Determined.
+   Before upgrading, visit the :ref:`release notes <release-notes>` for a description of recent
+   changes. While we try to preserve backward compatibility whenever possible, there are
+   occasionally incompatible changes introduced in new versions of Determined -- for example, the
+   format of the :ref:`master and agent configuration files <cluster-configuration>` might change.
 
 To upgrade, follow the same steps as you did during the initial :ref:`installation
 <installation-guide>` of Determined. For example, if you deployed your Determined cluster on Amazon

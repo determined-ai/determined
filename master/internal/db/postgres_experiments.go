@@ -884,9 +884,6 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 	if err != nil {
 		return errors.Wrapf(err, "error deleting experiments %v", ids)
 	}
-	if len(deletedIDs) != len(ids) {
-		return errors.Errorf("mis-match in delete-able experiments versus requested %v", ids)
-	}
 	return nil
 }
 

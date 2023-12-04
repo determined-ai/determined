@@ -9,15 +9,15 @@ import InputShortcut, { KeyboardShortcut, shortcutToString } from 'hew/InputShor
 import { useModal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import useUI, { Mode } from 'hew/Theme';
-import { makeToast } from 'hew/Toast';
-import Paragraph from 'hew/Typography/Paragraph';
+import { useToast } from 'hew/Toast';
+import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
+import useUI, { Mode } from 'components/ThemeProvider';
 import { ThemeOptions } from 'components/ThemeToggle';
 import {
   shortcutSettingsConfig,
@@ -55,16 +55,19 @@ interface Props {
   onClose: () => void;
 }
 
-const rowHeightLabels = rowHeightItems.reduce((acc, { rowHeight, label }) => {
-  acc[rowHeight] = label;
-  return acc;
-}, {} as Record<RowHeight, string>);
+const rowHeightLabels = rowHeightItems.reduce(
+  (acc, { rowHeight, label }) => {
+    acc[rowHeight] = label;
+    return acc;
+  },
+  {} as Record<RowHeight, string>,
+);
 
 const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const info = useObservable(determinedStore.info);
   const confirm = useConfirm();
-
+  const { openToast } = useToast();
   const UserSettingsModal = useModal(UserSettingsModalComponent);
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
   const {
@@ -80,13 +83,13 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         await userStore.patchUser(currentUser?.id || 0, {
           displayName: newValue as string,
         });
-        makeToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
+        openToast({ severity: 'Confirm', title: API_DISPLAYNAME_SUCCESS_MESSAGE });
       } catch (e) {
         handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
       }
     },
-    [currentUser?.id],
+    [currentUser?.id, openToast],
   );
 
   const handleSaveUsername = useCallback(
@@ -95,14 +98,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         await userStore.patchUser(currentUser?.id || 0, {
           username: newValue as string,
         });
-        makeToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
+        openToast({ severity: 'Confirm', title: API_USERNAME_SUCCESS_MESSAGE });
       } catch (e) {
-        makeToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
+        openToast({ severity: 'Error', title: API_USERNAME_ERROR_MESSAGE });
         handleError(e, { silent: true, type: ErrorType.Input });
         return e as Error;
       }
     },
-    [currentUser?.id],
+    [currentUser?.id, openToast],
   );
 
   const [newPassword, setNewPassword] = useState<string>('');
@@ -164,7 +167,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   onSubmit={handleSaveDisplayName}>
                   <Input autoFocus maxLength={32} placeholder="Add display name" />
                 </InlineForm>
-                {info.userManagementEnabled && (
+                {currentUser?.remote && (
+                  <label>Remote user cannot change password from WebUI</label>
+                )}
+                {info.userManagementEnabled && !currentUser?.remote && (
                   <>
                     <InlineForm<string>
                       initialValue={newPassword}
@@ -340,10 +346,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
               </div>
             </Section>
             <Section title="Advanced">
-              <Paragraph>
+              <Body>
                 Advanced features are potentially dangerous and could require you to completely
                 reset your user settings if you make a mistake.
-              </Paragraph>
+              </Body>
               <Accordion title="I know what I'm doing">
                 <Space>
                   <Button

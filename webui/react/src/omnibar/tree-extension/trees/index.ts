@@ -1,5 +1,5 @@
 import { activeRunStates, terminalCommandStates, terminalRunStatesKeys } from 'constants/states';
-import { displayHelp, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
+import { parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
 import dev from 'omnibar/tree-extension/trees/dev';
 import locations from 'omnibar/tree-extension/trees/goto';
 import { Children, LeafNode, NonLeafNode } from 'omnibar/tree-extension/types';
@@ -187,7 +187,8 @@ const root: NonLeafNode = {
       title: 'dev',
     },
     {
-      onAction: displayHelp,
+      /* eslint-disable-next-line @typescript-eslint/no-empty-function */
+      onAction: (): void => {},
       title: 'help',
     },
   ],

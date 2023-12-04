@@ -88,6 +88,8 @@ export class BaseAPI {
         if (configuration) {
             this.configuration = configuration;
             this.basePath = configuration.basePath || this.basePath;
+        } else {
+            this.configuration = new Configuration()
         }
     }
 };
@@ -99,9 +101,10 @@ export class BaseAPI {
  * @extends {Error}
  */
 export class RequiredError extends Error {
-    name: "RequiredError"
+    override name: "RequiredError"
     constructor(public field: string, msg?: string) {
         super(msg);
+        this.name = "RequiredError"
     }
 }
 
@@ -2036,6 +2039,12 @@ export interface V1Container {
      * @memberof V1Container
      */
     devices?: Array<V1Device>;
+    /**
+     * User has insufficient permissions to view this container's details. If true, we obfuscate: (1) parent (2) id (4) devices
+     * @type {boolean}
+     * @memberof V1Container
+     */
+    permissionDenied?: boolean;
 }
 /**
  * Request to continue an experiment.
@@ -4509,7 +4518,7 @@ export interface V1GetUserSettingResponse {
     settings: Array<V1UserWebSetting>;
 }
 /**
- * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+ * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
  * @export
  * @enum {string}
  */
@@ -4522,6 +4531,7 @@ export const V1GetUsersRequestSortBy = {
     MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME',
     NAME: 'SORT_BY_NAME',
     LASTAUTHTIME: 'SORT_BY_LAST_AUTH_TIME',
+    REMOTE: 'SORT_BY_REMOTE',
 } as const
 export type V1GetUsersRequestSortBy = ValueOf<typeof V1GetUsersRequestSortBy>
 /**
@@ -5489,10 +5499,10 @@ export type V1LocationType = ValueOf<typeof V1LocationType>
 export interface V1LogConfig {
     /**
      * The log level for Master Config.
-     * @type {string}
+     * @type {V1LogLevel}
      * @memberof V1LogConfig
      */
-    level?: string;
+    level?: V1LogLevel;
     /**
      * The color setting for log in Master Config.
      * @type {boolean}
@@ -17556,7 +17566,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createGenericTask.');
             }
-            const localVarPath = `/api/v1/generic-task`;
+            const localVarPath = `/api/v1/generic-tasks`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -29994,7 +30004,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -30392,7 +30402,7 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -30589,7 +30599,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get a list of users.
-         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+         * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -30721,7 +30731,7 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of users.
-     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+     * @param {V1GetUsersRequestSortBy} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.  - SORT_BY_NAME: Returns users sorted by username unless display name exist.  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.  - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
      * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.

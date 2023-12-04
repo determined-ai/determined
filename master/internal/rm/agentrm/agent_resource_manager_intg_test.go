@@ -6,25 +6,23 @@ package agentrm
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/internal/db"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 )
 
 func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
-	system := actor.NewSystem(t.Name())
-
 	// This is required only due to the resource manager needing
 	// to authenticate users when sending echo API requests.
 	// No echo http requests are sent so it won't cause issues
 	// initializing with nil values for this test.
-	user.InitService(nil, nil, nil)
+	user.InitService(nil, nil)
 
 	// Set up one CPU resource pool and one GPU resource pool.
 	cfg := &config.ResourceConfig{
@@ -43,71 +41,66 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 			{PoolName: "gpu-pool"},
 		},
 	}
-	_, cpuPoolRef := setupResourcePool(
-		t, nil, system, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
+	cpuPoolRef := setupResourcePool(
+		t, nil, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
 		nil, nil, []*MockAgent{{ID: "agent1", Slots: 0}},
 	)
-	_, gpuPoolRef := setupResourcePool(
-		t, nil, system, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
+	gpuPoolRef := setupResourcePool(
+		t, nil, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
 		nil, nil, []*MockAgent{{ID: "agent2", Slots: 4}},
 	)
-	agentRM := &agentResourceManager{
+	agentRM := &ResourceManager{
 		config:      cfg.ResourceManager.AgentRM,
 		poolsConfig: cfg.ResourcePools,
-		pools: map[string]*actor.Ref{
+		pools: map[string]*resourcePool{
 			"cpu-pool": cpuPoolRef,
 			"gpu-pool": gpuPoolRef,
 		},
+		agentUpdates: queue.New[agentUpdatedEvent](),
 	}
-	agentRMRef, created := system.ActorOf(actor.Addr("agentRM"), agentRM)
-	assert.Assert(t, created)
 
 	// Check if there are tasks.
-	var taskSummaries map[model.AllocationID]sproto.AllocationSummary
-	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).
-		Get().(map[model.AllocationID]sproto.AllocationSummary)
+	taskSummaries, err := agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	require.NoError(t, err)
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Start CPU tasks actors
-	var cpuTask1Ref, cpuTask2Ref *actor.Ref
 	cpuTask1 := &MockTask{
-		RMRef:        agentRMRef,
 		ID:           "cpu-task1",
 		SlotsNeeded:  0,
 		ResourcePool: "cpu-pool",
 	}
-	cpuTask1Ref, created = system.ActorOf(actor.Addr(cpuTask1.ID), cpuTask1)
-	assert.Assert(t, created)
-	cpuTask2 := &MockTask{RMRef: agentRMRef, ID: "cpu-task2", SlotsNeeded: 0}
-	cpuTask2Ref, created = system.ActorOf(actor.Addr(cpuTask2.ID), cpuTask2)
-	assert.Assert(t, created)
+	cpuTask2 := &MockTask{ID: "cpu-task2", SlotsNeeded: 0}
 
 	// Start GPU task actors.
-	var gpuTask1Ref, gpuTask2Ref *actor.Ref
 	gpuTask1 := &MockTask{
-		RMRef:        agentRMRef,
 		ID:           "gpu-task1",
 		SlotsNeeded:  4,
 		ResourcePool: "gpu-pool",
 	}
-	gpuTask1Ref, created = system.ActorOf(actor.Addr(gpuTask1.ID), gpuTask1)
-	assert.Assert(t, created)
-	gpuTask2 := &MockTask{RMRef: agentRMRef, ID: "gpu-task2", SlotsNeeded: 4}
-	gpuTask2Ref, created = system.ActorOf(actor.Addr(gpuTask2.ID), gpuTask2)
-	assert.Assert(t, created)
+	gpuTask2 := &MockTask{ID: "gpu-task2", SlotsNeeded: 4}
 
 	// Let the CPU task actors request resources.
-	system.Ask(cpuTask1Ref, SendRequestResourcesToResourceManager{}).Get()
-	system.Ask(cpuTask2Ref, SendRequestResourcesToResourceManager{}).Get()
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
+		AllocationID: cpuTask1.ID,
+		SlotsNeeded:  cpuTask1.SlotsNeeded,
+		ResourcePool: cpuTask1.ResourcePool,
+	})
+	require.NoError(t, err)
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
+		AllocationID: cpuTask2.ID,
+		SlotsNeeded:  cpuTask2.SlotsNeeded,
+		ResourcePool: cpuTask2.ResourcePool,
+	})
+	require.NoError(t, err)
 
 	// Check the resource pools of the tasks are correct.
-	taskSummary := system.Ask(
-		agentRMRef, sproto.GetAllocationSummary{ID: cpuTask1.ID}).Get().(*sproto.AllocationSummary)
+	taskSummary, err := agentRM.GetAllocationSummary(sproto.GetAllocationSummary{ID: cpuTask1.ID})
+	require.NoError(t, err)
 	assert.Equal(t, taskSummary.ResourcePool, cpuTask1.ResourcePool)
-	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).
-		Get().(map[model.AllocationID]sproto.AllocationSummary)
+
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	require.NoError(t, err)
 	assert.Equal(
 		t,
 		taskSummaries[cpuTask1.ID].ResourcePool,
@@ -115,16 +108,26 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	)
 
 	// Let the GPU task actors request resources.
-	system.Ask(gpuTask1Ref, SendRequestResourcesToResourceManager{}).Get()
-	system.Ask(gpuTask2Ref, SendRequestResourcesToResourceManager{}).Get()
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
+		AllocationID: gpuTask1.ID,
+		SlotsNeeded:  gpuTask1.SlotsNeeded,
+		ResourcePool: gpuTask1.ResourcePool,
+	})
+	require.NoError(t, err)
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
+		AllocationID: gpuTask2.ID,
+		SlotsNeeded:  gpuTask2.SlotsNeeded,
+		ResourcePool: gpuTask2.ResourcePool,
+	})
+	require.NoError(t, err)
 
 	// Check the resource pools of the tasks are correct.
-	taskSummary = system.Ask(
-		agentRMRef, sproto.GetAllocationSummary{ID: gpuTask1.ID}).Get().(*sproto.AllocationSummary)
+	taskSummary, err = agentRM.GetAllocationSummary(sproto.GetAllocationSummary{ID: gpuTask1.ID})
+	require.NoError(t, err)
 	assert.Equal(t, taskSummary.ResourcePool, gpuTask1.ResourcePool)
-	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).
-		Get().(map[model.AllocationID]sproto.AllocationSummary)
+
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	require.NoError(t, err)
 	assert.Equal(
 		t,
 		taskSummaries[gpuTask1.ID].ResourcePool,
@@ -132,25 +135,23 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	)
 
 	// Let the CPU task actors release resources.
-	system.Ask(cpuTask1Ref, SendResourcesReleasedToResourceManager{}).Get()
-	system.Ask(cpuTask2Ref, SendResourcesReleasedToResourceManager{}).Get()
-	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).
-		Get().(map[model.AllocationID]sproto.AllocationSummary)
+	agentRM.Release(sproto.ResourcesReleased{AllocationID: cpuTask1.ID})
+	agentRM.Release(sproto.ResourcesReleased{AllocationID: cpuTask2.ID})
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	require.NoError(t, err)
 	assert.Equal(t, len(taskSummaries), 2)
 
 	// Let the GPU task actors release resources.
-	system.Ask(gpuTask1Ref, SendResourcesReleasedToResourceManager{}).Get()
-	system.Ask(gpuTask2Ref, SendResourcesReleasedToResourceManager{}).Get()
-	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).
-		Get().(map[model.AllocationID]sproto.AllocationSummary)
+	agentRM.Release(sproto.ResourcesReleased{AllocationID: gpuTask1.ID})
+	agentRM.Release(sproto.ResourcesReleased{AllocationID: gpuTask2.ID})
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	require.NoError(t, err)
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Fetch average queued time for resource pool
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../../static/migrations")
-	_, err := agentRM.fetchAvgQueuedTime("cpu-pool")
+	_, err = agentRM.fetchAvgQueuedTime("cpu-pool")
 	assert.NilError(t, err, "error fetch average queued time for cpu-pool")
 	_, err = agentRM.fetchAvgQueuedTime("gpu-pool")
 	assert.NilError(t, err, "error fetch average queued time for gpu-pool")

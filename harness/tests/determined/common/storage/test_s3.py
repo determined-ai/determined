@@ -22,8 +22,7 @@ def sample_checkpoint(standard_session: api.Session) -> checkpoint.Checkpoint:
     return checkpoint.Checkpoint._from_bindings(bindings_checkpoint, standard_session)
 
 
-# Typing directive can be removed when https://github.com/getmoto/moto/issues/4944 is resolved.
-@moto.mock_s3  # type: ignore
+@moto.mock_s3
 def test_download_simple_checkpoint(
     sample_checkpoint: checkpoint.Checkpoint, tmp_path: os.PathLike
 ) -> None:

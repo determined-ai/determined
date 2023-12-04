@@ -2,14 +2,15 @@ import { Modal, Space, Typography } from 'antd';
 import Button from 'hew/Button';
 import CodeSample from 'hew/CodeSample';
 import Dropdown, { MenuOption } from 'hew/Dropdown';
+import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import Nameplate from 'hew/Nameplate';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
-import { Loadable } from 'hew/utils/loadable';
+import { useTheme } from 'hew/Theme';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import InfoBox, { InfoRow } from 'components/InfoBox';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
@@ -43,7 +44,6 @@ const ModelVersionHeader: React.FC<Props> = ({
   fetchModelVersion,
 }: Props) => {
   const loadableUsers = useObservable(userStore.getUsers());
-  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const modelDownloadModal = useModal(ModelDownloadModal);
@@ -52,32 +52,42 @@ const ModelVersionHeader: React.FC<Props> = ({
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
-  const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find((user) => user.id === modelVersion.userId);
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
-    return [
+  const infoRows: InfoRow[] = useMemo(
+    () => [
       {
-        content: (
-          <Space>
-            <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUsers)}>
-              <>
-                <Avatar user={user} />
-                {getDisplayName(user)} on{' '}
-                {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
-              </>
-            </Spinner>
-          </Space>
-        ),
         label: 'Created by',
+        value: (
+          <Spinner data={loadableUsers}>
+            {(users) => {
+              const user = users.find((user) => user.id === modelVersion.userId);
+              return (
+                <Space>
+                  <Nameplate
+                    alias={getDisplayName(user)}
+                    compact
+                    icon={<Avatar user={user} />}
+                    name={user?.username ?? 'Unavailable'}
+                  />{' '}
+                  on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+                </Space>
+              );
+            }}
+          </Spinner>
+        ),
       },
       {
-        content: (
+        label: 'Updated',
+        value: (
           <TimeAgo datetime={new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime)} />
         ),
-        label: 'Updated',
       },
       {
-        content: (
+        label: 'Description',
+        value: (
           <div>
             {(modelVersion.comment ?? '') || (
               <Typography.Text
@@ -87,10 +97,10 @@ const ModelVersionHeader: React.FC<Props> = ({
             )}
           </div>
         ),
-        label: 'Description',
       },
       {
-        content: (
+        label: 'Tags',
+        value: (
           <Tags
             disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
@@ -98,10 +108,10 @@ const ModelVersionHeader: React.FC<Props> = ({
             onAction={tagsActionHelper(modelVersion.labels ?? [], onUpdateTags)}
           />
         ),
-        label: 'Tags',
       },
-    ] as InfoRow[];
-  }, [loadableUsers, modelVersion, onUpdateTags, users, canModifyModelVersion]);
+    ],
+    [loadableUsers, modelVersion, onUpdateTags, canModifyModelVersion],
+  );
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -204,7 +214,7 @@ with det.import_from_path(path + "/code"):
             </Dropdown>
           </div>
         </div>
-        <InfoBox rows={infoRows} separator={false} />
+        <Glossary content={infoRows} />
       </div>
       <modelDownloadModal.Component modelVersion={modelVersion} />
       <modelVersionDeleteModal.Component modelVersion={modelVersion} />
@@ -217,6 +227,7 @@ with det.import_from_path(path + "/code"):
         footer={null}
         open={showUseInNotebook}
         title="Use in Notebook"
+        wrapClassName={themeClass}
         onCancel={() => setShowUseInNotebook(false)}>
         <div className={css.topLine}>
           <p>Reference this model in a notebook</p>

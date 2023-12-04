@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import Section from './Section';
 
@@ -15,17 +16,19 @@ const setup = ({
 }) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <Section
-      bodyBorder={bodyBorder}
-      bodyNoPadding={bodyNoPadding}
-      divider={divider}
-      filters={filters}
-      hideTitle={hideTitle}
-      loading={loading}
-      maxHeight={maxHeight}
-      options={options}
-      title={title}
-    />,
+    <UIProvider theme={DefaultTheme.Light}>
+      <Section
+        bodyBorder={bodyBorder}
+        bodyNoPadding={bodyNoPadding}
+        divider={divider}
+        filters={filters}
+        hideTitle={hideTitle}
+        loading={loading}
+        maxHeight={maxHeight}
+        options={options}
+        title={title}
+      />
+    </UIProvider>,
   );
   return { handleOnChange, view };
 };

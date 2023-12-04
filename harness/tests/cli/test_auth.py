@@ -72,13 +72,15 @@ def test_auth_user_from_env(
 
         requests_mock.get("/api/v1/me", status_code=200, json={"username": "alice"})
 
-        authentication = Authentication(MOCK_MASTER_URL, user)
         if has_token_store:
+            nop_password = "user_password"
+            authentication = Authentication(MOCK_MASTER_URL, user, nop_password)
             assert authentication.session.username == user or "determined"
             assert authentication.session.token == (
                 "det.token" if user == "determined" else "bob.token"
             )
         else:
+            authentication = Authentication(MOCK_MASTER_URL)
             assert authentication.session.username == "alice"
             assert authentication.session.token == "alice.token"
 

@@ -1,7 +1,7 @@
 import Form from 'hew/Form';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { ValueOf } from 'hew/utils/types';
 
 import { patchUsers } from 'services/api';
@@ -32,13 +32,13 @@ const ChangeUserStatusModalComponent = ({
   fetchUsers,
 }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
-
+  const { openToast } = useToast();
   const onSubmit = async () => {
     const values = await form.validateFields();
 
     try {
       await patchUsers({ activate: values[STATUS_NAME] === StatusType.Activate, userIds });
-      makeToast({ title: 'Successfully changed status' });
+      openToast({ title: 'Successfully changed status' });
       clearTableSelection();
     } catch (e) {
       handleError(e);

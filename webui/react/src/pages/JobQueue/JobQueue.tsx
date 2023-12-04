@@ -68,7 +68,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
         ({
           resourcePool: rp.name,
           stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
-        } as RPStats),
+        }) as RPStats,
     );
   });
   const [jobs, setJobs] = useState<Job[]>([]);

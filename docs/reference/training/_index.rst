@@ -9,27 +9,21 @@
 .. meta::
    :description: Discover reference guides and resources for Python modules APIs and the experiment configuration YAML file.
 
--  :doc:`det <api-det-reference>`
--  :doc:`det.core <api-core-reference>`
--  :doc:`det.pytorch <api-pytorch-reference>`
--  :doc:`det.pytorch.samplers <api-pytorch-samplers-reference>`
--  :doc:`det.pytorch.deepspeed <api-deepspeed-reference>`
--  :doc:`det.keras <api-keras-reference>`
+-  :ref:`det <det-reference>`
+-  :ref:`det.core <core-reference>`
+-  :ref:`det.pytorch <pytorch-reference>`
+-  :ref:`det.pytorch.samplers <pytorch-samplers>`
+-  :ref:`det.pytorch.deepspeed <deepspeed-reference>`
+-  :ref:`det.keras <keras-reference>`
 
 *******************************
  Experiment Configuration File
 *******************************
 
--  :doc:`experiment-config-reference`
+-  :ref:`experiment-config-reference`
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
+   :glob:
 
-   det <api-det-reference>
-   det.core <api-core-reference>
-   det.pytorch <api-pytorch-reference>
-   det.pytorch.samplers <api-pytorch-samplers-reference>
-   det.pytorch.deepspeed <api-deepspeed-reference>
-   det.keras <api-keras-reference>
-   Experiment Configuration <experiment-config-reference>
+   ./*

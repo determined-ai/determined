@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc/codes"
@@ -109,7 +111,10 @@ func (m *Master) getCheckpointImpl(
 	}
 
 	err = downloader.Download(ctx)
-	if err != nil {
+	switch {
+	case err != nil && errors.Is(err, context.Canceled):
+		return err
+	case err != nil:
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to download checkpoint %s: %s", id.String(), err.Error()))
 	}

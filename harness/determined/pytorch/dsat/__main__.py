@@ -11,6 +11,7 @@ from determined.pytorch.dsat import _defaults, _utils
 def parse_args() -> argparse.Namespace:
     parser = _utils.get_full_parser()
     args = parser.parse_args()
+    assert args.max_trials > 1, "--max-trials must be larger than 1"
 
     # Convert the paths to absolute paths
     args.config_path = os.path.abspath(args.config_path)

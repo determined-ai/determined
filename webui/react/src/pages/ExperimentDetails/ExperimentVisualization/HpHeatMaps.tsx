@@ -1,6 +1,5 @@
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
@@ -8,6 +7,7 @@ import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
+import useUI from 'components/ThemeProvider';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -131,10 +131,10 @@ const HpHeatMaps: React.FC<Props> = ({
         const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
         const yScaleKey = isYCategorical ? 'yCategorical' : isYLogarithmic ? 'yLog' : 'y';
         const xSplits = isXCategorical
-          ? new Array(xHpLabels.length).fill(0).map((x, i) => i)
+          ? new Array(xHpLabels.length).fill(0).map((_x, i) => i)
           : undefined;
         const ySplits = isYCategorical
-          ? new Array(yHpLabels.length).fill(0).map((x, i) => i)
+          ? new Array(yHpLabels.length).fill(0).map((_x, i) => i)
           : undefined;
         const xValues = isXCategorical ? xHpLabels : undefined;
         const yValues = isYCategorical ? yHpLabels : undefined;

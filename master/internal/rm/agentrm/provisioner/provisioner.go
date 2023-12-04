@@ -18,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -51,13 +50,10 @@ type Provisioner struct {
 	launchErr        *errInfo.StickyError
 
 	syslog *logrus.Entry
-
-	system *actor.System
 }
 
 // New creates a new Provisioner.
 func New(
-	system *actor.System,
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate, db db.DB,
 ) (*Provisioner, error) {
 	if err := config.InitMasterAddress(); err != nil {
@@ -98,7 +94,6 @@ func New(
 
 		syslog: logrus.WithField("component", "provisioner").
 			WithField("resource-pool", resourcePool),
-		system: system,
 	}, nil
 }
 

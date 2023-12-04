@@ -1,5 +1,5 @@
 import Progress from 'hew/Progress';
-import { getStateColorCssVar, ShirtSize } from 'hew/Theme';
+import { ShirtSize, useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import React, { useMemo } from 'react';
 
@@ -9,6 +9,7 @@ import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { ResourceState, SlotState } from 'types';
+import { getStateColorThemeVar } from 'utils/color';
 import { routeToReactUrl } from 'utils/routes';
 import { floatToPercent } from 'utils/string';
 
@@ -77,6 +78,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   poolType,
   slotsPotential,
 }: Props) => {
+  const { getThemeVar } = useTheme();
   const stateTallies = useMemo(() => {
     const tally: Record<ResourceState, number> = {
       [ResourceState.Assigned]: 0,
@@ -110,11 +112,11 @@ const SlotAllocationBar: React.FC<Props> = ({
           : 1;
       const parts = {
         free: {
-          color: getStateColorCssVar(SlotState.Free),
+          color: getThemeVar(getStateColorThemeVar(SlotState.Free)),
           percent: freePerc,
         },
         running: {
-          color: getStateColorCssVar(SlotState.Running),
+          color: getThemeVar(getStateColorThemeVar(SlotState.Running)),
           percent: 1 - freePerc,
         },
       };
@@ -124,26 +126,35 @@ const SlotAllocationBar: React.FC<Props> = ({
       slotsPotential && slotsPotential > totalSlots ? totalSlots / slotsPotential : 1;
     const parts = {
       free: {
-        color: getStateColorCssVar(SlotState.Free),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Free)),
         percent: totalSlots < 1 ? 0 : (freeSlots / totalSlots) * slotsAvailablePer,
       },
       pending: {
-        color: getStateColorCssVar(SlotState.Pending),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Pending)),
         percent: totalSlots < 1 ? 0 : (pendingSlots / totalSlots) * slotsAvailablePer,
       },
       potential: {
         bordered: true,
-        color: getStateColorCssVar(SlotState.Potential),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Potential)),
         percent: 1 - slotsAvailablePer,
       },
       running: {
-        color: getStateColorCssVar(SlotState.Running),
+        color: getThemeVar(getStateColorThemeVar(SlotState.Running)),
         percent: totalSlots < 1 ? 0 : (stateTallies.RUNNING / totalSlots) * slotsAvailablePer,
       },
     };
 
     return [parts.running, parts.pending, parts.free, parts.potential];
-  }, [totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential, footer, isAux]);
+  }, [
+    getThemeVar,
+    totalSlots,
+    stateTallies,
+    pendingSlots,
+    freeSlots,
+    slotsPotential,
+    footer,
+    isAux,
+  ]);
 
   const totalSlotsNum = useMemo(() => {
     return slotsPotential || totalSlots;

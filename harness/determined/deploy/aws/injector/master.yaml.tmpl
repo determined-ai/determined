@@ -31,7 +31,7 @@ resource_manager:
   scheduler:
     type: {{ .resource_manager.scheduler.type }}
     {{- if eq .resource_manager.scheduler.type "priority" }}
-    preemption: {{ .resource_manager.scheduler.preemption_enabled }}
+    preemption: {{ .resource_manager.scheduler.preemption }}
     {{- end }}
 
 resource_pools:

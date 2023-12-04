@@ -7,7 +7,7 @@
 +-----------------------------------------------+
 | Reference                                     |
 +===============================================+
-| :doc:`/reference/cli-reference`               |
+| :ref:`cli-reference`                          |
 +-----------------------------------------------+
 
 To use Determined, you'll need, at minimum, the Determined command-line interface (Determined CLI)

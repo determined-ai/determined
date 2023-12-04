@@ -1,5 +1,5 @@
 import Message from 'hew/Message';
-import Pivot, { TabItem } from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import React, { useMemo } from 'react';
 
 import SplitPane from 'components/SplitPane';
@@ -50,7 +50,7 @@ const ComparisonView: React.FC<Props> = ({
 
   const metricData = useTrialMetrics(trials);
 
-  const tabs: TabItem[] = useMemo(() => {
+  const tabs: PivotProps['items'] = useMemo(() => {
     return [
       {
         children: (

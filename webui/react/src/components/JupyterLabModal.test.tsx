@@ -2,11 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import JupyterLabModalComponent from 'components/JupyterLabModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import { WorkspaceState } from 'types';
@@ -85,8 +86,10 @@ const setup = async () => {
 
   render(
     <BrowserRouter>
-      <UIProvider>
-        <ModalTrigger />
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <ModalTrigger />
+        </ThemeProvider>
       </UIProvider>
     </BrowserRouter>,
   );

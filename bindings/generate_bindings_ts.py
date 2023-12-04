@@ -539,6 +539,8 @@ export class BaseAPI {{
         if (configuration) {{
             this.configuration = configuration;
             this.basePath = configuration.basePath || this.basePath;
+        }} else {{
+            this.configuration = new Configuration()
         }}
     }}
 }};
@@ -550,9 +552,10 @@ export class BaseAPI {{
  * @extends {{Error}}
  */
 export class RequiredError extends Error {{
-    name: "RequiredError"
+    override name: "RequiredError"
     constructor(public field: string, msg?: string) {{
         super(msg);
+        this.name = "RequiredError"
     }}
 }}
 

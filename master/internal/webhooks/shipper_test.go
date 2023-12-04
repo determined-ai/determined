@@ -50,6 +50,7 @@ func TestShipper(t *testing.T) {
 			ProjectName:   "project",
 		}
 		b, _ := json.Marshal(e)
+		//nolint: noctx
 		req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(b))
 		key := []byte("testsigningkey")
 		signedPayload := generateSignedPayload(req, ts, key)

@@ -17,7 +17,9 @@ from termcolor import colored
 import determined.cli.render
 from determined import cli
 from determined.cli import errors
-from determined.common.api import authentication, bindings, request
+from determined.common.api import authentication, bindings
+from determined.common.api import errors as api_errors
+from determined.common.api import request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -264,7 +266,12 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     """
     if fn_name in available_calls:
         return fn_name
-    matches = [n for n in available_calls if re.match(f".*{fn_name}.*", n, re.IGNORECASE)]
+    simplified_name = re.sub(r"[^a-zA-Z]", "", fn_name)
+    matches = [
+        n
+        for n in available_calls
+        if re.match(f".*({fn_name}|{simplified_name}).*", n, re.IGNORECASE)
+    ]
     if not matches:
         raise errors.CliError(f"no such binding found: {fn_name}")
     if not sys.stdout.isatty():
@@ -299,6 +306,7 @@ def call_bindings(args: Namespace) -> None:
     try:
         kwargs = parse_args_to_kwargs(args.args, params)
         output = fn(sess, **kwargs)
+        print_response(output)
     except TypeError as e:
         raise errors.CliError(
             "Usage: "
@@ -308,8 +316,10 @@ def call_bindings(args: Namespace) -> None:
             )
             + f"\n\n{str(e)}",
         )
-
-    print_response(output)
+    except (api_errors.BadRequestException, api_errors.APIException) as e:
+        raise errors.CliError(
+            "Received an API error:" + f"\n\n{str(e)}",
+        )
 
 
 args_description = [
@@ -320,7 +330,7 @@ args_description = [
         [
             Cmd("auth-token", token, "print the active user's auth token", []),
             Cmd(
-                "curl",
+                "c|url",
                 curl,
                 "invoke curl",
                 [
@@ -337,7 +347,7 @@ args_description = [
                 "print the active user's auth token",
                 [
                     Cmd(
-                        "list",
+                        "list ls",
                         list_bindings,
                         "list available api bindings to call",
                         [
@@ -351,7 +361,7 @@ args_description = [
                         is_default=True,
                     ),
                     Cmd(
-                        "call",
+                        "c|all",
                         call_bindings,
                         "call a function from bindings",
                         [

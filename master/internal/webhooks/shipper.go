@@ -197,9 +197,9 @@ func (w *worker) deliver(ctx context.Context, e Event) error {
 	}()
 
 	switch {
-	case resp.StatusCode >= 500:
+	case resp.StatusCode >= 500: //nolint: usestdlibvars
 		return fmt.Errorf("request returned %v: %w", resp.StatusCode, err)
-	case resp.StatusCode >= 400:
+	case resp.StatusCode >= 400: //nolint: usestdlibvars
 		return back.Permanent(fmt.Errorf("request returned %v: %w", resp.StatusCode, err))
 	default:
 		return nil

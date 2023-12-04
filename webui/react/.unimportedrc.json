@@ -13,7 +13,7 @@
   "ignoreUnused": ["fuse.js"],
   "ignoreUnresolved": [],
   "rootDir": "./src",
-  "entry": ["src/index.tsx", "design/index.tsx"],
+  "entry": ["src/index.tsx"],
   "extensions": [".ts", ".tsx", ".js", ".jsx"],
   "aliases": {
     "components/*": ["./components", "./components/*"],

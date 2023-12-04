@@ -63,13 +63,19 @@ from determined.common.experimental.determined import Determined
 from determined.common.experimental.experiment import (  # noqa: F401
     Experiment,
     ExperimentOrderBy,
+    ExperimentSortBy,
     ExperimentState,
 )
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy  # noqa: F401
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.project import Project  # noqa: F401
-from determined.common.experimental.trial import Trial, TrialOrderBy, TrialSortBy  # noqa: F401
+from determined.common.experimental.trial import (  # noqa: F401
+    Trial,
+    TrialOrderBy,
+    TrialSortBy,
+    TrialState,
+)
 from determined.common.experimental.user import User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
@@ -183,6 +189,48 @@ def get_experiment(experiment_id: int) -> Experiment:
     """
     assert _determined is not None
     return _determined.get_experiment(experiment_id)
+
+
+@_require_singleton
+def list_experiments(
+    sort_by: Optional[ExperimentSortBy] = None,
+    order_by: Optional[OrderBy] = None,
+    experiment_ids: Optional[List[int]] = None,
+    labels: Optional[List[str]] = None,
+    users: Optional[List[str]] = None,
+    states: Optional[List[ExperimentState]] = None,
+    name: Optional[str] = None,
+    project_id: Optional[int] = None,
+) -> List[Experiment]:
+    """Get a list of experiments (:class:`~determined.experimental.Experiment`).
+
+    Arguments:
+        sort_by: Which field to sort by. See
+            :class:`~determined.experimental.ExperimentSortBy`.
+        order_by: Whether to sort in ascending or descending order. See
+            :class:`~determined.experimental.OrderBy`.
+        name: If this parameter is set, experiments will be filtered to only include those
+            with names matching this parameter.
+        experiment_ids: Only return experiments with these IDs.
+        labels: Only return experiments with a label in this list.
+        users: Only return experiments belonging to these users. Defaults to all users.
+        states: Only return experiments that are in these states.
+        project_id: Only return experiments associated with this project ID.
+
+    Returns:
+        A list of experiments.
+    """
+    assert _determined is not None
+    return _determined.list_experiments(
+        sort_by=sort_by,
+        order_by=order_by,
+        experiment_ids=experiment_ids,
+        labels=labels,
+        users=users,
+        states=states,
+        name=name,
+        project_id=project_id,
+    )
 
 
 @_require_singleton
@@ -304,6 +352,37 @@ def list_workspaces() -> List[Workspace]:
 
 
 @_require_singleton
+def create_workspace(name: str) -> Workspace:
+    """Create a new workspace with the provided name.
+
+    Args:
+        name: The name of the workspace to create.
+
+    Returns:
+        The newly-created :class:`~determined.experimental.Workspace`.
+
+    Raises:
+        errors.APIException: If a workspace with the provided name already exists.
+    """
+    assert _determined is not None
+    return _determined.create_workspace(name)
+
+
+@_require_singleton
+def delete_workspace(name: str) -> None:
+    """Delete the workspace with the provided name.
+
+    Args:
+        name: The name of the workspace to delete.
+
+    Raises:
+        errors.NotFoundException: If no workspace with the provided name exists.
+    """
+    assert _determined is not None
+    return _determined.delete_workspace(name)
+
+
+@_require_singleton
 def create_model(
     name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
 ) -> Model:
@@ -391,6 +470,47 @@ def get_models(
     """
     assert _determined is not None
     return _determined.get_models(sort_by, order_by, name, description)
+
+
+@_require_singleton
+def list_models(
+    sort_by: ModelSortBy = ModelSortBy.NAME,
+    order_by: OrderBy = OrderBy.ASCENDING,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    model_id: Optional[int] = None,
+    workspace_names: Optional[List[str]] = None,
+    workspace_ids: Optional[List[int]] = None,
+) -> List[Model]:
+    """Get a list of all models in the model registry.
+
+    Arguments:
+        sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
+        order_by: Whether to sort in ascending or descending order. See
+            :class:`~determined.experimental.OrderBy`.
+        name: If this parameter is set, models will be filtered to only
+            include models with names matching this parameter.
+        description: If this parameter is set, models will be filtered to
+            only include models with descriptions matching this parameter.
+        model_id: If this parameter is set, models will be filtered to
+            only include the model with this unique numeric id.
+        workspace_names: Only return models with names in this list.
+        workspace_ids: Only return models with workspace IDs in this list.
+
+    Returns:
+        A list of :class:`~determined.experimental.client.Model` objects matching any passed
+        filters.
+    """
+    assert _determined is not None
+    return _determined.list_models(
+        sort_by=sort_by,
+        order_by=order_by,
+        name=name,
+        description=description,
+        model_id=model_id,
+        workspace_names=workspace_names,
+        workspace_ids=workspace_ids,
+    )
 
 
 @_require_singleton

@@ -2,8 +2,6 @@ package agentrm
 
 import (
 	"testing"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestRoundRobinScheduler(t *testing.T) {
@@ -24,8 +22,7 @@ func TestRoundRobinScheduler(t *testing.T) {
 	expectedToAllocate := []*MockTask{tasks[0], tasks[1], tasks[2]}
 	expectedToRelease := []*MockTask{}
 
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, agentMap := setupSchedulerStates(t, tasks, groups, agents)
 	toAllocate, toRelease := roundRobinSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)

@@ -14,6 +14,8 @@ from determined.common import api, check
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
+NO_PERMISSIONS = "NO PERMISSIONS"
+
 
 def local_id(address: str) -> str:
     return os.path.basename(address)
@@ -64,17 +66,21 @@ def list_agents(args: argparse.Namespace) -> None:
 
 @authentication.required
 def list_slots(args: argparse.Namespace) -> None:
-    task_res = api.get(args.master, "tasks")
+    task_res = bindings.get_GetTasks(cli.setup_session(args))
     resp = bindings.get_GetAgents(cli.setup_session(args))
 
-    allocations = task_res.json()
+    allocations = task_res.allocationIdToSummary
 
-    c_names = {
-        r["container_id"]: {"name": a["name"], "allocation_id": a["allocation_id"]}
-        for a in allocations.values()
-        for r in a["resources"]
-        if r["container_id"]
-    }
+    c_names = (
+        {
+            r.containerId: {"name": a.name, "allocation_id": a.allocationId}
+            for a in allocations.values()
+            for r in (a.resources or {})
+            if r.containerId
+        }
+        if allocations
+        else {}
+    )
 
     def device_type_string(deviceType: typing.Optional[bindings.devicev1Type]) -> str:
         if deviceType == bindings.devicev1Type.CUDA:
@@ -88,6 +94,9 @@ def list_slots(args: argparse.Namespace) -> None:
     def get_task_name(containers: Dict[str, Any], slot: bindings.v1Slot) -> str:
         if not slot.container:
             return "FREE"
+
+        if slot.container.permissionDenied:
+            return NO_PERMISSIONS
 
         container_id = slot.container.id
 

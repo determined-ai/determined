@@ -11,7 +11,7 @@ interface Props {
 }
 
 const ModelVersionDeleteModal = ({ modelVersion }: Props): JSX.Element => {
-  const handleOk = async () => {
+  const handleOk = async (): Promise<void> => {
     if (!modelVersion) return Promise.reject();
 
     try {

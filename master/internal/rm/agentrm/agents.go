@@ -3,198 +3,228 @@ package agentrm
 import (
 	"crypto/tls"
 	"fmt"
-	"net/http"
-	"time"
+	"strconv"
+	"sync"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/connsave"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/queue"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-// initializeAgents creates a new global agents actor.
-func initializeAgents(
-	system *actor.System, rm ResourceManager, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
-) {
-	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{rm: rm, opts: opts})
-	check.Panic(check.True(ok, "agents address already taken"))
-	system.Ask(agentsRef, actor.Ping{}).Get()
-	e.GET("/agent*", func(c echo.Context) error {
-		if c.IsWebSocket() {
-			handler := api.Route(system, nil)
-			if err := handler(c); err != nil {
-				return err
-			}
-			return nil
-		}
-		return echo.ErrNotFound
-	})
+type agentUpdatedEvent struct {
+	resourcePool string
+}
+
+// webSocketRequest notifies the actor that a websocket is attempting to connect.
+type webSocketRequest struct {
+	echoCtx echo.Context
+}
+
+// isReconnect checks if agent is reconnecting after a network failure.
+func (w *webSocketRequest) isReconnect() (bool, error) {
+	return strconv.ParseBool(w.echoCtx.QueryParam("reconnect"))
 }
 
 type agents struct {
-	rm   ResourceManager
-	opts *aproto.MasterSetAgentOptions
+	syslog *logrus.Entry
+	mu     sync.Mutex
+
+	agents       *tasklist.Registry[agentID, *agent]
+	agentUpdates *queue.Queue[agentUpdatedEvent]
+	poolConfigs  []config.ResourcePoolConfig
+	opts         *aproto.MasterSetAgentOptions
 }
 
-func (a *agents) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		// TODO(ilia): only restore the agents which have some non-zero state.
-		// Currently, if an agent tries to reconnect and it was not restored here,
-		// then it'd be told it must restart and do a fresh connection.
-		agentStates, err := retrieveAgentStates()
-		if err != nil {
-			ctx.Log().WithError(err).Warnf("failed to retrieve agent states")
-		}
-
-		ctx.Log().Debugf("agent states to restore: %d", len(agentStates))
-		badAgentIds := []agentID{}
-
-		for agentID := range agentStates {
-			state := agentStates[agentID]
-			agentRef, err := a.createAgentActor(
-				ctx, agentID, state.resourcePoolName, a.opts, &state)
-			if err != nil {
-				ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
-				badAgentIds = append(badAgentIds, agentID)
-				continue
-			}
-			ctx.Ask(agentRef, actor.Ping{}).Get()
-			ctx.Log().Debugf("restored agent state: %s", agentID)
-		}
-
-		if len(badAgentIds) > 0 {
-			ctx.Log().Debugf("cleaning %d bad agent states", len(badAgentIds))
-			if err := clearAgentStates(badAgentIds); err != nil {
-				ctx.Log().WithError(err).Warnf("failed to clean bad agent states")
-			}
-		}
-	case api.WebSocketRequest:
-		cmuxConn := connsave.GetConn(msg.Ctx.Request().Context()).(*cmux.MuxConn)
-		// Here, we just have to check that there are any certificates at all, since the top-level TLS
-		// config verifies that any certificates that are provided are valid.
-		if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
-			requireAuth := config.GetMasterConfig().ResourceManager.AgentRM.RequireAuthentication
-			missingAuth := len(tlsConn.ConnectionState().PeerCertificates) == 0
-			if requireAuth && missingAuth {
-				ctx.Log().WithField("remote-addr", tlsConn.RemoteAddr()).
-					Warnf("rejecting agent WebSocket request with no certificates")
-				ctx.Respond(echo.ErrForbidden)
-				return nil
-			}
-		}
-
-		id := msg.Ctx.QueryParam("id")
-		existingRef := ctx.Child(id)
-		reconnect, err := msg.IsReconnect()
-		if err != nil {
-			ctx.Respond(errors.Wrapf(err, "parsing reconnect query param"))
-			return nil
-		}
-
-		// If the agent actor is still alive on our side when an agent tries to reconnect,
-		// accept it. Whether it is a network failure or a crash/restart, we will just try
-		// to reattach whatever containers still exist.
-		// That logic is located in agent.receive(ws.WebSocketRequest).
-		if existingRef != nil {
-			ctx.Log().WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
-			ctx.Respond(ctx.Ask(existingRef, msg).Get())
-			return nil
-		}
-
-		// If the agent actor is _not_ alive on our side and the agent is trying to reconnect,
-		// continue to deny it. This case is nearly impossible (master waits longer than agent
-		// tries, to avoid it).
-		if reconnect {
-			ctx.Respond(aproto.ErrAgentMustReconnect)
-			return nil
-		}
-
-		// Finally, this must not be a recovery flow, so just create the agent actor.
-		resourcePool := msg.Ctx.QueryParam("resource_pool")
-		if ref, err := a.createAgentActor(ctx, agentID(id), resourcePool, a.opts, nil); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(ctx.Ask(ref, msg).Get())
-		}
-
-	case *apiv1.GetAgentsRequest:
-		response := &apiv1.GetAgentsResponse{}
-		for _, a := range a.summarize(ctx) {
-			response.Agents = append(response.Agents, a.ToProto())
-		}
-		ctx.Respond(response)
-	case echo.Context:
-		a.handleAPIRequest(ctx, msg)
-	case actor.PostStop:
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+func newAgentService(
+	poolConfigs []config.ResourcePoolConfig,
+	opts *aproto.MasterSetAgentOptions,
+) (*agents, *queue.Queue[agentUpdatedEvent]) {
+	agentUpdates := queue.New[agentUpdatedEvent]()
+	a := &agents{
+		syslog:       logrus.WithField("component", "agents"),
+		agents:       tasklist.NewRegistry[agentID, *agent](),
+		agentUpdates: agentUpdates,
+		poolConfigs:  poolConfigs,
+		opts:         opts,
 	}
+
+	// TODO(ilia): only restore the agents which have some non-zero state.
+	// Currently, if an agent tries to reconnect and it was not restored here,
+	// then it'd be told it must restart and do a fresh connection.
+	agentStates, err := retrieveAgentStates()
+	if err != nil {
+		a.syslog.WithError(err).Warnf("failed to retrieve agent states")
+	}
+
+	a.syslog.Debugf("agent states to restore: %d", len(agentStates))
+	badAgentIds := []agentID{}
+
+	for agentID, state := range agentStates {
+		state := state
+		agentRef, err := a.createAgent(agentID, state.resourcePoolName, a.opts, &state, func() {
+			_ = a.agents.Delete(agentID)
+		})
+		if err != nil {
+			a.syslog.WithError(err).Warnf("failed to create agent %s", agentID)
+			badAgentIds = append(badAgentIds, agentID)
+			continue
+		}
+
+		err = a.agents.Add(agentID, agentRef)
+		if err != nil {
+			a.syslog.WithError(err).Warnf("tried to restore duplicate agent %s", agentID)
+			badAgentIds = append(badAgentIds, agentID)
+			continue
+		}
+
+		a.syslog.Debugf("restored agent state: %s", agentID)
+	}
+
+	if len(badAgentIds) > 0 {
+		a.syslog.Debugf("cleaning %d bad agent states", len(badAgentIds))
+		if err := clearAgentStates(badAgentIds); err != nil {
+			a.syslog.WithError(err).Warnf("failed to clean bad agent states")
+		}
+	}
+
+	return a, agentUpdates
+}
+
+// list implements agentService.
+func (a *agents) list() map[agentID]*agentState {
+	agents := a.agents.Snapshot()
+	result := make(map[agentID]*agentState, len(agents))
+	for id, a := range agents {
+		state, err := a.State()
+		if err != nil {
+			a.syslog.WithError(err).Warnf("failed to get agent state for agent %s", id)
+			continue
+		}
+		result[state.id] = state
+	}
+	return result
+}
+
+func (a *agents) get(id agentID) (*agent, bool) {
+	return a.agents.Load(id)
+}
+
+func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	cmuxConn := connsave.GetConn(msg.echoCtx.Request().Context()).(*cmux.MuxConn)
+	// Here, we just have to check that there are any certificates at all, since the top-level TLS
+	// config verifies that any certificates that are provided are valid.
+	if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
+		requireAuth := config.GetMasterConfig().ResourceManager.AgentRM.RequireAuthentication
+		missingAuth := len(tlsConn.ConnectionState().PeerCertificates) == 0
+		if requireAuth && missingAuth {
+			a.syslog.WithField("remote-addr", tlsConn.RemoteAddr()).
+				Warnf("rejecting agent WebSocket request with no certificates")
+			return echo.ErrForbidden
+		}
+	}
+
+	id := msg.echoCtx.QueryParam("id")
+	reconnect, err := msg.isReconnect()
+	if err != nil {
+		return errors.Wrapf(err, "parsing reconnect query param")
+	}
+
+	// If the agent actor is still alive on our side when an agent tries to reconnect,
+	// accept it. Whether it is a network failure or a crash/restart, we will just try
+	// to reattach whatever containers still exist.
+	// That logic is located in agent.receive(ws.WebSocketRequest).
+	existingRef, ok := a.agents.Load(agentID(id))
+	if ok {
+		a.syslog.WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
+		existingRef.HandleWebsocketConnection(msg)
+		return nil
+	}
+
+	// If the agent actor is _not_ alive on our side and the agent is trying to reconnect,
+	// continue to deny it. This case is nearly impossible (master waits longer than agent
+	// tries, to avoid it).
+	if reconnect {
+		return aproto.ErrAgentMustReconnect
+	}
+
+	// Finally, this must not be a recovery flow, so just create the agent actor.
+	resourcePool := msg.echoCtx.QueryParam("resource_pool")
+	ref, err := a.createAgent(agentID(id), resourcePool, a.opts, nil, func() { _ = a.agents.Delete(agentID(id)) })
+	if err != nil {
+		return err
+	}
+
+	err = a.agents.Add(agentID(id), ref)
+	if err != nil {
+		return fmt.Errorf("adding agent because of incoming websocket: %w", err)
+	}
+	ref.HandleWebsocketConnection(msg)
 	return nil
 }
 
-func (a *agents) createAgentActor(
-	ctx *actor.Context,
+func (a *agents) getAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
+	var response apiv1.GetAgentsResponse
+	for _, a := range a.summarize() {
+		response.Agents = append(response.Agents, a.ToProto())
+	}
+	return &response
+}
+
+func (a *agents) createAgent(
 	id agentID,
 	resourcePool string,
 	opts *aproto.MasterSetAgentOptions,
 	restoredAgentState *agentState,
-) (*actor.Ref, error) {
+	unregister func(),
+) (*agent, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
 	if resourcePool == "" {
-		ctx.Log().Info("resource pool is empty; using default resource pool: default")
+		a.syslog.Info("resource pool is empty; using default resource pool: default")
 		resourcePool = "default"
 	}
 
-	if err := a.rm.ValidateResourcePool(resourcePool); err != nil {
-		return nil, fmt.Errorf("cannot find specified resource pool for agent %s: %w", id, err)
+	var poolConfig *config.ResourcePoolConfig
+	for _, pc := range a.poolConfigs {
+		pc := pc
+		if pc.PoolName == resourcePool {
+			poolConfig = &pc
+			break
+		}
+	}
+	if poolConfig == nil {
+		return nil, fmt.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
 	}
 
-	resourcePoolRef, err := a.rm.getResourcePoolRef(resourcePool)
-	if err != nil {
-		return nil, fmt.Errorf("getting resource pool for agent: %w", err)
-	}
-
-	rpConfig := ctx.Ask(resourcePoolRef, aproto.GetRPConfig{}).Get().(aproto.GetRPResponse)
-	ref, ok := ctx.ActorOf(id, &agent{
-		resourcePool:          resourcePoolRef,
-		resourcePoolName:      resourcePool,
-		maxZeroSlotContainers: rpConfig.MaxZeroSlotContainers,
-		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
-		opts:                  opts,
-		agentState:            restoredAgentState,
-	})
-	if !ok {
-		return nil, errors.Errorf("agent already connected: %s", id)
-	}
-	return ref, nil
+	return newAgent(
+		id,
+		a.agentUpdates,
+		resourcePool,
+		poolConfig,
+		opts,
+		restoredAgentState,
+		unregister,
+	), nil
 }
 
-func (a *agents) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		ctx.Respond(apiCtx.JSON(http.StatusOK, a.summarize(ctx)))
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
-
-func (a *agents) summarize(ctx *actor.Context) model.AgentsSummary {
-	results := ctx.AskAll(model.AgentSummary{}, ctx.Children()...).GetAll()
-	summary := make(map[string]model.AgentSummary, len(results))
-	for ref, result := range results {
-		summary[ref.Address().String()] = result.(model.AgentSummary)
+func (a *agents) summarize() model.AgentsSummary {
+	agents := a.agents.Snapshot()
+	summary := make(map[string]model.AgentSummary, len(agents))
+	for id, a := range agents {
+		summary[string(id)] = a.Summarize()
 	}
 	return summary
 }

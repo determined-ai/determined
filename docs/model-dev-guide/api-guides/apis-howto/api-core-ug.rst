@@ -323,17 +323,12 @@ settings we want to use for our experiment. More specifically, we'll need to def
 settings in our experiment configuration file:
 
 -  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :ref:`search-methods`.
-
 -  ``metric``: ``test_loss``
-
 -  ``smaller_is_better``: ``True`` (This is equivalent to minimization vs. maximization of
    objective.)
-
 -  ``max_trials``: 500 (This is the maximum number of trials the searcher should run.)
-
 -  ``max_length``: 20 epochs (The max length of a trial. For more information, visit Adaptive ASHA
-   in the :doc:`Experiment Configuration Reference
-   </reference/training/experiment-config-reference>`.
+   in the :ref:`Experiment Configuration Reference <experiment-configuration>`.
 
 In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
 between the ``minval`` and ``maxval`` for each hyperparameter for each trial.

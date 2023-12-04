@@ -49,10 +49,10 @@ _INTEG_MARKERS = {
     "deepspeed",
     "managed_devcluster",
     "port_registry",
-    "e2e_gpu_quarantine",
     "model_hub_mmdetection_quarantine",
     "nightly_quarantine",
     "distributed_quarantine",
+    "det_deploy_local_quarantine",
 }
 
 
@@ -100,13 +100,6 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addoption("--follow-local-logs", action="store_true", help="Follow local docker logs")
     parser.addoption("--no-compare-stats", action="store_true", help="Disable usage stats check")
-
-
-@pytest.fixture(scope="session", autouse=True)
-def instantiate_gpu() -> None:
-    command = ["det", "cmd", "--config", "resources.slots=1", "'sleep 30'"]
-
-    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 @pytest.fixture(scope="session", autouse=True)

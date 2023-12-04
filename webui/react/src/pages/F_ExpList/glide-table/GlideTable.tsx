@@ -16,7 +16,7 @@ import DataEditor, {
 import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
 import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import useUI, { getCssVar } from 'hew/Theme';
+import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import { literal, union } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +29,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import useUI from 'components/ThemeProvider';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
@@ -43,10 +44,10 @@ import {
   ProjectColumn,
   ProjectMetricsRange,
 } from 'types';
-import { Float, Surface } from 'utils/colors';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
+import { pluralizer } from 'utils/string';
 
 import {
   ColumnDef,
@@ -205,8 +206,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   >>(null);
 
   const {
-    ui: { theme: appTheme, darkLight },
+    ui: { theme: appTheme },
+    isDarkMode,
   } = useUI();
+  const { getThemeVar } = useTheme();
   const theme = getTheme(appTheme);
 
   const users = useObservable(usersStore.getUsers());
@@ -226,12 +229,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       getColumnDefs({
         appTheme,
         columnWidths,
-        darkLight,
         rowSelection: selection.rows,
         selectAll,
+        themeIsDark: isDarkMode,
         users,
       }),
-    [selectAll, selection.rows, columnWidths, users, darkLight, appTheme],
+    [selectAll, selection.rows, isDarkMode, columnWidths, users, appTheme],
   );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
@@ -255,14 +258,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
       // avoid showing 'empty rows' below data
       if (!data[row]) {
-        return { borderColor: getCssVar(Surface.Surface) };
+        return { borderColor: getThemeVar('surface') };
       }
 
       const hoverStyle: { accentLight?: string; bgCell?: string } = {};
       if (row === hoveredRow) {
-        hoverStyle.bgCell = getCssVar(Surface.SurfaceStrong);
+        hoverStyle.bgCell = getThemeVar('surfaceStrong');
         if (selection.rows.toArray().includes(hoveredRow)) {
-          hoverStyle.accentLight = getCssVar(Float.FloatStrong);
+          hoverStyle.accentLight = getThemeVar('floatStrong');
         }
       }
 
@@ -274,7 +277,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
       return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, hoveredRow, selection.rows],
+    [colorMap, data, getThemeVar, hoveredRow, selection.rows],
   );
 
   const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
@@ -343,6 +346,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         return;
       }
 
+      const filterCount = formStore.getFieldCount(column.column).get();
+
       const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
       const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
@@ -367,8 +372,56 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         onIsOpenFilterChange?.(true);
         setMenuIsOpen(false);
       };
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
 
+      const isPinned = col <= pinnedColumnsCount + staticColumns.length - 1;
       const items: MenuItem[] = [
+        // Column is pinned if the index is inside of the frozen columns
+        col < staticColumns.length || isMobile
+          ? null
+          : !isPinned
+            ? {
+                icon: <Icon decorative name="pin" />,
+                key: 'pin',
+                label: 'Pin column',
+                onClick: () => {
+                  const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                  newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                  onSortableColumnChange?.(newSortableColumns);
+                  onPinnedColumnsCountChange?.(
+                    Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
+                  );
+                  setMenuIsOpen(false);
+                },
+              }
+            : {
+                disabled: pinnedColumnsCount <= 1,
+                icon: <Icon decorative name="pin" />,
+                key: 'unpin',
+                label: 'Unpin column',
+                onClick: () => {
+                  const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                  newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
+                  onSortableColumnChange?.(newSortableColumns);
+                  onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+                  setMenuIsOpen(false);
+                },
+              },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+            onSortableColumnChange?.(newSortableColumns);
+            if (isPinned) {
+              onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+            }
+          },
+        },
+        { type: 'divider' as const },
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
@@ -377,14 +430,22 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               {
                 icon: <Icon decorative name="filter" />,
                 key: 'filter',
-                label: 'Filter by this column',
+                label: 'Add Filter',
                 onClick: () => {
-                  setTimeout(() => {
-                    filterMenuItemsForColumn();
-                  }, 5);
+                  setTimeout(filterMenuItemsForColumn, 5);
                 },
               },
             ]),
+        filterCount > 0
+          ? {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter-clear',
+              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+              onClick: () => {
+                setTimeout(clearFilterForColumn, 5);
+              },
+            }
+          : null,
         heatmapOn &&
         (column.column === 'searcherMetricsVal' ||
           (column.type === V1ColumnType.NUMBER &&
@@ -399,37 +460,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
               },
             }
           : null,
-        // Column is pinned if the index is inside of the frozen columns
-        col < staticColumns.length || isMobile
-          ? null
-          : col > pinnedColumnsCount + staticColumns.length - 1
-          ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(
-                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
-                );
-                setMenuIsOpen(false);
-              },
-            }
-          : {
-              disabled: pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-                setMenuIsOpen(false);
-              },
-            },
       ];
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
@@ -477,29 +507,31 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         _: () => loadingCell,
         Loaded: (rowData) => {
           const columnId = columnIds[col];
-          let cell = columnDefs[columnId]?.renderer?.(rowData, row);
-          switch (cell.kind) {
-            case GridCellKind.Text:
-            case GridCellKind.Number:
-              if (!cell.displayData || cell.displayData === '') {
-                cell = {
-                  ...cell,
-                  displayData: '-',
-                  themeOverride: {
-                    ...cell.themeOverride,
-                    textDark: getCssVar(Surface.SurfaceOnWeak),
-                  },
-                };
-              }
-              break;
-            default:
-              break;
+          let cell: GridCell | undefined = columnDefs[columnId]?.renderer(rowData, row);
+          if (cell) {
+            switch (cell.kind) {
+              case GridCellKind.Text:
+              case GridCellKind.Number:
+                if (!cell.displayData || cell.displayData === '') {
+                  cell = {
+                    ...cell,
+                    displayData: '-',
+                    themeOverride: {
+                      ...cell.themeOverride,
+                      textDark: getThemeVar('surfaceOnWeak'),
+                    },
+                  };
+                }
+                break;
+              default:
+                break;
+            }
           }
           return cell || loadingCell;
         }, // TODO correctly handle error state
       });
     },
-    [appTheme, data, columnIds, columnDefs],
+    [appTheme, data, columnIds, columnDefs, getThemeVar],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
@@ -722,10 +754,13 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const sortMap = useMemo(() => {
-    return sorts.reduce((acc, sort) => {
-      if (sort.column && sort.direction) acc[sort.column] = sort.direction;
-      return acc;
-    }, {} as Record<string, string>);
+    return sorts.reduce(
+      (acc, sort) => {
+        if (sort.column && sort.direction) acc[sort.column] = sort.direction;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
   }, [sorts]);
 
   const drawHeader: DrawHeaderCallback = useCallback(

@@ -6,7 +6,9 @@ $arrow-left: 22px;
   opacity: 0;
   pointer-events: none;
   position: relative;
-  transition: height 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  transition:
+    height 0.2s ease-in-out,
+    opacity 0.2s ease-in-out;
   z-index: 3;
 
   .container {
@@ -107,7 +109,7 @@ $arrow-left: 22px;
     }
   }
 
-  @media only screen and (max-width: 360px) {
+  @media only screen and (width <= 360px) {
     .container {
       height: 120px;
     }

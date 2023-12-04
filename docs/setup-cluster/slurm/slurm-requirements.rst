@@ -331,6 +331,11 @@ purposes of this documentation, you can consider all references to Singularity t
 Apptainer. The Determined launcher interacts with Apptainer/Singularity using the ``singularity``
 command.
 
+.. note::
+
+   In addition to the core Apptainer/Singularity installation package, the ``apptainer-suid`` or
+   ``singularity-suid`` component is also required for full Determined functionality.
+
 Singularity has numerous options that may be customized in the ``singularity.conf`` file. Determined
 has been verified using the default values and therefore does not require any special configuration
 on the compute nodes of the cluster.
@@ -434,7 +439,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-2b7e2a1
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-622d512
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

@@ -1,5 +1,5 @@
 import { Modal } from 'hew/Modal';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import React from 'react';
 
 import { deleteGroup } from 'services/api';
@@ -15,14 +15,16 @@ interface Props {
 }
 
 const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
+  const { openToast } = useToast();
+
   const handleSubmit = async () => {
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
-      makeToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
+      openToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
       onClose?.();
     } catch (e) {
-      makeToast({ severity: 'Error', title: 'error deleting group' });
+      openToast({ severity: 'Error', title: 'error deleting group' });
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.

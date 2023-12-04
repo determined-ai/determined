@@ -46,17 +46,6 @@ func (r *ResourcesConfigV0) SetSlotsPerTrial(val int) {
 	r.RawSlotsPerTrial = &val
 }
 
-func (r ResourcesConfigV0) SlotsPerTask() int {
-	if r.RawSlotsPerTask == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .SlotsPerTask")
-	}
-	return *r.RawSlotsPerTask
-}
-
-func (r *ResourcesConfigV0) SetSlotsPerTask(val int) {
-	r.RawSlotsPerTask = &val
-}
-
 func (r ResourcesConfigV0) Weight() float64 {
 	if r.RawWeight == nil {
 		panic("You must call WithDefaults on ResourcesConfigV0 before .Weight")

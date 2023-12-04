@@ -22,12 +22,12 @@ export const tzDate = (ts: number): Date => uPlot.tzDate(new Date(ts * 1e3), 'Et
 export const timeAxis: uPlot.Axis = {
   label: 'Time',
   scale: 'x',
-  space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
+  space: (_self, _axisIdx, scaleMin, scaleMax, plotDim) => {
     const rangeMs = scaleMax - scaleMin;
     const msPerSec = plotDim / rangeMs;
     return Math.max(60, msPerSec * 10 * 1000);
   },
-  values: (self, splits) => {
+  values: (_self, splits) => {
     return splits.map((i) => dayjs.utc(i).format('HH:mm:ss'));
   },
 };
@@ -42,7 +42,7 @@ export const baseSeries: Record<string, uPlot.Series> = {
   time: {
     label: 'Time',
     scale: 'x',
-    value: (self, rawValue) => dayjs.utc(rawValue).format('HH:mm:ss.SSS').slice(0, -2),
+    value: (_self, rawValue) => dayjs.utc(rawValue).format('HH:mm:ss.SSS').slice(0, -2),
   },
 };
 

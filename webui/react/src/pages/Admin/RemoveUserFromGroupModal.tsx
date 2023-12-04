@@ -1,5 +1,5 @@
 import { Modal } from 'hew/Modal';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { useCallback } from 'react';
 
 import { updateGroup } from 'services/api';
@@ -19,6 +19,7 @@ const RemoveUserFromGroupModalComponent = ({
   fetchGroups,
   onExpand,
 }: Props): JSX.Element => {
+  const { openToast } = useToast();
   const onRemoveUser = useCallback(
     async (record: V1GroupSearchResult, userId?: number) => {
       const {
@@ -27,18 +28,18 @@ const RemoveUserFromGroupModalComponent = ({
       if (!groupId || !userId) return;
       try {
         await updateGroup({ groupId, removeUsers: [userId] });
-        makeToast({
+        openToast({
           severity: 'Confirm',
           title: 'User has been removed from group.',
         });
         onExpand(true, record);
         fetchGroups();
       } catch (e) {
-        makeToast({ severity: 'Error', title: 'Error deleting group.' });
+        openToast({ severity: 'Error', title: 'Error deleting group.' });
         handleError(e, { silent: true, type: ErrorType.Input });
       }
     },
-    [onExpand, fetchGroups],
+    [onExpand, openToast, fetchGroups],
   );
 
   const handleOk = useCallback(() => {

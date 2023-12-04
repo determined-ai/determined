@@ -6,7 +6,6 @@ import { matchesShortcut, shortcutToString } from 'hew/InputShortcut';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
 import Spinner from 'hew/Spinner';
-import useUI from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import { boolean } from 'io-ts';
@@ -15,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import Link, { Props as LinkProps } from 'components/Link';
+import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,

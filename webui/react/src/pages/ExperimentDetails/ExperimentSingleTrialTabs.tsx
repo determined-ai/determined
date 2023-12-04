@@ -1,8 +1,8 @@
 import type { TabsProps } from 'antd';
 import Button from 'hew/Button';
 import Message from 'hew/Message';
-import Notes from 'hew/Notes';
 import Pivot from 'hew/Pivot';
+import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import Tooltip from 'hew/Tooltip';
 import { string } from 'io-ts';
@@ -296,7 +296,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <Notes
           disabled={!editableNotes}
           disableTitle
-          notes={{ contents: experiment.notes ?? '', name: 'Notes' }}
+          docs={{ contents: experiment.notes ?? '', name: 'Notes' }}
           onError={handleError}
           onPageUnloadHook={unstable_useBlocker}
           onSave={handleNotesUpdate}

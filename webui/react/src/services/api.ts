@@ -333,6 +333,12 @@ export const createExperiment = generateDetApi<
   Type.CreateExperimentResponse
 >(Config.createExperiment);
 
+export const continueExperiment = generateDetApi<
+  Service.ContinueExperimentParams,
+  Api.V1ContinueExperimentResponse,
+  void
+>(Config.continueExperiment);
+
 export const archiveExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1ArchiveExperimentResponse,
@@ -766,6 +772,30 @@ export const killTensorBoard = generateDetApi<
   Api.V1KillTensorboardResponse,
   void
 >(Config.killTensorBoard);
+
+export const getJupyterLab = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetNotebookResponse,
+  Type.CommandTask
+>(Config.getJupyterLab);
+
+export const getShell = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetShellResponse,
+  Type.CommandTask
+>(Config.getShell);
+
+export const getTensorBoard = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetTensorboardResponse,
+  Type.CommandTask
+>(Config.getTensorBoard);
+
+export const getCommand = generateDetApi<
+  Service.CommandIdParams,
+  Api.V1GetCommandResponse,
+  Type.CommandTask
+>(Config.getCommand);
 
 export const getTaskTemplates = generateDetApi<
   Service.GetTemplatesParams,

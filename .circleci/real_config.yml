@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.26.4-dev0
+    default: 0.26.5-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -40,7 +40,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-2b7e2a1
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-622d512
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -48,7 +48,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev23
+    default: v1dev25
   gke-version:
     type: string
     default: "1.25.10"
@@ -226,7 +226,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.11-cpu-2b7e2a1
+            - run: docker pull determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-622d512
 
   login-docker:
     parameters:
@@ -276,7 +276,7 @@ commands:
           target-stage: elastic
           devcluster-config: elastic-base.devcluster.yaml
 
-  go-get-deps:
+  go-get-deps: # Build Go doesn't use this because it doesn't need it.
     steps:
       - install-protoc
       - restore_cache:
@@ -350,15 +350,37 @@ commands:
         type: string
       python-version:
         type: string
-        default: "3.8.16"
+        default: "3.8.18"
     steps:
+      - run:
+          name: Write cache key
+          command: |
+            echo <<parameters.executor>> > /tmp/cachefile
+            pip freeze --all >> /tmp/cachefile
+            if [ "<<parameters.determined>>" = "true" ]; then
+              cat harness/setup.py >> /tmp/cachefile
+            fi
+            if [ "<<parameters.model-hub>>" = "true" ]; then
+              cat model_hub/setup.py >> /tmp/cachefile
+            fi
+            echo <<parameters.extras-requires>> >> /tmp/cachefile
+            if [ -n <<parameters.extra-requirements-file>> ]; then
+              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+            fi
+            echo '<<parameters.python-version>>' >> /tmp/cachefile
+            echo '<<parameters.install-python>>' >> /tmp/cachefile
+            date -u '+%y/%m/%d' >> /tmp/cachefile
+
+      - restore_cache:
+          keys:
+            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.install-python>>
           steps:
             - run:
                 name: prepare conda PATH
                 command: |
-                  echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
+                  echo 'export PATH=/tmp/conda/bin:${PATH}' >> $BASH_ENV
 
             - run:
                 name: prepare conda install_python.sh
@@ -367,10 +389,18 @@ commands:
                   #!/bin/bash
                   PYTHON_VERSION="${1}"
 
-                  CONDA_DIR="/opt/conda"
+                  CONDA_DIR="/tmp/conda"
                   CONDA_INSTALLER="Miniconda3-py39_23.5.2-0-Linux-x86_64.sh"
                   CONDA_SHA256="9829d95f639bd0053b2ed06d1204e60644617bf37dd5cc57523732e0e8d64516"
                   CONDA_URL="https://repo.anaconda.com/miniconda"
+
+                  ${CONDA_DIR}/bin/python --version
+                  installed_python_version=$(${CONDA_DIR}/bin/python --version 2>&1 | awk '{print $2}')
+                  if [ -x "${CONDA_DIR}/bin/python" ] && [ "$installed_python_version" = "$PYTHON_VERSION" ]; then
+                      echo "Python already installed, version $PYTHON_VERSION"
+                      exit 0
+                  fi
+                  echo "Python not installed or wrong version, installing conda and Python now"
 
                   mkdir -p /etc/determined/conda.d
                   mkdir -p "${CONDA_DIR}"
@@ -409,25 +439,6 @@ commands:
                 name: Install pypa builder
                 command: python3 -m pip install build
 
-      - run:
-          name: Write cache key
-          command: |
-            echo <<parameters.executor>> > /tmp/cachefile
-            pip freeze --all >> /tmp/cachefile
-            if [ "<<parameters.determined>>" = "true" ]; then
-              cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.model-hub>>" = "true" ]; then
-              cat model_hub/setup.py >> /tmp/cachefile
-            fi
-            echo <<parameters.extras-requires>> >> /tmp/cachefile
-            if [ -n <<parameters.extra-requirements-file>> ]; then
-              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
-            fi
-
-      - restore_cache:
-          keys:
-            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -461,6 +472,7 @@ commands:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
+            - "/tmp/conda"
       - run: python --version
       - run: pip --version
       - run: pip freeze --all
@@ -718,6 +730,7 @@ commands:
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
               --deployment-type <<parameters.deployment-type>> \
+              --retain-log-group \
               --yes
 
   terminate-aws-cluster:
@@ -1473,13 +1486,15 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     steps:
       - checkout-with-sm
       - skip-if-docs-only
       - skip-if-github-only
       - react-get-deps
       - run: make -C webui/react check
+      - store_artifacts:
+          path: /home/circleci/.npm/_logs/
 
   build-react:
     parameters:
@@ -1487,7 +1502,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1507,14 +1522,15 @@ jobs:
 
   test-e2e-react:
     docker:
-      - image: cimg/node:20.1.0
+      - image: mcr.microsoft.com/playwright:v1.40.0-focal
     resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
       - skip-if-github-only
+      - run: apt-get update && apt-get -y install make
       - react-get-deps
-      - run: npx playwright install --with-deps chrome firefox webkit
+      - run: npx playwright install --with-deps && npx playwright install chrome
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} PLAYWRIGHT_BROWSERS_PATH=0 npm run e2e --prefix webui/react
       - store_artifacts:
@@ -1526,7 +1542,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1546,7 +1562,7 @@ jobs:
 
   test-unit-react-quarantined:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
         environment:
           CI: "true"
     steps:
@@ -1556,47 +1572,9 @@ jobs:
       - react-get-deps
       - run: make -C webui/react test-ci-flaky
 
-  test-unit-react-screenshot:
-    docker:
-      - image: cimg/node:20.1.0
-        environment:
-          CI: "true"
-    resource_class: xlarge
-    steps:
-      - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
-      - run:
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_PATHS="webui/react/src/package-lock.json webui/react/src/package.json webui/react/src/pages/DesignKit.tsx webui/react/design"
-            if git diff --quiet $MERGE_BASE -- $DIFF_PATHS; then
-              echo "DesignKit not changed, halting job now."
-              circleci-agent step halt
-            else
-              echo "DesignKit changed, running downstream check."
-            fi
-          name: check for designkit changes
-      - react-get-deps
-      - run:
-          command: make -C webui/react visual-test
-          name: generate screenshots
-      - store_artifacts:
-          path: webui/react/screenshot-summary.html
-      - run:
-          command: |
-            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            if [ -f webui/react/.diff-detected ] ; then
-              export MESSAGE="Hello! DesignKit diffs for commit $CIRCLE_SHA1 are available for you to view [here]($ARTIFACT_URL)"
-            else
-              export MESSAGE="Hello! No changes detected to DesignKit for commit $CIRCLE_SHA1. Verify [here]($ARTIFACT_URL)"
-            fi
-            node webui/react/scripts/make-github-comment.mjs "$MESSAGE"
-          name: report results
-
   test-intg-downstream:
     docker:
-      - image: cimg/node:20.1.0
+      - image: cimg/node:20.9.0
     steps:
       - checkout-with-sm
       - skip-if-not-shared
@@ -1647,8 +1625,9 @@ jobs:
       - skip-if-github-only
       - skip-if-webui-only
       - reinstall-go
-      - go-get-deps
-      - run: make -C proto build
+      - restore_cache:
+          keys:
+            - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -1656,6 +1635,12 @@ jobs:
           paths:
             - "master/build"
             - "agent/build"
+      # Save cache after we build master and agent so we can have our build cache there.
+      - save_cache:
+          key: det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
+          paths:
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
 
   build-proto:
     docker:
@@ -1831,7 +1816,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1852,7 +1837,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-2b7e2a1
+      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-622d512
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1873,7 +1858,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-2b7e2a1
+      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-622d512
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -1894,7 +1879,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2098,16 +2083,10 @@ jobs:
       - attach_workspace:
           at: .
 
-      - reinstall-go
-
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-
-      - run:
-          name: Get master dependencies
-          command: make -C master get-deps
 
       - install-devcluster
       - unless:
@@ -2315,7 +2294,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.26.4
         type: string
       accel-node-taints:
         type: string
@@ -2561,9 +2540,6 @@ workflows:
     jobs:
       - test-unit-go
       - test-unit-react
-      - test-unit-react-screenshot:
-          context: github-write
-          filters: *any-upstream
       - test-unit-harness-cpu
       - test-unit-harness-tf2
       - test-unit-harness-pytorch2-cpu
@@ -2635,12 +2611,19 @@ workflows:
           requires:
             - build-react
             - build-docs
+          filters:
+            branches:
+              only:
+                - main
 
       - package-and-push-system-dev:
           requires:
             - build-react
             - build-docs
-          filters: *any-upstream
+          filters:
+            branches:
+              only:
+                - main
 
       - upload-docs-search-index:
           requires:
@@ -2654,12 +2637,16 @@ workflows:
       - test-debian-packaging:
           requires:
             - package-and-push-system-local
+          filters:
+            branches:
+              only:
+                - main
 
       - test-e2e:
           name: test-e2e-cpu
           requires:
             - build-go
-          parallelism: 4
+          parallelism: 6
           tf2: true
           mark: e2e_cpu
 
@@ -2667,7 +2654,7 @@ workflows:
           name: test-e2e-cpu-double
           requires:
             - build-go
-          parallelism: 1
+          parallelism: 3
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -2677,7 +2664,7 @@ workflows:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
-          parallelism: 2
+          parallelism: 4
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
@@ -2911,10 +2898,6 @@ workflows:
           requires:
             - build-react
             - build-docs
-      - package-and-push-system-dev:
-          requires:
-            - build-react
-            - build-docs
 
       - test-stress:
           name: test-stress
@@ -2926,21 +2909,6 @@ workflows:
               parallelism: [1]
               mark: ["stress_test"]
               det-version: [$CIRCLE_SHA1]
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-single-quarantined
-          context: aws
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["e2e-gpu"]
-              enable-tls: [true]
-              mark: ["e2e_gpu_quarantine"]
 
       - test-det-deploy:
           name: test-det-deploy-local
@@ -3211,6 +3179,24 @@ workflows:
               mark: ["model_hub_mmdetection"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
+
+      # packaging tests
+      - request-packaging-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - package-and-push-system-local:
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - request-packaging-tests
+
+      - test-debian-packaging:
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local
+            - request-packaging-tests
 
       # Request AWS FS tests
       - request-aws-fs-tests:
