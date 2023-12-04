@@ -18,7 +18,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 @authentication.required
@@ -93,8 +93,7 @@ def show_ssh_command(args: Namespace) -> None:
 @authentication.required
 def show_ssh_cmd_legacy(args: Namespace) -> None:
     cli.warn(
-        "DEPRECATION WARNING: show_ssh_command is being deprecated in favor"
-        "of show-ssh-command"
+        "DEPRECATION WARNING: show_ssh_command is being deprecated in favor" "of show-ssh-command"
     )
     show_ssh_command(args)
 
