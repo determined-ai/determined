@@ -253,7 +253,7 @@ args_description: List[Any] = [
             Cmd(
                 "create",
                 create,
-                "create task",
+                "create task (EXPERIMENTAL: This command should only be used in dev environments)",
                 [
                     Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
                     Arg(
