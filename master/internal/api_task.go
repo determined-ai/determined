@@ -22,7 +22,7 @@ func (a *apiServer) GetTask(
 		return nil, err
 	}
 
-	t := &taskv1.Task{}
+	t := new(taskv1.Task)
 	switch err := a.m.db.QueryProto("get_task", t, req.TaskId); {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, api.NotFoundErrs("task", req.TaskId, true)
@@ -40,7 +40,7 @@ func (a *apiServer) GetTaskConfig(
 		return nil, err
 	}
 
-	t := &taskv1.Task{}
+	t := new(taskv1.Task)
 	switch err := a.m.db.QueryProto("get_task", t, req.TaskId); {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, api.NotFoundErrs("task", req.TaskId, true)
