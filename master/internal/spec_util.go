@@ -94,7 +94,7 @@ func fillContextDir(
 	if len(contextDirectory) == 0 {
 		return configWorkDir, nil, nil
 	}
-	
+
 	workdirSetInReq := configWorkDir != nil &&
 		(defaultWorkDir == nil || *defaultWorkDir != *configWorkDir)
 	if workdirSetInReq {
@@ -119,14 +119,14 @@ func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, er
 				errors.Wrapf(err,
 					"unable to get external user token").Error())
 		}
-        return token, nil
+		return token, nil
 	}
 
-    token, err := user.StartSession(ctx, userModel)
-    if err != nil {
-        return "", status.Errorf(codes.Internal,
-            errors.Wrapf(err,
-                "unable to create user session inside task").Error())
-    }
-    return token, nil
+	token, err := user.StartSession(ctx, userModel)
+	if err != nil {
+		return "", status.Errorf(codes.Internal,
+			errors.Wrapf(err,
+				"unable to create user session inside task").Error())
+	}
+	return token, nil
 }
