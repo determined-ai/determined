@@ -60,7 +60,7 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task, config *model.Ge
 	if config != nil {
 		configBytes, err := json.Marshal(*config)
 		if err != nil {
-			return errors.Wrapf(err, "error handling experiment config %v", *config)
+			return fmt.Errorf("handling experiment config %v: %w", *config, err)
 		}
 		configStr = string(configBytes)
 	}
