@@ -161,9 +161,9 @@ type Config struct {
 	ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
-	InternalConfig InternalConfig     `json:"__internal"`
-	OIDC           OIDCConfig         `json:"oidc"`
-	Integrations   IntegrationsConfig `json:"integrations"`
+	InternalConfig InternalConfig `json:"__internal"`
+
+	Integrations IntegrationsConfig `json:"integrations"`
 }
 
 // GetMasterConfig returns reference to the master config singleton.
