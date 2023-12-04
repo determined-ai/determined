@@ -12,13 +12,13 @@ CREATE TABLE run_checkpoints (
   checkpoint_id uuid REFERENCES checkpoints_v2(uuid) ON DELETE CASCADE NOT NULL UNIQUE,
   model_id text, -- TODO?
   model_version text, -- TODO?
-  relationship relationship_type,
+  relationship relationship_type NOT NULL,
   PRIMARY KEY(run_id, checkpoint_id)
 );
 CREATE INDEX idx_checkpoint_id_run_id ON run_checkpoints USING btree (checkpoint_id, run_id);
 
-INSERT INTO run_checkpoints(run_id, checkpoint_id)
-SELECT t.trial_id AS run_id, uuid AS checkpoint_id
+INSERT INTO run_checkpoints(run_id, checkpoint_id, relationship_type)
+SELECT t.trial_id AS run_id, uuid AS checkpoint_id, 'CheckpointProducedByRun' AS relationship_type
 FROM checkpoints_v2 c
 LEFT JOIN trial_id_task_id t ON c.task_id = t.task_id;
 
