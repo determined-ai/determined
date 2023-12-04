@@ -51,9 +51,8 @@ func (a *apiServer) GetTaskConfig(
 	default:
 		config, err := json.Marshal(t.Config)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
 		}
-		return &apiv1.GetTaskConfigResponse{Config: string(config)},
-			errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
+		return &apiv1.GetTaskConfigResponse{Config: string(config)}, nil
 	}
 }
