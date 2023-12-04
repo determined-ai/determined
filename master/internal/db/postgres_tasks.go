@@ -15,6 +15,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -56,13 +57,13 @@ func AddTask(ctx context.Context, t *model.Task) error {
 
 // AddTaskTx UPSERT's the existence of a task in a tx.
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task, config *model.GenericTaskConfig) error {
-	var configStr = "{}"
+	var configStr *string
 	if config != nil {
 		configBytes, err := json.Marshal(*config)
 		if err != nil {
 			return fmt.Errorf("handling experiment config %v: %w", *config, err)
 		}
-		configStr = string(configBytes)
+		configStr = ptrs.Ptr(string(configBytes))
 	}
 	_, err := idb.NewInsert().Model(t).
 		Column("task_id", "task_type", "start_time", "job_id", "log_version").

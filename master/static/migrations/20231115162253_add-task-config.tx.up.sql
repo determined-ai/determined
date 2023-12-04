@@ -1,2 +1,2 @@
 ALTER TABLE tasks
-ADD config jsonb NOT NULL DEFAULT('{}');
+ADD config jsonb DEFAULT(NULL);
