@@ -574,7 +574,7 @@ func (a *apiServer) DeleteWorkspace(
 	}
 
 	log.Debugf("deleting workspace %d NTSC", req.Id)
-	command.TellNTSC(a.m.system, req)
+	command.DefaultCmdService.DeleteWorkspaceNTSC(req)
 
 	log.Debugf("deleting workspace %d templates", req.Id)
 	err = templates.DeleteWorkspaceTemplates(ctx, int(req.Id))

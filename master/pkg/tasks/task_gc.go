@@ -37,7 +37,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 	// Set Environment.
 	// Keep only the EnvironmentVariables provided by the experiment's config.
 	envVars := g.LegacyConfig.Environment.EnvironmentVariables()
-	//nolint:exhaustivestruct // This has caused an issue before, but is valid as a partial struct.
+	//nolint:exhaustruct // This has caused an issue before, but is valid as a partial struct.
 	env := expconf.EnvironmentConfig{
 		RawEnvironmentVariables: &envVars,
 		RawPodSpec:              g.LegacyConfig.Environment.PodSpec(),

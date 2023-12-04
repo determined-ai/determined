@@ -55,6 +55,5 @@ code.block {
   background-color: var(--theme-stage);
 }
 .u-wrap {
-  overflow-x: visible;
-  overflow-y: hidden;
+  overflow: visible hidden;
 }

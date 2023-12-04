@@ -1,5 +1,5 @@
-import { Select } from 'antd';
 import Button from 'hew/Button';
+import Select, { SelectValue } from 'hew/Select';
 import React, { useCallback, useState } from 'react';
 
 import css from './TableBatch.module.scss';
@@ -39,7 +39,7 @@ function TableBatch<T extends string>({
   if (selectCount > 0) classes.push(css.show);
 
   const handleAction = useCallback(
-    (action?: string) => {
+    (action?: SelectValue) => {
       /*
        * This succession setting of action to an empty string
        * followed by `undefined` is required to guarantee clearing

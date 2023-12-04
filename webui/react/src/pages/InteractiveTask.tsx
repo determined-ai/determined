@@ -1,9 +1,9 @@
-import useUI from 'hew/Theme';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
+import useUI from 'components/ThemeProvider';
 import { getTask } from 'services/api';
 import { CommandState, CommandType, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType, handleWarning } from 'utils/error';

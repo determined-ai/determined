@@ -1,4 +1,4 @@
-//nolint:exhaustivestruct
+//nolint:exhaustruct
 package searcher
 
 import (

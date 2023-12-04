@@ -79,7 +79,7 @@ const FilterField = ({
 
   const onChangeColumnName = (value: SelectValue) => {
     const prevType = currentColumn?.type;
-    const newCol = columns.find((c) => c.column === value?.toString() ?? '');
+    const newCol = columns.find((c) => c.column === (value?.toString() ?? ''));
     if (newCol) {
       formStore.setFieldColumnName(field.id, newCol);
 

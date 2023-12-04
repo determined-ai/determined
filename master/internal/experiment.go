@@ -322,6 +322,11 @@ func (e *internalExperiment) TrialCompleteOperation(msg experiment.TrialComplete
 		return api.AsValidationError("received op %v which was previously completed", msg.Op)
 	}
 
+	defer func() {
+		ops, err := e.searcher.ValidationCompleted(msg.RequestID, msg.Metric, msg.Op)
+		e.processOperations(ops, err)
+	}()
+
 	state.Complete = true
 	e.TrialSearcherState[msg.Op.RequestID] = state
 
@@ -335,9 +340,6 @@ func (e *internalExperiment) TrialCompleteOperation(msg experiment.TrialComplete
 		e.syslog.WithError(err).Error("patching trial search state")
 		return err
 	}
-
-	ops, err := e.searcher.ValidationCompleted(msg.RequestID, msg.Metric, msg.Op)
-	e.processOperations(ops, err)
 
 	return nil
 }
@@ -670,6 +672,12 @@ func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, rea
 		e.syslog.WithField("requestID", requestID).Error("trial has no searcher state on early exit")
 		return
 	}
+
+	defer func() {
+		ops, err := e.searcher.TrialExitedEarly(requestID, reason)
+		e.processOperations(ops, err)
+	}()
+
 	state.Complete = true
 	state.Closed = true
 	e.TrialSearcherState[requestID] = state
@@ -683,11 +691,7 @@ func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, rea
 	err := t.PatchSearcherState(state)
 	if err != nil {
 		e.syslog.WithError(err).Error("patching trial search state")
-		return
 	}
-
-	ops, err := e.searcher.TrialExitedEarly(requestID, reason)
-	e.processOperations(ops, err)
 }
 
 func (e *internalExperiment) trialCreated(t *trial) {
@@ -719,8 +723,10 @@ func (e *internalExperiment) restoreTrials() {
 func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
 	var continueFromTrialID *int
 	if e.continueTrials {
-		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID); {
+		case errors.Is(err, sql.ErrNoRows):
+		// Trial doesn't exist, don't do anything
+		case err != nil:
 			e.updateState(model.StateWithReason{
 				State: model.StoppingErrorState,
 				InformationalReason: fmt.Sprintf(
@@ -728,12 +734,13 @@ func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*i
 			})
 			e.syslog.Error(err)
 			return nil, true
-		}
-		if trial.State != model.CompletedState {
-			continueFromTrialID = &trial.ID
-		} else {
-			e.trialClosed(reqID, nil)
-			return nil, true
+		case err == nil:
+			if trial.State != model.CompletedState {
+				continueFromTrialID = &trial.ID
+			} else {
+				e.trialClosed(reqID, nil)
+				return nil, true
+			}
 		}
 	}
 	return continueFromTrialID, false
@@ -1030,7 +1037,7 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 			JobID:    e.JobID,
 		}).(type) {
 		case nil:
-		case rmerrors.ErrUnsupported:
+		case rmerrors.UnsupportedError:
 			e.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
@@ -1056,7 +1063,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		JobID:  e.JobID,
 	}).(type) {
 	case nil:
-	case rmerrors.ErrUnsupported:
+	case rmerrors.UnsupportedError:
 		e.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		resources.SetWeight(oldWeight)

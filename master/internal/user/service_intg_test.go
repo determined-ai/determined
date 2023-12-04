@@ -53,7 +53,7 @@ func setup(t *testing.T) (*Service, *mocks.UserAuthZ, echo.Context) {
 	require.NoError(t, etc.SetRootPath("../../static/srv"))
 
 	externalSessions := &model.ExternalSessions{}
-	InitService(pgDB, nil, externalSessions)
+	InitService(pgDB, externalSessions)
 	return GetService(), userAuthzSingleton, ctx
 }
 
@@ -61,7 +61,7 @@ func TestAddUserExec(t *testing.T) {
 	setup(t)
 	ctx := stdContext.TODO()
 	u := &model.User{Username: uuid.New().String()}
-	_, err := addUser(ctx, db.Bun(), u)
+	_, err := AddUserTx(ctx, db.Bun(), u)
 	require.NoError(t, err)
 
 	actual := &model.User{}

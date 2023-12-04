@@ -93,12 +93,15 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [data, checkpoint, xAxis]);
 
   const groupedMetrics: Metric[][] = useMemo(() => {
-    const map = metrics.reduce((acc, metric) => {
-      const metricName = stripPrefix(metric.name);
-      acc[metricName] = acc[metricName] ?? [];
-      acc[metricName].push(metric);
-      return acc;
-    }, {} as Record<string, Metric[]>);
+    const map = metrics.reduce(
+      (acc, metric) => {
+        const metricName = stripPrefix(metric.name);
+        acc[metricName] = acc[metricName] ?? [];
+        acc[metricName].push(metric);
+        return acc;
+      },
+      {} as Record<string, Metric[]>,
+    );
     return Object.keys(map)
       .sort()
       .map((metricName) => map[metricName].sortAll(metricSorter));
@@ -120,7 +123,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       }, new Set<number>());
       const xVals = Array.from(xValSet).sort((a, b) => a - b);
 
-      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
+      const onPointClick = (_event: MouseEvent, point: UPlotPoint) => {
         const xVal = xVals[point.idx];
         const selectedCheckpoint =
           xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;

@@ -10,6 +10,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
@@ -31,7 +31,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
 
 const (
@@ -41,8 +40,6 @@ const (
 	minSshdPort = 3200
 	maxSshdPort = minSshdPort + 299
 )
-
-var shellsAddr = actor.Addr("shells")
 
 func (a *apiServer) GetShells(
 	ctx context.Context, req *apiv1.GetShellsRequest,
@@ -70,9 +67,11 @@ func (a *apiServer) GetShells(
 		}
 	}
 
-	if err = a.ask(shellsAddr, req, &resp); err != nil {
+	resp, err = command.DefaultCmdService.GetShells(req)
+	if err != nil {
 		return nil, err
 	}
+
 	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
 		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
 	)
@@ -98,21 +97,20 @@ func (a *apiServer) GetShells(
 
 func (a *apiServer) GetShell(
 	ctx context.Context, req *apiv1.GetShellRequest,
-) (resp *apiv1.GetShellResponse, err error) {
+) (*apiv1.GetShellResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	addr := shellsAddr.Child(req.ShellId)
-	if err = a.ask(addr, req, &resp); err != nil {
+	resp, err := command.DefaultCmdService.GetShell(req)
+	if err != nil {
 		return nil, err
 	}
 
 	ctx = audit.SupplyEntityID(ctx, req.ShellId)
 	if err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Shell.WorkspaceId)); err != nil {
-		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("actor", fmt.Sprint(addr), true))
+		return nil, authz.SubIfUnauthorized(err, api.NotFoundErrs("shell", req.ShellId, true))
 	}
 	return resp, nil
 }
@@ -143,7 +141,9 @@ func (a *apiServer) KillShell(
 		return nil, err
 	}
 
-	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.ShellId, model.TaskTypeShell)
+
+	return &apiv1.KillShellResponse{Shell: cmd.ToV1Shell()}, nil
 }
 
 func (a *apiServer) SetShellPriority(
@@ -172,13 +172,18 @@ func (a *apiServer) SetShellPriority(
 		return nil, err
 	}
 
-	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.ShellId, int(req.Priority), model.TaskTypeShell)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.SetShellPriorityResponse{Shell: cmd.ToV1Shell()}, nil
 }
 
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
+	user, session, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -242,6 +247,12 @@ func (a *apiServer) LaunchShell(
 
 	launchReq.Spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeShell)}
 
+	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	if err != nil {
+		return nil, err
+	}
+	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
+
 	var passphrase *string
 	if len(req.Data) > 0 {
 		var data map[string]interface{}
@@ -263,19 +274,17 @@ func (a *apiServer) LaunchShell(
 	launchReq.Spec.Metadata.PublicKey = ptrs.Ptr(string(keys.PublicKey))
 	launchReq.Spec.Keys = &keys
 
-	// Launch a Shell actor.
-	var shellID model.TaskID
-	if err := a.ask(shellsAddr, launchReq, &shellID); err != nil {
-		return nil, err
-	}
-
-	var shell *shellv1.Shell
-	if err := a.ask(shellsAddr.Child(shellID), &shellv1.Shell{}, &shell); err != nil {
+	// Launch a Shell.
+	cmd, err := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeShell,
+		model.JobTypeShell,
+		launchReq)
+	if err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell:    shell,
+		Shell:    cmd.ToV1Shell(),
 		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil

@@ -1,7 +1,9 @@
 import { matchesShortcut } from 'hew/InputShortcut';
+import { useModal } from 'hew/Modal';
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import HelpModalComponent from 'components/HelpModal';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
@@ -49,6 +51,8 @@ const Omnibar: React.FC = () => {
     setShowing(false);
   }, []);
 
+  const HelpModal = useModal(HelpModalComponent);
+
   const onAction = useCallback(
     async (item: unknown, query: (inputEl: string) => void) => {
       const input: HTMLInputElement | null = omnibarInput();
@@ -56,6 +60,10 @@ const Omnibar: React.FC = () => {
       if (!input) return;
       if (isTreeNode(item)) {
         try {
+          if (item.title === 'help') {
+            HelpModal.open();
+            return;
+          }
           await Tree.onAction(input, item, query);
           if (item.closeBar) {
             hideBar();
@@ -65,7 +73,7 @@ const Omnibar: React.FC = () => {
         }
       }
     },
-    [hideBar],
+    [hideBar, HelpModal],
   );
 
   useEffect(() => {
@@ -79,19 +87,22 @@ const Omnibar: React.FC = () => {
   }, [showing]);
 
   return (
-    <div className={css.base} style={{ display: showing ? 'unset' : 'none' }}>
-      <div className={css.backdrop} onClick={hideBar} />
-      <div className={css.bar} id="omnibar">
-        <OmnibarNpm<BaseNode>
-          autoFocus={true}
-          extensions={[Tree.extension]}
-          maxResults={7}
-          placeholder='Type a command or "help" for more info.'
-          render={TreeNode}
-          onAction={onAction}
-        />
+    <>
+      <div className={css.base} style={{ display: showing ? 'unset' : 'none' }}>
+        <div className={css.backdrop} onClick={hideBar} />
+        <div className={css.bar} id="omnibar">
+          <OmnibarNpm<BaseNode>
+            autoFocus={true}
+            extensions={[Tree.extension]}
+            maxResults={7}
+            placeholder='Type a command or "help" for more info.'
+            render={TreeNode}
+            onAction={onAction}
+          />
+        </div>
       </div>
-    </div>
+      <HelpModal.Component />
+    </>
   );
 };
 

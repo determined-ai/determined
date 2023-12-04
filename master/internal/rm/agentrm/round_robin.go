@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -38,7 +37,7 @@ func (p *roundRobinScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto
 func roundRobinSchedule(
 	taskList *tasklist.TaskList,
 	groups map[model.JobID]*tasklist.Group,
-	agents map[*actor.Ref]*agentState,
+	agents map[agentID]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
 ) ([]*sproto.AllocateRequest, []model.AllocationID) {

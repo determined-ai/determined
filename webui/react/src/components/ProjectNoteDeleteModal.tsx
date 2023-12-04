@@ -20,7 +20,7 @@ const ProjectNoteDeleteModalComponent: React.FC<Props> = ({
     if (!project?.id) return;
     try {
       await setProjectNotes({
-        notes: project.notes.filter((note, idx) => idx !== pageNumber),
+        notes: project.notes.filter((_note, idx) => idx !== pageNumber),
         projectId: project.id,
       });
     } catch (e) {

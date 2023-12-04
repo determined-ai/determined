@@ -28,6 +28,7 @@ func (l *logStore) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 
+// nolint: noctx
 func TestAuditLogMiddleware(t *testing.T) {
 	// Given an echo server with our middleware, where we can introspect logs, and with a valid
 	// DetContext.

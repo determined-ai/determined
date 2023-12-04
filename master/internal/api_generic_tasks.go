@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	"github.com/pkg/errors"
@@ -28,7 +29,6 @@ import (
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -68,16 +68,16 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Validate the resource configuration.
 	resources := model.ParseJustResources([]byte(configYAML))
 
-	if resources.SlotsPerTask == nil {
-		resources.SlotsPerTask = ptrs.Ptr(1)
+	if resources.Slots < 1 {
+		resources.Slots = 1
 	}
 
-	poolName, launchWarnings, err := ResolveResources(a, resources.ResourcePool, *resources.SlotsPerTask, int(proj.WorkspaceId))
+	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	// Get the base TaskSpec.
-	taskSpec, err := fillTaskSpec(a, poolName, agentUserGroup, userModel)
+	taskSpec, err := a.m.fillTaskSpec(poolName, agentUserGroup, userModel)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -92,10 +92,16 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	// Copy discovered (default) resource pool name and slot count.
 
-	fillTaskConfig(&taskConfig.Resources.RawResourcePool, poolName, &taskConfig.Resources.RawSlotsPerTask, *resources.SlotsPerTask, taskSpec, &taskConfig.Environment)
+	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
+	taskConfig.Resources.RawResourcePool = &poolName
+	taskConfig.Resources.RawSlots = &resources.Slots
 
 	var contextDirectoryBytes []byte
-	contextDirectoryBytes, err = fillContextDir(&taskConfig.WorkDir, workDirInDefaults, contextDirectory)
+	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(
+		taskConfig.WorkDir,
+		workDirInDefaults,
+		contextDirectory,
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -222,6 +228,16 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
+	onAllocationExit := func(ae *task.AllocationExited) {
+		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
+		if err := a.m.db.CompleteTask(taskID, time.Now().UTC()); err != nil {
+			syslog.WithError(err).Error("marking generic task complete")
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+			syslog.WithError(err).Error("deleting group priority change registry")
+		}
+	}
+
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
 		TaskID:            taskID,
@@ -230,7 +246,7 @@ func (a *apiServer) CreateGenericTask(
 		IsUserVisible:     true,
 		Name:              fmt.Sprintf("Generic Task %s", taskID),
 
-		SlotsNeeded:  genericTaskSpec.GenericTaskConfig.Resources.SlotsPerTask(),
+		SlotsNeeded:  *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
 		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
@@ -249,5 +265,3 @@ func (a *apiServer) CreateGenericTask(
 		Warnings: pkgCommand.LaunchWarningToProto(warnings),
 	}, nil
 }
-
-func onAllocationExit(ae *task.AllocationExited) {}

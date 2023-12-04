@@ -187,6 +187,16 @@ func newAllocation(
 	return a, nil
 }
 
+// how are we getting 0 container snapshots in the first place?
+//		- sleep before we call persist() and see if that causes it
+//		- definitely peek at pre-actor code
+// either way, how does it cause a hang?
+//		- we don't send the resources released event.
+// after we finish restore, we should all the agentrm and cull all unreattached
+// containers.
+// allocation is crashing and deleting resourcemanagers_agent_containers so fast that
+// the agent can't restore them. then when the agent can't restore them
+
 // Receive implements actor.Actor for the allocation.
 // The normal flow of an allocation is to:
 //
@@ -211,17 +221,13 @@ func (a *allocation) run(ctx context.Context, sub *sproto.ResourcesSubscription)
 	defer a.recover()
 	defer sub.Close()
 	defer a.wg.Cancel() // Important if we panic, so awaitTermination can unblock.
-	for {
-		event := sub.Get()
-		if event == (sproto.ResourcesReleasedEvent{}) {
-			return
-		}
-		a.HandleRMEvent(event)
+
+	for !a.HandleRMEvent(sub.Get()) {
 	}
 }
 
 // HandleRMEvent handles downstream events from the resource manager.
-func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) {
+func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) (done bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -232,17 +238,22 @@ func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) {
 		}
 	case *sproto.ResourcesStateChanged:
 		a.resourcesStateChanged(msg)
-	case *sproto.ResourcesFailure:
-		a.restoreResourceFailure(msg)
 	case *sproto.ReleaseResources:
 		a.releaseResources(msg)
 	case *sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
+	case *sproto.ResourcesRestoreError:
+		a.restoreResourceFailure(msg)
+		return true
 	case *sproto.InvalidResourcesRequestError:
 		a.crash(msg.Cause)
+		return true
+	case sproto.ResourcesReleasedEvent:
+		return true
 	default:
 		panic(fmt.Errorf("unexpected RM event"))
 	}
+	return false
 }
 
 // State returns a copy of the current State of the allocation.
@@ -359,7 +370,7 @@ func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.Resource
 	defer a.mu.Unlock()
 
 	if _, ok := a.resources[rID]; !ok {
-		return ErrStaleResources{ID: rID}
+		return StaleResourcesError{ID: rID}
 	} else if len(a.resources) <= 1 {
 		// Ignoring request to daemonize resources within an allocation for an allocation
 		// 	with only one manageable set of resources, because this would just kill it. This is
@@ -434,14 +445,14 @@ func (a *allocation) validateRendezvous() error {
 	}
 
 	if len(a.resources) == 0 {
-		return ErrAllocationUnfulfilled{Action: "rendezvous"}
+		return AllocationUnfulfilledError{Action: "rendezvous"}
 	}
 
 	switch a.resources.first().Summary().ResourcesType {
 	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
 		break
 	default:
-		return ErrBehaviorUnsupported{Behavior: "rendezvous"}
+		return BehaviorUnsupportedError{Behavior: "rendezvous"}
 	}
 
 	return nil
@@ -540,7 +551,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		if a.getModelState() != model.AllocationStatePending {
 			// If we have moved on from the pending state, these must be stale (and we must have
 			// already released them, just the scheduler hasn't gotten word yet).
-			return ErrStaleResourcesReceived{}
+			return StaleResourcesReceivedError{}
 		}
 		a.setModelState(model.AllocationStateAssigned)
 	} else {
@@ -663,7 +674,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 	if _, ok := a.resources[msg.ResourcesID]; !ok {
 		a.syslog.
 			WithField("container", msg.Container).
-			WithError(ErrStaleResources{ID: msg.ResourcesID}).Warnf("old state change")
+			WithError(StaleResourcesError{ID: msg.ResourcesID}).Warnf("old state change")
 		return
 	}
 
@@ -788,7 +799,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 }
 
 // restoreResourceFailure handles the restored resource failures.
-func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesFailure) {
+func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
 	a.syslog.Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
@@ -967,7 +978,7 @@ func (a *allocation) exitedWithoutErr() bool {
 
 func (a *allocation) SetExitStatus(exitReason string, exitErr error, statusCode *int32) {
 	switch err := exitErr.(type) {
-	case sproto.ResourcesFailure:
+	case sproto.ResourcesRestoreError:
 		a.model.ExitErr = ptrs.Ptr(err.Error())
 		if err.ExitCode != nil {
 			a.model.StatusCode = ptrs.Ptr(int32(*err.ExitCode))
@@ -1097,7 +1108,7 @@ func (a *allocation) calculateExitStatus(reason string) (
 		return fmt.Sprintf("allocation stopped early after %s", reason), true, logrus.InfoLevel, nil
 	case a.exitErr != nil:
 		switch err := a.exitErr.(type) {
-		case sproto.ResourcesFailure:
+		case sproto.ResourcesRestoreError:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsGracefully {

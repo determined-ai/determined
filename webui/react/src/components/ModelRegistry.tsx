@@ -416,7 +416,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
-    const tagsRenderer = (value: string, record: ModelItem) => (
+    const tagsRenderer = (_CHART_HEIGHTvalue: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
@@ -521,7 +521,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         })),
         isFiltered: (settings: Settings) => !!settings.workspace,
         key: V1GetModelsRequestSortBy.WORKSPACE,
-        render: (v: string, record: ModelItem) => workspaceRenderer(record),
+        render: (_v: string, record: ModelItem) => workspaceRenderer(record),
         sorter: true,
         title: 'Workspace',
       },
@@ -606,7 +606,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<ModelItem> | SorterResult<ModelItem>[],
     ) => {
       if (Array.isArray(tableSorter)) return;

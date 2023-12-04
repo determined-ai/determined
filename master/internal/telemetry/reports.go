@@ -11,7 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -34,13 +33,13 @@ type telemetryRPFetcher interface {
 
 // PeriodicallyReportMasterTick periodically reports various telemetry information about the
 // running master. It should be called once per cluster.
-func PeriodicallyReportMasterTick(db db.DB, rm telemetryRPFetcher, system *actor.System) {
+func PeriodicallyReportMasterTick(db db.DB, rm telemetryRPFetcher) {
 	if defaultTelemeter == nil {
 		return
 	}
 
 	for {
-		reportMasterTick(db, rm, system)
+		reportMasterTick(db, rm)
 		time.Sleep(reportMasterTickDelay())
 	}
 }
@@ -57,7 +56,7 @@ func reportMasterTickDelay() time.Duration {
 }
 
 // reportMasterTick reports the master snapshot on a periodic tick.
-func reportMasterTick(db db.DB, rm telemetryRPFetcher, system *actor.System) {
+func reportMasterTick(db db.DB, rm telemetryRPFetcher) {
 	resp, err := rm.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	if err != nil {
 		// TODO(Brad): Make this routine more accepting of failures.

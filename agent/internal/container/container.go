@@ -336,7 +336,7 @@ func (c *Container) finalize(ctx context.Context, err error) {
 	switch err := err.(type) {
 	case nil:
 		stop = aproto.ContainerStopped{Failure: nil}
-	case *aproto.ContainerFailure:
+	case *aproto.ContainerFailureError:
 		stop = aproto.ContainerStopped{Failure: err}
 	default:
 		stop = aproto.ContainerError(aproto.TaskError, err)
@@ -345,7 +345,6 @@ func (c *Container) finalize(ctx context.Context, err error) {
 	if err := c.terminated(ctx, stop); err != nil {
 		c.log.WithError(err).Error("finalizing container")
 	}
-	return
 }
 
 func (c *Container) summary() cproto.Container {

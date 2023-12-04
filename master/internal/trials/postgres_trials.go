@@ -308,14 +308,14 @@ func MarkLostTrials(ctx context.Context) error {
 		}
 		var res []ExpWithTrials
 		_, err := tx.NewUpdate().Model(&res).
-			ModelTableExpr("trials").Table("experiments").
-			Where("trials.experiment_id = experiments.id").
+			ModelTableExpr("runs").Table("experiments").
+			Where("runs.experiment_id = experiments.id").
 			Where("experiments.unmanaged = true").
-			Where("trials.state = ?", model.RunningState).
-			Where("trials.last_activity < ?", time.Now().Add(-5*time.Minute)).
+			Where("runs.state = ?", model.RunningState).
+			Where("runs.last_activity < ?", time.Now().Add(-5*time.Minute)).
 			Set("state = ?", model.ErrorState).
-			Set("end_time = trials.last_activity").
-			Returning("experiments.id, experiments.state, trials.id as trial_id").Exec(ctx)
+			Set("end_time = runs.last_activity").
+			Returning("experiments.id, experiments.state, runs.id as trial_id").Exec(ctx)
 
 		if err != nil {
 			return err

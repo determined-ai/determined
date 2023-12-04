@@ -20,9 +20,14 @@
     margin-right: 30px;
 
     .nodeName {
-      font-size: var(--header-size-xs);
+      display: inline-block;
+      font-size: var(--single-line-size-l);
       margin-bottom: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
       text-transform: uppercase;
+      vertical-align: bottom;
+      white-space: nowrap;
     }
     .nodeCluster {
       align-items: center;

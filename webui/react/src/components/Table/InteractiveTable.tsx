@@ -328,8 +328,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? dropRightStyle
             : dragState === 'draggingLeft'
-            ? dropLeftStyle
-            : {}
+              ? dropLeftStyle
+              : {}
         }
       />
       <span
@@ -338,8 +338,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? { right: '-3px' }
             : dragState === 'draggingLeft'
-            ? { left: '-3px' }
-            : {}
+              ? { left: '-3px' }
+              : {}
         }
       />
     </th>
@@ -474,7 +474,7 @@ const InteractiveTable = <
 
   const handleResize = useCallback(
     (resizeIndex: number) => {
-      return (e: Event, { x }: DraggableData) => {
+      return (_e: Event, { x }: DraggableData) => {
         if (!settingsColumns) return;
 
         if (timeout.current) clearTimeout(timeout.current);
@@ -522,7 +522,7 @@ const InteractiveTable = <
 
   const handleResizeStart = useCallback(
     (index: number) =>
-      (e: Event, { x }: DraggableData) => {
+      (_e: Event, { x }: DraggableData) => {
         if (!settingsColumns) return;
 
         setIsResizing(true);
@@ -674,7 +674,7 @@ const InteractiveTable = <
                 index,
                 numOfPinned,
                 record,
-              } as React.HTMLAttributes<HTMLElement>)
+              }) as React.HTMLAttributes<HTMLElement>
             }
             {...props}
           />

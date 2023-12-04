@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -52,7 +51,6 @@ type ResourceManager struct {
 // New returns a new ResourceManager, which communicates with
 // and submits work to a Kubernetes apiserver.
 func New(
-	system *actor.System,
 	db *db.PgDB,
 	rmConfigs *config.ResourceConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,

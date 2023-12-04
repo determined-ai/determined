@@ -1,24 +1,34 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
+import * as t from 'io-ts';
 
 import { getExperiments } from 'services/api';
-import { V1Pagination } from 'services/api-ts-sdk';
 import { GetExperimentsParams } from 'services/types';
 import { ExperimentItem, ExperimentPagination } from 'types';
-import { Observable, observable, WritableObservable } from 'utils/observable';
+import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
+import { immutableObservable, Observable } from 'utils/observable';
 import { encodeParams } from 'utils/store';
 
 import PollingStore from './polling';
 
-type ExperimentCache = {
-  experimentIds: Readonly<number[]>;
-  pagination: Readonly<V1Pagination>;
-};
+const experimentCacheCodec = t.type({
+  experimentIds: t.readonlyArray(t.number),
+  pagination: t.readonly(
+    t.partial({
+      endIndex: t.number,
+      limit: t.number,
+      offset: t.number,
+      startIndex: t.number,
+      total: t.number,
+    }),
+  ),
+});
+type ExperimentCache = t.TypeOf<typeof experimentCacheCodec>;
 
 class ExperimentStore extends PollingStore {
   // Cache values keyed by encoded request param.
-  #experimentCache: WritableObservable<Map<string, ExperimentCache>> = observable(Map());
-  #experimentMap: WritableObservable<Map<number, ExperimentItem>> = observable(Map());
+  #experimentCache = immutableObservable<Map<string, ValueObjectOf<ExperimentCache>>>(Map());
+  #experimentMap = immutableObservable<Map<number, ValueObjectOf<ExperimentItem>>>(Map());
 
   public getExperimentsByIds(experimentIds: number[]): Observable<Readonly<ExperimentItem[]>> {
     return this.#experimentMap.select((map) =>
@@ -58,17 +68,20 @@ class ExperimentStore extends PollingStore {
     params: Readonly<GetExperimentsParams>,
   ) {
     this.#experimentCache.update((prev) =>
-      prev.set(encodeParams(params), {
-        experimentIds: pagination.experiments.map((exp) => exp.id),
-        pagination: pagination.pagination,
-      }),
+      prev.set(
+        encodeParams(params),
+        asValueObject(experimentCacheCodec, {
+          experimentIds: pagination.experiments.map((exp) => exp.id),
+          pagination: pagination.pagination,
+        }),
+      ),
     );
   }
 
   private updateExperimentMap(experimentItems: Readonly<ExperimentItem[]>) {
     this.#experimentMap.update((prev) =>
       prev.withMutations((map) => {
-        for (const exp of experimentItems) map.set(exp.id, exp);
+        for (const exp of experimentItems) map.set(exp.id, asValueObject(ExperimentItem, exp));
       }),
     );
   }

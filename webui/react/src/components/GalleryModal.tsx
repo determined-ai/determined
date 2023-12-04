@@ -2,6 +2,7 @@ import { Modal } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
+import { useTheme } from 'hew/Theme';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
@@ -28,6 +29,10 @@ const GalleryModal: React.FC<Props> = ({
   const resize = useResize();
   const [width, setWidth] = useState<number>();
   const [minHeight, setMinHeight] = useState<number>();
+
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   const handlePrevious = useCallback(() => {
     if (onPrevious) onPrevious();
@@ -65,7 +70,7 @@ const GalleryModal: React.FC<Props> = ({
   }, [onNext, onPrevious]);
 
   return (
-    <Modal centered footer={null} open width={width} {...props}>
+    <Modal centered footer={null} open width={width} {...props} wrapClassName={themeClass}>
       <div className={css.base} style={{ minHeight }}>
         {children}
         <div className={css.prev}>

@@ -102,33 +102,39 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Singularity Known Issues
 **************************
 
-Launching a PBS job with an experiment configuration that includes an embedded double quote
-character (") may cause the job to fail unless you have Singularity 3.10 or greater or Apptainer 1.1
-or greater. For example, the error might be the json.decoder.JSONDecodeError or the experiment log
-may contain ``source: /.inject-singularity-env.sh:224:1563: "export" must be followed by names or
-assignments`` and ``RuntimeError: missing environment keys [DET_MASTER, DET_CLUSTER_ID,
-DET_AGENT_ID, DET_SLOT_IDS, DET_TASK_ID, DET_ALLOCATION_ID, DET_SESSION_TOKEN, DET_TASK_TYPE], is
-this running on-cluster?``
+-  Launching a PBS job with an experiment configuration that includes an embedded double quote
+   character (") may cause the job to fail unless you have Singularity 3.10 or greater or Apptainer
+   1.1 or greater. For example, the error might be the json.decoder.JSONDecodeError or the
+   experiment log may contain ``source: /.inject-singularity-env.sh:224:1563: "export" must be
+   followed by names or assignments`` and ``RuntimeError: missing environment keys [DET_MASTER,
+   DET_CLUSTER_ID, DET_AGENT_ID, DET_SLOT_IDS, DET_TASK_ID, DET_ALLOCATION_ID, DET_SESSION_TOKEN,
+   DET_TASK_TYPE], is this running on-cluster?`` The version of Singularity is detected by the HPC
+   Launcher invoking the singularity command and checking for the ``--no-eval`` option. If the
+   singularity command is not on the path for the HPC launcher or is of an inconsistent version with
+   the compute nodes, embedded double quote characters may still not work.
 
-The version of Singularity is detected by the HPC Launcher invoking the singularity command and
-checking for the ``--no-eval`` option. If the singularity command is not on the path for the HPC
-launcher or is of an inconsistent version with the compute nodes, embedded double quote characters
-may still not work.
+-  When launching a shell or distributed experiment the ``sshd`` inside the container may log the
+   error ``chown(/dev/pts/0, 100165687, 5) failed: Invalid argument`` and the shell or experiment
+   may hang. This can be resolved by installing the ``singularity-suid`` installation package.
 
 ************************
  Apptainer Known Issues
 ************************
 
-Starting with Apptainer version 1.1.0 some changes may trigger permission problems inside of
-Determined containers for shells, TensorBoards, and experiments. For example, a TensorBoard log may
-contain ``ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device``,
-or a shell may fail to function and the shell logs contain the message ``chown(/dev/pts/1, 63200, 5)
-failed: Invalid argument``, or an experiment may fail to launch due to ``FATAL: container creation
-failed: mount /var/tmp->/var/tmp error: while mounting /var/tmp: could not mount /var/tmp: operation
-not supported``. This likely indicates an installation or configuration error for unprivileged
-containers. Review the `Installing Apptainer
-<https://apptainer.org/docs/admin/main/installation.html>`_ documentation. These errors are
-sometimes resolved by additionally installing the ``apptainer-setuid`` package.
+-  Starting with Apptainer version 1.1.0 some changes may trigger permission problems inside of
+   Determined containers for shells, TensorBoards, and experiments. For example, a TensorBoard log
+   may contain ``ERROR: Could not install packages due to an OSError: [Errno 28] No space left on
+   device``, or a shell may fail to function and the shell logs contain the message
+   ``chown(/dev/pts/1, 63200, 5) failed: Invalid argument``, or an experiment may fail to launch due
+   to ``FATAL: container creation failed: mount /var/tmp->/var/tmp error: while mounting /var/tmp:
+   could not mount /var/tmp: operation not supported``. This likely indicates an installation or
+   configuration error for unprivileged containers. Review the `Installing Apptainer
+   <https://apptainer.org/docs/admin/main/installation.html>`_ documentation. These errors are
+   sometimes resolved by additionally installing the ``apptainer-setuid`` package.
+
+-  When launching a shell or distributed experiment the ``sshd`` inside the container may log the
+   error ``chown(/dev/pts/0, 100165687, 5) failed: Invalid argument`` and the shell or experiment
+   may hang. This can be resolved by installing the ``singularity-suid`` installation package.
 
 *********************
  Podman Known Issues

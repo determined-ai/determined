@@ -59,6 +59,10 @@ func (a *apiServer) Login(
 		return nil, err
 	}
 
+	if userModel.Remote { // We can't return a more specific error for informational leak reasons.
+		return nil, grpcutil.ErrInvalidCredentials
+	}
+
 	var hashedPassword string
 	if req.IsHashed {
 		hashedPassword = req.Password

@@ -19,7 +19,7 @@ const regexCacheSize = 256
 
 var (
 	defaultSingleton       *LogPatternPolicies
-	expconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_pattern_policies\\\":)(.*)")
+	expconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_policies\\\":)(.*)")
 )
 
 // LogPatternPolicies performs log pattern checks.

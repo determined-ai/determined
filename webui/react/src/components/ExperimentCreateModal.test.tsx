@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { useInitApi } from 'hew/Toast';
 import React from 'react';
 
 import ExperimentCreateModalComponent, {
@@ -9,6 +12,7 @@ import ExperimentCreateModalComponent, {
   FULL_CONFIG_BUTTON_TEXT,
   SIMPLE_CONFIG_BUTTON_TEXT,
 } from 'components/ExperimentCreateModal';
+import { ThemeProvider } from 'components/ThemeProvider';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
@@ -21,7 +25,7 @@ vi.mock('services/api', () => ({
 const ModalTrigger: React.FC = () => {
   const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
   const { experiment, trial } = generateTestExperimentData();
-
+  useInitApi();
   return (
     <>
       <Button onClick={ExperimentCreateModal.open} />
@@ -35,7 +39,15 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  render(<ModalTrigger />);
+  render(
+    <App>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <ModalTrigger />
+        </ThemeProvider>
+      </UIProvider>
+    </App>,
+  );
 
   await user.click(screen.getByRole('button'));
 };

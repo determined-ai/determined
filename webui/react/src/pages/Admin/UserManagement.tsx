@@ -1,12 +1,13 @@
 import { SortOrder } from 'antd/es/table/interface';
 import Button from 'hew/Button';
-import { Column, Columns } from 'hew/Columns';
+import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { SelectValue } from 'hew/Select';
-import { makeToast } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -81,14 +82,14 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const ManageGroupsModal = useModal(ManageGroupsModalComponent);
   const ConfigureAgentModal = useModal(ConfigureAgentModalComponent);
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
-
+  const { openToast } = useToast();
   const { canModifyUsers } = usePermissions();
   const { rbacEnabled } = useObservable(determinedStore.info);
 
   const onToggleActive = useCallback(async () => {
     try {
       await patchUsers({ activate: !user.isActive, userIds: [user.id] });
-      makeToast({
+      openToast({
         severity: 'Confirm',
         title: `User has been ${user.isActive ? 'deactivated' : 'activated'}`,
       });
@@ -101,7 +102,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
         type: ErrorType.Api,
       });
     }
-  }, [fetchUsers, user]);
+  }, [fetchUsers, openToast, user]);
 
   const menuItems =
     userManagementEnabled && canModifyUsers
@@ -399,6 +400,15 @@ const UserManagement: React.FC = () => {
         title: 'Role',
       },
       {
+        dataIndex: 'remote',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['remote'],
+        key: V1GetUsersRequestSortBy.REMOTE,
+        onCell: onRightClickableCell,
+        render: (value: boolean): React.ReactNode => (value ? 'Remote' : 'Local'),
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(b.remote, a.remote),
+        title: 'Remote',
+      },
+      {
         dataIndex: 'modifiedAt',
         defaultSortOrder:
           defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
@@ -432,16 +442,18 @@ const UserManagement: React.FC = () => {
         title: '',
       },
     ];
-    return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
+    return rbacEnabled
+      ? columns.filter((c) => c.dataIndex !== 'isAdmin')
+      : columns.filter((c) => c.dataIndex !== 'remote');
   }, [fetchUsers, groups, info.userManagementEnabled, rbacEnabled, settings]);
 
   return (
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar}>
-          <Columns>
+          <Row>
             <Column>
-              <Columns>
+              <Row>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
@@ -464,10 +476,10 @@ const UserManagement: React.FC = () => {
                   width={170}
                   onChange={handleStatusFilterApply}
                 />
-              </Columns>
+              </Row>
             </Column>
             <Column align="right">
-              <Columns>
+              <Row>
                 {selectedUserIds.length > 0 && (
                   <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
                     <Button>Actions</Button>
@@ -479,9 +491,9 @@ const UserManagement: React.FC = () => {
                   onClick={CreateUserModal.open}>
                   {CREATE_USER}
                 </Button>
-              </Columns>
+              </Row>
             </Column>
-          </Columns>
+          </Row>
         </div>
         {settings ? (
           <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns>

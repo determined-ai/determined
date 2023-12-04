@@ -1,10 +1,11 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -110,7 +111,11 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   return (
     <SettingsProvider>
-      <BrowserRouter>{children}</BrowserRouter>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <BrowserRouter>{children}</BrowserRouter>
+        </ThemeProvider>
+      </UIProvider>
     </SettingsProvider>
   );
 };
@@ -123,8 +128,10 @@ const setup = (
   result: HookReturn;
 } => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
-    <UIProvider>
-      <Container>{children}</Container>
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <Container>{children}</Container>
+      </ThemeProvider>
     </UIProvider>
   );
   const hookResult = renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {

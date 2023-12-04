@@ -352,7 +352,7 @@ def test_model_rbac_deletes() -> None:
             user=bindings.v1User(username=get_random_string(), active=True, admin=False),
         )
         api_utils.assign_user_role(
-            session=editor_session,
+            session=api_utils.determined_test_session(conf.ADMIN_CREDENTIALS),
             user=cluster_admin_creds.username,
             role="ClusterAdmin",
             workspace=None,

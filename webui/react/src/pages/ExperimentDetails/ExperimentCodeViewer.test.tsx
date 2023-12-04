@@ -1,10 +1,11 @@
 import { findAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
@@ -129,8 +130,10 @@ const Container: React.FC<Pick<Props, 'experiment'>> = (props) => {
 const setup = (props: Pick<Props, 'experiment'> = { experiment: experimentMock }) => {
   render(
     <BrowserRouter>
-      <UIProvider>
-        <Container {...props} />
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <Container {...props} />
+        </ThemeProvider>
       </UIProvider>
     </BrowserRouter>,
   );

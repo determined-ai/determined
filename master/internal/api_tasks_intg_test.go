@@ -26,7 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	taskPkg "github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -147,13 +146,15 @@ func mockNotebookWithWorkspaceID(
 
 func TestGetTasksAuthZ(t *testing.T) {
 	var allocations map[model.AllocationID]sproto.AllocationSummary
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil, func(context *actor.Context) error {
-		switch context.Message().(type) {
-		case sproto.GetAllocationSummaries:
-			context.Respond(allocations)
-		}
-		return nil
-	})
+
+	mockRM := MockRM()
+	mockRM.On("GetAllocationSummaries", mock.Anything).Return(func(
+		_ sproto.GetAllocationSummaries,
+	) map[model.AllocationID]sproto.AllocationSummary {
+		return allocations
+	}, nil)
+
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil, mockRM)
 	_, authZNSC, _, _ := setupNTSCAuthzTest(t) //nolint: dogsled
 
 	canAccessTrial, expCanAccessTask := createTestTrial(t, api, curUser)

@@ -30,7 +30,7 @@ export const useCheckpointFlow = ({
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
-    onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
+    onClose: (_reason?: ModalCloseReason, checkpoints?: string[]) => {
       // TODO: fix the behavior along with checkpoint modal migration
       // It used to open checkpoint modal again after creating a model,
       // but it doesn't with new create model modal since we don't use context holder anymore.
@@ -40,7 +40,7 @@ export const useCheckpointFlow = ({
   });
 
   const handleOnCloseCreateModel = useCallback(
-    (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
+    (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
       if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
     },
     [openModalCheckpointRegister],

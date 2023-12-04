@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 
 import { User } from 'types';
 
@@ -25,7 +25,7 @@ const setup = (testUser: User) => {
   const user = userEvent.setup();
 
   const view = render(
-    <UIProvider>
+    <UIProvider theme={DefaultTheme.Light}>
       <Component user={testUser} />
     </UIProvider>,
   );

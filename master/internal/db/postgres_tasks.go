@@ -8,17 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/o1egl/paseto"
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
-	"github.com/jmoiron/sqlx"
-
-	"github.com/o1egl/paseto"
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // initAllocationSessions purges sessions of all closed allocations.
@@ -29,14 +26,6 @@ DELETE FROM allocation_sessions WHERE allocation_id in (
 	WHERE start_time IS NOT NULL AND end_time IS NOT NULL
 )`)
 	return err
-}
-
-// queryHandler is an interface for a query handler to use tx/db for same queries.
-type queryHandler interface {
-	sqlx.Queryer
-	sqlx.Execer
-	// Unfortunately database/sql doesn't expose an interface for this like sqlx.
-	NamedExec(query string, arg interface{}) (sql.Result, error)
 }
 
 // CheckTaskExists checks if the task exists.
@@ -108,6 +97,12 @@ func NonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID) (
 	}
 
 	return res.ContextDirectory, nil
+}
+
+// TaskCompleted checks if the end time exists for a task, if so, the task has completed.
+func TaskCompleted(ctx context.Context, tID model.TaskID) (bool, error) {
+	return Bun().NewSelect().Table("tasks").
+		Where("task_id = ?", tID).Where("end_time IS NOT NULL").Exists(ctx)
 }
 
 // CompleteTask persists the completion of a task.

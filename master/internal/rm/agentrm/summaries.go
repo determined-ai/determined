@@ -2,14 +2,13 @@ package agentrm
 
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 // newAgentSummary returns a new immutable view of the agent.
 func newAgentSummary(state *agentState) sproto.AgentSummary {
 	return sproto.AgentSummary{
-		Name:   state.Handler.Address().Local(),
+		Name:   string(state.id),
 		IsIdle: state.idle(),
 	}
 }
@@ -25,7 +24,7 @@ type resourceSummary struct {
 }
 
 func resourceSummaryFromAgentStates(
-	agentInfo map[*actor.Ref]*agentState,
+	agentInfo map[agentID]*agentState,
 ) resourceSummary {
 	summary := resourceSummary{
 		numTotalSlots:          0,

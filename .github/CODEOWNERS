@@ -10,6 +10,11 @@
 /proto          @determined-ai/backend
 /performance    @determined-ai/web
 
+# CI is a mix
+/.circleci            @determined-ai/infrastructure
+/.circleci/devcluster @determined-ai/backend
+/.circleci/packaging  @determined-ai/backend
+
 # anyone can approve docs, except for specific files
 /docs
 /docs/index.rst     @determined-ai/docs

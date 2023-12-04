@@ -365,7 +365,7 @@ func (a *apiServer) PatchModel(
 	if req.Model.Labels != nil {
 		// avoid duplicate keys
 		reqLabelSet := make(map[string]struct{}, len(req.Model.Labels.Values))
-		reqLabelList := make([]string, len(reqLabelSet))
+		reqLabelList := make([]string, 0, len(reqLabelSet))
 		for _, el := range req.Model.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); !ok {
 				// Invalid label.

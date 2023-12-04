@@ -2,9 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React from 'react';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
@@ -67,8 +68,10 @@ const Container: React.FC<Props> = ({ group }) => {
 
 const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
-    <UIProvider>
-      <Container group={group} />
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <Container group={group} />
+      </ThemeProvider>
     </UIProvider>,
   );
 

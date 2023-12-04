@@ -33,9 +33,9 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 			name: "single",
 			experiment: func() *internalExperiment {
 				e := &internalExperiment{}
-				//nolint:exhaustivestruct
+				//nolint:exhaustruct
 				single := expconf.SearcherConfig{
-					//nolint:exhaustivestruct
+					//nolint:exhaustruct
 					RawSingleConfig: &expconf.SingleConfig{
 						RawMaxLength: &expconf.Length{
 							Unit:  expconf.Batches,
@@ -54,9 +54,9 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 			name: "asha",
 			experiment: func() *internalExperiment {
 				e := &internalExperiment{}
-				//nolint:exhaustivestruct
+				//nolint:exhaustruct
 				asha := expconf.SearcherConfig{
-					//nolint:exhaustivestruct
+					//nolint:exhaustruct
 					RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 						RawNumRungs: ptrs.Ptr(4),
 						RawStopOnce: ptrs.Ptr(false),

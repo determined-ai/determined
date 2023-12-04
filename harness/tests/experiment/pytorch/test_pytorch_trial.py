@@ -1544,6 +1544,7 @@ def run_amp(tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Opti
             tmp_path=tmp_path,
             exp_config=exp_config,
             steps=1,
+            trial_args={"hparams": hparams},
         )
     else:
         pytorch_utils.train_from_checkpoint(
@@ -1554,6 +1555,7 @@ def run_amp(tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Opti
             exp_config=exp_config,
             steps=(1, 1),
             batches_trained=batches_trained,
+            trial_args={"hparams": hparams},
         )
         return True
 
