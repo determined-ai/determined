@@ -65,14 +65,15 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task, config *model.Ge
 		}
 		configStr = ptrs.Ptr(string(configBytes))
 	}
+	t.Config = configStr
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version").
-		Value("config", "?", configStr).
+		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
 		Set("job_id=EXCLUDED.job_id").
 		Set("log_version=EXCLUDED.log_version").
+		Set("config=EXCLUDED.config").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }
