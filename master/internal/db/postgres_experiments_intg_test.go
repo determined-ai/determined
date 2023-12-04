@@ -17,7 +17,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -420,26 +419,11 @@ func TestExperimentByIDs(t *testing.T) {
 			return ExperimentByTaskID(ctx, task.TaskID)
 		}},
 		{"ExperimentByExternalIDTx", func(isNotFoundCase bool) (*model.Experiment, error) {
-			var e *model.Experiment
-			err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-				if isNotFoundCase {
-					if _, err := ExperimentByExternalIDTx(ctx, tx, uuid.New().String()); err != nil {
-						return err
-					}
+			if isNotFoundCase {
+				return ExperimentByExternalIDTx(ctx, Bun(), uuid.New().String())
+			}
 
-					return nil
-				}
-
-				var err error
-				e, err = ExperimentByExternalIDTx(ctx, tx, externalID)
-				if err != nil {
-					return err
-				}
-
-				return nil
-			})
-
-			return e, err
+			return ExperimentByExternalIDTx(ctx, Bun(), externalID)
 		}},
 	} {
 		t.Run(c.funcName+"-notFound", func(t *testing.T) {
@@ -454,6 +438,58 @@ func TestExperimentByIDs(t *testing.T) {
 			require.Equal(t, e, exp)
 		})
 	}
+}
+
+func TestExperimentsTrialAndTaskIDs(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	tIDs, taskIDs, err := ExperimentsTrialAndTaskIDs(ctx, Bun(), nil)
+	require.NoError(t, err)
+	require.Len(t, tIDs, 0)
+	require.Len(t, taskIDs, 0)
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{-1})
+	require.NoError(t, err)
+	require.Len(t, tIDs, 0)
+	require.Len(t, taskIDs, 0)
+
+	e0 := RequireMockExperiment(t, db, user)
+	e0Trial0, e0Task0 := RequireMockTrial(t, db, e0)
+	e0Trial1, e0Task1 := RequireMockTrial(t, db, e0)
+	e0Trial2, e0Task2 := RequireMockTrial(t, db, e0)
+	e0ExpectedTrials := []int{e0Trial0.ID, e0Trial1.ID, e0Trial2.ID}
+	e0ExpectedTasks := []model.TaskID{e0Task0.TaskID, e0Task1.TaskID, e0Task2.TaskID}
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e0.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, e0ExpectedTrials, tIDs)
+	require.ElementsMatch(t, e0ExpectedTasks, taskIDs)
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e0.ID, -1})
+	require.NoError(t, err)
+	require.ElementsMatch(t, e0ExpectedTrials, tIDs)
+	require.ElementsMatch(t, e0ExpectedTasks, taskIDs)
+
+	e1 := RequireMockExperiment(t, db, user)
+	e1Trial0, e1Task0 := RequireMockTrial(t, db, e1)
+	e1Trial1, e1Task1 := RequireMockTrial(t, db, e1)
+	e1ExpectedTrials := []int{e1Trial0.ID, e1Trial1.ID}
+	e1ExpectedTasks := []model.TaskID{e1Task0.TaskID, e1Task1.TaskID}
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e1.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, e1ExpectedTrials, tIDs)
+	require.ElementsMatch(t, e1ExpectedTasks, taskIDs)
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e0.ID, e1.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, append(e0ExpectedTrials, e1ExpectedTrials...), tIDs)
+	require.ElementsMatch(t, append(e0ExpectedTasks, e1ExpectedTasks...), taskIDs)
 }
 
 func TestExperimentBestSearcherValidation(t *testing.T) {

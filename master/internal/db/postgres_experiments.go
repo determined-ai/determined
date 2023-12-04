@@ -1000,8 +1000,8 @@ WHERE trials.experiment_id = $1
 }
 
 // ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
-func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
-	[]model.TaskID, error,
+func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) (
+	[]int, []model.TaskID, error,
 ) {
 	if len(expIDs) == 0 {
 		return nil, nil, nil
