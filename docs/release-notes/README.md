@@ -137,3 +137,7 @@ As part of the release process, the release manager:
 1. Prepends the individual `docs/release-notes/` files to the `docs/release-notes.txt` file and creates a new version heading.
 1. Deletes the individual files from `docs/release-notes/`.
 1. Performs additional copy editing as needed.
+
+## How to Publish Release Notes Specific to Determined Enterprise Edition
+
+When publishing Determined enterprise docs, the release captain can update the release notes file with any release notes that are specific to the `enterprise version <https://hpe-mlde.determined.ai/latest/release-notes.html>`__ (e.g., user authentication features).
