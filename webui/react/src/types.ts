@@ -233,13 +233,13 @@ export interface Resource {
   uuid?: string;
 }
 
-export type Slot = { [k: string]: V1Slot };
+export type SlotsRecord = { [k: string]: V1Slot };
 
 export interface Agent {
   id: string;
   registeredTime: number;
   resourcePools: string[];
-  slots?: Slot;
+  slots?: SlotsRecord;
   resources: Resource[];
 }
 

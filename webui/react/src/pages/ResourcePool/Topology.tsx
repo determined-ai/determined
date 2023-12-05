@@ -2,14 +2,14 @@ import Tooltip from 'hew/Tooltip';
 import React, { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react';
 
 import Section from 'components/Section';
-import { Agent, Resource, Slot } from 'types';
+import { Agent, Resource, SlotsRecord } from 'types';
 
 import css from './Topology.module.scss';
 
 interface NodeElementProps {
   name: string;
   resources: Resource[];
-  slots?: Slot;
+  slots?: SlotsRecord;
 }
 
 interface Props {
@@ -25,11 +25,11 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
     [slots, resources],
   );
   const singleSlot = slotsData.length === 1;
-  const fewSlot = slotsData.length === 2;
+  const coupleSlot = slotsData.length === 2;
   const styles = [css.nodeSlot];
 
   if (singleSlot) styles.push(css.singleSlot);
-  if (fewSlot) styles.push(css.fewSlot);
+  if (coupleSlot) styles.push(css.coupleSlot);
 
   useEffect(() => {
     setContainerWidth(slotsContainer.current?.getBoundingClientRect().width || 0);
