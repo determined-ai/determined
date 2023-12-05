@@ -2,5 +2,4 @@
 
 **Improvements**
 
--  Checkpoint downloads through the server now work with ``shared_fs`` types of
-   ``checkpoint_storage``.
+-  Allow checkpoint downloads through the server for ``checkpoint_storage`` type ``shared_fs``.
