@@ -17,7 +17,7 @@ setuptools.setup(
     # libraries that are guaranteed to work with our code.  Other versions
     # may work with model-hub as well but are not officially supported.
     install_requires=[
-        "attrdict",
+        "attrdict3",
         "determined>=0.13.11",  # We require custom reducers for PyTorchTrial.
     ],
 )
