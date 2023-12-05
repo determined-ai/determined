@@ -50,6 +50,9 @@ func (a *apiServer) GetGenericTaskConfig(
 	case err != nil:
 		return nil, errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
 	default:
-		return &apiv1.GetGenericTaskConfigResponse{Config: *t.Config}, nil
+		if t.Config != nil {
+			return &apiv1.GetGenericTaskConfigResponse{Config: *t.Config}, nil
+		}
+		return &apiv1.GetGenericTaskConfigResponse{Config: ""}, nil
 	}
 }
