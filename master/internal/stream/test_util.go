@@ -160,6 +160,27 @@ func (s *mockSocket) ReadUntil(
 	}
 }
 
+func (s *mockSocket) ReadUntilFound(
+	t *testing.T,
+	data *[]string,
+	expected []string,
+) {
+	var msg string
+	checklist := map[string]struct{}{}
+	for _, s := range expected {
+		checklist[s] = struct{}{}
+	}
+
+	for len(checklist) > 0 {
+		s.ReadIncoming(t, &msg)
+		*data = append(*data, msg)
+		if _, ok := checklist[msg]; ok {
+			delete(checklist, msg)
+		}
+		t.Logf("ReadUntil()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, expected)
+	}
+}
+
 // Close closes the mockSocket.
 func (s *mockSocket) Close() {
 	close(s.closed)
@@ -268,7 +289,7 @@ func validateMsgs(
 		for i := range upserts {
 			if upserts[i] != expectedUpserts[i] {
 				t.Errorf(
-					"did not received unxpected upsert message:\n\texpected: %#v\n\tactual: %q",
+					"did not received expected upsert message:\n\texpected: %#v\n\tactual: %q",
 					expectedUpserts,
 					upserts[i],
 				)
@@ -277,7 +298,7 @@ func validateMsgs(
 		for i := range deletions {
 			if deletions[i] != expectedDeletions[i] {
 				t.Errorf(
-					"did not received unxpected deletion message:\n\texpected: %#v\n\tactual: %q",
+					"did not received expected deletion message:\n\texpected: %#v\n\tactual: %q",
 					expectedDeletions,
 					deletions[i],
 				)

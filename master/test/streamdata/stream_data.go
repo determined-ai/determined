@@ -9,7 +9,6 @@ import (
 
 	// embed is only used in comments.
 	_ "embed"
-	"strconv"
 	"testing"
 	"time"
 
@@ -77,75 +76,29 @@ type ExecutableQuery interface {
 
 // GetUpdateTrialQuery constructs a query for modifying rows of a trial.
 func GetUpdateTrialQuery(newTrial Trial) ExecutableQuery {
-	return db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID)
-}
-
-func queryTrials(ctx context.Context) ([]Trial, error) {
-	var trials []Trial
-	err := db.Bun().NewSelect().
-		Model(&trials).
-		Scan(ctx, &trials)
-	if err != nil {
-		return nil, err
-	}
-	return trials, nil
+	return db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID).OmitZero()
 }
 
 // GetAddTrialQueries constructs the necessary queries
 // to create a new trial under the given experimentID.
-func GetAddTrialQueries(ctx context.Context, experimentID int) ([]ExecutableQuery, error) {
+func GetAddTrialQueries(newTask *model.Task, newTrial *Trial) []ExecutableQuery {
+	// Insert into tasks, trials, and task id trial id
 	queries := []ExecutableQuery{}
-	trials, err := queryTrials(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	nextSeq := int64(0)
-	numRelevantTrials := 0
-
-	for _, t := range trials {
-		if t.Seq > nextSeq {
-			nextSeq = t.Seq
-		}
-		if t.ExperimentID == experimentID {
-			numRelevantTrials++
-		}
-	}
-
-	newTaskID := strconv.Itoa(experimentID) + strconv.Itoa(numRelevantTrials+1)
-	newJobID := testJob + strconv.Itoa(experimentID)
 	queries = append(queries,
-		db.Bun().NewInsert().Model(
-			&model.Task{
-				TaskID:    model.TaskID(newTaskID),
-				TaskType:  "TRIAL",
-				StartTime: time.Now(),
-				JobID:     (*model.JobID)(&newJobID),
-			},
-		),
+		db.Bun().NewInsert().Model(newTask),
 	)
 
-	// Insert into tasks, trials, and task id trial id
-	startTime := time.Now()
 	queries = append(queries,
-		db.Bun().NewInsert().Model(
-			&Trial{
-				ID:           int(nextSeq + 1),
-				ExperimentID: experimentID,
-				HParams:      map[string]any{},
-				State:        "ERROR",
-				StartTime:    startTime,
-				Seq:          nextSeq + 1,
-			},
-		),
+		db.Bun().NewInsert().Model(newTrial),
 	)
 
 	insertMap := map[string]interface{}{
-		"trial_id": nextSeq + 1,
-		"task_id":  newTaskID,
+		"trial_id": newTrial.ID,
+		"task_id":  newTask.TaskID,
 	}
 	queries = append(queries, db.Bun().NewInsert().Model(&insertMap).Table("trial_id_task_id"))
-	return queries, nil
+	return queries
 }
 
 // Experiment contains a subset of actual determined experiment fields and is used to test

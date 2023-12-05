@@ -103,7 +103,9 @@ BEGIN
 FOR checkpoint IN
 SELECT
     c.*,
-    workspace_id
+    workspace_id,
+    experiment_id,
+    trial_id
 FROM
     projects p
         INNER JOIN
@@ -111,7 +113,7 @@ FROM
         INNER JOIN
     trials t ON t.experiment_id = e.id
         INNER JOIN
-    trial_id_task_id tt ON t.trial_id = tt.trial_id
+    trial_id_task_id tt ON tt.trial_id = t.id
         INNER JOIN
     checkpoints_v2 c ON tt.task_id = c.task_id
 WHERE
@@ -120,7 +122,7 @@ WHERE
         checkpoint.seq = nextval('stream_checkpoint_seq');
 UPDATE checkpoints_v2 SET seq = checkpoint.seq where id = checkpoint.id;
 jcheckpoint = to_jsonb(checkpoint);
-        PERFORM stream_checkpoint_notify(jcheckpoint, OLD.workspace_id, jcheckpoint, NEW.workspace_id);
+PERFORM stream_checkpoint_notify(jcheckpoint, OLD.workspace_id, jcheckpoint, NEW.workspace_id, checkpoint.trial_id, checkpoint.experiment_id);
 END LOOP;
     -- return value for AFTER triggers is ignored
 return NULL;
@@ -143,13 +145,15 @@ checkpoint RECORD;
 BEGIN
 FOR checkpoint IN
 SELECT
-    c.*
+    c.*,
+    experiment_id,
+    trial_id
 FROM
     experiments e
         INNER JOIN
     trials t ON t.experiment_id = e.id
         INNER JOIN
-    trial_id_task_id tt ON t.trial_id = tt.trial_id
+    trial_id_task_id tt ON t.id = tt.trial_id
         INNER JOIN
     checkpoints_v2 c ON tt.task_id = c.task_id
 WHERE
@@ -162,7 +166,7 @@ oldwork = workspace_id from projects where projects.id = proj;
         checkpoint.seq = nextval('stream_checkpoint_seq');
 UPDATE checkpoints_v2 SET seq = checkpoint.seq where id = checkpoint.id;
 jcheckpoint = to_jsonb(checkpoint);
-        PERFORM stream_checkpoint_notify(jcheckpoint, oldwork, jcheckpoint, newwork);
+        PERFORM stream_checkpoint_notify(jcheckpoint, oldwork, jcheckpoint, newwork, checkpoint.trial_id, checkpoint.experiment_id);
 END LOOP;
     -- return value for AFTER triggers is ignored
 return NULL;
