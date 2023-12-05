@@ -83,8 +83,7 @@ message Task {
         "task_id",
         "task_type",
         "allocations",
-        "start_time",
-        "config"
+        "start_time"
       ]
     }
   };
@@ -99,7 +98,7 @@ message Task {
   // End timestamp if completed.
   optional google.protobuf.Timestamp end_time = 6;
   // The configuration of the task.
-  optional google.protobuf.Struct config = 7;
+  optional string config = 7;
 }
 
 // Address represents an exposed port on a container.

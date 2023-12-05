@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/pkg/errors"
 
@@ -49,10 +48,9 @@ func (a *apiServer) GetTaskConfig(
 	case errors.Is(err, db.ErrNotFound):
 		return nil, api.NotFoundErrs("task", req.TaskId, true)
 	default:
-		config, err := json.Marshal(t.Config)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
 		}
-		return &apiv1.GetTaskConfigResponse{Config: string(config)}, nil
+		return &apiv1.GetTaskConfigResponse{Config: *t.Config}, nil
 	}
 }
