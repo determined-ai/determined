@@ -1657,29 +1657,6 @@ jobs:
           paths:
             - "proto/build/**/*"
 
-  test-unit-go:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
-    steps:
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - reinstall-go
-      - go-get-deps
-      - run: make -C proto build
-      - run: make -C master test
-      - run: make -C agent test
-      - codecov/upload:
-          flags: "backend"
-          xtra_args: "-v"
-      - store_test_results:
-          path: master/test.junit.xml
-      - store_test_results:
-          path: agent/test.junit.xml
-
   test-intg-master:
     machine:
       image: <<pipeline.parameters.machine-image>>
@@ -1747,6 +1724,32 @@ jobs:
       - store_artifacts:
           path: go-coverage
           destination: go-coverage
+
+  check-go-coverage-master:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: go run master/cmd/cover-regex/cover_regex.go master/coverage.out || true
+
+  check-go-coverage-agent:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: go run master/cmd/cover-regex/cover_regex.go agent/coverage.out || true
 
   lint-docs:
     docker:
@@ -2538,7 +2541,6 @@ workflows:
 
   test-unit:
     jobs:
-      - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
       - test-unit-harness-tf2
@@ -2581,7 +2583,7 @@ workflows:
             - test-unit-model-hub
             - test-unit-storage
 
-  test-intg:
+  test-go:
     jobs:
       # https://determined-ai.slack.com/archives/C03H5KZPU30/p1667241463073989
       # - test-intg-downstream
@@ -2592,6 +2594,12 @@ workflows:
           requires:
             - test-intg-master
             - test-intg-agent
+      - check-go-coverage-master:
+          requires:
+            - go-coverage
+      - check-go-coverage-agent:
+          requires:
+            - go-coverage
 
   test-e2e:
     jobs:

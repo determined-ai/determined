@@ -185,6 +185,124 @@ func RequireMockJob(t *testing.T, db *PgDB, userID *model.UserID) model.JobID {
 	return jID
 }
 
+// RequireMockCommandID creates a mock command and returns a command ID.
+func RequireMockCommandID(t *testing.T, db *PgDB, userID model.UserID) model.TaskID {
+	task := RequireMockTask(t, db, &userID)
+	alloc := RequireMockAllocation(t, db, task.TaskID)
+
+	mockCommand := struct {
+		bun.BaseModel `bun:"table:command_state"`
+
+		TaskID             model.TaskID
+		AllocationID       model.AllocationID
+		GenericCommandSpec map[string]any
+	}{
+		TaskID:       task.TaskID,
+		AllocationID: alloc.AllocationID,
+		GenericCommandSpec: map[string]any{
+			"TaskType": model.TaskTypeCommand,
+			"Metadata": map[string]any{
+				"workspace_id": 1,
+			},
+			"Base": map[string]any{
+				"Owner": map[string]any{
+					"id": userID,
+				},
+			},
+		},
+	}
+	_, err := Bun().NewInsert().Model(&mockCommand).Exec(context.TODO())
+	require.NoError(t, err)
+
+	return task.TaskID
+}
+
+// RequireMockTensorboardID creates a mock tensorboard and returns a tensorboard ID.
+func RequireMockTensorboardID(
+	t *testing.T, db *PgDB, userID model.UserID, expIDs, trialIDs []int,
+) model.TaskID {
+	task := RequireMockTask(t, db, &userID)
+	alloc := RequireMockAllocation(t, db, task.TaskID)
+
+	mockTensorboard := struct {
+		bun.BaseModel `bun:"table:command_state"`
+
+		TaskID             model.TaskID
+		AllocationID       model.AllocationID
+		GenericCommandSpec map[string]any
+	}{
+		TaskID:       task.TaskID,
+		AllocationID: alloc.AllocationID,
+		GenericCommandSpec: map[string]any{
+			"TaskType": model.TaskTypeTensorboard,
+			"Metadata": map[string]any{
+				"workspace_id":   1,
+				"experiment_ids": expIDs,
+				"trial_ids":      trialIDs,
+			},
+			"Base": map[string]any{
+				"Owner": map[string]any{
+					"id": userID,
+				},
+			},
+		},
+	}
+	_, err := Bun().NewInsert().Model(&mockTensorboard).Exec(context.TODO())
+	require.NoError(t, err)
+
+	return task.TaskID
+}
+
+// RequireMockWorkspaceID returns a mock workspace ID.
+func RequireMockWorkspaceID(t *testing.T, db *PgDB) int {
+	mockWorkspace := struct {
+		bun.BaseModel `bun:"table:workspaces"`
+
+		ID   int `bun:"id,pk,autoincrement"`
+		Name string
+	}{
+		Name: uuid.New().String(),
+	}
+	_, err := Bun().NewInsert().Model(&mockWorkspace).Returning("id").Exec(context.TODO())
+	require.NoError(t, err)
+
+	return mockWorkspace.ID
+}
+
+// RequireMockProjectID returns a mock project ID.
+func RequireMockProjectID(t *testing.T, db *PgDB) int {
+	wID := RequireMockWorkspaceID(t, db)
+
+	mockProject := struct {
+		bun.BaseModel `bun:"table:projects"`
+
+		ID          int `bun:"id,pk,autoincrement"`
+		WorkspaceID int
+		Name        string
+	}{
+		WorkspaceID: wID,
+		Name:        uuid.New().String(),
+	}
+	_, err := Bun().NewInsert().Model(&mockProject).Returning("id").Exec(context.TODO())
+	require.NoError(t, err)
+
+	return mockProject.ID
+}
+
+// RequireGetProjectHParams returns projects hparams.
+func RequireGetProjectHParams(t *testing.T, db *PgDB, projectID int) []string {
+	p := struct {
+		bun.BaseModel `bun:"table:projects"`
+
+		Hyperparameters []string
+	}{}
+	require.NoError(t, Bun().NewSelect().Model(&p).
+		Where("id = ?", projectID).
+		Scan(context.TODO(), &p))
+
+	return p.Hyperparameters
+}
+
 // RequireMockTask returns a mock task.
 func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 	jID := RequireMockJob(t, db, userID)
@@ -216,9 +334,25 @@ func RequireMockUser(t *testing.T, db *PgDB) model.User {
 }
 
 // RequireMockExperiment returns a mock experiment.
-// nolint: exhaustruct
 func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Experiment {
-	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
+	return RequireMockExperimentParams(t, db, user, MockExperimentParams{})
+}
+
+// MockExperimentParams is the parameters for mock experiment.
+type MockExperimentParams struct {
+	HParamNames *[]string
+	ProjectID   *int
+}
+
+// RequireMockExperimentParams returns a mock experiment with various parameters.
+// nolint: exhaustruct
+func RequireMockExperimentParams(
+	t *testing.T,
+	db *PgDB,
+	user model.User,
+	p MockExperimentParams,
+) *model.Experiment {
+	notDefaulted := expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{
 				RawHostPath: ptrs.Ptr("/home/ckpts"),
@@ -243,7 +377,19 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 			},
 			RawMetric: ptrs.Ptr(defaultSearcherMetric),
 		},
-	})
+	}
+	if p.HParamNames != nil {
+		notDefaulted.RawHyperparameters = map[string]expconf.HyperparameterV0{}
+		for _, n := range *p.HParamNames {
+			notDefaulted.RawHyperparameters[n] = expconf.HyperparameterV0{
+				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
+					RawVal: ptrs.Ptr(1),
+				},
+			}
+		}
+	}
+
+	cfg := schemas.WithDefaults(notDefaulted)
 
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),
@@ -255,6 +401,10 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 		Username:             user.Username,
 		ProjectID:            1,
 	}
+	if p.ProjectID != nil {
+		exp.ProjectID = *p.ProjectID
+	}
+
 	err := db.AddExperiment(&exp, cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
