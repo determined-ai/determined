@@ -152,11 +152,11 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
             ? option.content
             : option.menuOptions.map((menuOption) => (
               <Button
-                disabled={menuOption.disabled || !menuOption.onClick}
-                icon={menuOption?.icon}
-                key={menuOption.key}
-                loading={menuOption.isLoading}
-                onClick={menuOption.onClick}>
+                  disabled={menuOption.disabled || !menuOption.onClick}
+                  icon={menuOption?.icon}
+                  key={menuOption.key}
+                  loading={menuOption.isLoading}
+                  onClick={menuOption.onClick}>
                 {renderOptionLabel(menuOption)}
               </Button>
               )),
