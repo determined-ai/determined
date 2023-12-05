@@ -6,7 +6,7 @@
 
 Determined lets you manage users and user provisioning remotely. Remote user provisioning lets you
 include and synchronize any information about the user stored in your IdP such as their username,
-groups, and display name. Once configured, you can manage remote users without having to manually
+display name, and groups. Once configured, you can manage remote users without having to manually
 modify the users or update them via SCIM. Each time the remote user accesses Determined, their
 information is synchronized.
 
@@ -14,7 +14,7 @@ information is synchronized.
 
 .. note::
 
-   Only OIDC is supported.
+   As of 026.4, OIDC is supported.
 
 *******************************
  Enable Remote User Management
@@ -47,11 +47,12 @@ enable auto provisioning users and the remote management of any information atta
          oidc:
              enabled: true
              provider: "Okta"
-             idp_recipient_url: "https://determined.example.com"
+             idp_recipient_url: "https://determined.example.com/oidc/sso"
              idp_sso_url: "https://dev-00000000.okta.com"
              client_id: "xx0xx0"
              client_secret: "xx0xx0"
              auto_provision_users: true
+             display_name_claim_name: "XYZ"
 
    .. tab::
 
@@ -69,14 +70,18 @@ enable auto provisioning users and the remote management of any information atta
 
       .. code:: yaml
 
-         samle:
+         saml:
              enabled: true
              provider: "Okta"
-             idp_recipient_url: "https://determined.example.com"
-             idp_sso_url: "https://dev-00000000.okta.com"
-             client_id: "xx0xx0"
-             client_secret: "xx0xx0"
+             idp_recipient_url: "https://determined.example.com/saml/sso"
+             idp_sso_url: "https://myorg.okta.com/app/...sso/saml"
+             idp_cert_path: "okta.cert"
              auto_provision_users: true
+             groups_attribute_name: "groups"
+             display_name_attribute_name: "disp_name"
+         security:
+            rbac_ui_enabled: true
+            type: rbac
 
 Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
@@ -84,8 +89,8 @@ independently.
 Set the Groups Claim Name Option
 ================================
 
-Determined receives OIDC claims via a JSON Web Token (JWT) that you send from your IdP. If there is
-a group that does not already exist in Determined, then the system creates the group.
+Determined receives OIDC and SAML claims via a JSON Web Token (JWT) that you send from your IdP. If
+there is a group that does not already exist in Determined, then the system creates the group.
 
 To enable group membership synchronization:
 
@@ -125,7 +130,7 @@ Once auto provisioning is configured, the user simply signs in with their userna
 For example, to sign in to Determined via Okta, the user performs the following steps:
 
 -  Visit the Determined URL, e.g., https://determined.example.com.
--  Under **Sign in with Okta**, the user enters their SSO-enabled email address.
+-  Under **Sign in with Okta**, enter the SSO-enabled email address.
 
 If the sign in is successful, Determined provisions the user, adds the user to the user table, and
 authenticates the user to Determined.

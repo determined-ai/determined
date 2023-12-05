@@ -177,13 +177,19 @@ To list all existing roles and their permissions:
 
    det rbac list-roles
 
-To list existing users, group and their membership:
+To list all users, groups, and their membership:
+
+.. code:: bash
+
+   det user list --all
+   det user-group list
+   det user-group describe GROUP_NAME
+
+To list only **active** users, remove the ``--all`` (or ``--a``) option:
 
 .. code:: bash
 
    det user list
-   det user-group list
-   det user-group describe GROUP_NAME
 
 To create a new :ref:`remote user <remote-users>`:
 
