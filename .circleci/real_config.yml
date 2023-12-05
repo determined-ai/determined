@@ -577,7 +577,7 @@ commands:
             # of the tests that would be run, along with some other stuff. Each file containing
             # any selected tests is printed on a line by itself, except for (for some reason) a
             # single trailing space.
-            pytest --setup-plan -m '<<parameters.mark>>' | grep '\.py $' | sed 's/ $//' > /tmp/all-relevant-files
+            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py (ss)?$' | sed 's/ $//' > /tmp/all-relevant-files
 
             echo 'All files with tests matching mark "<<parameters.mark>>":'
             sed 's/^/- /' </tmp/all-relevant-files
