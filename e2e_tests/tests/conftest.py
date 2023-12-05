@@ -49,10 +49,9 @@ _INTEG_MARKERS = {
     "deepspeed",
     "managed_devcluster",
     "port_registry",
-    "e2e_gpu_quarantine",
     "model_hub_mmdetection_quarantine",
-    "nightly_quarantine",
     "distributed_quarantine",
+    "det_deploy_local_quarantine",
 }
 
 

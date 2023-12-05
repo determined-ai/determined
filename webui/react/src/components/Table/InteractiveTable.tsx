@@ -328,8 +328,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? dropRightStyle
             : dragState === 'draggingLeft'
-            ? dropLeftStyle
-            : {}
+              ? dropLeftStyle
+              : {}
         }
       />
       <span
@@ -338,8 +338,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? { right: '-3px' }
             : dragState === 'draggingLeft'
-            ? { left: '-3px' }
-            : {}
+              ? { left: '-3px' }
+              : {}
         }
       />
     </th>
@@ -674,7 +674,7 @@ const InteractiveTable = <
                 index,
                 numOfPinned,
                 record,
-              } as React.HTMLAttributes<HTMLElement>)
+              }) as React.HTMLAttributes<HTMLElement>
             }
             {...props}
           />

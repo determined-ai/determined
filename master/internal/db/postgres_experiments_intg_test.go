@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -354,7 +355,10 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.ValidationMetricGroup])
 
 	addMetricCustomTime(ctx, t, trial2, time.Now())
-	runSummaryMigration(t)
+	require.NoError(t, db.withTransaction("add trial summary metrics",
+		func(tx *sqlx.Tx) error {
+			return db.fullTrialSummaryMetricsRecompute(ctx, tx, trial2)
+		}))
 
 	actualNames, err = db.MetricNames(ctx, []int{exp.ID})
 	require.NoError(t, err)
@@ -373,6 +377,92 @@ func TestMetricNames(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "d"}, actualNames[model.MetricGroup("inference")])
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
+}
+
+func TestExperimentBestSearcherValidation(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	// Not found.
+	_, err := ExperimentBestSearcherValidation(ctx, -1)
+	require.ErrorIs(t, err, ErrNotFound)
+
+	exp := RequireMockExperiment(t, db, user)
+	t0 := RequireMockTrialID(t, db, exp)
+	addMetrics(ctx, t, db, t0, `[]`,
+		fmt.Sprintf(`[{"%[1]s": -5.0}, {"%[1]s": 1.0}]`, defaultSearcherMetric), false)
+
+	t1 := RequireMockTrialID(t, db, exp)
+	addMetrics(ctx, t, db, t1, `[]`,
+		fmt.Sprintf(`[{"%[1]s": -1.0}, {"%[1]s": 5.0}]`, defaultSearcherMetric), false)
+
+	val, err := ExperimentBestSearcherValidation(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, float32(-5.0), val)
+
+	_, err = Bun().NewUpdate().Table("experiments").
+		Set("config = jsonb_set(config, '{searcher,smaller_is_better}', 'false'::jsonb)").
+		Where("id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	val, err = ExperimentBestSearcherValidation(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, float32(5.0), val)
+}
+
+func TestProjectHyperparameters(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	projectID := RequireMockProjectID(t, db)
+	exp0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		HParamNames: &[]string{"a", "b", "c"},
+		ProjectID:   &projectID,
+	})
+	exp1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		HParamNames: &[]string{"b", "c", "d"},
+		ProjectID:   &projectID,
+	})
+
+	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
+	require.Len(t, RequireGetProjectHParams(t, db, projectID), 0)
+
+	require.NoError(t,
+		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
+	require.Len(t, RequireGetProjectHParams(t, db, projectID), 0)
+
+	require.NoError(t,
+		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
+	require.ElementsMatch(t, []string{"a", "b", "c"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
+	require.ElementsMatch(t, []string{"a", "b", "c"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp1.ID)}))
+	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp1.ID)}))
+	require.ElementsMatch(t, []string{}, // TODO(!!!) this is a bug in the query.
+		RequireGetProjectHParams(t, db, projectID))
 }
 
 func TestActiveLogPatternPolicies(t *testing.T) {

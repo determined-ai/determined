@@ -138,12 +138,18 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
-      if (!canHparam) {
+      if (!canHparam || !!experiment.unmanaged) {
         delete opts[TrialAction.HyperparameterSearch];
       }
       return opts;
     },
-    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [
+      canHparam,
+      experiment.unmanaged,
+      handleHyperparameterSearch,
+      handleOpenTensorBoard,
+      handleViewLogs,
+    ],
   );
 
   const columns = useMemo(() => {

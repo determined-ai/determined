@@ -205,7 +205,8 @@ func (a *agentState) deepCopy() *agentState {
 		draining:              a.draining,
 		containerState:        maps.Clone(a.containerState),
 		// TODO(ilia): Deepcopy of `slotStates` may be necessary one day.
-		slotStates: a.slotStates,
+		slotStates:       a.slotStates,
+		resourcePoolName: a.resourcePoolName,
 	}
 
 	return copiedAgent
@@ -659,9 +660,9 @@ func (a *agentState) restoreContainersField() error {
 	if err != nil {
 		return err
 	}
-	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(res))
 	a.containerAllocation = res
 
+	a.syslog.Debugf("restored %d/%d container to allocation mappings", len(res), len(containerIDs))
 	return nil
 }
 

@@ -100,10 +100,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
         const roles = await getGroupRoles({ groupId: group.group.groupId });
         const groupRoles = roles.filter((r) => r.scopeCluster);
         setGroupRoles(groupRoles);
-        form.setFieldValue(
-          GROUP_ROLE_NAME,
-          groupRoles?.map((r) => r.id),
-        );
+        form.setFieldValue(GROUP_ROLE_NAME, groupRoles?.map((r) => r.id));
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this group's roles." });
       }

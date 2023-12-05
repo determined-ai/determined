@@ -47,10 +47,11 @@ type User struct {
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
 type UserSession struct {
-	bun.BaseModel `bun:"table:user_sessions"`
-	ID            SessionID `db:"id" json:"id"`
-	UserID        UserID    `db:"user_id" json:"user_id"`
-	Expiry        time.Time `db:"expiry" json:"expiry"`
+	bun.BaseModel   `bun:"table:user_sessions"`
+	ID              SessionID         `db:"id" json:"id"`
+	UserID          UserID            `db:"user_id" json:"user_id"`
+	Expiry          time.Time         `db:"expiry" json:"expiry"`
+	InheritedClaims map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
 }
 
 // A FullUser is a User joined with any other user relations.

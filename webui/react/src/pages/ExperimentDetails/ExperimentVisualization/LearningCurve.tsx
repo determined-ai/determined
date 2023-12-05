@@ -93,12 +93,15 @@ export const getCustomSearchVaryingHPs = (
 
   // If there's only one result, don't filter by unique results
   const all_keys = trialHps.length === 1 ? Object.keys(check_dict) : Array.from(uniq);
-  return all_keys.reduce((acc, key) => {
-    acc[key] = {
-      type: HyperparameterType.Constant,
-    };
-    return acc;
-  }, {} as Record<string, Hyperparameter>);
+  return all_keys.reduce(
+    (acc, key) => {
+      acc[key] = {
+        type: HyperparameterType.Constant,
+      };
+      return acc;
+    },
+    {} as Record<string, Hyperparameter>,
+  );
 };
 
 const LearningCurve: React.FC<Props> = ({
@@ -126,10 +129,13 @@ const LearningCurve: React.FC<Props> = ({
     if (experiment.config.searcher.name === ExperimentSearcherName.Custom && trialHps.length > 0) {
       return getCustomSearchVaryingHPs(trialHps);
     } else {
-      return fullHParams.reduce((acc, key) => {
-        acc[key] = experiment.hyperparameters[key];
-        return acc;
-      }, {} as Record<string, Hyperparameter>);
+      return fullHParams.reduce(
+        (acc, key) => {
+          acc[key] = experiment.hyperparameters[key];
+          return acc;
+        },
+        {} as Record<string, Hyperparameter>,
+      );
     }
   }, [experiment.hyperparameters, fullHParams, trialHps, experiment.config]);
 

@@ -155,7 +155,7 @@ func (rp *resourcePool) allocateRequest(msg sproto.AllocateRequest) {
 			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
-			rmevents.Publish(msg.AllocationID, &sproto.ResourcesFailureError{
+			rmevents.Publish(msg.AllocationID, &sproto.ResourcesRestoreError{
 				FailureType: sproto.RestoreError,
 				ErrMsg:      err.Error(),
 				ExitCode:    nil,
@@ -170,7 +170,7 @@ func (rp *resourcePool) allocateRequest(msg sproto.AllocateRequest) {
 func (rp *resourcePool) restoreResources(
 	req *sproto.AllocateRequest,
 ) error {
-	rp.agentStatesCache = rp.agentService.list()
+	rp.agentStatesCache = rp.agentService.list(rp.config.PoolName)
 	defer func() {
 		rp.agentStatesCache = nil
 	}()
@@ -371,7 +371,7 @@ func (rp *resourcePool) schedulerTick() {
 	}
 	if rp.reschedule {
 		rp.syslog.Trace("scheduling")
-		rp.agentStatesCache = rp.agentService.list()
+		rp.agentStatesCache = rp.agentService.list(rp.config.PoolName)
 		defer func() {
 			rp.agentStatesCache = nil
 		}()
@@ -608,7 +608,7 @@ func (rp *resourcePool) GetResourceSummary() resourceSummary {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
-	rp.agentStatesCache = rp.agentService.list()
+	rp.agentStatesCache = rp.agentService.list(rp.config.PoolName)
 	defer func() {
 		rp.agentStatesCache = nil
 	}()
@@ -628,7 +628,7 @@ func (rp *resourcePool) CapacityCheck(msg sproto.CapacityCheck) (sproto.Capacity
 		}
 		blockedNodeSet = set.FromSlice(blockedNodes)
 	}
-	rp.agentStatesCache = rp.agentService.list()
+	rp.agentStatesCache = rp.agentService.list(rp.config.PoolName)
 	defer func() {
 		rp.agentStatesCache = nil
 	}()

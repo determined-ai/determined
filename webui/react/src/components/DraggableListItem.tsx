@@ -65,8 +65,8 @@ const DraggableListItem: React.FC<Props> = ({
             ? dropDirection === 'above'
               ? css.aboveDropTarget
               : dropDirection === 'below'
-              ? css.belowDropTarget
-              : undefined
+                ? css.belowDropTarget
+                : undefined
             : undefined
         }
         ref={drag}

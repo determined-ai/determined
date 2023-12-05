@@ -187,6 +187,16 @@ func newAllocation(
 	return a, nil
 }
 
+// how are we getting 0 container snapshots in the first place?
+//		- sleep before we call persist() and see if that causes it
+//		- definitely peek at pre-actor code
+// either way, how does it cause a hang?
+//		- we don't send the resources released event.
+// after we finish restore, we should all the agentrm and cull all unreattached
+// containers.
+// allocation is crashing and deleting resourcemanagers_agent_containers so fast that
+// the agent can't restore them. then when the agent can't restore them
+
 // Receive implements actor.Actor for the allocation.
 // The normal flow of an allocation is to:
 //
@@ -211,17 +221,13 @@ func (a *allocation) run(ctx context.Context, sub *sproto.ResourcesSubscription)
 	defer a.recover()
 	defer sub.Close()
 	defer a.wg.Cancel() // Important if we panic, so awaitTermination can unblock.
-	for {
-		event := sub.Get()
-		if event == (sproto.ResourcesReleasedEvent{}) {
-			return
-		}
-		a.HandleRMEvent(event)
+
+	for !a.HandleRMEvent(sub.Get()) {
 	}
 }
 
 // HandleRMEvent handles downstream events from the resource manager.
-func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) {
+func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) (done bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -232,17 +238,22 @@ func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) {
 		}
 	case *sproto.ResourcesStateChanged:
 		a.resourcesStateChanged(msg)
-	case *sproto.ResourcesFailureError:
-		a.restoreResourceFailure(msg)
 	case *sproto.ReleaseResources:
 		a.releaseResources(msg)
 	case *sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
+	case *sproto.ResourcesRestoreError:
+		a.restoreResourceFailure(msg)
+		return true
 	case *sproto.InvalidResourcesRequestError:
 		a.crash(msg.Cause)
+		return true
+	case sproto.ResourcesReleasedEvent:
+		return true
 	default:
 		panic(fmt.Errorf("unexpected RM event"))
 	}
+	return false
 }
 
 // State returns a copy of the current State of the allocation.
@@ -511,7 +522,10 @@ func (a *allocation) finalize(
 	severity logrus.Level,
 	exitErr error,
 ) {
-	defer a.rm.Release(sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+	defer a.rm.Release(sproto.ResourcesReleased{
+		AllocationID: a.req.AllocationID,
+		ResourcePool: a.req.ResourcePool,
+	})
 	for _, cl := range a.closers {
 		defer cl()
 	}
@@ -734,6 +748,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		a.rm.Release(sproto.ResourcesReleased{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  &msg.ResourcesID,
+			ResourcePool: a.req.ResourcePool,
 		})
 
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
@@ -788,7 +803,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 }
 
 // restoreResourceFailure handles the restored resource failures.
-func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesFailureError) {
+func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
 	a.syslog.Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
@@ -967,7 +982,7 @@ func (a *allocation) exitedWithoutErr() bool {
 
 func (a *allocation) SetExitStatus(exitReason string, exitErr error, statusCode *int32) {
 	switch err := exitErr.(type) {
-	case sproto.ResourcesFailureError:
+	case sproto.ResourcesRestoreError:
 		a.model.ExitErr = ptrs.Ptr(err.Error())
 		if err.ExitCode != nil {
 			a.model.StatusCode = ptrs.Ptr(int32(*err.ExitCode))
@@ -1097,7 +1112,7 @@ func (a *allocation) calculateExitStatus(reason string) (
 		return fmt.Sprintf("allocation stopped early after %s", reason), true, logrus.InfoLevel, nil
 	case a.exitErr != nil:
 		switch err := a.exitErr.(type) {
-		case sproto.ResourcesFailureError:
+		case sproto.ResourcesRestoreError:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsGracefully {

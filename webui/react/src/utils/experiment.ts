@@ -1,6 +1,7 @@
 import {
   cancellableRunStates,
   deletableRunStates,
+  erroredRunStates,
   killableRunStates,
   pausableRunStates,
   terminalRunStates,
@@ -24,7 +25,11 @@ import {
 } from 'types';
 import { deletePathList, getPathList, isNumber, setPathList, unflattenObject } from 'utils/data';
 
-type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) => boolean;
+type ExperimentChecker = (
+  experiment: ProjectExperiment,
+  trial?: TrialDetails,
+  erroredTrialCount?: number,
+) => boolean;
 
 type ExperimentPermissionSet = {
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -50,15 +55,18 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 export const trialHParamsToExperimentHParams = (
   trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
-  const hParams = Object.keys(trialHParams).reduce((acc, key) => {
-    return {
-      ...acc,
-      [key]: {
-        type: HyperparameterType.Constant,
-        val: trialHParams[key] as number,
-      },
-    };
-  }, {} as Record<keyof TrialHyperparameters, unknown>);
+  const hParams = Object.keys(trialHParams).reduce(
+    (acc, key) => {
+      return {
+        ...acc,
+        [key]: {
+          type: HyperparameterType.Constant,
+          val: trialHParams[key] as number,
+        },
+      };
+    },
+    {} as Record<keyof TrialHyperparameters, unknown>,
+  );
   return unflattenObject(hParams) as Hyperparameters;
 };
 
@@ -113,6 +121,11 @@ export const isExperimentForkable = (experiment: ProjectExperiment): boolean =>
 
 export const alwaysTrueExperimentChecker = (_experiment: ProjectExperiment): boolean => true;
 
+const resumableSearcherTypes: ExperimentSearcherName[] = [
+  ExperimentSearcherName.Grid,
+  ExperimentSearcherName.Random,
+];
+
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
@@ -147,6 +160,11 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Fork]: isExperimentForkable,
 
+  [ExperimentAction.Retry]: (experiment, _, erroredTrialCount) =>
+    (erroredRunStates.has(experiment.state) ||
+      (experiment.state === RunState.Completed && (erroredTrialCount ?? 0) > 0)) &&
+    resumableSearcherTypes.includes(experiment.config.searcher.name),
+
   [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
 
   [ExperimentAction.Move]: (experiment) => !experiment?.parentArchived && !experiment.archived,
@@ -167,24 +185,27 @@ export const canActionExperiment = (
   action: ExperimentAction,
   experiment: ProjectExperiment,
   trial?: TrialDetails,
+  erroredTrialCount?: number,
 ): boolean => {
-  return !!experiment && experimentCheckers[action](experiment, trial);
+  return !!experiment && experimentCheckers[action](experiment, trial, erroredTrialCount);
 };
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
   targets: ExperimentAction[],
   permissions: ExperimentPermissionSet,
+  erroredTrialCount?: number,
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
   const workspace = { id: experiment.workspaceId };
   return targets
-    .filter((action) => canActionExperiment(action, experiment))
+    .filter((action) => canActionExperiment(action, experiment, undefined, erroredTrialCount))
     .filter((action) => {
       switch (action) {
         case ExperimentAction.ContinueTrial:
         case ExperimentAction.Fork:
         case ExperimentAction.HyperparameterSearch:
+        case ExperimentAction.Retry:
           return (
             permissions.canViewExperimentArtifacts({ workspace }) &&
             permissions.canCreateExperiment({ workspace }) &&
@@ -250,7 +271,7 @@ export const getProjectExperimentForExperimentItem = (
     projectOwnerId: project?.userId ?? 0,
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
-  } as ProjectExperiment);
+  }) as ProjectExperiment;
 
 const runStateSortOrder: RunState[] = [
   RunState.Active,

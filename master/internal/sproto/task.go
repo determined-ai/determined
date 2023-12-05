@@ -73,6 +73,7 @@ type (
 	ResourcesReleased struct {
 		AllocationID model.AllocationID
 		ResourcesID  *ResourcesID
+		ResourcePool string
 	}
 	// GetAllocationSummary returns the summary of the specified task.
 	GetAllocationSummary struct{ ID model.AllocationID }
@@ -95,6 +96,7 @@ type (
 	SetAllocationName struct {
 		Name         string
 		AllocationID model.AllocationID
+		ResourcePool string
 	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
@@ -136,7 +138,7 @@ func (*ReleaseResources) ResourcesEvent() {}
 func (*ResourcesStateChanged) ResourcesEvent() {}
 
 // ResourcesEvent implements ResourcesEvent.
-func (*ResourcesFailureError) ResourcesEvent() {}
+func (*ResourcesRestoreError) ResourcesEvent() {}
 
 // ResourcesEvent implements ResourcesEvent.
 func (*ContainerLog) ResourcesEvent() {}

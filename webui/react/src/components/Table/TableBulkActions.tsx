@@ -42,8 +42,8 @@ function TableBatch<T extends string>({
   const message = selectAllMatching
     ? 'Apply batch operations to all matching items'
     : selectCount === 0
-    ? 'Select Items to Apply Actions'
-    : `Apply batch operations to ${selectCount}` + ` item${selectCount === 1 ? '' : 's'}`;
+      ? 'Select Items to Apply Actions'
+      : `Apply batch operations to ${selectCount}` + ` item${selectCount === 1 ? '' : 's'}`;
 
   const actions = useMemo(
     () =>

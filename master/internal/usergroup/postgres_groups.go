@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
@@ -484,4 +485,55 @@ func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, er
 		Scan(ctx)
 
 	return users, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d info", gid)
+}
+
+// UpdateUserGroupMembershipTx takes in slice of groups, and updates a user's membership in those groups.
+func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User, groups []string) error {
+	// Get a list of groups a user is in.
+	currentGroups, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, "", u.ID)
+	if err != nil {
+		return fmt.Errorf("finding current user groups: %w", err)
+	}
+
+	groupsToRemove := set.New[int]()
+	// Remove the user from any groups no longer included in the slice.
+	for _, g := range currentGroups {
+		if !slices.Contains(groups, g.Name) {
+			groupsToRemove.Insert(g.ID)
+		}
+	}
+	if len(groupsToRemove) != 0 {
+		if err := RemoveUsersFromGroupsTx(ctx, tx, groupsToRemove.ToSlice(), u.ID); err != nil {
+			return fmt.Errorf("failed to remove user from group: %w", err)
+		}
+	}
+
+	groupsToAdd := set.New[int]()
+	// Add the user to groups included in the slice.
+	for _, g := range groups {
+		// Check if the group already exists, regardless of if the user belongs to it.
+		gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, g, model.UserID(0))
+		if err != nil {
+			return fmt.Errorf("failed to find usergroup: %w", err)
+		}
+
+		if len(gps) == 0 {
+			newGroup, err := AddGroupTx(ctx, tx, model.Group{Name: g})
+			if err != nil {
+				return fmt.Errorf("failed to add usergroup: %w", err)
+			}
+			groupsToAdd.Insert(newGroup.ID)
+		} else if !slices.Contains(currentGroups, gps[0]) {
+			// gps should be a slice of length 1 since group name is unique.
+			groupsToAdd.Insert(gps[0].ID)
+		}
+	}
+
+	if len(groupsToAdd) != 0 {
+		if err := AddUsersToGroupsTx(ctx, tx, groupsToAdd.ToSlice(), true, u.ID); err != nil {
+			return fmt.Errorf("error adding user to group: %s", err)
+		}
+	}
+
+	return nil
 }
