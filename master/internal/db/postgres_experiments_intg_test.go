@@ -258,6 +258,17 @@ func TestCheckpointMetadata(t *testing.T) {
 			err := AddCheckpointMetadata(ctx, &ckpt, tr.ID)
 			require.NoError(t, err)
 
+			// We added the checkpoint relationship row.
+			var res model.RunCheckpoints
+			require.NoError(t, Bun().NewSelect().Model(&res).
+				Where("run_id = ?", tr.ID).
+				Where("checkpoint_id = ?", ckptUUID).
+				Scan(ctx, &res))
+			require.Equal(t, model.RunCheckpoints{
+				RunID:        tr.ID,
+				CheckpointID: ckptUUID,
+			}, res)
+
 			var m *trialv1.TrialMetrics
 			const metricValue = 1.0
 			if tt.hasValidation {
