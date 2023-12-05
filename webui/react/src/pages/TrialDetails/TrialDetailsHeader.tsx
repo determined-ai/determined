@@ -6,10 +6,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
-import PageHeaderFoldable, { Option, renderOptionLabel } from 'components/PageHeaderFoldable';
+import PageHeaderFoldable, { renderOptionLabel } from 'components/PageHeaderFoldable';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import { ActionOptions } from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
 import {
@@ -21,7 +22,6 @@ import {
 } from 'types';
 import { canActionExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
-
 interface Props {
   experiment: ExperimentBase;
   fetchTrialDetails: () => void;
@@ -58,45 +58,60 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     }
   }, [trial]);
 
-  const headerOptions = useMemo<Option[]>(() => {
-    const options: Option[] = [];
+  const headerOptions = useMemo<ActionOptions[]>(() => {
+    const options: ActionOptions[] = [];
 
     if (!trialNeverData) {
       options.push({
-        icon: <Icon decorative name="tensor-board" size="small" />,
-        isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
-        label: 'TensorBoard',
-        onClick: async () => {
-          setIsRunningTensorBoard(true);
-          const commandResponse = await openOrCreateTensorBoard({
-            trialIds: [trial.id],
-            workspaceId: experiment.workspaceId,
-          });
-          openCommandResponse(commandResponse);
-          await fetchTrialDetails();
-          setIsRunningTensorBoard(false);
-        },
+        menuOptions: [
+          {
+            icon: <Icon decorative name="tensor-board" size="small" />,
+            isLoading: isRunningTensorBoard,
+            key: Action.OpenTensorBoard,
+            label: 'TensorBoard',
+            onClick: async () => {
+              setIsRunningTensorBoard(true);
+              const commandResponse = await openOrCreateTensorBoard({
+                trialIds: [trial.id],
+                workspaceId: experiment.workspaceId,
+              });
+              openCommandResponse(commandResponse);
+              await fetchTrialDetails();
+              setIsRunningTensorBoard(false);
+            },
+          },
+        ],
       });
     }
 
     if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
-          disabled: experiment.unmanaged,
-          icon: <Icon decorative name="fork" size="small" />,
           key: Action.ContinueTrial,
-          label: 'Continue Trial',
-          onClick: ExperimentCreateModal.open,
-          tooltip: experiment.unmanaged ? UNMANAGED_MESSAGE : undefined,
+          menuOptions: [
+            {
+              disabled: experiment.unmanaged,
+              icon: <Icon decorative name="fork" size="small" />,
+              key: Action.ContinueTrial,
+              label: 'Continue Trial',
+              onClick: ExperimentCreateModal.open,
+              tooltip: experiment.unmanaged ? UNMANAGED_MESSAGE : undefined,
+            },
+          ],
         });
       } else {
         options.push({
-          disabled: experiment.unmanaged,
-          icon: <Icon decorative name="fork" size="small" />,
           key: Action.ContinueTrial,
-          label: 'Continue Trial',
-          tooltip: 'No checkpoints found. Cannot continue trial',
+          menuOptions: [
+            {
+              disabled: experiment.unmanaged,
+              icon: <Icon decorative name="fork" size="small" />,
+              key: Action.ContinueTrial,
+              label: 'Continue Trial',
+              tooltip: 'No checkpoints found. Cannot continue trial',
+            },
+          ],
         });
       }
     }
@@ -107,8 +122,13 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     ) {
       options.push({
         key: Action.HyperparameterSearch,
-        label: 'Hyperparameter Search',
-        onClick: handleHyperparameterSearch,
+        menuOptions: [
+          {
+            key: Action.HyperparameterSearch,
+            label: 'Hyperparameter Search',
+            onClick: handleHyperparameterSearch,
+          },
+        ],
       });
     }
 
@@ -128,17 +148,20 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
       <PageHeaderFoldable
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions.map((option) => ({
-          content: (
-            <Button
-              disabled={option.disabled || !option.onClick}
-              icon={option?.icon}
-              key={option.key}
-              loading={option.isLoading}
-              onClick={option.onClick}>
-              {renderOptionLabel(option)}
-            </Button>
-          ),
-          menuOption: option,
+          content: option?.content
+            ? option.content
+            : option.menuOptions.map((menuOption) => (
+              <Button
+                  disabled={menuOption.disabled || !menuOption.onClick}
+                  icon={menuOption?.icon}
+                  key={menuOption.key}
+                  loading={menuOption.isLoading}
+                  onClick={menuOption.onClick}>
+                {renderOptionLabel(menuOption)}
+              </Button>
+              )),
+          key: option.key,
+          menuOptions: option.menuOptions,
         }))}
       />
       <ExperimentCreateModal.Component
