@@ -1,5 +1,6 @@
 import os
 import typing
+from urllib import parse
 
 import swagger_parser
 from typing_extensions import assert_never
@@ -209,6 +210,7 @@ def gen_function(func: swagger_parser.Function) -> Code:
     if func.params:
         out += ["    *,"]
 
+
     required = sorted((k, v) for k, v in func.params.items() if v.required)
     optional = sorted((k, v) for k, v in func.params.items() if not v.required)
 
@@ -259,6 +261,10 @@ def gen_function(func: swagger_parser.Function) -> Code:
         out += ["    }"]
     else:
         out += ["    _params = None"]
+
+    for n, param in func.params.items():
+        if param.where == "path" and isinstance(param.type, swagger_parser.String):
+            out += [f"    {param.name} = parse.quote({param.name})"]
 
     if "body" in func.params:
         # It is important that request bodies omit unset values so that PATCH request bodies
@@ -431,6 +437,7 @@ import json
 import math
 import os
 import typing
+from urllib import parse
 
 import requests
 
