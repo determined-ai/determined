@@ -47,10 +47,9 @@ func (a *apiServer) GetTaskConfig(
 		Scan(ctx); {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, api.NotFoundErrs("task", req.TaskId, true)
+	case err != nil:
+		return nil, errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
 	default:
-		if err != nil {
-			return nil, errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
-		}
 		return &apiv1.GetTaskConfigResponse{Config: *t.Config}, nil
 	}
 }
