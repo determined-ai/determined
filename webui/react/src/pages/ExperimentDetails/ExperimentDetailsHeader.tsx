@@ -730,14 +730,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           content: option?.content
             ? option.content
             : option.menuOptions.map((menuOption) => (
-              <Button
+                <Button
                   disabled={menuOption.disabled || !menuOption.onClick}
                   icon={menuOption?.icon}
                   key={menuOption.key}
                   loading={menuOption.isLoading}
                   onClick={menuOption.onClick}>
-                {renderOptionLabel(menuOption)}
-              </Button>
+                  {renderOptionLabel(menuOption)}
+                </Button>
               )),
           key: option.key,
           menuOptions: option.menuOptions,
