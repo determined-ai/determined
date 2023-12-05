@@ -61,7 +61,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
 				checkpoint.Resources = resources[resourcesIndex]
-				err := AddCheckpointMetadata(ctx, &checkpoint, &tr.ID)
+				err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 				require.NoError(t, err)
 
 				resourcesIndex++
@@ -170,15 +170,15 @@ func TestDeleteCheckpoints(t *testing.T) {
 	// Create checkpoints
 	ckpt1 := uuid.New()
 	checkpoint1 := MockModelCheckpoint(ckpt1, allocation)
-	err := AddCheckpointMetadata(ctx, &checkpoint1, &tr.ID)
+	err := AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
 	require.NoError(t, err)
 	ckpt2 := uuid.New()
 	checkpoint2 := MockModelCheckpoint(ckpt2, allocation)
-	err = AddCheckpointMetadata(ctx, &checkpoint2, &tr.ID)
+	err = AddCheckpointMetadata(ctx, &checkpoint2, tr.ID)
 	require.NoError(t, err)
 	ckpt3 := uuid.New()
 	checkpoint3 := MockModelCheckpoint(ckpt3, allocation)
-	err = AddCheckpointMetadata(ctx, &checkpoint3, &tr.ID)
+	err = AddCheckpointMetadata(ctx, &checkpoint3, tr.ID)
 	require.NoError(t, err)
 
 	// Insert a model.
@@ -299,7 +299,7 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 			checkpoint := MockModelCheckpoint(ckpt, allocation)
 			checkpoint.Resources = resources
 
-			err := AddCheckpointMetadata(ctx, &checkpoint, &tr.ID)
+			err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 			require.NoError(t, err)
 		}
 	}
