@@ -56,4 +56,3 @@ CREATE OR REPLACE VIEW proto_checkpoints_view AS
 
 -- Uncreate run_checkpoints MTM.
 DROP TABLE run_checkpoints;
-DROP TYPE relationship_type;
