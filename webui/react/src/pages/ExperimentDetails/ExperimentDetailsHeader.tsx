@@ -1,4 +1,5 @@
-import { Button, Space, Typography } from 'antd';
+import { Button as AntdButton, Space, Typography } from 'antd';
+import Button from 'hew/Button';
 import Dropdown from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
@@ -668,7 +669,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isActionableIcon(experiment.state) ? (
                   <div className={classes.join(' ')} style={stateStyle}>
                     {isPausable && (
-                      <Button
+                      <AntdButton
                         className={
                           isShownAnimation(experiment.state)
                             ? css.buttonWithAnimation
@@ -681,7 +682,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       />
                     )}
                     {isPaused && (
-                      <Button
+                      <AntdButton
                         className={
                           isShownAnimation(experiment.state)
                             ? css.buttonWithAnimation
@@ -694,7 +695,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       />
                     )}
                     {!isTerminated && (
-                      <Button
+                      <AntdButton
                         className={css.buttonStop}
                         disabled={!canPausePlay}
                         icon={<Icon name="stop" size="large" title="Stop" />}
