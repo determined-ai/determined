@@ -16,7 +16,6 @@ export interface Option {
   label: React.ReactNode;
   onClick?: (ev: React.MouseEvent) => void;
   tooltip?: string;
-  content?: React.ReactNode;
 }
 
 export interface HeaderOption {
