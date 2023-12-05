@@ -58,15 +58,18 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 export const trialHParamsToExperimentHParams = (
   trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
-  const hParams = Object.keys(trialHParams).reduce((acc, key) => {
-    return {
-      ...acc,
-      [key]: {
-        type: HyperparameterType.Constant,
-        val: trialHParams[key] as number,
-      },
-    };
-  }, {} as Record<keyof TrialHyperparameters, unknown>);
+  const hParams = Object.keys(trialHParams).reduce(
+    (acc, key) => {
+      return {
+        ...acc,
+        [key]: {
+          type: HyperparameterType.Constant,
+          val: trialHParams[key] as number,
+        },
+      };
+    },
+    {} as Record<keyof TrialHyperparameters, unknown>,
+  );
   return unflattenObject(hParams) as Hyperparameters;
 };
 
@@ -274,7 +277,7 @@ export const getProjectExperimentForExperimentItem = (
     projectOwnerId: project?.userId ?? 0,
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
-  } as ProjectExperiment);
+  }) as ProjectExperiment;
 
 const runStateSortOrder: RunState[] = [
   RunState.Active,
