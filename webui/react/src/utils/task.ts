@@ -166,7 +166,7 @@ export const filterTasks = <
 >(
   tasks: A[],
   filters: Type.TaskFilters<T>,
-  users: Type.User[],
+  _users: Type.User[],
   search = '',
 ): A[] => {
   return tasks

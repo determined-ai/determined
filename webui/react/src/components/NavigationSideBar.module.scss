@@ -53,8 +53,7 @@
       list-style: none;
       margin: 0;
       min-height: 0;
-      overflow-x: hidden;
-      overflow-y: auto;
+      overflow: hidden auto;
       padding: 0;
     }
   }
@@ -246,20 +245,27 @@
     height: 24px;
     left: 12px;
     top: 16px;
-    transition: height var(--animation-curve), left var(--animation-curve),
-      top var(--animation-curve), width var(--animation-curve);
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 32px;
   }
   .logoIcon {
     height: 24px;
     left: 0;
-    transition: height var(--animation-curve), left var(--animation-curve),
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
       width var(--animation-curve);
     width: 32px;
   }
   .logoLabel {
     opacity: 0;
-    transition: opacity var(--animation-curve), width var(--animation-curve);
+    transition:
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 0;
   }
   .launchBlock {
@@ -269,7 +275,9 @@
     .launchButton {
       opacity: 0;
       padding: 0;
-      transition: opacity var(--animation-curve), padding var(--animation-curve),
+      transition:
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
         width var(--animation-curve);
       width: 0;
     }
@@ -284,7 +292,9 @@
   }
   .navItemContainer {
     flex-direction: column;
-    transition: height var(--animation-curve), width var(--animation-curve);
+    transition:
+      height var(--animation-curve),
+      width var(--animation-curve);
     width: var(--nav-side-bar-width-min);
 
     .action,
@@ -416,20 +426,27 @@
     height: 64.94px;
     left: 60px;
     top: 24px;
-    transition: height var(--animation-curve), left var(--animation-curve),
-      top var(--animation-curve), width var(--animation-curve);
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 128px;
   }
   .logoIcon {
     height: 40px;
     left: 32px;
-    transition: height var(--animation-curve), left var(--animation-curve),
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
       width var(--animation-curve);
     width: 52px;
   }
   .logoLabel {
     opacity: 1;
-    transition: opacity var(--animation-curve), width var(--animation-curve);
+    transition:
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 120px;
   }
   .launchBlock {
@@ -439,7 +456,9 @@
     .launchButton {
       opacity: 1;
       padding: 0 16px;
-      transition: opacity var(--animation-curve), padding var(--animation-curve),
+      transition:
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
         width var(--animation-curve);
       width: 100%;
     }
@@ -453,7 +472,9 @@
     transition: opacity var(--animation-curve);
   }
   .navItemContainer {
-    transition: height var(--animation-curve), width var(--animation-curve);
+    transition:
+      height var(--animation-curve),
+      width var(--animation-curve);
     width: var(--nav-side-bar-width-max);
 
     .action,

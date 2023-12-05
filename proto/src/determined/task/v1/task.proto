@@ -79,7 +79,7 @@ message Allocation {
 message Task {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "task_id", "task_type", "allocations", "start_time", "config" ]
+      required: [ "task_id", "task_type", "allocations", "start_time" ]
     }
   };
   // Unique ID of task.
@@ -93,7 +93,7 @@ message Task {
   // End timestamp if completed.
   optional google.protobuf.Timestamp end_time = 6;
   // The configuration of the task.
-  google.protobuf.Struct config = 7;
+  optional string config = 7;
 }
 
 // Address represents an exposed port on a container.

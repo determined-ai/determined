@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import { Metadata } from 'types';
 
@@ -17,7 +18,9 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = (metadata: Metadata = {}, editing = false) => {
   const handleOnChange = vi.fn();
   const view = render(
-    <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />,
+    <UIProvider theme={DefaultTheme.Light}>
+      <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />
+    </UIProvider>,
   );
   return { handleOnChange, view };
 };

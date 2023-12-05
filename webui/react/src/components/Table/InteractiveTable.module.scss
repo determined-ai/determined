@@ -1,15 +1,13 @@
 .tableContainer {
   :global(.ant-table) {
-    overflow-x: scroll;
-    overflow-y: hidden;
+    overflow: scroll hidden;
   }
 }
 .row {
   height: 48px;
 
   > td {
-    overflow-x: hidden;
-    overflow-y: hidden;
+    overflow: hidden;
     white-space: nowrap;
   }
   &.lastPinnedRow,
@@ -92,8 +90,7 @@
 }
 .cell {
   .rightClickableCellWrapper {
-    overflow-x: hidden;
-    overflow-y: hidden;
+    overflow: hidden hidden;
     width: 100%;
   }
 }

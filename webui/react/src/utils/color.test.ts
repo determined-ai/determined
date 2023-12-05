@@ -1,6 +1,8 @@
 import { GLASBEY } from 'constants/colors';
 import * as utils from 'utils/color';
 
+import { Background, Brand, Float, Interactive, Overlay, Stage, Status, Surface } from './colors';
+
 describe('Color Utilities', () => {
   const colors = [
     {
@@ -221,6 +223,86 @@ describe('Color Utilities', () => {
 
     it('should handle invalid rgba string colors', () => {
       expect(utils.str2rgba('rgba(1000, 1000, 1000, 10')).toEqual({ a: 0.0, b: 0, g: 0, r: 0 });
+    });
+  });
+
+  describe('cssVarToThemeVar', () => {
+    it('should create valid status theme variable', () => {
+      Object.entries(Status).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'status' ? 'status' : `status${key}`,
+        ),
+      );
+    });
+
+    it('should create valid background theme variable', () => {
+      Object.entries(Background).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'background'
+            ? 'background'
+            : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
+        ),
+      );
+    });
+
+    it('should create valid stage theme variable', () => {
+      Object.entries(Stage).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'stage'
+            ? 'stage'
+            : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
+        ),
+      );
+    });
+
+    it('should create valid surface theme variable', () => {
+      Object.entries(Surface).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'surface'
+            ? 'surface'
+            : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
+        ),
+      );
+    });
+
+    it('should create valid float theme variable', () => {
+      Object.entries(Float).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'float'
+            ? 'float'
+            : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
+        ),
+      );
+    });
+
+    it('should create valid overlay theme variable', () => {
+      Object.entries(Overlay).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'overlay'
+            ? 'overlay'
+            : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
+        ),
+      );
+    });
+
+    it('should create valid brand theme variable', () => {
+      Object.entries(Brand).forEach(([key, value]) =>
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'brand'
+            ? 'brand'
+            : key.toString().charAt(0).toLowerCase() + key.toString().slice(1),
+        ),
+      );
+    });
+
+    it('should create valid interactive theme variable', () => {
+      Object.entries(Interactive).forEach(([key, value]) => {
+        const s = key.toString().charAt(0).toLowerCase() + key.toString().slice(1);
+        const expectedString = s.replaceAll('interactive', 'ix');
+        expect(utils.cssVarToThemeVar(value)).toEqual(
+          key.toString().toLowerCase() === 'ix' ? 'ix' : expectedString,
+        );
+      });
     });
   });
 });

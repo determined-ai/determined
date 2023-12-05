@@ -167,13 +167,11 @@ To reactivate a user, ``user activate`` can be used:
  Run Tasks as Specific Agent Users
 ***********************************
 
-If an experiment, notebook, or command task uses the ``bind_mount`` option in its
-:ref:`experiment-config-reference`, it is often useful to set the Unix user and group on the agent
-that the task runs as. This allows the file permissions on the agent to be reflected in the task and
-vice versa.
+For experiment, notebook, or command tasks using the ``bind_mount`` option in their
+:ref:`experiment-config-reference`, setting the Unix user and group on the agent ensures file
+permission consistency between the task and agent.
 
-This can be configured by linking a Determined user with the user and group configuration on an
-agent:
+Configure this by linking a Determined user with the user and group configuration on an agent:
 
 .. code::
 

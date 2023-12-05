@@ -38,7 +38,7 @@ func (m mockTaskSpecifier) ToTaskSpec() (t tasks.TaskSpec) {
 func TestAllocation(t *testing.T) {
 	cases := []struct {
 		name  string
-		err   *sproto.ResourcesFailure
+		err   *sproto.ResourcesRestoreError
 		acked bool
 		exit  *AllocationExited
 	}{
@@ -55,13 +55,13 @@ func TestAllocation(t *testing.T) {
 		{
 			name:  "container failed",
 			acked: false,
-			err:   &sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed},
-			exit:  &AllocationExited{Err: sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed}},
+			err:   &sproto.ResourcesRestoreError{FailureType: sproto.ResourcesFailed},
+			exit:  &AllocationExited{Err: sproto.ResourcesRestoreError{FailureType: sproto.ResourcesFailed}},
 		},
 		{
 			name:  "container failed, but acked preemption",
 			acked: true,
-			err:   &sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed},
+			err:   &sproto.ResourcesRestoreError{FailureType: sproto.ResourcesFailed},
 			exit:  &AllocationExited{},
 		},
 	}

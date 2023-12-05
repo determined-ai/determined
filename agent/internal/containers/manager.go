@@ -97,7 +97,7 @@ func (m *Manager) ReattachContainers(
 			m.log.Tracef("container is gone on reattachment %s", cID)
 			ack = aproto.ContainerReattachAck{
 				Container: cproto.Container{ID: cID},
-				Failure: &aproto.ContainerFailure{
+				Failure: &aproto.ContainerFailureError{
 					FailureType: aproto.RestoreError,
 					ErrMsg:      "container is gone on reattachment",
 				},
@@ -110,7 +110,7 @@ func (m *Manager) ReattachContainers(
 				m.log.WithError(err).Tracef("failed to reattach container %s", cID)
 				ack = aproto.ContainerReattachAck{
 					Container: cproto.Container{ID: cID},
-					Failure: &aproto.ContainerFailure{
+					Failure: &aproto.ContainerFailureError{
 						FailureType: aproto.RestoreError,
 						ErrMsg:      err.Error(),
 					},
@@ -182,7 +182,7 @@ func (m *Manager) RevalidateContainers(
 		// Else fallback to a missing message.
 		result = append(result, aproto.ContainerReattachAck{
 			Container: cproto.Container{ID: cid},
-			Failure: &aproto.ContainerFailure{
+			Failure: &aproto.ContainerFailureError{
 				FailureType: aproto.RestoreError,
 				ErrMsg:      "failed to restore container on master blip",
 			},
@@ -325,7 +325,7 @@ func (m *Manager) reattachContainer(
 
 func (m *Manager) recentExit(
 	cID cproto.ID,
-	fallback *aproto.ContainerFailure,
+	fallback *aproto.ContainerFailureError,
 ) *aproto.ContainerStateChanged {
 	var stop *aproto.ContainerStateChanged
 	m.recentExits.Do(func(v any) {

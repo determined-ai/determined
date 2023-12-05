@@ -1,4 +1,6 @@
+import Breadcrumb from 'hew/Breadcrumb';
 import Button from 'hew/Button';
+import Glossary, { InfoRow } from 'hew/Glossary';
 import { Modal } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useMemo } from 'react';
@@ -70,23 +72,6 @@ const getStorageLocation = (
   return `${location}/${checkpoint.uuid}`;
 };
 
-const renderRow = (label: string, content: React.ReactNode): React.ReactNode => (
-  <div className={css.row} key={label}>
-    <div className={css.label}>{label}</div>
-    <div className={css.content}>{content}</div>
-  </div>
-);
-
-const renderResource = (resource: string, size: string): React.ReactNode => {
-  return (
-    <div className={css.resource} key={resource}>
-      <div className={css.resourceName}>{resource}</div>
-      <div className={css.resourceSpacer} />
-      <div className={css.resourceSize}>{size}</div>
-    </div>
-  );
-};
-
 const CheckpointModalComponent: React.FC<Props> = ({
   checkpoint,
   config,
@@ -120,7 +105,7 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
   }, [checkpoint?.totalBatches, confirm, handleDelete]);
 
   const content = useMemo(() => {
-    if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
+    if (!checkpoint?.experimentId || !checkpoint?.resources) return;
 
     const state = checkpoint.state;
     const totalSize = humanReadableBytes(checkpointSize(checkpoint));
@@ -131,60 +116,65 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
       .map((key) => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
 
-    return (
-      <div className={css.base}>
-        {renderRow(
-          'Source',
-          <div className={css.source}>
-            <Link path={paths.experimentDetails(checkpoint.experimentId)}>
-              Experiment {checkpoint.experimentId}
-            </Link>
+    const glossaryContent: InfoRow[] = [
+      {
+        label: 'Source',
+        value: (
+          <Breadcrumb>
+            <Breadcrumb.Item>
+              <Link path={paths.experimentDetails(checkpoint.experimentId)}>
+                Experiment {checkpoint.experimentId}
+              </Link>
+            </Breadcrumb.Item>
             {checkpoint.trialId && (
-              <>
-                <span className={css.sourceDivider} />
+              <Breadcrumb.Item>
                 <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
                   Trial {checkpoint.trialId}
                 </Link>
-              </>
+              </Breadcrumb.Item>
             )}
-            <span className={css.sourceDivider} />
-            <span>Batch {checkpoint.totalBatches}</span>
-          </div>,
-        )}
-        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
-        {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
-        {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {searcherMetric &&
-          renderRow(
-            'Validation Metric',
-            <>
-              <HumanReadableNumber num={searcherMetric} />
-              {`(${config.searcher.metric})`}
-            </>,
+            <Breadcrumb.Item>Batch {checkpoint.totalBatches}</Breadcrumb.Item>
+          </Breadcrumb>
+        ),
+      },
+      { label: 'State', value: <Badge state={state} type={BadgeType.State} /> },
+    ];
+
+    if (checkpoint.uuid) glossaryContent.push({ label: 'UUID', value: checkpoint.uuid });
+    glossaryContent.push({ label: 'Location', value: getStorageLocation(config, checkpoint) });
+    if (searcherMetric)
+      glossaryContent.push({
+        label: 'Validation Metric',
+        value: (
+          <>
+            <HumanReadableNumber num={searcherMetric} />
+            (config.searcher.metric)
+          </>
+        ),
+      });
+    if ('endTime' in checkpoint && checkpoint?.endTime)
+      glossaryContent.push({ label: 'Ended', value: formatDatetime(checkpoint.endTime) });
+    glossaryContent.push({
+      label: 'Total Size',
+      value: (
+        <div className={css.size}>
+          <span>{totalSize}</span>
+          {checkpoint.uuid && state !== CheckpointState.Deleted && (
+            <Button danger type="text" onClick={onClickDelete}>
+              {'Request Checkpoint Deletion'}
+            </Button>
           )}
-        {'endTime' in checkpoint &&
-          checkpoint?.endTime &&
-          renderRow('Ended', formatDatetime(checkpoint.endTime))}
-        {renderRow(
-          'Total Size',
-          <div className={css.size}>
-            <span>{totalSize}</span>
-            {checkpoint.uuid && state !== CheckpointState.Deleted && (
-              <Button danger type="text" onClick={onClickDelete}>
-                {'Request Checkpoint Deletion'}
-              </Button>
-            )}
-          </div>,
-        )}
-        {resources.length !== 0 &&
-          renderRow(
-            'Resources',
-            <div className={css.resources}>
-              {resources.map((resource) => renderResource(resource.name, resource.size))}
-            </div>,
-          )}
-      </div>
-    );
+        </div>
+      ),
+    });
+    if (resources.length > 0)
+      glossaryContent.push({
+        label: 'Resources',
+        value: (
+          <Glossary content={resources.map(({ name, size }) => ({ label: name, value: size }))} />
+        ),
+      });
+    return glossaryContent;
   }, [checkpoint, config, props.searcherValidation, onClickDelete]);
 
   return (
@@ -198,7 +188,9 @@ ${checkpoint?.totalBatches}. This action may complete or fail without further no
       }}
       title={title}
       onClose={handleCancel}>
-      {content}
+      <div className={css.base}>
+        <Glossary content={content} />
+      </div>
     </Modal>
   );
 };

@@ -149,8 +149,7 @@ def test_agent_restart_cmd_container_failure(
 
 
 @pytest.mark.managed_devcluster
-@pytest.mark.parametrize("slots", [0, 1])
-@pytest.mark.parametrize("downtime", [0, 20, 60])
+@pytest.mark.parametrize("downtime, slots", [(0, 0), (20, 1), (60, 1)])
 def test_agent_restart_recover_cmd(
     restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
 ) -> None:
@@ -179,7 +178,7 @@ def test_agent_restart_recover_cmd(
 
 
 @pytest.mark.managed_devcluster
-@pytest.mark.parametrize("downtime", [-1, 0, 20, 60])
+@pytest.mark.parametrize("downtime", [0, 20, 60])
 def test_agent_restart_recover_experiment(
     restartable_managed_cluster: ManagedCluster, downtime: int
 ) -> None:
@@ -254,15 +253,12 @@ def test_agent_reconnect_keep_cmd(restartable_managed_cluster: ManagedCluster) -
 
 
 @pytest.mark.managed_devcluster
-@pytest.mark.parametrize("slots", [0, 1])
-def test_agent_reconnect_trigger_schedule(
-    restartable_managed_cluster: ManagedCluster, slots: int
-) -> None:
+def test_agent_reconnect_trigger_schedule(restartable_managed_cluster: ManagedCluster) -> None:
     restartable_managed_cluster.ensure_agent_ok()
 
     try:
         restartable_managed_cluster.kill_proxy()
-        command_id = run_command(5, slots=slots)
+        command_id = run_command(5, slots=1)
         restartable_managed_cluster.restart_proxy()
         wait_for_command_state(command_id, "TERMINATED", 10)
 

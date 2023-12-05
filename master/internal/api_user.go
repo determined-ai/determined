@@ -33,7 +33,7 @@ const determinedName = "determined"
 
 var (
 	errExternalSessions = status.Error(codes.PermissionDenied, "not enabled with external sessions")
-	latinText           = regexp.MustCompile("[^[:graph:]\\s]")
+	latinText           = regexp.MustCompile(`[^[:graph:]\s]`)
 )
 
 func clearUsername(targetUser model.User, name string, minLength int) (*string, error) {
@@ -143,6 +143,7 @@ func (a *apiServer) GetUsers(
 		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME:  "modified_at",
 		apiv1.GetUsersRequest_SORT_BY_NAME:           "name",
 		apiv1.GetUsersRequest_SORT_BY_LAST_AUTH_TIME: "last_auth_at",
+		apiv1.GetUsersRequest_SORT_BY_REMOTE:         "remote",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -423,6 +424,7 @@ func (a *apiServer) PatchUser(
 	}
 
 	updatedUser := &model.User{ID: targetUser.ID}
+	willBeRemote := targetUser.Remote
 	var insertColumns []string
 	if req.User.Admin != nil {
 		if err = user.AuthZProvider.Get().
@@ -441,7 +443,19 @@ func (a *apiServer) PatchUser(
 		}
 
 		updatedUser.Remote = *req.User.Remote
+		willBeRemote = updatedUser.Remote
 		insertColumns = append(insertColumns, "remote")
+
+		// We changed remote status. Need to clear passwords.
+		if targetUser.Remote != willBeRemote {
+			if willBeRemote {
+				updatedUser.PasswordHash = model.NoPasswordLogin
+				insertColumns = append(insertColumns, "password_hash")
+			} else if !willBeRemote && req.User.Password == nil {
+				updatedUser.PasswordHash = model.EmptyPassword
+				insertColumns = append(insertColumns, "password_hash")
+			}
+		}
 	}
 
 	if req.User.Active != nil {
@@ -459,7 +473,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		if targetUser.Remote {
+		if willBeRemote {
 			return nil, status.Error(codes.InvalidArgument, "Cannot set username for remote users")
 		}
 
@@ -507,7 +521,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		if targetUser.Remote {
+		if willBeRemote {
 			return nil, status.Error(codes.InvalidArgument, "Cannot set password for remote users")
 		}
 

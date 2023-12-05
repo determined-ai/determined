@@ -22,11 +22,25 @@ const SessionDuration = 7 * 24 * time.Hour
 // PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
 const PersonalGroupPostfix = "DeterminedPersonalGroup"
 
+// UserSessionOption is the return type for WithInheritedClaims helper function.
+type UserSessionOption func(f *model.UserSession)
+
+// WithInheritedClaims function will add the specified inherited claims to the user session.
+func WithInheritedClaims(claims map[string]string) UserSessionOption {
+	return func(s *model.UserSession) {
+		s.InheritedClaims = claims
+	}
+}
+
 // StartSession creates a row in the user_sessions table.
-func StartSession(ctx context.Context, user *model.User) (string, error) {
+func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOption) (string, error) {
 	userSession := &model.UserSession{
 		UserID: user.ID,
 		Expiry: time.Now().Add(SessionDuration),
+	}
+
+	for _, opt := range opts {
+		opt(userSession)
 	}
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -71,7 +85,7 @@ func Add(
 	var userID model.UserID
 	return userID, db.Bun().RunInTx(ctx, &sql.TxOptions{},
 		func(ctx context.Context, tx bun.Tx) error {
-			uID, err := addUser(ctx, tx, user)
+			uID, err := AddUserTx(ctx, tx, user)
 			if err != nil {
 				return err
 			}
@@ -141,7 +155,7 @@ func DeleteSessionByToken(ctx context.Context, token string) error {
 	var session model.UserSession
 	// verification will fail when using external token (Jwt instead of Paseto)
 	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &session, nil); err != nil {
-		return nil
+		return nil //nolint: nilerr
 	}
 	return DeleteSessionByID(ctx, session.ID)
 }
@@ -155,9 +169,9 @@ func DeleteSessionByID(ctx context.Context, sessionID model.SessionID) error {
 	return err
 }
 
-// addUser & addAgentUserGroup are helper methods for Add & Update.
-// addUser UPSERT's the existence of a new user.
-func addUser(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID, error) {
+// AddUserTx & addAgentUserGroup are helper methods for Add & Update.
+// AddUserTx UPSERT's the existence of a new user.
+func AddUserTx(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID, error) {
 	if _, err := idb.NewInsert().Model(user).Returning("id").Exec(ctx); err != nil {
 		return 0, fmt.Errorf("error inserting user: %s", err)
 	}

@@ -1,5 +1,5 @@
 import datetime
-from typing import Callable
+from typing import Callable, no_type_check
 from unittest import mock
 
 import pytest
@@ -43,8 +43,16 @@ def test_trial_logs_converts_epoch_time(make_trialref: Callable[[int], trial.Tri
 
     call = responses.calls[0]
     assert isinstance(call, responses.Call)
-    assert call.request.params["timestampBefore"] == timestamp_before
-    assert call.request.params["timestampAfter"] == timestamp_after
+
+    # Mypy seems to dislike getting .params from call.request under certain versions of responses,
+    # but since we don't allow unnecessary type-ignore comments when a working version is present,
+    # we disable type checking this way.
+    @no_type_check
+    def do():
+        assert call.request.params["timestampBefore"] == timestamp_before
+        assert call.request.params["timestampAfter"] == timestamp_after
+
+    do()
 
 
 @pytest.mark.parametrize(

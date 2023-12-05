@@ -3,6 +3,9 @@ package tasks
 import (
 	"archive/tar"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -39,7 +42,6 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 	res.SlurmConfig = s.GenericTaskConfig.Slurm
 
 	res.ExtraArchives = []cproto.RunArchive{commandEntryArchive}
-	res.TaskType = s.Base.TaskType
 	res.Environment = s.GenericTaskConfig.Environment.ToExpconf()
 
 	res.WorkDir = DefaultWorkDir
@@ -67,7 +69,9 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 // not right on the generic task spec.
 
 // ToV1Job todo.
-func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) { return nil, nil }
+func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
+	return nil, status.Error(codes.Unimplemented, "ToV1Job not implemented for Generic Tasks")
+}
 
 // SetJobPriority todo.
 func (s GenericTaskSpec) SetJobPriority(priority int) error { return nil }

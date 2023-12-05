@@ -69,7 +69,7 @@ const TrialLogPreview: React.FC<Props> = ({
   }, []);
 
   const fetchLatestTrialLog = useCallback(
-    (trialId: number, trialState: RunState, canceler: AbortController) => {
+    (trialId: number, _trialState: RunState, canceler: AbortController) => {
       readStream(
         detApi.StreamingExperiments.trialLogs(
           trialId,
@@ -125,12 +125,7 @@ const TrialLogPreview: React.FC<Props> = ({
         <div className={css.preview} onClick={handleClick}>
           <div className={css.container} ref={containerRef}>
             {logEntry && (
-              <LogViewerEntry
-                noWrap
-                style={{ position: 'relative' }}
-                timeStyle={{ width: dateTimeWidth }}
-                {...logEntry}
-              />
+              <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
             )}
           </div>
         </div>

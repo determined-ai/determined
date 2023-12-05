@@ -81,6 +81,10 @@ class Authentication:
         password: Optional[str],
         cert: Optional[certs.Cert],
     ) -> UsernameTokenPair:
+        # Get session_user and password given the following priority:
+        # 1. User passed in with flag (requested_user)
+        # 2. User from environment if DET_PASS is set.
+        # 3. Active user from the token store.
         session_user, password = default_load_user_password(
             requested_user, password, self.token_store
         )
@@ -90,13 +94,21 @@ class Authentication:
             session_user = constants.DEFAULT_DETERMINED_USER
         assert session_user is not None
 
+        # Check the token store if this session_user has a cached token. If so, check with the
+        # master to verify it has not expired. Otherwise, let the token be None.
         token = self.token_store.get_token(session_user)
         if token is not None and not _is_token_valid(self.master_address, token, cert):
             self.token_store.drop_user(session_user)
             token = None
 
+        # Special case: use token provided from the container environment if:
+        # * No token was obtained from the token store already,
+        # * No user was explicitly requested, or the requested user matches the token available
+        # in the container environment, and
+        # * There is a token available from the container environment.
         if (
             token is None
+            and requested_user in (None, util.get_det_username_from_env())
             and util.get_det_username_from_env() is not None
             and util.get_det_user_token_from_env() is not None
         ):
@@ -107,6 +119,9 @@ class Authentication:
         if token is not None:
             return UsernameTokenPair(session_user, token)
 
+        # We'll need to create a new token, so we'll need a password. If there was no requested
+        # user and we ended up falling back to the default username `determined`, then we can fall
+        # back to the default login as well. Otherwise, ask the user for their password.
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
         if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD

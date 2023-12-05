@@ -1,6 +1,7 @@
 import {
   cancellableRunStates,
   deletableRunStates,
+  erroredRunStates,
   killableRunStates,
   pausableRunStates,
   terminalRunStates,
@@ -50,15 +51,18 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 export const trialHParamsToExperimentHParams = (
   trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
-  const hParams = Object.keys(trialHParams).reduce((acc, key) => {
-    return {
-      ...acc,
-      [key]: {
-        type: HyperparameterType.Constant,
-        val: trialHParams[key] as number,
-      },
-    };
-  }, {} as Record<keyof TrialHyperparameters, unknown>);
+  const hParams = Object.keys(trialHParams).reduce(
+    (acc, key) => {
+      return {
+        ...acc,
+        [key]: {
+          type: HyperparameterType.Constant,
+          val: trialHParams[key] as number,
+        },
+      };
+    },
+    {} as Record<keyof TrialHyperparameters, unknown>,
+  );
   return unflattenObject(hParams) as Hyperparameters;
 };
 
@@ -111,7 +115,12 @@ export const isExperimentModifiable = (experiment: ProjectExperiment): boolean =
 export const isExperimentForkable = (experiment: ProjectExperiment): boolean =>
   !experiment.parentArchived;
 
-export const alwaysTrueExperimentChecker = (experiment: ProjectExperiment): boolean => true;
+export const alwaysTrueExperimentChecker = (_experiment: ProjectExperiment): boolean => true;
+
+const resumableSearcherTypes: ExperimentSearcherName[] = [
+  ExperimentSearcherName.Grid,
+  ExperimentSearcherName.Random,
+];
 
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
@@ -146,6 +155,10 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.HyperparameterSearch]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.Fork]: isExperimentForkable,
+
+  [ExperimentAction.Retry]: (experiment) =>
+    erroredRunStates.has(experiment.state) &&
+    resumableSearcherTypes.includes(experiment.config.searcher.name),
 
   [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
 
@@ -185,6 +198,7 @@ export const getActionsForExperiment = (
         case ExperimentAction.ContinueTrial:
         case ExperimentAction.Fork:
         case ExperimentAction.HyperparameterSearch:
+        case ExperimentAction.Retry:
           return (
             permissions.canViewExperimentArtifacts({ workspace }) &&
             permissions.canCreateExperiment({ workspace }) &&
@@ -250,7 +264,7 @@ export const getProjectExperimentForExperimentItem = (
     projectOwnerId: project?.userId ?? 0,
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
-  } as ProjectExperiment);
+  }) as ProjectExperiment;
 
 const runStateSortOrder: RunState[] = [
   RunState.Active,

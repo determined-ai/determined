@@ -138,12 +138,18 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
-      if (!canHparam) {
+      if (!canHparam || !!experiment.unmanaged) {
         delete opts[TrialAction.HyperparameterSearch];
       }
       return opts;
     },
-    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [
+      canHparam,
+      experiment.unmanaged,
+      handleHyperparameterSearch,
+      handleOpenTensorBoard,
+      handleViewLogs,
+    ],
   );
 
   const columns = useMemo(() => {
@@ -247,7 +253,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const handleTableChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
+      _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<TrialItem> | SorterResult<TrialItem>[],
     ) => {
       if (Array.isArray(tableSorter) || !settings) return;

@@ -2,6 +2,7 @@ import { Modal, Tag, Typography } from 'antd';
 import Message from 'hew/Message';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
+import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import usePrevious from 'hew/utils/usePrevious';
 import _ from 'lodash';
@@ -49,6 +50,9 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
   ...props
 }: ModalProps) => {
   const resize = useResize();
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   useEffect(() => {
     if (props.trialIds?.length === 0 || props.trials?.length === 0) onCancel();
@@ -66,6 +70,7 @@ const TrialsComparisonModal: React.FC<ModalProps> = ({
           : 'Trial Comparison'
       }
       width={resize.width * 0.9}
+      wrapClassName={themeClass}
       onCancel={onCancel}>
       <TrialsComparisonTable {...props} />
     </Modal>
@@ -173,19 +178,25 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const latestMetrics = useMemo(
     () =>
-      trialsDetails.reduce((metricValues, trial) => {
-        metricValues[trial.id] = Object.values<Record<string, MetricSummary> | null>(
-          trial.summaryMetrics ?? {},
-        ).reduce((trialMetrics, curMetricType) => {
-          for (const [metricName, metricSummary] of Object.entries<MetricSummary>(
-            curMetricType ?? {},
-          )) {
-            if (metricSummary.last != null) trialMetrics[metricName] = metricSummary.last;
-          }
-          return trialMetrics;
-        }, {} as Record<string, Primitive>);
-        return metricValues;
-      }, {} as Record<number, Record<string, Primitive>>),
+      trialsDetails.reduce(
+        (metricValues, trial) => {
+          metricValues[trial.id] = Object.values<Record<string, MetricSummary> | null>(
+            trial.summaryMetrics ?? {},
+          ).reduce(
+            (trialMetrics, curMetricType) => {
+              for (const [metricName, metricSummary] of Object.entries<MetricSummary>(
+                curMetricType ?? {},
+              )) {
+                if (metricSummary.last != null) trialMetrics[metricName] = metricSummary.last;
+              }
+              return trialMetrics;
+            },
+            {} as Record<string, Primitive>,
+          );
+          return metricValues;
+        },
+        {} as Record<number, Record<string, Primitive>>,
+      ),
     [trialsDetails],
   );
 

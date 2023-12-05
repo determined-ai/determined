@@ -6,14 +6,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ContainerFailure holds the reason why a container did not complete successfully.
-type ContainerFailure struct {
+// ContainerFailureError holds the reason why a container did not complete successfully.
+type ContainerFailureError struct {
 	FailureType FailureType
 	ErrMsg      string
 	ExitCode    *ExitCode
 }
 
-func (c ContainerFailure) Error() string {
+func (c ContainerFailureError) Error() string {
 	if c.ExitCode == nil {
 		return fmt.Sprintf("%s: %s", c.FailureType, c.ErrMsg)
 	}
@@ -33,14 +33,14 @@ const (
 func ContainerError(failureType FailureType, err error) ContainerStopped {
 	if err == nil {
 		return ContainerStopped{
-			Failure: &ContainerFailure{
+			Failure: &ContainerFailureError{
 				FailureType: failureType,
 				ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
 			},
 		}
 	}
 	return ContainerStopped{
-		Failure: &ContainerFailure{
+		Failure: &ContainerFailureError{
 			FailureType: failureType,
 			ErrMsg:      err.Error(),
 		},
@@ -49,14 +49,14 @@ func ContainerError(failureType FailureType, err error) ContainerStopped {
 
 // NewContainerFailure returns a container failure wrapping the provided error. If the error is nil,
 // a stack trace is provided instead.
-func NewContainerFailure(failureType FailureType, err error) *ContainerFailure {
+func NewContainerFailure(failureType FailureType, err error) *ContainerFailureError {
 	if err == nil {
-		return &ContainerFailure{
+		return &ContainerFailureError{
 			FailureType: failureType,
 			ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
 		}
 	}
-	return &ContainerFailure{
+	return &ContainerFailureError{
 		FailureType: failureType,
 		ErrMsg:      err.Error(),
 	}
@@ -64,11 +64,11 @@ func NewContainerFailure(failureType FailureType, err error) *ContainerFailure {
 
 // NewContainerExit returns a container failure with the encoded exit code. If the exit code is a
 // the zero value, no failure is returned.
-func NewContainerExit(code ExitCode) *ContainerFailure {
+func NewContainerExit(code ExitCode) *ContainerFailureError {
 	if code == SuccessExitCode {
 		return nil
 	}
-	return &ContainerFailure{
+	return &ContainerFailureError{
 		FailureType: ContainerFailed,
 		ErrMsg:      errors.Errorf("%s: %d", ContainerFailed, code).Error(),
 		ExitCode:    &code,
@@ -82,7 +82,7 @@ func ContainerExited(code ExitCode) ContainerStopped {
 		return ContainerStopped{}
 	}
 	return ContainerStopped{
-		&ContainerFailure{
+		&ContainerFailureError{
 			FailureType: ContainerFailed,
 			ErrMsg:      errors.Errorf("%s: %d", ContainerFailed, code).Error(),
 			ExitCode:    &code,

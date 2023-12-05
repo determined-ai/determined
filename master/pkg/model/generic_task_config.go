@@ -12,8 +12,16 @@ func DefaultConfigGenericTaskConfig(
 ) GenericTaskConfig {
 	out := GenericTaskConfig{
 		Resources: expconf.ResourcesConfig{
-			RawSlotsPerTask: ptrs.Ptr(1),
-			RawIsSingleNode: ptrs.Ptr(true),
+			RawSlots:          ptrs.Ptr(1),
+			RawIsSingleNode:   ptrs.Ptr(true),
+			RawMaxSlots:       nil,
+			RawSlotsPerTrial:  nil,
+			RawWeight:         nil,
+			RawNativeParallel: nil,
+			RawShmSize:        nil,
+			RawResourcePool:   nil,
+			RawPriority:       nil,
+			RawDevices:        expconf.DevicesConfigV0{},
 		},
 		Environment: DefaultEnvConfig(taskContainerDefaults),
 	}
@@ -44,7 +52,7 @@ type GenericTaskConfig struct {
 // Validate implements the check.Validatable interface.
 func (c *GenericTaskConfig) Validate() []error {
 	return []error{
-		check.GreaterThanOrEqualTo(c.Resources.SlotsPerTask(), 0,
+		check.GreaterThanOrEqualTo(c.Resources.Slots(), 0,
 			"resources.slots_per_task must be >= 0"),
 		check.GreaterThan(len(c.Entrypoint), 0, "entrypoint must be non-empty"),
 	}

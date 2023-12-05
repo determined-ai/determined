@@ -11189,8 +11189,8 @@ func local_request_Determined_ListWorkspacesBoundToRP_0(ctx context.Context, mar
 
 }
 
-func request_Determined_GetTaskConfig_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTaskConfigRequest
+func request_Determined_GetGenericTaskConfig_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetGenericTaskConfigRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -11211,13 +11211,13 @@ func request_Determined_GetTaskConfig_0(ctx context.Context, marshaler runtime.M
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
 
-	msg, err := client.GetTaskConfig(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetGenericTaskConfig(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Determined_GetTaskConfig_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTaskConfigRequest
+func local_request_Determined_GetGenericTaskConfig_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetGenericTaskConfigRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -11238,7 +11238,7 @@ func local_request_Determined_GetTaskConfig_0(ctx context.Context, marshaler run
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
 
-	msg, err := server.GetTaskConfig(ctx, &protoReq)
+	msg, err := server.GetGenericTaskConfig(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -15426,7 +15426,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_GetTaskConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Determined_GetGenericTaskConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -15435,14 +15435,14 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Determined_GetTaskConfig_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Determined_GetGenericTaskConfig_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Determined_GetTaskConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Determined_GetGenericTaskConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -19847,7 +19847,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("GET", pattern_Determined_GetTaskConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Determined_GetGenericTaskConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -19856,14 +19856,14 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Determined_GetTaskConfig_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Determined_GetGenericTaskConfig_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Determined_GetTaskConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Determined_GetGenericTaskConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -19927,7 +19927,7 @@ var (
 
 	pattern_Determined_DisableSlot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"api", "v1", "agents", "agent_id", "slots", "slot_id", "disable"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_CreateGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "generic-task"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_CreateGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "generic-tasks"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_CreateExperiment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "experiments"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -20307,7 +20307,7 @@ var (
 
 	pattern_Determined_ListWorkspacesBoundToRP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "resource-pools", "resource_pool_name", "workspace-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_GetTaskConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "tasks", "task_id", "config"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_GetGenericTaskConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "tasks", "task_id", "config"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -20747,5 +20747,5 @@ var (
 
 	forward_Determined_ListWorkspacesBoundToRP_0 = runtime.ForwardResponseMessage
 
-	forward_Determined_GetTaskConfig_0 = runtime.ForwardResponseMessage
+	forward_Determined_GetGenericTaskConfig_0 = runtime.ForwardResponseMessage
 )

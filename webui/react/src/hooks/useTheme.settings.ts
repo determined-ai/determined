@@ -1,6 +1,6 @@
-import { Mode } from 'hew/Theme';
 import { literal, union } from 'io-ts';
 
+import { Mode } from 'components/ThemeProvider';
 import { SettingsConfig } from 'hooks/useSettings';
 
 export interface Settings {

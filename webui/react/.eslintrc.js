@@ -103,6 +103,7 @@ module.exports = {
     ],
     'keyword-spacing': ['error'],
     'no-console': ['error', { allow: ['error'] }],
+    'no-constant-binary-expression': 'error',
     'no-duplicate-imports': 'error',
     'no-empty': ['error', { allowEmptyCatch: false }],
     'no-multi-spaces': ['error', { ignoreEOLComments: true }],

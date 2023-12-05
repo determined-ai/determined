@@ -2339,6 +2339,7 @@ class v1Container(Printable):
     """
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
     parent: "typing.Optional[str]" = None
+    permissionDenied: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -2347,6 +2348,7 @@ class v1Container(Printable):
         state: "containerv1State",
         devices: "typing.Union[typing.Sequence[v1Device], None, Unset]" = _unset,
         parent: "typing.Union[str, None, Unset]" = _unset,
+        permissionDenied: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.id = id
         self.state = state
@@ -2354,6 +2356,8 @@ class v1Container(Printable):
             self.devices = devices
         if not isinstance(parent, Unset):
             self.parent = parent
+        if not isinstance(permissionDenied, Unset):
+            self.permissionDenied = permissionDenied
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Container":
@@ -2365,6 +2369,8 @@ class v1Container(Printable):
             kwargs["devices"] = [v1Device.from_json(x) for x in obj["devices"]] if obj["devices"] is not None else None
         if "parent" in obj:
             kwargs["parent"] = obj["parent"]
+        if "permissionDenied" in obj:
+            kwargs["permissionDenied"] = obj["permissionDenied"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -2376,6 +2382,8 @@ class v1Container(Printable):
             out["devices"] = None if self.devices is None else [x.to_json(omit_unset) for x in self.devices]
         if not omit_unset or "parent" in vars(self):
             out["parent"] = self.parent
+        if not omit_unset or "permissionDenied" in vars(self):
+            out["permissionDenied"] = self.permissionDenied
         return out
 
 class v1ContinueExperimentRequest(Printable):
@@ -6143,6 +6151,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
     - SORT_BY_NAME: Returns users sorted by username unless display name exist.
     - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+    - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
@@ -6152,6 +6161,7 @@ class v1GetUsersRequestSortBy(DetEnum):
     MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
     NAME = "SORT_BY_NAME"
     LAST_AUTH_TIME = "SORT_BY_LAST_AUTH_TIME"
+    REMOTE = "SORT_BY_REMOTE"
 
 class v1GetUsersResponse(Printable):
     """Response to GetUsersRequest."""
@@ -7562,13 +7572,13 @@ class v1LocationType(DetEnum):
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None
-    level: "typing.Optional[str]" = None
+    level: "typing.Optional[v1LogLevel]" = None
 
     def __init__(
         self,
         *,
         color: "typing.Union[bool, None, Unset]" = _unset,
-        level: "typing.Union[str, None, Unset]" = _unset,
+        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
     ):
         if not isinstance(color, Unset):
             self.color = color
@@ -7582,7 +7592,7 @@ class v1LogConfig(Printable):
         if "color" in obj:
             kwargs["color"] = obj["color"]
         if "level" in obj:
-            kwargs["level"] = obj["level"]
+            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7591,7 +7601,7 @@ class v1LogConfig(Printable):
         if not omit_unset or "color" in vars(self):
             out["color"] = self.color
         if not omit_unset or "level" in vars(self):
-            out["level"] = self.level
+            out["level"] = None if self.level is None else self.level.value
         return out
 
 class v1LogEntry(Printable):
@@ -15776,7 +15786,7 @@ def post_CreateGenericTask(
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/generic-task",
+        path="/api/v1/generic-tasks",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -18669,6 +18679,7 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  - SORT_BY_NAME: Returns users sorted by username unless display name exist.
  - SORT_BY_LAST_AUTH_TIME: Returns users sorted by last authenticated time.
+ - SORT_BY_REMOTE: Returns users sorted by local or remote auth.
     """
     _params = {
         "active": str(active).lower() if active is not None else None,

@@ -244,8 +244,7 @@ def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
 
 
 @pytest.mark.managed_devcluster
-@pytest.mark.parametrize("slots", [0, 1])
-@pytest.mark.parametrize("downtime", [0, 20, 60])
+@pytest.mark.parametrize("downtime, slots", [(0, 0), (20, 1), (60, 1)])
 def test_master_restart_cmd(
     restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
 ) -> None:

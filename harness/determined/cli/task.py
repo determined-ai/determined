@@ -150,6 +150,7 @@ def create(args: Namespace) -> None:
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
 
+
 @authentication.required
 def config(args: Namespace) -> None:
     sess = cli.setup_session(args)
@@ -294,7 +295,7 @@ args_description: List[Any] = [
                         help="additional files to copy into the task container",
                     ),
                     Arg("--project_id", type=int, help="place this task inside this project"),
-                    Arg("--config", action="append", default=[], help="TODO HELP"),
+                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
                     Arg(
                         "-f",
                         "--follow",

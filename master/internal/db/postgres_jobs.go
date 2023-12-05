@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/uptrace/bun"
-
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -27,7 +26,7 @@ func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
 
 // AddJob persists the existence of a job.
 func (db *PgDB) AddJob(j *model.Job) error {
-	return addJob(db.sql, j)
+	return AddJobTx(context.TODO(), Bun(), j)
 }
 
 // JobByID retrieves a job by ID.
@@ -41,17 +40,6 @@ WHERE job_id = $1
 		return nil, errors.Wrap(err, "querying job")
 	}
 	return &j, nil
-}
-
-// addJob persists the existence of a job from a tx.
-func addJob(tx queryHandler, j *model.Job) error {
-	if _, err := tx.NamedExec(`
-INSERT INTO jobs (job_id, job_type, owner_id, q_position)
-VALUES (:job_id, :job_type, :owner_id, :q_position)
-`, j); err != nil {
-		return errors.Wrap(err, "adding job")
-	}
-	return nil
 }
 
 // UpdateJobPosition propagates the new queue position to the job.

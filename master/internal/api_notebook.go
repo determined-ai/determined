@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/task/idle"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
@@ -53,11 +53,9 @@ const (
 	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
-var notebooksAddr = actor.Addr(command.NotebookActorPath)
-
 func (a *apiServer) GetNotebooks(
 	ctx context.Context, req *apiv1.GetNotebooksRequest,
-) (resp *apiv1.GetNotebooksResponse, err error) {
+) (*apiv1.GetNotebooksResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -71,7 +69,8 @@ func (a *apiServer) GetNotebooks(
 		}
 	}
 
-	if err = a.ask(notebooksAddr, req, &resp); err != nil {
+	resp, err := command.DefaultCmdService.GetNotebooks(req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -91,14 +90,14 @@ func (a *apiServer) GetNotebooks(
 
 func (a *apiServer) GetNotebook(
 	ctx context.Context, req *apiv1.GetNotebookRequest,
-) (resp *apiv1.GetNotebookResponse, err error) {
+) (*apiv1.GetNotebookResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	addr := notebooksAddr.Child(req.NotebookId)
-	if err = a.ask(addr, req, &resp); err != nil {
+	resp, err := command.DefaultCmdService.GetNotebook(req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -107,7 +106,7 @@ func (a *apiServer) GetNotebook(
 		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
 		return nil, authz.SubIfUnauthorized(err,
-			api.NotFoundErrs("actor", fmt.Sprint(addr), true))
+			api.NotFoundErrs("notebook", req.NotebookId, true))
 	}
 	return resp, nil
 }
@@ -149,7 +148,11 @@ func (a *apiServer) KillNotebook(
 	if err != nil {
 		return nil, err
 	}
-	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
+	cmd, err := command.DefaultCmdService.KillNTSC(req.NotebookId, model.TaskTypeNotebook)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.KillNotebookResponse{Notebook: cmd.ToV1Notebook()}, nil
 }
 
 func (a *apiServer) SetNotebookPriority(
@@ -173,7 +176,12 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
-	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
+	cmd, err := command.DefaultCmdService.SetNTSCPriority(req.NotebookId, int(req.Priority), model.TaskTypeNotebook)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.SetNotebookPriorityResponse{Notebook: cmd.ToV1Notebook()}, nil
 }
 
 // isNTSCPermittedToLaunch checks authorization to launch in a given
@@ -218,7 +226,7 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
+	user, session, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -270,12 +278,20 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot marshal notebook config: %s", err.Error())
 	}
+
 	launchReq.Spec.Base.ExtraEnvVars = map[string]string{
 		"NOTEBOOK_PORT":      strconv.Itoa(port),
 		"NOTEBOOK_CONFIG":    string(configBytes),
 		"NOTEBOOK_IDLE_TYPE": launchReq.Spec.Config.NotebookIdleType,
 		"DET_TASK_TYPE":      string(model.TaskTypeNotebook),
 	}
+
+	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	if err != nil {
+		return nil, err
+	}
+	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
+
 	launchReq.Spec.Base.ExtraProxyPorts = append(launchReq.Spec.Base.ExtraProxyPorts,
 		expconf.ProxyPort{
 			RawProxyPort:        port,
@@ -331,19 +347,17 @@ func (a *apiServer) LaunchNotebook(
 		),
 	}
 
-	// Launch a Notebook actor.
-	var notebookID model.TaskID
-	if err = a.ask(notebooksAddr, launchReq, &notebookID); err != nil {
-		return nil, err
-	}
-
-	var notebook *notebookv1.Notebook
-	if err = a.ask(notebooksAddr.Child(notebookID), &notebookv1.Notebook{}, &notebook); err != nil {
+	// Launch a Notebook.
+	genericCmd, err := command.DefaultCmdService.LaunchGenericCommand(
+		model.TaskTypeNotebook,
+		model.JobTypeNotebook,
+		launchReq)
+	if err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchNotebookResponse{
-		Notebook: notebook,
+		Notebook: genericCmd.ToV1Notebook(),
 		Config:   protoutils.ToStruct(launchReq.Spec.Config),
 		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil

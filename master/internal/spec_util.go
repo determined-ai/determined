@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	k8sV1 "k8s.io/api/core/v1"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -15,24 +20,24 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	k8sV1 "k8s.io/api/core/v1"
 )
 
-func ResolveResources(a *apiServer, resourcePool string, slots int, workspaceID int) (string, []pkgCommand.LaunchWarning, error) {
-
-	poolName, err := a.m.rm.ResolveResourcePool(
+// ResolveResources - Validate ResoucePool and check for availability.
+func (m *Master) ResolveResources(
+	resourcePool string,
+	slots int,
+	workspaceID int,
+) (string, []pkgCommand.LaunchWarning, error) {
+	poolName, err := m.rm.ResolveResourcePool(
 		resourcePool, workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = a.m.rm.ValidateResources(poolName, slots, true); err != nil {
+	if err = m.rm.ValidateResources(poolName, slots, true); err != nil {
 		return "nil", nil, fmt.Errorf("validating resources: %v", err)
 	}
 
-	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
+	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
 		&sproto.ValidateResourcePoolAvailabilityRequest{
 			Name:  poolName,
 			Slots: slots,
@@ -41,8 +46,8 @@ func ResolveResources(a *apiServer, resourcePool string, slots int, workspaceID 
 	if err != nil {
 		return "", launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
 	}
-	if a.m.config.ResourceManager.AgentRM != nil &&
-		a.m.config.LaunchError &&
+	if m.config.ResourceManager.AgentRM != nil &&
+		m.config.LaunchError &&
 		len(launchWarnings) > 0 {
 		return "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
@@ -50,25 +55,27 @@ func ResolveResources(a *apiServer, resourcePool string, slots int, workspaceID 
 	return poolName, launchWarnings, nil
 }
 
-func fillTaskSpec(a *apiServer, poolName string, agentUserGroup *model.AgentUserGroup, userModel *model.User) (tasks.TaskSpec, error) {
-	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
+// Fill and return TaskSpec.
+func (m *Master) fillTaskSpec(
+	poolName string,
+	agentUserGroup *model.AgentUserGroup,
+	userModel *model.User,
+) (tasks.TaskSpec, error) {
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
-		a.m.config.TaskContainerDefaults,
+		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
 		return tasks.TaskSpec{}, fmt.Errorf("getting TaskContainerDefaults: %v", err)
 	}
-	taskSpec := *a.m.taskSpec
+	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = userModel
 	return taskSpec, nil
 }
 
-func fillTaskConfig(resourcePoolDest **string, poolName string, resourceSlotsDest **int, slots int, taskSpec tasks.TaskSpec, environment *model.Environment) {
-	*resourcePoolDest = &poolName
-	*resourceSlotsDest = &slots
-
+func fillTaskConfig(slots int, taskSpec tasks.TaskSpec, environment *model.Environment) {
 	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
 	if slots == 0 {
 		taskContainerPodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
@@ -79,34 +86,37 @@ func fillTaskConfig(resourcePoolDest **string, poolName string, resourceSlotsDes
 	))
 }
 
-func fillContextDir(configWorkDirDest **string, defaultWorkDir *string, contextDirectory []*utilv1.File) ([]byte, error) {
+func fillContextDir(
+	configWorkDir *string,
+	defaultWorkDir *string,
+	contextDirectory []*utilv1.File,
+) (*string, []byte, error) {
 	var contextDirectoryBytes []byte
 	if len(contextDirectory) > 0 {
 		userFiles := filesToArchive(contextDirectory)
 
-		workdirSetInReq := *configWorkDirDest != nil &&
-			(defaultWorkDir == nil || *defaultWorkDir != **configWorkDirDest)
+		workdirSetInReq := configWorkDir != nil &&
+			(defaultWorkDir == nil || *defaultWorkDir != *configWorkDir)
 		if workdirSetInReq {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, nil, status.Errorf(codes.InvalidArgument,
 				"cannot set work_dir and context directory at the same time")
 		}
-		*configWorkDirDest = nil
 
 		var err error
 		contextDirectoryBytes, err = archive.ToTarGz(userFiles)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, nil, status.Errorf(codes.InvalidArgument,
 				fmt.Errorf("compressing files context files: %w", err).Error())
 		}
+		return nil, contextDirectoryBytes, nil
 	}
-	return contextDirectoryBytes, nil
+	return configWorkDir, contextDirectoryBytes, nil
 }
 
 func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, error) {
-	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
 	var token string
 	var err error
-	if extConfig.Enabled() {
+	if config.GetMasterConfig().InternalConfig.ExternalSessions.Enabled() {
 		token, err = grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
 			return "", status.Errorf(codes.Internal,

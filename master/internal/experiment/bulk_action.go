@@ -377,7 +377,7 @@ func DeleteExperiments(ctx context.Context,
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
-			Where("state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
+			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	}
 
 	query, err = AuthZProvider.Get().

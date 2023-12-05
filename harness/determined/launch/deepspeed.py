@@ -194,7 +194,7 @@ def create_deepspeed_env_file() -> None:
             #
             # Therefore, avoid writing any environment variables containing a
             # newline character.
-            if "\n" not in line:
+            if "\n" not in line and "\r" not in line:
                 f.write(f"{line}\n")
             else:
                 logger.warning(

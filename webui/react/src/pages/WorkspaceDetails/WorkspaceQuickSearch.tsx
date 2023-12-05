@@ -3,6 +3,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -30,6 +31,10 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
 
   const workspaceObservable = useObservable(workspaceStore.mutables);
   const workspaces = Loadable.getOrElse([], workspaceObservable);
+
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
 
   const fetchData = useCallback(async () => {
     try {
@@ -151,6 +156,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           />
         }
         width={'clamp(520px, 50vw, 1000px)'}
+        wrapClassName={themeClass}
         onCancel={onHideModal}>
         <div className={css.modalBody}>
           {isLoading ? (

@@ -2,10 +2,14 @@ package rmerrors
 
 import "github.com/pkg/errors"
 
-// ErrUnsupported is returned when an unsupported feature of a resource manager is used.
-type ErrUnsupported string
+// UnsupportedError is returned when an unsupported feature of a resource manager is used.
+type UnsupportedError string
 
-func (e ErrUnsupported) Error() string {
+func (e UnsupportedError) Unwrap() error {
+	return ErrNotSupported
+}
+
+func (e UnsupportedError) Error() string {
 	return string(e)
 }
 

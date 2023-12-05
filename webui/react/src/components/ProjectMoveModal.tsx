@@ -1,8 +1,9 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
-import { makeToast } from 'hew/Toast';
+import Select, { Option } from 'hew/Select';
+import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
@@ -17,8 +18,6 @@ import { useObservable } from 'utils/observable';
 
 import css from './ProjectMoveModal.module.scss';
 
-const { Option } = Select;
-
 interface Props {
   onMove?: () => void;
   project: Project;
@@ -27,6 +26,7 @@ interface Props {
 const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) => {
   const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
   const { canMoveProjectsTo } = usePermissions();
+  const { openToast } = useToast();
   const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
     _: () => [],
     Loaded: (workspaces: Workspace[]) =>
@@ -39,7 +39,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
       await moveProject({ destinationWorkspaceId, projectId: project.id });
       const destinationWorkspaceName: string =
         workspaces.find((w) => w.id === destinationWorkspaceId)?.name ?? '';
-      makeToast({
+      openToast({
         description: `${project.name} moved to workspace ${destinationWorkspaceName}`,
         link: <Link path={paths.workspaceDetails(destinationWorkspaceId)}>View Workspace</Link>,
         title: 'Move Success',
@@ -54,7 +54,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, onMove, project.id, project.name, workspaces]);
+  }, [destinationWorkspaceId, onMove, openToast, project.id, project.name, workspaces]);
 
   const handleWorkspaceSelect = useCallback(
     (selectedWorkspaceId: SelectValue) => {
@@ -83,8 +83,8 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
       <Select
         id="workspace"
         placeholder="Select a destination workspace."
-        style={{ width: '100%' }}
         value={destinationWorkspaceId}
+        width={'100%'}
         onSelect={handleWorkspaceSelect}>
         {workspaces.map((workspace) => {
           const disabled = workspace.archived || workspace.id === project.workspaceId;

@@ -1,4 +1,3 @@
-import useUI, { DarkLight } from 'hew/Theme';
 import React, { useMemo } from 'react';
 
 import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg?url';
@@ -7,6 +6,7 @@ import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-li
 import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg?url';
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
+import useUI from 'components/ThemeProvider';
 import { serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
@@ -26,25 +26,25 @@ interface Props {
   orientation?: Orientation;
 }
 
-const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>> = {
+const logos: Record<BrandingType, Record<Orientation, Record<string, string>>> = {
   [BrandingType.Determined]: {
     [Orientation.Horizontal]: {
-      [DarkLight.Dark]: logoDeterminedOnDarkHorizontal,
-      [DarkLight.Light]: logoDeterminedOnLightHorizontal,
+      dark: logoDeterminedOnDarkHorizontal,
+      light: logoDeterminedOnLightHorizontal,
     },
     [Orientation.Vertical]: {
-      [DarkLight.Dark]: logoDeterminedOnDarkVertical,
-      [DarkLight.Light]: logoDeterminedOnLightVertical,
+      dark: logoDeterminedOnDarkVertical,
+      light: logoDeterminedOnLightVertical,
     },
   },
   [BrandingType.HPE]: {
     [Orientation.Horizontal]: {
-      [DarkLight.Dark]: logoHpeOnDarkHorizontal,
-      [DarkLight.Light]: logoHpeOnLightHorizontal,
+      dark: logoHpeOnDarkHorizontal,
+      light: logoHpeOnLightHorizontal,
     },
     [Orientation.Vertical]: {
-      [DarkLight.Dark]: logoHpeOnDarkHorizontal,
-      [DarkLight.Light]: logoHpeOnLightHorizontal,
+      dark: logoHpeOnDarkHorizontal,
+      light: logoHpeOnLightHorizontal,
     },
   },
 };
@@ -53,7 +53,7 @@ const Logo: React.FC<Props> = ({
   branding = BrandingType.Determined,
   orientation = Orientation.Vertical,
 }: Props) => {
-  const { ui } = useUI();
+  const { isDarkMode } = useUI();
   const classes = [css[branding], css[orientation]];
 
   const alt = useMemo(() => {
@@ -67,7 +67,11 @@ const Logo: React.FC<Props> = ({
   }, [branding]);
 
   return (
-    <img alt={alt} className={classes.join(' ')} src={logos[branding][orientation][ui.darkLight]} />
+    <img
+      alt={alt}
+      className={classes.join(' ')}
+      src={logos[branding][orientation][isDarkMode ? 'dark' : 'light']}
+    />
   );
 };
 

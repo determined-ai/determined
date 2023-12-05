@@ -358,7 +358,7 @@ service Determined {
   rpc CreateGenericTask(CreateGenericTaskRequest)
       returns (CreateGenericTaskResponse) {
     option (google.api.http) = {
-      post: "/api/v1/generic-task"
+      post: "/api/v1/generic-tasks"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -2396,13 +2396,13 @@ service Determined {
   }
 
   // Get task config
-  rpc GetTaskConfig(GetTaskConfigRequest)
-    returns (GetTaskConfigResponse) {
+  rpc GetGenericTaskConfig(GetGenericTaskConfigRequest)
+      returns (GetGenericTaskConfigResponse) {
     option (google.api.http) = {
       get: "/api/v1/tasks/{task_id}/config"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Tasks"
+      tags: "Internal"
     };
   }
 }

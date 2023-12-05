@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import { UIProvider } from 'hew/Theme';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
 import React, { useCallback, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
@@ -66,10 +67,12 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <UIProvider>
-      <DndProvider backend={HTML5Backend}>
-        <Container />
-      </DndProvider>
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <DndProvider backend={HTML5Backend}>
+          <Container />
+        </DndProvider>
+      </ThemeProvider>
     </UIProvider>,
   );
 

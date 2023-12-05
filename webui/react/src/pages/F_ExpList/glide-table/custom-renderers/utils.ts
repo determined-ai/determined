@@ -72,7 +72,7 @@ export function drawArrow(
 function truncate(
   ctx: CanvasRenderingContext2D,
   text: string,
-  x: number,
+  _x: number,
   maxWidth: number,
   suffix = '…',
 ): string {

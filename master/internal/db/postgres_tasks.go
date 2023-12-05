@@ -3,22 +3,18 @@ package db
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/o1egl/paseto"
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
-	"github.com/jmoiron/sqlx"
-
-	"github.com/o1egl/paseto"
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // initAllocationSessions purges sessions of all closed allocations.
@@ -29,14 +25,6 @@ DELETE FROM allocation_sessions WHERE allocation_id in (
 	WHERE start_time IS NOT NULL AND end_time IS NOT NULL
 )`)
 	return err
-}
-
-// queryHandler is an interface for a query handler to use tx/db for same queries.
-type queryHandler interface {
-	sqlx.Queryer
-	sqlx.Execer
-	// Unfortunately database/sql doesn't expose an interface for this like sqlx.
-	NamedExec(query string, arg interface{}) (sql.Result, error)
 }
 
 // CheckTaskExists checks if the task exists.
@@ -62,28 +50,19 @@ func (db *PgDB) AddTask(t *model.Task) error {
 // AddTask UPSERT's the existence of a task.
 func AddTask(ctx context.Context, t *model.Task) error {
 	// Since AddTaskTx is a single query, RunInTx is an overkill.
-	return AddTaskTx(ctx, Bun(), t, nil)
+	return AddTaskTx(ctx, Bun(), t)
 }
 
 // AddTaskTx UPSERT's the existence of a task in a tx.
-func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task, config *model.GenericTaskConfig) error {
-	var configStr = "{}"
-	if config != nil {
-		configBytes, err := json.Marshal(*config)
-		if err != nil {
-			return errors.Wrapf(err, "error handling experiment config %v", *config)
-		}
-		configStr = string(configBytes)
-	}
+func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version", "forked_from").
-		Value("config", "?", configStr).
-		Value("forked_from", "?", t.ForkedFrom).
+		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
 		Set("job_id=EXCLUDED.job_id").
 		Set("log_version=EXCLUDED.log_version").
+		Set("config=EXCLUDED.config").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }
@@ -109,6 +88,12 @@ func NonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID) (
 	}
 
 	return res.ContextDirectory, nil
+}
+
+// TaskCompleted checks if the end time exists for a task, if so, the task has completed.
+func TaskCompleted(ctx context.Context, tID model.TaskID) (bool, error) {
+	return Bun().NewSelect().Table("tasks").
+		Where("task_id = ?", tID).Where("end_time IS NOT NULL").Exists(ctx)
 }
 
 // CompleteTask persists the completion of a task.

@@ -79,6 +79,8 @@ export const terminalRunStates: Set<CompoundRunState> = new Set([
   RunState.Deleted,
 ]);
 
+export const erroredRunStates: Set<CompoundRunState> = new Set([RunState.Error, RunState.Canceled]);
+
 export const terminalRunStatesKeys = [...runStateList, RunState.Deleted];
 
 export const runStateToLabel: { [key in RunState]: string } = {
@@ -157,7 +159,7 @@ export const commandTypeToLabel: { [key in CommandType]: string } = {
 };
 
 export const jobStateToLabel: { [key in JobState]: string } = {
-  [JobState.SCHEDULED]: 'Scheduled',
+  [JobState.SCHEDULED]: 'Running',
   [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
   [JobState.UNSPECIFIED]: 'Unspecified',
