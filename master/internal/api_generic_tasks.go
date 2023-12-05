@@ -180,22 +180,22 @@ func (a *apiServer) CreateGenericTask(
 	var parentContextDirectory []byte
 	if req.ForkedFrom != nil {
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
-		getTaskReq := &apiv1.GetTaskRequest{
+		getTaskReq := &apiv1.GetGenericTaskConfigRequest{
 			TaskId: *req.ForkedFrom,
 		}
-		resp, err := a.GetTask(ctx, getTaskReq)
+		resp, err := a.GetGenericTaskConfig(ctx, getTaskReq)
 		if err != nil {
 			return nil, err
 		}
 
-		parentConfig, err = resp.Task.Config.MarshalJSON()
+		parentConfig = []byte(resp.Config)
 		if err != nil {
 			return nil, err
 		}
 
 		if len(req.ContextDirectory) == 0 {
 			contextDirectoryResp, err := a.GetTaskContextDirectory(ctx, &apiv1.GetTaskContextDirectoryRequest{
-				TaskId: resp.Task.TaskId,
+				TaskId: *req.ForkedFrom,
 			})
 			if err != nil {
 				return nil, err
