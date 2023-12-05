@@ -1,4 +1,5 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isEqual } from 'lodash';
 import { useCallback, useEffect, useInsertionEffect, useRef, useState } from 'react';
 
 type LoadablePromiser<T> = (canceler: AbortController) => Promise<T | Loadable<T>>;
@@ -38,10 +39,12 @@ export const useAsync = <T>(
   useEffect(() => {
     const internalCanceler = new AbortController();
     (async () => {
-      setState(NotLoaded);
       const retVal = await callFunc(internalCanceler);
       if (!internalCanceler.signal.aborted) {
-        setState(Loadable.isLoadable(retVal) ? retVal : Loaded(retVal));
+        const loaded = Loadable.isLoadable(retVal) ? retVal : Loaded(retVal);
+        if (!isEqual(loaded, state)) {
+          setState(loaded);
+        }
       }
     })();
     return () => {
