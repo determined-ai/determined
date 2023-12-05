@@ -31,9 +31,9 @@ func (a *apiServer) GetTask(
 	}
 }
 
-func (a *apiServer) GetTaskConfig(
-	ctx context.Context, req *apiv1.GetTaskConfigRequest,
-) (resp *apiv1.GetTaskConfigResponse, err error) {
+func (a *apiServer) GetGenericTaskConfig(
+	ctx context.Context, req *apiv1.GetGenericTaskConfigRequest,
+) (resp *apiv1.GetGenericTaskConfigResponse, err error) {
 	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -50,6 +50,6 @@ func (a *apiServer) GetTaskConfig(
 	case err != nil:
 		return nil, errors.Wrapf(err, "error fetching task config for task '%s' from database", req.TaskId)
 	default:
-		return &apiv1.GetTaskConfigResponse{Config: *t.Config}, nil
+		return &apiv1.GetGenericTaskConfigResponse{Config: *t.Config}, nil
 	}
 }

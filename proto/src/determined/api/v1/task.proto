@@ -276,7 +276,7 @@ message GetAllocationResponse {
 }
 
 // Gets task configuration JSON
-message GetTaskConfigRequest {
+message GetGenericTaskConfigRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "task_id" ] }
   };
@@ -285,7 +285,7 @@ message GetTaskConfigRequest {
 }
 
 // Response to GetTaskConfigRequest
-message GetTaskConfigResponse {
+message GetGenericTaskConfigResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "config" ] }
   };
