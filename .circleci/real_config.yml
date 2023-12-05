@@ -3267,17 +3267,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection-quarantine
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet-quarantine"]
-              mark: ["model_hub_mmdetection_quarantine"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-        # DeepSpeed tests do not work on K80s, so we need V100 instances.
-      - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context: aws
           matrix:
