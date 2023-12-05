@@ -398,7 +398,7 @@ const ExperimentContinueModalComponent = ({
 
   const hideSimpleConfig = isReactivate && experiment.state !== RunState.Completed;
 
-  const maxLengthType = capitalizeWord(getMaxLengthType(modalState.config) || 'length');
+  const maxLengthType = capitalizeWord(getMaxLengthType(modalState.config) || 'batches');
   const modalIsInAdvancedMode = modalState.isAdvancedMode || hideSimpleConfig;
   return (
     <Modal
