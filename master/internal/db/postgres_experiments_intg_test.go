@@ -53,7 +53,7 @@ func TestPgDB_ExperimentCheckpointsToGCRawModelRegistry(t *testing.T) {
 	for i := 1; i <= length; i++ {
 		ckptUUID := uuid.New()
 		ckpt := MockModelCheckpoint(ckptUUID, a, WithSteps(i))
-		err := AddCheckpointMetadata(ctx, &ckpt)
+		err := AddCheckpointMetadata(ctx, &ckpt, &tr.ID)
 		require.NoError(t, err)
 		err = AddTrialValidationMetrics(ctx, ckptUUID, tr, int32(i), int32(i+5), db)
 		require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestPgDB_ExperimentCheckpointsToGCRaw(t *testing.T) {
 	for i := 1; i <= length; i++ {
 		ckptUUID := uuid.New()
 		ckpt := MockModelCheckpoint(ckptUUID, a, WithSteps(i))
-		err := AddCheckpointMetadata(ctx, &ckpt)
+		err := AddCheckpointMetadata(ctx, &ckpt, &tr.ID)
 		require.NoError(t, err)
 		err = AddTrialValidationMetrics(ctx, ckptUUID, tr, int32(i), int32(i+5), db)
 		require.NoError(t, err)
@@ -255,7 +255,7 @@ func TestCheckpointMetadata(t *testing.T) {
 					"steps_completed":    float64(stepsCompleted),
 				},
 			}
-			err := AddCheckpointMetadata(ctx, &ckpt)
+			err := AddCheckpointMetadata(ctx, &ckpt, &tr.ID)
 			require.NoError(t, err)
 
 			var m *trialv1.TrialMetrics
@@ -718,7 +718,7 @@ func TestDeleteExperiments(t *testing.T) {
 			for k := 0; k < numChkpts; k++ { // Create checkpoints
 				ckpt := uuid.New()
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
-				err := AddCheckpointMetadata(ctx, &checkpoint)
+				err := AddCheckpointMetadata(ctx, &checkpoint, &tr.ID)
 				require.NoError(t, err)
 				checkpointIDs = append(checkpointIDs, checkpoint.ID)
 				checkPointIndex++

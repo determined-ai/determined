@@ -530,6 +530,9 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	})
 }
 
+func TestReportCheckpoint(t *testing.T) {
+}
+
 func TestUnusualMetricNames(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	expectedMetricsMap := map[string]any{
