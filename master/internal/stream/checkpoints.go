@@ -151,7 +151,7 @@ func CheckpointCollectStartupMsgs(
 		Join("JOIN trials ON trial_id_task_id.trial_id = trials.id").
 		Join("JOIN experiments e ON trials.experiment_id = e.id").
 		Join("JOIN projects p ON e.project_id = p.id").
-		OrderExpr("trials.id ASC")
+		OrderExpr("checkpoints_v2.id ASC")
 	q = permFilter(q)
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
