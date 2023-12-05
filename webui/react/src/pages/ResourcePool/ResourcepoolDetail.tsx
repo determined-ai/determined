@@ -81,6 +81,11 @@ const ResourcepoolDetailInner: React.FC = () => {
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
   const [poolStats, setPoolStats] = useState<V1RPQueueStat>();
 
+  const topologyAgentPool = useMemo(
+    () => (poolname ? agents.filter(({ resourcePools }) => resourcePools.includes(poolname)) : []),
+    [poolname, agents],
+  );
+
   const fetchStats = useCallback(async () => {
     try {
       const promises = [getJobQStats({}, { signal: canceler.signal })] as [
@@ -219,11 +224,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        {!!agents.length && poolname && (
-          <Topology
-            nodes={agents.filter(({ resourcePools }) => resourcePools.includes(poolname))}
-          />
-        )}
+        {!!topologyAgentPool.length && poolname && <Topology nodes={topologyAgentPool} />}
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>
