@@ -215,11 +215,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
         if not hasattr(self, "hparams"):
-            self.hparams = utils.attribute_dict(context.get_hparams())
+            self.hparams = utils.to_namespace(context.get_hparams())
         if not hasattr(self, "data_config"):
-            self.data_config = utils.attribute_dict(context.get_data_config())
+            self.data_config = utils.to_namespace(context.get_data_config())
         if not hasattr(self, "exp_config"):
-            self.exp_config = utils.attribute_dict(context.get_experiment_config())
+            self.exp_config = utils.to_namespace(context.get_experiment_config())
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
 
@@ -267,7 +267,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
     def check_hparams(self) -> None:
         # We require hparams to be a SimpleNamespace.
         if not isinstance(self.hparams, types.SimpleNamespace):
-            self.hparams = utils.attribute_dict(self.hparams)
+            self.hparams = utils.to_namespace(self.hparams)
 
         if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the

@@ -55,8 +55,8 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
         self.context = context
-        self.hparams = utils.attribute_dict(context.get_hparams())
-        self.data_config = utils.attribute_dict(context.get_data_config())
+        self.hparams = utils.to_namespace(context.get_hparams())
+        self.data_config = utils.to_namespace(context.get_data_config())
         self.cfg = self.build_mmdet_config()
         # We will control how data is moved to GPU.
         self.context.experimental.disable_auto_to_device()

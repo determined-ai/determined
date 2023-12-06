@@ -296,9 +296,9 @@ def parse_dict_to_dataclasses(
         obj = dtype(**inputs)
         if as_dict:
             try:
-                obj = utils.attribute_dict(obj.as_dict())
+                obj = utils.to_namespace(obj.as_dict())
             except AttributeError:
-                obj = utils.attribute_dict(dataclasses.asdict(obj))
+                obj = utils.to_namespace(dataclasses.asdict(obj))
         outputs.append(obj)
     return (*outputs,)
 
@@ -318,7 +318,7 @@ def default_parse_config_tokenizer_model_kwargs(
         One dictionary each for the config, tokenizer, and model.
     """
     if not isinstance(hparams, types.SimpleNamespace):
-        hparams = utils.attribute_dict(hparams)
+        hparams = utils.to_namespace(hparams)
     config_args, tokenizer_args, model_args = parse_dict_to_dataclasses(
         (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, as_dict=True
     )
