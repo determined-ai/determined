@@ -884,14 +884,12 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 	JOIN trials t ON t.id = tt.run_id
 	WHERE experiment_id IN (?)
 )`, bun.In(ids)).
-			Returning("id").
 			Exec(ctx); err != nil {
 			return fmt.Errorf("deleting checkpoints (v2): %w", err)
 		}
 
 		if _, err := tx.NewDelete().Model(&model.Experiment{}).
 			Where("id IN (?)", bun.In(ids)).
-			Returning("id").
 			Exec(ctx); err != nil {
 			return fmt.Errorf("deleting experiments table: %w", err)
 		}
