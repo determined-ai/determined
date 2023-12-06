@@ -355,7 +355,7 @@ func (t *trial) continueSetup(continueFromTrialID *int) error {
 	}
 	if _, err := db.Bun().
 		NewInsert().
-		Model(&model.TrialTaskID{TrialID: t.id, TaskID: t.taskID}).
+		Model(&model.RunTaskID{RunID: t.id, TaskID: t.taskID}).
 		Exec(context.TODO()); err != nil {
 		return fmt.Errorf("adding trial ID task ID relationship: %w", err)
 	}
