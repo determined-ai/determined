@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -100,8 +99,6 @@ type DB interface {
 		experimentID int, version int, experimentSnapshot []byte,
 	) error
 	DeleteSnapshotsForExperiment(experimentID int) error
-	DeleteSnapshotsForExperiments(experimentIDs []int) func(ctx context.Context,
-		tx *bun.Tx) error
 	DeleteSnapshotsForTerminalExperiments() error
 	QueryProto(queryName string, v interface{}, args ...interface{}) error
 	QueryProtof(
