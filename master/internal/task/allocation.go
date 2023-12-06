@@ -919,7 +919,7 @@ func (a *allocation) tryExitOrTerminate(reason string, forcePreemption bool) {
 	}
 
 	switch {
-	case a.req.Preemptible && a.ready() || forcePreemption:
+	case a.req.Preemptible && coalesceBool(a.model.IsReady, false) || forcePreemption:
 		a.preempt(reason)
 	default:
 		a.kill(reason)
@@ -1281,7 +1281,7 @@ func (a *allocation) state() AllocationState {
 		Resources:  resources,
 		Addresses:  addresses,
 		Containers: containers,
-		Ready:      a.ready(),
+		Ready:      coalesceBool(a.model.IsReady, false),
 	}
 }
 
@@ -1298,13 +1298,6 @@ func (a *allocation) getModelState() model.AllocationState {
 		return model.AllocationStatePending
 	}
 	return *a.model.State
-}
-
-func (a *allocation) ready() bool {
-	// Most trials use `a.rendezvous` and the normal rendezvous APIs, and go through this path.
-	return (a.rendezvous != nil && a.rendezvous.ready()) ||
-		// And finally, of course, if the task explicitly called `AllocationReady` it is ready.
-		coalesceBool(a.model.IsReady, false)
 }
 
 func coalesceBool(x *bool, fallback bool) bool {
