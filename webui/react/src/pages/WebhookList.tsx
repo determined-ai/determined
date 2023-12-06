@@ -71,7 +71,11 @@ const WebhooksView: React.FC = () => {
     }
   }, [canceler.signal]);
 
-  usePolling(fetchWebhooks, { rerunOnNewFn: true });
+  const fetchAll = useCallback(async () => {
+    await Promise.allSettled([fetchWebhooks()]);
+  }, [fetchWebhooks]);
+
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   /**
    * Get new webhooks based on changes to the pagination and sorter.
@@ -238,8 +242,8 @@ const WebhooksView: React.FC = () => {
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-      <WebhookCreateModal.Component onSuccess={() => fetchWebhooks()} />
-      <WebhookDeleteModal.Component webhook={selectedWebhook} onSuccess={() => fetchWebhooks()} />
+      <WebhookCreateModal.Component />
+      <WebhookDeleteModal.Component webhook={selectedWebhook} />
     </Page>
   );
 };

@@ -305,12 +305,15 @@ func (ResourceManager) GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse
 }
 
 // MoveJob implements rm.ResourceManager.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) MoveJob(msg sproto.MoveJob) error {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("move job found no resource pool with name %s: %w", msg.ResourcePool, err)
+	for _, rp := range k.pools {
+		err := rp.MoveJob(msg)
+		if err != nil {
+			return err
+		}
 	}
-	return rp.MoveJob(msg)
+	return nil
 }
 
 // RecoverJobPosition implements rm.ResourceManager.
@@ -324,56 +327,51 @@ func (k *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 }
 
 // Release implements rm.ResourceManager.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) Release(msg sproto.ResourcesReleased) {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		k.syslog.WithError(err).Warnf("release found no resource pool with name %s",
-			msg.ResourcePool)
-		return
+	for _, rp := range k.pools {
+		rp.ResourcesReleased(msg)
 	}
-	rp.ResourcesReleased(msg)
 }
 
 // SetAllocationName implements rm.ResourceManager.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		k.syslog.WithError(err).Warnf("set allocation name found no resource pool with name %s",
-			msg.ResourcePool)
-		return
+	for _, rp := range k.pools {
+		rp.SetAllocationName(msg)
 	}
-	rp.SetAllocationName(msg)
 }
 
 // SetGroupMaxSlots implements rm.ResourceManager.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		k.syslog.WithError(err).Warnf("set group max slots found no resource pool with name %s",
-			msg.ResourcePool)
-		return
+	for _, rp := range k.pools {
+		rp.SetGroupMaxSlots(msg)
 	}
-	rp.SetGroupMaxSlots(msg)
 }
 
 // SetGroupPriority implements rm.ResourceManager.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("set group priority found no resource pool with name %s: %w",
-			msg.ResourcePool, err)
+	for _, rp := range k.pools {
+		err := rp.SetGroupPriority(msg)
+		if err != nil {
+			return err
+		}
 	}
-	return rp.SetGroupPriority(msg)
+	return nil
 }
 
 // SetGroupWeight implements rm.ResourceManager.
+// TODO(DET-9920): This should know which pool it wants.
 func (k *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("set group weight found no resource pool with name %s: %w",
-			msg.ResourcePool, err)
+	for _, rp := range k.pools {
+		err := rp.SetGroupWeight(msg)
+		if err != nil {
+			return err
+		}
 	}
-	return rp.SetGroupWeight(msg)
+	return nil
 }
 
 // ValidateCommandResources implements rm.ResourceManager.
@@ -528,9 +526,6 @@ func (k *ResourceManager) podStatusUpdateCallback(msg sproto.UpdatePodStatus) {
 }
 
 func (k *ResourceManager) poolByName(resourcePool string) (*kubernetesResourcePool, error) {
-	if resourcePool == "" {
-		return nil, errors.New("invalid call: cannot get a resource pool with no name")
-	}
 	rp, ok := k.pools[resourcePool]
 	if !ok {
 		return nil, fmt.Errorf("cannot find resource pool %s", resourcePool)

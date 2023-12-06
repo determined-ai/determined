@@ -38,21 +38,11 @@ export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
   if (flexSchedulers.has(pool.schedulerType) && pool.slotsAvailable > 0) {
     return pool.slotsAvailable; // The case for HPC Slurm & PBS clusters
   }
-  if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0) {
+  if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
     return pool.maxAgents * pool.slotsPerAgent;
-  }
-  /**
-   * On-premise deployments don't have dynamic agents and we don't know how many
-   * agents might connect.
-   *
-   * This is a work around for dynamic agents such as Kubernetes where `slotsAvailable`,
-   * `slotsPerAgents` and `maxAgents` are all zero. This value is used for form
-   * validation and it is too strict to allow anything to run experiments. Intentially
-   * generalized and not matching against Kubernetes, in case other schedulers return
-   * zeroes, and this would at least unblock experiments, and the backend would be able
-   * to return capacity issues.
-   */
-  return pool.slotsAvailable || Infinity;
+  // on-premise deployments don't have dynamic agents and we don't know how many
+  // agents might connect.
+  return pool.slotsAvailable;
 };
 
 /**

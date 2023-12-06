@@ -268,9 +268,8 @@ func (c *Command) garbageCollect() {
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
-			Priority:     priority,
-			ResourcePool: c.Config.Resources.ResourcePool,
-			JobID:        c.jobID,
+			Priority: priority,
+			JobID:    c.jobID,
 		}).(type) {
 		case nil:
 		case rmerrors.UnsupportedError:

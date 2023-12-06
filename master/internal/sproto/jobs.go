@@ -83,10 +83,9 @@ type (
 	}
 	// MoveJob requests the job to be moved within a priority queue relative to another job.
 	MoveJob struct {
-		ID           model.JobID
-		Anchor       model.JobID
-		Ahead        bool
-		ResourcePool string
+		ID     model.JobID
+		Anchor model.JobID
+		Ahead  bool
 	}
 )
 

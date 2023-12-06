@@ -3474,19 +3474,6 @@ export interface V1GetExperimentValidationHistoryResponse {
     validationHistory?: Array<V1ValidationHistoryEntry>;
 }
 /**
- * 
- * @export
- * @interface V1GetGenericTaskConfigResponse
- */
-export interface V1GetGenericTaskConfigResponse {
-    /**
-     * The config of the task
-     * @type {string}
-     * @memberof V1GetGenericTaskConfigResponse
-     */
-    config: string;
-}
-/**
  * GetGroupResponse is the body of the response for the call to get a group by id.
  * @export
  * @interface V1GetGroupResponse
@@ -9566,12 +9553,6 @@ export interface V1Task {
      * @memberof V1Task
      */
     endTime?: Date;
-    /**
-     * The configuration of the task.
-     * @type {string}
-     * @memberof V1Task
-     */
-    config?: string;
 }
 /**
  * 
@@ -9769,7 +9750,7 @@ export interface V1TaskLogsResponse {
     stdtype?: string;
 }
 /**
- * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.  - TASK_TYPE_GENERIC: "GENERIC" task type for the enum public.task_type in Postgres.
+ * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
  * @export
  * @enum {string}
  */
@@ -9781,7 +9762,6 @@ export const V1TaskType = {
     COMMAND: 'TASK_TYPE_COMMAND',
     TENSORBOARD: 'TASK_TYPE_TENSORBOARD',
     CHECKPOINTGC: 'TASK_TYPE_CHECKPOINT_GC',
-    GENERIC: 'TASK_TYPE_GENERIC',
 } as const
 export type V1TaskType = ValueOf<typeof V1TaskType>
 /**
@@ -17878,42 +17858,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get task config
-         * @param {string} taskId The id of the task.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getGenericTaskConfig(taskId: string, options: any = {}): FetchArgs {
-            // verify required parameter 'taskId' is not null or undefined
-            if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getGenericTaskConfig.');
-            }
-            const localVarPath = `/api/v1/tasks/{taskId}/config`
-                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
@@ -20305,25 +20249,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get task config
-         * @param {string} taskId The id of the task.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getGenericTaskConfig(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGenericTaskConfigResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGenericTaskConfig(taskId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
@@ -21446,16 +21371,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get task config
-         * @param {string} taskId The id of the task.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getGenericTaskConfig(taskId: string, options?: any) {
-            return InternalApiFp(configuration).getGenericTaskConfig(taskId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
@@ -22219,18 +22134,6 @@ export class InternalApi extends BaseAPI {
      */
     public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
         return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get task config
-     * @param {string} taskId The id of the task.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public getGenericTaskConfig(taskId: string, options?: any) {
-        return InternalApiFp(this.configuration).getGenericTaskConfig(taskId, options)(this.fetch, this.basePath)
     }
     
     /**

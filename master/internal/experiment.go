@@ -252,9 +252,8 @@ func (e *internalExperiment) start() error {
 	}
 
 	e.rm.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
-		MaxSlots:     e.activeConfig.Resources().MaxSlots(),
-		ResourcePool: e.activeConfig.Resources().ResourcePool(),
-		JobID:        e.JobID,
+		MaxSlots: e.activeConfig.Resources().MaxSlots(),
+		JobID:    e.JobID,
 	})
 	if err := e.setWeight(e.activeConfig.Resources().Weight()); err != nil {
 		e.updateState(model.StateWithReason{
@@ -404,7 +403,6 @@ func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	resources.SetMaxSlots(msg.MaxSlots)
 	e.activeConfig.SetResources(resources)
 	msg.JobID = e.JobID
-	msg.ResourcePool = e.activeConfig.Resources().ResourcePool()
 	e.rm.SetGroupMaxSlots(msg)
 }
 
@@ -1035,9 +1033,8 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 
 	if forward {
 		switch err := e.rm.SetGroupPriority(sproto.SetGroupPriority{
-			Priority:     *priority,
-			ResourcePool: e.activeConfig.Resources().ResourcePool(),
-			JobID:        e.JobID,
+			Priority: *priority,
+			JobID:    e.JobID,
 		}).(type) {
 		case nil:
 		case rmerrors.UnsupportedError:
@@ -1062,9 +1059,8 @@ func (e *internalExperiment) setWeight(weight float64) error {
 	}
 
 	switch err := e.rm.SetGroupWeight(sproto.SetGroupWeight{
-		Weight:       weight,
-		ResourcePool: e.activeConfig.Resources().ResourcePool(),
-		JobID:        e.JobID,
+		Weight: weight,
+		JobID:  e.JobID,
 	}).(type) {
 	case nil:
 	case rmerrors.UnsupportedError:

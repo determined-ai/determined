@@ -173,7 +173,7 @@ const ModelHeader: React.FC<Props> = ({
         </div>
         <Glossary content={infoRows} />
       </div>
-      <deleteModelModal.Component model={model} redirectOnDelete />
+      <deleteModelModal.Component model={model} />
       <modelMoveModal.Component model={model} />
       <modelEditModal.Component fetchModel={fetchModel} model={model} />
     </header>

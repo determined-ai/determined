@@ -389,11 +389,14 @@ func (*ResourceManager) IsReattachableOnlyAfterStarted() bool {
 
 // MoveJob implements rm.ResourceManager.
 func (a *ResourceManager) MoveJob(msg sproto.MoveJob) error {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("move job found no resource pool with name %s: %w", msg.ResourcePool, err)
+	for _, pool := range a.pools {
+		err := pool.MoveJob(msg)
+		if err != nil {
+			a.syslog.WithError(err).Errorf("failed to move job %s", msg.ID)
+			return err
+		}
 	}
-	return pool.MoveJob(msg)
+	return nil
 }
 
 // NotifyContainerRunning implements rm.ResourceManager.
@@ -416,13 +419,9 @@ func (a *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 
 // Release implements rm.ResourceManager.
 func (a *ResourceManager) Release(msg sproto.ResourcesReleased) {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		a.syslog.WithError(err).Warnf("release found no resource pool with name %s",
-			msg.ResourcePool)
-		return
+	for _, pool := range a.pools {
+		pool.ResourcesReleased(msg)
 	}
-	pool.ResourcesReleased(msg)
 }
 
 // ResolveResourcePool implements rm.ResourceManager.
@@ -488,48 +487,39 @@ func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slot
 
 // SetAllocationName implements rm.ResourceManager.
 func (a *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		a.syslog.WithError(err).Warnf("set allocation name found no resource pool with name %s",
-			msg.ResourcePool)
-		return
+	for _, pool := range a.pools {
+		// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
+		// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
+		go pool.SetAllocationName(msg)
 	}
-	// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
-	// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
-	go pool.SetAllocationName(msg)
 }
 
 // SetGroupMaxSlots implements rm.ResourceManager.
 func (a *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		a.syslog.WithError(err).Warnf("set group max slots found no resource pool with name %s",
-			msg.ResourcePool)
-		return
+	for _, pool := range a.pools {
+		// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
+		// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
+		go pool.SetGroupMaxSlots(msg)
 	}
-	// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
-	// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
-	go pool.SetGroupMaxSlots(msg)
 }
 
 // SetGroupPriority implements rm.ResourceManager.
 func (a *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("set group priority found no resource pool with name %s: %w",
-			msg.ResourcePool, err)
+	for _, pool := range a.pools {
+		err := pool.setGroupPriority(msg)
+		if err != nil {
+			a.syslog.WithError(err).Errorf("failed to set priority for job %s", msg.JobID)
+			return err
+		}
 	}
-	return pool.SetGroupPriority(msg)
+	return nil
 }
 
 // SetGroupWeight implements rm.ResourceManager.
 func (a *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("set group weight found no resource pool with name %s: %w",
-			msg.ResourcePool, err)
+	for _, pool := range a.pools {
+		pool.SetGroupWeight(msg)
 	}
-	pool.SetGroupWeight(msg)
 	return nil
 }
 
@@ -634,9 +624,6 @@ func (a *ResourceManager) createResourcePool(
 }
 
 func (a *ResourceManager) poolByName(name string) (*resourcePool, error) {
-	if name == "" {
-		return nil, errors.New("invalid call: cannot get a resource pool with no name")
-	}
 	pool, ok := a.pools[name]
 	if !ok {
 		return nil, fmt.Errorf("cannot find resource pool %s", name)

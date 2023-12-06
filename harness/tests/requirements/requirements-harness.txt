@@ -15,4 +15,3 @@ attrdict3
 moto
 # Pydantic V2 has changes that break existing tests
 pydantic<2
-pandas

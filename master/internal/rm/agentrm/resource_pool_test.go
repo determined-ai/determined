@@ -28,10 +28,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	rp.ResourcesReleased(sproto.ResourcesReleased{
-		AllocationID: tasks[0].ID,
-		ResourcePool: tasks[0].ResourcePool,
-	})
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -50,10 +47,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	rp.ResourcesReleased(sproto.ResourcesReleased{
-		AllocationID: tasks[0].ID,
-		ResourcePool: tasks[0].ResourcePool,
-	})
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -72,10 +66,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	rp.ResourcesReleased(sproto.ResourcesReleased{
-		AllocationID: tasks[0].ID,
-		ResourcePool: tasks[0].ResourcePool,
-	})
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -94,10 +85,7 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.Equal(t, len(taskSummaries), 1)
 
-	rp.ResourcesReleased(sproto.ResourcesReleased{
-		AllocationID: tasks[0].ID,
-		ResourcePool: tasks[0].ResourcePool,
-	})
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: tasks[0].ID})
 
 	rp.stop()
 	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)

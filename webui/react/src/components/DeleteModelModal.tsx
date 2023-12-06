@@ -8,20 +8,13 @@ import { routeToReactUrl } from 'utils/routes';
 
 interface Props {
   model: ModelItem;
-  redirectOnDelete?: boolean;
 }
 
-const DeleteModelModal = ({ model, redirectOnDelete = false }: Props): JSX.Element => {
+const DeleteModelModal = ({ model }: Props): JSX.Element => {
   const handleOk = async () => {
     try {
       await deleteModel({ modelName: model.name });
-      if (redirectOnDelete) {
-        routeToReactUrl(
-          model.workspaceId
-            ? paths.workspaceDetails(model.workspaceId, 'models')
-            : paths.modelList(),
-        );
-      }
+      routeToReactUrl(paths.modelList());
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
