@@ -22,7 +22,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-// ResolveResources - Validate ResoucePool and check for availability.
+// ResolveResources validates if the pool exists and check for resource availability.
 func (m *Master) ResolveResources(
 	resourcePool string,
 	slots int,

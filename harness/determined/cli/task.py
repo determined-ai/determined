@@ -267,7 +267,7 @@ args_description: List[Any] = [
                         action="append",
                         default=[],
                         type=Path,
-                        help="additional files to copy into the task container",
+                        help=command.INCLUDE_DESC,
                     ),
                     Arg("--project_id", type=int, help="place this task inside this project"),
                     Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
