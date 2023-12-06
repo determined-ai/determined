@@ -7,6 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
 
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -112,19 +113,14 @@ func (user User) ValidatePassword(password string) bool {
 // techniques.
 func (user *User) UpdatePasswordHash(password string) error {
 	if password == "" {
-		user.PasswordHash = null.NewString("", false)
+		user.PasswordHash = EmptyPassword
 	} else {
-		// truncate password for bcrypt
-		truncatePass := []byte(password)[:72]
-		passwordHash, err := bcrypt.GenerateFromPassword(
-			truncatePass,
-			BCryptCost,
-		)
+		passwordHash, err := HashPassword(password)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error updating user password")
 		}
 
-		user.PasswordHash = null.StringFrom(string(passwordHash))
+		user.PasswordHash = null.StringFrom(passwordHash)
 	}
 	return nil
 }
@@ -177,4 +173,25 @@ type UserWebSetting struct {
 	Key         string
 	Value       string
 	StoragePath string
+}
+
+// HashPassword hashes the user's password.
+func HashPassword(password string) (string, error) {
+	// truncate password to confirm the bcrypt length limit <=72bytes
+	passwordBytes := []byte(password)
+	var truncatedBytes []byte
+	if len(passwordBytes) <= 72 {
+		truncatedBytes = passwordBytes
+	} else {
+		truncatedBytes = passwordBytes[:72]
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		truncatedBytes,
+		BCryptCost,
+	)
+	if err != nil {
+		return "", err
+	}
+	return string(passwordHash), nil
 }
