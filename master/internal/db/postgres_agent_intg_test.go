@@ -101,11 +101,6 @@ func TestEndAllAgentStats(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	/*
-		bleh := time.Date(2021, 10, 10, 0, 0, 0, 0, time.Local).Truncate(time.Millisecond)
-		require.NoError(t, db.UpdateClusterHeartBeat(bleh))
-	*/
-
 	rp := uuid.New().String()
 
 	// Start is before our cluster heartbeat.

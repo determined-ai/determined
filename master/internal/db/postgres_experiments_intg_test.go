@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -619,6 +620,50 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	policies, err = ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
 	require.Equal(t, activeConfig.RawLogPolicies, policies)
+}
+
+func TestGetNonTerminalExperimentCount(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	c, err := GetNonTerminalExperimentCount(ctx, nil)
+	require.NoError(t, err)
+	require.Equal(t, 0, c)
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{})
+	require.NoError(t, err)
+	require.Equal(t, 0, c)
+
+	e0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		State: ptrs.Ptr(model.ActiveState),
+	})
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
+
+	e1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		State: ptrs.Ptr(model.CompletedState),
+	})
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e1.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 0, c)
+
+	e2 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		State: ptrs.Ptr(model.PausedState),
+	})
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e2.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
+
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID), int32(e1.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
+
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID), int32(e1.ID), int32(e2.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 2, c)
 }
 
 func TestMetricBatchesMilestones(t *testing.T) {

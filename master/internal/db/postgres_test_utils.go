@@ -343,6 +343,7 @@ type MockExperimentParams struct {
 	HParamNames          *[]string
 	ProjectID            *int
 	ExternalExperimentID *string
+	State                *model.State
 }
 
 // RequireMockExperimentParams returns a mock experiment with various parameters.
@@ -405,6 +406,9 @@ func RequireMockExperimentParams(
 	}
 	if p.ProjectID != nil {
 		exp.ProjectID = *p.ProjectID
+	}
+	if p.State != nil {
+		exp.State = *p.State
 	}
 
 	err := db.AddExperiment(&exp, cfg)
