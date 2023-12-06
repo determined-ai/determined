@@ -10,6 +10,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/google/uuid"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -85,6 +87,76 @@ func TestAddAndRemoveBindings(t *testing.T) {
 	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
 }
 
+func TestCheckIfRPUnbound(t *testing.T) {
+	ctx := context.Background()
+	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	poolName := uuid.New().String()
+	require.NoError(t, CheckIfRPUnbound(poolName))
+
+	user := RequireMockUser(t, pgDB)
+	workspaceIDs, err := MockWorkspaces([]string{uuid.New().String()}, user.ID)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, CleanupMockWorkspace(workspaceIDs))
+	}()
+
+	poolConfigs := []config.ResourcePoolConfig{{PoolName: poolName}}
+	require.NoError(t, AddRPWorkspaceBindings(ctx, workspaceIDs, poolName, poolConfigs))
+
+	require.ErrorContains(t, CheckIfRPUnbound(poolName), "can not be bound to any workspaces")
+
+	require.NoError(t, RemoveRPWorkspaceBindings(ctx, workspaceIDs, poolName))
+}
+
+func TestGetDefaultPoolsForWorkspace(t *testing.T) {
+	ctx := context.Background()
+	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	comp, aux, err := GetDefaultPoolsForWorkspace(ctx, -1)
+	require.NoError(t, err) // TODO(!!!) we should return errors for these cases.
+	require.Equal(t, "", comp)
+	require.Equal(t, "", aux)
+
+	user := RequireMockUser(t, pgDB)
+	workspaceIDs, err := MockWorkspaces([]string{uuid.New().String()}, user.ID)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, CleanupMockWorkspace(workspaceIDs))
+	}()
+
+	comp, aux, err = GetDefaultPoolsForWorkspace(ctx, int(workspaceIDs[0]))
+	require.NoError(t, err)
+	require.Equal(t, "", comp)
+	require.Equal(t, "", aux)
+
+	expectedCompute := uuid.New().String()
+	_, err = Bun().NewUpdate().Model(&model.Workspace{}).
+		Set("default_compute_pool = ?", expectedCompute).
+		Where("id = ?", workspaceIDs[0]).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	comp, aux, err = GetDefaultPoolsForWorkspace(ctx, int(workspaceIDs[0]))
+	require.NoError(t, err)
+	require.Equal(t, expectedCompute, comp)
+	require.Equal(t, "", aux)
+
+	expectedAux := uuid.New().String()
+	_, err = Bun().NewUpdate().Model(&model.Workspace{}).
+		Set("default_aux_pool = ?", expectedAux).
+		Where("id = ?", workspaceIDs[0]).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	comp, aux, err = GetDefaultPoolsForWorkspace(ctx, int(workspaceIDs[0]))
+	require.NoError(t, err)
+	require.Equal(t, expectedCompute, comp)
+	require.Equal(t, expectedAux, aux)
+}
+
 func TestBindingFail(t *testing.T) {
 	// Test add the same binding multiple times - should fail
 	ctx := context.Background()
@@ -126,7 +198,8 @@ func TestBindingFail(t *testing.T) {
 
 func TestListWorkspacesBindingRP(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, cleanup := MustResolveNewPostgresDatabase(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	user := RequireMockUser(t, pgDB)
