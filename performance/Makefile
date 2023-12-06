@@ -8,7 +8,7 @@ KEYPAIR_ID ?= performance-tests
 VERSION ?= $(shell det -v | cut -d' ' -f2)
 
 # Perf test options
-DET_URL ?= $(shell cat .det.url || echo UNSET)
+DET_MASTER ?= $(shell cat .det.url || echo http://localhost:8080)
 DET_ADMIN_USERNAME ?= admin
 DET_ADMIN_PASSWORD ?= ""
 
@@ -77,7 +77,7 @@ run:
 	docker run \
 		--name perf-tests \
 		$(IMAGE) run \
-		-e DET_MASTER=$(DET_URL) \
+		-e DET_MASTER=$(DET_MASTER) \
 		$(K6_FLAGS) \
 		/test_scripts/api_performance_tests.js; \
 	TEST_STATUS=$$?; \
@@ -87,23 +87,6 @@ run:
 	docker cp \
 		perf-tests:/home/k6/results.txt \
 		reports/$$(date +%s).results.txt; \
-	docker rm perf-tests; \
-	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
-
-run-local:
-	docker run \
-		--name perf-tests \
-		$(IMAGE) run \
-		-e DET_MASTER=http://localhost:8080 \
-		$(K6_FLAGS) \
-		/test_scripts/api_performance_tests.js; \
-	TEST_STATUS=$$?; \
-	docker cp \
-		perf-tests:/home/k6/junit.xml \
-		reports/local-$$(date +%s).junit.xml; \
-	docker cp \
-		perf-tests:/home/k6/results.txt \
-		reports/local-$$(date +%s).results.txt; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 

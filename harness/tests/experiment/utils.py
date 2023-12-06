@@ -97,7 +97,11 @@ def make_default_exp_config(
     scheduling_unit: int,
     searcher_metric: str,
     checkpoint_dir: Optional[str] = None,
+    data: Optional[Dict[str, Any]] = None,
 ) -> Dict:
+    if data is None:
+        data = {}
+
     return {
         "scheduling_unit": scheduling_unit,
         "resources": {"native_parallel": False, "slots_per_trial": 1},
@@ -124,6 +128,7 @@ def make_default_exp_config(
         },
         "min_checkpoint_period": {"batches": 0},
         "min_validation_period": {"batches": 0},
+        "data": data,
     }
 
 
