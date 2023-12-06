@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -25,7 +26,7 @@ import (
 var syslog = logrus.WithField("component", "allocation_service")
 
 // DefaultService is the singleton default allocationService.
-var DefaultService AllocationService = newAllocationService()
+var DefaultService = newAllocationService()
 
 // allocationService is used to launch, track and interact with allocations.
 type allocationService struct {
@@ -53,6 +54,10 @@ func (as *allocationService) StartAllocation(
 ) error {
 	as.mu.Lock()
 	defer as.mu.Unlock()
+
+	if as.allocations[req.AllocationID] != nil {
+		return fmt.Errorf("allocation with ID %s already exists", req.AllocationID)
+	}
 
 	ref, err := newAllocation(logCtx, req, db, rm, specifier)
 	if err != nil {
@@ -321,6 +326,21 @@ func (as *allocationService) waitForRestore(
 		return nil, err
 	}
 	return ref, nil
+}
+
+// detach "detaches" the allocation, letting go of the underlying resources without modifying their or its
+// own state in anyway. Useful for testing restart paths.
+func (as *allocationService) detach(id model.AllocationID) error {
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		return err
+	}
+	ref.detach()
+
+	as.mu.Lock()
+	delete(as.allocations, id)
+	as.mu.Unlock()
+	return nil
 }
 
 // getAllocation returns allocation actor by allocation id.

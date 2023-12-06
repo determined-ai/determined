@@ -142,6 +142,9 @@ type allocation struct {
 	portsRegistered bool
 
 	closers []func()
+
+	// tracks if detach was called. If it was, the service won't try to clean us up as if we crashed.
+	detached bool
 }
 
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
@@ -222,7 +225,19 @@ func (a *allocation) run(ctx context.Context, sub *sproto.ResourcesSubscription)
 	defer sub.Close()
 	defer a.wg.Cancel() // Important if we panic, so awaitTermination can unblock.
 
-	for !a.HandleRMEvent(sub.Get()) {
+	for {
+		event, err := sub.GetWithContext(ctx)
+		if err != nil {
+			// The following block is only used by tests to simulate a master crash by calling detach().
+			// It follows, though, no one should ever call detach() or wg.Cancel() in the code unless you are
+			// implementing graceful shutdown.
+			return
+		}
+
+		done := a.HandleRMEvent(event)
+		if done {
+			return
+		}
 	}
 }
 
@@ -475,23 +490,27 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "loading trial allocation")
 		}
-	} else {
-		// Insert new allocation.
-		a.syslog.Debug("requestResources add allocation")
-
-		a.setModelState(model.AllocationStatePending)
-		if err := a.db.AddAllocation(&a.model); err != nil {
-			return nil, errors.Wrap(err, "saving trial allocation")
+		sub, err := a.rm.Allocate(a.req)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to request allocation")
 		}
+		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Restoring %s (id: %s)", a.req.Name, a.req.AllocationID)})
+		return sub, nil
+	}
+
+	// Insert new allocation.
+	a.syslog.Debug("requestResources add allocation")
+
+	a.setModelState(model.AllocationStatePending)
+	if err := a.db.AddAllocation(&a.model); err != nil {
+		return nil, errors.Wrap(err, "saving trial allocation")
 	}
 
 	sub, err := a.rm.Allocate(a.req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to request allocation")
 	}
-	a.sendTaskLog(&model.TaskLog{
-		Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, a.req.AllocationID),
-	})
+	a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, a.req.AllocationID)})
 	return sub, nil
 }
 
@@ -504,6 +523,10 @@ func (a *allocation) Cleanup() {
 
 	// FYI, if we haven't exited something went terribly wrong (it is bug).
 	if a.exited != nil {
+		return
+	}
+	if a.detached {
+		// This path is only used by testing to simulate a master crash.
 		return
 	}
 
@@ -1298,4 +1321,11 @@ func (a *allocation) getPorts(exposedPorts map[string]int) (map[string]int, erro
 	}
 
 	return ports, nil
+}
+
+func (a *allocation) detach() {
+	a.mu.Lock()
+	a.detached = true
+	a.mu.Unlock()
+	a.wg.Close()
 }

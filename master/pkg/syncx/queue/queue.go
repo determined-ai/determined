@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"sync"
 )
 
@@ -41,6 +42,35 @@ func (q *Queue[T]) Get() T {
 	res := q.elems[0]
 	q.elems = q.elems[1:]
 	return res
+}
+
+// GetWithContext removes and returns an element from the queue. If the queue is empty, then Get will block
+// until an element is available or the context is canceled. This routine is relatively expensive---don't use
+// it for a high throughput queue. Instead, you should probably just use a channel.
+func (q *Queue[T]) GetWithContext(ctx context.Context) (T, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		select {
+		case <-ctx.Done():
+			q.cond.Broadcast()
+		case <-done:
+		}
+	}()
+
+	for q.empty() && ctx.Err() == nil {
+		q.cond.Wait()
+	}
+	if ctx.Err() != nil {
+		var t T
+		return t, ctx.Err()
+	}
+	res := q.elems[0]
+	q.elems = q.elems[1:]
+	return res, nil
 }
 
 // Len returns the number of elements in the queue.
