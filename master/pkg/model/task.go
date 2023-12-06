@@ -79,7 +79,8 @@ type Task struct {
 	LogVersion TaskLogVersion `db:"log_version"`
 
 	// Relations.
-	Job *Job `bun:"rel:belongs-to,join:job_id=job_id"`
+	Job      *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
+	ParentID *string `db:"parent_id`
 
 	Config *string `db:"config"`
 }

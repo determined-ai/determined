@@ -205,6 +205,7 @@ func (a *apiServer) CreateGenericTask(
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 			Config:     ptrs.Ptr(string(configBytes)),
+			ParentID:   req.ParentId,
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}

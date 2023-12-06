@@ -24,6 +24,8 @@ message CreateGenericTaskRequest {
   string config = 2;
   // Project id to contain the experiment.
   optional int32 project_id = 3;
+  // Parent ID of new task
+  optional string parent_id = 4;
   // Unmanaged experiments are detached. Maybe?
   // optional bool unmanaged = 40;
 }

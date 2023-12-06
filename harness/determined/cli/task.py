@@ -122,6 +122,7 @@ def create(args: Namespace) -> None:
         config=config_text,
         contextDirectory=context_directory,
         projectId=args.project_id,
+        parentId=args.parent,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")
@@ -284,6 +285,12 @@ args_description: List[Any] = [
                         action="store_true",
                         help="follow the logs of the task that is created",
                     ),
+                    Arg(
+                        "-p",
+                        "--parent",
+                        type=str,
+                        help="task id of parent task",
+                    )
                 ],
             ),
             Cmd(
