@@ -130,15 +130,15 @@ class MMDetTrial(det_torch.PyTorchTrial):
             new_config = mmcv.Config._merge_a_into_b(override_config, cfg._cfg_dict)
             cfg = mmcv.Config(new_config, cfg._text, cfg._filename)
 
-        if "override_mmdet_config" in self.hparams:
+        if hasattr(self.hparams,"override_mmdet_config"):
             cfg.merge_from_dict(self.hparams.override_mmdet_config)
 
         cfg.data.val.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.val.pipeline)
         cfg.data.test.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.test.pipeline)
 
         # Save and log the resulting config.
-        if "save_cfg" in self.hparams and self.hparams.save_cfg:
-            save_dir = self.hparams.save_dir if "save_dir" in self.hparams else "/tmp"
+        if hasattr(self.hparams, "save_cfg") and self.hparams.save_cfg:
+            save_dir = self.hparams.save_dir if hasattr(self.hparams, "save_dir") else "/tmp"
             extension = cfg._filename.split(".")[-1]
             cfg.dump(os.path.join(save_dir, f"final_config.{extension}"))
         logging.info(cfg)
@@ -158,7 +158,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
     def build_callbacks(self) -> Dict[str, det_torch.PyTorchCallback]:
         self.lr_updater = None
         hooks = {}  # type: Dict[str, det_torch.PyTorchCallback]
-        if "lr_config" in self.cfg:
+        if hasattr(self.cfg, "lr_config"):
             logging.info("Adding lr updater callback.")
             self.lr_updater = callbacks.LrUpdaterCallback(
                 self.context, lr_config=self.cfg.lr_config
