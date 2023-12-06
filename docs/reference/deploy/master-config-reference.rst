@@ -1659,7 +1659,7 @@ The claim name from the OIDC provider used to set the user's display name in Det
 
 Applies only to Determined Enterprise Edition. The SAML (Security Assertion Markup Language)
 configuration allows administrators to integrate a SAML provider such as Okta for authentication in
-Determined.
+Determined and is used for :ref:`remote user <remote-users>` management.
 
 For example:
 
@@ -1705,6 +1705,23 @@ requests and responses.
 =================
 
 The path to the IdP's certificate, used to validate assertions.
+
+``auto_provision_users``
+========================
+
+Determines if users should be automatically created in Determined upon successful SAML authentication.
+   -  ``true``: Automatic user provisioning is enabled.
+   -  ``false``: Automatic user provisioning is disabled.
+
+``groups_attribute_name``
+=========================
+
+The claim name that specifies group memberships in SAML.
+
+``display_name_attribute_name``
+===============================
+
+The claim name from the SAML provider used to set the user's display name in Determined.
 
 ********************
  ``reserved_ports``

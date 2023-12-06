@@ -77,11 +77,6 @@ enable auto provisioning users and the remote management of any information atta
              idp_sso_url: "https://myorg.okta.com/app/...sso/saml"
              idp_cert_path: "okta.cert"
              auto_provision_users: true
-             groups_attribute_name: "groups"
-             display_name_attribute_name: "disp_name"
-         security:
-            rbac_ui_enabled: true
-            type: rbac
 
 Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
@@ -94,29 +89,42 @@ there is a group that does not already exist in Determined, then the system crea
 
 To enable group membership synchronization:
 
--  Set the ``groups_claim_name`` option to match the claim name for group memberships from your
-   authenticator (i.e., ``groups_memberships``, ``usergroup_memberships``, etc.).
+.. tabs::
 
-For example, in the following claim, let's say the user-group information is passed through
-``group_memberships`` in your IdP.
+   .. tab::
 
-.. code::
+      OIDC
 
-   {
-      email: dee.ray@example.com
-      group_memberships: ['A', 'B'],
-      displayName: "Dee Ray"
-   }
+      -  Set the ``groups_claim_name`` option to match the claim name for group memberships from
+         your authenticator (i.e., ``groups_memberships``, ``usergroup_memberships``, etc.).
 
-Then, Determined creates the following user:
+      For example, in the following claim, let's say the user-group information is passed through
+      ``group_memberships`` in your IdP.
 
-.. code::
+      .. code::
 
-   {
-      username: dee.ray@example.com
-      groups: ['A', 'B'],
-      displayName: "Dee Ray"
-   }
+         {
+           email: dee.ray@example.com
+           group_memberships: ['A', 'B'],
+           displayName: "Dee Ray"
+          }
+
+      Then, Determined creates the following user:
+
+      .. code::
+
+         {
+          username: dee.ray@example.com
+          groups: ['A', 'B'],
+          displayName: "Dee Ray"
+         }
+
+   .. tab::
+
+      SAML
+
+      -  Set the ``groups_attribute_name`` option to match the claim name for group memberships from
+         your authenticator (i.e., ``groups_memberships``, ``usergroup_memberships``, etc.).
 
 Each time the authenticated user accesses Determined, their information is passed to Determined, and
 group memberships are updated. For example, when a user is assigned to a new group via your IdP,
