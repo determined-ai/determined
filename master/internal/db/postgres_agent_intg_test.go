@@ -89,7 +89,8 @@ func TestEndAllAgentStats(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveNewPostgresDatabase(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	setTimesTo := func(id string, startTime time.Time, endTime *time.Time) {
