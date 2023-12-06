@@ -545,6 +545,7 @@ func (a *allocation) Cleanup() {
 	}
 	if a.detached {
 		// This path is only used by testing to simulate a master crash.
+		a.syslog.Warn("detached allocation")
 		return
 	}
 

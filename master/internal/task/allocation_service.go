@@ -74,6 +74,8 @@ func (as *allocationService) StartAllocation(
 		as.mu.Unlock() // don't defer in case onExit calls back into the service
 
 		onExit(ref.exited)
+
+		as.syslog.Info("allocation cleaned up and removed from cache")
 	}()
 	return nil
 }
@@ -340,10 +342,6 @@ func (as *allocationService) detach(id model.AllocationID) error {
 		return err
 	}
 	ref.detach()
-
-	as.mu.Lock()
-	delete(as.allocations, id)
-	as.mu.Unlock()
 	return nil
 }
 

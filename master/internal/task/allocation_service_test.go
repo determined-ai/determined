@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -219,12 +220,10 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 	requireState(t, pgDB, ar.AllocationID, model.AllocationStateRunning)
 
 	t.Log("do rendezvous (sets ready bit)")
-	info, err := DefaultService.WatchRendezvous(context.Background(), ar.AllocationID, rID)
+	info, err := DefaultService.WatchRendezvous(context.TODO(), ar.AllocationID, rID)
 	require.NoError(t, err)
 	require.Len(t, info.Addresses, 1)
 	require.Equal(t, "remotehost", info.Addresses[0])
-
-	t.Log("wait for ready bit to be set (done by rendezvous)")
 	require.True(t, waitForCondition(time.Second, func() bool {
 		state, err := DefaultService.State(ar.AllocationID)
 		require.NoError(t, err)
@@ -234,6 +233,9 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 	t.Log("detach the allocation")
 	err = DefaultService.detach(ar.AllocationID)
 	require.NoError(t, err)
+	require.True(t, waitForCondition(time.Second, func() bool {
+		return !slices.Contains(DefaultService.GetAllAllocationIDs(), ar.AllocationID)
+	}), "allocation never went away after detached")
 
 	t.Log("restore the allocation")
 	ar.Restore = true
@@ -257,7 +259,7 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 		Resources:    map[sproto.ResourcesID]sproto.Resources{rID: resources},
 		Recovered:    true,
 	})
-	_, err = DefaultService.waitForRestore(context.Background(), ar.AllocationID)
+	_, err = DefaultService.waitForRestore(context.TODO(), ar.AllocationID)
 	require.NoError(t, err)
 
 	t.Log("terminate, should be graceful")
