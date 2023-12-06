@@ -269,13 +269,13 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         if not isinstance(self.hparams, types.SimpleNamespace):
             self.hparams = utils.to_namespace(self.hparams)
 
-        if "num_training_steps" not in self.hparams:
+        if not hasattr(self.hparams, "num_training_steps"):
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
             self.hparams.num_training_steps = model_hub.utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
-        if "use_pretrained_weights" not in self.hparams:
+        if not hasattr(self.hparams, "use_pretrained_weights"):
             logging.warning(
                 "We will be using pretrained weights for the model by default."
                 "If you want to train the model from scratch, you can set a hyperparameter "
@@ -286,7 +286,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         required_hps = ("use_apex_amp", "model_mode", "num_training_steps")
         for hp in required_hps:
             assert (
-                hp in self.hparams
+                hasattr(self.hparams, hp)
             ), "{} is a required hyperparameter for BaseTransformerTrial".format(hp)
 
     def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Any:
