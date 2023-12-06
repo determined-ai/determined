@@ -117,14 +117,14 @@ class MMDetTrial(det_torch.PyTorchTrial):
             if config_dir is not None:
                 config_file = os.path.join(config_dir, config_file)
             if config_dir is None or not os.path.exists(config_file):
-                raise OSError(f"Config file {self.hparams.config_file} not found.")
+                raise OSError(f"Config file {self.hparams['config_file']} not found.")
         cfg = mmcv.Config.fromfile(config_file)
         cfg.data.val.test_mode = True
 
         # If a backend is specified, we will the backend used in all occurrences of
         # LoadImageFromFile in the mmdet config.
-        if self.data_config.file_client_args is not None:
-            data_backends.sub_backend(self.data_config.file_client_args, cfg)
+        if self.data_config["file_client_args"] is not None:
+            data_backends.sub_backend(self.data_config["file_client_args"], cfg)
         if self.hparams["merge_config"] is not None:
             override_config = mmcv.Config.fromfile(self.hparams["merge_config"])
             new_config = mmcv.Config._merge_a_into_b(override_config, cfg._cfg_dict)
@@ -138,7 +138,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
         # Save and log the resulting config.
         if "save_cfg" in self.hparams and self.hparams["save_cfg"]:
-            save_dir = self.hparams.save_dir if "save_dir" in self.hparams else "/tmp"
+            save_dir = self.hparams["save_dir"] if "save_dir" in self.hparams else "/tmp"
             extension = cfg._filename.split(".")[-1]
             cfg.dump(os.path.join(save_dir, f"final_config.{extension}"))
         logging.info(cfg)
