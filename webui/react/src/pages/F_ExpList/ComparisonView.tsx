@@ -1,9 +1,8 @@
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
-import SplitPane, { Pane } from 'hew/SplitPane';
 import React, { useMemo } from 'react';
 
-import useMobile from 'hooks/useMobile';
+import SplitPane from 'components/SplitPane';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
@@ -33,7 +32,6 @@ const ComparisonView: React.FC<Props> = ({
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
-  const isMobile = useMobile();
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
@@ -85,33 +83,27 @@ const ComparisonView: React.FC<Props> = ({
     ];
   }, [selectedExperiments, projectId, experiments, trials, metricData]);
 
-  const leftPane =
-    open && !hasPinnedColumns ? (
-      <Message icon="info" title='Pin columns to see them in "Compare View"' />
-    ) : (
-      children
-    );
-
-  const rightPane =
-    selectedExperiments.length === 0 ? (
-      <Message
-        description="Select experiments you would like to compare."
-        icon="warning"
-        title="No experiments selected."
-      />
-    ) : (
-      <Pivot items={tabs} />
-    );
-
   return (
     <SplitPane
-      hidePane={!open ? Pane.Right : isMobile ? Pane.Left : undefined}
       initialWidth={initialWidth}
-      leftPane={leftPane}
-      minimumWidths={{ left: minWidths[0], right: minWidths[1] }}
-      rightPane={rightPane}
-      onChange={onWidthChange}
-    />
+      minimumWidths={minWidths}
+      open={open}
+      onChange={onWidthChange}>
+      {open && !hasPinnedColumns ? (
+        <Message icon="info" title='Pin columns to see them in "Compare View"' />
+      ) : (
+        children
+      )}
+      {selectedExperiments.length === 0 ? (
+        <Message
+          description="Select experiments you would like to compare."
+          icon="warning"
+          title="No experiments selected."
+        />
+      ) : (
+        <Pivot items={tabs} />
+      )}
+    </SplitPane>
   );
 };
 
