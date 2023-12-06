@@ -595,7 +595,7 @@ func ExperimentByID(ctx context.Context, expID int) (*model.Experiment, error) {
 	if err := Bun().NewRaw(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username, project_id, unmanaged
+		 job_id, u.username as username, project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = ?`, expID).Scan(ctx, &experiment); err != nil {
@@ -613,7 +613,7 @@ func ExperimentByTrialID(ctx context.Context, trialID int) (*model.Experiment, e
 	if err := Bun().NewRaw(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
        e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
-       e.job_id, u.username as username, e.project_id, unmanaged
+       e.job_id, u.username as username, e.project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON (e.owner_id = u.id)
@@ -633,7 +633,7 @@ func ExperimentByTaskID(
 	if err := Bun().NewRaw(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time,
        e.end_time, e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date,
-       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN trial_id_task_id ON t.id = trial_id_task_id.trial_id
@@ -654,7 +654,7 @@ func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperime
 	if err := idb.NewRaw(`
 	SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		job_id, u.username as username, project_id, unmanaged
+		job_id, u.username as username, project_id, unmanaged, external_experiment_id
 	FROM experiments e
 	JOIN users u ON (e.owner_id = u.id)
 	WHERE e.external_experiment_id = ?`, externalExperimentID).Scan(ctx, &experiment); err != nil {
@@ -1000,8 +1000,8 @@ WHERE trials.experiment_id = $1
 }
 
 // ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
-func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int,
-	[]model.TaskID, error,
+func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) (
+	[]int, []model.TaskID, error,
 ) {
 	if len(expIDs) == 0 {
 		return nil, nil, nil

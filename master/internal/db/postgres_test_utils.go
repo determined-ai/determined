@@ -340,8 +340,9 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 
 // MockExperimentParams is the parameters for mock experiment.
 type MockExperimentParams struct {
-	HParamNames *[]string
-	ProjectID   *int
+	HParamNames          *[]string
+	ProjectID            *int
+	ExternalExperimentID *string
 }
 
 // RequireMockExperimentParams returns a mock experiment with various parameters.
@@ -364,7 +365,7 @@ func RequireMockExperimentParams(
 		RawHyperparameters: map[string]expconf.HyperparameterV0{
 			"global_batch_size": {
 				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.Ptr(1),
+					RawVal: float64(1),
 				},
 			},
 		},
@@ -396,10 +397,11 @@ func RequireMockExperimentParams(
 		State:                model.ActiveState,
 		Config:               cfg.AsLegacy(),
 		ModelDefinitionBytes: ReadTestModelDefiniton(t, DefaultTestSrcPath),
-		StartTime:            time.Now().Add(-time.Hour),
+		StartTime:            time.Now().Add(-time.Hour).Truncate(time.Millisecond),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		ProjectID:            1,
+		ExternalExperimentID: p.ExternalExperimentID,
 	}
 	if p.ProjectID != nil {
 		exp.ProjectID = *p.ProjectID
