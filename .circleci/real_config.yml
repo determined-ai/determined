@@ -577,7 +577,7 @@ commands:
             # of the tests that would be run, along with some other stuff. Each file containing
             # any selected tests is printed on a line by itself, except for (for some reason) a
             # single trailing space.
-            pytest --setup-plan -m '<<parameters.mark>>' | grep '\.py $' | sed 's/ $//' > /tmp/all-relevant-files
+            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py (ss)?$' | sed 's/ \(ss\)\{0,1\}$//' > /tmp/all-relevant-files
 
             echo 'All files with tests matching mark "<<parameters.mark>>":'
             sed 's/^/- /' </tmp/all-relevant-files
@@ -3266,17 +3266,6 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-      - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection-quarantine
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet-quarantine"]
-              mark: ["model_hub_mmdetection_quarantine"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-        # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context: aws
