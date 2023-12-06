@@ -189,6 +189,10 @@ func (as *allocationService) WatchRendezvous(
 		if rsp.Err != nil {
 			return nil, rsp.Err
 		}
+		err := ref.PersistRendezvousComplete()
+		if err != nil {
+			as.syslog.Error(err)
+		}
 		return rsp.Info, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()

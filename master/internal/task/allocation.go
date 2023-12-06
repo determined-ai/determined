@@ -378,6 +378,23 @@ func (a *allocation) SetReady(_ context.Context) error {
 	return nil
 }
 
+func (a *allocation) PersistRendezvousComplete() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.persistRendezvousComplete()
+}
+
+func (a *allocation) persistRendezvousComplete() error {
+	if a.model.IsReady == nil || (a.model.IsReady != nil && !*a.model.IsReady) {
+		a.syslog.Info("all containers are connected successfully (task container state changed)")
+		a.model.IsReady = ptrs.Ptr(true)
+		if err := a.db.UpdateAllocationState(a.model); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
 // allocation will kill the remaining daemon resources.
 func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.ResourcesID) error {
@@ -490,6 +507,7 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "loading trial allocation")
 		}
+
 		sub, err := a.rm.Allocate(a.req)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to request allocation")
@@ -734,8 +752,10 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		}
 
 		if a.rendezvous != nil && a.rendezvous.try() {
-			a.syslog.
-				Info("all containers are connected successfully (task container state changed)")
+			err := a.persistRendezvousComplete()
+			if err != nil {
+				a.syslog.Error(err)
+			}
 		}
 		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
 			a.resources[msg.ResourcesID].Rank == 0 {

@@ -267,7 +267,7 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 	t.Log("check we didn't get killed")
 	require.False(t, waitForCondition(time.Second, func() bool {
 		state, err := DefaultService.State(ar.AllocationID)
-		require.NoError(t, err)
+		require.NoError(t, err, "allocation is gone before expected, must have not been a graceful close")
 		return state.State == model.AllocationStateTerminated
 	}), "allocation terminated before expected, must have not been a graceful close")
 
