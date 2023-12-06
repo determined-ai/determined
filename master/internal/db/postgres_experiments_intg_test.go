@@ -432,10 +432,10 @@ func TestExperimentByIDs(t *testing.T) {
 		})
 
 		t.Run(c.funcName, func(t *testing.T) {
-			e, err := c.f(false)
+			actual, err := c.f(false)
 			require.NoError(t, err)
 
-			require.Equal(t, e, exp)
+			require.Equal(t, exp, actual)
 		})
 	}
 }
