@@ -249,7 +249,7 @@ func (a *apiServer) CreateGenericTask(
 		SlotsNeeded:  *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
 		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
-			SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
+			SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.MustFitSingleNode(),
 		},
 
 		Restore: false,
