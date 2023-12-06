@@ -2,14 +2,14 @@ import dataclasses
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import attrdict
 import datasets as hf_datasets
 import torch
 import transformers
 import transformers.optimization as hf_opt
+import types
 
 import determined.pytorch as det_torch
-import model_hub.utils
+from model_hub import utils
 from model_hub.huggingface import _config_parser as hf_parse
 
 MODEL_MODES = {
@@ -27,10 +27,10 @@ MODEL_MODES = {
 
 
 def build_using_auto(
-    config_kwargs: Union[Dict, attrdict.AttrDict],
-    tokenizer_kwargs: Union[Dict, attrdict.AttrDict],
+    config_kwargs: Union[Dict, types.SimpleNamespace],
+    tokenizer_kwargs: Union[Dict, types.SimpleNamespace],
     model_mode: str,
-    model_kwargs: Union[Dict, attrdict.AttrDict],
+    model_kwargs: Union[Dict, types.SimpleNamespace],
     use_pretrained_weights: bool = True,
 ) -> Tuple[
     transformers.PretrainedConfig,  # This is how it's named in transformers
@@ -146,7 +146,7 @@ def build_default_lr_scheduler(
 
 
 def default_load_dataset(
-    data_config: Union[Dict, attrdict.AttrDict]
+    data_config: Union[Dict, types.SimpleNamespace]
 ) -> Union[
     hf_datasets.Dataset,
     hf_datasets.IterableDataset,
@@ -215,11 +215,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
         if not hasattr(self, "hparams"):
-            self.hparams = attrdict.AttrDict(context.get_hparams())
+            self.hparams = utils.attribute_dict(context.get_hparams())
         if not hasattr(self, "data_config"):
-            self.data_config = attrdict.AttrDict(context.get_data_config())
+            self.data_config = utils.attribute_dict(context.get_data_config())
         if not hasattr(self, "exp_config"):
-            self.exp_config = attrdict.AttrDict(context.get_experiment_config())
+            self.exp_config = utils.attribute_dict(context.get_experiment_config())
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
 
@@ -265,9 +265,9 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
             )
 
     def check_hparams(self) -> None:
-        # We require hparams to be an AttrDict.
-        if not isinstance(self.hparams, attrdict.AttrDict):
-            self.hparams = attrdict.AttrDict(self.hparams)
+        # We require hparams to be a SimpleNamespace.
+        if not isinstance(self.hparams, types.SimpleNamespace):
+            self.hparams = utils.attribute_dict(self.hparams)
 
         if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the

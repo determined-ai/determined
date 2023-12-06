@@ -7,6 +7,7 @@ import filelock
 import numpy as np
 import requests
 import torch
+import types
 
 
 def expand_like(arrays: List[np.ndarray], fill: float = -100) -> np.ndarray:
@@ -86,3 +87,7 @@ def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) 
         )
     # Otherwise, max_length_unit=='records'
     return int(max_length / global_batch_size)
+
+def attribute_dict(input_dict: dict) -> types.SimpleNamespace:
+    dictionary = types.SimpleNamespace(input_dict)
+    return dictionary
