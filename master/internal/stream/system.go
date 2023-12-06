@@ -337,7 +337,6 @@ func (ps *PublisherSet) entrypoint(
 	}()
 
 	streamer := stream.NewStreamer(prepareFunc)
-
 	// read first startup message
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
@@ -482,11 +481,10 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 		case <-time.After(30 * time.Second):
 			pingErrChan := make(chan error)
 			go func() {
-				err = permListener.Ping()
-				pingErrChan <- fmt.Errorf("no active connection: %s", err.Error())
+				pingErrChan <- permListener.Ping()
 			}()
 			if err := <-pingErrChan; err != nil {
-				log.Errorf("permission listener failed %s", err.Error())
+				log.Errorf("permission listener failed, no active connection: %s", err.Error())
 				return err
 			}
 		// are we canceled?
@@ -548,13 +546,10 @@ func doPublishLoop[T stream.Msg](
 		case <-time.After(30 * time.Second):
 			pingErrChan := make(chan error)
 			go func() {
-				err = listener.Ping()
-				if err != nil {
-					pingErrChan <- fmt.Errorf("no active connection: %s", err.Error())
-				}
+				pingErrChan <- listener.Ping()
 			}()
 			if err := <-pingErrChan; err != nil {
-				return err
+				return fmt.Errorf("no active connection: %s", err.Error())
 			}
 
 		// Did we get a notification?

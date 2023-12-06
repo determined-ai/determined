@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -17,8 +16,6 @@ import (
 )
 
 const (
-	// MetricsDeleteKey specifies the key for delete metrics.
-	MetricsDeleteKey = "metrics_deleted"
 	// MetricsUpsertKey specifies the key for upsert metrics.
 	MetricsUpsertKey = "metric"
 )
@@ -29,8 +26,6 @@ type MetricMsg struct {
 	bun.BaseModel `bun:"table:metrics"`
 
 	// immutable attributes
-	// XXX (corban): if ID gets removed, what happens to delete msg?
-	ID            int                    `bun:"id,pk" json:"id"`
 	TrialID       int                    `bun:"trial_id" json:"trial_id"`
 	TrialRunID    int                    `bun:"trial_run_id" json:"trial_run_id"`
 	EndTime       *time.Time             `bun:"end_time" json:"end_time"`
@@ -46,10 +41,7 @@ type MetricMsg struct {
 	Seq int64 `bun:"seq" json:"seq"`
 
 	// permission scope
-	WorkspaceID int `json:"-"`
-
-	// subscription level
-	ExperimentID int `json:"-"`
+	WorkspaceID int `json:"workspace_id,omitempty"`
 }
 
 // SeqNum gets the SeqNum from a MetricMsg.
@@ -59,6 +51,8 @@ func (mm *MetricMsg) SeqNum() int64 {
 
 // UpsertMsg creates a Metric stream upsert message.
 func (mm *MetricMsg) UpsertMsg() stream.UpsertMsg {
+	// omit workspaceID since it wasn't part of the original row
+	mm.WorkspaceID = 0
 	return stream.UpsertMsg{
 		JSONKey: MetricsUpsertKey,
 		Msg:     mm,
@@ -67,24 +61,18 @@ func (mm *MetricMsg) UpsertMsg() stream.UpsertMsg {
 
 // DeleteMsg creates a Metric stream delete message.
 func (mm *MetricMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(mm.ID), 10)
-	return stream.DeleteMsg{
-		Key:     MetricsDeleteKey,
-		Deleted: deleted,
-	}
+	panic("streaming metric is append-only, delete messages are not supported")
 }
 
 // MetricSubscriptionSpec is what a user submits to define a Metric subscription.
 // determined:streamable
 type MetricSubscriptionSpec struct {
-	TrialIds      []int `json:"trial_ids"`
-	ExperimentIds []int `json:"experiment_ids"`
-	Since         int64 `json:"since"`
+	TrialIds []int `json:"trial_ids"`
+	Since    int64 `json:"since"`
 }
 
 func getMetricMsgsWithWorkspaceID(metricMsgs []*MetricMsg) *bun.SelectQuery {
 	q := db.Bun().NewSelect().Model(&metricMsgs).
-		Column("id").
 		Column("trial_id").
 		Column("trial_run_id").
 		Column("end_time").
@@ -95,7 +83,6 @@ func getMetricMsgsWithWorkspaceID(metricMsgs []*MetricMsg) *bun.SelectQuery {
 		Column("archived").
 		Column("seq").
 		Column("projects.workspace_id").
-		Column("trials.experiment_id").
 		Join("JOIN trials ON metric_msg.trial_id = trials.id").
 		Join("JOIN experiments ON trials.experiment_id = experiments.id").
 		Join("JOIN projects ON experiments.project_id = projects.id")
@@ -106,20 +93,16 @@ func getMetricMsgsWithWorkspaceID(metricMsgs []*MetricMsg) *bun.SelectQuery {
 func MetricCollectStartupMsgs(
 	ctx context.Context,
 	user model.User,
-	known string,
+	_ string, // known is not needed since metrics are append-only
 	spec MetricSubscriptionSpec,
 ) (
 	[]stream.PreparableMessage, error,
 ) {
 	var out []stream.PreparableMessage
 
-	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
-		// empty subscription: everything known should be returned as deleted
-		out = append(out, stream.DeleteMsg{
-			Key:     MetricsDeleteKey,
-			Deleted: known,
-		})
-		return out, nil
+	if len(spec.TrialIds) == 0 {
+		// empty subscription: noop
+		return nil, nil
 	}
 	// step 0: get user's permitted access scopes
 	accessMap, err := AuthZProvider.Get().GetMetricStreamableScopes(ctx, user)
@@ -156,9 +139,6 @@ func MetricCollectStartupMsgs(
 	if len(spec.TrialIds) > 0 {
 		ws.Include("trial_id in (?)", bun.In(spec.TrialIds))
 	}
-	if len(spec.ExperimentIds) > 0 {
-		ws.Include("experiment_id in (?)", bun.In(spec.ExperimentIds))
-	}
 	q = ws.Apply(q)
 
 	var exist []int64
@@ -168,17 +148,12 @@ func MetricCollectStartupMsgs(
 		return nil, err
 	}
 
-	// step 2: figure out what was missing and what has appeared
-	missing, appeared, err := stream.ProcessKnown(known, exist)
-	if err != nil {
-		return nil, err
-	}
-
+	// step 2: skipped, since metrics are append-only
 	// step 3: hydrate appeared IDs into full MetricMsgs
 	var metricMsgs []*MetricMsg
-	if len(appeared) > 0 {
+	if len(exist) > 0 {
 		query := getMetricMsgsWithWorkspaceID(metricMsgs).
-			Where("metric_msg.id in (?)", bun.In(appeared))
+			Where("metric_msg.id in (?)", bun.In(exist))
 		query = permFilter(query)
 		err := query.Scan(ctx, &metricMsgs)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -187,11 +162,7 @@ func MetricCollectStartupMsgs(
 		}
 	}
 
-	// step 4: emit deletions and updates to the client
-	out = append(out, stream.DeleteMsg{
-		Key:     MetricsDeleteKey,
-		Deleted: missing,
-	})
+	// step 4: emit updates to the client
 	for _, msg := range metricMsgs {
 		out = append(out, msg.UpsertMsg())
 	}
@@ -201,13 +172,9 @@ func MetricCollectStartupMsgs(
 // MetricMakeFilter creates a MetricMsg filter based on the given MetricSubscriptionSpec.
 func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, error) {
 	// Should this filter even run?
-	if len(spec.TrialIds) == 0 && len(spec.ExperimentIds) == 0 {
-		return nil, fmt.Errorf(
-			"invalid subscription spec arguments: %v %v",
-			spec.TrialIds, spec.ExperimentIds,
-		)
+	if len(spec.TrialIds) == 0 {
+		return nil, fmt.Errorf("invalid subscription spec arguments: %v", spec.TrialIds)
 	}
-
 	// Make a copy of the map, because the filter must run safely off-thread.
 	trialIds := make(map[int]struct{})
 	for _, id := range spec.TrialIds {
@@ -216,23 +183,11 @@ func MetricMakeFilter(spec *MetricSubscriptionSpec) (func(*MetricMsg) bool, erro
 		}
 		trialIds[id] = struct{}{}
 	}
-	experimentIds := make(map[int]struct{})
-	for _, id := range spec.ExperimentIds {
-		if id <= 0 {
-			return nil, fmt.Errorf("invalid experiment id: %d", id)
-		}
-		experimentIds[id] = struct{}{}
-	}
 
 	// return a closure around our copied map
 	return func(msg *MetricMsg) bool {
-		if _, ok := trialIds[msg.ID]; ok {
-			return true
-		}
-		if _, ok := experimentIds[msg.ExperimentID]; ok {
-			return true
-		}
-		return false
+		_, ok := trialIds[msg.TrialID]
+		return ok
 	}, nil
 }
 
