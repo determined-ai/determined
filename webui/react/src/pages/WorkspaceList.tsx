@@ -58,7 +58,7 @@ const WorkspaceList: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [isLoading, setIsLoading] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
-  const canceler = useRef<AbortController | null>(null);
+  const canceler = useRef<AbortController>();
 
   const { canCreateWorkspace } = usePermissions();
 
