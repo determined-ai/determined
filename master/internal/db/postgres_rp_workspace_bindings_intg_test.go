@@ -8,10 +8,11 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/google/uuid"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
