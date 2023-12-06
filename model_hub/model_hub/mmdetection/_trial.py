@@ -39,7 +39,6 @@ from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends
 from model_hub.mmdetection import utils as mmdetutils
-from model_hub import utils
 
 
 class MMDetTrial(det_torch.PyTorchTrial):
@@ -69,7 +68,9 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
         # If use_pretrained, try loading pretrained weights for the mmcv config if available.
         if "use_pretrained" in self.hparams:
-            ckpt_path, ckpt = mmdetutils.get_pretrained_ckpt_path("/tmp", self.hparams["config_file"])
+            ckpt_path, ckpt = mmdetutils.get_pretrained_ckpt_path(
+                "/tmp", self.hparams["config_file"]
+            )
             if ckpt_path is not None:
                 logging.info("Loading from pretrained weights.")
                 if "state_dict" in ckpt:

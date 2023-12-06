@@ -1,5 +1,6 @@
 import logging
 import os
+import types
 import urllib.parse
 from typing import Dict, List, Union
 
@@ -7,7 +8,6 @@ import filelock
 import numpy as np
 import requests
 import torch
-import types
 
 
 def expand_like(arrays: List[np.ndarray], fill: float = -100) -> np.ndarray:
@@ -87,6 +87,7 @@ def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) 
         )
     # Otherwise, max_length_unit=='records'
     return int(max_length / global_batch_size)
+
 
 def to_namespace(input_dict: [dict, list]) -> types.SimpleNamespace:
     namespace = types.SimpleNamespace()

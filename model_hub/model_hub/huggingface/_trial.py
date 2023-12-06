@@ -1,12 +1,12 @@
 import dataclasses
 import logging
+import types
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import datasets as hf_datasets
 import torch
 import transformers
 import transformers.optimization as hf_opt
-import types
 
 import determined.pytorch as det_torch
 from model_hub import utils
@@ -285,8 +285,8 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
 
         required_hps = ("use_apex_amp", "model_mode", "num_training_steps")
         for hp in required_hps:
-            assert (
-                hasattr(self.hparams, hp)
+            assert hasattr(
+                self.hparams, hp
             ), "{} is a required hyperparameter for BaseTransformerTrial".format(hp)
 
     def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Any:
