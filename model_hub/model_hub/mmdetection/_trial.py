@@ -55,8 +55,8 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
         self.context = context
-        self.hparams = utils.to_namespace(context.get_hparams())
-        self.data_config = utils.to_namespace(context.get_data_config())
+        self.hparams = context.get_hparams()
+        self.data_config = context.get_data_config()
         self.cfg = self.build_mmdet_config()
         # We will control how data is moved to GPU.
         self.context.experimental.disable_auto_to_device()
@@ -68,8 +68,8 @@ class MMDetTrial(det_torch.PyTorchTrial):
         self.model.init_weights()
 
         # If use_pretrained, try loading pretrained weights for the mmcv config if available.
-        if self.hparams.use_pretrained:
-            ckpt_path, ckpt = mmdetutils.get_pretrained_ckpt_path("/tmp", self.hparams.config_file)
+        if "use_pretrained" in self.hparams:
+            ckpt_path, ckpt = mmdetutils.get_pretrained_ckpt_path("/tmp", self.hparams["config_file"])
             if ckpt_path is not None:
                 logging.info("Loading from pretrained weights.")
                 if "state_dict" in ckpt:
@@ -111,7 +111,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         Returns:
             overridden mmdet config
         """
-        config_file = self.hparams.config_file
+        config_file = self.hparams["config_file"]
         if not os.path.exists(config_file):
             config_dir = os.getenv("MMDETECTION_CONFIG_DIR")
             if config_dir is not None:
@@ -125,20 +125,20 @@ class MMDetTrial(det_torch.PyTorchTrial):
         # LoadImageFromFile in the mmdet config.
         if self.data_config.file_client_args is not None:
             data_backends.sub_backend(self.data_config.file_client_args, cfg)
-        if self.hparams.merge_config is not None:
-            override_config = mmcv.Config.fromfile(self.hparams.merge_config)
+        if self.hparams["merge_config"] is not None:
+            override_config = mmcv.Config.fromfile(self.hparams["merge_config"])
             new_config = mmcv.Config._merge_a_into_b(override_config, cfg._cfg_dict)
             cfg = mmcv.Config(new_config, cfg._text, cfg._filename)
 
-        if hasattr(self.hparams,"override_mmdet_config"):
-            cfg.merge_from_dict(self.hparams.override_mmdet_config)
+        if "override_mmdet_config" in self.hparams:
+            cfg.merge_from_dict(self.hparams["override_mmdet_config"])
 
         cfg.data.val.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.val.pipeline)
         cfg.data.test.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.test.pipeline)
 
         # Save and log the resulting config.
-        if hasattr(self.hparams, "save_cfg") and self.hparams.save_cfg:
-            save_dir = self.hparams.save_dir if hasattr(self.hparams, "save_dir") else "/tmp"
+        if "save_cfg" in self.hparams and self.hparams["save_cfg"]:
+            save_dir = self.hparams.save_dir if "save_dir" in self.hparams else "/tmp"
             extension = cfg._filename.split(".")[-1]
             cfg.dump(os.path.join(save_dir, f"final_config.{extension}"))
         logging.info(cfg)
