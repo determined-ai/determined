@@ -89,13 +89,11 @@ def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) 
     return int(max_length / global_batch_size)
 
 
-def to_namespace(input_dict: [dict, list]) -> types.SimpleNamespace:
+def to_namespace(input_dict: dict) -> types.SimpleNamespace:
     namespace = types.SimpleNamespace()
     for key, value in input_dict.items():
         if isinstance(value, dict):
             setattr(namespace, key, to_namespace(value))
-        elif isinstance(value, list):
-            _ = [setattr(namespace, key, to_namespace(item)) for item in value]
         else:
             setattr(namespace, key, value)
     return namespace

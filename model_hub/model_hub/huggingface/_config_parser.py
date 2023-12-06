@@ -326,11 +326,11 @@ def default_parse_config_tokenizer_model_kwargs(
     # If a pretrained_model_name_or_path is provided it will be parsed to the
     # arguments for config, tokenizer, and model.  Then, if specific names are
     # provided for config, tokenizer, or model we will override it.
-    if "config_name" in hparams:
+    if hasattr(hparams, "config_name"):
         config_args.pretrained_model_name_or_path = hparams.config_name
-    if "tokenizer_name" in hparams:
+    if hasattr(hparams, "tokenizer_name"):
         tokenizer_args.pretrained_model_name_or_path = hparams.tokenizer_name
-    if "model_name" in hparams:
+    if hasattr(hparams, "tokenizer_name"):
         model_args.pretrained_model_name_or_path = hparams.model_name
     assert (
         config_args.pretrained_model_name_or_path is not None

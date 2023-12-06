@@ -272,7 +272,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         if not hasattr(self.hparams, "num_training_steps"):
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
-            self.hparams.num_training_steps = model_hub.utils.compute_num_training_steps(
+            self.hparams.num_training_steps = utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
         if not hasattr(self.hparams, "use_pretrained_weights"):
