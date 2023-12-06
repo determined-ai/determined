@@ -42,7 +42,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	contextDirectory []*utilv1.File,
 	configYAML string,
 	projectID int,
-	parentConfig []byte,
+	forkedConfig []byte,
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
@@ -70,7 +70,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	configBytes := []byte(configYAML)
 	if len(configYAML) == 0 {
-		configBytes = parentConfig
+		configBytes = forkedConfig
 	}
 	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
@@ -93,8 +93,8 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
 	workDirInDefaults := taskConfig.WorkDir
 
-	if len(parentConfig) != 0 && len(configYAML) != 0 {
-		if err := yaml.Unmarshal(parentConfig, &taskConfig); err != nil {
+	if len(forkedConfig) != 0 && len(configYAML) != 0 {
+		if err := yaml.Unmarshal(forkedConfig, &taskConfig); err != nil {
 			return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
 		}
 	}
@@ -176,10 +176,10 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
-	var parentConfig []byte
-	var parentContextDirectory []byte
+	// forkedConfig denotes the config of the task we are forking from
+	var forkedConfig []byte
+	var forkedContextDirectory []byte
 	if req.ForkedFrom != nil {
-		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		getTaskReq := &apiv1.GetGenericTaskConfigRequest{
 			TaskId: *req.ForkedFrom,
 		}
@@ -188,7 +188,7 @@ func (a *apiServer) CreateGenericTask(
 			return nil, err
 		}
 
-		parentConfig = []byte(resp.Config)
+		forkedConfig = []byte(resp.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -200,20 +200,20 @@ func (a *apiServer) CreateGenericTask(
 			if err != nil {
 				return nil, err
 			}
-			parentContextDirectory = []byte(contextDirectoryResp.B64Tgz)
+			forkedContextDirectory = []byte(contextDirectoryResp.B64Tgz)
 
 		}
 
 	}
 
-	if len(parentConfig) == 0 && len(req.Config) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "No config file nor parent task provided")
+	if len(forkedConfig) == 0 && len(req.Config) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "No config file nor forked task provided")
 	}
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
-		ctx, req.ContextDirectory, req.Config, projectID, parentConfig,
+		ctx, req.ContextDirectory, req.Config, projectID, forkedConfig,
 	)
 	if len(contextDirectoryBytes) == 0 {
-		contextDirectoryBytes = parentContextDirectory
+		contextDirectoryBytes = forkedContextDirectory
 	}
 	if err != nil {
 		return nil, err
