@@ -58,7 +58,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
   }, [isEditing, metadataArray.length]);
 
   return (
-    <Surface>
+    <Surface elevationOverride={1}>
       <div className={css.cardPadding}>
         <div className={css.cardHeader}>
           <Title size={TypographySize.S}>Metadata</Title>
