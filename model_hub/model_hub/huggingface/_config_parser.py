@@ -315,7 +315,7 @@ def default_parse_config_tokenizer_model_kwargs(
         hparams: hyperparameters to parse.
 
     Returns:
-        One dictionary each for the config, tokenizer, and model.
+        One SimpleNamespace each for the config, tokenizer, and model.
     """
     if not isinstance(hparams, types.SimpleNamespace):
         hparams = utils.to_namespace(hparams)
