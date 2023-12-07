@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 import types
+import typing
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import datasets as hf_datasets
@@ -145,8 +146,9 @@ def build_default_lr_scheduler(
     )
 
 
+@typing.no_type_check
 def default_load_dataset(
-    data_config: dict
+    data_config: dict,
 ) -> Union[
     hf_datasets.Dataset,
     hf_datasets.IterableDataset,
@@ -163,7 +165,9 @@ def default_load_dataset(
     Returns:
         Dataset returned from hf_datasets.load_dataset.
     """
-    (data_config,) = hf_parse.parse_dict_to_dataclasses((hf_parse.DatasetKwargs,), data_config)
+    (data_config,) = hf_parse.parse_dict_to_dataclasses(
+        (hf_parse.DatasetKwargs,), data_config, output_as_namespace=True
+    )
     # This method is common in nearly all main HF examples.
     if data_config.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
