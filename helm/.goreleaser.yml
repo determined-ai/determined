@@ -6,7 +6,7 @@ build:
 release:
   github:
     owner: determined-ai
-    name: determined
+    name: determined-ee
   mode: keep-existing
   extra_files:
     - glob: build/determined-latest.tgz
@@ -16,4 +16,4 @@ release:
   # the "include" functionality is only in the pro version
   header: |
     ## Release Notes
-    [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
+    [{{ .Tag }}](https://github.com/determined-ai/determined-ee/blob/{{ .Tag }}/docs/release-notes.rst)

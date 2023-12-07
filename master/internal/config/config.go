@@ -130,6 +130,11 @@ func DefaultConfig() *Config {
 		},
 		FeatureSwitches: []string{},
 		ResourceConfig:  *DefaultResourceConfig(),
+		OIDC: OIDCConfig{
+			AuthenticationClaim:         "email",
+			SCIMAuthenticationAttribute: "userName",
+			AutoProvisionUsers:          false,
+		},
 	}
 }
 
@@ -161,9 +166,13 @@ type Config struct {
 	ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
-	InternalConfig InternalConfig     `json:"__internal"`
-	OIDC           OIDCConfig         `json:"oidc"`
-	Integrations   IntegrationsConfig `json:"integrations"`
+	InternalConfig InternalConfig `json:"__internal"`
+
+	Scim         ScimConfig         `json:"scim"`
+	SAML         SAMLConfig         `json:"saml"`
+	OIDC         OIDCConfig         `json:"oidc"`
+	DetCloud     DetCloudConfig     `json:"det_cloud"`
+	Integrations IntegrationsConfig `json:"integrations"`
 }
 
 // GetMasterConfig returns reference to the master config singleton.
@@ -206,6 +215,15 @@ func (c Config) Printable() ([]byte, error) {
 			printable.Password = hiddenValue
 			c.TaskContainerDefaults.RegistryAuth = &printable
 		}
+	}
+
+	// When there are pointers inside the type, we need to copy things to avoid modifying the original
+	// object.
+	if origAuth := c.Scim.Auth.BasicAuthConfig; origAuth != nil {
+		auth := *origAuth
+		auth.Username = hiddenValue
+		auth.Password = hiddenValue
+		c.Scim.Auth.BasicAuthConfig = &auth
 	}
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
@@ -287,6 +305,16 @@ func (c *Config) Resolve() error {
 
 	if c.Security.AuthZ.StrictNTSCEnabled {
 		log.Warn("_strict_ntsc_enabled option is removed and will not have any effect.")
+	}
+
+	if c.OIDC.AutoProvisionUsers && c.Scim.Enabled {
+		log.Warn("scim enabled will override OIDC AutoProvisionUsers.")
+		c.OIDC.AutoProvisionUsers = false
+	}
+
+	if c.OIDC.GroupsClaimName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
+		log.Warn("groups_claim_name requires rbac to be enabled")
+		c.OIDC.GroupsClaimName = ""
 	}
 
 	return nil
@@ -457,6 +485,9 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
 	case config.ResourceManager.KubernetesRM != nil:
 		return config.ResourceManager.KubernetesRM.GetPreemption()
+	case config.ResourceManager.DispatcherRM != nil,
+		config.ResourceManager.PbsRM != nil:
+		return false
 	default:
 		panic("unexpected resource configuration")
 	}

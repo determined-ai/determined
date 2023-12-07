@@ -76,3 +76,21 @@ field.
 
 Once the master is started with this configuration, users will be able to log in to Determined by
 clicking the 'Sign in with Okta' button on the sign-in page.
+
+.. note::
+
+   Users must be assigned to the App in order to generate a valid authorization code. When the OIDC
+   authorization code is invalid or expired, an error message displays reminding users to check
+   their user assignments.
+
+**********************************
+ Manually provision user for OIDC
+**********************************
+
+If SCIM is not used, users can be manually provisioned into Determined through the CLI. This
+requires Determined admin privileges. Note the remote option is required for users to be able to
+login through OIDC.
+
+.. code:: bash
+
+   det user create email@exmple.com --remote

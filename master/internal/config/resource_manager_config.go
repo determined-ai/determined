@@ -16,6 +16,8 @@ const defaultResourcePoolName = "default"
 type ResourceManagerConfig struct {
 	AgentRM      *AgentResourceManagerConfig      `union:"type,agent" json:"-"`
 	KubernetesRM *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`
+	DispatcherRM *DispatcherResourceManagerConfig `union:"type,slurm" json:"-"`
+	PbsRM        *DispatcherResourceManagerConfig `union:"type,pbs" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -35,7 +37,7 @@ func (r *ResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	// Fill in the default config.
-	if r.AgentRM == nil && r.KubernetesRM == nil {
+	if r.AgentRM == nil && r.KubernetesRM == nil && r.DispatcherRM == nil && r.PbsRM == nil {
 		r.AgentRM = &AgentResourceManagerConfig{
 			Scheduler: &SchedulerConfig{
 				FittingPolicy: defaultFitPolicy,

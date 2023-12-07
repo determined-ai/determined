@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm"
+	"github.com/determined-ai/determined/master/internal/rm/dispatcherrm"
 	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -27,6 +28,9 @@ func New(
 		return agentrm.New(db, echo, config, opts, cert)
 	case config.ResourceManager.KubernetesRM != nil:
 		return kubernetesrm.New(db, config, taskContainerDefaults, opts, cert)
+	case config.ResourceManager.DispatcherRM != nil,
+		config.ResourceManager.PbsRM != nil:
+		return dispatcherrm.New(db, echo, config, opts, cert)
 	default:
 		panic("no expected resource manager config is defined")
 	}

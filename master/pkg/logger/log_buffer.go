@@ -9,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
@@ -156,6 +157,9 @@ func (lb *LogBuffer) Len() int {
 
 // Fire implements the logrus.Hook interface.
 func (lb *LogBuffer) Fire(entry *logrus.Entry) error {
+	if audit.IsRBACLog(entry) && !audit.IsRBACPermissionDenied(entry) {
+		return nil
+	}
 	lb.write(&Entry{
 		Message: logrusMessageAndData(entry),
 		Time:    entry.Time,
