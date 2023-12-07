@@ -48,7 +48,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     [trial],
   );
 
-  const { contextHolders, openCheckpoint, modelCreateModalComponent, checkpointModalComponent } =
+  const { openCheckpoint, modelCreateModalComponent, checkpointModalComponent, registerModalComponent } =
     useCheckpointFlow({
       checkpoint,
       config: experiment.config,
@@ -176,10 +176,8 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       ) : (
         <Spinner spinning />
       )}
-      {contextHolders.map((contextHolder, i) => (
-        <React.Fragment key={i}>{contextHolder}</React.Fragment>
-      ))}
       {modelCreateModalComponent}
+      {registerModalComponent}
       {checkpointModalComponent}
     </>
   );

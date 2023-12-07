@@ -1,5 +1,5 @@
 import { useModal } from 'hew/Modal';
-import { ReactElement, useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
 import ModelCreateModal from 'components/ModelCreateModal';
@@ -8,9 +8,9 @@ import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentConfig 
 
 interface Return {
   checkpointModalComponent: React.ReactNode;
-  contextHolders: ReactElement[];
   openCheckpoint: () => void;
   modelCreateModalComponent: React.ReactNode;
+  registerModalComponent: React.ReactNode;
 }
 
 export const useCheckpointFlow = ({
@@ -24,43 +24,29 @@ export const useCheckpointFlow = ({
 }): Return => {
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
-  const {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({
-    onClose: (_reason?: ModalCloseReason, checkpoints?: string[]) => {
-      // TODO: fix the behavior along with checkpoint modal migration
-      // It used to open checkpoint modal again after creating a model,
-      // but it doesn't with new create model modal since we don't use context holder anymore.
-      // This should be able to fix it along with checkpoint modal migration.
-      if (checkpoints) modelCreateModal.open();
-    },
-  });
+  const registerModal = useModal(RegisterCheckpointModal);
 
   const handleOnCloseCreateModel = useCallback(
-    (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+    (_reason?: string, checkpoints?: string[], modelName?: string) => {
+      if (checkpoints) registerModal.open();
+      console.log({ checkpoints, selectedModelName: modelName });
     },
-    [openModalCheckpointRegister],
+    [registerModal],
   );
 
   const handleOnCloseCheckpoint = useCallback(
-    (reason?: ModalCloseReason) => {
-      if (reason === ModalCloseReason.Ok && checkpoint?.uuid) {
-        openModalCheckpointRegister({ checkpoints: checkpoint.uuid });
+    (reason?: string) => {
+      if (reason === 'Ok' && checkpoint?.uuid) {
+        registerModal.open();
+        console.log({ checkpoints: checkpoint.uuid });
       }
     },
-    [checkpoint, openModalCheckpointRegister],
+    [checkpoint, registerModal],
   );
 
   const openCheckpoint = useCallback(() => {
     checkpointModal.open();
   }, [checkpointModal]);
-
-  const contextHolders = useMemo(
-    () => [modalCheckpointRegisterContextHolder],
-    [modalCheckpointRegisterContextHolder],
-  );
 
   return {
     checkpointModalComponent: (
@@ -71,8 +57,10 @@ export const useCheckpointFlow = ({
         onClose={handleOnCloseCheckpoint}
       />
     ),
-    contextHolders,
     modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
+    registerModalComponent: (
+      <registerModal.Component onClose={handleOnCloseCreateModel}/>
+    ),
     openCheckpoint,
   };
 };

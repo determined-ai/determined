@@ -1,6 +1,6 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
-import { ModalCloseReason, useModal } from 'hew/Modal';
+import { useModal } from 'hew/Modal';
 import React, { useCallback } from 'react';
 
 import ModelCreateModal from 'components/ModelCreateModal';
@@ -28,26 +28,28 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   const registerModal = useModal(RegisterCheckpointModal);
 
   const handleOnCloseCreateModel = useCallback(
-    (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+    (_reason?: string, checkpoints?: string[], modelName?: string) => {
+      if (checkpoints) registerModal.open();
+      console.log({ checkpoints, selectedModelName: modelName });
     },
-    [openModalCheckpointRegister],
+    [registerModal],
   );
 
   const handleOnCloseCheckpoint = useCallback(
-    (reason?: ModalCloseReason) => {
-      if (reason === ModalCloseReason.Ok && checkpoint.uuid) {
-        openModalCheckpointRegister({ checkpoints: checkpoint.uuid });
+    (reason?: string) => {
+      if (reason === 'Ok' && checkpoint.uuid) {
+        registerModal.open();
+        console.log({ checkpoints: checkpoint.uuid });
       }
     },
-    [checkpoint, openModalCheckpointRegister],
+    [checkpoint, registerModal],
   );
 
   const handleModalCheckpointClick = useCallback(() => {
     checkpointModal.open();
   }, [checkpointModal]);
 
-  const handleOnCloseRegister = useCallback((_reason?: ModalCloseReason, checkpoints?: string[]) => {
+  const handleOnCloseRegister = useCallback((_reason?: string, checkpoints?: string[]) => {
     if (checkpoints) modelCreateModal.open();
   }, []);
 

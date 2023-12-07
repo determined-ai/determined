@@ -38,34 +38,24 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
-
-  const {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({
-    onClose: (_reason?: ModalCloseReason, checkpoints?: string[]) => {
-      // TODO: fix the behavior along with checkpoint modal migration
-      // It used to open checkpoint modal again after creating a model,
-      // but it doesn't with new create model modal since we don't use context holder anymore.
-      // This should be able to fix it along with checkpoint modal migration.
-      if (checkpoints) modelCreateModal.open();
-    },
-  });
+  const registerModal = useModal(RegisterCheckpointModal);
 
   const handleOnCloseCreateModel = useCallback(
     (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+      if (checkpoints) registerModal.open();
+      console.log({ checkpoints, selectedModelName: modelName });
     },
-    [openModalCheckpointRegister],
+    [registerModal],
   );
 
   const handleOnCloseCheckpoint = useCallback(
     (reason?: ModalCloseReason) => {
       if (reason === ModalCloseReason.Ok && bestCheckpoint?.uuid) {
-        openModalCheckpointRegister({ checkpoints: bestCheckpoint.uuid });
+        registerModal.open();
+        console.log({ checkpoints: bestCheckpoint.uuid });
       }
     },
-    [bestCheckpoint, openModalCheckpointRegister],
+    [bestCheckpoint, registerModal],
   );
 
   const handleModalCheckpointClick = useCallback(() => {
@@ -91,7 +81,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
               Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
-            {modalCheckpointRegisterContextHolder}
+            <registerModal.Component onClose={handleOnCloseCheckpoint} />
             <checkpointModal.Component
               checkpoint={bestCheckpoint}
               config={experiment.config}

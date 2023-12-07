@@ -18,7 +18,6 @@ import {
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
-import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
@@ -61,26 +60,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const modelCreateModal = useModal(ModelCreateModal);
+  const registerModal = useModal(RegisterCheckpointModal);
 
-  const {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({
-    onClose: (_reason?: ModalCloseReason, checkpoints?: string[]) => {
-      // TODO: fix the behavior along with checkpoint modal migration
-      // It used to open checkpoint modal again after creating a model,
-      // but it doesn't with new create model modal since we don't use context holder anymore.
-      // This should be able to fix it along with checkpoint modal migration.
-      if (checkpoints) modelCreateModal.open();
-    },
-  });
+  const handleOnCloseCreateModel = () => {
 
-  const handleOnCloseCreateModel = useCallback(
-    (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
-    },
-    [openModalCheckpointRegister],
-  );
+  };
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -117,9 +101,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const handleRegisterCheckpoint = useCallback(
     (checkpoints: string[]) => {
-      openModalCheckpointRegister({ checkpoints });
+      registerModal.open();
+      console.log({ checkpoints });
     },
-    [openModalCheckpointRegister],
+    [registerModal],
   );
 
   const handleDelete = useCallback((checkpoints: string[]) => {
@@ -375,7 +360,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         )}
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-      {modalCheckpointRegisterContextHolder}
+      <registerModal.Component onClose={handleOnCloseCreateModel} />
     </>
   );
 };
