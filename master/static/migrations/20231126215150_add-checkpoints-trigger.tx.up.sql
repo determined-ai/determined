@@ -26,23 +26,21 @@ CREATE OR REPLACE FUNCTION stream_checkpoint_notify(
 DECLARE
 output jsonb = NULL;
     temp jsonb = NULL;
-    temptrial jsonb = NULL;
-    tempexp jsonb = NULL;
 BEGIN
     IF before IS NOT NULL THEN
         temp = before || jsonb_object_agg('workspace_id', beforework);
-        temptrial = temp || jsonb_build_object('trial_id', trialid);
-        tempexp = temp || jsonb_build_object('experiment_id', expid);
-        output = jsonb_object_agg('before', tempexp);
+        temp = temp || jsonb_build_object('trial_id', trialid);
+        temp = temp || jsonb_build_object('experiment_id', expid);
+        output = jsonb_object_agg('before', temp);
     END IF;
     IF after IS NOT NULL THEN
         temp = after || jsonb_object_agg('workspace_id', afterwork);
-        temptrial = temp || jsonb_build_object('trial_id', trialid);
-        tempexp = temp || jsonb_build_object('experiment_id', expid);
+        temp = temp || jsonb_build_object('trial_id', trialid);
+        temp = temp || jsonb_build_object('experiment_id', expid);
         IF output IS NULL THEN
-            output = jsonb_object_agg('after', tempexp);
+            output = jsonb_object_agg('after', temp);
         ELSE
-            output = output || jsonb_object_agg('after', tempexp);
+            output = output || jsonb_object_agg('after', temp);
     END IF;
 END IF;
     PERFORM pg_notify('stream_checkpoint_chan', output::text);
