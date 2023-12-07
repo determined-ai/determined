@@ -141,35 +141,25 @@ const ExperimentContinueModalComponent = ({
     setDisabled(hasError || missingRequiredFields);
   };
 
-  const handleEditorChange = useCallback(
-    (newConfigString: string) => {
-      // Update config string and config error upon each keystroke change.
-      setModalState((prev) => {
-        if (!prev) return prev;
+  const handleEditorChange = useCallback((newConfigString: string) => {
+    // Update config string and config error upon each keystroke change.
+    setModalState((prev) => {
+      if (!prev) return prev;
 
-        const newModalState = { ...prev, configString: newConfigString };
+      const newModalState = { ...prev, configString: newConfigString };
 
-        // Validate the yaml syntax by attempting to load it.
-        try {
-          newModalState.config = yaml.load(newConfigString) as RawJson;
-          newModalState.configError = undefined;
-          if (isReactivate) {
-            if (newModalState.config.workspace !== originalConfig.workspace) {
-              newModalState.configError = 'Cannot change workspace';
-            } else if (newModalState.config.project !== originalConfig.project) {
-              newModalState.configError = 'Cannot change project';
-            }
-          }
-          newModalState.error = undefined;
-        } catch (e) {
-          if (isError(e)) newModalState.configError = e.message;
-        }
+      // Validate the yaml syntax by attempting to load it.
+      try {
+        newModalState.config = yaml.load(newConfigString) as RawJson;
+        newModalState.configError = undefined;
+        newModalState.error = undefined;
+      } catch (e) {
+        if (isError(e)) newModalState.configError = e.message;
+      }
 
-        return newModalState;
-      });
-    },
-    [isReactivate, originalConfig.project, originalConfig.workspace],
-  );
+      return newModalState;
+    });
+  }, []);
 
   const toggleMode = useCallback(async () => {
     setModalState((prev) => {
