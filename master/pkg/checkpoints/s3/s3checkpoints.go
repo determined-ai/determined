@@ -49,6 +49,11 @@ func GetS3BucketRegion(ctx context.Context, bucket string) (string, error) {
 		return "", err
 	}
 
+	// Buckets in Region us-east-1 have a LocationConstraint of null.
+	if out == nil || out.LocationConstraint == nil {
+		return "us-east-1", nil
+	}
+
 	return *out.LocationConstraint, nil
 }
 
