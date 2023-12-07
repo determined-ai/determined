@@ -31,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -39,7 +40,20 @@ import (
 
 func combineTaskConfig(config []byte, forkedConfig []byte) model.GenericTaskConfig {
 
-	combinedConfig := model.GenericTaskConfig{}
+	combinedConfig := model.GenericTaskConfig{
+		Resources: expconf.ResourcesConfigV0{
+			RawSlots:          ptrs.Ptr(1),
+			RawResourcePool:   ptrs.Ptr(""),
+			RawIsSingleNode:   nil,
+			RawMaxSlots:       nil,
+			RawSlotsPerTrial:  nil,
+			RawWeight:         nil,
+			RawNativeParallel: nil,
+			RawShmSize:        nil,
+			RawPriority:       nil,
+			RawDevices:        nil,
+		},
+	}
 
 	// Don't throw errors; validation should happen elsewhere.
 	if len(forkedConfig) > 0 {
