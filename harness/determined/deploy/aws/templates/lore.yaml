@@ -292,6 +292,9 @@ Parameters:
       {{ end }}
 
       {{ if ne .lore_version "" }}
+      feature_switches:
+        - GAS
+
       __internal:
         proxied_servers:
           - destination: "http://lore-backend:9011/lore"
