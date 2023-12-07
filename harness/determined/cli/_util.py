@@ -115,7 +115,7 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
     return decorator
 
 
-def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
+def print_launch_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
     for warning in warnings:
         print(termcolor.colored(api.WARNING_MESSAGE_MAP[warning], "yellow"), file=sys.stderr)
 
@@ -131,3 +131,7 @@ def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) ->
     loading_animator.clear(msg)
     if err_msg:
         raise errors.CliError(err_msg)
+
+
+def warn(message: str) -> None:
+    print(termcolor.colored(message, "yellow"), file=sys.stderr)
