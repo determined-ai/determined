@@ -274,6 +274,7 @@ class LRSchedulerKwargs:
 def parse_dict_to_dataclasses(
     dataclass_types: Tuple[Any, ...],
     args: Union[Dict[str, Any], types.SimpleNamespace],
+    output_as_namespace: bool = False,
 ) -> Tuple[Any, ...]:
     """
     This function will fill in values for a dataclass if the target key is found
@@ -283,17 +284,17 @@ def parse_dict_to_dataclasses(
     Args:
         dataclass_types: dataclasses with expected attributes.
         args: arguments that will be parsed to each of the dataclass_types.
-        as_dict: if true will return dictionary instead of SimpleNamespace
+        output_as_namespace: if true will return SimpleNamespace instead of dict
 
     Returns:
-        One dictionary for each dataclass with keys filled in from args if found.
+        One namespace for each dataclass with keys filled in from args if found.
     """
     outputs = []
     for dtype in dataclass_types:
         keys = {f.name for f in dataclasses.fields(dtype) if f.init}
         inputs = {k: v for k, v in args.items() if k in keys}
         obj = dtype(**inputs)
-        if as_dict:
+        if output_as_namespace:
             try:
                 obj = utils.to_namespace(obj.as_dict())
             except AttributeError:
@@ -319,7 +320,7 @@ def default_parse_config_tokenizer_model_kwargs(
     if not isinstance(hparams, types.SimpleNamespace):
         hparams = utils.to_namespace(hparams)
     config_args, tokenizer_args, model_args = parse_dict_to_dataclasses(
-        (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, as_dict=True
+        (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, output_as_namespace=True
     )
 
     # If a pretrained_model_name_or_path is provided it will be parsed to the
