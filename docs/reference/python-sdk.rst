@@ -65,13 +65,8 @@ with an object-oriented interface.
       **Run and Administer Experiments**
 
       Visit the `det-python-sdk-demo
-      <https://github.com/determined-ai/determined-examples/tree/main/blog/python_sdk_demo>`__ to
-      learn how to run and administer experiments using the Python SDK.
-
-      .. note::
-
-         Note: This repository contains a variety of Determined examples that are not actively
-         maintained by the Determined team. Results may vary.
+      <https://github.com/determined-ai/determined-examples/tree/e499000d92a0a973d1f40a419934f393957a3296/blog/python_sdk_demo>`__
+      to learn how to run and administer experiments using the Python SDK.
 
 .. _python-sdk-reference:
 
