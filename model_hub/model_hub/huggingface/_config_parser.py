@@ -274,7 +274,6 @@ class LRSchedulerKwargs:
 def parse_dict_to_dataclasses(
     dataclass_types: Tuple[Any, ...],
     args: Union[Dict[str, Any], types.SimpleNamespace],
-    as_dict: bool = False,
 ) -> Tuple[Any, ...]:
     """
     This function will fill in values for a dataclass if the target key is found
