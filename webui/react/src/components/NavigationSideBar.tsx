@@ -24,7 +24,7 @@ import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
-import { isGenAIDeployed, paths } from 'routes/utils';
+import { paths, serverAddress } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -116,7 +116,6 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [genAIUrl, setGenAIUrl] = useState<string | undefined>(undefined);
 
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
@@ -144,13 +143,9 @@ const NavigationSideBar: React.FC = () => {
 
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
-  useEffect(() => {
-    const getGenAIUrl = async () => {
-      const genAIUrl = await isGenAIDeployed();
-      if (genAIUrl) setGenAIUrl(genAIUrl);
-    };
-    getGenAIUrl();
-  }, []);
+  const isGASDeployed = useMemo(() => {
+    return !!info.featureSwitches.find((feature) => feature === 'GAS');
+  }, [info.featureSwitches]);
 
   interface MenuItemProps {
     icon: IconName;
@@ -199,17 +194,20 @@ const NavigationSideBar: React.FC = () => {
       },
     ];
 
-    if (genAIUrl) {
-      bottomItems.push(
-        // TODO: pick a better icon.
-        { external: true, icon: 'cloud', label: 'GenAI', path: genAIUrl, popout: true },
-      );
+    if (isGASDeployed) {
+      bottomItems.push({
+        external: true,
+        icon: 'cloud',
+        label: 'GenAI',
+        path: serverAddress('/genai'),
+        popout: true,
+      });
     }
     return {
       bottom: bottomItems,
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, genAIUrl]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding, isGASDeployed]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });

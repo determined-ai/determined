@@ -1,7 +1,6 @@
 import { pathToRegexp } from 'path-to-regexp';
 
 import { globalStorage } from 'globalStorage';
-import { getInfo } from 'services/api';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType } from 'stores/determinedInfo';
 import { CommandTask, RouteConfig } from 'types';
@@ -239,21 +238,4 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
       const routeRegex = pathToRegexp(route.path);
       return routeRegex.test(pathname);
     });
-};
-
-/**
- * isGenAIDeployed checks to see if the GenAI is deployed alongside MLDE.
- * Returns: the url if deployed.
- */
-export const isGenAIDeployed = async (): Promise<string> => {
-  const info = await getInfo({});
-  const isEnabled = !!info.featureSwitches.find((feature) => feature === 'GAS');
-  if (!isEnabled) return '';
-  const possiblesPaths = ['/genai', '/lore'];
-  for (const path of possiblesPaths) {
-    const url = serverAddress(path);
-    const response = await fetch(url, { method: 'GET' });
-    if (response.ok) return url;
-  }
-  return '';
 };
