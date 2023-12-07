@@ -78,6 +78,13 @@ def open_shell(args: argparse.Namespace) -> None:
 
 @authentication.required
 def show_ssh_command(args: argparse.Namespace) -> None:
+    if "WSL" in os.uname().release:
+        cli.warn(
+            "WSL remote-ssh integration is not supported in VSCode, which "
+            "uses Windows openssh. For Windows VSCode integration, rerun this "
+            "command in a Windows shell. For PyCharm users, configure the Pycharm "
+            "ssh command to target the WSL ssh command."
+        )
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
