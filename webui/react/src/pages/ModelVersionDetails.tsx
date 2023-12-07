@@ -1,10 +1,11 @@
-import { Card } from 'antd';
 import Breadcrumb from 'hew/Breadcrumb';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
+import Surface from 'hew/Surface';
+import { Title, TypographySize } from 'hew/Typography';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -246,12 +247,14 @@ const ModelVersionDetails: React.FC = () => {
       {
         children: (
           <div className={css.base}>
-            <Card title="Model Checkpoint">
+            <Surface>
+              <Title size={TypographySize.S}>Model Checkpoint</Title>
               <Glossary content={checkpointInfo} />
-            </Card>
-            <Card title="Validation Metrics">
+            </Surface>
+            <Surface>
+              <Title size={TypographySize.S}>Validation Metrics</Title>
               <Glossary content={validationMetrics} />
-            </Card>
+            </Surface>
             <MetadataCard
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               metadata={modelVersion.metadata}
