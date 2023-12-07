@@ -6,6 +6,9 @@ package stream
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 
@@ -211,7 +214,7 @@ func TestTrialStartup(t *testing.T) {
 	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
 	t.Cleanup(dbCleanup)
 	errgrp := errgroupx.WithContext(ctx)
-	trials := streamdata.GenerateStreamTrials()
+	trials := streamdata.GenerateStreamData()
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
 	// start publisher set and connect as testUser
@@ -320,7 +323,156 @@ func TestTrialUpdate(t *testing.T) {
 	}
 
 	// run migrations
-	trials := streamdata.GenerateStreamTrials()
+	trials := streamdata.GenerateStreamData()
+	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
+
+	// start publisher set and connect as testUser
+	errgrp := errgroupx.WithContext(ctx)
+	errgrp.Go(ps.Start)
+	errgrp.Go(func(ctx context.Context) error {
+		return ps.entrypoint(superCtx, ctx, testUser, socket, testPrepareFunc)
+	})
+
+	func() {
+		// clean up socket & errgroup
+		defer func() {
+			socket.Close()
+			errgrp.Cancel()
+		}()
+
+		for i := range testCases {
+			t.Run(
+				testCases[i].description,
+				func(t *testing.T) {
+					basicUpdateTest(ctx, t, testCases[i], socket)
+				},
+			)
+		}
+	}()
+
+	require.NoError(t, errgrp.Wait())
+}
+
+func TestCheckpointStartup(t *testing.T) {
+	testCases := []startupTestCase{
+		{
+			description: "checkpoint subscription with experiment id and known checkpoints",
+			startupMsg: StartupMsg{
+				SyncID: "1",
+				Known: KnownKeySet{
+					Checkpoints: "1,2,3",
+				},
+				Subscribe: SubscriptionSpecSet{
+					Checkpoints: &CheckpointSubscriptionSpec{
+						ExperimentIDs: []int{1}, // trials 1,2,3 exist in experiment 1
+						Since:         0,
+					},
+				},
+			},
+			expectedSync:      "key: sync_msg, sync_id: 1",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 3"},
+		},
+		{
+			description: "checkpoint subscription with trial ids and known checkpoints",
+			startupMsg: StartupMsg{
+				SyncID: "2",
+				Known: KnownKeySet{
+					Checkpoints: "1,2,3",
+				},
+				Subscribe: SubscriptionSpecSet{
+					Checkpoints: &CheckpointSubscriptionSpec{
+						TrialIDs: []int{1, 2, 3}, // Subscribe to all known trials, but 4 doesn't exist
+						Since:    0,
+					},
+				},
+			},
+			expectedSync:      "key: sync_msg, sync_id: 2",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 3"},
+		},
+	}
+
+	// setup test environment
+	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
+	t.Cleanup(dbCleanup)
+	errgrp := errgroupx.WithContext(ctx)
+	trials := streamdata.GenerateStreamData()
+	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
+
+	// start publisher set and connect as testUser
+	errgrp.Go(ps.Start)
+	errgrp.Go(func(ctx context.Context) error {
+		return ps.entrypoint(superCtx, ctx, testUser, socket, testPrepareFunc)
+	})
+
+	func() {
+		// clean up socket & errgroup
+		defer func() {
+			socket.Close()
+			errgrp.Cancel()
+		}()
+
+	TestLoop:
+		for i := range testCases {
+			select {
+			case <-ctx.Done():
+				break TestLoop
+			default:
+				t.Run(testCases[i].description, func(t *testing.T) {
+					basicStartupTest(t, testCases[i], socket)
+				})
+			}
+		}
+	}()
+
+	require.NoError(t, errgrp.Wait())
+}
+
+func TestCheckpointUpdate(t *testing.T) {
+	// setup test environment
+	superCtx, ctx, testUser, ps, socket, pgDB, dbCleanup := setupStreamTest(t)
+	t.Cleanup(dbCleanup)
+
+	baseStartupCase := startupTestCase{
+		startupMsg: StartupMsg{
+			SyncID: "1",
+			Known: KnownKeySet{
+				Checkpoints: "1",
+			},
+			Subscribe: SubscriptionSpecSet{
+				Checkpoints: &CheckpointSubscriptionSpec{
+					ExperimentIDs: []int{1},
+					Since:         0,
+				},
+			},
+		},
+		expectedSync:      "key: sync_msg, sync_id: 1",
+		expectedUpserts:   []string{"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, workspace_id: 1"},
+		expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
+	}
+
+	modCheckpoint := streamdata.Checkpoint{
+		BaseModel:  bun.BaseModel{},
+		ID:         1,
+		TaskID:     "",
+		State:      model.DeletedState,
+		ReportTime: time.Time{},
+	}
+
+	testCases := []updateTestCase{
+		{
+			startupCase:       baseStartupCase,
+			description:       "update checkpoint while subscribed to its events",
+			queries:           []streamdata.ExecutableQuery{streamdata.GetUpdateCheckpointQuery(modCheckpoint)},
+			expectedUpserts:   []string{"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, workspace_id: 1"},
+			expectedDeletions: []string{},
+			terminationMsg:    "key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, workspace_id: 1",
+		},
+	}
+
+	// run migrations
+	trials := streamdata.GenerateStreamData()
 	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
 	// start publisher set and connect as testUser

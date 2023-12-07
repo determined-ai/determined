@@ -15,3 +15,6 @@ INSERT INTO trials (id, experiment_id, state, start_time, hparams, seq) VALUES (
 INSERT INTO trial_id_task_id (trial_id, task_id) VALUES (1, '1.1');
 INSERT INTO trial_id_task_id (trial_id, task_id) VALUES (2, '1.2');
 INSERT INTO trial_id_task_id (trial_id, task_id) VALUES (3, '1.3');
+
+INSERT INTO checkpoints_v2 (uuid, task_id, report_time, state) VALUES ('ae4fb7ae-887f-41fa-a70b-97c55c9b18d2', '1.1', '2023-07-25 16:44:23.610081+00', 'COMPLETED');
+INSERT INTO checkpoints_v2 (uuid, task_id, report_time, state) VALUES ('ae4fb7ae-887f-41fa-a70b-97c55c9b18d3', '1.2', '2023-07-25 16:44:23.610081+00', 'COMPLETED');
