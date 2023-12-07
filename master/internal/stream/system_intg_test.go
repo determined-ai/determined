@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/uptrace/bun"
-
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 
 	"github.com/google/uuid"
@@ -452,8 +450,7 @@ func TestCheckpointUpdate(t *testing.T) {
 		expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
 	}
 
-	modCheckpoint := streamdata.Checkpoint{
-		BaseModel:  bun.BaseModel{},
+	modCheckpoint := model.CheckpointV2{
 		ID:         1,
 		State:      model.DeletedState,
 		ReportTime: time.Time{},
@@ -516,11 +513,11 @@ func TestCheckpointUpdate(t *testing.T) {
 			},
 			description: "change experiment project",
 			queries: []streamdata.ExecutableQuery{
-				db.Bun().NewRaw("UPDATE projects SET workspace_id = 1 WHERE name = 'test_project1'"),
+				db.Bun().NewRaw("UPDATE projects SET workspace_id = 1 WHERE workspace_id = 2"),
 			},
 			expectedUpserts: []string{
-				// "key: checkpoint, checkpoint_id: 1, state: COMPLETED, experiment_id: 1, workspace_id: 2",
-				// "key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, workspace_id: 2",
+				"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, workspace_id: 1",
+				"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, workspace_id: 1",
 			},
 			expectedDeletions: []string{},
 		},

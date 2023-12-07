@@ -43,7 +43,7 @@ def create_payload(trials=None, experiments=None, checkpoints=None) -> bytes:
         },
         "known": {
             "trials":  "$trial_ids",
-            "experiments": "$experiment_ids"
+            "experiments": "$experiment_ids",
             "checkpoints": "$checkpoint_ids"
         }
     }

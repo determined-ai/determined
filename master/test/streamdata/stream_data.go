@@ -131,17 +131,7 @@ func GetDeleteExperimentQuery(id int) ExecutableQuery {
 	return db.Bun().NewDelete().Table("experiments").Where("id = ?", id)
 }
 
-// Checkpoint contains a subset of checkpoint_v2 fields and is used to test streaming code
-// without importing anything from determined/master/internal.
-type Checkpoint struct {
-	bun.BaseModel `bun:"table:checkpoints_v2"`
-	ID            int         `bun:"id,pk"`
-	TaskID        string      `bun:"task_id"`
-	State         model.State `bun:"state"`
-	ReportTime    time.Time   `bun:"report_time"`
-}
-
 // GetUpdateCheckpointQuery constructs a query for updating a checkpoint.
-func GetUpdateCheckpointQuery(checkpoint Checkpoint) ExecutableQuery {
+func GetUpdateCheckpointQuery(checkpoint model.CheckpointV2) ExecutableQuery {
 	return db.Bun().NewUpdate().Model(&checkpoint).OmitZero().WherePK()
 }
