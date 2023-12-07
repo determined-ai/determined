@@ -1193,9 +1193,9 @@ main_cmd = Cmd(
         ),
         # Lifecycle management commands.
         Cmd(
-            "activate",
+            "activate unpause",
             activate,
-            "activate experiment",
+            "activate experiment, i.e., unpause a paused experiment",
             [experiment_id_arg("experiment ID to activate")],
         ),
         Cmd("cancel", cancel, "cancel experiment", [experiment_id_arg("experiment ID to cancel")]),
