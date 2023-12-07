@@ -1,6 +1,5 @@
 import Form from 'hew/Form';
 import Glossary, { InfoRow } from 'hew/Glossary';
-import Surface from 'hew/Surface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Link from 'components/Link';
@@ -60,7 +59,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   return (
     <Form form={form} initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
       {editing ? (
-        <Surface>
+        <>
           <div className={css.titleRow}>
             <span>Key</span>
             <span>Value</span>
@@ -84,7 +83,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
               </>
             )}
           </Form.List>
-        </Surface>
+        </>
       ) : (
         <Glossary content={metadataRows} />
       )}

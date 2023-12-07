@@ -1,14 +1,15 @@
-import { Typography } from 'antd';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Spinner from 'hew/Spinner';
 import Surface from 'hew/Surface';
+import { Title, TypographySize } from 'hew/Typography';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Metadata } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 
 import EditableMetadata from './EditableMetadata';
+import css from './MetadataCard.module.scss';
 
 interface Props {
   disabled?: boolean;
@@ -58,42 +59,46 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
 
   return (
     <Surface>
-      <Typography.Title level={5}>Metadata</Typography.Title>
-      {isEditing ? (
-        <>
-          <Button size="small" onClick={cancelEditMetadata}>
-            Cancel
-          </Button>
-          <Button size="small" type="primary" onClick={saveMetadata}>
-            Save
-          </Button>
-        </>
-      ) : (
-        disabled || (
-          <Button
-            icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
-            type="text"
-            onClick={editMetadata}
-          />
-        )
-      )}
-      {showPlaceholder ? (
+      <div className={css.cardPadding}>
+        <div className={css.cardHeader}>
+          <Title size={TypographySize.S}>Metadata</Title>
+          {isEditing ? (
+            <div>
+              <Button size="small" onClick={cancelEditMetadata}>
+                Cancel
+              </Button>
+              <Button size="small" type="primary" onClick={saveMetadata}>
+                Save
+              </Button>
+            </div>
+          ) : (
+            disabled || (
+              <Button
+                icon={<Icon name="pencil" showTooltip size="small" title="Edit" />}
+                type="text"
+                onClick={editMetadata}
+              />
+            )
+          )}
+        </div>
         <Surface>
-          <div
-            style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
-            onClick={editMetadata}>
-            {disabled ? 'No metadata present.' : 'Add Metadata...'}
-          </div>
+          {showPlaceholder ? (
+            <div
+              style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
+              onClick={editMetadata}>
+              {disabled ? 'No metadata present.' : 'Add Metadata...'}
+            </div>
+          ) : (
+            <Spinner spinning={isLoading}>
+              <EditableMetadata
+                editing={isEditing}
+                metadata={editedMetadata}
+                updateMetadata={setEditedMetadata}
+              />
+            </Spinner>
+          )}
         </Surface>
-      ) : (
-        <Spinner spinning={isLoading}>
-          <EditableMetadata
-            editing={isEditing}
-            metadata={editedMetadata}
-            updateMetadata={setEditedMetadata}
-          />
-        </Spinner>
-      )}
+      </div>
     </Surface>
   );
 };
