@@ -10,6 +10,20 @@
  Version 0.26
 **************
 
+Version 0.26.5
+==============
+
+**Release Date:** December 07, 2023
+
+**Bug Fixes**
+
+-  Fix an issue where ``log_policies`` would be compared against the trial log printing experiment
+   config which could often cause patterns like ``(.*) match (.*)`` to incorrectly always match.
+
+-  Fix an issue where the ``determined.launch.wrap_rank`` module, often used by custom launch
+   layers, was improperly buffering multiple lines separated by a carriage return, such as logs
+   emitted from the popular TQDM library. TQDM logs will pass now through without undue buffering.
+
 Version 0.26.4
 ==============
 
