@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -193,9 +192,9 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
 
-		configBytes, err := json.Marshal(genericTaskSpec.GenericTaskConfig)
+		configBytes, err := yaml.YAMLToJSON([]byte(req.Config))
 		if err != nil {
-			return fmt.Errorf("handling experiment config %v: %w", genericTaskSpec.GenericTaskConfig, err)
+			return fmt.Errorf("handling experiment config %v: %w", req.Config, err)
 		}
 
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
