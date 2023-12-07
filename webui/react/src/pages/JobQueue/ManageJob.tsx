@@ -1,8 +1,8 @@
-import { List, Modal, Typography } from 'antd';
+import { List, Typography } from 'antd';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
+import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
@@ -75,7 +75,7 @@ const formValuesToUpdate = async (
   return undefined;
 };
 
-const ManageJob: React.FC<Props> = ({
+const ManageJobModalComponent: React.FC<Props> = ({
   onFinish,
   rpStats,
   job,
@@ -87,10 +87,6 @@ const ManageJob: React.FC<Props> = ({
   const isOrderedQ = orderedSchedulers.has(schedulerType);
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools)); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
-
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
 
   const details = useMemo(() => {
     interface Item {
@@ -180,12 +176,13 @@ const ManageJob: React.FC<Props> = ({
 
   return (
     <Modal
-      mask
-      open={true}
+      submit={{
+        handleError: () => {},
+        handler: onOk,
+        text: 'Ok',
+      }}
       title={'Manage Job ' + truncate(job.jobId, 6, '')}
-      wrapClassName={themeClass}
-      onCancel={onFinish}
-      onOk={onOk}>
+      onClose={onFinish}>
       {isOrderedQ && (
         <p>
           There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
@@ -260,4 +257,4 @@ const ManageJob: React.FC<Props> = ({
   );
 };
 
-export default ManageJob;
+export default ManageJobModalComponent;
