@@ -89,7 +89,7 @@ func New(db *db.PgDB, config config.OIDCConfig) (*Service, error) {
 			ClientSecret: secret,
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  ru.String(),
-			Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+			Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "groups"},
 		},
 	}, nil
 }
