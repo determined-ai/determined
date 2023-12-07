@@ -2,17 +2,14 @@
   display: grid;
   gap: 16px;
   grid-template:
-    'header  header' auto
+    'header header' auto
     'workspace workspace' 20px
     'footer footer' 20px / auto auto;
   height: 100%;
 
-  .headerContainer {
+  h1 {
     grid-area: header;
-
-    * {
-      margin-block-end: 0;
-    }
+    max-width: 100%;
   }
   .workspaceContainer {
     grid-area: workspace;

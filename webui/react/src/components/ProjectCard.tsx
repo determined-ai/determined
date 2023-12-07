@@ -48,11 +48,9 @@ const ProjectCard: React.FC<Props> = ({
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
-        <div className={css.headerContainer}>
-          <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
-            {project.name}
-          </Title>
-        </div>
+        <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
+          {project.name}
+        </Title>
         <div className={css.workspaceContainer}>
           {showWorkspace && project.workspaceId !== 1 && (
             <Tooltip content={project.workspaceName}>
