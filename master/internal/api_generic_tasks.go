@@ -31,11 +31,27 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
+
+func combineTaskConfig(config []byte, forkedConfig []byte) model.GenericTaskConfig {
+
+	combinedConfig := model.GenericTaskConfig{}
+
+	// Don't throw errors; validation should happen elsewhere.
+	if len(forkedConfig) > 0 {
+		_ = yaml.Unmarshal(forkedConfig, &combinedConfig)
+	}
+	if len(config) > 0 {
+		_ = yaml.Unmarshal(config, &combinedConfig)
+	}
+
+	return combinedConfig
+}
 
 func (a *apiServer) getGenericTaskLaunchParameters(
 	ctx context.Context,
@@ -68,18 +84,12 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, err
 	}
 
-	configBytes := []byte(configYAML)
-	if len(configYAML) == 0 {
-		configBytes = forkedConfig
-	}
+	combinedTaskConfig := combineTaskConfig([]byte(configYAML), forkedConfig)
+
 	// Validate the resource configuration.
-	resources := model.ParseJustResources(configBytes)
+	resources := combinedTaskConfig.Resources
 
-	if resources.Slots < 1 {
-		resources.Slots = 1
-	}
-
-	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
+	poolName, launchWarnings, err := a.m.ResolveResources(*resources.RawResourcePool, *resources.RawSlots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -90,24 +100,15 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	}
 
 	// Get the full configuration.
-	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
+	taskConfigDefaults := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
+	taskConfig := schemas.Merge(combinedTaskConfig, taskConfigDefaults)
 	workDirInDefaults := taskConfig.WorkDir
-
-	if len(forkedConfig) != 0 && len(configYAML) != 0 {
-		if err := yaml.Unmarshal(forkedConfig, &taskConfig); err != nil {
-			return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
-		}
-	}
-
-	if err := yaml.Unmarshal(configBytes, &taskConfig); err != nil {
-		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
-	}
 
 	// Copy discovered (default) resource pool name and slot count.
 
-	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
+	fillTaskConfig(*resources.RawSlots, taskSpec, &taskConfig.Environment)
 	taskConfig.Resources.RawResourcePool = &poolName
-	taskConfig.Resources.RawSlots = &resources.Slots
+	taskConfig.Resources.RawSlots = resources.RawSlots
 
 	var contextDirectoryBytes []byte
 	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(
@@ -201,9 +202,7 @@ func (a *apiServer) CreateGenericTask(
 				return nil, err
 			}
 			forkedContextDirectory = []byte(contextDirectoryResp.B64Tgz)
-
 		}
-
 	}
 
 	if len(forkedConfig) == 0 && len(req.Config) == 0 {
