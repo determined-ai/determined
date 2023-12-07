@@ -185,7 +185,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             # this precedence is implemented in the deployment template
             print(
                 "--db-snapshot and --db-password are mutually exclusive, "
-                "password value be ignored as snapshot would take precedence"
+                "password value ignored as snapshot would take precedence"
             )
 
     if args.deployment_type != constants.deployment_types.GENAI:
