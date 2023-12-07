@@ -1,5 +1,6 @@
 import { LineChart } from 'hew/LineChart';
 import Message from 'hew/Message';
+import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
@@ -10,7 +11,7 @@ import TableBatch from 'components/Table/TableBatch';
 import useUI from 'components/ThemeProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
-import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
+import TrialsComparisonModalComponent from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -121,7 +122,7 @@ const LearningCurve: React.FC<Props> = ({
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-
+  const TrialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -179,6 +180,12 @@ const LearningCurve: React.FC<Props> = ({
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
   }, []);
+
+  useEffect(() => {
+    if (showCompareTrials) {
+      TrialsComparisonModal.open();
+    }
+  }, [showCompareTrials, TrialsComparisonModal]);
 
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
@@ -366,15 +373,12 @@ const LearningCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-      {showCompareTrials && (
-        <TrialsComparisonModal
-          experiment={experiment}
-          trialIds={selectedRowKeys}
-          visible={showCompareTrials}
-          onCancel={() => setShowCompareTrials(false)}
-          onUnselect={handleTrialUnselect}
-        />
-      )}
+      <TrialsComparisonModal.Component
+        experiment={experiment}
+        trialIds={selectedRowKeys}
+        onCancel={() => setShowCompareTrials(false)}
+        onUnselect={handleTrialUnselect}
+      />
     </div>
   );
 };

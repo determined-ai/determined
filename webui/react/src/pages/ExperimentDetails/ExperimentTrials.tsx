@@ -1,6 +1,7 @@
 import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import Dropdown from 'hew/Dropdown';
+import { useModal } from 'hew/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
@@ -42,7 +43,7 @@ import { openCommandResponse } from 'utils/wait';
 import css from './ExperimentTrials.module.scss';
 import { configForExperiment, isOfSortKey, Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
-import TrialsComparisonModal from './TrialsComparisonModal';
+import TrialsComparisonModalComponent from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
@@ -62,7 +63,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
-
+  const TrialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
@@ -363,6 +364,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     return () => canceler.abort();
   }, [canceler]);
 
+  useEffect(() => {
+    if (settings.compare) {
+      TrialsComparisonModal.open();
+    }
+  }, [settings.compare, TrialsComparisonModal]);
+
   const handleTableRowSelect = useCallback(
     (rowKeys: React.Key[]) => {
       updateSettings({ row: rowKeys.map(Number) });
@@ -464,12 +471,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           updateSettings={updateSettings}
           onChange={handleTableChange}
         />
-      </Section>
+      </Section>{' '}
       {settings.compare && (
-        <TrialsComparisonModal
+        <TrialsComparisonModal.Component
           experiment={experiment}
           trialIds={settings.row ?? []}
-          visible={settings.compare}
           onCancel={handleTrialCompareCancel}
           onUnselect={handleTrialUnselect}
         />

@@ -1,5 +1,6 @@
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
+import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -8,7 +9,7 @@ import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import useUI from 'components/ThemeProvider';
 import { terminalRunStates } from 'constants/states';
-import TrialsComparisonModal from 'pages/ExperimentDetails/TrialsComparisonModal';
+import TrialsComparisonModalComponent from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -73,6 +74,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
+  const TrialsComparisonModal = useModal(TrialsComparisonModalComponent);
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce(
@@ -224,6 +226,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [chartData?.metricRange, hyperparameters, selectedMetric, selectedScale, selectedHParams]);
 
   const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
+
+  useEffect(() => {
+    if (showCompareTrials) TrialsComparisonModal.open();
+  }, [showCompareTrials, TrialsComparisonModal]);
 
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
@@ -436,15 +442,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </div>
         </div>
       </Section>
-      {showCompareTrials && (
-        <TrialsComparisonModal
-          experiment={experiment}
-          trialIds={selectedRowKeys}
-          visible={showCompareTrials}
-          onCancel={() => setShowCompareTrials(false)}
-          onUnselect={handleTrialUnselect}
-        />
-      )}
+      <TrialsComparisonModal.Component
+        experiment={experiment}
+        trialIds={selectedRowKeys}
+        onCancel={() => setShowCompareTrials(false)}
+        onUnselect={handleTrialUnselect}
+      />
     </div>
   );
 };
