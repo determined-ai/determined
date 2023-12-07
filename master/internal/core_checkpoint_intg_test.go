@@ -197,7 +197,6 @@ func testGetCheckpointEcho(t *testing.T, bucket string) {
 			err = api.m.getCheckpoint(ctx)
 			require.NoError(t, err, "API call returns error")
 			checkTgz(t, rec.Body, id)
-
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func() error {
