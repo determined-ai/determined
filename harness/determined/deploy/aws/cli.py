@@ -175,6 +175,15 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if args.deployment_type != constants.deployment_types.LORE:
         if args.lore_version is not None:
             raise ValueError("--lore-version can only be specified for 'lore' deployments")
+    else:
+        print(
+            colored(
+                "Lore deployment type is experimental and not ready for production use.",
+                "yellow",
+            )
+        )
+        if args.lore_version is not None:
+            raise ValueError("--lore-version must be specified for 'lore' deployments")
 
     if args.deployment_type not in {
         constants.deployment_types.EFS,
@@ -437,7 +446,7 @@ args_description = Cmd(
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,
                     default=constants.defaults.DEPLOYMENT_TYPE,
-                    help="deployment type",
+                    help="deployment type. Lore support is experimental.",
                 ),
                 Arg(
                     "--inbound-cidr",
@@ -639,7 +648,8 @@ args_description = Cmd(
                 Arg(
                     "--lore-version",
                     type=str,
-                    help=argparse.SUPPRESS,
+                    help="Specifies the version of Lore to install. The value must be a valid"
+                    + " Lore tag available on Docker Hub.",
                 ),
             ],
         ),
