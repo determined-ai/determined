@@ -584,11 +584,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     const rows = [
       {
         label: 'Description',
-        value: (
-          <div className={css.nomargin}>
-            <Body truncate={{ rows: 1, tooltip: true }}>{experiment.description || 'N/A'}</Body>
-          </div>
-        ),
+        value: <Body truncate={{ rows: 1, tooltip: true }}>{experiment.description || 'N/A'}</Body>,
       },
     ];
     if (experiment.forkedFrom && experiment.config.searcher.sourceTrialId) {
