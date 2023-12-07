@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,26 +36,20 @@ func (w *seqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 // GetS3BucketRegion returns the region name of the specified bucket.
 // It does so by making an API call to AWS.
 func GetS3BucketRegion(ctx context.Context, bucket string) (string, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
-	})
+	// TODO this won't work on non aws s3 APIs.
+	url := fmt.Sprintf("https://%s.s3.amazonaws.com", bucket)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("making request to get region of s3 bucket at url %s: %w", url, err)
 	}
 
-	out, err := s3.New(sess).GetBucketLocationWithContext(ctx, &s3.GetBucketLocationInput{
-		Bucket: &bucket,
-	})
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting region of s3 bucket at url %s: %w", url, err)
 	}
+	defer res.Body.Close()
 
-	// Buckets in Region us-east-1 have a LocationConstraint of null.
-	if out == nil || out.LocationConstraint == nil {
-		return "us-east-1", nil
-	}
-
-	return *out.LocationConstraint, nil
+	return res.Header.Get("X-Amz-Bucket-Region"), nil
 }
 
 // S3Downloader implements downloading a checkpoint from S3
