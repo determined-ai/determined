@@ -4,7 +4,7 @@
 
 # check for dirty changes
 if [[ -n "$(git status --porcelain)" ]]; then
-    echo "untracked or dirty files are not allowed, cleanup before running lock-published-urls.sh"
+    echo "untracked or dirty files are not allowed, cleanup before running update-docker-tags.sh"
     exit 1
 fi
 
@@ -26,8 +26,8 @@ done
 
 # check to see if redirects.py published resulted in any file changes or not
 if [[ -z "$(git status --porcelain)" ]]; then
-    echo "no change to published urls"
-    exit 0
+    echo "no change to published urls, is the proper VERSION being passed?"
+    exit 1
 fi
 git add --update
 git commit -m "chore: bump current environment image versions to $NEW_VERSION"
