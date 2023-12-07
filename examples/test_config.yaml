@@ -1,1 +1,0 @@
-entrypoint: ["python3", "run.py"]
