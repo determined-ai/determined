@@ -21,8 +21,11 @@ import (
 )
 
 var regexesAndMessages = [][]string{
-	{`.*Scan\(ctx`, "Bun 'Scan()' queries must be covered by an integration test"},
-	{`.*Exec\(ctx`, "Bun 'Exec()' queries must be covered by an integration test"},
+	{`.*Scan\((ctx|context)`, "Bun 'Scan()' queries must be covered by an integration test"},
+	{`.*Exec\((ctx|context)`, "Bun 'Exec()' queries must be covered by an integration test"},
+	{`.*Count\((ctx|context)`, "Bun 'Count()' queries must be covered by an integration test"},
+	{`.*Exists\((ctx|context)`, "Bun 'Exists()' queries must be covered by an integration test"},
+	{`.*ScanAndCount\((ctx|context)`, "Bun 'ScanAndCount()' queries must be covered by an integration test"},
 }
 
 type regexWithInfo struct {

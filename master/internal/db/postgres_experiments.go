@@ -121,10 +121,15 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 func GetNonTerminalExperimentCount(ctx context.Context,
 	experimentIDs []int32,
 ) (count int, err error) {
-	return Bun().NewSelect().Table("experiments").
+	c, err := Bun().NewSelect().Table("experiments").
 		Where("id IN (?)", bun.In(experimentIDs)).
 		Where("state NOT IN (?)", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Count(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("counting non terminal experiments IDs %v: %w", experimentIDs, err)
+	}
+
+	return c, nil
 }
 
 // MetricNames returns a list of metric names for the given experiment IDs.
