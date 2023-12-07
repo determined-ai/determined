@@ -42,8 +42,9 @@ import (
 )
 
 const (
-	S3TestBucket = "storage-unit-tests"
-	S3TestPrefix = "master/checkpoint-download"
+	S3TestBucket        = "storage-unit-tests"
+	S3TestBucketUSEast1 = "storage-unit-tests-us-east-1"
+	S3TestPrefix        = "master/checkpoint-download"
 )
 
 var mockCheckpointContent = map[string]string{
@@ -129,11 +130,11 @@ func checkZip(t *testing.T, content string, id string) {
 	require.Equal(t, mockCheckpointContent, gotMap)
 }
 
-func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
+func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID, bucket string) {
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	user := db.RequireMockUser(t, pgDB)
 	// Using a different path than DefaultTestSrcPath since we are one level up than most db tests
-	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch")
+	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch", bucket)
 	_, task := db.RequireMockTrial(t, pgDB, exp)
 	allocation := db.RequireMockAllocation(t, pgDB, task.TaskID)
 	// Create checkpoints
@@ -142,10 +143,10 @@ func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
 	require.NoError(t, err)
 }
 
-func createCheckpoint(t *testing.T, pgDB *db.PgDB) (string, error) {
+func createCheckpoint(t *testing.T, pgDB *db.PgDB, bucket string) (string, error) {
 	id := uuid.New()
-	addMockCheckpointDB(t, pgDB, id)
-	err := createMockCheckpointS3(S3TestBucket, S3TestPrefix+"/"+id.String())
+	addMockCheckpointDB(t, pgDB, id, bucket)
+	err := createMockCheckpointS3(bucket, S3TestPrefix+"/"+id.String())
 	return id.String(), err
 }
 
@@ -165,6 +166,14 @@ func setupCheckpointTestEcho(t *testing.T) (
 }
 
 func TestGetCheckpointEcho(t *testing.T) {
+	testGetCheckpointEcho(t, S3TestBucket)
+}
+
+func TestGetCheckpointEchoUSEast1(t *testing.T) {
+	testGetCheckpointEcho(t, S3TestBucketUSEast1)
+}
+
+func testGetCheckpointEcho(t *testing.T, bucket string) {
 	gitBranch := os.Getenv("CIRCLE_BRANCH")
 	if gitBranch == "" || strings.HasPrefix(gitBranch, "pull/") {
 		t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
@@ -177,7 +186,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 	}{
 		{"CanGetCheckpointTgz", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
-			id, err := createCheckpoint(t, api.m.db)
+			id, err := createCheckpoint(t, api.m.db, bucket)
 			if err != nil {
 				return err
 			}
@@ -188,11 +197,12 @@ func TestGetCheckpointEcho(t *testing.T) {
 			err = api.m.getCheckpoint(ctx)
 			require.NoError(t, err, "API call returns error")
 			checkTgz(t, rec.Body, id)
+
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
-			id, err := createCheckpoint(t, api.m.db)
+			id, err := createCheckpoint(t, api.m.db, bucket)
 			if err != nil {
 				return err
 			}
@@ -315,7 +325,7 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 	require.Equal(t, apiPkg.NotFoundErrs("checkpoint", fmt.Sprint(checkpointUUID), false),
 		api.m.getCheckpoint(ctx))
 
-	addMockCheckpointDB(t, api.m.db, checkpointUUID)
+	addMockCheckpointDB(t, api.m.db, checkpointUUID, S3TestBucket)
 	RegisterCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
@@ -345,12 +355,12 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 
 // nolint: exhaustruct
 func mockExperimentS3(
-	t *testing.T, pgDB *db.PgDB, user model.User, folderPath string,
+	t *testing.T, pgDB *db.PgDB, user model.User, folderPath, bucket string,
 ) *model.Experiment {
 	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawS3Config: &expconf.S3ConfigV0{
-				RawBucket: aws.String(S3TestBucket),
+				RawBucket: aws.String(bucket),
 				RawPrefix: aws.String(S3TestPrefix),
 			},
 		},
