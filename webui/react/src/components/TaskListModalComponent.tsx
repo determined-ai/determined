@@ -35,7 +35,15 @@ interface Props {
 
 const TaskListModalComponent: React.FC<Props> = ({ onClose, sourcesModal, title }: Props) => {
   return (
-    <Modal size="medium" title={title} onClose={onClose}>
+    <Modal
+      size="medium"
+      submit={{
+        handleError: () => {},
+        handler: onClose,
+        text: 'Close',
+      }}
+      title={title}
+      onClose={onClose}>
       <div className={css.sourceLinks}>
         <Grid gap={ShirtSize.Medium} minItemWidth={120}>
           {sourcesModal?.sources.map((source) => (

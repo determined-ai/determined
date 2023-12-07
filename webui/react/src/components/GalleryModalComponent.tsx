@@ -13,7 +13,7 @@ import UPlotScatter from './UPlot/UPlotScatter';
 interface Props {
   onNext?: () => void;
   onPrevious?: () => void;
-  onCancel?: () => void;
+  onCancel: () => void;
   chartProps: Record<string, UPlotScatterProps> | undefined;
   activeHParam: string | undefined;
   selectedScale: Scale;
@@ -52,7 +52,15 @@ const GalleryModalComponent: React.FC<Props> = ({
   }, [onNext, onPrevious]);
 
   return (
-    <Modal size="large" title="" onClose={onCancel}>
+    <Modal
+      size="large"
+      submit={{
+        handleError: () => {},
+        handler: onCancel,
+        text: 'Close',
+      }}
+      title=""
+      onClose={onCancel}>
       <div className={css.base}>
         {chartProps && activeHParam && (
           <UPlotScatter
