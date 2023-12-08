@@ -4,6 +4,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -19,7 +20,7 @@ type Spec struct {
 // PullSpec contains configs for an ImagePull call.
 type PullSpec struct {
 	ForcePull bool
-	Registry  *types.AuthConfig
+	Registry  *registry.AuthConfig
 }
 
 // RunSpec contains configs for ContainerCreate, CopyToContainer, and ContainerStart calls.
@@ -30,7 +31,7 @@ type RunSpec struct {
 
 	Archives   []RunArchive
 	DeviceType device.Type
-	Registry   *types.AuthConfig
+	Registry   *registry.AuthConfig
 }
 
 // ChecksConfig describes the configuration for multiple readiness checks.

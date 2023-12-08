@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	typeReg "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/registry"
@@ -60,7 +61,7 @@ type (
 	// Results on the Waiter channel indicate changes in container state, while results on the
 	// Errs channel indicate failures to watch for updates.
 	ContainerWaiter struct {
-		Waiter <-chan dcontainer.ContainerWaitOKBody
+		Waiter <-chan dcontainer.WaitResponse
 		Errs   <-chan error
 	}
 	// Container contains details about a running container and waiters to await its termination.
@@ -74,7 +75,7 @@ type (
 type Client struct {
 	// Configuration details. Set during initialization, never modified afterwards.
 	credentialStores map[string]*credentialStore
-	authConfigs      map[string]types.AuthConfig
+	authConfigs      map[string]typeReg.AuthConfig
 
 	// System dependencies. Also set during initialization, never modified afterwards.
 	cl  *client.Client
@@ -157,7 +158,7 @@ func (d *Client) ReattachContainer(
 type PullImage struct {
 	Name      string
 	ForcePull bool
-	Registry  *types.AuthConfig
+	Registry  *typeReg.AuthConfig
 }
 
 // PullImage pulls an image according to the given request and credentials initialized at client
@@ -363,9 +364,9 @@ func LabelFilter(key, val string) filters.Args {
 func (d *Client) getDockerAuths(
 	ctx context.Context,
 	image reference.Named,
-	userRegistry *types.AuthConfig,
+	userRegistry *typeReg.AuthConfig,
 	p events.Publisher[Event],
-) (*types.AuthConfig, error) {
+) (*typeReg.AuthConfig, error) {
 	imageDomain := reference.Domain(image)
 	// Try user submitted registry auth config.
 	if userRegistry != nil {
@@ -415,7 +416,7 @@ func (d *Client) getDockerAuths(
 		return nil, fmt.Errorf("error invalid docker repo name: %w", err)
 	}
 	reg := registry.ResolveAuthConfig(d.authConfigs, index)
-	if reg == (types.AuthConfig{}) {
+	if reg == (typeReg.AuthConfig{}) {
 		return &reg, nil
 	}
 
@@ -428,8 +429,8 @@ func (d *Client) getDockerAuths(
 }
 
 // registryToString converts the Registry struct to a base64 encoding for json strings.
-func registryToString(reg types.AuthConfig) (string, error) {
-	// Docker stores the username and password in an auth section types.AuthConfig
+func registryToString(reg typeReg.AuthConfig) (string, error) {
+	// Docker stores the username and password in an auth section typeReg.AuthConfig
 	// formatted as user:pass then base64ed. This is not documented clearly.
 	// https://github.com/docker/cli/blob/master/cli/config/configfile/file.go#L76
 	if reg.Auth != "" {
