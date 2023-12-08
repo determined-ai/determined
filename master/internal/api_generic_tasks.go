@@ -82,7 +82,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
 	workDirInDefaults := taskConfig.WorkDir
 
-	if err := yaml.Unmarshal([]byte(configYAML), &taskConfig); err != nil {
+	if err := yaml.UnmarshalStrict([]byte(configYAML), &taskConfig, yaml.DisallowUnknownFields); err != nil {
 		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
 	}
 
