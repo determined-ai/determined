@@ -179,7 +179,7 @@ const ManageJobModalComponent: React.FC<Props> = ({
       submit={{
         handleError: () => {},
         handler: onOk,
-        text: 'Ok',
+        text: 'Close',
       }}
       title={'Manage Job ' + truncate(job.jobId, 6, '')}
       onClose={onFinish}>

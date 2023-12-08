@@ -56,7 +56,7 @@ const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
         handleError: () => {},
         handler: () => {},
         onComplete: onCancel,
-        text: 'Ok',
+        text: 'Close',
       }}
       title={
         !Array.isArray(props.experiment)
