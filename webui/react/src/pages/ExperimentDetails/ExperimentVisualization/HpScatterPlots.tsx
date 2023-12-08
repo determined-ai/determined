@@ -55,13 +55,13 @@ const ScatterPlots: React.FC<Props> = ({
   const [chartData, setChartData] = useState<HpMetricData>();
   const [pageError, setPageError] = useState<Error>();
   const [activeHParam, setActiveHParam] = useState<string>();
-  const GalleryModal = useModal(GalleryModalComponent);
+  const galleryModal = useModal(GalleryModalComponent);
 
   useEffect(() => {
     if (activeHParam) {
-      GalleryModal.open();
+      galleryModal.open();
     }
-  }, [activeHParam, GalleryModal]);
+  }, [activeHParam, galleryModal]);
 
   const yScaleKey = selectedScale === Scale.Log ? 'yLog' : 'y';
 
@@ -288,7 +288,7 @@ const ScatterPlots: React.FC<Props> = ({
           )}
         </div>
       </Section>
-      <GalleryModal.Component
+      <galleryModal.Component
         activeHParam={activeHParam}
         chartProps={chartProps}
         selectedScale={selectedScale}

@@ -122,7 +122,7 @@ const LearningCurve: React.FC<Props> = ({
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const TrialsComparisonModal = useModal(TrialsComparisonModalComponent);
+  const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -183,9 +183,9 @@ const LearningCurve: React.FC<Props> = ({
 
   useEffect(() => {
     if (showCompareTrials) {
-      TrialsComparisonModal.open();
+      trialsComparisonModal.open();
     }
-  }, [showCompareTrials, TrialsComparisonModal]);
+  }, [showCompareTrials, trialsComparisonModal]);
 
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
@@ -373,7 +373,7 @@ const LearningCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-      <TrialsComparisonModal.Component
+      <trialsComparisonModal.Component
         experiment={experiment}
         trialIds={selectedRowKeys}
         onCancel={() => setShowCompareTrials(false)}

@@ -84,15 +84,15 @@ const HpHeatMaps: React.FC<Props> = ({
   const [chartData, setChartData] = useState<HpData>();
   const [pageError, setPageError] = useState<Error>();
   const [activeHParam, setActiveHParam] = useState<string>();
-  const GalleryModal = useModal(GalleryModalComponent);
+  const galleryModal = useModal(GalleryModalComponent);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
 
   useEffect(() => {
     if (activeHParam) {
-      GalleryModal.open();
+      galleryModal.open();
     }
-  }, [activeHParam, GalleryModal]);
+  }, [activeHParam, galleryModal]);
   const smallerIsBetter = useMemo(() => {
     if (
       selectedMetric &&
@@ -392,7 +392,7 @@ const HpHeatMaps: React.FC<Props> = ({
           )}
         </div>
       </Section>
-      <GalleryModal.Component
+      <galleryModal.Component
         activeHParam={activeHParam}
         chartProps={chartProps}
         selectedScale={selectedScale}

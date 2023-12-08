@@ -48,13 +48,13 @@ const ModelVersionHeader: React.FC<Props> = ({
   const modelDownloadModal = useModal(ModelDownloadModal);
   const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
   const modelVersionEditModal = useModal(ModelVersionEditModal);
-  const UseNotebookModal = useModal(UseNotebookModalComponent);
+  const useNotebookModal = useModal(UseNotebookModalComponent);
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   useEffect(() => {
-    if (showUseInNotebook) UseNotebookModal.open();
-  }, [showUseInNotebook, UseNotebookModal]);
+    if (showUseInNotebook) useNotebookModal.open();
+  }, [showUseInNotebook, useNotebookModal]);
 
   const infoRows: InfoRow[] = useMemo(
     () => [
@@ -197,7 +197,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         fetchModelVersion={fetchModelVersion}
         modelVersion={modelVersion}
       />
-      <UseNotebookModal.Component
+      <useNotebookModal.Component
         modelVersion={modelVersion}
         onClose={() => setShowUseInNotebook(false)}
       />

@@ -98,16 +98,16 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
-  const TaskListModal = useModal(TaskListModalComponent);
+  const taskListModal = useModal(TaskListModalComponent);
   const canceler = useRef(new AbortController());
 
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   useEffect(() => {
     if (sourcesModal) {
-      TaskListModal.open();
+      taskListModal.open();
     }
-  }, [TaskListModal, sourcesModal]);
+  }, [taskListModal, sourcesModal]);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -649,7 +649,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         itemName="task"
         onConfirm={handleBatchKill}
       />
-      <TaskListModal.Component
+      <taskListModal.Component
         sourcesModal={sourcesModal}
         title={`
           ${sourcesModal?.sources.length}

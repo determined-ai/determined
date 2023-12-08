@@ -18,13 +18,13 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   const [workspaceMap, setWorkspaceMap] = useState<Map<Workspace, Project[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const WorkspaceQuickSearchModal = useModal(WorkspaceQuickSearchModalComponent);
+  const workspaceQuickSearchModal = useModal(WorkspaceQuickSearchModalComponent);
   const workspaceObservable = useObservable(workspaceStore.mutables);
   const workspaces = Loadable.getOrElse([], workspaceObservable);
 
   useEffect(() => {
-    if (isModalVisible) WorkspaceQuickSearchModal.open();
-  }, [isModalVisible, WorkspaceQuickSearchModal]);
+    if (isModalVisible) workspaceQuickSearchModal.open();
+  }, [isModalVisible, workspaceQuickSearchModal]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -65,7 +65,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   return (
     <>
       <div onClick={onShowModal}>{children}</div>
-      <WorkspaceQuickSearchModal.Component
+      <workspaceQuickSearchModal.Component
         isLoading={isLoading}
         workspaceMap={workspaceMap}
         onModalClose={() => setIsModalVisible(false)}

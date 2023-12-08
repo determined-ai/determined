@@ -19,16 +19,16 @@ const ClusterOverview: React.FC = () => {
   const resourcePools = useObservable(clusterStore.resourcePools);
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
-  const ResourcePoolDetailsModal = useModal(ResourcePoolDetailsModalComponent);
+  const resourcePoolDetailsModal = useModal(ResourcePoolDetailsModalComponent);
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
   useEffect(() => {
     if (rpDetail) {
-      ResourcePoolDetailsModal.open();
+      resourcePoolDetailsModal.open();
     }
-  }, [rpDetail, ResourcePoolDetailsModal]);
+  }, [rpDetail, resourcePoolDetailsModal]);
 
   const actionMenu = useCallback(
     (pool: ResourcePool) =>
@@ -65,7 +65,7 @@ const ClusterOverview: React.FC = () => {
         </Card.Group>
       </Section>
       {!!rpDetail && (
-        <ResourcePoolDetailsModal.Component resourcePool={rpDetail} onCloseModal={hideModal} />
+        <resourcePoolDetailsModal.Component resourcePool={rpDetail} onCloseModal={hideModal} />
       )}
     </>
   );

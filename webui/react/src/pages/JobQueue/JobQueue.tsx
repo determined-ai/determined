@@ -77,14 +77,14 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const [pageState, setPageState] = useState<{ isLoading: boolean }>({ isLoading: true });
-  const ManageJobModal = useModal(ManageJobModalComponent);
+  const manageJobModal = useModal(ManageJobModalComponent);
   const pageRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (managingJob) {
-      ManageJobModal.open();
+      manageJobModal.open();
     }
-  }, [managingJob, ManageJobModal]);
+  }, [managingJob, manageJobModal]);
   const { settings, updateSettings } = useSettings<Settings>(
     useMemo(() => settingsConfig(jobState), [jobState]),
   );
@@ -411,7 +411,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
         )}
       </Section>
       {!!managingJob && (
-        <ManageJobModal.Component
+        <manageJobModal.Component
           initialPool={selectedRp.name}
           job={managingJob}
           jobCount={rpTotalJobCount(selectedRp.name)}

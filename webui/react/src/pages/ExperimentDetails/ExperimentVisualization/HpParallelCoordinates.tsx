@@ -74,7 +74,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
-  const TrialsComparisonModal = useModal(TrialsComparisonModalComponent);
+  const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce(
@@ -228,8 +228,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
   useEffect(() => {
-    if (showCompareTrials) TrialsComparisonModal.open();
-  }, [showCompareTrials, TrialsComparisonModal]);
+    if (showCompareTrials) trialsComparisonModal.open();
+  }, [showCompareTrials, trialsComparisonModal]);
 
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
@@ -442,7 +442,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </div>
         </div>
       </Section>
-      <TrialsComparisonModal.Component
+      <trialsComparisonModal.Component
         experiment={experiment}
         trialIds={selectedRowKeys}
         onCancel={() => setShowCompareTrials(false)}

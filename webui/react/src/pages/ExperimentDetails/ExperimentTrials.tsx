@@ -63,7 +63,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
-  const TrialsComparisonModal = useModal(TrialsComparisonModalComponent);
+  const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
@@ -366,9 +366,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   useEffect(() => {
     if (settings.compare) {
-      TrialsComparisonModal.open();
+      trialsComparisonModal.open();
     }
-  }, [settings.compare, TrialsComparisonModal]);
+  }, [settings.compare, trialsComparisonModal]);
 
   const handleTableRowSelect = useCallback(
     (rowKeys: React.Key[]) => {
@@ -473,7 +473,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         />
       </Section>{' '}
       {settings.compare && (
-        <TrialsComparisonModal.Component
+        <trialsComparisonModal.Component
           experiment={experiment}
           trialIds={settings.row ?? []}
           onCancel={handleTrialCompareCancel}
