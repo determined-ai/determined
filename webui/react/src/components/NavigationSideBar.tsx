@@ -19,6 +19,7 @@ import UserSettings from 'components/UserSettings';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
+import useFeature from 'hooks/useFeature';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -116,7 +117,7 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
-
+  const GASLinkOn = useFeature().isOn('GAS');
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
@@ -142,10 +143,6 @@ const NavigationSideBar: React.FC = () => {
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
-
-  const isGASDeployed = useMemo(() => {
-    return !!info.featureSwitches.find((feature) => feature === 'GAS');
-  }, [info.featureSwitches]);
 
   interface MenuItemProps {
     icon: IconName;
@@ -194,7 +191,7 @@ const NavigationSideBar: React.FC = () => {
       },
     ];
 
-    if (isGASDeployed) {
+    if (GASLinkOn) {
       bottomItems.push({
         external: true,
         icon: 'cloud',
@@ -207,7 +204,7 @@ const NavigationSideBar: React.FC = () => {
       bottom: bottomItems,
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, isGASDeployed]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding, GASLinkOn]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
