@@ -128,7 +128,20 @@ func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) err
 
 	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
 	p := &projectv1.Project{}
-	if err := a.m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
+	// Get project details
+	if err := db.Bun().NewSelect().TableExpr("pe, projects AS p").With("pe", db.Bun().NewSelect().
+		ModelTableExpr("experiments").ColumnExpr(`COUNT(*) AS num_experiments,
+		SUM(CASE WHEN state = 'ACTIVE' THEN 1 ELSE 0 END) AS num_active_experiments,
+		MAX(start_time) AS last_experiment_started_at`).Where("project_id = ?", projectID)).
+		ColumnExpr(`p.id,p.name,p.workspace_id,p.description,p.immutable,
+		p.notes,w.name AS workspace_name,p.error_message,
+		(p.archived OR w.archived) AS archived,MAX(pe.num_experiments) AS num_experiments,
+		MAX(pe.num_active_experiments) AS num_active_experiments,u.username,p.user_id`).
+		Join("LEFT JOIN users AS u ON u.id = p.user_id").
+		Join("LEFT JOIN workspaces AS w ON w.id = p.workspace_id").
+		Where("p.id = ?", projectID).
+		GroupExpr("p.id, u.username, w.archived, w.name").
+		Scan(ctx, p); errors.Is(err, db.ErrNotFound) {
 		return errProjectNotFound
 	} else if err != nil {
 		return err
