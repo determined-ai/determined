@@ -4332,18 +4332,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection
-          context:
-            - aws
-            - determined-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet"]
-              mark: ["model_hub_mmdetection"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-      - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context:
             - aws
