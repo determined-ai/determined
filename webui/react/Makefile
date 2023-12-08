@@ -3,7 +3,6 @@ export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
 source_files := $(shell find src public -type f)
-merge_base := $(shell git merge-base main HEAD)
 
 .PHONY: default
 default: get-deps
