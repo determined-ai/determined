@@ -65,11 +65,13 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   return (
     <>
       <div onClick={onShowModal}>{children}</div>
-      <workspaceQuickSearchModal.Component
-        isLoading={isLoading}
-        workspaceMap={workspaceMap}
-        onModalClose={() => setIsModalVisible(false)}
-      />
+      {isModalVisible && (
+        <workspaceQuickSearchModal.Component
+          isLoading={isLoading}
+          workspaceMap={workspaceMap}
+          onModalClose={() => setIsModalVisible(false)}
+        />
+      )}
     </>
   );
 };
