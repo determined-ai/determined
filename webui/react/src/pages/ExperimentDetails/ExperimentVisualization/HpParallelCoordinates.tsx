@@ -72,7 +72,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [pageError, setPageError] = useState<Error>();
   const [filteredTrialIdMap, setFilteredTrialIdMap] = useState<Record<number, boolean>>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
-  const [showCompareTrials, setShowCompareTrials] = useState(false);
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
   const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
 
@@ -228,10 +227,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
   useEffect(() => {
-    if (showCompareTrials) trialsComparisonModal.open();
-  }, [showCompareTrials, trialsComparisonModal]);
-
-  useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
 
     const canceler = new AbortController();
@@ -332,10 +327,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
           workspaceId: experiment.workspaceId,
         });
       } else if (action === Action.CompareTrials) {
-        return setShowCompareTrials(true);
+        return trialsComparisonModal.open();
       }
     },
-    [selectedRowKeys, experiment],
+    [selectedRowKeys, trialsComparisonModal, experiment],
   );
 
   const submitBatchAction = useCallback(
@@ -445,7 +440,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
       <trialsComparisonModal.Component
         experiment={experiment}
         trialIds={selectedRowKeys}
-        onCancel={() => setShowCompareTrials(false)}
         onUnselect={handleTrialUnselect}
       />
     </div>

@@ -39,7 +39,7 @@ type TableProps = XOR<
   TablePropsBase;
 
 type ModalProps = TableProps & {
-  onCancel: () => void;
+  onCancel?: () => void;
 };
 
 const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
@@ -47,7 +47,7 @@ const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
   ...props
 }: ModalProps) => {
   useEffect(() => {
-    if (props.trialIds?.length === 0 || props.trials?.length === 0) onCancel();
+    if ((props.trialIds?.length === 0 || props.trials?.length === 0) && onCancel) onCancel();
   }, [onCancel, props.trialIds?.length, props.trials?.length]);
 
   return (

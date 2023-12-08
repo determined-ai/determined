@@ -121,7 +121,6 @@ const LearningCurve: React.FC<Props> = ({
   const [hasLoaded, setHasLoaded] = useState(false);
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
-  const [showCompareTrials, setShowCompareTrials] = useState(false);
   const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
@@ -180,12 +179,6 @@ const LearningCurve: React.FC<Props> = ({
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
   }, []);
-
-  useEffect(() => {
-    if (showCompareTrials) {
-      trialsComparisonModal.open();
-    }
-  }, [showCompareTrials, trialsComparisonModal]);
 
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
@@ -278,10 +271,10 @@ const LearningCurve: React.FC<Props> = ({
           workspaceId: experiment.workspaceId,
         });
       } else if (action === Action.CompareTrials) {
-        return setShowCompareTrials(true);
+        return trialsComparisonModal.open();
       }
     },
-    [selectedRowKeys, experiment],
+    [trialsComparisonModal, selectedRowKeys, experiment],
   );
 
   const submitBatchAction = useCallback(
@@ -376,7 +369,6 @@ const LearningCurve: React.FC<Props> = ({
       <trialsComparisonModal.Component
         experiment={experiment}
         trialIds={selectedRowKeys}
-        onCancel={() => setShowCompareTrials(false)}
         onUnselect={handleTrialUnselect}
       />
     </div>
