@@ -37,7 +37,7 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 		),
 	}, "/")
 
-	// TODO proxy ports eventually.
+	// TODO(aaron.amanuel): proxy ports eventually.
 	res.PbsConfig = s.GenericTaskConfig.Pbs
 	res.SlurmConfig = s.GenericTaskConfig.Slurm
 
@@ -65,19 +65,13 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 	return res
 }
 
-// TODO fill in job information. These should probably be on a different struct.
-// not right on the generic task spec.
-
-// ToV1Job todo.
+// TODO(aaron.amanuel): implement taskSpec functions
 func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
 	return nil, status.Error(codes.Unimplemented, "ToV1Job not implemented for Generic Tasks")
 }
 
-// SetJobPriority todo.
 func (s GenericTaskSpec) SetJobPriority(priority int) error { return nil }
 
-// SetWeight todo.
 func (s GenericTaskSpec) SetWeight(weight float64) error { return nil }
 
-// SetResourcePool todo.
 func (s GenericTaskSpec) SetResourcePool(resourcePool string) error { return nil }

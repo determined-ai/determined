@@ -259,7 +259,7 @@ args_description: List[Any] = [
                     Arg(
                         "context",
                         type=Path,
-                        help="file or directory containing task context directory",
+                        help=command.CONTEXT_DESC,
                     ),
                     Arg(
                         "-i",
