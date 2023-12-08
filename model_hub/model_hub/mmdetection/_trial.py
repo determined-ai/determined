@@ -131,7 +131,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
             cfg = mmcv.Config(new_config, cfg._text, cfg._filename)
 
         if hasattr(self.hparams, "override_mmdet_config"):
-            cfg.merge_from_dict(self.hparams.override_mmdet_config)
+            cfg.merge_from_dict(self.hparams.override_mmdet_config.__dict__)
 
         cfg.data.val.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.val.pipeline)
         cfg.data.test.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.test.pipeline)
