@@ -26,13 +26,13 @@ Version 0.26.5
 
 **New Features**
 
--  Authentication: Users can now provide a pachyderm address in the master config under
-   integrations.pachyderm.address. This address will be added as an environment variable called
-   ``PACHD_ADDRESS`` in the task container. The OIDC raw ID token will also be available as an
-   environment variable called ``DEX_TOKEN`` in the task container.
+-  Authentication: Users can now provide a Pachyderm address in the master config under
+   ``integrations.pachyderm.address``. This address will be added as an environment variable called
+   ``PACHD_ADDRESS`` in task containers. The OIDC raw ID token will also be available as an
+   environment variable called ``DEX_TOKEN`` in task containers.
 
 -  Authentication: In the enterprise edition, add synchronization of OIDC user group memberships with
-   existing groups. Configure by setting oidc.groups_claim_name to the string value of the
+   existing groups. Configure by setting ``oidc.groups_claim_name`` in the master config to the string value of the
    authenticator's claim name for groups.
 
 Version 0.26.4
