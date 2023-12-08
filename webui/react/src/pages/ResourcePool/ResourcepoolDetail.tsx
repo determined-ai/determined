@@ -1,6 +1,6 @@
-import { Divider, type TabsProps } from 'antd';
+import { Divider } from 'antd';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { ShirtSize } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
@@ -155,12 +155,12 @@ const ResourcepoolDetailInner: React.FC = () => {
     );
   }, [pool]);
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     if (!pool) {
       return [];
     }
 
-    const tabItems: TabsProps['items'] = [
+    const tabItems: PivotProps['items'] = [
       {
         children: <JobQueue jobState={JobState.SCHEDULED} selectedRp={pool} />,
         key: TabType.Active,
@@ -205,9 +205,8 @@ const ResourcepoolDetailInner: React.FC = () => {
       breadcrumb={[
         { breadcrumbName: 'Cluster', path: paths.clusters() },
         {
-          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
-            usage ? `- ${floatToPercent(usage)}` : ''
-          }`,
+          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${usage ? `- ${floatToPercent(usage)}` : ''
+            }`,
           path: '',
         },
       ]}

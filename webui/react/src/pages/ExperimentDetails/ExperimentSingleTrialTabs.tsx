@@ -1,7 +1,6 @@
-import type { TabsProps } from 'antd';
 import Button from 'hew/Button';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import Tooltip from 'hew/Tooltip';
@@ -233,8 +232,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
   const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
-    const items: TabsProps['items'] = [
+  const tabItems: PivotProps['items'] = useMemo(() => {
+    const items: PivotProps['items'] = [
       {
         children: waitingForTrials ? (
           <Spinner spinning tip="Waiting for trials..." />

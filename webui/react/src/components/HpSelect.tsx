@@ -1,5 +1,4 @@
-import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
-import Select, { Option, SelectProps } from 'hew/Select';
+import Select, { DefaultOptionType, LabeledValue, Option, SelectProps, SelectValue } from 'hew/Select';
 import React, { useCallback, useMemo } from 'react';
 
 import { ALL_VALUE } from 'types';

@@ -1,5 +1,4 @@
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import Checkbox from 'hew/Checkbox';
+import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import React, { useState } from 'react';

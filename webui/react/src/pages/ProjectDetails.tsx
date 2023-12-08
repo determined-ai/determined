@@ -1,5 +1,5 @@
-import type { TabsProps } from 'antd';
 import Message from 'hew/Message';
+import type { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
@@ -82,12 +82,12 @@ const ProjectDetails: React.FC = () => {
     workspaceArchived: workspace?.archived,
   });
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     if (!project) {
       return [];
     }
 
-    const items: TabsProps['items'] = [
+    const items: PivotProps['items'] = [
       {
         children: (
           <div className={css.tabPane}>
@@ -147,22 +147,22 @@ const ProjectDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] =
     project.workspaceId !== 1
       ? [
-          {
-            breadcrumbName: project.workspaceName,
-            path: paths.workspaceDetails(project.workspaceId),
-          },
+        {
+          breadcrumbName: project.workspaceName,
+          path: paths.workspaceDetails(project.workspaceId),
+        },
 
-          {
-            breadcrumbName: project.name,
-            path: paths.projectDetails(project.id),
-          },
-        ]
+        {
+          breadcrumbName: project.name,
+          path: paths.projectDetails(project.id),
+        },
+      ]
       : [
-          {
-            breadcrumbName: 'Uncategorized Experiments',
-            path: paths.projectDetails(project.id),
-          },
-        ];
+        {
+          breadcrumbName: 'Uncategorized Experiments',
+          path: paths.projectDetails(project.id),
+        },
+      ];
   return (
     <Page
       breadcrumb={pageBreadcrumb}

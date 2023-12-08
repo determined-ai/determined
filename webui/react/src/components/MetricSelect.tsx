@@ -1,5 +1,4 @@
-import { RefSelectProps } from 'antd/es/select';
-import Select, { OptGroup, Option, SelectValue } from 'hew/Select';
+import Select, { OptGroup, Option, RefSelectProps, SelectValue } from 'hew/Select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Metric } from 'types';
@@ -64,10 +63,6 @@ const MetricSelect: React.FC<Props> = ({
     return metrics.length;
   }, [metrics]);
 
-  /**
-   * visibleMetrics should always match the list of metrics that antd displays to
-   * the user, including any filtering.
-   */
   const visibleMetrics = useMemo(() => {
     return metrics.filter((metric: Metric) => {
       return filterFn(filterString, metric.name);

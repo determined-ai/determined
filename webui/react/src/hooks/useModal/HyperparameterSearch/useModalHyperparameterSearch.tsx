@@ -1,5 +1,4 @@
 import { ModalFuncProps, Radio, Space, Typography } from 'antd';
-import { RefSelectProps } from 'antd/lib/select';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
@@ -7,7 +6,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
-import Select, { Option, SelectValue } from 'hew/Select';
+import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -100,7 +99,7 @@ const useModalHyperparameterSearch = ({
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
-      SEARCH_METHODS.ASHA,
+    SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
