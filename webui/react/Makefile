@@ -16,8 +16,7 @@ node_modules/playwright-core/.local-browsers:
 .PHONY: get-deps-npm
 get-deps-npm:
 	npm ci --no-audit
-	# stop if running in production environment
-	[ "$$NODE_ENV" == "production" ] || $(MAKE) node_modules/playwright-core/.local-browsers
+	$(MAKE) node_modules/playwright-core/.local-browsers
 
 node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm
