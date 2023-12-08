@@ -11,12 +11,15 @@ import (
 
 // SAMLConfig describes config for SAML.
 type SAMLConfig struct {
-	Enabled             bool   `json:"enabled"`
-	Provider            string `json:"provider"`
-	IDPRecipientURL     string `json:"idp_recipient_url"`
-	IDPSSOURL           string `json:"idp_sso_url"`
-	IDPSSODescriptorURL string `json:"idp_sso_descriptor_url"`
-	IDPCertPath         string `json:"idp_cert_path"`
+	Enabled                  bool   `json:"enabled"`
+	Provider                 string `json:"provider"`
+	IDPRecipientURL          string `json:"idp_recipient_url"`
+	IDPSSOURL                string `json:"idp_sso_url"`
+	IDPSSODescriptorURL      string `json:"idp_sso_descriptor_url"`
+	IDPCertPath              string `json:"idp_cert_path"`
+	AutoProvisionUsers       bool   `json:"auto_provision_users"`
+	GroupsAttributeName      string `json:"groups_attribute_name"`
+	DisplayNameAttributeName string `json:"display_name_attribute_name"`
 }
 
 // Validate implements the check.Validatable interface.

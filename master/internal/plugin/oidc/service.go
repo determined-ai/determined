@@ -259,12 +259,13 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenCl
 			// If the config is set to auto-provision users, sync the display name.
 			if s.config.AutoProvisionUsers {
 				if claims.DisplayName != "" && claims.DisplayName != u.DisplayName.String {
-					if _, err := tx.NewUpdate().
-						Model(&model.User{
+					err := user.Update(ctx,
+						&model.User{
 							ID:          u.ID,
 							Username:    claims.AuthenticationClaim,
 							DisplayName: null.NewString(claims.DisplayName, true),
-						}).Column("display_name").Where("id = ?", u.ID).Exec(ctx); err != nil {
+						}, []string{"display_name"}, nil)
+					if err != nil {
 						return fmt.Errorf("error setting display name of %q: %s", u.Username, err)
 					}
 				}

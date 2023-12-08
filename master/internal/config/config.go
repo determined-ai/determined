@@ -308,7 +308,7 @@ func (c *Config) Resolve() error {
 	}
 
 	if c.OIDC.AutoProvisionUsers && c.Scim.Enabled {
-		log.Warn("scim enabled will override OIDC user & group provisions")
+		log.Warn("scim enabled; overriding OIDC user & group provisions")
 		c.OIDC.AutoProvisionUsers = false
 		c.OIDC.GroupsClaimName = ""
 	}
@@ -316,6 +316,17 @@ func (c *Config) Resolve() error {
 	if c.OIDC.GroupsClaimName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
 		log.Warn("groups_claim_name requires rbac to be enabled")
 		c.OIDC.GroupsClaimName = ""
+	}
+
+	if c.SAML.AutoProvisionUsers && c.Scim.Enabled {
+		log.Warn("scim enabled; overriding SAML user & group provisions")
+		c.SAML.AutoProvisionUsers = false
+		c.SAML.GroupsAttributeName = ""
+	}
+
+	if c.SAML.GroupsAttributeName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
+		log.Warn("groups_attribute_name requires rbac to be enabled")
+		c.SAML.GroupsAttributeName = ""
 	}
 
 	return nil
