@@ -389,7 +389,8 @@ func TestTrialUpdate(t *testing.T) {
 }
 
 func TestCheckpointStartup(t *testing.T) {
-	checkpointUpsert := "key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, workspace_id: 2"
+	checkpointUpsert := "key: checkpoint, checkpoint_id: 2, state: COMPLETED, " +
+		"experiment_id: 1, trial_id: 2, workspace_id: 2"
 
 	testCases := []startupTestCase{
 		{
@@ -443,13 +444,6 @@ func TestCheckpointUpdate(t *testing.T) {
 	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
 	t.Cleanup(dbCleanup)
 
-	baseStartupCase := startupTestCase{
-		startupMsg:        buildStartupMsg("1", "checkpoints", "1", []int{1}, []int{}),
-		expectedSync:      "key: sync_msg, sync_id: 1",
-		expectedUpserts:   []string{"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, workspace_id: 2"},
-		expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
-	}
-
 	modCheckpoint := model.CheckpointV2{
 		ID:         1,
 		State:      model.DeletedState,
@@ -465,10 +459,18 @@ func TestCheckpointUpdate(t *testing.T) {
 
 	testCases := []updateTestCase{
 		{
-			startupCase:       baseStartupCase,
-			description:       "update checkpoint while subscribed to its events",
-			queries:           []streamdata.ExecutableQuery{streamdata.GetUpdateCheckpointQuery(modCheckpoint)},
-			expectedUpserts:   []string{"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, workspace_id: 2"},
+			startupCase: startupTestCase{
+				description:  "startup case for: update checkpoint while subscribed to its events",
+				startupMsg:   buildStartupMsg("1", "checkpoints", "1", []int{1}, []int{}),
+				expectedSync: "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{"key: checkpoint, checkpoint_id: 2, state: COMPLETED, " +
+					"experiment_id: 1, trial_id: 2, workspace_id: 2"},
+				expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
+			},
+			description: "update checkpoint while subscribed to its events",
+			queries:     []streamdata.ExecutableQuery{streamdata.GetUpdateCheckpointQuery(modCheckpoint)},
+			expectedUpserts: []string{"key: checkpoint, checkpoint_id: 1, state: DELETED, " +
+				"experiment_id: 1, trial_id: 1, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
 		{
@@ -484,7 +486,7 @@ func TestCheckpointUpdate(t *testing.T) {
 				db.Bun().NewInsert().Model(&newCheckpoint),
 			},
 			expectedUpserts: []string{
-				"key: checkpoint, checkpoint_id: 3, state: COMPLETED, experiment_id: 1, workspace_id: 2",
+				"key: checkpoint, checkpoint_id: 3, state: COMPLETED, experiment_id: 1, trial_id: 3, workspace_id: 2",
 			},
 			expectedDeletions: []string{},
 		},
@@ -516,8 +518,8 @@ func TestCheckpointUpdate(t *testing.T) {
 				db.Bun().NewRaw("UPDATE projects SET workspace_id = 1 WHERE workspace_id = 2"),
 			},
 			expectedUpserts: []string{
-				"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, workspace_id: 1",
-				"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, workspace_id: 1",
+				"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, trial_id: 1, workspace_id: 1",
+				"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, trial_id: 2, workspace_id: 1",
 			},
 			expectedDeletions: []string{},
 		},

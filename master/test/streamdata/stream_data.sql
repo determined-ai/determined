@@ -1,4 +1,4 @@
--- Trials to insert for test
+-- objects to insert for test
 INSERT INTO workspaces (name) VALUES ('test_workspace1');
 
 INSERT INTO projects (name, workspace_id) VALUES ('test_project1', 2);

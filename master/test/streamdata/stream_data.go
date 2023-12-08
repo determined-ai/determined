@@ -25,8 +25,8 @@ const (
 	testJob         = "test_job"
 )
 
-//go:embed stream_trials.sql
-var streamTrialsSQL string
+//go:embed stream_data.sql
+var streamDataSQL string
 
 // StreamTrialsData holds the migration function and relevant information.
 type StreamTrialsData struct {
@@ -42,7 +42,7 @@ func GenerateStreamData() StreamTrialsData {
 	mustMigrate := func(t *testing.T, pgdb *db.PgDB, migrationsPath string) {
 		extra := migrationutils.MigrationExtra{
 			When: latestMigration,
-			SQL:  streamTrialsSQL,
+			SQL:  streamDataSQL,
 		}
 		migrationutils.MustMigrateWithExtras(t, pgdb, migrationsPath, extra)
 	}
