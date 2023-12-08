@@ -9,7 +9,6 @@ import (
 
 	// embed is only used in comments.
 	_ "embed"
-	"strconv"
 	"testing"
 	"time"
 
@@ -26,8 +25,8 @@ const (
 	testJob         = "test_job"
 )
 
-//go:embed stream_trials.sql
-var streamTrialsSQL string
+//go:embed stream_data.sql
+var streamDataSQL string
 
 // StreamTrialsData holds the migration function and relevant information.
 type StreamTrialsData struct {
@@ -43,7 +42,7 @@ func GenerateStreamData() StreamTrialsData {
 	mustMigrate := func(t *testing.T, pgdb *db.PgDB, migrationsPath string) {
 		extra := migrationutils.MigrationExtra{
 			When: latestMigration,
-			SQL:  streamTrialsSQL,
+			SQL:  streamDataSQL,
 		}
 		migrationutils.MustMigrateWithExtras(t, pgdb, migrationsPath, extra)
 	}
@@ -77,75 +76,29 @@ type ExecutableQuery interface {
 
 // GetUpdateTrialQuery constructs a query for modifying rows of a trial.
 func GetUpdateTrialQuery(newTrial Trial) ExecutableQuery {
-	return db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID)
-}
-
-func queryTrials(ctx context.Context) ([]Trial, error) {
-	var trials []Trial
-	err := db.Bun().NewSelect().
-		Model(&trials).
-		Scan(ctx, &trials)
-	if err != nil {
-		return nil, err
-	}
-	return trials, nil
+	return db.Bun().NewUpdate().Model(&newTrial).Where("id = ?", newTrial.ID).OmitZero()
 }
 
 // GetAddTrialQueries constructs the necessary queries
 // to create a new trial under the given experimentID.
-func GetAddTrialQueries(ctx context.Context, experimentID int) ([]ExecutableQuery, error) {
+func GetAddTrialQueries(newTask *model.Task, newTrial *Trial) []ExecutableQuery {
+	// Insert into tasks, trials, and task id trial id
 	queries := []ExecutableQuery{}
-	trials, err := queryTrials(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	nextSeq := int64(0)
-	numRelevantTrials := 0
-
-	for _, t := range trials {
-		if t.Seq > nextSeq {
-			nextSeq = t.Seq
-		}
-		if t.ExperimentID == experimentID {
-			numRelevantTrials++
-		}
-	}
-
-	newTaskID := strconv.Itoa(experimentID) + strconv.Itoa(numRelevantTrials+1)
-	newJobID := testJob + strconv.Itoa(experimentID)
 	queries = append(queries,
-		db.Bun().NewInsert().Model(
-			&model.Task{
-				TaskID:    model.TaskID(newTaskID),
-				TaskType:  "TRIAL",
-				StartTime: time.Now(),
-				JobID:     (*model.JobID)(&newJobID),
-			},
-		),
+		db.Bun().NewInsert().Model(newTask),
 	)
 
-	// Insert into tasks, trials, and task id trial id
-	startTime := time.Now()
 	queries = append(queries,
-		db.Bun().NewInsert().Model(
-			&Trial{
-				ID:           int(nextSeq + 1),
-				ExperimentID: experimentID,
-				HParams:      map[string]any{},
-				State:        "ERROR",
-				StartTime:    startTime,
-				Seq:          nextSeq + 1,
-			},
-		),
+		db.Bun().NewInsert().Model(newTrial),
 	)
 
 	insertMap := map[string]interface{}{
-		"trial_id": nextSeq + 1,
-		"task_id":  newTaskID,
+		"trial_id": newTrial.ID,
+		"task_id":  newTask.TaskID,
 	}
 	queries = append(queries, db.Bun().NewInsert().Model(&insertMap).Table("trial_id_task_id"))
-	return queries, nil
+	return queries
 }
 
 // Experiment contains a subset of actual determined experiment fields and is used to test
@@ -160,75 +113,25 @@ type Experiment struct {
 	ModelDefinitionBytes []byte               `bun:"model_definition"`
 	StartTime            time.Time            `bun:"start_time"`
 	OwnerID              *model.UserID        `bun:"owner_id"`
+	ProjectID            int                  `bin:"project_id"`
 }
 
-// GetAddExperimentQueries constructs the necessary queries
-// to create a new experiment to the db.
-func GetAddExperimentQueries(experiment *Experiment) (
-	queries []ExecutableQuery,
-	experimentID int,
-	err error,
-) {
-	ctx := context.TODO()
-	var ids []int
-	err = db.Bun().NewSelect().
-		Table("experiments").
-		Column("ID").
-		Order("id DESC").
-		Scan(ctx, &ids)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	newJobID := testJob + strconv.Itoa(ids[0]+1)
-	ownerID := model.UserID(1)
-	queries = append(queries,
-		db.Bun().NewInsert().Model(
-			&model.Job{
-				JobID:   model.JobID(newJobID),
-				JobType: "EXPERIMENT",
-				OwnerID: &ownerID,
-			},
-		),
-	)
-
-	// we have to control id and jobId generation
-	experiment.ID = ids[0] + 1
-	experiment.JobID = newJobID
-
-	queries = append(queries, db.Bun().NewInsert().Model(experiment))
-	// XXX (eliu): example experiment:
-	// Experiment{
-	//			ID:                   ids[0] + 1,
-	//			JobID:                newJobID,
-	//			State:                "ERROR",
-	//			Notes:                "",
-	//			Config:               expconf.LegacyConfig{},
-	//			ModelDefinitionBytes: nil,
-	//			StartTime:            time.Now(),
-	//			OwnerID:              &ownerID,
-	//		}
-
-	return queries, ids[0] + 1, nil
+// GetAddExperimentQuery constructs the query to create a new experiment in the db.
+func GetAddExperimentQuery(experiment *Experiment) ExecutableQuery {
+	return db.Bun().NewInsert().Model(experiment)
 }
 
-// ModExperiment modifies an experiment in the experiment table.
-func ModExperiment(ctx context.Context, newExp Experiment) error {
-	_, err := db.Bun().NewUpdate().Model(&newExp).OmitZero().WherePK().Exec(ctx)
-	return err
+// GetUpdateExperimentQuery constructs a query to update an experiment in the db.
+func GetUpdateExperimentQuery(newExp Experiment) ExecutableQuery {
+	return db.Bun().NewUpdate().Model(&newExp).OmitZero().Where("id = ?", newExp.ID)
 }
 
-// Checkpoint contains a subset of checkpoint_v2 fields and is used to test streaming code
-// without importing anything from determined/master/internal.
-type Checkpoint struct {
-	bun.BaseModel `bun:"table:checkpoints_v2"`
-	ID            int         `bun:"id,pk"`
-	TaskID        string      `bun:"task_id"`
-	State         model.State `bun:"state"`
-	ReportTime    time.Time   `bun:"report_time"`
+// GetDeleteExperimentQuery constructs a query to delete an experiment with the specified id.
+func GetDeleteExperimentQuery(id int) ExecutableQuery {
+	return db.Bun().NewDelete().Table("experiments").Where("id = ?", id)
 }
 
 // GetUpdateCheckpointQuery constructs a query for updating a checkpoint.
-func GetUpdateCheckpointQuery(checkpoint Checkpoint) ExecutableQuery {
+func GetUpdateCheckpointQuery(checkpoint model.CheckpointV2) ExecutableQuery {
 	return db.Bun().NewUpdate().Model(&checkpoint).OmitZero().WherePK()
 }
