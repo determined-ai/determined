@@ -1,8 +1,9 @@
 import Message from 'hew/Message';
+import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import GalleryModal from 'components/GalleryModal';
+import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
 import Section from 'components/Section';
 import useUI from 'components/ThemeProvider';
@@ -54,7 +55,13 @@ const ScatterPlots: React.FC<Props> = ({
   const [chartData, setChartData] = useState<HpMetricData>();
   const [pageError, setPageError] = useState<Error>();
   const [activeHParam, setActiveHParam] = useState<string>();
-  const [galleryHeight, setGalleryHeight] = useState<number>(450);
+  const galleryModal = useModal(GalleryModalComponent);
+
+  useEffect(() => {
+    if (activeHParam) {
+      galleryModal.open();
+    }
+  }, [activeHParam, galleryModal]);
 
   const yScaleKey = selectedScale === Scale.Log ? 'yLog' : 'y';
 
@@ -236,8 +243,6 @@ const ScatterPlots: React.FC<Props> = ({
     ui.isPageHidden,
   ]);
 
-  useEffect(() => setGalleryHeight(resize.height), [resize]);
-
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !chartData) {
@@ -283,24 +288,14 @@ const ScatterPlots: React.FC<Props> = ({
           )}
         </div>
       </Section>
-      <GalleryModal
-        height={galleryHeight}
-        open={!!activeHParam}
+      <galleryModal.Component
+        activeHParam={activeHParam}
+        chartProps={chartProps}
+        selectedScale={selectedScale}
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
-        onPrevious={handleGalleryPrevious}>
-        {chartProps && activeHParam && (
-          <UPlotScatter
-            data={chartProps[activeHParam].data}
-            options={{
-              ...chartProps[activeHParam].options,
-              cursor: { drag: undefined },
-              height: galleryHeight,
-            }}
-            tooltipLabels={chartProps[activeHParam].tooltipLabels}
-          />
-        )}
-      </GalleryModal>
+        onPrevious={handleGalleryPrevious}
+      />
     </div>
   );
 };
