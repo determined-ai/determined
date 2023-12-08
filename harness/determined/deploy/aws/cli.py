@@ -30,6 +30,10 @@ def validate_spot_max_price() -> Callable:
     return validate
 
 
+def is_full_git_commit_hash(s: str) -> bool:
+    return bool(re.fullmatch(r"[0-9a-f]{40}", s))
+
+
 def parse_add_tag() -> Callable:
     def parse(s: str) -> Tuple[str, str]:
         try:
@@ -182,8 +186,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 "yellow",
             )
         )
-        if args.lore_version is not None:
-            raise ValueError("--lore-version must be specified for 'lore' deployments")
+        assert isinstance(args.lore_version, str)
+        if is_full_git_commit_hash(args.lore_version):
+            args.lore_version = args.lore_version[:7]
 
     if args.deployment_type not in {
         constants.deployment_types.EFS,
@@ -648,6 +653,7 @@ args_description = Cmd(
                 Arg(
                     "--lore-version",
                     type=str,
+                    default="latest",
                     help="Specifies the version of Lore to install. The value must be a valid"
                     + " Lore tag available on Docker Hub.",
                 ),
