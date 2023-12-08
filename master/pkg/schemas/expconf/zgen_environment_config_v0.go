@@ -3,7 +3,7 @@
 package expconf
 
 import (
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/santhosh-tekuri/jsonschema/v2"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -50,11 +50,11 @@ func (e *EnvironmentConfigV0) SetPorts(val map[string]int) {
 	e.RawPorts = val
 }
 
-func (e EnvironmentConfigV0) RegistryAuth() *types.AuthConfig {
+func (e EnvironmentConfigV0) RegistryAuth() *registry.AuthConfig {
 	return e.RawRegistryAuth
 }
 
-func (e *EnvironmentConfigV0) SetRegistryAuth(val *types.AuthConfig) {
+func (e *EnvironmentConfigV0) SetRegistryAuth(val *registry.AuthConfig) {
 	e.RawRegistryAuth = val
 }
 

@@ -8,9 +8,9 @@ import (
 	"os/user"
 	"testing"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -40,7 +40,7 @@ func TestSingularity(t *testing.T) {
 	pub := events.ChannelPublisher(evs)
 	err = cl.PullImage(ctx, docker.PullImage{
 		Name:     image,
-		Registry: &types.AuthConfig{},
+		Registry: &registry.AuthConfig{},
 	}, pub)
 	require.NoError(t, err)
 

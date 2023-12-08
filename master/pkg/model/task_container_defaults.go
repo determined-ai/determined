@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/jinzhu/copier"
 
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -30,12 +30,12 @@ type TaskContainerDefaultsConfig struct {
 	ShmSizeBytes           int64                 `json:"shm_size_bytes,omitempty"`
 	NetworkMode            container.NetworkMode `json:"network_mode,omitempty"`
 	// TODO(DET-9855) we should move these over to KubernetesTaskContainerDefaults.
-	CPUPodSpec           *k8sV1.Pod        `json:"cpu_pod_spec"`
-	GPUPodSpec           *k8sV1.Pod        `json:"gpu_pod_spec"`
-	Image                *RuntimeItem      `json:"image,omitempty"`
-	RegistryAuth         *types.AuthConfig `json:"registry_auth,omitempty"`
-	ForcePullImage       bool              `json:"force_pull_image,omitempty"`
-	EnvironmentVariables *RuntimeItems     `json:"environment_variables,omitempty"`
+	CPUPodSpec           *k8sV1.Pod           `json:"cpu_pod_spec"`
+	GPUPodSpec           *k8sV1.Pod           `json:"gpu_pod_spec"`
+	Image                *RuntimeItem         `json:"image,omitempty"`
+	RegistryAuth         *registry.AuthConfig `json:"registry_auth,omitempty"`
+	ForcePullImage       bool                 `json:"force_pull_image,omitempty"`
+	EnvironmentVariables *RuntimeItems        `json:"environment_variables,omitempty"`
 
 	AddCapabilities  []string      `json:"add_capabilities"`
 	DropCapabilities []string      `json:"drop_capabilities"`
