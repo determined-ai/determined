@@ -10,6 +10,31 @@
  Version 0.26
 **************
 
+Version 0.26.5
+==============
+
+**Release Date:** December 07, 2023
+
+**Bug Fixes**
+
+-  Fix an issue where ``log_policies`` would be compared against the trial log printing experiment
+   config, which could often cause patterns like ``(.*) match (.*)`` to incorrectly always match.
+
+-  Fix an issue where the ``determined.launch.wrap_rank`` module, often used by custom launch
+   layers, was improperly buffering multiple lines separated by a carriage return, such as logs
+   emitted from the popular TQDM library. TQDM logs will pass now through without undue buffering.
+
+**New Features**
+
+-  Authentication: Users can now provide a Pachyderm address in the master config under
+   ``integrations.pachyderm.address``. This address will be added as an environment variable called
+   ``PACHD_ADDRESS`` in task containers. The OIDC raw ID token will also be available as an
+   environment variable called ``DEX_TOKEN`` in task containers.
+
+-  Authentication: In the enterprise edition, add synchronization of OIDC user group memberships
+   with existing groups. Configure by setting ``oidc.groups_claim_name`` in the master config to the
+   string value of the authenticator's claim name for groups.
+
 Version 0.26.4
 ==============
 
