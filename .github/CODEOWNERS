@@ -6,6 +6,8 @@
 # team-specific repo segments
 /.github        @determined-ai/infrastructure
 /master         @determined-ai/backend
+go.mod          @determined-ai/backend
+go.sum          @determined-ai/backend
 /agent          @determined-ai/backend
 /proto          @determined-ai/backend
 /performance    @determined-ai/web
