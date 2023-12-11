@@ -61,10 +61,9 @@ if [ ""$ACTION"" = "up" ]; then
     gcloud container node-pools create "$GKE_GPU_NODE_POOL_NAME" \
         --cluster "$GKE_CLUSTER_NAME" \
         --project "$GCP_PROJECT_NAME" \
-        \
         --region="$GKE_REGION" \
         --machine-type=n1-standard-8 \
-        --scopes=storage-full # --accelerator type="$GKE_GPU_TYPE",count="$GKE_GPU_PER_NODE" \
+        --scopes=storage-full # --accelerator type="$GKE_GPU_TYPE",count="$GKE_GPU_PER_NODE"
 
     gcloud compute instances create "$BASTION_INSTANCE_NAME" \
         --project "$GCP_PROJECT_NAME" \
@@ -73,6 +72,7 @@ if [ ""$ACTION"" = "up" ]; then
         --network-interface=no-address,network-tier=PREMIUM,subnet="$GCS_SUBNET_NAME"
 
 elif [ ""$ACTION"" = "connect" ]; then
+    set -e
     # Kill old tunnels.
     # For some reason setting:
     #   sudo sh -c 'echo "StreamLocalBindUnlink yes" >> /etc/ssh/sshd_config'
@@ -81,7 +81,7 @@ elif [ ""$ACTION"" = "connect" ]; then
         --project "$GCP_PROJECT_NAME" \
         --zone="$BASTION_INSTANCE_ZONE" \
         --tunnel-through-iap \
-        -- pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"'
+        -- pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"' || true
 
     export MASTER_IP_FROM_INTERNAL=$(
         gcloud compute instances describe "$BASTION_INSTANCE_NAME" \
@@ -103,21 +103,22 @@ elif [ ""$ACTION"" = "connect" ]; then
     trap 'kill $TUNNEL_PID' EXIT
     export SOCKS5_PROXY_URL="socks5://localhost:$SOCKS5_PROXY_PORT"
 
+    # kubectl won't respect ALL_PROXY, only HTTPS_PROXY.
+    # https://kubernetes.io/docs/tasks/extend-kubernetes/socks5-proxy-access-api/#client-configuration
+    echo "Cluster is setup, please use HTTPS_PROXY=$SOCKS5_PROXY_URL when using kubectl"
+
     gcloud container clusters get-credentials "$GKE_CLUSTER_NAME" \
         --region="$GKE_REGION" \
         --project="$GCP_PROJECT_NAME"
 
-    echo "Cluster is setup, please use HTTPS_PROXY when using kubectl, or paste this into your terminal:"
-    echo "k() ("
-    echo "    HTTPS_PROXY=$SOCKS5_PROXY_URL kubectl $@"
-    echo ")"
-    # kubectl won't respect ALL_PROXY, only HTTPS_PROXY.
-    # https://kubernetes.io/docs/tasks/extend-kubernetes/socks5-proxy-access-api/#client-configuration
-    k() (
-        HTTPS_PROXY=$SOCKS5_PROXY_URL kubectl $@
-    )
+    export ALL_PROXY=$SOCKS5_PROXY_URL HTTP_PROXY=$SOCKS5_PROXY_URL HTTPS_PROXY=$SOCKS5_PROXY_URL
     export KUBERNETES_NAMESPACE=$USER-devcluster
-    k create namespace $KUBERNETES_NAMESPACE
+    for i in 1 2 3 4 5; do
+        kubectl create namespace $KUBERNETES_NAMESPACE --dry-run=client -o yaml | kubectl apply -f - && break \
+            || echo "Trying to create namespace $KUBERNETES_NAMESPACE for you again in 2 seconds..." \
+            && sleep 2
+
+    done
 
     # Although devcluster supports variables, numeric values fail to load, so
     # Manually apply those into a temp file.
