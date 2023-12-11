@@ -1,6 +1,5 @@
-import { Modal, Space, Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import Button from 'hew/Button';
-import CodeSample from 'hew/CodeSample';
 import Dropdown, { MenuOption } from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
@@ -8,13 +7,13 @@ import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
-import { useTheme } from 'hew/Theme';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
+import UseNotebookModalComponent from 'components/UseNotebookModalComponent';
 import Avatar from 'components/UserAvatar';
 import usePermissions from 'hooks/usePermissions';
 import userStore from 'stores/users';
@@ -49,12 +48,13 @@ const ModelVersionHeader: React.FC<Props> = ({
   const modelDownloadModal = useModal(ModelDownloadModal);
   const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
   const modelVersionEditModal = useModal(ModelVersionEditModal);
+  const useNotebookModal = useModal(UseNotebookModalComponent);
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
+  useEffect(() => {
+    if (showUseInNotebook) useNotebookModal.open();
+  }, [showUseInNotebook, useNotebookModal]);
 
   const infoRows: InfoRow[] = useMemo(
     () => [
@@ -112,31 +112,6 @@ const ModelVersionHeader: React.FC<Props> = ({
     ],
     [loadableUsers, modelVersion, onUpdateTags, canModifyModelVersion],
   );
-
-  const referenceText = useMemo(() => {
-    const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `import determined as det
-from determined.experimental import client
-
-model_entry = client.get_model("${escapedModelName}")
-version = model_entry.get_version(${modelVersion.version})
-ckpt = version.checkpoint
-path = ckpt.download()
-
-# Load a PyTorchTrial from a checkpoint:
-from determined import pytorch
-my_trial = \\
-    pytorch.load_trial_from_checkpoint_path(path)
-
-# Load a Keras model from TFKerasTrial checkpoint:
-from determined import keras
-model = keras.load_model_from_checkpoint_path(path)
-
-# Import your checkpointed code:
-with det.import_from_path(path + "/code"):
-    import my_model_def as ckpt_model_def
-`;
-  }, [modelVersion]);
 
   const menu = useMemo(() => {
     const items: MenuOption[] = [
@@ -222,19 +197,10 @@ with det.import_from_path(path + "/code"):
         fetchModelVersion={fetchModelVersion}
         modelVersion={modelVersion}
       />
-      <Modal
-        className={css.useNotebookModal}
-        footer={null}
-        open={showUseInNotebook}
-        title="Use in Notebook"
-        wrapClassName={themeClass}
-        onCancel={() => setShowUseInNotebook(false)}>
-        <div className={css.topLine}>
-          <p>Reference this model in a notebook</p>
-        </div>
-        <CodeSample text={referenceText} />
-        <p>Copy/paste code into a notebook cell</p>
-      </Modal>
+      <useNotebookModal.Component
+        modelVersion={modelVersion}
+        onClose={() => setShowUseInNotebook(false)}
+      />
     </header>
   );
 };

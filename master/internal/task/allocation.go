@@ -522,7 +522,10 @@ func (a *allocation) finalize(
 	severity logrus.Level,
 	exitErr error,
 ) {
-	defer a.rm.Release(sproto.ResourcesReleased{AllocationID: a.req.AllocationID})
+	defer a.rm.Release(sproto.ResourcesReleased{
+		AllocationID: a.req.AllocationID,
+		ResourcePool: a.req.ResourcePool,
+	})
 	for _, cl := range a.closers {
 		defer cl()
 	}
@@ -745,6 +748,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		a.rm.Release(sproto.ResourcesReleased{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  &msg.ResourcesID,
+			ResourcePool: a.req.ResourcePool,
 		})
 
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {

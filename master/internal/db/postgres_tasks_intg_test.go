@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -168,6 +170,46 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, expected, actual)
+}
+
+func TestNonExperimentTasksContextDirectory(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	// Task doesn't exist.
+	_, err := NonExperimentTasksContextDirectory(ctx, model.TaskID(uuid.New().String()))
+	require.ErrorIs(t, err, sql.ErrNoRows)
+
+	// Nil context directory.
+	tID := model.NewTaskID()
+	require.NoError(t, db.AddTask(&model.Task{
+		TaskID:    tID,
+		TaskType:  model.TaskTypeNotebook,
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+	}), "failed to add task")
+
+	require.NoError(t, AddNonExperimentTasksContextDirectory(ctx, tID, nil))
+
+	dir, err := NonExperimentTasksContextDirectory(ctx, tID)
+	require.NoError(t, err)
+	require.Len(t, dir, 0)
+
+	// Non nil context directory.
+	tID = model.NewTaskID()
+	require.NoError(t, db.AddTask(&model.Task{
+		TaskID:    tID,
+		TaskType:  model.TaskTypeNotebook,
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+	}), "failed to add task")
+
+	expectedDir := []byte{3, 2, 1}
+	require.NoError(t, AddNonExperimentTasksContextDirectory(ctx, tID, expectedDir))
+
+	dir, err = NonExperimentTasksContextDirectory(ctx, tID)
+	require.NoError(t, err)
+	require.Equal(t, expectedDir, dir)
 }
 
 func TestAllocationState(t *testing.T) {

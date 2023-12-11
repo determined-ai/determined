@@ -1,3 +1,4 @@
+import argparse
 import contextlib
 import getpass
 import os
@@ -6,7 +7,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
 from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union, cast
@@ -22,7 +22,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 @authentication.required
-def start_shell(args: Namespace) -> None:
+def start_shell(args: argparse.Namespace) -> None:
     data = {}
     if args.passphrase:
         data["passphrase"] = getpass.getpass("Enter new passphrase: ")
@@ -62,7 +62,7 @@ def start_shell(args: Namespace) -> None:
 
 
 @authentication.required
-def open_shell(args: Namespace) -> None:
+def open_shell(args: argparse.Namespace) -> None:
     shell_id = cast(str, command.expand_uuid_prefixes(args))
 
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
@@ -77,7 +77,14 @@ def open_shell(args: Namespace) -> None:
 
 
 @authentication.required
-def show_ssh_command(args: Namespace) -> None:
+def show_ssh_command(args: argparse.Namespace) -> None:
+    if "WSL" in os.uname().release:
+        cli.warn(
+            "WSL remote-ssh integration is not supported in VSCode, which "
+            "uses Windows openssh. For Windows VSCode integration, rerun this "
+            "command in a Windows shell. For PyCharm users, configure the Pycharm "
+            "ssh command to target the WSL ssh command."
+        )
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
@@ -88,6 +95,13 @@ def show_ssh_command(args: Namespace) -> None:
         retain_keys_and_print=True,
         print_only=True,
     )
+
+
+def show_ssh_cmd_legacy(args: argparse.Namespace) -> None:
+    cli.warn(
+        "DEPRECATION WARNING: show_ssh_command is being deprecated in favor" "of show-ssh-command"
+    )
+    show_ssh_command(args)
 
 
 def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], str]:
@@ -203,7 +217,7 @@ def _open_shell(
         ]
 
         if retain_keys_and_print:
-            print(colored(subprocess.list2cmdline(cmd), "yellow"))
+            print(colored(subprocess.list2cmdline(cmd), "green"))
             if print_only:
                 return
 
@@ -230,7 +244,7 @@ args_description = [
         ]),
         Cmd("start", start_shell, "start a new shell", [
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
-            Arg("--config-file", default=None, type=FileType("r"),
+            Arg("--config-file", default=None, type=argparse.FileType("r"),
                 help="command config file (.yaml)"),
             cli.workspace.workspace_arg,
             Arg("-v", "--volume", action="append", default=[],
@@ -260,7 +274,11 @@ args_description = [
             Arg("--show-ssh-command", action="store_true",
                 help="show ssh command (e.g. for use in IDE) when starting the shell"),
         ]),
-        Cmd("show_ssh_command", show_ssh_command, "print the ssh command", [
+        Cmd("show_ssh_command", show_ssh_cmd_legacy, argparse.SUPPRESS, [
+            Arg("shell_id", help="shell ID"),
+            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
+        ]),
+        Cmd("show-ssh-command", show_ssh_command, "print the ssh command", [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
@@ -270,7 +288,7 @@ args_description = [
             *task.common_log_options
         ]),
         Cmd("kill", partial(command.kill), "kill a shell", [
-            Arg("shell_id", help="shell ID", nargs=ONE_OR_MORE),
+            Arg("shell_id", help="shell ID", nargs=argparse.ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
         Cmd("set", None, "set shell attributes", [

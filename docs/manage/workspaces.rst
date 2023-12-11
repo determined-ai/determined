@@ -69,9 +69,3 @@ projects. Use the ``-h`` flag to get a list of all possible commands.
 
    det workspace -h
    det project -h
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   Binding Resource Pools to Workspaces <workspaces-rpools>
