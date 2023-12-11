@@ -24,6 +24,8 @@ These security features apply only to Determined Enterprise Edition, except for 
 | :ref:`rbac`       | Configure Role-Based Access Control.                                       |
 +-------------------+----------------------------------------------------------------------------+
 
+See also: :ref:`remote-users`
+
 .. toctree::
    :maxdepth: 1
    :hidden:
