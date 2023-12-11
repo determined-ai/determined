@@ -590,10 +590,9 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
   return (
-    <Modal title="Hyperparameter Search">
+    <Modal footer={footer} title="Hyperparameter Search">
       <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
         {pages[currentPage]}
-        {footer}
       </Form>
     </Modal>
   );

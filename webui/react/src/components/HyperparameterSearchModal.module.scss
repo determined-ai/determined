@@ -1,4 +1,4 @@
-.modal:global(.ant-modal) > :global(.ant-modal-content) {
+:global(.ant-modal-content) {
   padding: 0;
 
   & > :global(.ant-modal-body) {
@@ -102,17 +102,6 @@
         }
       }
     }
-    .footer {
-      border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
-      display: flex;
-      flex-direction: row;
-      padding-block: 8px;
-      padding-inline: 16px;
-
-      .spacer {
-        flex-grow: 1;
-      }
-    }
     .error {
       color: var(--theme-status-critical);
       font-size: 12px;
@@ -125,6 +114,17 @@
       grid-column: 1 / -1;
       margin-block: -8px !important;
     }
+  }
+}
+.footer {
+  border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
+  display: flex;
+  flex-direction: row;
+  padding-block: 8px;
+  padding-inline: 16px;
+
+  .spacer {
+    flex-grow: 1;
   }
 }
 
