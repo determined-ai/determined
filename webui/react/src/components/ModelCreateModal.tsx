@@ -165,7 +165,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       const metadataKeys = metadata?.map((m) => m?.key ?? '') ?? [];
                       const metadataKeySet = new Set(metadataKeys);
                       if (metadataKeySet.size !== metadataKeys.length) {
-                        return await Promise.reject(new Error('No dupelicate keys'));
+                        return await Promise.reject(new Error('No duplicate keys'));
                       }
                       return await Promise.resolve();
                     },
@@ -228,7 +228,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                     validator: async (_, tags?: string[]) => {
                       const tagSet = new Set(tags);
                       if (tags && tagSet.size !== tags.length) {
-                        return await Promise.reject(new Error('No dupelicate tags'));
+                        return await Promise.reject(new Error('No duplicate tags'));
                       }
                       return await Promise.resolve();
                     },

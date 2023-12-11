@@ -1,8 +1,8 @@
-import { Modal, Tag, Typography } from 'antd';
+import { Tag, Typography } from 'antd';
 import Message from 'hew/Message';
+import { Modal } from 'hew/Modal';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import usePrevious from 'hew/utils/usePrevious';
 import _ from 'lodash';
@@ -14,7 +14,6 @@ import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
-import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails, XOR } from 'types';
@@ -40,38 +39,31 @@ type TableProps = XOR<
   TablePropsBase;
 
 type ModalProps = TableProps & {
-  onCancel: () => void;
-  visible: boolean;
+  onCancel?: () => void;
 };
 
-const TrialsComparisonModal: React.FC<ModalProps> = ({
+const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
   onCancel,
-  visible,
   ...props
 }: ModalProps) => {
-  const resize = useResize();
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
-
   useEffect(() => {
-    if (props.trialIds?.length === 0 || props.trials?.length === 0) onCancel();
+    if ((props.trialIds?.length === 0 || props.trials?.length === 0) && onCancel) onCancel();
   }, [onCancel, props.trialIds?.length, props.trials?.length]);
 
   return (
     <Modal
-      centered
-      footer={null}
-      open={visible}
-      style={{ height: resize.height * 0.9 }}
+      submit={{
+        handleError: () => {},
+        handler: () => {},
+        onComplete: onCancel,
+        text: 'Close',
+      }}
       title={
         !Array.isArray(props.experiment)
           ? `Experiment ${props.experiment.id} Trial Comparison`
           : 'Trial Comparison'
       }
-      width={resize.width * 0.9}
-      wrapClassName={themeClass}
-      onCancel={onCancel}>
+      onClose={onCancel}>
       <TrialsComparisonTable {...props} />
     </Modal>
   );
@@ -395,4 +387,4 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   );
 };
 
-export default TrialsComparisonModal;
+export default TrialsComparisonModalComponent;

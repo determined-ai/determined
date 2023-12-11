@@ -667,6 +667,18 @@ export const createExperiment: DetApi<
   },
 };
 
+export const continueExperiment: DetApi<
+  Service.ContinueExperimentParams,
+  Api.V1ContinueExperimentResponse,
+  void
+> = {
+  name: 'continueExperiment',
+  postProcess: noOp,
+  request: (params: Service.ContinueExperimentParams, options) => {
+    return detApi.Internal.continueExperiment(params, options);
+  },
+};
+
 export const archiveExperiment: DetApi<
   Service.ExperimentIdParams,
   Api.V1ArchiveExperimentResponse,

@@ -4,9 +4,12 @@
  Examples
 ##########
 
-Get started quickly by using an example machine learning model that has been converted to
-Determined's APIs. Visit the ``examples/`` subdirectory of the `Determined GitHub repo
-<https://github.com/determined-ai/determined/tree/master/examples>`__ or download the link below.
+Start with an example machine learning model converted to Determined's APIs. Code examples are in
+the ``examples/`` subdirectory of the `Determined GitHub repo
+<https://github.com/determined-ai/determined/tree/master/examples>`__. Download links are below.
+
+For more examples, visit the `determined-examples repo
+<https://github.com/determined-ai/determined-examples/>`__.
 
 Each example includes a model definition and one or more experiment configuration files. To run an
 example, download the appropriate ``.tgz`` file, extract it, ``cd`` into the directory, and use
@@ -36,10 +39,6 @@ For an introduction to using the training APIs, please visit :ref:`Training APIs
    -  -  PyTorch
       -  MNIST
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
-
-   -  -  TensorFlow (tf.keras)
-      -  CIFAR-10
-      -  :download:`cifar10_tf_keras.tgz </examples/cifar10_tf_keras.tgz>`
 
 ***********
  DeepSpeed

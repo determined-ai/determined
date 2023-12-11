@@ -52,6 +52,7 @@ class Trial:
     Attributes:
         trial_id: ID of trial.
         session: HTTP request session.
+        experiment_id: (Mutable, Optional[int]) ID of the experiment this trial belongs to.
         hparams: (Mutable, Optional[Dict]) Dict[name, value] of the trial's hyperparameters.
             This is an instance of the hyperparameter space defined by the experiment.
         state: (Mutable, Optional[TrialState]) Trial state (ex: ACTIVE, PAUSED, COMPLETED).
@@ -84,6 +85,7 @@ class Trial:
         self.id = trial_id
         self._session = session
 
+        self.experiment_id: Optional[int] = None
         self.hparams: Optional[Dict[str, Any]] = None
         self.summary_metrics: Optional[Dict[str, Any]] = None
         self.state: Optional[TrialState] = None
@@ -482,6 +484,7 @@ class Trial:
         return _stream_trials_metrics(self._session, [self.id], group=group)
 
     def _hydrate(self, trial: bindings.trialv1Trial) -> None:
+        self.experiment_id = trial.experimentId
         self.hparams = trial.hparams
         self.state = TrialState(trial.state.value)
         self.summary_metrics = trial.summaryMetrics

@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.26.5-dev0
+    default: 0.26.6-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -577,7 +577,7 @@ commands:
             # of the tests that would be run, along with some other stuff. Each file containing
             # any selected tests is printed on a line by itself, except for (for some reason) a
             # single trailing space.
-            pytest --setup-plan -m '<<parameters.mark>>' | grep '\.py $' | sed 's/ $//' > /tmp/all-relevant-files
+            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py (ss)?$' | sed 's/ \(ss\)\{0,1\}$//' > /tmp/all-relevant-files
 
             echo 'All files with tests matching mark "<<parameters.mark>>":'
             sed 's/^/- /' </tmp/all-relevant-files
@@ -607,6 +607,9 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
+      - upload-test-job:
+          only_on_branch: main
+          test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
     parameters:
@@ -1654,29 +1657,6 @@ jobs:
           paths:
             - "proto/build/**/*"
 
-  test-unit-go:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
-    steps:
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - reinstall-go
-      - go-get-deps
-      - run: make -C proto build
-      - run: make -C master test
-      - run: make -C agent test
-      - codecov/upload:
-          flags: "backend"
-          xtra_args: "-v"
-      - store_test_results:
-          path: master/test.junit.xml
-      - store_test_results:
-          path: agent/test.junit.xml
-
   test-intg-master:
     machine:
       image: <<pipeline.parameters.machine-image>>
@@ -1744,6 +1724,32 @@ jobs:
       - store_artifacts:
           path: go-coverage
           destination: go-coverage
+
+  check-go-coverage-master:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: go run master/cmd/cover-regex/cover_regex.go master/coverage.out || true
+
+  check-go-coverage-agent:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: go run master/cmd/cover-regex/cover_regex.go agent/coverage.out || true
 
   lint-docs:
     docker:
@@ -2343,6 +2349,8 @@ jobs:
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
+      - store_test_results:
+          path: /tmp/test-results/
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
           region: <<parameters.region>>
@@ -2535,7 +2543,6 @@ workflows:
 
   test-unit:
     jobs:
-      - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
       - test-unit-harness-tf2
@@ -2578,7 +2585,7 @@ workflows:
             - test-unit-model-hub
             - test-unit-storage
 
-  test-intg:
+  test-go:
     jobs:
       # https://determined-ai.slack.com/archives/C03H5KZPU30/p1667241463073989
       # - test-intg-downstream
@@ -2589,6 +2596,12 @@ workflows:
           requires:
             - test-intg-master
             - test-intg-agent
+      - check-go-coverage-master:
+          requires:
+            - go-coverage
+      - check-go-coverage-agent:
+          requires:
+            - go-coverage
 
   test-e2e:
     jobs:
@@ -3256,17 +3269,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection-quarantine
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet-quarantine"]
-              mark: ["model_hub_mmdetection_quarantine"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-        # DeepSpeed tests do not work on K80s, so we need V100 instances.
-      - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context: aws
           matrix:
@@ -3300,29 +3302,6 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
-
-  nightly-quarantine:
-    when: << pipeline.parameters.do_nightly_tests >>
-    jobs:
-      - test-e2e-aws:
-          name: test-e2e-gpu-nightly-quarantine
-          context: aws
-          matrix:
-            parameters:
-              parallelism: [1]
-              cluster-id-prefix: ["nightly-quarantine"]
-              mark: ["nightly_quarantine"]
-      - test-e2e-aws:
-          name: test-e2e-gpu-distributed-quarantine
-          context: aws
-          matrix:
-            parameters:
-              # Cluster name lengths are limited by bucket name lengths in AWS.
-              cluster-id-prefix: ["dist-quarantine"]
-              mark: ["distributed_quarantine"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
 
   release:
     jobs:

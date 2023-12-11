@@ -323,6 +323,160 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 
 
+@pytest.mark.nightly
+def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> None:
+    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
+    config["searcher"] = {
+        "name": "custom",
+        "metric": "validation_error",
+        "smaller_is_better": True,
+        "unit": "batches",
+    }
+    config["name"] = "asha"
+    config["description"] = "custom searcher"
+
+    max_length = 2000
+    max_trials = 16
+    num_rungs = 3
+    divisor = 4
+
+    search_method = searchers.ASHASearchMethod(
+        max_length, max_trials, num_rungs, divisor, test_type="noop"
+    )
+    search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+
+    assert client._determined is not None
+    session = client._determined._session
+    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+
+    assert response.experiment.numTrials == 16
+    assert search_method.asha_search_state.pending_trials == 0
+    assert search_method.asha_search_state.completed_trials == 16
+    assert len(search_runner.state.trials_closed) == len(
+        search_method.asha_search_state.closed_trials
+    )
+
+    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+
+    # 16 trials in rung 1 (#batches = 125)
+    assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 500)
+    assert sum(t.totalBatchesProcessed >= 500 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2000)
+    assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
+
+    ok = True
+    for trial in response_trials:
+        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+    assert ok, "some trials failed"
+
+
+@pytest.mark.nightly
+@pytest.mark.parametrize(
+    "exceptions",
+    [
+        [
+            "initial_operations_start",  # fail before sending initial operations
+            "after_save",  # fail on save - should not send initial operations again
+            "save_method_state",
+            "save_method_state",
+            "after_save",
+            "on_trial_created",
+            "_get_close_rungs_ops",
+        ],
+        [  # searcher state and search method state are restored to last saved state
+            "on_validation_completed",
+            "on_validation_completed",
+            "save_method_state",
+            "save_method_state",
+            "after_save",
+            "after_save",
+            "load_method_state",
+            "on_validation_completed",
+            "shutdown",
+        ],
+    ],
+)
+def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> None:
+    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
+    config["searcher"] = {
+        "name": "custom",
+        "metric": "validation_error",
+        "smaller_is_better": True,
+        "unit": "batches",
+    }
+    config["name"] = "asha"
+    config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
+
+    max_length = 2000
+    max_trials = 16
+    num_rungs = 3
+    divisor = 4
+    failures_expected = len(exceptions)
+
+    with tempfile.TemporaryDirectory() as searcher_dir:
+        logging.info(f"searcher_dir type = {type(searcher_dir)}")
+        failures = 0
+        while failures < failures_expected:
+            try:
+                exception_point = exceptions.pop(0)
+                search_method = searchers.ASHASearchMethod(
+                    max_length,
+                    max_trials,
+                    num_rungs,
+                    divisor,
+                    test_type="noop",
+                    exception_points=[exception_point],
+                )
+                search_runner_mock = FallibleSearchRunner(
+                    exception_point, search_method, pathlib.Path(searcher_dir)
+                )
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
+                pytest.fail("Expected an exception")
+            except connectionpool.MaxRetryError:
+                failures += 1
+
+        assert failures == failures_expected
+
+        search_method = searchers.ASHASearchMethod(
+            max_length, max_trials, num_rungs, divisor, test_type="noop"
+        )
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+
+    assert search_runner.state.experiment_completed is True
+    assert client._determined is not None
+    session = client._determined._session
+    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+
+    assert response.experiment.numTrials == 16
+    # asha search method state
+    assert search_method.asha_search_state.pending_trials == 0
+    assert search_method.asha_search_state.completed_trials == 16
+    # searcher state
+    assert len(search_runner.state.trials_created) == 16
+    assert len(search_runner.state.trials_closed) == 16
+
+    assert len(search_runner.state.trials_closed) == len(
+        search_method.asha_search_state.closed_trials
+    )
+
+    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+
+    # 16 trials in rung 1 (#batches = 125)
+    assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 500)
+    assert sum(t.totalBatchesProcessed >= 500 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2000)
+    assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
+
+    for trial in response_trials:
+        assert trial.state == bindings.trialv1State.COMPLETED
+
+    assert search_method.progress(search_runner.state) == pytest.approx(1.0)
+
+
 class FallibleSearchRunner(searcher.LocalSearchRunner):
     def __init__(
         self,

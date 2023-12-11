@@ -40,7 +40,7 @@ def start_tensorboard(args: Namespace) -> None:
     render.report_job_launched("tensorboard", tsb.id)
 
     if resp.warnings:
-        cli.print_warnings(resp.warnings)
+        cli.print_launch_warnings(resp.warnings)
     currentSlotsExceeded = (resp.warnings is not None) and (
         bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )

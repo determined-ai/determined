@@ -27,7 +27,7 @@ def test_delete_experiment_removes_tensorboard_files() -> None:
     tb_path = tb_path / "experiment" / str(experiment_id)
     assert pathlib.Path(tb_path).exists()
 
-    command = ["det", "e", "delete", str(experiment_id), "--yes"]
+    command = ["det", "-m", conf.make_master_url(), "e", "delete", str(experiment_id), "--yes"]
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
     ticks = 60

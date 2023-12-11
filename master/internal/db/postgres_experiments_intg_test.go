@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -379,6 +380,205 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
 }
 
+func TestExperimentByIDs(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	externalID := uuid.New().String()
+	exp := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		ExternalExperimentID: &externalID,
+	})
+	trial, task := RequireMockTrial(t, db, exp)
+
+	for _, c := range []struct {
+		funcName string
+		f        func(IsNotFoundCase bool) (*model.Experiment, error)
+	}{
+		{"ExperimentByID", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByID(ctx, -1)
+			}
+
+			return ExperimentByID(ctx, exp.ID)
+		}},
+		{"ExperimentByTrialID", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByTrialID(ctx, -1)
+			}
+
+			return ExperimentByTrialID(ctx, trial.ID)
+		}},
+		{"ExperimentByTaskID", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByTaskID(ctx, model.TaskID(uuid.New().String()))
+			}
+
+			return ExperimentByTaskID(ctx, task.TaskID)
+		}},
+		{"ExperimentByExternalIDTx", func(isNotFoundCase bool) (*model.Experiment, error) {
+			if isNotFoundCase {
+				return ExperimentByExternalIDTx(ctx, Bun(), uuid.New().String())
+			}
+
+			return ExperimentByExternalIDTx(ctx, Bun(), externalID)
+		}},
+	} {
+		t.Run(c.funcName+"-notFound", func(t *testing.T) {
+			_, err := c.f(true)
+			require.ErrorIs(t, err, ErrNotFound)
+		})
+
+		t.Run(c.funcName, func(t *testing.T) {
+			actual, err := c.f(false)
+			require.NoError(t, err)
+
+			require.Equal(t, exp, actual)
+		})
+	}
+}
+
+func TestExperimentsTrialAndTaskIDs(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	tIDs, taskIDs, err := ExperimentsTrialAndTaskIDs(ctx, Bun(), nil)
+	require.NoError(t, err)
+	require.Len(t, tIDs, 0)
+	require.Len(t, taskIDs, 0)
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{-1})
+	require.NoError(t, err)
+	require.Len(t, tIDs, 0)
+	require.Len(t, taskIDs, 0)
+
+	e0 := RequireMockExperiment(t, db, user)
+	e0Trial0, e0Task0 := RequireMockTrial(t, db, e0)
+	e0Trial1, e0Task1 := RequireMockTrial(t, db, e0)
+	e0Trial2, e0Task2 := RequireMockTrial(t, db, e0)
+	e0ExpectedTrials := []int{e0Trial0.ID, e0Trial1.ID, e0Trial2.ID}
+	e0ExpectedTasks := []model.TaskID{e0Task0.TaskID, e0Task1.TaskID, e0Task2.TaskID}
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e0.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, e0ExpectedTrials, tIDs)
+	require.ElementsMatch(t, e0ExpectedTasks, taskIDs)
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e0.ID, -1})
+	require.NoError(t, err)
+	require.ElementsMatch(t, e0ExpectedTrials, tIDs)
+	require.ElementsMatch(t, e0ExpectedTasks, taskIDs)
+
+	e1 := RequireMockExperiment(t, db, user)
+	e1Trial0, e1Task0 := RequireMockTrial(t, db, e1)
+	e1Trial1, e1Task1 := RequireMockTrial(t, db, e1)
+	e1ExpectedTrials := []int{e1Trial0.ID, e1Trial1.ID}
+	e1ExpectedTasks := []model.TaskID{e1Task0.TaskID, e1Task1.TaskID}
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e1.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, e1ExpectedTrials, tIDs)
+	require.ElementsMatch(t, e1ExpectedTasks, taskIDs)
+
+	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{e0.ID, e1.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, append(e0ExpectedTrials, e1ExpectedTrials...), tIDs)
+	require.ElementsMatch(t, append(e0ExpectedTasks, e1ExpectedTasks...), taskIDs)
+}
+
+func TestExperimentBestSearcherValidation(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	// Not found.
+	_, err := ExperimentBestSearcherValidation(ctx, -1)
+	require.ErrorIs(t, err, ErrNotFound)
+
+	exp := RequireMockExperiment(t, db, user)
+	t0 := RequireMockTrialID(t, db, exp)
+	addMetrics(ctx, t, db, t0, `[]`,
+		fmt.Sprintf(`[{"%[1]s": -5.0}, {"%[1]s": 1.0}]`, defaultSearcherMetric), false)
+
+	t1 := RequireMockTrialID(t, db, exp)
+	addMetrics(ctx, t, db, t1, `[]`,
+		fmt.Sprintf(`[{"%[1]s": -1.0}, {"%[1]s": 5.0}]`, defaultSearcherMetric), false)
+
+	val, err := ExperimentBestSearcherValidation(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, float32(-5.0), val)
+
+	_, err = Bun().NewUpdate().Table("experiments").
+		Set("config = jsonb_set(config, '{searcher,smaller_is_better}', 'false'::jsonb)").
+		Where("id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	val, err = ExperimentBestSearcherValidation(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, float32(5.0), val)
+}
+
+func TestProjectHyperparameters(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	projectID := RequireMockProjectID(t, db)
+	exp0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		HParamNames: &[]string{"a", "b", "c"},
+		ProjectID:   &projectID,
+	})
+	exp1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		HParamNames: &[]string{"b", "c", "d"},
+		ProjectID:   &projectID,
+	})
+
+	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
+	require.Len(t, RequireGetProjectHParams(t, db, projectID), 0)
+
+	require.NoError(t,
+		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
+	require.Len(t, RequireGetProjectHParams(t, db, projectID), 0)
+
+	require.NoError(t,
+		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
+	require.ElementsMatch(t, []string{"a", "b", "c"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
+	require.ElementsMatch(t, []string{"a", "b", "c"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp1.ID)}))
+	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
+		RequireGetProjectHParams(t, db, projectID))
+
+	require.NoError(t,
+		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp1.ID)}))
+	require.ElementsMatch(t, []string{}, // TODO(!!!) this is a bug in the query.
+		RequireGetProjectHParams(t, db, projectID))
+}
+
 func TestActiveLogPatternPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -420,6 +620,50 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	policies, err = ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
 	require.Equal(t, activeConfig.RawLogPolicies, policies)
+}
+
+func TestGetNonTerminalExperimentCount(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	c, err := GetNonTerminalExperimentCount(ctx, nil)
+	require.NoError(t, err)
+	require.Equal(t, 0, c)
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{})
+	require.NoError(t, err)
+	require.Equal(t, 0, c)
+
+	e0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		State: ptrs.Ptr(model.ActiveState),
+	})
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
+
+	e1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		State: ptrs.Ptr(model.CompletedState),
+	})
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e1.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 0, c)
+
+	e2 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		State: ptrs.Ptr(model.PausedState),
+	})
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e2.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
+
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID), int32(e1.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 1, c)
+
+	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID), int32(e1.ID), int32(e2.ID)})
+	require.NoError(t, err)
+	require.Equal(t, 2, c)
 }
 
 func TestMetricBatchesMilestones(t *testing.T) {
