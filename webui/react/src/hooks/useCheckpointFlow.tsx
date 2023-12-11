@@ -26,24 +26,6 @@ export const useCheckpointFlow = ({
   const checkpointModal = useModal(CheckpointModalComponent);
   const registerModal = useModal(RegisterCheckpointModal);
 
-  const handleOnCloseCreateModel = useCallback(
-    (_reason?: string, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) registerModal.open();
-      console.log({ checkpoints, selectedModelName: modelName });
-    },
-    [registerModal],
-  );
-
-  const handleOnCloseCheckpoint = useCallback(
-    (reason?: string) => {
-      if (reason === 'Ok' && checkpoint?.uuid) {
-        registerModal.open();
-        console.log({ checkpoints: checkpoint.uuid });
-      }
-    },
-    [checkpoint, registerModal],
-  );
-
   const openCheckpoint = useCallback(() => {
     checkpointModal.open();
   }, [checkpointModal]);
@@ -57,10 +39,8 @@ export const useCheckpointFlow = ({
         onClose={handleOnCloseCheckpoint}
       />
     ),
-    modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
-    registerModalComponent: (
-      <registerModal.Component onClose={handleOnCloseCreateModel}/>
-    ),
+    modelCreateModalComponent: <modelCreateModal.Component onClose={() => 1} />,
     openCheckpoint,
+    registerModalComponent: <registerModal.Component onClose={() => 1} />,
   };
 };

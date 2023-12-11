@@ -1,14 +1,14 @@
 import Input from 'hew/Input';
+import { Modal } from 'hew/Modal';
 import Select, { SelectValue } from 'hew/Select';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import { useToast } from 'hew/Toast';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
-import { useModal } from 'hew/Modal';
-import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
@@ -51,16 +51,17 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
   onClose,
   modelName: selectedModelName,
 }) => {
+  const [canceler] = useState(new AbortController());
   const { openToast } = useToast();
   const { canCreateModelVersion } = usePermissions();
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
 
-  const registerModal = useModal(RegisterCheckpointModal);
-
   const selectedModelNumVersions = useMemo(() => {
-    return Loadable.getOrElse([], models).find((model) => model.name === selectedModelName)?.numVersions ??
-      0;
+    return (
+      Loadable.getOrElse([], models).find((model) => model.name === selectedModelName)
+        ?.numVersions ?? 0
+    );
   }, [models, selectedModelName]);
 
   const modelOptions = useMemo(() => {
@@ -90,7 +91,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
 
           if (!response) return;
 
-          registerModal.close();
+          onClose();
           openToast({
             description: `"${versionName || `Version ${selectedModelNumVersions + 1}`} registered"`,
             link: (
@@ -113,7 +114,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
               modelName: selectedModelName,
             });
           }
-          registerModal.close();
+          onClose();
           openToast({
             description: `${checkpoints.length} versions registered`,
             link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
@@ -128,15 +129,12 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
         });
       }
     },
-    [selectedModelNumVersions, openToast],
+    [selectedModelNumVersions, openToast, onClose],
   );
 
-  const handleOk = useCallback(
-    async (state: ModalState) => {
-      await registerModelVersion(state);
-    },
-    [registerModelVersion],
-  );
+  const handleOk = useCallback(async () => {
+    await registerModelVersion(modalState);
+  }, [registerModelVersion, modalState]);
 
   const updateModel = useCallback((value: SelectValue) => {
     setModalState((prev) => ({ ...prev, selectedModelName: value?.toString() }));
@@ -162,13 +160,9 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
     setModalState((prev) => ({ ...prev, tags: value }));
   }, []);
 
-  const launchNewModelModal = useCallback(
-    (state: ModalState) => {
-      registerModal.close();
-      onClose?.('Cancel', state.checkpoints);
-    },
-    [onClose, registerModal],
-  );
+  const launchNewModelModal = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
   const fetchModels = useCallback(async () => {
     if (!modalState.visible) return;
@@ -198,70 +192,85 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
     }
   }, [canceler.signal, modalState.visible]);
 
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
+
+  const { checkpoints, expandDetails, metadata, tags, versionDescription, versionName } =
+    modalState;
+
   return (
-    <div className={css.base}>
-      <p className={css.directions}>Save this checkpoint to the Model Registry</p>
-      <div>
-        <div className={css.selectModelRow}>
-          <h2>Select Model</h2>
-          <p onClick={() => launchNewModelModal(state)}>New Model</p>
+    <Modal
+      submit={{
+        handleError,
+        handler: handleOk,
+        text: 'Register Checkpoint',
+      }}
+      title={`Checkpoint ${checkpoints?.[0]}`}>
+      <div className={css.base}>
+        <p className={css.directions}>Save this checkpoint to the Model Registry</p>
+        <div>
+          <div className={css.selectModelRow}>
+            <h2>Select Model</h2>
+            <p onClick={() => launchNewModelModal()}>New Model</p>
+          </div>
+          <Select
+            options={modelOptions.map((option) => ({ label: option.name, value: option.name }))}
+            placeholder="Select a model..."
+            value={selectedModelName}
+            width={'100%'}
+            onChange={updateModel}
+          />
         </div>
-        <Select
-          options={modelOptions.map((option) => ({ label: option.name, value: option.name }))}
-          placeholder="Select a model..."
-          value={selectedModelName}
-          width={'100%'}
-          onChange={updateModel}
-        />
-      </div>
-      {selectedModelName && (
-        <>
-          <div className={css.separator} />
-          <div>
-            <h2>Version Name</h2>
-            <Input
-              disabled={checkpoints?.length != null && checkpoints.length > 1}
-              placeholder={`Version ${selectedModelNumVersions + 1}`}
-              value={versionName}
-              onChange={updateVersionName}
-            />
-            {checkpoints?.length != null && checkpoints.length > 1 && (
-              <p>Cannot specify version name when batch registering.</p>
+        {selectedModelName && (
+          <>
+            <div className={css.separator} />
+            <div>
+              <h2>Version Name</h2>
+              <Input
+                disabled={checkpoints?.length != null && checkpoints.length > 1}
+                placeholder={`Version ${selectedModelNumVersions + 1}`}
+                value={versionName}
+                onChange={updateVersionName}
+              />
+              {checkpoints?.length != null && checkpoints.length > 1 && (
+                <p>Cannot specify version name when batch registering.</p>
+              )}
+            </div>
+            <div>
+              <h2>
+                Description <span>(optional)</span>
+              </h2>
+              <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
+            </div>
+            {expandDetails ? (
+              <>
+                <div>
+                  <h2>
+                    Metadata <span>(optional)</span>
+                  </h2>
+                  <EditableMetadata
+                    editing={true}
+                    metadata={metadata}
+                    updateMetadata={updateMetadata}
+                  />
+                </div>
+                <div>
+                  <h2>
+                    Tags <span>(optional)</span>
+                  </h2>
+                  <Tags tags={tags} onAction={tagsActionHelper(tags, updateTags)} />
+                </div>
+              </>
+            ) : (
+              <p className={css.expandDetails} onClick={openDetails}>
+                Add More Details...
+              </p>
             )}
-          </div>
-          <div>
-            <h2>
-              Description <span>(optional)</span>
-            </h2>
-            <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
-          </div>
-          {expandDetails ? (
-            <>
-              <div>
-                <h2>
-                  Metadata <span>(optional)</span>
-                </h2>
-                <EditableMetadata
-                  editing={true}
-                  metadata={metadata}
-                  updateMetadata={updateMetadata}
-                />
-              </div>
-              <div>
-                <h2>
-                  Tags <span>(optional)</span>
-                </h2>
-                <Tags tags={tags} onAction={tagsActionHelper(tags, updateTags)} />
-              </div>
-            </>
-          ) : (
-            <p className={css.expandDetails} onClick={openDetails}>
-              Add More Details...
-            </p>
-          )}
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </div>
+    </Modal>
   );
 };
 

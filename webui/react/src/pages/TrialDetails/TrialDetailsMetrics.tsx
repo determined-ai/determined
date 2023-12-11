@@ -48,12 +48,16 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     [trial],
   );
 
-  const { openCheckpoint, modelCreateModalComponent, checkpointModalComponent, registerModalComponent } =
-    useCheckpointFlow({
-      checkpoint,
-      config: experiment.config,
-      title: `Best checkpoint for Trial ${trial?.id}`,
-    });
+  const {
+    openCheckpoint,
+    modelCreateModalComponent,
+    checkpointModalComponent,
+    registerModalComponent,
+  } = useCheckpointFlow({
+    checkpoint,
+    config: experiment.config,
+    title: `Best checkpoint for Trial ${trial?.id}`,
+  });
 
   const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
 

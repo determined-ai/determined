@@ -7,6 +7,7 @@ import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import ModelCreateModal from 'components/ModelCreateModal';
+import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import Section from 'components/Section';
 import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -17,7 +18,6 @@ import {
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
-import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
@@ -62,9 +62,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const modelCreateModal = useModal(ModelCreateModal);
   const registerModal = useModal(RegisterCheckpointModal);
 
-  const handleOnCloseCreateModel = () => {
-
-  };
+  const handleOnCloseCreateModel = () => {};
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -99,13 +97,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
-  const handleRegisterCheckpoint = useCallback(
-    (checkpoints: string[]) => {
-      registerModal.open();
-      console.log({ checkpoints });
-    },
-    [registerModal],
-  );
+  const handleRegisterCheckpoint = useCallback(() => {
+    registerModal.open();
+  }, [registerModal]);
 
   const handleDelete = useCallback((checkpoints: string[]) => {
     readStream(
@@ -141,7 +135,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     (checkpoints: string | string[]) => {
       const checkpointsArr = ensureArray(checkpoints);
       return {
-        [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointsArr),
+        [checkpointAction.Register]: () => handleRegisterCheckpoint(),
         [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
       };
     },
