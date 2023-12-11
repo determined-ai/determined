@@ -506,7 +506,6 @@ func (t *Trial) ToRunAndTrialV2() (*Run, *TrialV2) {
 }
 
 // TrialV2 represents a row from the `trials_v2` table.
-// Except for runner state. These models are kind of a mess.
 type TrialV2 struct {
 	bun.BaseModel `bun:"table:trials_v2"`
 

@@ -1122,11 +1122,11 @@ func TestUpdateTrialRunnerMetadata(t *testing.T) {
 	}))
 
 	actual := struct {
-		bun.BaseModel `bun:"table:trials_v2"`
+		bun.BaseModel `bun:"table:runs"`
 		RunnerState   string
 	}{}
 	require.NoError(t, Bun().NewSelect().Model(&actual).
-		Where("run_id = ?", trialID).
+		Where("id = ?", trialID).
 		Scan(ctx, &actual))
 	require.Equal(t, "expectedState", actual.RunnerState)
 }

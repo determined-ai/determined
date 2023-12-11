@@ -2,19 +2,15 @@ DROP VIEW trials;
 
 ALTER TABLE public.runs
   ADD COLUMN request_id text,
-  ADD COLUMN runner_state text,
   ADD COLUMN seed integer;
 
 UPDATE runs SET
   request_id = t.request_id,
-  runner_state = t.runner_state,
   seed = t.seed
 FROM trials_v2 t
 WHERE runs.id = t.run_id;
 
 ALTER TABLE runs
-  ALTER COLUMN runner_state SET NOT NULL,
-  ALTER COLUMN runner_state SET DEFAULT 'UNSPECIFIED',
   ALTER COLUMN seed SET NOT NULL,
   ALTER COLUMN seed SET DEFAULT 0;
 
