@@ -660,7 +660,6 @@ args_description = Cmd(
                 Arg(
                     "--lore-version",
                     type=str,
-                    default="latest",
                     help="Specifies the version of Lore to install. The value must be a valid"
                     + " Lore tag available on Docker Hub.",
                 ),
