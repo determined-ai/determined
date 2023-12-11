@@ -24,6 +24,8 @@ import (
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -76,12 +78,13 @@ type pods struct {
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 	credsDir              string
 
-	clientSet        *k8sClient.Clientset
-	masterIP         string
-	masterPort       int32
-	masterTLSConfig  model.TLSClientConfig
-	loggingTLSConfig model.TLSClientConfig
-	loggingConfig    model.LoggingConfig
+	clientSet         *k8sClient.Clientset
+	masterIP          string
+	masterPort        int32
+	masterTLSConfig   model.TLSClientConfig
+	loggingTLSConfig  model.TLSClientConfig
+	loggingConfig     model.LoggingConfig
+	useUserKubeconfig bool
 
 	resourceRequestQueue         *requestQueue
 	podNameToPodHandler          map[string]*pod
@@ -154,6 +157,7 @@ func newPodsService(
 	credsDir string,
 	masterIP string,
 	masterPort int32,
+	useUserKubeconfig bool,
 	podStatusUpdateCallback podStatusUpdateCallback,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
@@ -170,6 +174,7 @@ func newPodsService(
 		scheduler:                    scheduler,
 		loggingTLSConfig:             loggingTLSConfig,
 		loggingConfig:                loggingConfig,
+		useUserKubeconfig:            useUserKubeconfig,
 		podNameToPodHandler:          make(map[string]*pod),
 		podNameToResourcePool:        make(map[string]string),
 		containerIDToPodName:         make(map[string]string),
@@ -295,7 +300,18 @@ func (p *pods) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgent
 	return p.disableNode(msg.AgentId, msg.Drain)
 }
 
-func readClientConfig(credsDir string) (*rest.Config, error) {
+func readClientConfig(credsDir string, useUserKubeconfig bool) (*rest.Config, error) {
+	if useUserKubeconfig {
+		kubeConfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
+
+		// use the current context in kubeconfig
+		config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+		if err != nil {
+			return nil, fmt.Errorf("building REST config from kubeconfig %s: %w", kubeConfig, err)
+		}
+		return config, nil
+	}
+
 	if credsDir == "" {
 		// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
 		// environment variables:
@@ -337,7 +353,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 }
 
 func (p *pods) startClientSet() error {
-	config, err := readClientConfig(p.credsDir)
+	config, err := readClientConfig(p.credsDir, p.useUserKubeconfig)
 	if err != nil {
 		return errors.Wrap(err, "error building kubernetes config")
 	}
