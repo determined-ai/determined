@@ -94,9 +94,11 @@ class AttrDict(dict):
         for key in self.keys():
             if isinstance(self[key], dict):
                 self[key] = AttrDict(self[key])
-
-    def __getattr__(self, name: str, default: Any = None) -> Any:
-        return self.get(name, default)
+            super().__setattr__(key, self[key])
 
     def __setattr__(self, name: str, val: Any) -> None:
-        self[name] = val
+        super().__setattr__(name, val)
+        super().__setitem__(name, val)
+
+    def __setitem__(self, name: str, val: Any) -> None:
+        setattr(self, name, val)

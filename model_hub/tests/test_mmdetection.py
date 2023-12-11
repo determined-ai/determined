@@ -125,8 +125,8 @@ class TestMMDetTrial:
     def test_merge_config(
         self, context: det_torch.PyTorchTrialContext, trial: mh_mmdet.MMDetTrial
     ) -> None:
-        hparams = context.get_hparams()
-        hparams["merge_config"] = "./tests/fixtures/merge_config.py"
+        hparams = mh_utils.AttrDict(context.get_hparams())
+        hparams.merge_config = "./tests/fixtures/merge_config.py"
         trial.hparams = hparams
         new_cfg = trial.build_mmdet_config()
         assert new_cfg.optimizer.type == "AdamW"
@@ -136,11 +136,14 @@ class TestMMDetTrial:
         self, context: det_torch.PyTorchTrialContext, trial: mh_mmdet.MMDetTrial
     ) -> None:
         hparams = context.get_hparams()
-        hparams["override_mmdet_config"] = {
-            "optimizer_config._delete_": True,
-            "optimizer_config.grad_clip.max_norm": 35,
-            "optimizer_config.grad_clip.norm_type": 2,
-        }
+        hparams = mh_utils.AttrDict(hparams)
+        hparams["override_mmdet_config"] = mh_utils.AttrDict(
+            {
+                "optimizer_config._delete_": True,
+                "optimizer_config.grad_clip.max_norm": 35,
+                "optimizer_config.grad_clip.norm_type": 2,
+            }
+        )
         trial.hparams = hparams
         new_cfg = trial.build_mmdet_config()
         assert new_cfg.optimizer_config.grad_clip.max_norm == 35
