@@ -216,11 +216,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
         if not hasattr(self, "hparams"):
-            self.hparams = utils.AttrDict(context.get_hparams())
+            self.hparams = utils.AttrDict(context.get_hparams())  # type: ignore
         if not hasattr(self, "data_config"):
-            self.data_config = utils.AttrDict(context.get_data_config())
+            self.data_config = utils.AttrDict(context.get_data_config())  # type: ignore
         if not hasattr(self, "exp_config"):
-            self.exp_config = utils.AttrDict(context.get_experiment_config())
+            self.exp_config = utils.AttrDict(context.get_experiment_config())  # type: ignore
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
 
