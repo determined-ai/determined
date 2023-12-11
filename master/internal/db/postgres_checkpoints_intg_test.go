@@ -61,7 +61,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
 				checkpoint.Resources = resources[resourcesIndex]
-				err := AddCheckpointMetadata(ctx, &checkpoint)
+				err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 				require.NoError(t, err)
 
 				resourcesIndex++
@@ -164,21 +164,21 @@ func TestDeleteCheckpoints(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
-	_, task := RequireMockTrial(t, db, exp)
+	tr, task := RequireMockTrial(t, db, exp)
 	allocation := RequireMockAllocation(t, db, task.TaskID)
 
 	// Create checkpoints
 	ckpt1 := uuid.New()
 	checkpoint1 := MockModelCheckpoint(ckpt1, allocation)
-	err := AddCheckpointMetadata(ctx, &checkpoint1)
+	err := AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
 	require.NoError(t, err)
 	ckpt2 := uuid.New()
 	checkpoint2 := MockModelCheckpoint(ckpt2, allocation)
-	err = AddCheckpointMetadata(ctx, &checkpoint2)
+	err = AddCheckpointMetadata(ctx, &checkpoint2, tr.ID)
 	require.NoError(t, err)
 	ckpt3 := uuid.New()
 	checkpoint3 := MockModelCheckpoint(ckpt3, allocation)
-	err = AddCheckpointMetadata(ctx, &checkpoint3)
+	err = AddCheckpointMetadata(ctx, &checkpoint3, tr.ID)
 	require.NoError(t, err)
 
 	// Insert a model.
@@ -285,7 +285,7 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 	exp := RequireMockExperiment(t, db, user)
 	for j := 0; j < 10; j++ {
 		t.Logf("Adding trial #%d", j)
-		_, task := RequireMockTrial(t, db, exp)
+		tr, task := RequireMockTrial(t, db, exp)
 		allocation := RequireMockAllocation(t, db, task.TaskID)
 		for k := 0; k < 10; k++ {
 			ckpt := uuid.New()
@@ -299,7 +299,7 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 			checkpoint := MockModelCheckpoint(ckpt, allocation)
 			checkpoint.Resources = resources
 
-			err := AddCheckpointMetadata(ctx, &checkpoint)
+			err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 			require.NoError(t, err)
 		}
 	}

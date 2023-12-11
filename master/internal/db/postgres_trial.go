@@ -646,7 +646,7 @@ func calculateNewSummaryMetrics(
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
-func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
+func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2, runID int) error {
 	var size int64
 	for _, v := range m.Resources {
 		size += v
@@ -654,12 +654,19 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	m.Size = size
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
-			return errors.Wrap(err, "inserting checkpoint")
+		if _, err := tx.NewInsert().Model(m).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting checkpoint model: %w", err)
+		}
+
+		if _, err := tx.NewInsert().Model(&model.RunCheckpoints{
+			RunID:        runID,
+			CheckpointID: m.UUID,
+		}).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting checkpoint run model: %w", err)
 		}
 
 		if err := UpdateCheckpointSizeTx(ctx, tx, []uuid.UUID{m.UUID}); err != nil {
-			return errors.Wrap(err, "updating checkpoint size")
+			return fmt.Errorf("updating checkpoint size: %w", err)
 		}
 
 		return nil

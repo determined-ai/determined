@@ -23,19 +23,39 @@ func TestMigrateTrials(t *testing.T) {
 
 	preTrialData := olddata.MigrateToPreRunTrialsData(t, pgDB, "file://../../static/migrations")
 
-	var currentTrialsViewData []struct {
-		TrialData map[string]any
-	}
-	require.NoError(t, db.Bun().NewSelect().Table("trials").
-		ColumnExpr("to_jsonb(trials.*) AS trial_data").
-		Order("id").
-		Scan(ctx, &currentTrialsViewData),
-	)
+	t.Run("trialView", func(t *testing.T) {
+		var currentTrialsViewData []struct {
+			TrialData map[string]any
+		}
+		require.NoError(t, db.Bun().NewSelect().Table("trials").
+			ColumnExpr("to_jsonb(trials.*) AS trial_data").
+			Order("id").
+			Scan(ctx, &currentTrialsViewData),
+		)
 
-	var actual []map[string]any
-	for _, t := range currentTrialsViewData {
-		actual = append(actual, t.TrialData)
-	}
+		var actual []map[string]any
+		for _, t := range currentTrialsViewData {
+			actual = append(actual, t.TrialData)
+		}
 
-	require.Equal(t, preTrialData.PreRunTrialsTable, actual)
+		require.Equal(t, preTrialData.PreRunTrialsTable, actual)
+	})
+
+	t.Run("checkpointsView", func(t *testing.T) {
+		var currentCheckpointViewData []struct {
+			CheckpointData map[string]any
+		}
+		require.NoError(t, db.Bun().NewSelect().Table("checkpoints_view").
+			ColumnExpr("to_jsonb(checkpoints_view.*) AS checkpoint_data").
+			Order("id").
+			Scan(ctx, &currentCheckpointViewData),
+		)
+
+		var actual []map[string]any
+		for _, t := range currentCheckpointViewData {
+			actual = append(actual, t.CheckpointData)
+		}
+
+		require.Equal(t, preTrialData.PreRunCheckpointsView, actual)
+	})
 }

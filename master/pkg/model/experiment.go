@@ -662,6 +662,13 @@ type CheckpointV2 struct {
 	Size          int64                  `db:"size"`
 }
 
+// RunCheckpoints represents a row from the `run_checkpoints` table.
+type RunCheckpoints struct {
+	bun.BaseModel `bun:"table:run_checkpoints"`
+	RunID         int       `bun:"run_id"`
+	CheckpointID  uuid.UUID `bun:"checkpoint_id"`
+}
+
 // CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific
 // information.
 type CheckpointTrainingMetadata struct {
