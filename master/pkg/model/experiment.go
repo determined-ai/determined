@@ -531,12 +531,12 @@ type Run struct {
 	LastActivity          *time.Time     `db:"last_activity"`
 }
 
-// TrialTaskID represents a row from the `trial_id_task_id` table.
-type TrialTaskID struct {
-	bun.BaseModel `bun:"table:trial_id_task_id"`
+// RunTaskID represents a row from the `run_id_task_id` table.
+type RunTaskID struct {
+	bun.BaseModel `bun:"table:run_id_task_id"`
 
-	TrialID int
-	TaskID  TaskID
+	RunID  int
+	TaskID TaskID
 }
 
 // NewTrial creates a new trial in the specified state.  Note that the trial ID

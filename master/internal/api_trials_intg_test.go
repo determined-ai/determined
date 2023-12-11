@@ -844,9 +844,9 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddTask(task2))
 
-	_, err = db.Bun().NewInsert().Model(&[]model.TrialTaskID{
-		{TrialID: trial.ID, TaskID: task1.TaskID},
-		{TrialID: trial.ID, TaskID: task2.TaskID},
+	_, err = db.Bun().NewInsert().Model(&[]model.RunTaskID{
+		{RunID: trial.ID, TaskID: task1.TaskID},
+		{RunID: trial.ID, TaskID: task2.TaskID},
 	}).Exec(ctx)
 	require.NoError(t, err)
 
@@ -982,9 +982,9 @@ func TestTrialLogs(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddTask(task2))
 
-	_, err := db.Bun().NewInsert().Model(&[]model.TrialTaskID{
-		{TrialID: trial.ID, TaskID: task1.TaskID},
-		{TrialID: trial.ID, TaskID: task2.TaskID},
+	_, err := db.Bun().NewInsert().Model(&[]model.RunTaskID{
+		{RunID: trial.ID, TaskID: task1.TaskID},
+		{RunID: trial.ID, TaskID: task2.TaskID},
 	}).Exec(ctx)
 	require.NoError(t, err)
 
@@ -1078,9 +1078,9 @@ func TestTrialLogFields(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddTask(task2))
 
-	_, err := db.Bun().NewInsert().Model(&[]model.TrialTaskID{
-		{TrialID: trial.ID, TaskID: task1.TaskID},
-		{TrialID: trial.ID, TaskID: task2.TaskID},
+	_, err := db.Bun().NewInsert().Model(&[]model.RunTaskID{
+		{RunID: trial.ID, TaskID: task1.TaskID},
+		{RunID: trial.ID, TaskID: task2.TaskID},
 	}).Exec(ctx)
 	require.NoError(t, err)
 
