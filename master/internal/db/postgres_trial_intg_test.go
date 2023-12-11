@@ -926,7 +926,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 50},
-	}))
+	}, tr.ID))
 
 	// Trial gets interrupted and starts in the future with a new trial run ID.
 	a = &model.Allocation{
@@ -968,7 +968,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 400},
-	}))
+	}, tr.ID))
 	checkpoints = []*checkpointv1.Checkpoint{}
 	require.NoError(t, db.QueryProto("get_checkpoints_for_experiment", &checkpoints, exp.ID))
 	require.Len(t, checkpoints, 2)
@@ -1044,7 +1044,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 				ReportTime:   time.Now(),
 				State:        model.CompletedState,
 				Metadata:     map[string]any{"steps_completed": batches},
-			}))
+			}, tr.ID))
 		default:
 			rollbacksCnts, err := db.addTrialMetrics(
 				ctx, trialMetrics, model.MetricGroup(typ),
