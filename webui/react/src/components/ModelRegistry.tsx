@@ -1,4 +1,4 @@
-import { Space, Typography } from 'antd';
+import { Typography } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -12,6 +12,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import Toggle from 'hew/Toggle';
 import Tooltip from 'hew/Tooltip';
@@ -673,7 +674,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <>
       <div className={css.options}>
-        <Space>
+        <Row>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
@@ -689,7 +690,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
               </div>
             </Tooltip>
           )}
-        </Space>
+        </Row>
       </div>
       {models.length === 0 && !isLoading && filterCount === 0 ? (
         <Message

@@ -1,6 +1,7 @@
-import { Card, Space } from 'antd';
+import { Card } from 'antd';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -60,14 +61,14 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
       bodyStyle={{ padding: '16px' }}
       extra={
         isEditing ? (
-          <Space size="small">
+          <Row>
             <Button size="small" onClick={cancelEditMetadata}>
               Cancel
             </Button>
             <Button size="small" type="primary" onClick={saveMetadata}>
               Save
             </Button>
-          </Space>
+          </Row>
         ) : (
           disabled || (
             <Button
