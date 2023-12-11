@@ -6,10 +6,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
+import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import PageHeaderFoldable, { renderOptionLabel } from 'components/PageHeaderFoldable';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import { ActionOptions } from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
@@ -36,15 +36,11 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
   const handleModalClose = useCallback(() => fetchTrialDetails(), [fetchTrialDetails]);
 
   const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
-
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, trial });
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
   const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
+    HyperparameterSearchModal.open();
+  }, [HyperparameterSearchModal]);
 
   useMemo(async () => {
     if (!terminalRunStates.has(trial.state)) {
@@ -171,7 +167,11 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         type={CreateExperimentType.ContinueTrial}
         onClose={handleModalClose}
       />
-      {modalHyperparameterSearchContextHolder}
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+        trial={trial}
+      />
     </>
   );
 };

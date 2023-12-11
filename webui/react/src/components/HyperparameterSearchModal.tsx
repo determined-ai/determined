@@ -6,6 +6,7 @@ import Icon, { IconName } from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
+import { Modal, ModalCloseReason } from 'hew/Modal';
 import RadioGroup from 'hew/RadioGroup';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
 import { Label, TypographySize } from 'hew/Typography';
@@ -14,7 +15,6 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -37,11 +37,12 @@ import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { validateLength } from 'utils/string';
 
-import css from './useModalHyperparameterSearch.module.scss';
+import css from './HyperparameterSearchModal.module.scss';
 
 const FORM_ID = 'create-hp-search-form';
 
 interface Props {
+  closeModal: (reason: ModalCloseReason) => void;
   experiment: ExperimentItem;
   onClose?: () => void;
   trial?: TrialDetails | TrialItem;
@@ -50,10 +51,6 @@ interface Props {
 export interface ShowModalProps {
   initialModalProps?: ModalFuncProps;
   trial?: TrialDetails | TrialItem;
-}
-
-interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (props?: ShowModalProps) => void;
 }
 
 interface SearchMethod {
@@ -90,14 +87,8 @@ interface HyperparameterRowValues {
   value?: number | string;
 }
 
-const useModalHyperparameterSearch = ({
-  experiment,
-  onClose,
-  trial: trialIn,
-}: Props): ModalHooks => {
+const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JSX.Element => {
   const idPrefix = useId();
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
-  const [trial, setTrial] = useState(trialIn);
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.id === experiment.searcherType) ??
@@ -263,8 +254,8 @@ const useModalHyperparameterSearch = ({
   }, []);
 
   const handleCancel = useCallback(() => {
-    modalClose(ModalCloseReason.Cancel);
-  }, [modalClose]);
+    closeModal('Cancel');
+  }, [closeModal]);
 
   const handleSelectPool = useCallback(
     (value: SelectValue) => {
@@ -598,42 +589,14 @@ const useModalHyperparameterSearch = ({
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
-  const modalProps: Partial<ModalFuncProps> = useMemo(() => {
-    return {
-      className: css.modal,
-      closable: true,
-      content: (
-        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
-          {pages[currentPage]}
-          {footer}
-        </Form>
-      ),
-      icon: null,
-      maskClosable: true,
-      title: 'Hyperparameter Search',
-      width: 700,
-    };
-  }, [form, idPrefix, pages, currentPage, footer]);
-
-  const modalOpen = useCallback(
-    (props?: ShowModalProps) => {
-      setCurrentPage(0);
-      form.resetFields();
-      if (props?.trial) setTrial(props?.trial);
-      openOrUpdate({ ...modalProps, ...props?.initialModalProps });
-    },
-    [form, modalProps, openOrUpdate],
+  return (
+    <Modal title="Hyperparameter Search">
+      <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
+        {pages[currentPage]}
+        {footer}
+      </Form>
+    </Modal>
   );
-
-  /*
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
-   */
-  useEffect(() => {
-    if (modalRef.current) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
-
-  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 interface RowProps {
@@ -834,4 +797,4 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   );
 };
 
-export default useModalHyperparameterSearch;
+export default HyperparameterSearchModal;
