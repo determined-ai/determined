@@ -49,6 +49,23 @@ resources. Compatible with on-prem clusters and cloud auto-scaling (AWS and GCP)
 
 -  :ref:`topic_guide_gcp`
 
+.. _mldes-trial:
+
+***********************************
+ Bring Your Own Cloud (Evaluation)
+***********************************
+
+Get access to AI clusters running Determined without having to provision or configure the hardware
+yourself.
+
+-  Visit the Machine Learning Development Environment Software (MLDES) Trial `sign-up page
+   <http://mldes.ext.hpe.com/trial>`_.
+-  Visit the `documentation <https://mldes.ext.hpe.com/docs/index.html>`_.
+
+.. attention::
+
+   This method is only available on Determined Enterprise Edition.
+
 ************
  Kubernetes
 ************
