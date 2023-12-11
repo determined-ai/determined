@@ -1,7 +1,5 @@
 import dataclasses
 import logging
-import types
-import typing
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import datasets as hf_datasets
@@ -28,10 +26,10 @@ MODEL_MODES = {
 
 
 def build_using_auto(
-    config_kwargs: Union[Dict, types.SimpleNamespace],
-    tokenizer_kwargs: Union[Dict, types.SimpleNamespace],
+    config_kwargs: Dict,
+    tokenizer_kwargs: Dict,
     model_mode: str,
-    model_kwargs: Union[Dict, types.SimpleNamespace],
+    model_kwargs: Dict,
     use_pretrained_weights: bool = True,
 ) -> Tuple[
     transformers.PretrainedConfig,  # This is how it's named in transformers
@@ -146,7 +144,6 @@ def build_default_lr_scheduler(
     )
 
 
-@typing.no_type_check
 def default_load_dataset(
     data_config: dict,
 ) -> Union[
@@ -166,13 +163,13 @@ def default_load_dataset(
         Dataset returned from hf_datasets.load_dataset.
     """
     (data_config,) = hf_parse.parse_dict_to_dataclasses(
-        (hf_parse.DatasetKwargs,), data_config, output_as_namespace=True
+        (hf_parse.DatasetKwargs,), data_config, output_as_dict=True
     )
     # This method is common in nearly all main HF examples.
-    if data_config.dataset_name is not None:
+    if data_config["dataset_name"] is not None:
         # Downloading and loading a dataset from the hub.
         datasets = hf_datasets.load_dataset(
-            data_config.dataset_name, data_config.dataset_config_name
+            data_config["dataset_name"], data_config["dataset_config_name"]
         )
         assert hasattr(datasets, "keys"), "Expected a dictionary of datasets."
         datasets = cast(Union[hf_datasets.DatasetDict, hf_datasets.IterableDatasetDict], datasets)
@@ -183,22 +180,22 @@ def default_load_dataset(
             ), "Validation split not provided by this huggingface dataset. Please specify "
             "validation_split_percentage in data_config for use to create validation set"
             datasets["validation"] = hf_datasets.load_dataset(
-                data_config.dataset_name,
-                data_config.dataset_config_name,
-                split=f"train[:{data_config.validation_split_percentage}%]",
+                data_config["dataset_name"],
+                data_config["dataset_config_name"],
+                split=f"train[:{data_config['validation_split_percentage']}%]",
             )
             datasets["train"] = hf_datasets.load_dataset(
-                data_config.dataset_name,
-                data_config.dataset_config_name,
-                split=f"train[{data_config.validation_split_percentage}%:]",
+                data_config["dataset_name"],
+                data_config["dataset_config_name"],
+                split=f"train[:{data_config['validation_split_percentage']}%]",
             )
     else:
         data_files = {}
-        if data_config.train_file is not None:
-            data_files["train"] = data_config.train_file
-        if data_config.validation_file is not None:
-            data_files["validation"] = data_config.validation_file
-        extension = data_config.train_file.split(".")[-1]
+        if data_config["train_file"] is not None:
+            data_files["train"] = data_config["train_file"]
+        if data_config["validation_file"] is not None:
+            data_files["validation"] = data_config["validation_file"]
+        extension = data_config["train_file"].split(".")[-1]
         if extension == "txt":
             extension = "text"
         datasets = hf_datasets.load_dataset(extension, data_files=data_files)
@@ -219,11 +216,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
         if not hasattr(self, "hparams"):
-            self.hparams = utils.to_namespace(context.get_hparams())
+            self.hparams = utils.AttrDict(context.get_hparams())
         if not hasattr(self, "data_config"):
-            self.data_config = utils.to_namespace(context.get_data_config())
+            self.data_config = utils.AttrDict(context.get_data_config())
         if not hasattr(self, "exp_config"):
-            self.exp_config = utils.to_namespace(context.get_experiment_config())
+            self.exp_config = utils.AttrDict(context.get_experiment_config())
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
 
@@ -269,9 +266,9 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
             )
 
     def check_hparams(self) -> None:
-        # We require hparams to be a SimpleNamespace.
-        if not isinstance(self.hparams, types.SimpleNamespace):
-            self.hparams = utils.to_namespace(self.hparams)
+        # We require hparams to be a AttrDict.
+        if not isinstance(self.hparams, utils.AttrDict):
+            self.hparams = utils.AttrDict(self.hparams)
 
         if not hasattr(self.hparams, "num_training_steps"):
             # Compute the total number of training iterations used to configure the

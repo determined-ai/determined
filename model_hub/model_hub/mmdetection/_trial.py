@@ -55,8 +55,8 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
         self.context = context
-        self.hparams = utils.to_namespace(context.get_hparams())
-        self.data_config = utils.to_namespace(context.get_data_config())
+        self.hparams = utils.AttrDict(context.get_hparams())
+        self.data_config = utils.AttrDict(context.get_data_config())
         self.cfg = self.build_mmdet_config()
         # We will control how data is moved to GPU.
         self.context.experimental.disable_auto_to_device()
@@ -131,8 +131,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
             cfg = mmcv.Config(new_config, cfg._text, cfg._filename)
 
         if hasattr(self.hparams, "override_mmdet_config"):
-            cfg.merge_from_dict(
-                utils.from_namespace(utils.from_namespace(self.hparams.override_mmdet_config)))
+            cfg.merge_from_dict(self.hparams.override_mmdet_config)
 
         cfg.data.val.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.val.pipeline)
         cfg.data.test.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.test.pipeline)

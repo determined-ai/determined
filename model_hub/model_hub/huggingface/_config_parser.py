@@ -1,5 +1,4 @@
 import dataclasses
-import types
 from typing import Any, Dict, Optional, Tuple, Union
 
 from model_hub import utils
@@ -273,8 +272,8 @@ class LRSchedulerKwargs:
 
 def parse_dict_to_dataclasses(
     dataclass_types: Tuple[Any, ...],
-    args: Union[Dict[str, Any], types.SimpleNamespace],
-    output_as_namespace: bool = False,
+    args: Union[Dict[str, Any]],
+    output_as_dict: bool = False,
 ) -> Tuple[Any, ...]:
     """
     This function will fill in values for a dataclass if the target key is found
@@ -284,7 +283,7 @@ def parse_dict_to_dataclasses(
     Args:
         dataclass_types: dataclasses with expected attributes.
         args: arguments that will be parsed to each of the dataclass_types.
-        output_as_namespace: if true will return SimpleNamespace instead of dict
+        output_as_dict: if true will return AttrDict instead of dict
 
     Returns:
         One namespace for each dataclass with keys filled in from args if found.
@@ -294,18 +293,16 @@ def parse_dict_to_dataclasses(
         keys = {f.name for f in dataclasses.fields(dtype) if f.init}
         inputs = {k: v for k, v in args.items() if k in keys}
         obj = dtype(**inputs)
-        if output_as_namespace:
+        if output_as_dict:
             try:
-                obj = utils.to_namespace(obj.as_dict())
+                obj = utils.AttrDict(obj.as_dict())
             except AttributeError:
-                obj = utils.to_namespace(dataclasses.asdict(obj))
+                obj = utils.AttrDict(dataclasses.asdict(obj))
         outputs.append(obj)
     return (*outputs,)
 
 
-def default_parse_config_tokenizer_model_kwargs(
-    hparams: Union[Dict, types.SimpleNamespace]
-) -> Tuple[Dict, Dict, Dict]:
+def default_parse_config_tokenizer_model_kwargs(hparams: Dict) -> Tuple[Dict, Dict, Dict]:
     """
     This function will provided hparams into fields for the transformers config, tokenizer,
     and model. See the defined dataclasses ConfigKwargs, TokenizerKwargs, and ModelKwargs for
@@ -315,12 +312,12 @@ def default_parse_config_tokenizer_model_kwargs(
         hparams: hyperparameters to parse.
 
     Returns:
-        One SimpleNamespace each for the config, tokenizer, and model.
+        One AttrDict each for the config, tokenizer, and model.
     """
-    if not isinstance(hparams, types.SimpleNamespace):
-        hparams = utils.to_namespace(hparams)
+    if not isinstance(hparams, utils.AttrDict):
+        hparams = utils.AttrDict(hparams)
     config_args, tokenizer_args, model_args = parse_dict_to_dataclasses(
-        (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, output_as_namespace=True
+        (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, output_as_dict=True
     )
 
     # If a pretrained_model_name_or_path is provided it will be parsed to the
@@ -341,7 +338,7 @@ def default_parse_config_tokenizer_model_kwargs(
 
 
 def default_parse_optimizer_lr_scheduler_kwargs(
-    hparams: Union[Dict, types.SimpleNamespace]
+    hparams: Dict,
 ) -> Tuple[OptimizerKwargs, LRSchedulerKwargs]:
     """
     Parse hparams relevant for the optimizer and lr_scheduler and fills in with

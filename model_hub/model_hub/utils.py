@@ -1,8 +1,7 @@
 import logging
 import os
-import types
 import urllib.parse
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import filelock
 import numpy as np
@@ -89,20 +88,12 @@ def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) 
     return int(max_length / global_batch_size)
 
 
-def to_namespace(input_dict: dict) -> types.SimpleNamespace:
-    namespace = types.SimpleNamespace()
-    for key, value in input_dict.items():
-        if isinstance(value, dict):
-            setattr(namespace, key, to_namespace(value))
-        else:
-            setattr(namespace, key, value)
-    return namespace
+class AttrDict(dict):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
+    def __getattr__(self, name: str, default: Any = None) -> Any:
+        return self.get(name, default)
 
-def from_namespace(input_namespace: types.SimpleNamespace) -> dict:
-    output_dict = input_namespace.__dict__
-    for key, val in output_dict.items():
-        if isinstance(val, types.SimpleNamespace):
-            output_dict[key] = from_namespace(val)
-
-    return output_dict
+    def __setattr__(self, name: str, val: Any) -> None:
+        self[name] = val
