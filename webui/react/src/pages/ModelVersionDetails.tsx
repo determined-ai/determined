@@ -323,7 +323,7 @@ const ModelVersionDetails: React.FC = () => {
         : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
     },
     {
-      breadcrumbName: `${modelVersion.model.name} (${modelId})`,
+      breadcrumbName: `${modelVersion.model.name} (${modelVersion.model.id})`,
       path: paths.modelDetails(modelVersion.model.id.toString()),
     },
     {

@@ -30,7 +30,7 @@ export interface Props {
   checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   children?: React.ReactNode;
   config: ExperimentConfig;
-  onClose: (reason?: ModalCloseReason) => void;
+  onClose?: (reason?: ModalCloseReason) => void;
   searcherValidation?: number;
   title: string;
 }
@@ -81,9 +81,9 @@ const CheckpointModalComponent: React.FC<Props> = ({
 }: Props) => {
   const confirm = useConfirm();
 
-  const handleCancel = useCallback(() => onClose(ModalCloseReason.Cancel), [onClose]);
+  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [onClose]);
 
-  const handleOk = useCallback(() => onClose(ModalCloseReason.Ok), [onClose]);
+  const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [onClose]);
 
   const handleDelete = useCallback(async () => {
     if (!checkpoint?.uuid) return;

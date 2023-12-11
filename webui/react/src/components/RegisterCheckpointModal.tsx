@@ -1,60 +1,56 @@
 import Input from 'hew/Input';
-import { Modal } from 'hew/Modal';
+import { Modal, ModalCloseReason } from 'hew/Modal';
 import Select, { SelectValue } from 'hew/Select';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import { useToast } from 'hew/Toast';
-import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Loadable } from 'hew/utils/loadable';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getModels, postModelVersion } from 'services/api';
-import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import { postModelVersion } from 'services/api';
 import { Metadata, ModelItem } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { validateDetApiEnum } from 'utils/service';
 import { pluralizer } from 'utils/string';
 
 import css from './RegisterCheckpointModal.module.scss';
 
 interface ModalProps {
+  checkpoints: string[];
+  closeModal: (reason: ModalCloseReason) => void;
+  models: Loadable<ModelItem[]>;
   modelName?: string;
-  onClose: () => void;
+  openModelModal?: () => void;
 }
 
 interface ModalState {
-  checkpoints?: string[];
   expandDetails: boolean;
   metadata: Metadata;
-  models: ModelItem[];
   selectedModelName?: string;
   tags: string[];
   versionDescription: string;
   versionName: string;
-  visible: boolean;
 }
 
 const INITIAL_MODAL_STATE = {
   expandDetails: false,
   metadata: {},
-  models: [],
   tags: [],
   versionDescription: '',
   versionName: '',
-  visible: false,
 };
 
 const RegisterCheckpointModal: React.FC<ModalProps> = ({
-  onClose,
+  checkpoints,
+  closeModal,
+  openModelModal,
+  models,
   modelName: selectedModelName,
 }) => {
-  const [canceler] = useState(new AbortController());
   const { openToast } = useToast();
   const { canCreateModelVersion } = usePermissions();
-  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
 
   const selectedModelNumVersions = useMemo(() => {
@@ -72,8 +68,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
 
   const registerModelVersion = useCallback(
     async (state: ModalState) => {
-      const { selectedModelName, versionDescription, tags, metadata, versionName, checkpoints } =
-        state;
+      const { selectedModelName, versionDescription, tags, metadata, versionName } = state;
       if (!selectedModelName || !checkpoints) return;
       try {
         if (checkpoints.length === 1) {
@@ -91,7 +86,6 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
 
           if (!response) return;
 
-          onClose();
           openToast({
             description: `"${versionName || `Version ${selectedModelNumVersions + 1}`} registered"`,
             link: (
@@ -114,7 +108,6 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
               modelName: selectedModelName,
             });
           }
-          onClose();
           openToast({
             description: `${checkpoints.length} versions registered`,
             link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
@@ -129,7 +122,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
         });
       }
     },
-    [selectedModelNumVersions, openToast, onClose],
+    [checkpoints, selectedModelNumVersions, openToast],
   );
 
   const handleOk = useCallback(async () => {
@@ -161,43 +154,11 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
   }, []);
 
   const launchNewModelModal = useCallback(() => {
-    onClose();
-  }, [onClose]);
+    openModelModal?.();
+    closeModal('ok');
+  }, [openModelModal, closeModal]);
 
-  const fetchModels = useCallback(async () => {
-    if (!modalState.visible) return;
-    try {
-      const response = await getModels(
-        {
-          archived: false,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: validateDetApiEnum(
-            V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-          ),
-        },
-        { signal: canceler.signal },
-      );
-      setModels((prev) => {
-        const loadedModels = Loaded(response.models);
-        if (_.isEqual(prev, loadedModels)) return prev;
-        return loadedModels;
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch models.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler.signal, modalState.visible]);
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
-
-  const { checkpoints, expandDetails, metadata, tags, versionDescription, versionName } =
-    modalState;
+  const { expandDetails, metadata, tags, versionDescription, versionName } = modalState;
 
   return (
     <Modal
@@ -206,7 +167,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
         handler: handleOk,
         text: 'Register Checkpoint',
       }}
-      title={`Checkpoint ${checkpoints?.[0]}`}>
+      title="Register Checkpoint">
       <div className={css.base}>
         <p className={css.directions}>Save this checkpoint to the Model Registry</p>
         <div>

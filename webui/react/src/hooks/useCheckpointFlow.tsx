@@ -1,10 +1,21 @@
 import { useModal } from 'hew/Modal';
-import { useCallback } from 'react';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useState } from 'react';
 
 import CheckpointModalComponent from 'components/CheckpointModal';
 import ModelCreateModal from 'components/ModelCreateModal';
 import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
-import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentConfig } from 'types';
+import { getModels } from 'services/api';
+import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import {
+  CheckpointWorkloadExtended,
+  CoreApiGenericCheckpoint,
+  ExperimentConfig,
+  ModelItem,
+} from 'types';
+import handleError, { ErrorType } from 'utils/error';
+import { validateDetApiEnum } from 'utils/service';
 
 interface Return {
   checkpointModalComponent: React.ReactNode;
@@ -26,21 +37,56 @@ export const useCheckpointFlow = ({
   const checkpointModal = useModal(CheckpointModalComponent);
   const registerModal = useModal(RegisterCheckpointModal);
 
+  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [canceler] = useState(new AbortController());
+
   const openCheckpoint = useCallback(() => {
     checkpointModal.open();
   }, [checkpointModal]);
 
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await getModels(
+        {
+          archived: false,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: validateDetApiEnum(
+            V1GetModelsRequestSortBy,
+            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+          ),
+        },
+        { signal: canceler.signal },
+      );
+      setModels((prev) => {
+        const loadedModels = Loaded(response.models);
+        if (isEqual(prev, loadedModels)) return prev;
+        return loadedModels;
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [canceler.signal]);
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
+
   return {
     checkpointModalComponent: (
-      <checkpointModal.Component
-        checkpoint={checkpoint}
-        config={config}
-        title={title}
-        onClose={handleOnCloseCheckpoint}
+      <checkpointModal.Component checkpoint={checkpoint} config={config} title={title} />
+    ),
+    modelCreateModalComponent: <modelCreateModal.Component />,
+    openCheckpoint,
+    registerModalComponent: (
+      <registerModal.Component
+        checkpoints={[]}
+        closeModal={() => registerModal.close('')}
+        models={models}
       />
     ),
-    modelCreateModalComponent: <modelCreateModal.Component onClose={() => 1} />,
-    openCheckpoint,
-    registerModalComponent: <registerModal.Component onClose={() => 1} />,
   };
 };

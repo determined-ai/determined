@@ -2,6 +2,7 @@ import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import Dropdown from 'hew/Dropdown';
 import { useModal } from 'hew/Modal';
+import { isEqual } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
@@ -295,7 +296,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         { signal: canceler.signal },
       );
       setTotal(responsePagination?.total || 0);
-      setTrials(experimentTrials);
+      if (!isEqual(trials, experimentTrials)) {
+        setTrials(experimentTrials);
+      }
       setIsLoading(false);
     } catch (e) {
       handleError(e, {
@@ -305,7 +308,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       });
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [experiment.id, canceler, settings, stateString, trials]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
