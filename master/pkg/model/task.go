@@ -82,6 +82,8 @@ type Task struct {
 	Job      *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
 	ParentID *TaskID `db:"parent_id"`
 
+	State *TaskState `db:"task_state"`
+
 	Config *string `db:"config"`
 }
 
@@ -142,6 +144,19 @@ type AcceleratorData struct {
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState string
+
+type TaskState string
+
+const (
+	TaskStateActive            TaskState = "ACTIVE"
+	TaskStateCanceled          TaskState = "CANCELED"
+	TaskStateCompleted         TaskState = "COMPLETED"
+	TaskStateError             TaskState = "ERROR"
+	TaskStatePaused            TaskState = "PAUSED"
+	TaskStateStoppingCanceled  TaskState = "STOPPING_CANCELED"
+	TaskStateStoppingCompleted TaskState = "STOPPING_COMPLETED"
+	TaskStateStoppingError     TaskState = "STOPPING_ERROR"
+)
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {

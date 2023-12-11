@@ -210,6 +210,7 @@ func (a *apiServer) CreateGenericTask(
 			LogVersion: model.CurrentTaskLogVersion,
 			Config:     ptrs.Ptr(string(configBytes)),
 			ParentID:   parentTaskID,
+			State:      ptrs.Ptr(model.TaskStateActive),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
@@ -249,6 +250,9 @@ func (a *apiServer) CreateGenericTask(
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
 			syslog.WithError(err).Error("deleting group priority change registry")
 		}
+		if err := a.SetTaskState(ctx, taskID, model.TaskStateCompleted); err != nil {
+			syslog.WithError(err).Error("deleting group priority change registry")
+		}
 	}
 
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
@@ -277,4 +281,24 @@ func (a *apiServer) CreateGenericTask(
 		TaskId:   string(taskID),
 		Warnings: pkgCommand.LaunchWarningToProto(warnings),
 	}, nil
+}
+
+func (a *apiServer) PropegateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
+	query := fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	)
+	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id;`, taskID, state)
+	_, err := db.Bun().NewRaw(query).Exec(ctx)
+	return err
+}
+
+func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
+	_, err := db.Bun().NewUpdate().Table("tasks").
+		Set("task_state = ?", state).
+		Where("task_id = ?", taskID).
+		Exec(ctx)
+	return err
 }
