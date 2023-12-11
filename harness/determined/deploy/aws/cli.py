@@ -188,7 +188,14 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         )
         assert isinstance(args.lore_version, str)
         if is_full_git_commit_hash(args.lore_version):
-            args.lore_version = args.lore_version[:7]
+            short_hash = args.lore_version[:7]
+            print(
+                colored(
+                    f"Lore tags are not full commit hashes. Using {short_hash} instead.",
+                    "yellow",
+                )
+            )
+            args.lore_version = short_hash
 
     if args.deployment_type not in {
         constants.deployment_types.EFS,
