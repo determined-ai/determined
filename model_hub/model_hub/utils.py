@@ -97,3 +97,12 @@ def to_namespace(input_dict: dict) -> types.SimpleNamespace:
         else:
             setattr(namespace, key, value)
     return namespace
+
+
+def from_namespace(input_namespace: types.SimpleNamespace) -> dict:
+    output_dict = input_namespace.__dict__
+    for key, val in output_dict.items():
+        if isinstance(val, types.SimpleNamespace):
+            output_dict[key] = from_namespace(val)
+
+    return output_dict
