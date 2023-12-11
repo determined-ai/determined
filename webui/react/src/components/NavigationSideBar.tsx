@@ -117,7 +117,7 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const GASLinkOn = useFeature().isOn('GAS');
+  const gasLinkOn = useFeature().isOn('GAS');
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
@@ -191,7 +191,7 @@ const NavigationSideBar: React.FC = () => {
       },
     ];
 
-    if (GASLinkOn) {
+    if (gasLinkOn) {
       bottomItems.push({
         external: true,
         icon: 'cloud',
@@ -204,7 +204,7 @@ const NavigationSideBar: React.FC = () => {
       bottom: bottomItems,
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, GASLinkOn]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding, gasLinkOn]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
