@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	mrand "math/rand"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -59,6 +61,93 @@ func createTestTrial(
 	outTrial, err := db.TrialByID(context.TODO(), trial.ID)
 	require.NoError(t, err)
 	return outTrial, task
+}
+
+func TestSlowdown(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	trialID := 1
+	if false {
+		trial, _ := createTestTrial(t, api, curUser)
+		trialID = trial.ID
+	}
+
+	//
+	_ = curUser
+	n, err := db.Bun().NewSelect().Table("metrics").Where("trial_id = ?", trialID).Count(ctx)
+	require.NoError(t, err)
+
+	tri := model.Trial{}
+	err = db.Bun().NewSelect().Model(&tri).Where("id = ?", trialID).Scan(ctx, &tri)
+	require.NoError(t, err)
+	trialRunID := tri.RunID
+	// require.Equal(t, tri.RunID, 0)
+
+	// fmt.Println(n)
+	for i := n + 1; i < n+100*1000; i++ {
+		// Add step that will be archived.
+		metrics, err := structpb.NewStruct(map[string]any{"archive_metric_dont_appear": "3.14"})
+		require.NoError(t, err)
+		require.NoError(t, db.SingleDB().AddTrainingMetrics(ctx, &trialv1.TrialMetrics{
+			TrialId:        int32(trialID),
+			TrialRunId:     int32(trialRunID),
+			StepsCompleted: int32(i) + 1,
+			Metrics: &commonv1.Metrics{
+				AvgMetrics: metrics,
+			},
+		}))
+		trialRunID++
+		require.NoError(t, db.SingleDB().UpdateTrialRunID(trialID, trialRunID))
+
+		randomFloats := []string{
+			"training/loss",
+			"runtime/step_duration",
+			"runtime/tflops_megatron",
+			"runtime/tflops_megatron_layout_independent",
+			"runtime/tflops_bloom",
+			"runtime/tflops_electra",
+			"runtime/tflops_aleph_alpha",
+			"runtime/mfu_palm",
+			"training/global_grad_norm",
+			"training/learning_rate_weight_decay_params",
+			"training/learning_rate_no_weight_decay_params",
+			"accuracy",
+		}
+
+		fields := map[string]*structpb.Value{
+			"epoch": {
+				Kind: &structpb.Value_NumberValue{
+					NumberValue: float64(i),
+				},
+			},
+		}
+		for _, r := range randomFloats {
+			fields[r] = &structpb.Value{
+				Kind: &structpb.Value_NumberValue{
+					NumberValue: float64(mrand.Float64()),
+				},
+			}
+		}
+
+		trainMetrics := &commonv1.Metrics{
+			AvgMetrics: &structpb.Struct{
+				Fields: fields,
+			},
+		}
+
+		_, err = api.ReportTrialMetrics(ctx,
+			&apiv1.ReportTrialMetricsRequest{
+				Metrics: &trialv1.TrialMetrics{
+					TrialId:        int32(trialID), // int32(trial.ID),
+					TrialRunId:     int32(trialRunID),
+					StepsCompleted: int32(i),
+					Metrics:        trainMetrics,
+				},
+				// model.TrainingMetricGroup.ToString(), //
+				Group: model.ValidationMetricGroup.ToString(),
+			})
+		require.NoError(t, err)
+	}
 }
 
 func createTestTrialWithMetrics(

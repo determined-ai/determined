@@ -1,0 +1,8 @@
+name: slowdown
+entrypoint: python3 train.py
+searcher:
+  name: single
+  metric: x
+  smaller_is_better: true
+  max_length: 1
+max_restarts: 0

@@ -143,6 +143,7 @@ WHERE trial_id = $1
 
 	);
 	`, trialID, runID, lastProcessedBatch, pType)
+	// fmt.Println(trialID, runID, lastProcessedBatch, pType)
 	if err != nil {
 		return 0, errors.Wrap(err, "archiving metrics")
 	}

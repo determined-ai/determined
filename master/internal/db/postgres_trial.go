@@ -332,20 +332,45 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 	return nil
 }
 
+var timeSinceLastLog time.Time
+
 func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) (rollbacks int, err error) {
+	vStart := time.Now()
+
+	// fmt.Println(time.Now().Sub(timeSinceLastLog))
+	shouldLog := time.Now().Sub(timeSinceLastLog) > time.Second && m.Metrics.AvgMetrics.Fields["epoch"] != nil
+	if shouldLog {
+		timeSinceLastLog = time.Now()
+		fmt.Printf("epoch=%d\n", int(m.Metrics.AvgMetrics.Fields["epoch"].AsInterface().(float64)))
+	}
+
+	t := time.Now()
 	isValidation := mGroup == model.ValidationMetricGroup
 	mBody := newMetricsBody(m.Metrics.AvgMetrics, m.Metrics.BatchMetrics, isValidation)
+	if shouldLog {
+		fmt.Println(time.Now().Sub(t), "isValidation mBody")
+	}
 
+	t = time.Now()
 	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 		return rollbacks, err
 	}
+	if shouldLog {
+		fmt.Println(time.Now().Sub(t), "checkTrialRunID")
+	}
 
+	t = time.Now()
 	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
 		mGroup); err != nil {
 		return rollbacks, err
 	}
+	if shouldLog {
+		fmt.Println(time.Now().Sub(t), "rollbackMetrics")
+	}
+
+	t = time.Now()
 	var summaryMetrics model.JSONObj
 	err = tx.QueryRowContext(ctx, `
 		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
@@ -353,11 +378,18 @@ func (db *PgDB) _addTrialMetricsTx(
 	if err != nil {
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)
 	}
+	if shouldLog {
+		fmt.Println(time.Now().Sub(t), "summaryMetrics scan")
+	}
 
+	t = time.Now()
 	metricRowID, addedMetrics, err := db.addMetricsWithMerge(ctx, tx,
 		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mGroup)
 	if err != nil {
 		return rollbacks, err
+	}
+	if shouldLog {
+		fmt.Println(time.Now().Sub(t), "addMetricsWithMerge")
 	}
 
 	switch {
@@ -375,6 +407,7 @@ func (db *PgDB) _addTrialMetricsTx(
 			return rollbacks, errors.Wrap(err, "error on rollback compute of summary metrics")
 		}
 	default: // no rollbacks happened.
+		t = time.Now()
 		summaryMetricsJSONPath := model.TrialSummaryMetricsJSONPath(mGroup)
 		if _, ok := summaryMetrics[summaryMetricsJSONPath]; !ok {
 			summaryMetrics[summaryMetricsJSONPath] = map[string]any{}
@@ -397,11 +430,20 @@ func (db *PgDB) _addTrialMetricsTx(
 
 			summaryMetricsForGroup = make(map[string]any)
 		}
+		if shouldLog {
+			fmt.Println(time.Now().Sub(t), "summary metrics create")
+		}
+
+		t = time.Now()
 		summaryMetrics[summaryMetricsJSONPath] = calculateNewSummaryMetrics(
 			summaryMetricsForGroup,
 			addedMetrics.AvgMetrics,
 		)
+		if shouldLog {
+			fmt.Println(time.Now().Sub(t), "calculate new summary metrics")
+		}
 
+		t = time.Now()
 		var latestValidationID *int
 		if isValidation {
 			var searcherMetric *string
@@ -417,7 +459,11 @@ func (db *PgDB) _addTrialMetricsTx(
 				latestValidationID = &metricRowID
 			}
 		}
+		if shouldLog {
+			fmt.Println(time.Now().Sub(t), "validations ID")
+		}
 
+		t = time.Now()
 		for k, v := range summaryMetrics {
 			switch v := v.(type) {
 			case model.JSONObj, map[string]any:
@@ -432,7 +478,11 @@ func (db *PgDB) _addTrialMetricsTx(
 				summaryMetrics[k] = model.JSONObj{}
 			}
 		}
+		if shouldLog {
+			fmt.Println(time.Now().Sub(t), "summary metrics debug check")
+		}
 
+		t = time.Now()
 		if _, err := tx.ExecContext(ctx, `
 UPDATE runs SET total_batches = GREATEST(total_batches, $2),
 summary_metrics = $3, summary_metrics_timestamp = NOW(),
@@ -441,8 +491,12 @@ WHERE id = $1;
 `, m.TrialId, m.StepsCompleted, summaryMetrics, latestValidationID); err != nil {
 			return rollbacks, errors.Wrap(err, "updating trial total batches")
 		}
+		if shouldLog {
+			fmt.Println(time.Now().Sub(t), "update runs")
+		}
 	}
 
+	t = time.Now()
 	if isValidation {
 		if err := setTrialBestValidation(
 			tx, int(m.TrialId),
@@ -451,6 +505,15 @@ WHERE id = $1;
 			return rollbacks, errors.Wrap(err, "updating trial best validation")
 		}
 	}
+	if shouldLog {
+		fmt.Println(time.Now().Sub(t), "set best trial validation")
+	}
+
+	if shouldLog {
+		fmt.Println(time.Now().Sub(vStart), "ALL")
+		fmt.Println("")
+	}
+
 	return rollbacks, nil
 }
 

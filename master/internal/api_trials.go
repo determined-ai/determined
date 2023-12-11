@@ -1330,6 +1330,8 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialMetrics(
 	ctx context.Context, req *apiv1.ReportTrialMetricsRequest,
 ) (*apiv1.ReportTrialMetricsResponse, error) {
+	// start := time.Now()
+
 	metricGroup := model.MetricGroup(req.Group)
 	if err := metricGroup.Validate(); err != nil {
 		return nil, err
@@ -1341,6 +1343,8 @@ func (a *apiServer) ReportTrialMetrics(
 	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricGroup); err != nil {
 		return nil, err
 	}
+
+	// fmt.Println("TIME TOOK", time.Now().Sub(start))
 	return &apiv1.ReportTrialMetricsResponse{}, nil
 }
 
