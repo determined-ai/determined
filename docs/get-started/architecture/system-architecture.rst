@@ -7,11 +7,11 @@
 Determined consists of a single **master** and one or more **agents**. There is typically one agent
 per compute server; a single machine can serve as both a master and an agent.
 
-.. image:: /assets/images/_det-ai-sys-arch-network-light.png
+.. image:: /assets/images/_det-ai-sys-arch-01-dark.png
    :class: only-dark
    :alt: Determined AI system architecture diagram describing master and agent components including network connectivity traffic in dark mode
 
-.. image:: /assets/images/_det-ai-sys-arch-network-light.png
+.. image:: /assets/images/_det-ai-sys-arch-01-light.png
    :class: only-light
    :alt: Determined AI system architecture diagram describing master and agent components including network connectivity traffic in light mode
 
@@ -53,7 +53,7 @@ are responsible for reporting the status of the **task container** to the master
 When the system is configured according to the :ref:`setup requirements
 <advanced-setup-requirements>`, network traffic flows to and from the master and agents as follows:
 
--  **Master-Compute Connection**: Compute nodes connect to the master node on the master's
+-  **Master-Compute Connection**: Compute (agent) nodes connect to the master node on the master's
    configured port.
 
 -  **Inter-Compute Connection**: Compute nodes can connect to each other on any port.
