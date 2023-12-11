@@ -15,8 +15,8 @@ Version 0.26.6
 
 **Release Date:** December 07, 2023
 
-Version `0.26.6` is a re-release of `0.26.5`, which encountered some technical difficulties. The
-contents of `0.26.6` are the same as `0.26.5`. See release notes for `0.26.5` below.
+Version 0.26.6 is a re-release of 0.26.5, which encountered some technical difficulties. The
+contents of 0.26.6 are the same as 0.26.5. See release notes for 0.26.5 below.
 
 Version 0.26.5
 ==============
