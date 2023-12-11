@@ -6427,12 +6427,6 @@ export interface V1PatchMasterConfigRequest {
  * @interface V1PatchMasterConfigResponse
  */
 export interface V1PatchMasterConfigResponse {
-    /**
-     * The config file loaded by the master.
-     * @type {any}
-     * @memberof V1PatchMasterConfigResponse
-     */
-    config: any;
 }
 /**
  * PatchModel is a partial update to a model with only name required.

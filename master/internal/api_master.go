@@ -89,6 +89,8 @@ func (a *apiServer) GetMasterConfig(
 	}, err
 }
 
+// This endpoint will only make ephermeral changes to the master config,
+// that will be lost if the user restarts the cluster.
 func (a *apiServer) PatchMasterConfig(
 	ctx context.Context, req *apiv1.PatchMasterConfigRequest,
 ) (*apiv1.PatchMasterConfigResponse, error) {
@@ -109,25 +111,14 @@ func (a *apiServer) PatchMasterConfig(
 	for _, path := range paths {
 		switch path {
 		case "log.level":
-			a.m.config.Log.Level = logger.ProtoToLogrusLevel(req.Config.Log.Level).String()
 			logger.SetLogrus(a.m.config.Log)
 		case "log.color":
-			a.m.config.Log.Color = req.Config.Log.Color
 			logger.SetLogrus(a.m.config.Log)
 		default:
 			panic(fmt.Sprintf("unsupported or invalid field: %s", path))
 		}
 	}
-
-	config, err := a.m.config.Printable()
-	if err != nil {
-		return nil, errors.Wrap(err, "error parsing master config")
-	}
-	configStruct := &structpb.Struct{}
-	err = protojson.Unmarshal(config, configStruct)
-	return &apiv1.PatchMasterConfigResponse{
-		Config: configStruct,
-	}, err
+	return &apiv1.PatchMasterConfigResponse{}, err
 }
 
 func (a *apiServer) MasterLogs(

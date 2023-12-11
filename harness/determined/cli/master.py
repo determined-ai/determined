@@ -29,16 +29,22 @@ def set_master_config(args: Namespace) -> None:
         log_config.level = bindings.v1LogLevel[args.log_level]
         field_masks.append("log.level")
 
+    if len(field_masks) == 0:
+        raise cli.errors.CliError(
+            "Please provide at least one argument to set master config. "
+            + "Currently, the supported fields are --log.level and --log.color."
+        )
+
     master_config = bindings.v1Config(log=log_config)
     req = bindings.v1PatchMasterConfigRequest(
         config=master_config, fieldMask=bindings.protobufFieldMask(paths=field_masks)
     )
-    resp = bindings.patch_PatchMasterConfig(cli.setup_session(args), body=req).config
-
-    if args.json:
-        render.print_json(resp)
-    else:
-        print(util.yaml_safe_dump(resp, default_flow_style=False))
+    bindings.patch_PatchMasterConfig(cli.setup_session(args), body=req)
+    cli.warn(
+        "This will only make ephermeral changes to the master config, "
+        + "that will be lost if the user restarts the cluster."
+    )
+    print("Successfully made changes to the master config.")
 
 
 def get_master(args: Namespace) -> None:
@@ -95,9 +101,7 @@ args_description = [
                                      if lvl != bindings.v1LogLevel.UNSPECIFIED]),
                         Arg("--log.color", type=str, default=argparse.SUPPRESS, required=False,
                             help="set log color in the master config", dest="log_color",
-                            choices=["on", "off"]),
-                        Group(cli.output_format_args["json"],
-                              cli.output_format_args["yaml"])
+                            choices=["on", "off"])
                     ]
                 ),
                 Group(cli.output_format_args["json"],

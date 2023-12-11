@@ -8722,29 +8722,6 @@ class v1PatchMasterConfigRequest(Printable):
             out["fieldMask"] = None if self.fieldMask is None else self.fieldMask.to_json(omit_unset)
         return out
 
-class v1PatchMasterConfigResponse(Printable):
-    """Response to PatchMasterConfigRequest."""
-
-    def __init__(
-        self,
-        *,
-        config: "typing.Dict[str, typing.Any]",
-    ):
-        self.config = config
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchMasterConfigResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "config": obj["config"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "config": self.config,
-        }
-        return out
-
 class v1PatchModel(Printable):
     """PatchModel is a partial update to a model with only name required."""
     description: "typing.Optional[str]" = None
@@ -19605,7 +19582,7 @@ def patch_PatchMasterConfig(
     session: "api.Session",
     *,
     body: "v1PatchMasterConfigRequest",
-) -> "v1PatchMasterConfigResponse":
+) -> None:
     """Patch master config."""
     _params = None
     _resp = session._do_request(
@@ -19619,7 +19596,7 @@ def patch_PatchMasterConfig(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1PatchMasterConfigResponse.from_json(_resp.json())
+        return
     raise APIHttpError("patch_PatchMasterConfig", _resp)
 
 def patch_PatchModel(
