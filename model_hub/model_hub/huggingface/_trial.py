@@ -163,7 +163,7 @@ def default_load_dataset(
         Dataset returned from hf_datasets.load_dataset.
     """
     (data_config,) = hf_parse.parse_dict_to_dataclasses(
-        (hf_parse.DatasetKwargs,), data_config, output_as_dict=True
+        (hf_parse.DatasetKwargs,), data_config, as_dict=True
     )
     # This method is common in nearly all main HF examples.
     if data_config["dataset_name"] is not None:

@@ -273,7 +273,7 @@ class LRSchedulerKwargs:
 def parse_dict_to_dataclasses(
     dataclass_types: Tuple[Any, ...],
     args: Union[Dict[str, Any]],
-    output_as_dict: bool = False,
+    as_dict: bool = False,
 ) -> Tuple[Any, ...]:
     """
     This function will fill in values for a dataclass if the target key is found
@@ -283,7 +283,7 @@ def parse_dict_to_dataclasses(
     Args:
         dataclass_types: dataclasses with expected attributes.
         args: arguments that will be parsed to each of the dataclass_types.
-        output_as_dict: if true will return AttrDict instead of dict
+        as_dict: if true will return AttrDict instead of dict
 
     Returns:
         One namespace for each dataclass with keys filled in from args if found.
@@ -293,7 +293,7 @@ def parse_dict_to_dataclasses(
         keys = {f.name for f in dataclasses.fields(dtype) if f.init}
         inputs = {k: v for k, v in args.items() if k in keys}
         obj = dtype(**inputs)
-        if output_as_dict:
+        if as_dict:
             try:
                 obj = utils.AttrDict(obj.as_dict())
             except AttributeError:
@@ -317,7 +317,7 @@ def default_parse_config_tokenizer_model_kwargs(hparams: Dict) -> Tuple[Dict, Di
     if not isinstance(hparams, utils.AttrDict):
         hparams = utils.AttrDict(hparams)
     config_args, tokenizer_args, model_args = parse_dict_to_dataclasses(
-        (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, output_as_dict=True
+        (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, as_dict=True
     )
 
     # If a pretrained_model_name_or_path is provided it will be parsed to the

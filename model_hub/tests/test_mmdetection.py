@@ -127,6 +127,7 @@ class TestMMDetTrial:
     ) -> None:
         hparams = context.get_hparams()
         hparams["merge_config"] = "./tests/fixtures/merge_config.py"
+        trial.hparams = hparams
         new_cfg = trial.build_mmdet_config()
         assert new_cfg.optimizer.type == "AdamW"
         assert new_cfg.optimizer_config.grad_clip.max_norm == 0.1
@@ -140,6 +141,7 @@ class TestMMDetTrial:
             "optimizer_config.grad_clip.max_norm": 35,
             "optimizer_config.grad_clip.norm_type": 2,
         }
+        trial.hparams = hparams
         new_cfg = trial.build_mmdet_config()
         assert new_cfg.optimizer_config.grad_clip.max_norm == 35
         assert new_cfg.optimizer_config.grad_clip.norm_type == 2
