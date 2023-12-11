@@ -949,7 +949,8 @@ func TestDeleteExperiments(t *testing.T) {
 		var ids []int
 		err := Bun().NewSelect().Table(table).Column(column).Scan(context.Background(), &ids)
 		require.NoError(t, err)
-		require.Equal(t, num, len(ids))
+		require.Equalf(t, num, len(ids),
+			"table=%s column=%s removed=%+v num=%d", table, column, removed, num)
 
 		for _, id := range ids {
 			_, inRm := removed[id]
