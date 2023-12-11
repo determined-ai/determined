@@ -295,6 +295,18 @@ func (a *apiServer) PropegateTaskState(ctx context.Context, taskID model.TaskID,
 	return err
 }
 
+func (a *apiServer) FindRoot(ctx context.Context, taskID model.TaskID) (model.TaskID, error) {
+	out := struct {
+		taskID model.TaskID `bun:"table:root"`
+	}{}
+	tree_query := db.Bun().NewSelect().TableExpr("tasks t").Join("my_tree on m.task_id=t.parent_id")
+	task_query := db.Bun().NewSelect().Table("tasks").ColumnExpr("task_id, parent_id, task_id as root").Where("parent_id IS NULL").UnionAll(tree_query)
+	err := db.Bun().NewSelect().Model(&out).
+		WithRecursive("my_tree", task_query).
+		Table("my_tree").Column("root").Where("task_id = ?", taskID).Scan(ctx)
+	return out.taskID, err
+}
+
 func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
 	_, err := db.Bun().NewUpdate().Table("tasks").
 		Set("task_state = ?", state).
