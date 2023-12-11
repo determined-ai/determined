@@ -183,8 +183,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 "yellow",
             )
         )
-        assert isinstance(args.lore_version, str)
-        if is_full_git_commit_hash(args.lore_version):
+        if args.lore_version is not None and is_full_git_commit_hash(args.lore_version):
             short_hash = args.lore_version[:7]
             print(
                 colored(
