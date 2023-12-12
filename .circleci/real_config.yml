@@ -1532,7 +1532,7 @@ jobs:
       - react-get-deps
       - run: npx playwright install --with-deps && npx playwright install chrome
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
-      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} PLAYWRIGHT_BROWSERS_PATH=0 npm run e2e --prefix webui/react
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
