@@ -1,4 +1,10 @@
-import Select, { DefaultOptionType, LabeledValue, Option, SelectProps, SelectValue } from 'hew/Select';
+import Select, {
+  DefaultOptionType,
+  LabeledValue,
+  Option,
+  SelectProps,
+  SelectValue,
+} from 'hew/Select';
 import React, { useCallback, useMemo } from 'react';
 
 import { ALL_VALUE } from 'types';

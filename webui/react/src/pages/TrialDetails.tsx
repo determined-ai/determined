@@ -221,13 +221,13 @@ const TrialDetailsComp: React.FC = () => {
       breadcrumb={[
         workspaceName && experiment?.workspaceId !== 1
           ? {
-            breadcrumbName: workspaceName,
-            path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
-          }
+              breadcrumbName: workspaceName,
+              path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
+            }
           : {
-            breadcrumbName: 'Uncategorized Experiments',
-            path: paths.projectDetails(1),
-          },
+              breadcrumbName: 'Uncategorized Experiments',
+              path: paths.projectDetails(1),
+            },
         {
           breadcrumbName: experiment?.name ?? '',
           path: paths.experimentDetails(experiment.id),

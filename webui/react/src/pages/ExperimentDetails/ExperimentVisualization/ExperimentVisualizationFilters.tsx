@@ -78,8 +78,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       return [
         ExperimentVisualizationType.LearningCurve === type,
         ExperimentVisualizationType.HpHeatMap === type ||
-        ExperimentVisualizationType.HpParallelCoordinates === type ||
-        ExperimentVisualizationType.HpScatterPlots === type,
+          ExperimentVisualizationType.HpParallelCoordinates === type ||
+          ExperimentVisualizationType.HpScatterPlots === type,
         [
           ExperimentVisualizationType.HpHeatMap,
           ExperimentVisualizationType.HpParallelCoordinates,
@@ -87,8 +87,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           ExperimentVisualizationType.LearningCurve,
         ].includes(type),
         ExperimentVisualizationType.HpHeatMap === type ||
-        ExperimentVisualizationType.HpParallelCoordinates === type ||
-        ExperimentVisualizationType.HpScatterPlots === type,
+          ExperimentVisualizationType.HpParallelCoordinates === type ||
+          ExperimentVisualizationType.HpScatterPlots === type,
         ExperimentVisualizationType.HpHeatMap === type,
         [
           ExperimentVisualizationType.HpHeatMap,

@@ -100,7 +100,7 @@ const useModalHyperparameterSearch = ({
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
-    SEARCH_METHODS.ASHA,
+      SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -434,7 +434,9 @@ const useModalHyperparameterSearch = ({
           }
           name="searcher">
           <RadioGroup
-            options={Object.values(SEARCH_METHODS).map((m) => { return { icon: m.icon as IconName, id: m.name, label: m.displayName }; })}
+            options={Object.values(SEARCH_METHODS).map((m) => {
+              return { icon: m.icon as IconName, id: m.name, label: m.displayName };
+            })}
             radioType="row"
             value={searcher.name}
             onChange={(value) => handleSelectSearcher(value as string)}
@@ -498,44 +500,40 @@ const useModalHyperparameterSearch = ({
             <InputNumber max={maxSlots} min={0} precision={0} />
           </Form.Item>
         </div>
-        {
-          searcher.name === 'adaptive_asha' && (
-            <Form.Item
-              initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
-              label={
-                <div className={css.labelWithTooltip}>
-                  Early stopping mode
-                  <Icon
-                    name="info"
-                    showTooltip
-                    title="How aggressively to perform early stopping of underperforming trials"
-                  />
-                </div>
-              }
-              name="mode"
-              rules={[{ required: true }]}>
-              <Select>
-                <Option value="aggressive">Aggressive</Option>
-                <Option value="standard">Standard</Option>
-                <Option value="conservative">Conservative</Option>
-              </Select>
-            </Form.Item>
-          )
-        }
-        {
-          searcher.name === 'adaptive_asha' && (
-            <Form.Item
-              initialValue={experiment.configRaw.searcher?.stop_once ?? true}
-              name="stop_once"
-              rules={[{ required: true }]}
-              valuePropName="checked">
-              <Checkbox>
-                Stop once - Only stop trials one time when there is enough evidence to terminate
-                training (recommended for faster search)
-              </Checkbox>
-            </Form.Item>
-          )
-        }
+        {searcher.name === 'adaptive_asha' && (
+          <Form.Item
+            initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
+            label={
+              <div className={css.labelWithTooltip}>
+                Early stopping mode
+                <Icon
+                  name="info"
+                  showTooltip
+                  title="How aggressively to perform early stopping of underperforming trials"
+                />
+              </div>
+            }
+            name="mode"
+            rules={[{ required: true }]}>
+            <Select>
+              <Option value="aggressive">Aggressive</Option>
+              <Option value="standard">Standard</Option>
+              <Option value="conservative">Conservative</Option>
+            </Select>
+          </Form.Item>
+        )}
+        {searcher.name === 'adaptive_asha' && (
+          <Form.Item
+            initialValue={experiment.configRaw.searcher?.stop_once ?? true}
+            name="stop_once"
+            rules={[{ required: true }]}
+            valuePropName="checked">
+            <Checkbox>
+              Stop once - Only stop trials one time when there is enough evidence to terminate
+              training (recommended for faster search)
+            </Checkbox>
+          </Form.Item>
+        )}
         <h2 className={css.sectionTitle}>Set Training Limits</h2>
         <div className={css.inputRow}>
           <Form.Item

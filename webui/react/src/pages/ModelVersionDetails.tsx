@@ -304,13 +304,13 @@ const ModelVersionDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [
     isUncategorized
       ? {
-        breadcrumbName: 'Uncategorized Experiments',
-        path: paths.projectDetails(1),
-      }
+          breadcrumbName: 'Uncategorized Experiments',
+          path: paths.projectDetails(1),
+        }
       : {
-        breadcrumbName: workspace.name,
-        path: paths.workspaceDetails(workspace.id),
-      },
+          breadcrumbName: workspace.name,
+          path: paths.workspaceDetails(workspace.id),
+        },
     {
       breadcrumbName: 'Model Registry',
       path: isUncategorized

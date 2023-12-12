@@ -133,8 +133,8 @@ const WorkspaceDetails: React.FC = () => {
     () =>
       groups
         ? groups
-          .map((groupDetails) => groupDetails.group)
-          .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
+            .map((groupDetails) => groupDetails.group)
+            .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
         : [],
     [groups, groupsAssignedDirectlyIds],
   );

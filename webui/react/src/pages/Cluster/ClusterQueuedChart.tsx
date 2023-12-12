@@ -37,7 +37,10 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
         bodyBorder
         options={
           <RadioGroup
-            options={[{ id: 7, label: '7 days' }, { id: 30, label: '30 days' }]}
+            options={[
+              { id: 7, label: '7 days' },
+              { id: 30, label: '30 days' },
+            ]}
             value={viewDays}
             onChange={(value) => setViewDays(value as number)}
           />
