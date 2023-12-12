@@ -28,6 +28,7 @@ interface Props {
   trial: TrialDetails;
 }
 
+// prettier-ignore
 const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, trial }: Props) => {
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
   const [trialNeverData, setTrialNeverData] = useState<boolean>(false);
@@ -152,14 +153,14 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
             ? option.content
             : option.menuOptions.map((menuOption) => (
               <Button
-                  disabled={menuOption.disabled || !menuOption.onClick}
-                  icon={menuOption?.icon}
-                  key={menuOption.key}
-                  loading={menuOption.isLoading}
-                  onClick={menuOption.onClick}>
+                disabled={menuOption.disabled || !menuOption.onClick}
+                icon={menuOption?.icon}
+                key={menuOption.key}
+                loading={menuOption.isLoading}
+                onClick={menuOption.onClick}>
                 {renderOptionLabel(menuOption)}
               </Button>
-              )),
+            )),
           key: option.key,
           menuOptions: option.menuOptions,
         }))}

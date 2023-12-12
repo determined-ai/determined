@@ -142,6 +142,7 @@ const headerActions = [
   Action.Delete,
 ];
 
+// prettier-ignore
 const ExperimentDetailsHeader: React.FC<Props> = ({
   experiment,
   fetchExperimentDetails,
@@ -280,60 +281,60 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     () =>
       experiment?.config.searcher.name === 'single'
         ? {
-            content: (
-              <Dropdown
-                menu={[
-                  {
-                    key: 'Create New Experiment',
-                    label: 'Create New Experiment...',
-                  },
-                  {
-                    key: 'Reactivate Current Trial',
-                    label: 'Reactivate Current Trial...',
-                  },
-                ]}
-                onClick={(key: string) => {
-                  if (key === 'Create New Experiment') ContinueExperimentModal.open();
-                  if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
-                }}>
-                <Button disabled={experiment.unmanaged}>Continue Trial</Button>
-              </Dropdown>
-            ),
-            menuOptions: [
-              {
-                key: 'create-new-experiment',
-                label: experiment.unmanaged ? (
-                  <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
-                ) : (
-                  'Create New Experiment'
-                ),
-                onClick: ContinueExperimentModal.open,
-              },
-              {
-                key: 'reactivate-current-trial',
-                label: experiment.unmanaged ? (
-                  <Tooltip content={UNMANAGED_MESSAGE}>Reactivate Current Trial</Tooltip>
-                ) : (
-                  'Reactivate Current Trial'
-                ),
-                onClick: ReactivateExperimentModal.open,
-              },
-            ],
-          }
+          content: (
+            <Dropdown
+              menu={[
+                {
+                  key: 'Create New Experiment',
+                  label: 'Create New Experiment...',
+                },
+                {
+                  key: 'Reactivate Current Trial',
+                  label: 'Reactivate Current Trial...',
+                },
+              ]}
+              onClick={(key: string) => {
+                if (key === 'Create New Experiment') ContinueExperimentModal.open();
+                if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
+              }}>
+              <Button disabled={experiment.unmanaged}>Continue Trial</Button>
+            </Dropdown>
+          ),
+          menuOptions: [
+            {
+              key: 'create-new-experiment',
+              label: experiment.unmanaged ? (
+                <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+              ) : (
+                'Create New Experiment'
+              ),
+              onClick: ContinueExperimentModal.open,
+            },
+            {
+              key: 'reactivate-current-trial',
+              label: experiment.unmanaged ? (
+                <Tooltip content={UNMANAGED_MESSAGE}>Reactivate Current Trial</Tooltip>
+              ) : (
+                'Reactivate Current Trial'
+              ),
+              onClick: ReactivateExperimentModal.open,
+            },
+          ],
+        }
         : {
-            menuOptions: [
-              {
-                disabled: experiment.unmanaged,
-                key: 'continue-trial',
-                label: experiment.unmanaged ? (
-                  <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
-                ) : (
-                  'Continue Trial'
-                ),
-                onClick: ContinueTrialModal.open,
-              },
-            ],
-          },
+          menuOptions: [
+            {
+              disabled: experiment.unmanaged,
+              key: 'continue-trial',
+              label: experiment.unmanaged ? (
+                <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+              ) : (
+                'Continue Trial'
+              ),
+              onClick: ContinueTrialModal.open,
+            },
+          ],
+        },
     [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal],
   );
 
@@ -419,9 +420,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 content:
                   erroredTrialCount && erroredTrialCount > 0
                     ? `Retry will attempt to complete ${erroredTrialCount} errored ${pluralizer(
-                        erroredTrialCount,
-                        'trial',
-                      )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
+                      erroredTrialCount,
+                      'trial',
+                    )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
                     : 'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
                 okText: 'Retry',
                 onConfirm: async () => {
@@ -732,14 +733,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             ? option.content
             : option.menuOptions.map((menuOption) => (
               <Button
-                  disabled={menuOption.disabled || !menuOption.onClick}
-                  icon={menuOption?.icon}
-                  key={menuOption.key}
-                  loading={menuOption.isLoading}
-                  onClick={menuOption.onClick}>
+                disabled={menuOption.disabled || !menuOption.onClick}
+                icon={menuOption?.icon}
+                key={menuOption.key}
+                loading={menuOption.isLoading}
+                onClick={menuOption.onClick}>
                 {renderOptionLabel(menuOption)}
               </Button>
-              )),
+            )),
           key: option.key,
           menuOptions: option.menuOptions,
         }))}
