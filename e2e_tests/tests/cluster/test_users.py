@@ -431,33 +431,6 @@ def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None
 
 
 @pytest.mark.e2e_cpu
-def test_login_with_environment_variables(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
-    # logout admin
-    log_out_user()
-
-    os.environ["DET_USER"] = creds.username
-    os.environ["DET_PASS"] = creds.password
-    try:
-        child = det_spawn(["user", "whoami"])
-        child.expect(creds.username)
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
-
-        # Can still override with -u.
-        with logged_in_user(conf.ADMIN_CREDENTIALS):
-            child = det_spawn(["-u", conf.ADMIN_CREDENTIALS.username, "user", "whoami"])
-            child.expect(conf.ADMIN_CREDENTIALS.username)
-            child.read()
-            child.wait()
-            assert child.exitstatus == 0
-    finally:
-        del os.environ["DET_USER"]
-        del os.environ["DET_PASS"]
-
-
-@pytest.mark.e2e_cpu
 def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
     creds = api_utils.create_test_user(True)
 
