@@ -1044,4 +1044,6 @@ def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 120) -> 
             return
         else:
             time.sleep(1)
+    for trial in experiment_trials(experiment_id):
+        print_trial_logs(trial.trial.id)
     pytest.fail("Experiment did not reach at least one checkpoint after {} seconds".format(timeout))
