@@ -260,7 +260,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
 
         self.grad_clip_fn = None
 
-        if optimizer_kwargs.max_grad_norm > 0:
+        if optimizer_kwargs.max_grad_norm > 0:  # type: ignore
             self.grad_clip_fn = lambda x: torch.nn.utils.clip_grad_norm_(
                 x, optimizer_kwargs.max_grad_norm
             )
