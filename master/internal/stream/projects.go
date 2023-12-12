@@ -94,7 +94,7 @@ func ProjectCollectStartupMsgs(
 		})
 		return out, nil
 	}
-	// step 0: get user's permitted access scopes
+	// get user's permitted access scopes
 	accessMap, err := AuthZProvider.Get().GetProjectStreamableScopes(ctx, user)
 	if err != nil {
 		return nil, err
@@ -106,12 +106,11 @@ func ProjectCollectStartupMsgs(
 		}
 	}
 
-	// step 1: calculate all ids matching this subscription
+	// get project messages
 	var data []*ProjectMsg
 	q := db.Bun().NewSelect().Model(&data).Order("id ASC")
 	q = permFilter(q, accessMap, accessScopes)
 
-	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
 	if len(spec.WorkspaceIDs) > 0 {
 		ws.Include("workspace_id in (?)", bun.In(spec.WorkspaceIDs))
@@ -132,7 +131,7 @@ func ProjectCollectStartupMsgs(
 		exist = append(exist, int64(pm.ID))
 	}
 
-	// step 2: figure out what was missing and what has appeared
+	// figure out what was missing and what has appeared
 	missing, appeared, err := stream.ProcessKnown(known, exist)
 	if err != nil {
 		return nil, err
@@ -161,7 +160,7 @@ func ProjectCollectStartupMsgs(
 		}
 	}
 
-	// step 4: emit deletions and updates to the client
+	// emit deletions and updates to the client
 	out = append(out, stream.DeleteMsg{
 		Key:     ProjectsDeleteKey,
 		Deleted: missing,
