@@ -275,27 +275,33 @@ func (a *apiServer) CreateGenericTask(
 	}, nil
 }
 
-func (a *apiServer) PropegateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
+func (a *apiServer) PropegateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) ([]model.TaskID, error) {
+	out := struct {
+		taskIDs []model.TaskID `bun:"table:id"`
+	}{}
 	query := fmt.Sprintf(`
 	WITH RECURSIVE cte as (
 		SELECT * FROM tasks WHERE task_id='%s'
 		UNION ALL
 		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
 	)
-	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id;`, taskID, state)
-	_, err := db.Bun().NewRaw(query).Exec(ctx)
-	return err
+	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id RETURNING cte.task_id as id;`, taskID, state)
+	_, err := db.Bun().NewRaw(query).Exec(ctx, &out)
+	return out.taskIDs, err
 }
 
 func (a *apiServer) FindRoot(ctx context.Context, taskID model.TaskID) (model.TaskID, error) {
 	out := struct {
 		taskID model.TaskID `bun:"table:root"`
 	}{}
-	tree_query := db.Bun().NewSelect().TableExpr("tasks t").Join("my_tree on m.task_id=t.parent_id")
-	task_query := db.Bun().NewSelect().Table("tasks").ColumnExpr("task_id, parent_id, task_id as root").Where("parent_id IS NULL").UnionAll(tree_query)
-	err := db.Bun().NewSelect().Model(&out).
-		WithRecursive("my_tree", task_query).
-		Table("my_tree").Column("root").Where("task_id = ?", taskID).Scan(ctx)
+	query := fmt.Sprintf(`
+	WITH RECURSIVE my_tree as (
+		SELECT task_id, parent_id, task_id as root FROM tasks WHERE parent_id IS NULL
+		UNION ALL
+		SELECT t.task_id, t.parent_id, m.root FROM tasks t JOIN my_tree m on m.task_id=t.parent_id
+	)
+	SELECT root FROM my_tree WHERE task_id='%s'`, taskID)
+	err := db.Bun().NewRaw(query).Scan(ctx, &out)
 	return out.taskID, err
 }
 
