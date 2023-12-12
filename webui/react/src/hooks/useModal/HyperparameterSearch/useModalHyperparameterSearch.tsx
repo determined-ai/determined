@@ -1,11 +1,12 @@
-import { ModalFuncProps, Radio, Space, Typography } from 'antd';
+import { ModalFuncProps, Space, Typography } from 'antd';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
-import Icon from 'hew/Icon';
+import Icon, { IconName } from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
+import RadioGroup from 'hew/RadioGroup';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
@@ -63,17 +64,17 @@ interface SearchMethod {
 const SEARCH_METHODS: Record<string, SearchMethod> = {
   ASHA: {
     displayName: 'Adaptive',
-    icon: <Icon name="searcher-adaptive" title="Adaptive" />,
+    icon: 'searcher-adaptive',
     name: 'adaptive_asha',
   },
   Grid: {
     displayName: 'Grid',
-    icon: <Icon name="searcher-grid" title="Grid" />,
+    icon: 'searcher-grid',
     name: 'grid',
   },
   Random: {
     displayName: 'Random',
-    icon: <Icon name="searcher-random" title="Random" />,
+    icon: 'searcher-random',
     name: 'random',
   },
 } as const;
@@ -432,18 +433,12 @@ const useModalHyperparameterSearch = ({
             </div>
           }
           name="searcher">
-          <Radio.Group className={css.searcherGroup} optionType="button">
-            {Object.values(SEARCH_METHODS).map((searcherOption) => (
-              <Button
-                column
-                icon={searcherOption.icon}
-                key={searcherOption.name}
-                selected={searcher.name === searcherOption.name}
-                onClick={() => handleSelectSearcher(searcherOption.name)}>
-                {searcherOption.displayName}
-              </Button>
-            ))}
-          </Radio.Group>
+          <RadioGroup
+            options={Object.values(SEARCH_METHODS).map((m) => { return { icon: m.icon as IconName, id: m.name, label: m.displayName }; })}
+            radioType="row"
+            value={searcher.name}
+            onChange={(value) => handleSelectSearcher(value as string)}
+          />
         </Form.Item>
         <Form.Item
           initialValue={experiment.name}
@@ -503,40 +498,44 @@ const useModalHyperparameterSearch = ({
             <InputNumber max={maxSlots} min={0} precision={0} />
           </Form.Item>
         </div>
-        {searcher.name === 'adaptive_asha' && (
-          <Form.Item
-            initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
-            label={
-              <div className={css.labelWithTooltip}>
-                Early stopping mode
-                <Icon
-                  name="info"
-                  showTooltip
-                  title="How aggressively to perform early stopping of underperforming trials"
-                />
-              </div>
-            }
-            name="mode"
-            rules={[{ required: true }]}>
-            <Select>
-              <Option value="aggressive">Aggressive</Option>
-              <Option value="standard">Standard</Option>
-              <Option value="conservative">Conservative</Option>
-            </Select>
-          </Form.Item>
-        )}
-        {searcher.name === 'adaptive_asha' && (
-          <Form.Item
-            initialValue={experiment.configRaw.searcher?.stop_once ?? true}
-            name="stop_once"
-            rules={[{ required: true }]}
-            valuePropName="checked">
-            <Checkbox>
-              Stop once - Only stop trials one time when there is enough evidence to terminate
-              training (recommended for faster search)
-            </Checkbox>
-          </Form.Item>
-        )}
+        {
+          searcher.name === 'adaptive_asha' && (
+            <Form.Item
+              initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
+              label={
+                <div className={css.labelWithTooltip}>
+                  Early stopping mode
+                  <Icon
+                    name="info"
+                    showTooltip
+                    title="How aggressively to perform early stopping of underperforming trials"
+                  />
+                </div>
+              }
+              name="mode"
+              rules={[{ required: true }]}>
+              <Select>
+                <Option value="aggressive">Aggressive</Option>
+                <Option value="standard">Standard</Option>
+                <Option value="conservative">Conservative</Option>
+              </Select>
+            </Form.Item>
+          )
+        }
+        {
+          searcher.name === 'adaptive_asha' && (
+            <Form.Item
+              initialValue={experiment.configRaw.searcher?.stop_once ?? true}
+              name="stop_once"
+              rules={[{ required: true }]}
+              valuePropName="checked">
+              <Checkbox>
+                Stop once - Only stop trials one time when there is enough evidence to terminate
+                training (recommended for faster search)
+              </Checkbox>
+            </Form.Item>
+          )
+        }
         <h2 className={css.sectionTitle}>Set Training Limits</h2>
         <div className={css.inputRow}>
           <Form.Item
