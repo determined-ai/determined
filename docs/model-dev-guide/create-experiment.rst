@@ -1,8 +1,8 @@
 .. _experiments:
 
-###################
- Submit Experiment
-###################
+#################################
+ Create and Submit an Experiment
+#################################
 
 You run training code by submitting your code to a cluster and running it as an experiment.
 
@@ -33,9 +33,9 @@ training launcher must implement the following logic:
 
 These requirements ensure that distributed training jobs do not hang after a single worker failure.
 
-**********************
- Configure a Launcher
-**********************
+************************
+ Configuring a Launcher
+************************
 
 The entry point of a model is configured in the :ref:`Experiment Configuration
 <experiment-configuration>` file and specifies the path of the model and how it should be launched.
@@ -212,9 +212,9 @@ Example:
 
    dlprof --mode=simple python3 -m determined.launch.autohorovod --trial model_def:MnistTrial
 
-**********************
- Create an Experiment
-**********************
+************************
+ Creating an Experiment
+************************
 
 The CLI is the recommended way to create an experiment, although you can also use the WebUI to
 create from an existing experiment or trial. To create an experiment:
@@ -278,9 +278,9 @@ the saved checkpoint is loaded and training continues from the saved state.
 
 .. _job-queue:
 
-********************
- View the Job Queue
-********************
+***********************
+ Viewing the Job Queue
+***********************
 
 The Determined Queue Management system extends scheduler functionality to offer better visibility
 and control over scheduling decisions. It does this using the Job Queue, which provides better
@@ -323,9 +323,9 @@ The WebUI and the CLI display a table of results, ordered by scheduling order. T
 does not represent the job priority. In addition to job order, the table includes the job states and
 number of slots allocated to each job.
 
-**********************
- Modify the Job Queue
-**********************
+*************************
+ Modifying the Job Queue
+*************************
 
 The job queue can be changed in the WebUI **Job Queue** section or by using the CLI ``det job
 update`` command. You can make changes on a per-job basis by selecting a job and a job operation.

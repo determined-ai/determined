@@ -102,15 +102,15 @@ class Authentication:
             token = None
 
         # Special case: use token provided from the container environment if:
-        # * No token was obtained from the token store already,
-        # * No user was explicitly requested, or the requested user matches the token available
-        # in the container environment, and
-        # * There is a token available from the container environment.
+        # - No token was obtained from the token store already,
+        # - There is a token available from the container environment, and
+        # - No user was explicitly requested, or the requested user matches the token available
+        #   in the container environment.
         if (
             token is None
-            and requested_user in (None, util.get_det_username_from_env())
             and util.get_det_username_from_env() is not None
             and util.get_det_user_token_from_env() is not None
+            and requested_user in (None, util.get_det_username_from_env())
         ):
             session_user = util.get_det_username_from_env()
             assert session_user
@@ -125,8 +125,6 @@ class Authentication:
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
         if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD
-        elif session_user is None:
-            session_user = input("Username: ")
 
         if password is None:
             password = getpass.getpass("Password for user '{}': ".format(session_user))

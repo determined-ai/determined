@@ -79,6 +79,22 @@ func TaskByID(ctx context.Context, tID model.TaskID) (*model.Task, error) {
 	return &t, nil
 }
 
+// AddNonExperimentTasksContextDirectory adds a context directory for a non experiment task.
+func AddNonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID, bytes []byte) error {
+	if bytes == nil {
+		bytes = []byte{}
+	}
+
+	if _, err := Bun().NewInsert().Model(&model.TaskContextDirectory{
+		TaskID:           tID,
+		ContextDirectory: bytes,
+	}).Exec(ctx); err != nil {
+		return fmt.Errorf("persisting context directory files for task %s: %w", tID, err)
+	}
+
+	return nil
+}
+
 // NonExperimentTasksContextDirectory returns a non experiment's context directory.
 func NonExperimentTasksContextDirectory(ctx context.Context, tID model.TaskID) ([]byte, error) {
 	res := &model.TaskContextDirectory{}

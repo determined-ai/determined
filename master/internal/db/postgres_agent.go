@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
@@ -26,7 +27,7 @@ func EndAgentStats(a *model.AgentStats) error {
 		"end_time = (SELECT CURRENT_TIMESTAMP)").Where(
 		"agent_id = ?", a.AgentID).Where("end_time IS NULL").Exec(context.TODO())
 	if err != nil {
-		return err
+		return fmt.Errorf("ending agent stats %+v: %w", a, err)
 	}
 	count, err := res.RowsAffected()
 	if count != 1 {

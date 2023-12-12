@@ -431,33 +431,6 @@ def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None
 
 
 @pytest.mark.e2e_cpu
-def test_login_with_environment_variables(clean_auth: None, login_admin: None) -> None:
-    creds = api_utils.create_test_user(True)
-    # logout admin
-    log_out_user()
-
-    os.environ["DET_USER"] = creds.username
-    os.environ["DET_PASS"] = creds.password
-    try:
-        child = det_spawn(["user", "whoami"])
-        child.expect(creds.username)
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
-
-        # Can still override with -u.
-        with logged_in_user(conf.ADMIN_CREDENTIALS):
-            child = det_spawn(["-u", conf.ADMIN_CREDENTIALS.username, "user", "whoami"])
-            child.expect(conf.ADMIN_CREDENTIALS.username)
-            child.read()
-            child.wait()
-            assert child.exitstatus == 0
-    finally:
-        del os.environ["DET_USER"]
-        del os.environ["DET_PASS"]
-
-
-@pytest.mark.e2e_cpu
 def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
     creds = api_utils.create_test_user(True)
 
@@ -1165,3 +1138,41 @@ def test_user_edit_no_fields(clean_auth: None, login_admin: None) -> None:
     child.wait()
     child.close()
     assert child.status != 0
+
+
+@pytest.mark.e2e_cpu
+def test_user_list(clean_auth: None, login_admin: None) -> None:
+    u_patch = api_utils.create_test_user(False)
+    command = [
+        "user",
+        "ls",
+    ]
+
+    child = det_spawn(command)
+    assert u_patch.username in str(child.read())
+    # Deactivate user
+    activate_deactivate_user(active=False, target_user=u_patch.username)
+    command = [
+        "user",
+        "ls",
+    ]
+
+    # User should no longer appear in list
+    child = det_spawn(command)
+    assert u_patch.username not in str(child.read())
+
+
+@pytest.mark.e2e_cpu
+def test_user_list_with_inactive(clean_auth: None, login_admin: None) -> None:
+    u_patch = api_utils.create_test_user(False)
+    command = ["user", "ls", "--all"]
+
+    child = det_spawn(command)
+    assert u_patch.username in str(child.read())
+    # Deactivate user
+    activate_deactivate_user(active=False, target_user=u_patch.username)
+    command = ["user", "ls", "--all"]
+
+    # User should still appear in list
+    child = det_spawn(command)
+    assert u_patch.username in str(child.read())
