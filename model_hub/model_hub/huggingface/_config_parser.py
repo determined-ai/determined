@@ -324,11 +324,11 @@ def default_parse_config_tokenizer_model_kwargs(hparams: Dict) -> Tuple[Dict, Di
     # arguments for config, tokenizer, and model.  Then, if specific names are
     # provided for config, tokenizer, or model we will override it.
     if hasattr(hparams, "config_name"):
-        config_args.pretrained_model_name_or_path = hparams.config_name  # type: ignore
+        config_args.pretrained_model_name_or_path = hparams.config_name
     if hasattr(hparams, "tokenizer_name"):
-        tokenizer_args.pretrained_model_name_or_path = hparams.tokenizer_name  # type: ignore
+        tokenizer_args.pretrained_model_name_or_path = hparams.tokenizer_name
     if hasattr(hparams, "tokenizer_name"):
-        model_args.pretrained_model_name_or_path = hparams.model_name  # type: ignore
+        model_args.pretrained_model_name_or_path = hparams.model_name
     assert (
         config_args.pretrained_model_name_or_path is not None
         and tokenizer_args.pretrained_model_name_or_path is not None

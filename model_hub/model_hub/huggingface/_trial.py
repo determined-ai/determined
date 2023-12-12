@@ -216,11 +216,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
         if not hasattr(self, "hparams"):
-            self.hparams = utils.AttrDict(context.get_hparams())  # type: ignore
+            self.hparams = utils.AttrDict(context.get_hparams())
         if not hasattr(self, "data_config"):
-            self.data_config = utils.AttrDict(context.get_data_config())  # type: ignore
+            self.data_config = utils.AttrDict(context.get_data_config())
         if not hasattr(self, "exp_config"):
-            self.exp_config = utils.AttrDict(context.get_experiment_config())  # type: ignore
+            self.exp_config = utils.AttrDict(context.get_experiment_config())
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
 
@@ -260,7 +260,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
 
         self.grad_clip_fn = None
 
-        if optimizer_kwargs.max_grad_norm > 0:  # type: ignore
+        if optimizer_kwargs.max_grad_norm > 0:
             self.grad_clip_fn = lambda x: torch.nn.utils.clip_grad_norm_(
                 x, optimizer_kwargs.max_grad_norm
             )
