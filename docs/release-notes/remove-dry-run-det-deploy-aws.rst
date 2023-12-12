@@ -1,4 +1,4 @@
 **Breaking Changes**
 
--  CLI: The `--dry-run` option for `det deploy aws` has been removed. Previously, this option had no
-   effect, as AWS CloudFormation does not provide a utility to preview staged changes.
+-  CLI: Remove the ``--dry-run`` option for ``det deploy aws``. This option has no effect because
+   AWS CloudFormation does not provide a utility to preview staged changes.
