@@ -222,14 +222,13 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 		return nil, fmt.Errorf("user info authenticationClaim missing")
 	}
 
-	if cs["display_name"] != nil {
-		displayName, ok := cs["display_name"].(string)
+	if cs[s.config.DisplayNameClaimName] != nil {
+		displayName, ok := cs[s.config.DisplayNameClaimName].(string)
 		if !ok {
 			return nil, fmt.Errorf("user info displayName value was not a string")
 		}
 		c.DisplayName = displayName
 	}
-
 	if cs[s.config.GroupsClaimName] != nil {
 		gs, ok := cs[s.config.GroupsClaimName].([]interface{})
 		if !ok {
