@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 
 	"github.com/google/uuid"
@@ -58,7 +60,7 @@ func TestMockSocket(t *testing.T) {
 	err = socket.Write("final")
 	require.NoError(t, err)
 	var msgs []string
-	socket.ReadUntil(t, &msgs, "final")
+	socket.ReadUntilFound(t, &msgs, []string{"final"})
 	require.NoError(t, err)
 	require.Equal(t, 2, len(msgs))
 	require.Equal(t, "test", msgs[0])
@@ -80,7 +82,8 @@ func basicStartupTest(t *testing.T, testCase startupTestCase, socket *mockSocket
 
 	// read messages collected during startup + sync msg
 	var data []string
-	socket.ReadUntil(t, &data, testCase.expectedSync)
+	socket.ReadUntilFound(t, &data, []string{testCase.expectedSync})
+
 	deletions, upserts, syncs := splitMsgs(t, data)
 	require.Len(t, syncs, 1)
 
@@ -139,38 +142,61 @@ func runStartupTest(t *testing.T, testCases []startupTestCase) {
 	require.NoError(t, errgrp.Wait())
 }
 
-func buildStartupMsg(syncID string, knownsMap map[string]string, subscriptionsMap map[string][]int) StartupMsg {
+func buildStartupMsg(
+	syncID string,
+	knownsMap map[string]string,
+	subscriptionsMap map[string]map[string][]int,
+) StartupMsg {
 	var knownKeySet KnownKeySet
 	var subscriptionSpecSet SubscriptionSpecSet
 
+	// populate knownKeySet
 	for knownType, known := range knownsMap {
+		var typedSet *string
 		switch knownType {
-		case "trials":
-			knownKeySet.Trials = known
+		case TrialsUpsertKey:
+			typedSet = &knownKeySet.Trials
+		case ExperimentsUpsertKey:
+			typedSet = &knownKeySet.Experiments
+		case CheckpointsUpsertKey:
+			typedSet = &knownKeySet.Checkpoints
+		case ProjectsUpsertKey:
+			typedSet = &knownKeySet.Projects
+			// no metrics, since append-only
+		}
+		*typedSet = known
+	}
+
+	// populate subscriptionSpec
+	for subscriptionType, subscriptionIDs := range subscriptionsMap {
+		switch subscriptionType {
+		case TrialsUpsertKey:
 			subscriptionSpecSet.Trials = &TrialSubscriptionSpec{
-				TrialIds:      subscriptionsMap["trials"],
-				ExperimentIds: subscriptionsMap["experiments"],
+				TrialIds:      subscriptionIDs[TrialsUpsertKey],
+				ExperimentIds: subscriptionIDs[ExperimentsUpsertKey],
 				Since:         0,
 			}
-		case "experiments":
-			knownKeySet.Experiments = known
+		case ExperimentsUpsertKey:
 			subscriptionSpecSet.Experiments = &ExperimentSubscriptionSpec{
-				ExperimentIds: subscriptionsMap["experiments"],
+				ExperimentIds: subscriptionIDs[ExperimentsUpsertKey],
 				Since:         0,
 			}
-		case "checkpoints":
-			knownKeySet.Checkpoints = known
+		case CheckpointsUpsertKey:
 			subscriptionSpecSet.Checkpoints = &CheckpointSubscriptionSpec{
-				TrialIDs:      subscriptionsMap["trials"],
-				ExperimentIDs: subscriptionsMap["experiments"],
+				TrialIDs:      subscriptionIDs[TrialsUpsertKey],
+				ExperimentIDs: subscriptionIDs[ExperimentsUpsertKey],
 				Since:         0,
 			}
 		case "projects":
-			knownKeySet.Projects = known
 			subscriptionSpecSet.Projects = &ProjectSubscriptionSpec{
-				ProjectIDs:   subscriptionsMap["projects"],
-				WorkspaceIDs: subscriptionsMap["workspaces"],
+				ProjectIDs:   subscriptionIDs["projects"],
+				WorkspaceIDs: subscriptionIDs["workspaces"],
 				Since:        0,
+			}
+		case MetricsUpsertKey:
+			subscriptionSpecSet.Metrics = &MetricSubscriptionSpec{
+				TrialIds: subscriptionIDs[TrialsUpsertKey],
+				Since:    0,
 			}
 		}
 	}
@@ -188,40 +214,40 @@ func TestTrialStartup(t *testing.T) {
 	testCases := []startupTestCase{
 		{
 			description: "trial subscription with known trials",
-			startupMsg: buildStartupMsg("1", map[string]string{"trials": "1,2,3"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("1", map[string]string{TrialsUpsertKey: "1,2,3"},
+				map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: trials_deleted, deleted: "},
 		},
 		{
 			description: "trial subscription with incomplete known trials",
-			startupMsg: buildStartupMsg("2", map[string]string{"trials": "1,2,4"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("2", map[string]string{TrialsUpsertKey: "1,2,4"},
+				map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 2",
 			expectedUpserts:   []string{trialUpsert},
 			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with trial ids subscription and known trials",
-			startupMsg: buildStartupMsg("3", map[string]string{"trials": "1,2,3,4"},
-				map[string][]int{"trials": {1, 2, 3, 4}}),
+			startupMsg: buildStartupMsg("3", map[string]string{TrialsUpsertKey: "1,2,3,4"},
+				map[string]map[string][]int{TrialsUpsertKey: {TrialsUpsertKey: {1, 2, 3, 4}}}),
 			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with trial ids subscription and incomplete known trials",
-			startupMsg: buildStartupMsg("4", map[string]string{"trials": "1,2,4"},
-				map[string][]int{"trials": {1, 2, 3, 4}}),
+			startupMsg: buildStartupMsg("4", map[string]string{TrialsUpsertKey: "1,2,4"},
+				map[string]map[string][]int{TrialsUpsertKey: {TrialsUpsertKey: {1, 2, 3, 4}}}),
 			expectedSync:      "key: sync_msg, sync_id: 4",
 			expectedUpserts:   []string{trialUpsert},
 			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
 		},
 		{
 			description: "trial subscription with divergent known set and subscription",
-			startupMsg: buildStartupMsg("5", map[string]string{"trials": "1,2"},
-				map[string][]int{"trials": {3}}),
+			startupMsg: buildStartupMsg("5", map[string]string{TrialsUpsertKey: "1,2"},
+				map[string]map[string][]int{TrialsUpsertKey: {TrialsUpsertKey: {3}}}),
 			expectedSync:      "key: sync_msg, sync_id: 5",
 			expectedUpserts:   []string{trialUpsert},
 			expectedDeletions: []string{"key: trials_deleted, deleted: 1-2"},
@@ -261,6 +287,7 @@ func basicUpdateTest(
 	// read until we received the expected message
 	data := []string{}
 	socket.ReadUntilFound(t, &data, append(testCase.expectedUpserts, testCase.expectedDeletions...))
+	t.Logf("Read and split")
 	deletions, upserts, _ := splitMsgs(t, data)
 
 	// validate messages collected at startup
@@ -334,8 +361,8 @@ func TestTrialUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: update trial while subscribed to its events",
-				startupMsg: buildStartupMsg("1", map[string]string{"trials": "1,2,3"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("1", map[string]string{TrialsUpsertKey: "1,2,3"},
+					map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: trials_deleted, deleted: "},
@@ -352,8 +379,8 @@ func TestTrialUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: insert trial while subscribed to its events",
-				startupMsg: buildStartupMsg("2", map[string]string{"trials": "1,2,3"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("2", map[string]string{TrialsUpsertKey: "1,2,3"},
+					map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 2",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: trials_deleted, deleted: "},
@@ -367,8 +394,8 @@ func TestTrialUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: delete trial while subscribed to its events",
-				startupMsg: buildStartupMsg("3", map[string]string{"trials": "1,2,3,4"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("3", map[string]string{TrialsUpsertKey: "1,2,3,4"},
+					map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 3",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: trials_deleted, deleted: "},
@@ -384,8 +411,8 @@ func TestTrialUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: change experiment project",
-				startupMsg: buildStartupMsg("4", map[string]string{"trials": "1,2,3,4"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("4", map[string]string{TrialsUpsertKey: "1,2,3,4"},
+					map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 4",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
@@ -414,48 +441,48 @@ func TestCheckpointStartup(t *testing.T) {
 	testCases := []startupTestCase{
 		{
 			description: "checkpoint subscription with known checkpoints",
-			startupMsg: buildStartupMsg("1", map[string]string{"checkpoints": "1,2"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("1", map[string]string{CheckpointsUpsertKey: "1,2"},
+				map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
 		},
 		{
 			description: "checkpoint subscription with experiment id and known checkpoints",
-			startupMsg: buildStartupMsg("2", map[string]string{"checkpoints": "1,2,3"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("2", map[string]string{CheckpointsUpsertKey: "1,2,3"},
+				map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 2",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 3"},
 		},
 		{
 			description: "checkpoint subscription with trial ids and known checkpoints",
-			startupMsg: buildStartupMsg("3", map[string]string{"checkpoints": "1,2,3"},
-				map[string][]int{"trials": {1, 2}}),
+			startupMsg: buildStartupMsg("3", map[string]string{CheckpointsUpsertKey: "1,2,3"},
+				map[string]map[string][]int{CheckpointsUpsertKey: {TrialsUpsertKey: {1, 2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 3"},
 		},
 		{
 			description: "checkpoint subscription with incomplete known set",
-			startupMsg: buildStartupMsg("4", map[string]string{"checkpoints": "1,3"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("4", map[string]string{CheckpointsUpsertKey: "1,3"},
+				map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 4",
 			expectedUpserts:   []string{checkpointUpsert},
 			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 3"},
 		},
 		{
 			description: "checkpoint subscription with incomplete known set using trial IDs",
-			startupMsg: buildStartupMsg("5", map[string]string{"checkpoints": "1,3"},
-				map[string][]int{"trials": {1, 2, 3}}),
+			startupMsg: buildStartupMsg("5", map[string]string{CheckpointsUpsertKey: "1,3"},
+				map[string]map[string][]int{CheckpointsUpsertKey: {TrialsUpsertKey: {1, 2, 3}}}),
 			expectedSync:      "key: sync_msg, sync_id: 5",
 			expectedUpserts:   []string{checkpointUpsert},
 			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 3"},
 		},
 		{
 			description: "trial subscription with divergent known set and subscription",
-			startupMsg: buildStartupMsg("6", map[string]string{"checkpoints": "1"},
-				map[string][]int{"trials": {2}}),
+			startupMsg: buildStartupMsg("6", map[string]string{CheckpointsUpsertKey: "1"},
+				map[string]map[string][]int{CheckpointsUpsertKey: {TrialsUpsertKey: {2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 6",
 			expectedUpserts:   []string{checkpointUpsert},
 			expectedDeletions: []string{"key: checkpoints_deleted, deleted: 1"},
@@ -463,6 +490,55 @@ func TestCheckpointStartup(t *testing.T) {
 	}
 
 	runStartupTest(t, testCases)
+}
+
+func TestMetricInsert(t *testing.T) {
+	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+	t.Cleanup(dbCleanup)
+
+	type metric struct {
+		bun.BaseModel `bun:"table:metrics"`
+		ID            int
+		TrialID       int
+		TrialRunID    int
+		Metrics       map[string]any
+		TotalBatches  int
+		EndTime       time.Time
+		PartitionType db.MetricPartitionType
+		MetricGroup   model.MetricGroup
+	}
+
+	newMetric := metric{
+		ID:            1,
+		TrialID:       1,
+		TrialRunID:    1,
+		TotalBatches:  999999,
+		EndTime:       time.Now(),
+		PartitionType: db.GenericMetric,
+	}
+
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description:       "startup case for: insert metric while subscribed to relevant trial",
+				startupMsg:        buildStartupMsg("1", nil, map[string]map[string][]int{MetricsUpsertKey: {TrialsUpsertKey: {1}}}),
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{},
+			},
+			description: "insert metric while subscribed to relevant trial",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewInsert().Model(&newMetric),
+			},
+			// TODO (bugfix): expected upsert has workspace_id 0 because workspace_id is not being populated on db modify
+			expectedUpserts: []string{
+				"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+			},
+			expectedDeletions: []string{},
+		},
+	}
+
+	runUpdateTest(t, pgDB, testCases)
 }
 
 func TestCheckpointUpdate(t *testing.T) {
@@ -486,8 +562,8 @@ func TestCheckpointUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: update checkpoint while subscribed to its events",
-				startupMsg: buildStartupMsg("1", map[string]string{"checkpoints": "1"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("1", map[string]string{CheckpointsUpsertKey: "1"},
+					map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync: "key: sync_msg, sync_id: 1",
 				expectedUpserts: []string{"key: checkpoint, checkpoint_id: 2, state: COMPLETED, " +
 					"experiment_id: 1, trial_id: 2, workspace_id: 2"},
@@ -502,8 +578,8 @@ func TestCheckpointUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: insert checkpoint while subscribed to its events",
-				startupMsg: buildStartupMsg("2", map[string]string{"checkpoints": "1,2"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("2", map[string]string{CheckpointsUpsertKey: "1,2"},
+					map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 2",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
@@ -520,8 +596,8 @@ func TestCheckpointUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: delete checkpoint while subscribed to its events",
-				startupMsg: buildStartupMsg("3", map[string]string{"checkpoints": "1,2,3"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("3", map[string]string{CheckpointsUpsertKey: "1,2,3"},
+					map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 3",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
@@ -536,8 +612,8 @@ func TestCheckpointUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: change experiment project",
-				startupMsg: buildStartupMsg("4", map[string]string{"checkpoints": "1,2"},
-					map[string][]int{"experiments": {1}}),
+				startupMsg: buildStartupMsg("4", map[string]string{CheckpointsUpsertKey: "1,2"},
+					map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 4",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
@@ -562,32 +638,32 @@ func TestExperimentStartup(t *testing.T) {
 	testCases := []startupTestCase{
 		{
 			description: "experiment subscription with experiment id",
-			startupMsg: buildStartupMsg("1", map[string]string{"experiments": "1"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("1", map[string]string{ExperimentsUpsertKey: "1"},
+				map[string]map[string][]int{ExperimentsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: experiments_deleted, deleted: "},
 		},
 		{
 			description: "experiment subscription with extra known experiments",
-			startupMsg: buildStartupMsg("2", map[string]string{"experiments": "1,3,4"},
-				map[string][]int{"experiments": {1}}),
+			startupMsg: buildStartupMsg("2", map[string]string{ExperimentsUpsertKey: "1,3,4"},
+				map[string]map[string][]int{ExperimentsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 2",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: experiments_deleted, deleted: 3-4"},
 		},
 		{
 			description: "experiment subscription with incomplete known experiments",
-			startupMsg: buildStartupMsg("3", map[string]string{"experiments": "1,4"},
-				map[string][]int{"experiments": {1, 2, 3, 4}}),
+			startupMsg: buildStartupMsg("3", map[string]string{ExperimentsUpsertKey: "1,4"},
+				map[string]map[string][]int{ExperimentsUpsertKey: {ExperimentsUpsertKey: {1, 2, 3, 4}}}),
 			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{expUpsertString},
 			expectedDeletions: []string{"key: experiments_deleted, deleted: 4"},
 		},
 		{
 			description: "experiment subscription with divergent known set",
-			startupMsg: buildStartupMsg("4", map[string]string{"experiments": "1"},
-				map[string][]int{"experiments": {2}}),
+			startupMsg: buildStartupMsg("4", map[string]string{ExperimentsUpsertKey: "1"},
+				map[string]map[string][]int{ExperimentsUpsertKey: {ExperimentsUpsertKey: {2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 4",
 			expectedUpserts:   []string{expUpsertString},
 			expectedDeletions: []string{"key: experiments_deleted, deleted: 1"},
