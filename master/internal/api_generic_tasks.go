@@ -200,7 +200,7 @@ func (a *apiServer) CreateGenericTask(
 
 		var parentTaskID *model.TaskID
 		if req.ParentId != nil {
-			parentTaskID = ptrs.Ptr(model.TaskID(*req.ParentId))
+			parentTaskID = (*model.TaskID)(req.ParentId)
 		}
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
 			TaskID:     taskID,
