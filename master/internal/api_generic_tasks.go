@@ -275,7 +275,7 @@ func (a *apiServer) CreateGenericTask(
 	}, nil
 }
 
-func (a *apiServer) PropegateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) ([]model.TaskID, error) {
+func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) ([]model.TaskID, error) {
 	out := struct {
 		taskIDs []model.TaskID `bun:"table:id"`
 	}{}
