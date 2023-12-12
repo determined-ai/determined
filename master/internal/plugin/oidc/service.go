@@ -119,14 +119,18 @@ func (s *Service) callback(c echo.Context) error {
 
 	ctx := context.TODO()
 	u, err := s.lookupUser(ctx, claims.AuthenticationClaim)
-	if errors.Is(err, db.ErrNotFound) && s.config.AutoProvisionUsers {
-		newUser, err := s.provisionUser(ctx, claims.AuthenticationClaim, claims.Groups)
-		if err != nil {
-			return err
+	if errors.Is(err, db.ErrNotFound) {
+		if s.config.AutoProvisionUsers {
+			newUser, err := s.provisionUser(ctx, claims.AuthenticationClaim, claims.Groups)
+			if err != nil {
+				return err
+			}
+			u = newUser
+		} else {
+			return errNotProvisioned
 		}
-		u = newUser
 	} else if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if !u.Remote {
@@ -179,7 +183,16 @@ func (s *Service) getOauthToken(c echo.Context) (*oauth2.Token, error) {
 		return nil, fmt.Errorf("oidc state did not match")
 	}
 
-	tok, err := s.oauth2Config.Exchange(c.Request().Context(), c.QueryParam("code"))
+	var tok *oauth2.Token
+	relayParam := c.QueryParam("relayState")
+	// Tolerate CLI login (needed, as of version 0.26.5)
+	if relayParam == cliRelayState || relayParam == deprecatedCliRelayState {
+		configCopy := s.oauth2Config
+		configCopy.RedirectURL = fmt.Sprintf("%s?relayState=%s", configCopy.RedirectURL, relayParam)
+		tok, err = configCopy.Exchange(c.Request().Context(), c.QueryParam("code"))
+	} else {
+		tok, err = s.oauth2Config.Exchange(c.Request().Context(), c.QueryParam("code"))
+	}
 	if err != nil {
 		if strings.Contains(err.Error(), "The authorization code is invalid or has expired.") {
 			return nil, fmt.Errorf("access denied, please check user assignments. %s", err.Error())
