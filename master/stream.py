@@ -15,7 +15,9 @@ print(f"Logged in as: {client._determined._session._auth.session.username}")
 token = client._determined._session._auth.session.token
 
 
-def create_payload(trials=None, experiments=None, checkpoints=None) -> bytes:
+def create_payload(
+    trials=None, experiments=None, checkpoints=None, projects=None, workspaces=None
+) -> bytes:
     sync_id = uuid.uuid4()
     payload_template = Template(
         """
@@ -39,12 +41,19 @@ def create_payload(trials=None, experiments=None, checkpoints=None) -> bytes:
                 "trial_ids": [$trial_ids],
                 "experiment_ids": [$experiment_ids],
                 "since": 0
+            },
+            "projects": {
+                "project_ids": [$project_ids],
+                "workspace_ids": [$workspace_ids],
+                "since": 0
             }
         },
         "known": {
             "trials":  "$trial_ids",
             "experiments": "$experiment_ids",
-            "checkpoints": "$checkpoint_ids"
+            "checkpoints": "$checkpoint_ids",
+            "projects": "$project_ids",
+            "workspaces": "$workspace_ids"
         }
     }
     """
@@ -60,12 +69,22 @@ def create_payload(trials=None, experiments=None, checkpoints=None) -> bytes:
         checkpoints = (
             input("Submit checkpoints to subscribe to (default: 1,2,3): ") or "1,2,3"
         )
+    if projects is None:
+        projects = (
+            input("Submit projects to subscribe to (default: 1,2,3): ") or "1,2,3"
+        )
+    if workspaces is None:
+        workspaces = (
+            input("Submit workspaces to subscribe to (default: 1,2,3): ") or "1,2,3"
+        )
 
     startupMsg = payload_template.substitute(
         sync_id=sync_id,
         trial_ids=trials,
         experiment_ids=experiments,
         checkpoint_ids=checkpoints,
+        project_ids=projects,
+        workspace_ids=workspaces,
     )
     print(f"startupMsg ({sync_id}) created")
     return startupMsg.encode()
