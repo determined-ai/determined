@@ -1,6 +1,7 @@
 import logging
 import os
 import urllib.parse
+import typing
 from typing import Any, Dict, List, Union
 
 import filelock
@@ -96,3 +97,10 @@ class AttrDict(dict):
             if isinstance(self[key], dict):
                 self[key] = AttrDict(self[key])
             super().__setattr__(key, self[key])
+
+    if typing.TYPE_CHECKING:
+        def __getattr__(self, item):
+            return True
+
+        def __setattr__(self, item, value):
+            return None
