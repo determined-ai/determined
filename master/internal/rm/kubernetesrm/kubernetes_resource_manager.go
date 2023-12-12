@@ -172,9 +172,8 @@ func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error
 }
 
 // GetAgent implements rm.ResourceManager.
-func (ResourceManager) GetAgent(*apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	// TODO(DET-9921): Ticket or add this, was missing previously.
-	return nil, rmerrors.ErrNotSupported
+func (k *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
+	return k.podsService.GetAgent(msg), nil
 }
 
 // GetAgents implements rm.ResourceManager.
@@ -293,15 +292,13 @@ func (k *ResourceManager) GetResourcePools(*apiv1.GetResourcePoolsRequest) (*api
 }
 
 // GetSlot implements rm.ResourceManager.
-// TODO(DET-9919): Implement GetSlot for Kubernetes RM.
-func (ResourceManager) GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
-	return nil, rmerrors.ErrNotSupported
+func (k *ResourceManager) GetSlot(msg *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
+	return k.podsService.GetSlot(msg), nil
 }
 
 // GetSlots implements rm.ResourceManager.
-// TODO(DET-9919): Implement GetSlots for Kubernetes RM.
-func (ResourceManager) GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
-	return nil, rmerrors.ErrNotSupported
+func (k *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
+	return k.podsService.GetSlots(msg), nil
 }
 
 // MoveJob implements rm.ResourceManager.

@@ -62,6 +62,8 @@ type podStatusUpdateCallback func(sproto.UpdatePodStatus)
 //	  +- events: sends updates about kubernetes events.
 //	  +- requestQueue: queues requests to create / delete kubernetes resources.
 //	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
+//
+// TODO(DET-10011): Give this literal a more intuitive name.
 type pods struct {
 	mu sync.RWMutex
 	wg waitgroupx.Group
@@ -76,7 +78,7 @@ type pods struct {
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 	credsDir              string
 
-	clientSet        *k8sClient.Clientset
+	clientSet        k8sClient.Interface
 	masterIP         string
 	masterPort       int32
 	masterTLSConfig  model.TLSClientConfig
@@ -277,10 +279,28 @@ func (p *pods) RefreshPodStates(msg refreshPodStates) error {
 	return p.refreshPodStates(msg.allocationID)
 }
 
+func (p *pods) GetSlots(msg *apiv1.GetSlotsRequest) *apiv1.GetSlotsResponse {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.handleGetSlotsRequest(msg.AgentId)
+}
+
+func (p *pods) GetSlot(msg *apiv1.GetSlotRequest) *apiv1.GetSlotResponse {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.handleGetSlotRequest(msg.AgentId, msg.SlotId)
+}
+
 func (p *pods) GetAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.handleGetAgentsRequest()
+}
+
+func (p *pods) GetAgent(msg *apiv1.GetAgentRequest) *apiv1.GetAgentResponse {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.handleGetAgentRequest(msg.AgentId)
 }
 
 func (p *pods) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
@@ -1221,6 +1241,30 @@ func (p *pods) cleanUpPodHandler(podHandler *pod) error {
 	return nil
 }
 
+func (p *pods) handleGetSlotsRequest(agentID string) *apiv1.GetSlotsResponse {
+	agentResp := p.handleGetAgentRequest(agentID)
+	if agentResp == nil {
+		p.syslog.Warnf("no agent with id %s", agentID)
+		return nil
+	}
+	return &apiv1.GetSlotsResponse{Slots: maps.Values(agentResp.Agent.Slots)}
+}
+
+func (p *pods) handleGetSlotRequest(agentID string, slotID string) *apiv1.GetSlotResponse {
+	agentResp := p.handleGetAgentRequest(agentID)
+	if agentResp == nil {
+		p.syslog.Warnf("no agent with id %s", agentID)
+		return nil
+	}
+	slots := agentResp.Agent.Slots
+	slot, ok := slots[slotID]
+	if !ok {
+		p.syslog.Warnf("no slot with id %s", slotID)
+		return nil
+	}
+	return &apiv1.GetSlotResponse{Slot: slot}
+}
+
 func (p *pods) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
 	nodeSummaries := p.summarizeClusterByNodes()
 	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
@@ -1231,6 +1275,20 @@ func (p *pods) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
 		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	return response
+}
+
+func (p *pods) handleGetAgentRequest(agentID string) *apiv1.GetAgentResponse {
+	nodeSummaries := p.summarizeClusterByNodes()
+	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
+	agentSummary, ok := nodeSummaries[agentID]
+	if !ok {
+		// TODO(DET-10029): We should return an error indicating the invalid ID request (rather
+		//	than a warn).
+		p.syslog.Warnf("no agent with id %s", agentID)
+		return nil
+	}
+	agentSummary.ResourcePool = nodesToPools[agentSummary.ID]
+	return &apiv1.GetAgentResponse{Agent: agentSummary.ToProto()}
 }
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
@@ -1371,20 +1429,21 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 }
 
 func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
-	var results []podNodeInfo
+	var allPods []podNodeInfo
+
 	for _, p := range p.podNameToPodHandler {
-		results = append(results, p.getPodNodeInfo())
+		allPods = append(allPods, p.getPodNodeInfo())
 	}
 
 	// Separate pods by nodes.
-	podByNode := make(map[string][]podNodeInfo, len(results))
-	for _, info := range results {
-		if len(info.nodeName) == 0 {
+	podByNode := make(map[string][]podNodeInfo, len(allPods))
+	for _, podInfo := range allPods {
+		if len(podInfo.nodeName) == 0 {
 			// If a pod doesn't have a nodeName it means it has not yet
 			// been allocated to a node.
 			continue
 		}
-		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
+		podByNode[podInfo.nodeName] = append(podByNode[podInfo.nodeName], podInfo)
 	}
 
 	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
@@ -1395,9 +1454,12 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 
 		var numSlots int64
 		var deviceType device.Type
+
+		// TODO(DET-10010): slot type per node probably shouldn't be decided from pods literal
+		// (which has the same value for all nodes).
 		switch p.slotType {
 		case device.CPU:
-			resources := node.Status.Allocatable["cpu"]
+			resources := node.Status.Allocatable[k8sV1.ResourceCPU]
 			milliCPUs := resources.MilliValue() - p.nodeToSystemResourceRequests[node.Name]
 			numSlots = int64(float32(milliCPUs) / (1000. * p.slotResourceRequests.CPU))
 			deviceType = device.CPU
@@ -1425,7 +1487,7 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:        strconv.Itoa(i),
+					ID:        strconv.Itoa(curSlot),
 					Device:    device.Device{Type: deviceType},
 					Draining:  isDraining,
 					Enabled:   !isDisabled,
@@ -1443,7 +1505,7 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:       strconv.FormatInt(i, 10),
+					ID:       strconv.Itoa(curSlot),
 					Device:   device.Device{Type: deviceType},
 					Draining: isDraining,
 					Enabled:  !isDisabled,
@@ -1515,6 +1577,7 @@ func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[
 		nodeToTasks[node.Name] = []string{}
 	}
 
+	// Ignore pods not yet scheduled on a node.
 	for _, pod := range nonDetPods {
 		if _, ok := nodeToTasks[pod.Spec.NodeName]; !ok {
 			continue
