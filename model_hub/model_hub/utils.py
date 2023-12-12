@@ -96,7 +96,6 @@ class AttrDict(dict):
         for key in self.keys():
             if isinstance(self[key], dict):
                 self[key] = AttrDict(self[key])
-            super().__setattr__(key, self[key])
 
     if typing.TYPE_CHECKING:
         def __getattr__(self, item):
