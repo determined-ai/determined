@@ -796,6 +796,13 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 			sub.Checkpoints, ss.Checkpoints.Subscription.Streamer.PrepareFn,
 		)
 	}
+	if ss.Projects != nil {
+		err = startup(
+			ctx, user, &msgs, err,
+			ss.Projects, known.Projects,
+			sub.Projects, ss.Projects.Subscription.Streamer.PrepareFn,
+		)
+	}
 
 	/*
 		if ss.Experiments != nil {

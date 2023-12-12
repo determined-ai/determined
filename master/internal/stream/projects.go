@@ -19,14 +19,14 @@ import (
 
 const (
 	// ProjectsDeleteKey specifies the key for delete projects.
-	ProjectsDeleteKey = "projectss_deleted"
+	ProjectsDeleteKey = "projects_deleted"
 	// ProjectsUpsertKey specifies the key for upsert projects.
 	ProjectsUpsertKey = "project"
 )
 
 // ProjectMsg is a stream.Msg.
 type ProjectMsg struct {
-	bun.BaseModel `bun:"table:trials"`
+	bun.BaseModel `bun:"table:projects"`
 
 	// immutable attributes
 	ID int `bun:"id,pk" json:"id"`
@@ -163,7 +163,7 @@ func ProjectCollectStartupMsgs(
 
 	// step 4: emit deletions and updates to the client
 	out = append(out, stream.DeleteMsg{
-		Key:     TrialsDeleteKey,
+		Key:     ProjectsDeleteKey,
 		Deleted: missing,
 	})
 	for _, msg := range appearedMsgs {

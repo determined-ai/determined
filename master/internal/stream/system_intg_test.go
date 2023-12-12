@@ -165,6 +165,13 @@ func buildStartupMsg(syncID string, knownsMap map[string]string, subscriptionsMa
 				ExperimentIDs: subscriptionsMap["experiments"],
 				Since:         0,
 			}
+		case "projects":
+			knownKeySet.Projects = known
+			subscriptionSpecSet.Projects = &ProjectSubscriptionSpec{
+				ProjectIDs:   subscriptionsMap["projects"],
+				WorkspaceIDs: subscriptionsMap["workspaces"],
+				Since:        0,
+			}
 		}
 	}
 
@@ -711,6 +718,121 @@ func TestExperimentUpdate(t *testing.T) {
 			},
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: experiments_deleted, deleted: 3"},
+		},
+	}
+
+	runUpdateTest(t, pgDB, testCases)
+}
+
+func TestProjectStartup(t *testing.T) {
+	testCases := []startupTestCase{
+		{
+			description: "project subscription with project id",
+			startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
+				map[string][]int{"projects": {1, 2}}),
+			expectedSync:      "key: sync_msg, sync_id: 1",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: projects_deleted, deleted: "},
+		},
+		{
+			description: "project subscription with excess project id",
+			startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2,3"},
+				map[string][]int{"projects": {1, 2, 3}}),
+			expectedSync:      "key: sync_msg, sync_id: 1",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
+		},
+		{
+			description: "project subscription with workspaces",
+			startupMsg: buildStartupMsg("3", map[string]string{"projects": "1,2"},
+				map[string][]int{"workspaces": {1, 2}}),
+			expectedSync:      "key: sync_msg, sync_id: 3",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: projects_deleted, deleted: "},
+		},
+		{
+			description: "project subscription with incomplete workspaces",
+			startupMsg: buildStartupMsg("4", map[string]string{"projects": "1,2"},
+				map[string][]int{"workspaces": {1}}),
+			expectedSync:      "key: sync_msg, sync_id: 4",
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: projects_deleted, deleted: 2"},
+		},
+		{
+			description: "project subscription with incomplete workspaces",
+			startupMsg: buildStartupMsg("5", map[string]string{"projects": "1"},
+				map[string][]int{"workspaces": {1, 2}}),
+			expectedSync:      "key: sync_msg, sync_id: 5",
+			expectedUpserts:   []string{"key: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
+			expectedDeletions: []string{"key: projects_deleted, deleted: "},
+		},
+	}
+
+	runStartupTest(t, testCases)
+}
+
+func TestProjectUpdate(t *testing.T) {
+	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+	t.Cleanup(dbCleanup)
+
+	newProject3 := model.Project{
+		Name:        "test project 3",
+		CreatedAt:   time.Now(),
+		Archived:    false,
+		WorkspaceID: 2,
+		UserID:      1,
+		State:       "UNSPECIFIED",
+	}
+
+	project3Mod := model.Project{
+		ID:          3,
+		WorkspaceID: 1,
+	}
+
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup case for: create project 3",
+				startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
+					map[string][]int{"projects": {1, 2, 3}}),
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: projects_deleted, deleted: "},
+			},
+			description:       "create project 3",
+			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(newProject3)},
+			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup case for: update project 3",
+				startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
+					map[string][]int{"projects": {1, 2, 3}}),
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: projects_deleted, deleted: "},
+			},
+			description: "update project 3",
+			queries:     []streamdata.ExecutableQuery{streamdata.GetUpdateProjectQuery(project3Mod)},
+			expectedUpserts: []string{
+				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1",
+			},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup case for: delete project 3",
+				startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
+					map[string][]int{"projects": {1, 2, 3}}),
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: projects_deleted, deleted: "},
+			},
+			description:       "delete project 3",
+			queries:           []streamdata.ExecutableQuery{streamdata.GetDeleteProjectQuery(project3Mod)},
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
 		},
 	}
 
