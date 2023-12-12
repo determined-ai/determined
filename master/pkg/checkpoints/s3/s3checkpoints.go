@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,21 +36,27 @@ func (w *seqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 // GetS3BucketRegion returns the region name of the specified bucket.
 // It does so by making an API call to AWS.
 func GetS3BucketRegion(ctx context.Context, bucket string) (string, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
-	})
+	// TODO this won't work on non aws s3 APIs.
+	// We can't use the AWS SDK for getting bucket region
+	// because we get a 403 when the region in the client is different
+	// than the bucket (defeating the whole point of calling bucket location).
+	// Instead just use the HEAD API since this is a lot simpler and doesn't require any auth.
+	// https://github.com/aws/aws-sdk-go/issues/720
+	url := fmt.Sprintf("https://%s.s3.amazonaws.com", bucket)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("making request to get region of s3 bucket at url %s: %w", url, err)
 	}
 
-	out, err := s3.New(sess).GetBucketLocationWithContext(ctx, &s3.GetBucketLocationInput{
-		Bucket: &bucket,
-	})
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting region of s3 bucket at url %s: %w", url, err)
+	}
+	if err := res.Body.Close(); err != nil {
+		return "", fmt.Errorf("closing s3 bucket request body: %w", err)
 	}
 
-	return *out.LocationConstraint, nil
+	return res.Header.Get("X-Amz-Bucket-Region"), nil
 }
 
 // S3Downloader implements downloading a checkpoint from S3
