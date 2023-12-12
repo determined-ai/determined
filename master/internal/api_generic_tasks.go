@@ -198,10 +198,6 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("handling experiment config %v: %w", genericTaskSpec.GenericTaskConfig, err)
 		}
 
-		var parentTaskID *model.TaskID
-		if req.ParentId != nil {
-			parentTaskID = (*model.TaskID)(req.ParentId)
-		}
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
 			TaskID:     taskID,
 			TaskType:   model.TaskTypeGeneric,
@@ -209,7 +205,7 @@ func (a *apiServer) CreateGenericTask(
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 			Config:     ptrs.Ptr(string(configBytes)),
-			ParentID:   parentTaskID,
+			ParentID:   (*model.TaskID)(req.ParentId),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
