@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.26.5-dev0
+    default: 0.26.6-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -2349,6 +2349,8 @@ jobs:
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
+      - store_test_results:
+          path: /tmp/test-results/
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
           region: <<parameters.region>>

@@ -122,12 +122,9 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> List[user.User]:
+    def list_users(self, active: Optional[bool] = None) -> List[user.User]:
         def get_with_offset(offset: int) -> bindings.v1GetUsersResponse:
-            return bindings.get_GetUsers(
-                session=self._session,
-                offset=offset,
-            )
+            return bindings.get_GetUsers(session=self._session, offset=offset, active=active)
 
         resps = api.read_paginated(get_with_offset)
 

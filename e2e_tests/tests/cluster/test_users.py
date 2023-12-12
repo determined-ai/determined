@@ -1165,3 +1165,41 @@ def test_user_edit_no_fields(clean_auth: None, login_admin: None) -> None:
     child.wait()
     child.close()
     assert child.status != 0
+
+
+@pytest.mark.e2e_cpu
+def test_user_list(clean_auth: None, login_admin: None) -> None:
+    u_patch = api_utils.create_test_user(False)
+    command = [
+        "user",
+        "ls",
+    ]
+
+    child = det_spawn(command)
+    assert u_patch.username in str(child.read())
+    # Deactivate user
+    activate_deactivate_user(active=False, target_user=u_patch.username)
+    command = [
+        "user",
+        "ls",
+    ]
+
+    # User should no longer appear in list
+    child = det_spawn(command)
+    assert u_patch.username not in str(child.read())
+
+
+@pytest.mark.e2e_cpu
+def test_user_list_with_inactive(clean_auth: None, login_admin: None) -> None:
+    u_patch = api_utils.create_test_user(False)
+    command = ["user", "ls", "--all"]
+
+    child = det_spawn(command)
+    assert u_patch.username in str(child.read())
+    # Deactivate user
+    activate_deactivate_user(active=False, target_user=u_patch.username)
+    command = ["user", "ls", "--all"]
+
+    # User should still appear in list
+    child = det_spawn(command)
+    assert u_patch.username in str(child.read())

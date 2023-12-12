@@ -30,6 +30,10 @@ def validate_spot_max_price() -> Callable:
     return validate
 
 
+def is_full_git_commit_hash(s: str) -> bool:
+    return bool(re.fullmatch(r"[0-9a-f]{40}", s))
+
+
 def parse_add_tag() -> Callable:
     def parse(s: str) -> Tuple[str, str]:
         try:
@@ -116,7 +120,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             val = input(
                 "Deleting an AWS stack will lose all your data, including the created network "
                 "file system. Please back up the file system before deleting it. Do you still "
-                "want to delete the stack? [y/N]"
+                f"want to delete the stack with cluster-id ({args.cluster_id})? [y/N]"
             )
             if val.lower() != "y":
                 print("Delete cancelled.")
@@ -175,6 +179,22 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if args.deployment_type != constants.deployment_types.LORE:
         if args.lore_version is not None:
             raise ValueError("--lore-version can only be specified for 'lore' deployments")
+    else:
+        print(
+            colored(
+                "Lore deployment type is experimental and not ready for production use.",
+                "yellow",
+            )
+        )
+        if args.lore_version is not None and is_full_git_commit_hash(args.lore_version):
+            short_hash = args.lore_version[:7]
+            print(
+                colored(
+                    f"Lore tags are not full commit hashes. Using {short_hash} instead.",
+                    "yellow",
+                )
+            )
+            args.lore_version = short_hash
 
     if args.deployment_type not in {
         constants.deployment_types.EFS,
@@ -437,7 +457,7 @@ args_description = Cmd(
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,
                     default=constants.defaults.DEPLOYMENT_TYPE,
-                    help="deployment type",
+                    help="deployment type. Lore support is experimental.",
                 ),
                 Arg(
                     "--inbound-cidr",
@@ -639,7 +659,8 @@ args_description = Cmd(
                 Arg(
                     "--lore-version",
                     type=str,
-                    help=argparse.SUPPRESS,
+                    help="Specifies the version of Lore to install. The value must be a valid"
+                    + " Lore tag available on Docker Hub.",
                 ),
             ],
         ),

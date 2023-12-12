@@ -12,10 +12,6 @@ information is synchronized.
 
 .. include:: ../_shared/attn-enterprise-edition.txt
 
-.. note::
-
-   As of 026.4, OIDC is supported.
-
 *******************************
  Enable Remote User Management
 *******************************
@@ -23,8 +19,8 @@ information is synchronized.
 Set the Auto Provision Option
 =============================
 
-The first step is to configure the :ref:`master configuration file <master-config-reference>` to
-enable auto provisioning users and the remote management of any information attached to the users.
+The first step is to configure the :ref:`master configuration <master-config-reference>` file to
+enable user auto-provisioning and the remote management of any information attached to the users.
 
 .. tabs::
 
@@ -34,7 +30,7 @@ enable auto provisioning users and the remote management of any information atta
 
       -  Enable OIDC.
       -  Set ``oidc.auto_provision_users`` option to ``true`` in your :ref:`master configuration
-         file <master-config-reference>`.
+         <master-config-reference>` file.
 
       .. note::
 
@@ -60,7 +56,7 @@ enable auto provisioning users and the remote management of any information atta
 
       -  Enable SAML.
       -  Set ``saml.auto_provision_users`` option to ``true`` in your :ref:`master configuration
-         file <master-config-reference>`.
+         <master-config-reference>` file.
 
       .. note::
 
@@ -96,7 +92,9 @@ To enable group membership synchronization:
       OIDC
 
       -  Set the ``groups_claim_name`` option to match the claim name for group memberships from
-         your authenticator (i.e., ``groups_memberships``, ``usergroup_memberships``, etc.).
+         your authenticator (i.e., either a custom user attribute such as ``groups_memberships`` or
+         ``usergroup_memberships``, or the authenticator's groups claim, passed in as ``groups``,
+         etc.).
 
       For example, in the following claim, let's say the user-group information is passed through
       ``group_memberships`` in your IdP.
@@ -137,7 +135,7 @@ Once auto provisioning is configured, the user simply signs in with their userna
 
 For example, to sign in to Determined via Okta, the user performs the following steps:
 
--  Visit the Determined URL, e.g., https://determined.example.com.
+-  Visit the Determined URL, e.g., ``https://determined.example.com``.
 -  Under **Sign in with Okta**, enter the SSO-enabled email address.
 
 If the sign in is successful, Determined provisions the user, adds the user to the user table, and
@@ -147,10 +145,10 @@ authenticates the user to Determined.
  Manage Remote Users and Groups via the WebUI
 **********************************************
 
-Admins can manage users and groups in the WebUI. To do this:
+To manage users and groups in the WebUI:
 
--  Sign in to the Determined cluster via the Determined URL, e.g., https://determined.example.com,
-   as a cluster admin.
+-  Sign in to the Determined cluster via the Determined URL, e.g.,
+   ``https://determined.example.com``, as a cluster admin.
 -  View **Admin Settings** by selecting your profile in the upper left corner and then choosing
    **Admin**.
 
@@ -159,4 +157,4 @@ bulk actions, and more. For example, using the filters, you can select to view o
 You can also manage user groups.
 
 To find out how to manage remote users via the WebUI, including adding a new remote user, visit
-:ref:`manage-users-groups-webui`.
+:ref:`managing RBAC via the WebUI <manage-users-groups-webui>`.
