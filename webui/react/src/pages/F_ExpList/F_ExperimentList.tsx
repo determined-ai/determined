@@ -724,7 +724,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const experimentsIfLoaded = useMemo(
-    () => (isLoading ? [NotLoaded] : experiments),
+    () => (isLoading ? INITIAL_LOADING_EXPERIMENTS : experiments),
     [isLoading, experiments],
   );
 
@@ -789,7 +789,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 columnWidths={settings.columnWidths}
                 comparisonViewOpen={settings.compare}
                 data={experimentsIfLoaded}
-                dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
+                dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
                 formStore={formStore}
                 heatmapOn={settings.heatmapOn}
                 heatmapSkipped={settings.heatmapSkipped}
