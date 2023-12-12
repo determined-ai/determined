@@ -231,7 +231,7 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 	}), "allocation never became ready")
 
 	t.Log("detach the allocation")
-	err = DefaultService.detach(ar.AllocationID)
+	err = DefaultService.Detach(ar.AllocationID)
 	require.NoError(t, err)
 	require.True(t, waitForCondition(time.Second, func() bool {
 		return !slices.Contains(DefaultService.GetAllAllocationIDs(), ar.AllocationID)
@@ -259,7 +259,7 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 		Resources:    map[sproto.ResourcesID]sproto.Resources{rID: resources},
 		Recovered:    true,
 	})
-	_, err = DefaultService.waitForRestore(context.TODO(), ar.AllocationID)
+	err = DefaultService.WaitForRestore(context.TODO(), ar.AllocationID)
 	require.NoError(t, err)
 
 	t.Log("terminate, should be graceful")

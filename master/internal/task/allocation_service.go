@@ -26,7 +26,7 @@ import (
 var syslog = logrus.WithField("component", "allocation_service")
 
 // DefaultService is the singleton default allocationService.
-var DefaultService = newAllocationService()
+var DefaultService AllocationService = newAllocationService()
 
 // allocationService is used to launch, track and interact with allocations.
 type allocationService struct {
@@ -334,9 +334,20 @@ func (as *allocationService) waitForRestore(
 	return ref, nil
 }
 
+// WaitForRestore waits until the allocation has been restored by the resource manager. The
+// allocation must exist otherwise this will return a not found error.
+func (as *allocationService) WaitForRestore(
+	ctx context.Context,
+	id model.AllocationID,
+) error {
+	_, err := as.waitForRestore(ctx, id)
+	return err
+}
+
 // detach "detaches" the allocation, letting go of the underlying resources without modifying their or its
-// own state in anyway. Useful for testing restart paths.
-func (as *allocationService) detach(id model.AllocationID) error {
+// own state in anyway. Useful for testing restart paths. Do not call this in real code unless you are implementing
+// graceful shutdown.
+func (as *allocationService) Detach(id model.AllocationID) error {
 	ref, err := as.getAllocation(id)
 	if err != nil {
 		return err
