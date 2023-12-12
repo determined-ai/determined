@@ -1,8 +1,1 @@
 entrypoint: ["python3", "run.py"]
-resources:
-  slots_per_task: 1
-bind_mounts:
-   - host_path: "/Users/aaronamanuel/workspace/determined/master"
-     container_path: "./master"
-child_task_config:
-  - child_path: "/Users/aaronamanuel/workspace/determined/examples/test_child_config1.yaml"

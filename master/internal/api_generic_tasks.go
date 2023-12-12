@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -193,15 +192,11 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
 
-		configBytes, err := json.Marshal(genericTaskSpec.GenericTaskConfig)
+		configBytes, err := yaml.YAMLToJSON([]byte(req.Config))
 		if err != nil {
-			return fmt.Errorf("handling experiment config %v: %w", genericTaskSpec.GenericTaskConfig, err)
+			return fmt.Errorf("handling experiment config %v: %w", req.Config, err)
 		}
 
-		var parentTaskID *model.TaskID
-		if req.ParentId != nil {
-			parentTaskID = ptrs.Ptr(model.TaskID(*req.ParentId))
-		}
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
 			TaskID:     taskID,
 			TaskType:   model.TaskTypeGeneric,
@@ -209,7 +204,7 @@ func (a *apiServer) CreateGenericTask(
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 			Config:     ptrs.Ptr(string(configBytes)),
-			ParentID:   parentTaskID,
+			ParentID:   (*model.TaskID)(req.ParentId),
 			State:      ptrs.Ptr(model.TaskStateActive),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
