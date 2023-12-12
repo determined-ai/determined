@@ -82,7 +82,7 @@ type Task struct {
 	Job      *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
 	ParentID *TaskID `db:"parent_id"`
 
-	State *TaskState `db:"task_state"`
+	State *TaskState `db:"task_state" bun:"task_state"`
 
 	Config *string `db:"config"`
 }

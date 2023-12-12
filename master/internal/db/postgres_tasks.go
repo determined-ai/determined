@@ -56,7 +56,7 @@ func AddTask(ctx context.Context, t *model.Task) error {
 // AddTaskTx UPSERT's the existence of a task in a tx.
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config", "parent_id").
+		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config", "parent_id", "task_state").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
@@ -64,6 +64,7 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 		Set("log_version=EXCLUDED.log_version").
 		Set("config=EXCLUDED.config").
 		Set("parent_id=EXCLUDED.parent_id").
+		Set("task_state=EXCLUDED.task_state").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }

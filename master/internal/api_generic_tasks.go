@@ -250,9 +250,6 @@ func (a *apiServer) CreateGenericTask(
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
 			syslog.WithError(err).Error("deleting group priority change registry")
 		}
-		if err := a.SetTaskState(ctx, taskID, model.TaskStateCompleted); err != nil {
-			syslog.WithError(err).Error("deleting group priority change registry")
-		}
 	}
 
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
