@@ -166,7 +166,7 @@ def do_request(
             if mes is not None:
                 return str(mes)
             # Try getting GRPC error description if message does not exist.
-            return str(json_resp.get("error").get("error"))
+            return str(json_resp.get("error"))
         except Exception:
             return ""
 
