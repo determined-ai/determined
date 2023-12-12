@@ -103,6 +103,22 @@ func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)
 }
 
+// CompleteGenericTask persists the completion of a task of type GENERIC
+func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
+	err := completeTask(db.sql, tID, endTime)
+	if err != nil {
+		return err
+	}
+	if _, err := db.sql.Exec(`
+UPDATE tasks
+SET task_state = $2
+WHERE task_id = $1
+	`, tID, model.TaskStateCompleted); err != nil {
+		return errors.Wrap(err, "completing task")
+	}
+	return nil
+}
+
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {
 	if _, err := ex.Exec(`
 UPDATE tasks

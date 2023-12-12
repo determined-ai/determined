@@ -239,7 +239,7 @@ func (a *apiServer) CreateGenericTask(
 
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-		if err := a.m.db.CompleteTask(taskID, time.Now().UTC()); err != nil {
+		if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking generic task complete")
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
