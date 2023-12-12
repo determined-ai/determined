@@ -91,14 +91,8 @@ def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) 
 class AttrDict(dict):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.__dict__ = self
         for key in self.keys():
             if isinstance(self[key], dict):
                 self[key] = AttrDict(self[key])
             super().__setattr__(key, self[key])
-
-    def __setattr__(self, name: str, val: Any) -> None:
-        super().__setattr__(name, val)
-        super().__setitem__(name, val)
-
-    def __setitem__(self, name: str, val: Any) -> None:
-        setattr(self, name, val)
