@@ -68,7 +68,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         self.model.init_weights()
 
         # If use_pretrained, try loading pretrained weights for the mmcv config if available.
-        if hasattr(self.hparams, "use_pretrained"):
+        if self.hparams.use_pretrained:
             ckpt_path, ckpt = mmdetutils.get_pretrained_ckpt_path("/tmp", self.hparams.config_file)
             if ckpt_path is not None:
                 logging.info("Loading from pretrained weights.")
@@ -91,7 +91,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
         self.clip_grads_fn = None
         if self.cfg.optimizer_config.grad_clip is not None:
-            self.clip_grads_fn = lambda x: torch.nn.mmdetutils.clip_grad_norm_(
+            self.clip_grads_fn = lambda x: torch.nn.utils.clip_grad_norm_(
                 x,
                 self.cfg.optimizer_config.grad_clip.max_norm,
                 self.cfg.optimizer_config.grad_clip.norm_type,
