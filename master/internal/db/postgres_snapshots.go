@@ -1,10 +1,7 @@
 package db
 
 import (
-	"context"
-
 	"github.com/jmoiron/sqlx"
-	"github.com/uptrace/bun"
 
 	"github.com/pkg/errors"
 )
@@ -56,21 +53,6 @@ func (db *PgDB) deleteSnapshotsForExperiment(experimentID int) func(tx *sqlx.Tx)
 DELETE FROM experiment_snapshots
 WHERE experiment_id = $1`, experimentID); err != nil {
 			return errors.Wrap(err, "failed to delete experiment snapshots")
-		}
-		return nil
-	}
-}
-
-// DeleteSnapshotsForExperiments deletes all snapshots for multiple given experiments.
-func (db *PgDB) DeleteSnapshotsForExperiments(experimentIDs []int) func(ctx context.Context,
-	tx *bun.Tx) error {
-	return func(ctx context.Context, tx *bun.Tx) error {
-		var snapIDs []int
-		if _, err := tx.NewDelete().Model(&snapIDs).Table("experiment_snapshots").
-			Where("experiment_id IN (?)", bun.In(experimentIDs)).
-			Returning("id").
-			Exec(ctx); err != nil {
-			return errors.Wrap(err, "failed to delete experiments snapshots")
 		}
 		return nil
 	}

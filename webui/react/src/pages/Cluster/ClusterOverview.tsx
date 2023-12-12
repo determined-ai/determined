@@ -1,10 +1,11 @@
 import Card from 'hew/Card';
 import Icon from 'hew/Icon';
+import { useModal } from 'hew/Modal';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import ResourcePoolCard from 'components/ResourcePoolCard';
-import ResourcePoolDetails from 'components/ResourcePoolDetails';
+import ResourcePoolDetailsModalComponent from 'components/ResourcePoolDetailsModalComponent';
 import Section from 'components/Section';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -18,10 +19,16 @@ const ClusterOverview: React.FC = () => {
   const resourcePools = useObservable(clusterStore.resourcePools);
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
-
+  const resourcePoolDetailsModal = useModal(ResourcePoolDetailsModalComponent);
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
+
+  useEffect(() => {
+    if (rpDetail) {
+      resourcePoolDetailsModal.open();
+    }
+  }, [rpDetail, resourcePoolDetailsModal]);
 
   const actionMenu = useCallback(
     (pool: ResourcePool) =>
@@ -58,7 +65,7 @@ const ClusterOverview: React.FC = () => {
         </Card.Group>
       </Section>
       {!!rpDetail && (
-        <ResourcePoolDetails finally={hideModal} resourcePool={rpDetail} visible={!!rpDetail} />
+        <resourcePoolDetailsModal.Component resourcePool={rpDetail} onCloseModal={hideModal} />
       )}
     </>
   );

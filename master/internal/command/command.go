@@ -199,15 +199,10 @@ func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 }
 
 func (c *Command) persistAndEvictContextDirectoryFromMemory() error {
-	if c.contextDirectory == nil {
-		c.contextDirectory = make([]byte, 0)
-	}
-
-	if _, err := db.Bun().NewInsert().Model(&model.TaskContextDirectory{
-		TaskID:           c.taskID,
-		ContextDirectory: c.contextDirectory,
-	}).Exec(context.TODO()); err != nil {
-		return fmt.Errorf("persisting context directory files: %w", err)
+	if err := db.AddNonExperimentTasksContextDirectory(
+		context.TODO(), c.taskID, c.contextDirectory,
+	); err != nil {
+		return fmt.Errorf("saving NTSC context directory: %w", err)
 	}
 
 	c.contextDirectory = nil
