@@ -256,6 +256,7 @@ export interface CreateExperimentParams {
 
 export interface ContinueExperimentParams {
   id: number;
+  overrideConfig?: string;
 }
 
 export interface PatchExperimentParams extends ExperimentIdParams {
