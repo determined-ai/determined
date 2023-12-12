@@ -123,21 +123,21 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
         # If a backend is specified, we will the backend used in all occurrences of
         # LoadImageFromFile in the mmdet config.
-        if hasattr(self.data_config, "file_client_args") is not None:
+        if self.data_config.file_client_args is not None:
             data_backends.sub_backend(self.data_config.file_client_args, cfg)
         if self.hparams.merge_config is not None:
             override_config = mmcv.Config.fromfile(self.hparams.merge_config)
             new_config = mmcv.Config._merge_a_into_b(override_config, cfg._cfg_dict)
             cfg = mmcv.Config(new_config, cfg._text, cfg._filename)
 
-        if hasattr(self.hparams, "override_mmdet_config"):
+        if "override_mmdet_config" in self.hparams:
             cfg.merge_from_dict(self.hparams.override_mmdet_config)
         cfg.data.val.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.val.pipeline)
         cfg.data.test.pipeline = mmdet.datasets.replace_ImageToTensor(cfg.data.test.pipeline)
 
         # Save and log the resulting config.
-        if hasattr(self.hparams, "save_cfg") and self.hparams.save_cfg:
-            save_dir = self.hparams.save_dir if hasattr(self.hparams, "save_dir") else "/tmp"
+        if "save_cfg" in self.hparams and self.hparams.save_cfg:
+            save_dir = self.hparams.save_dir if "save_dir" in self.hparams else "/tmp"
             extension = cfg._filename.split(".")[-1]
             cfg.dump(os.path.join(save_dir, f"final_config.{extension}"))
         logging.info(cfg)
@@ -157,7 +157,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
     def build_callbacks(self) -> Dict[str, det_torch.PyTorchCallback]:
         self.lr_updater = None
         hooks = {}  # type: Dict[str, det_torch.PyTorchCallback]
-        if hasattr(self.cfg, "lr_config"):
+        if "lr_config" in self.cfg:
             logging.info("Adding lr updater callback.")
             self.lr_updater = callbacks.LrUpdaterCallback(
                 self.context, lr_config=self.cfg.lr_config

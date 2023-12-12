@@ -166,10 +166,10 @@ def default_load_dataset(
         (hf_parse.DatasetKwargs,), data_config, as_dict=True
     )
     # This method is common in nearly all main HF examples.
-    if data_config["dataset_name"] is not None:
+    if data_config.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
         datasets = hf_datasets.load_dataset(
-            data_config["dataset_name"], data_config["dataset_config_name"]
+            data_config.dataset_name, data_config.dataset_config_name
         )
         assert hasattr(datasets, "keys"), "Expected a dictionary of datasets."
         datasets = cast(Union[hf_datasets.DatasetDict, hf_datasets.IterableDatasetDict], datasets)
@@ -180,22 +180,22 @@ def default_load_dataset(
             ), "Validation split not provided by this huggingface dataset. Please specify "
             "validation_split_percentage in data_config for use to create validation set"
             datasets["validation"] = hf_datasets.load_dataset(
-                data_config["dataset_name"],
-                data_config["dataset_config_name"],
-                split=f"train[:{data_config['validation_split_percentage']}%]",
+                data_config.dataset_name,
+                data_config.dataset_config_name,
+                split=f"train[:{data_config.validation_split_percentage}%]",
             )
             datasets["train"] = hf_datasets.load_dataset(
-                data_config["dataset_name"],
-                data_config["dataset_config_name"],
-                split=f"train[:{data_config['validation_split_percentage']}%]",
+                data_config.dataset_name,
+                data_config.dataset_config_name,
+                split=f"train[:{data_config.validation_split_percentage}%]",
             )
     else:
         data_files = {}
-        if data_config["train_file"] is not None:
-            data_files["train"] = data_config["train_file"]
-        if data_config["validation_file"] is not None:
-            data_files["validation"] = data_config["validation_file"]
-        extension = data_config["train_file"].split(".")[-1]
+        if data_config.train_file is not None:
+            data_files["train"] = data_config.train_file
+        if data_config.validation_file is not None:
+            data_files["validation"] = data_config.validation_file
+        extension = data_config.train_file.split(".")[-1]
         if extension == "txt":
             extension = "text"
         datasets = hf_datasets.load_dataset(extension, data_files=data_files)
@@ -270,13 +270,13 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         if not isinstance(self.hparams, utils.AttrDict):
             self.hparams = utils.AttrDict(self.hparams)
 
-        if not hasattr(self.hparams, "num_training_steps"):
+        if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
             self.hparams.num_training_steps = utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
-        if not hasattr(self.hparams, "use_pretrained_weights"):
+        if "use_pretrained_weights" not in self.hparams:
             logging.warning(
                 "We will be using pretrained weights for the model by default."
                 "If you want to train the model from scratch, you can set a hyperparameter "

@@ -286,7 +286,7 @@ def parse_dict_to_dataclasses(
         as_dict: if true will return AttrDict instead of dict
 
     Returns:
-        One namespace for each dataclass with keys filled in from args if found.
+        One dictionary for each dataclass with keys filled in from args if found.
     """
     outputs = []
     for dtype in dataclass_types:
@@ -323,11 +323,11 @@ def default_parse_config_tokenizer_model_kwargs(hparams: Dict) -> Tuple[Dict, Di
     # If a pretrained_model_name_or_path is provided it will be parsed to the
     # arguments for config, tokenizer, and model.  Then, if specific names are
     # provided for config, tokenizer, or model we will override it.
-    if hasattr(hparams, "config_name"):
+    if "config_name" in hparams:
         config_args.pretrained_model_name_or_path = hparams.config_name
-    if hasattr(hparams, "tokenizer_name"):
+    if "tokenizer_name" in hparams:
         tokenizer_args.pretrained_model_name_or_path = hparams.tokenizer_name
-    if hasattr(hparams, "tokenizer_name"):
+    if "model_name" in hparams:
         model_args.pretrained_model_name_or_path = hparams.model_name
     assert (
         config_args.pretrained_model_name_or_path is not None
