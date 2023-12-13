@@ -39,7 +39,7 @@ func (a *apiServer) GetGenericTaskConfig(
 		return nil, err
 	}
 
-	t := new(taskv1.Task)
+	t := &taskv1.Task{}
 	switch err := db.Bun().NewSelect().Model(t).
 		Column("config").
 		Where("task_id = ?", req.TaskId).

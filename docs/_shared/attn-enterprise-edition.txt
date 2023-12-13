@@ -1,0 +1,3 @@
+.. attention::
+
+   This feature applies only to Determined Enterprise Edition.

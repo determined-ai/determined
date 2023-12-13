@@ -1,4 +1,4 @@
-import { Modal, Space } from 'antd';
+import { Space } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -8,16 +8,13 @@ import {
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import { ShirtSize, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
-import Grid from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
-import Link from 'components/Link';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
@@ -66,6 +63,7 @@ import { getDisplayName } from 'utils/user';
 
 import BatchActionConfirmModalComponent from './BatchActionConfirmModal';
 import css from './TaskList.module.scss';
+import TaskListModalComponent, { SourceInfo } from './TaskListModalComponent';
 import WorkspaceFilter from './WorkspaceFilter';
 
 const TensorBoardSourceType = {
@@ -85,12 +83,6 @@ interface TensorBoardSource {
   type: TensorBoardSourceType;
 }
 
-interface SourceInfo {
-  path: string;
-  plural: string;
-  sources: TensorBoardSource[];
-}
-
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
@@ -106,13 +98,16 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
+  const taskListModal = useModal(TaskListModalComponent);
   const canceler = useRef(new AbortController());
 
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
+  useEffect(() => {
+    if (sourcesModal) {
+      taskListModal.open();
+    }
+  }, [taskListModal, sourcesModal]);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -654,26 +649,14 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         itemName="task"
         onConfirm={handleBatchKill}
       />
-      <Modal
-        footer={null}
-        open={!!sourcesModal}
-        style={{ minWidth: '600px' }}
+      <taskListModal.Component
+        sourcesModal={sourcesModal}
         title={`
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}
         `}
-        wrapClassName={themeClass}
-        onCancel={handleSourceDismiss}>
-        <div className={css.sourceLinks}>
-          <Grid gap={ShirtSize.Medium} minItemWidth={120}>
-            {sourcesModal?.sources.map((source) => (
-              <Link key={source.id} path={source.path}>
-                {source.type} {source.id}
-              </Link>
-            ))}
-          </Grid>
-        </div>
-      </Modal>
+        onClose={handleSourceDismiss}
+      />
     </>
   );
 };

@@ -37,7 +37,7 @@ def export_and_load_model(experiment_id: int) -> None:
 def test_tf_keras_parallel(
     aggregation_frequency: int, collect_trial_profiles: Callable[[int], None]
 ) -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
@@ -45,7 +45,7 @@ def test_tf_keras_parallel(
     config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_tf_keras"), 1
+        config, conf.cv_examples_path("iris_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
@@ -55,7 +55,7 @@ def test_tf_keras_parallel(
     collect_trial_profiles(trials[0].trial.id)
 
     # Check on record/batch counts we emitted in logs.
-    validation_size = 10000
+    validation_size = 32
     global_batch_size = config["hyperparameters"]["global_batch_size"]
     num_workers = config.get("resources", {}).get("slots_per_trial", 1)
     global_batch_size = config["hyperparameters"]["global_batch_size"]

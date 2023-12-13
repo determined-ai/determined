@@ -1,3 +1,4 @@
+import json
 from argparse import FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -117,7 +118,7 @@ def task_creation_output(
     print(f"created task {task_resp.taskId}")
 
     if task_resp.warnings:
-        cli.print_warnings(task_resp.warnings)
+        cli.print_launch_warnings(task_resp.warnings)
 
     if follow:
         try:
@@ -154,8 +155,13 @@ def create(args: Namespace) -> None:
 @authentication.required
 def config(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    config_resp = bindings.get_GetTaskConfig(sess, taskId=args.task_id)
-    print(config_resp.config)
+    config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
+    if args.json:
+        render.print_json(config_resp.config)
+    else:
+        yaml_dict = json.loads(config_resp.config)
+        print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
+
 
 
 @authentication.required
@@ -278,13 +284,13 @@ args_description: List[Any] = [
             Cmd(
                 "create",
                 create,
-                "create task",
+                "create task (EXPERIMENTAL: This command should only be used in dev environments)",
                 [
                     Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
                     Arg(
                         "context",
                         type=Path,
-                        help="file or directory containing task context directory",
+                        help=command.CONTEXT_DESC,
                     ),
                     Arg(
                         "-i",
@@ -292,7 +298,7 @@ args_description: List[Any] = [
                         action="append",
                         default=[],
                         type=Path,
-                        help="additional files to copy into the task container",
+                        help=command.INCLUDE_DESC,
                     ),
                     Arg("--project_id", type=int, help="place this task inside this project"),
                     Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
@@ -311,6 +317,11 @@ args_description: List[Any] = [
                 "get config for given task",
                 [
                     Arg("task_id", type=str, help="ID of task to pull config from"),
+                    Arg(
+                        "--json",
+                        action="store_true",
+                        help="return config in JSON format",
+                    ),
                 ],
             ),
             Cmd(

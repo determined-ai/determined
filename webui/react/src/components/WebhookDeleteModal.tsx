@@ -8,14 +8,16 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { routeToReactUrl } from 'utils/routes';
 
 interface Props {
+  onSuccess?: () => void;
   webhook?: Webhook;
 }
 
-const WebhookDeleteModalComponent: React.FC<Props> = ({ webhook }: Props) => {
+const WebhookDeleteModalComponent: React.FC<Props> = ({ onSuccess, webhook }: Props) => {
   const handleSubmit = async () => {
     if (!webhook) return;
     try {
       await deleteWebhook({ id: webhook.id });
+      onSuccess?.();
       routeToReactUrl(paths.webhooks());
     } catch (e) {
       handleError(e, {

@@ -11,7 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// AddJobTx persists the existence of a job with a transcation.
+// AddJobTx persists the existence of a job with a transaction.
 func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
 	if idb == nil {
 		idb = Bun()
