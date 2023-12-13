@@ -5,7 +5,6 @@ import sys
 import time
 import warnings
 from typing import Any, Dict, Iterator, List, Optional, Set, Union
-from urllib import parse
 
 from determined.common import api
 from determined.common.api import bindings
@@ -185,8 +184,7 @@ class Experiment:
             label: a string label to add to the experiment. If the label already exists,
                 the method call will be a no-op.
         """
-        # URL-encode label for request.
-        label = parse.quote(label)
+
         resp = bindings.put_PutExperimentLabel(
             session=self._session, experimentId=self.id, label=label
         )
@@ -202,8 +200,7 @@ class Experiment:
             label: a string label to remove from the experiment. If the specified label does not
                 exist on the experiment, this method call will be a no-op.
         """
-        # URL-encode label for request.
-        label = parse.quote(label)
+
         resp = bindings.delete_DeleteExperimentLabel(
             session=self._session, experimentId=self.id, label=label
         )
