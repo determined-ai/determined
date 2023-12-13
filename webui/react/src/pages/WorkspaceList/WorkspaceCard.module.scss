@@ -8,14 +8,8 @@
   padding: 2px 4px;
 }
 .info {
-  display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
   width: 100%;
-
-  > div:first-child {
-    display: flex;
-    justify-content: space-between;
-  }
 }

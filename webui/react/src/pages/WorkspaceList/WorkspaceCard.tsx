@@ -43,27 +43,27 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
           <Column width="hug">
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
           </Column>
-          <Column>
-            <div className={css.info}>
-              <Row width={215}>
+          <div className={css.info}>
+            <Column width={225}>
+              <Row justifyContent="space-between" width="fill">
                 <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
                   {workspace.name}
                 </Title>
                 {workspace.pinned && <Icon name="pin" title="Pinned" />}
               </Row>
               <Row>
-                <Label size={TypographySize.XS}>
+                <Label size="small">
                   {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
                 </Label>
               </Row>
-              <Row>
+              <Row justifyContent="space-between" width="fill">
                 <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUser)}>
                   {Loadable.isLoaded(loadableUser) && <UserAvatar user={user} />}
                 </Spinner>
                 {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
               </Row>
-            </div>
-          </Column>
+            </Column>
+          </div>
         </Row>
       </div>
       {contextHolders}
