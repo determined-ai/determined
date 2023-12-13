@@ -86,7 +86,6 @@ SELECT
   e.unmanaged AS unmanaged,
 
   -- run_collections.
-  rc.name AS name,
   rc.state AS state,
   rc.notes AS notes,
   rc.project_id AS project_id,

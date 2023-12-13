@@ -5,6 +5,8 @@ package olddata
 
 import (
 	"context"
+	// embed is only used in comments.
+	_ "embed"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,15 +19,24 @@ const migrationBeforeRuns = 20231031103358
 
 // PreRunTrialsData holds the migration and useful data for pre run trials test.
 type PreRunTrialsData struct {
-	PreRunTrialsTable     []map[string]any
-	PreRunCheckpointsView []map[string]any
+	PreRunTrialsTable      []map[string]any
+	PreRunCheckpointsView  []map[string]any
+	PreRunExperimentsTable []map[string]any
 }
+
+//go:embed modern_experiments_add.sql
+var modernExperimentsAdd string
 
 // MigrateToPreRunTrialsData sets the database to where trials were migrated.
 func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath string) PreRunTrialsData {
 	addTrialData := migrationExtra{
 		When: migration001213,
 		SQL:  preRemoveStepsSQL,
+	}
+
+	addMoreModernExperiments := migrationExtra{
+		When: migrationBeforeRuns,
+		SQL:  modernExperimentsAdd,
 	}
 
 	saveTrialDataAsJSONTable := migrationExtra{
@@ -40,10 +51,18 @@ func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath strin
 	SELECT to_jsonb(checkpoints_view.*) AS checkpoint_data FROM checkpoints_view ORDER BY id;`,
 	}
 
+	saveExperimentsDataAsJSONTable := migrationExtra{
+		When: migrationBeforeRuns,
+		SQL: `CREATE TABLE experiment_json_data AS
+	SELECT to_jsonb(experiments.*) AS experiment_data FROM experiments ORDER BY id;`,
+	}
+
 	mustMigrateWithExtras(t, pgdb, migrationsPath,
 		addTrialData,
+		addMoreModernExperiments,
 		saveTrialDataAsJSONTable,
 		saveCheckpointsViewAsJSONTable,
+		saveExperimentsDataAsJSONTable,
 	)
 
 	var trialJSONDataRow []struct {
@@ -70,8 +89,21 @@ func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath strin
 		checkpointsJSON = append(checkpointsJSON, t.CheckpointData)
 	}
 
+	var experimentJSONDataRow []struct {
+		ExperimentData map[string]any
+	}
+	require.NoError(t,
+		db.Bun().NewSelect().Table("experiment_json_data").Scan(context.TODO(), &experimentJSONDataRow),
+		"getting experiment json data",
+	)
+	var experimentsJSON []map[string]any
+	for _, t := range experimentJSONDataRow {
+		experimentsJSON = append(experimentsJSON, t.ExperimentData)
+	}
+
 	return PreRunTrialsData{
-		PreRunTrialsTable:     trialsJSON,
-		PreRunCheckpointsView: checkpointsJSON,
+		PreRunTrialsTable:      trialsJSON,
+		PreRunCheckpointsView:  checkpointsJSON,
+		PreRunExperimentsTable: experimentsJSON,
 	}
 }
