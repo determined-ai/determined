@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.task.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/taskv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 import "determined/device/v1/device.proto";
@@ -45,6 +46,8 @@ enum TaskType {
   TASK_TYPE_TENSORBOARD = 5;
   // "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
   TASK_TYPE_CHECKPOINT_GC = 6;
+  // "GENERIC" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_GENERIC = 7;
 }
 
 // Allocation tracks a specific instance of a Task.
@@ -89,6 +92,8 @@ message Task {
   google.protobuf.Timestamp start_time = 5;
   // End timestamp if completed.
   optional google.protobuf.Timestamp end_time = 6;
+  // The configuration of the task.
+  optional string config = 7;
 }
 
 // Address represents an exposed port on a container.

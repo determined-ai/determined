@@ -1,3 +1,4 @@
+import json
 from argparse import FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -9,7 +10,7 @@ from determined import cli
 from determined.cli import command, render
 from determined.common import api, context, util
 from determined.common.api import authentication, bindings
-from determined.common.api.bindings import v1AllocationSummary
+from determined.common.api.bindings import v1AllocationSummary, v1CreateGenericTaskResponse
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -111,6 +112,28 @@ def logs(args: Namespace) -> None:
         )
 
 
+def task_creation_output(
+    session: api.Session, task_resp: v1CreateGenericTaskResponse, follow: bool
+) -> None:
+    print(f"created task {task_resp.taskId}")
+
+    if task_resp.warnings:
+        cli.print_launch_warnings(task_resp.warnings)
+
+    if follow:
+        try:
+            logs = api.task_logs(session, task_resp.taskId, follow=True)
+            api.pprint_logs(logs)
+        finally:
+            print(
+                colored(
+                    "Task log stream ended. To reopen log stream, run: "
+                    "det task logs -f {}".format(task_resp.taskId),
+                    "green",
+                )
+            )
+
+
 @authentication.required
 def create(args: Namespace) -> None:
     config = command.parse_config(args.config_file, None, args.config, [])
@@ -122,25 +145,32 @@ def create(args: Namespace) -> None:
         config=config_text,
         contextDirectory=context_directory,
         projectId=args.project_id,
+        forkedFrom=args.fork,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
-    print(f"created task {task_resp.taskId}")
+    task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
-    if task_resp.warnings:
-        cli.print_launch_warnings(task_resp.warnings)
 
-    if args.follow:
-        try:
-            logs = api.task_logs(sess, task_resp.taskId, follow=True)
-            api.pprint_logs(logs)
-        finally:
-            print(
-                colored(
-                    "Task log stream ended. To reopen log stream, run: "
-                    "det task logs -f {}".format(task_resp.taskId),
-                    "green",
-                )
-            )
+
+@authentication.required
+def config(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
+    if args.json:
+        render.print_json(config_resp.config)
+    else:
+        yaml_dict = json.loads(config_resp.config)
+        print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
+
+
+@authentication.required
+def fork(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    req = bindings.v1CreateGenericTaskRequest(
+        config="", contextDirectory="", projectId=args.project_id, forkedFrom=args.parent_task_id
+    )
+    task_resp = bindings.post_CreateGenericTask(sess, body=req)
+    task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
 
 common_log_options: List[Any] = [
@@ -277,6 +307,35 @@ args_description: List[Any] = [
                         action="store_true",
                         help="follow the logs of the task that is created",
                     ),
+                    Arg("--fork", type=str, help="id of parent task to fork from"),
+                ],
+            ),
+            Cmd(
+                "config",
+                config,
+                "get config for given task",
+                [
+                    Arg("task_id", type=str, help="ID of task to pull config from"),
+                    Arg(
+                        "--json",
+                        action="store_true",
+                        help="return config in JSON format",
+                    ),
+                ],
+            ),
+            Cmd(
+                "fork",
+                fork,
+                "fork",
+                [
+                    Arg("parent_task_id", type=str, help="Id of parent task to fork from"),
+                    Arg(
+                        "-f",
+                        "--follow",
+                        action="store_true",
+                        help="follow the logs of the task that is created",
+                    ),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
                 ],
             ),
         ],
