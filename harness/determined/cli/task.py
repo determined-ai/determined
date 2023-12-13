@@ -127,7 +127,7 @@ def create(args: Namespace) -> None:
     print(f"created task {task_resp.taskId}")
 
     if task_resp.warnings:
-        cli.print_warnings(task_resp.warnings)
+        cli.print_launch_warnings(task_resp.warnings)
 
     if args.follow:
         try:
