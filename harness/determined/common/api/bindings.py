@@ -15022,7 +15022,8 @@ def post_AckAllocationPreemptionSignal(
     - allocationId: The allocation that is acknowledging the request.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/signals/ack_preemption",
@@ -15120,7 +15121,8 @@ def post_AllocationAllGather(
     - allocationId: The ID of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/all_gather",
@@ -15149,7 +15151,8 @@ def post_AllocationPendingPreemptionSignal(
     - allocationId: The id of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/signals/pending_preemption",
@@ -15181,7 +15184,8 @@ def get_AllocationPreemptionSignal(
     _params = {
         "timeoutSeconds": timeoutSeconds,
     }
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/allocations/{allocationId}/signals/preemption",
@@ -15207,7 +15211,8 @@ def post_AllocationReady(
     - allocationId: The id of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/ready",
@@ -15236,8 +15241,10 @@ def get_AllocationRendezvousInfo(
     - resourcesId: The id of the clump of resources.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
-    resourcesId = parse.quote(resourcesId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
+    if type(resourcesId) == str:
+        resourcesId = parse.quote(resourcesId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous",
@@ -15263,7 +15270,8 @@ def post_AllocationWaiting(
     - allocationId: The id of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/waiting",
@@ -15333,7 +15341,8 @@ def post_ArchiveModel(
     - modelName: The name of the model to archive.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/models/{modelName}/archive",
@@ -15449,7 +15458,8 @@ def post_BindRPToWorkspace(
     - resourcePoolName: The resource pool name.
     """
     _params = None
-    resourcePoolName = parse.quote(resourcePoolName)
+    if type(resourcePoolName) == str:
+        resourcePoolName = parse.quote(resourcePoolName)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
@@ -15816,7 +15826,8 @@ def delete_DeleteExperimentLabel(
     - label: The label to delete.
     """
     _params = None
-    label = parse.quote(label)
+    if type(label) == str:
+        label = parse.quote(label)
     _resp = session._do_request(
         method="DELETE",
         path=f"/api/v1/experiments/{experimentId}/labels/{label}",
@@ -15886,7 +15897,8 @@ def delete_DeleteModel(
     - modelName: The name of the model to delete.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="DELETE",
         path=f"/api/v1/models/{modelName}",
@@ -15913,7 +15925,8 @@ def delete_DeleteModelVersion(
     - modelVersionNum: Sequential model version number.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="DELETE",
         path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}",
@@ -15962,7 +15975,8 @@ def delete_DeleteTemplate(
     - templateName: The id of the template.
     """
     _params = None
-    templateName = parse.quote(templateName)
+    if type(templateName) == str:
+        templateName = parse.quote(templateName)
     _resp = session._do_request(
         method="DELETE",
         path=f"/api/v1/templates/{templateName}",
@@ -16060,7 +16074,8 @@ def post_DisableAgent(
     - agentId: The id of the agent.
     """
     _params = None
-    agentId = parse.quote(agentId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/agents/{agentId}/disable",
@@ -16088,8 +16103,10 @@ def post_DisableSlot(
     - slotId: The id of the slot.
     """
     _params = None
-    agentId = parse.quote(agentId)
-    slotId = parse.quote(slotId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
+    if type(slotId) == str:
+        slotId = parse.quote(slotId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
@@ -16114,7 +16131,8 @@ def post_EnableAgent(
     - agentId: The id of the agent.
     """
     _params = None
-    agentId = parse.quote(agentId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/agents/{agentId}/enable",
@@ -16141,8 +16159,10 @@ def post_EnableSlot(
     - slotId: The id of the slot.
     """
     _params = None
-    agentId = parse.quote(agentId)
-    slotId = parse.quote(slotId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
+    if type(slotId) == str:
+        slotId = parse.quote(slotId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/agents/{agentId}/slots/{slotId}/enable",
@@ -16226,7 +16246,8 @@ def get_GetAgent(
     - agentId: The id of the agent.
     """
     _params = None
-    agentId = parse.quote(agentId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/agents/{agentId}",
@@ -16298,7 +16319,8 @@ def get_GetAllocation(
     - allocationId: The id of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/allocations/{allocationId}",
@@ -16347,7 +16369,8 @@ def get_GetCheckpoint(
     - checkpointUuid: The uuid for the requested checkpoint.
     """
     _params = None
-    checkpointUuid = parse.quote(checkpointUuid)
+    if type(checkpointUuid) == str:
+        checkpointUuid = parse.quote(checkpointUuid)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/checkpoints/{checkpointUuid}",
@@ -16372,7 +16395,8 @@ def get_GetCommand(
     - commandId: The id of the command.
     """
     _params = None
-    commandId = parse.quote(commandId)
+    if type(commandId) == str:
+        commandId = parse.quote(commandId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/commands/{commandId}",
@@ -17124,7 +17148,8 @@ def get_GetModel(
     - modelName: The name of the model.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/models/{modelName}",
@@ -17250,7 +17275,8 @@ def get_GetModelVersion(
     - modelVersionNum: Sequential model version number.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}",
@@ -17297,7 +17323,8 @@ denote number of models to skip from the end before returning results.
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
     }
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/models/{modelName}/versions",
@@ -17397,7 +17424,8 @@ def get_GetNotebook(
     - notebookId: The id of the notebook.
     """
     _params = None
-    notebookId = parse.quote(notebookId)
+    if type(notebookId) == str:
+        notebookId = parse.quote(notebookId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/notebooks/{notebookId}",
@@ -17724,7 +17752,8 @@ def get_GetShell(
     - shellId: The id of the shell.
     """
     _params = None
-    shellId = parse.quote(shellId)
+    if type(shellId) == str:
+        shellId = parse.quote(shellId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/shells/{shellId}",
@@ -17807,8 +17836,10 @@ def get_GetSlot(
     - slotId: The id of the slot.
     """
     _params = None
-    agentId = parse.quote(agentId)
-    slotId = parse.quote(slotId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
+    if type(slotId) == str:
+        slotId = parse.quote(slotId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/agents/{agentId}/slots/{slotId}",
@@ -17833,7 +17864,8 @@ def get_GetSlots(
     - agentId: The id of the agent.
     """
     _params = None
-    agentId = parse.quote(agentId)
+    if type(agentId) == str:
+        agentId = parse.quote(agentId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/agents/{agentId}/slots",
@@ -17858,7 +17890,8 @@ def get_GetTask(
     - taskId: The requested task id.
     """
     _params = None
-    taskId = parse.quote(taskId)
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tasks/{taskId}",
@@ -17884,7 +17917,8 @@ def get_GetTaskAcceleratorData(
     - taskId: The id of the task.
     """
     _params = None
-    taskId = parse.quote(taskId)
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tasks/{taskId}/acceleratorData",
@@ -17909,7 +17943,8 @@ def get_GetTaskContextDirectory(
     - taskId: The id of the experiment.
     """
     _params = None
-    taskId = parse.quote(taskId)
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tasks/{taskId}/context_directory",
@@ -17972,7 +18007,8 @@ def get_GetTemplate(
     - templateName: The id of the template.
     """
     _params = None
-    templateName = parse.quote(templateName)
+    if type(templateName) == str:
+        templateName = parse.quote(templateName)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/templates/{templateName}",
@@ -18043,7 +18079,8 @@ def get_GetTensorboard(
     - tensorboardId: The id of the tensorboard.
     """
     _params = None
-    tensorboardId = parse.quote(tensorboardId)
+    if type(tensorboardId) == str:
+        tensorboardId = parse.quote(tensorboardId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tensorboards/{tensorboardId}",
@@ -18264,7 +18301,8 @@ all groups).
         "metricGroup": metricGroup,
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
     }
-    checkpointUuid = parse.quote(checkpointUuid)
+    if type(checkpointUuid) == str:
+        checkpointUuid = parse.quote(checkpointUuid)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/checkpoints/{checkpointUuid}/metrics",
@@ -18303,7 +18341,8 @@ all groups).
         "metricGroup": metricGroup,
         "trialSourceInfoType": trialSourceInfoType.value if trialSourceInfoType is not None else None,
     }
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}/metrics",
@@ -18515,7 +18554,8 @@ def get_GetUserByUsername(
     - username: The string of the username.
     """
     _params = None
-    username = parse.quote(username)
+    if type(username) == str:
+        username = parse.quote(username)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/users/{username}/by-username",
@@ -18826,7 +18866,8 @@ def put_IdleNotebook(
     - notebookId: The id of the notebook.
     """
     _params = None
-    notebookId = parse.quote(notebookId)
+    if type(notebookId) == str:
+        notebookId = parse.quote(notebookId)
     _resp = session._do_request(
         method="PUT",
         path=f"/api/v1/notebooks/{notebookId}/report_idle",
@@ -18851,7 +18892,8 @@ def post_KillCommand(
     - commandId: The id of the command.
     """
     _params = None
-    commandId = parse.quote(commandId)
+    if type(commandId) == str:
+        commandId = parse.quote(commandId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/commands/{commandId}/kill",
@@ -18921,7 +18963,8 @@ def post_KillNotebook(
     - notebookId: The id of the notebook.
     """
     _params = None
-    notebookId = parse.quote(notebookId)
+    if type(notebookId) == str:
+        notebookId = parse.quote(notebookId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/notebooks/{notebookId}/kill",
@@ -18946,7 +18989,8 @@ def post_KillShell(
     - shellId: The id of the shell.
     """
     _params = None
-    shellId = parse.quote(shellId)
+    if type(shellId) == str:
+        shellId = parse.quote(shellId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/shells/{shellId}/kill",
@@ -18971,7 +19015,8 @@ def post_KillTensorboard(
     - tensorboardId: The id of the tensorboard.
     """
     _params = None
-    tensorboardId = parse.quote(tensorboardId)
+    if type(tensorboardId) == str:
+        tensorboardId = parse.quote(tensorboardId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tensorboards/{tensorboardId}/kill",
@@ -19164,7 +19209,8 @@ def get_ListWorkspacesBoundToRP(
         "limit": limit,
         "offset": offset,
     }
-    resourcePoolName = parse.quote(resourcePoolName)
+    if type(resourcePoolName) == str:
+        resourcePoolName = parse.quote(resourcePoolName)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
@@ -19236,8 +19282,10 @@ def post_MarkAllocationResourcesDaemon(
     - resourcesId: The id of the clump of resources to mark as daemon.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
-    resourcesId = parse.quote(resourcesId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
+    if type(resourcesId) == str:
+        resourcesId = parse.quote(resourcesId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon",
@@ -19406,7 +19454,8 @@ def post_MoveModel(
     - modelName: The target model name.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/models/{modelName}/move",
@@ -19462,7 +19511,8 @@ def post_NotifyContainerRunning(
     - allocationId: The ID of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/notify_container_running",
@@ -19488,7 +19538,8 @@ def put_OverwriteRPWorkspaceBindings(
     - resourcePoolName: The resource pool name.
     """
     _params = None
-    resourcePoolName = parse.quote(resourcePoolName)
+    if type(resourcePoolName) == str:
+        resourcePoolName = parse.quote(resourcePoolName)
     _resp = session._do_request(
         method="PUT",
         path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
@@ -19583,7 +19634,8 @@ def patch_PatchModel(
     - modelName: The name of the model being updated.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="PATCH",
         path=f"/api/v1/models/{modelName}",
@@ -19612,7 +19664,8 @@ def patch_PatchModelVersion(
     - modelVersionNum: The model version number being updated.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="PATCH",
         path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}",
@@ -19665,7 +19718,8 @@ def patch_PatchTemplateConfig(
     - templateName: The name of the template.
     """
     _params = None
-    templateName = parse.quote(templateName)
+    if type(templateName) == str:
+        templateName = parse.quote(templateName)
     _resp = session._do_request(
         method="PATCH",
         path=f"/api/v1/templates/{templateName}",
@@ -19858,7 +19912,8 @@ def post_PostAllocationAcceleratorData(
     - allocationId: The id of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/acceleratorData",
@@ -19886,7 +19941,8 @@ def post_PostAllocationProxyAddress(
     - allocationId: The id of the allocation.
     """
     _params = None
-    allocationId = parse.quote(allocationId)
+    if type(allocationId) == str:
+        allocationId = parse.quote(allocationId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/allocations/{allocationId}/proxy_address",
@@ -19912,7 +19968,8 @@ def post_PostCheckpointMetadata(
     - checkpoint_uuid: UUID of the checkpoint.
     """
     _params = None
-    checkpoint_uuid = parse.quote(checkpoint_uuid)
+    if type(checkpoint_uuid) == str:
+        checkpoint_uuid = parse.quote(checkpoint_uuid)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/checkpoints/{checkpoint_uuid}/metadata",
@@ -19959,7 +20016,8 @@ def post_PostModelVersion(
     - modelName: The name of the model to add this version to.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/models/{modelName}/versions",
@@ -20057,7 +20115,8 @@ def post_PostTemplate(
     - template_name: The name of the template.
     """
     _params = None
-    template_name = parse.quote(template_name)
+    if type(template_name) == str:
+        template_name = parse.quote(template_name)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/templates/{template_name}",
@@ -20261,7 +20320,8 @@ def put_PutExperiment(
     - externalExperimentId: External experiment id.
     """
     _params = None
-    externalExperimentId = parse.quote(externalExperimentId)
+    if type(externalExperimentId) == str:
+        externalExperimentId = parse.quote(externalExperimentId)
     _resp = session._do_request(
         method="PUT",
         path=f"/api/v1/experiments/by-external-id/{externalExperimentId}",
@@ -20288,7 +20348,8 @@ def put_PutExperimentLabel(
     - label: The label to add.
     """
     _params = None
-    label = parse.quote(label)
+    if type(label) == str:
+        label = parse.quote(label)
     _resp = session._do_request(
         method="PUT",
         path=f"/api/v1/experiments/{experimentId}/labels/{label}",
@@ -20340,7 +20401,8 @@ def put_PutTemplate(
     - template_name: The name of the template.
     """
     _params = None
-    template_name = parse.quote(template_name)
+    if type(template_name) == str:
+        template_name = parse.quote(template_name)
     _resp = session._do_request(
         method="PUT",
         path=f"/api/v1/templates/{template_name}",
@@ -20732,7 +20794,8 @@ def post_SetCommandPriority(
     - commandId: The id of the command.
     """
     _params = None
-    commandId = parse.quote(commandId)
+    if type(commandId) == str:
+        commandId = parse.quote(commandId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/commands/{commandId}/set_priority",
@@ -20758,7 +20821,8 @@ def post_SetNotebookPriority(
     - notebookId: The id of the notebook.
     """
     _params = None
-    notebookId = parse.quote(notebookId)
+    if type(notebookId) == str:
+        notebookId = parse.quote(notebookId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/notebooks/{notebookId}/set_priority",
@@ -20784,7 +20848,8 @@ def post_SetShellPriority(
     - shellId: The id of the shell.
     """
     _params = None
-    shellId = parse.quote(shellId)
+    if type(shellId) == str:
+        shellId = parse.quote(shellId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/shells/{shellId}/set_priority",
@@ -20810,7 +20875,8 @@ def post_SetTensorboardPriority(
     - tensorboardId: The id of the TensorBoard.
     """
     _params = None
-    tensorboardId = parse.quote(tensorboardId)
+    if type(tensorboardId) == str:
+        tensorboardId = parse.quote(tensorboardId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tensorboards/{tensorboardId}/set_priority",
@@ -20938,7 +21004,8 @@ def get_TaskLogs(
         "timestampAfter": timestampAfter,
         "timestampBefore": timestampBefore,
     }
-    taskId = parse.quote(taskId)
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tasks/{taskId}/logs",
@@ -20978,7 +21045,8 @@ def get_TaskLogsFields(
     _params = {
         "follow": str(follow).lower() if follow is not None else None,
     }
-    taskId = parse.quote(taskId)
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tasks/{taskId}/logs/fields",
@@ -21329,7 +21397,8 @@ def post_UnarchiveModel(
     - modelName: The name of the model to un-archive.
     """
     _params = None
-    modelName = parse.quote(modelName)
+    if type(modelName) == str:
+        modelName = parse.quote(modelName)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/models/{modelName}/unarchive",
@@ -21403,7 +21472,8 @@ def delete_UnbindRPFromWorkspace(
     - resourcePoolName: The resource pool name.
     """
     _params = None
-    resourcePoolName = parse.quote(resourcePoolName)
+    if type(resourcePoolName) == str:
+        resourcePoolName = parse.quote(resourcePoolName)
     _resp = session._do_request(
         method="DELETE",
         path=f"/api/v1/resource-pools/{resourcePoolName}/workspace-bindings",
