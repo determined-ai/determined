@@ -34,14 +34,6 @@ def test_mnist_pytorch_set_stop_requested_distributed() -> None:
     exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
-@pytest.mark.distributed_quarantine
-def test_cifar10_tf_keras_distributed() -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("cifar10_tf_keras"), 1)
-
-
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:

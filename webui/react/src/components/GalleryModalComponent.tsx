@@ -1,39 +1,32 @@
-import { Modal } from 'antd';
-import { ModalProps } from 'antd/es/modal/Modal';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
-import { useTheme } from 'hew/Theme';
-import React, { useCallback, useEffect, useState } from 'react';
+import { UPlotScatterProps } from 'hew/internal/UPlot/types';
+import { Modal } from 'hew/Modal';
+import React, { useCallback, useEffect } from 'react';
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
-import useResize from 'hooks/useResize';
-import { isNumber } from 'utils/data';
-import { isPercent, percentToFloat } from 'utils/number';
+import { Scale } from 'types';
 
 import css from './GalleryModal.module.scss';
+import UPlotScatter from './UPlot/UPlotScatter';
 
-interface Props extends ModalProps {
-  children: React.ReactNode;
-  height?: number | string;
+interface Props {
   onNext?: () => void;
   onPrevious?: () => void;
+  onCancel: () => void;
+  chartProps: Record<string, UPlotScatterProps> | undefined;
+  activeHParam: string | undefined;
+  selectedScale: Scale;
 }
 
-const GalleryModal: React.FC<Props> = ({
-  height = '80%',
+const GalleryModalComponent: React.FC<Props> = ({
   onNext,
   onPrevious,
-  children,
-  ...props
+  onCancel,
+  chartProps,
+  activeHParam,
+  selectedScale,
 }: Props) => {
-  const resize = useResize();
-  const [width, setWidth] = useState<number>();
-  const [minHeight, setMinHeight] = useState<number>();
-
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
-
   const handlePrevious = useCallback(() => {
     if (onPrevious) onPrevious();
   }, [onPrevious]);
@@ -41,17 +34,6 @@ const GalleryModal: React.FC<Props> = ({
   const handleNext = useCallback(() => {
     if (onNext) onNext();
   }, [onNext]);
-
-  useEffect(() => {
-    setWidth(resize.width);
-
-    if (isPercent(height)) {
-      const newMinHeight = percentToFloat(height) * resize.height;
-      setMinHeight(newMinHeight);
-    } else if (isNumber(height) && height < resize.height) {
-      setMinHeight(height);
-    }
-  }, [height, resize]);
 
   useEffect(() => {
     const keyUpListener = (e: KeyboardEvent) => {
@@ -70,9 +52,28 @@ const GalleryModal: React.FC<Props> = ({
   }, [onNext, onPrevious]);
 
   return (
-    <Modal centered footer={null} open width={width} {...props} wrapClassName={themeClass}>
-      <div className={css.base} style={{ minHeight }}>
-        {children}
+    <Modal
+      size="large"
+      submit={{
+        handleError: () => {},
+        handler: onCancel,
+        text: 'Close',
+      }}
+      title=""
+      onClose={onCancel}>
+      <div className={css.base}>
+        {chartProps && activeHParam && (
+          <UPlotScatter
+            colorScaleDistribution={selectedScale}
+            data={chartProps[activeHParam].data}
+            options={{
+              ...chartProps[activeHParam].options,
+              cursor: { drag: undefined },
+              height: 400,
+            }}
+            tooltipLabels={chartProps[activeHParam].tooltipLabels}
+          />
+        )}
         <div className={css.prev}>
           <Button
             icon={<Icon name="arrow-left" showTooltip title="Previous" />}
@@ -90,4 +91,4 @@ const GalleryModal: React.FC<Props> = ({
   );
 };
 
-export default GalleryModal;
+export default GalleryModalComponent;

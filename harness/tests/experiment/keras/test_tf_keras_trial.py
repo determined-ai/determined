@@ -369,7 +369,7 @@ class TestKerasTrial:
 
 
 @pytest.mark.tensorflow
-def test_cifar10(tmp_path: Path):
+def test_iris(tmp_path: Path):
     """
     Make sure each example:
      - trains
@@ -394,23 +394,26 @@ def test_cifar10(tmp_path: Path):
         latest_checkpoint = interceptor.metrics_result()["uuid"]
         steps_completed = trainer.get_steps_completed()
 
-    example_path = utils.cv_examples_path("cifar10_tf_keras/model_def.py")
-    trial_cls = utils.import_class_from_module("CIFARTrial", example_path)
+    example_path = utils.cv_examples_path("iris_tf_keras/model_def.py")
+    trial_cls = utils.import_class_from_module("IrisTrial", example_path)
 
     hparams = {
         "learning_rate": 1.0e-4,
         "learning_rate_decay": 1.0e-6,
-        "layer1_dropout": 0.25,
-        "layer2_dropout": 0.25,
-        "layer3_dropout": 0.5,
-        "global_batch_size": 32,
-        "width_shift_range": 0.1,
-        "height_shift_range": 0.1,
-        "horizontal_flip": True,
+        "layer1_dense_size": 16,
+        "global_batch_size": 30,
+    }
+    data = {
+        "train_url": "http://download.tensorflow.org/data/iris_training.csv",
+        "test_url": "http://download.tensorflow.org/data/iris_test.csv",
     }
 
     exp_config = utils.make_default_exp_config(
-        hparams, scheduling_unit=1, searcher_metric="random", checkpoint_dir=checkpoint_dir
+        hparams,
+        scheduling_unit=1,
+        searcher_metric="random",
+        checkpoint_dir=checkpoint_dir,
+        data=data,
     )
 
     controller = utils.make_trial_controller_from_trial_implementation(

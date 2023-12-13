@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="determined",
-    version="0.26.5-dev0",
+    version="0.26.6-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -23,7 +23,6 @@ setuptools.setup(
         "numpy>=1.16.2",
         "psutil",
         "pyzmq>=18.1.0",
-        "yogadl==0.1.4",
         # Common:
         "certifi",
         "filelock",

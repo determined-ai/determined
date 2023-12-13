@@ -416,6 +416,9 @@ func (a *apiServer) DeleteExperiments(
 	}
 
 	results, experiments, err := experiment.DeleteExperiments(ctx, req.ExperimentIds, req.Filters)
+	if err != nil {
+		return nil, err
+	}
 
 	go func() {
 		err := a.deleteExperiments(experiments, curUser)

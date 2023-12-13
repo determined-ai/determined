@@ -65,7 +65,7 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 	return res
 }
 
-// TODO fill in job information. These should probably be on a different struct.
+// TODO(aaron.amanuel): fill in job information. These should probably be on a different struct.
 // not right on the generic task spec.
 
 // ToV1Job todo.
@@ -81,3 +81,6 @@ func (s GenericTaskSpec) SetWeight(weight float64) error { return nil }
 
 // SetResourcePool todo.
 func (s GenericTaskSpec) SetResourcePool(resourcePool string) error { return nil }
+
+// ResourcePool - returns resource pool.
+func (s GenericTaskSpec) ResourcePool() string { return s.GenericTaskConfig.Resources.ResourcePool() }

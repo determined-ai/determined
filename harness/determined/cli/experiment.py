@@ -284,7 +284,7 @@ def submit_experiment(args: Namespace) -> None:
         print(f"Created experiment {resp.experiment.id}")
 
         if resp.warnings:
-            cli.print_warnings(resp.warnings)
+            cli.print_launch_warnings(resp.warnings)
 
         if not args.paused and args.follow_first_trial:
             if args.publish:

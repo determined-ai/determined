@@ -183,8 +183,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const onProjectEdit = useCallback(
     (id: number, name: string, archived: boolean) => {
       setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived, name } : p)));
+      fetchProjects();
     },
-    [setProjects],
+    [setProjects, fetchProjects],
   );
 
   const columns = useMemo(() => {

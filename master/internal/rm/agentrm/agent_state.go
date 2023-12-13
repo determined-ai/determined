@@ -205,7 +205,8 @@ func (a *agentState) deepCopy() *agentState {
 		draining:              a.draining,
 		containerState:        maps.Clone(a.containerState),
 		// TODO(ilia): Deepcopy of `slotStates` may be necessary one day.
-		slotStates: a.slotStates,
+		slotStates:       a.slotStates,
+		resourcePoolName: a.resourcePoolName,
 	}
 
 	return copiedAgent

@@ -2,6 +2,7 @@ import { Space } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'hew/Button';
 import { SyncProvider } from 'hew/LineChart/SyncProvider';
+import { useModal } from 'hew/Modal';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,7 +17,9 @@ import { useObservable } from 'utils/observable';
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
 import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
-import ClusterHistoricalUsageCsvModal, { CSVGroupBy } from './ClusterHistoricalUsageCsvModal';
+import ClusterHistoricalUsageCsvModalComponent, {
+  CSVGroupBy,
+} from './ClusterHistoricalUsageCsvModalComponent';
 import ClusterHistoricalUsageFilters, {
   ClusterHistoricalUsageFiltersInterface,
 } from './ClusterHistoricalUsageFilters';
@@ -32,7 +35,12 @@ const ClusterHistoricalUsage: React.FC = () => {
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const loadableUsers = useObservable(userStore.getUsers());
+  const clusterHistoricalUsageCsvModal = useModal(ClusterHistoricalUsageCsvModalComponent);
   const users = Loadable.getOrElse([], loadableUsers);
+
+  useEffect(() => {
+    if (isCsvModalVisible) clusterHistoricalUsageCsvModal.open();
+  }, [clusterHistoricalUsageCsvModal, isCsvModalVisible]);
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -209,7 +217,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           })}
         </Section>
         {isCsvModalVisible && (
-          <ClusterHistoricalUsageCsvModal
+          <clusterHistoricalUsageCsvModal.Component
             afterDate={csvAfterDate}
             beforeDate={csvBeforeDate}
             groupBy={CSVGroupBy.Workloads}
