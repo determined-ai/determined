@@ -3,7 +3,6 @@ import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import { useTheme } from 'hew/Theme';
 import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import usePrevious from 'hew/utils/usePrevious';
