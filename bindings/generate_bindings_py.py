@@ -1,6 +1,5 @@
 import os
 import typing
-from urllib import parse
 
 import swagger_parser
 from typing_extensions import assert_never
