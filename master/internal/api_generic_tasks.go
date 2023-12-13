@@ -275,24 +275,39 @@ func (a *apiServer) CreateGenericTask(
 	}, nil
 }
 
-func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) ([]model.TaskID, error) {
-	out := struct {
-		taskIDs []model.TaskID `bun:"table:id"`
-	}{}
+func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID) ([]model.Task, error) {
 	query := fmt.Sprintf(`
 	WITH RECURSIVE cte as (
 		SELECT * FROM tasks WHERE task_id='%s'
 		UNION ALL
 		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
 	)
-	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id RETURNING cte.task_id as id;`, taskID, state)
-	_, err := db.Bun().NewRaw(query).Exec(ctx, &out)
-	return out.taskIDs, err
+	SELECT task_id, task_state, parent_id, job_id FROM cte`, taskID)
+
+	var tasks []model.Task
+	rows, err := db.Bun().QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	err = db.Bun().ScanRows(ctx, rows, &tasks)
+	return tasks, err
+}
+
+func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
+	query := fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	)
+	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id;`, taskID, state)
+	_, err := db.Bun().NewRaw(query).Exec(ctx)
+	return err
 }
 
 func (a *apiServer) FindRoot(ctx context.Context, taskID model.TaskID) (model.TaskID, error) {
 	out := struct {
-		taskID model.TaskID `bun:"table:root"`
+		Root model.TaskID
 	}{}
 	query := fmt.Sprintf(`
 	WITH RECURSIVE my_tree as (
@@ -302,7 +317,7 @@ func (a *apiServer) FindRoot(ctx context.Context, taskID model.TaskID) (model.Ta
 	)
 	SELECT root FROM my_tree WHERE task_id='%s'`, taskID)
 	err := db.Bun().NewRaw(query).Scan(ctx, &out)
-	return out.taskID, err
+	return out.Root, err
 }
 
 func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {

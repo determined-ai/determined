@@ -95,6 +95,8 @@ message Task {
   optional string config = 7;
   // ID of parent task (empty if root task)
   optional string parent_id = 8;
+  //
+  optional string task_state = 9;
 }
 
 // Address represents an exposed port on a container.
