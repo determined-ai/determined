@@ -1,6 +1,7 @@
 package sproto
 
 import (
+	"context"
 	"strconv"
 	"time"
 
@@ -170,6 +171,12 @@ func NewAllocationSubscription(
 // subscription is closed, ResourcesReleasedEvent is returned.
 func (a *ResourcesSubscription) Get() ResourcesEvent {
 	return a.inbox.Get()
+}
+
+// GetWithContext blocks until an event is published for our subscription's topic or the context
+// is canceled. When the subscription is closed, ResourcesReleasedEvent is returned.
+func (a *ResourcesSubscription) GetWithContext(ctx context.Context) (ResourcesEvent, error) {
+	return a.inbox.GetWithContext(ctx)
 }
 
 // Close unsubscribes us from further updates.
