@@ -263,7 +263,7 @@ def gen_function(func: swagger_parser.Function) -> Code:
 
     for n, param in func.params.items():
         if param.where == "path" and isinstance(param.type, swagger_parser.String):
-            # Callers may pass in int types despite bindings type.
+            # bindings string types are not enforced, so check the actual type.
             out += [f"    if type({param.name}) == str:"]
             out += [f"        {param.name} = parse.quote({param.name})"]
 
