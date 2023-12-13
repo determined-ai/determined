@@ -1,4 +1,6 @@
 import Card from 'hew/Card';
+import Column from 'hew/Column';
+import Row from 'hew/Row';
 import { Body, Label, TypographySize } from 'hew/Typography';
 import React from 'react';
 
@@ -17,16 +19,18 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
 
   return (
     <Card onClick={props.onClick}>
-      <div className={css.base}>
-        <div className={css.title}>
+      <Column>
+        <Row>
           <Label size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
             {props.title}
           </Label>
-        </div>
-        <strong className={childClasses.join(' ')}>
-          <Body truncate={{ rows: 1, tooltip: true }}>{props.children}</Body>
-        </strong>
-      </div>
+        </Row>
+        <Row>
+          <strong className={childClasses.join(' ')}>
+            <Body truncate={{ rows: 1, tooltip: true }}>{props.children}</Body>
+          </strong>
+        </Row>
+      </Column>
     </Card>
   );
 };
