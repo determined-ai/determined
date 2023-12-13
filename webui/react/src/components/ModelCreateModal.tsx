@@ -32,8 +32,7 @@ type FormInputs = {
 };
 
 interface Props {
-  // TODO: we should be able to remove `reason` from onClose props after modal migration
-  onClose?: (reason?: string, checkpoints?: string[], modelName?: string) => void;
+  onClose?: (checkpoints?: string[], modelName?: string) => void;
   workspaceId?: number;
 }
 
