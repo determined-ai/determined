@@ -1,12 +1,13 @@
-import { Space } from 'antd';
 import Accordion from 'hew/Accordion';
 import Button from 'hew/Button';
+import Column from 'hew/Column';
 import Drawer from 'hew/Drawer';
 import Icon from 'hew/Icon';
 import InlineForm from 'hew/InlineForm';
 import Input from 'hew/Input';
 import InputShortcut, { KeyboardShortcut, shortcutToString } from 'hew/InputShortcut';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { ShirtSize } from 'hew/Theme';
@@ -328,10 +329,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     }
                     key={feature}
                     label={
-                      <Space>
+                      <Row>
                         {description.friendlyName}
                         <Icon name="info" showTooltip title={description.description} />
-                      </Space>
+                      </Row>
                     }
                     valueFormatter={(value) => (value ? 'On' : 'Off')}
                     onSubmit={(val) => {
@@ -354,7 +355,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   reset your user settings if you make a mistake.
                 </Body>
                 <Accordion title="I know what I'm doing">
-                  <Space>
+                  <Column>
                     <Button
                       danger
                       type="primary"
@@ -376,7 +377,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       Edit Raw Settings (JSON)
                     </Button>
                     <UserSettingsModal.Component />
-                  </Space>
+                  </Column>
                 </Accordion>
               </Grid>
             </Section>

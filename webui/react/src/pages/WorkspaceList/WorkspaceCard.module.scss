@@ -10,8 +10,12 @@
 .info {
   display: flex;
   flex-direction: column;
-  font-size: 11px;
   justify-content: space-between;
   overflow: hidden;
   width: 100%;
+
+  > div:first-child {
+    display: flex;
+    justify-content: space-between;
+  }
 }

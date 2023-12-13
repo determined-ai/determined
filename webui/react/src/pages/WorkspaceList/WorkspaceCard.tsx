@@ -52,7 +52,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
                 {workspace.pinned && <Icon name="pin" title="Pinned" />}
               </Row>
               <Row>
-                <Label>
+                <Label size={TypographySize.XS}>
                   {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
                 </Label>
               </Row>
