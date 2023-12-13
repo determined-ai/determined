@@ -42,10 +42,12 @@ class EFS(VPCBase):
 
 class Lore(VPCBase):
     template = "lore.yaml"
-    deployment_type = constants.deployment_types.LORE
+    deployment_type = constants.deployment_types.GENAI
 
     def before_deploy_print(self) -> None:
         super().before_deploy_print()
         lore_tag = self.parameters[constants.cloudformation.LORE_VERSION] or "latest"
-        print(f"Lore Version: {lore_tag}")
-        print(f"Lore Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
+        # Lore is renamed to GenAI and we are changing the user visible text to GenAI
+        # Interal references will be updated in a later stage if prioritized
+        print(f"GenAI Version: {lore_tag}")
+        print(f"GenAI Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
