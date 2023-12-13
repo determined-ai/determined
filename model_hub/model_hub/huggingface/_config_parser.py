@@ -272,7 +272,7 @@ class LRSchedulerKwargs:
 
 def parse_dict_to_dataclasses(
     dataclass_types: Tuple[Any, ...],
-    args: Union[Dict[str, Any]],
+    args: Union[Dict[str, Any], utils.AttrDict],
     as_dict: bool = False,
 ) -> Tuple[Any, ...]:
     """
@@ -283,7 +283,7 @@ def parse_dict_to_dataclasses(
     Args:
         dataclass_types: dataclasses with expected attributes.
         args: arguments that will be parsed to each of the dataclass_types.
-        as_dict: if true will return AttrDict instead of dict
+        as_dict: if true will return dictionary instead of AttrDict
 
     Returns:
         One dictionary for each dataclass with keys filled in from args if found.

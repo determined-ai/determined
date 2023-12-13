@@ -145,7 +145,7 @@ def build_default_lr_scheduler(
 
 
 def default_load_dataset(
-    data_config: dict,
+    data_config_input: Union[Dict, utils.AttrDict],
 ) -> Union[
     hf_datasets.Dataset,
     hf_datasets.IterableDataset,
@@ -154,7 +154,7 @@ def default_load_dataset(
 ]:
     """
     Creates the dataset using HuggingFace datasets' load_dataset method.
-    If a dataset_name is provided, we will use that long with the dataset_config_name.
+    If a dataset_name is provided, we will use that along with the dataset_config_name.
     Otherwise, we will create the dataset using provided train_file and validation_file.
 
     Args:
@@ -163,7 +163,7 @@ def default_load_dataset(
         Dataset returned from hf_datasets.load_dataset.
     """
     (data_config,) = hf_parse.parse_dict_to_dataclasses(
-        (hf_parse.DatasetKwargs,), data_config, as_dict=True
+        (hf_parse.DatasetKwargs,), data_config_input
     )
     # This method is common in nearly all main HF examples.
     if data_config.dataset_name is not None:
