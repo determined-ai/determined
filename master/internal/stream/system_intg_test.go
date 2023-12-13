@@ -209,7 +209,7 @@ func buildStartupMsg(
 }
 
 func TestTrialStartup(t *testing.T) {
-	trialUpsert := "key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 2"
+	trialUpsert := "key: trial, trial_id: 3, state: ERROR, experiment_id: 1, workspace_id: 0"
 
 	testCases := []startupTestCase{
 		{
@@ -371,7 +371,6 @@ func TestTrialUpdate(t *testing.T) {
 			queries: []streamdata.ExecutableQuery{
 				db.Bun().NewRaw("UPDATE trials SET state = 'CANCELED' WHERE id = 1"),
 			},
-			// TODO (bugfix): expected upsert has workspace_id 0 because workspace_id is not being populated on db modify
 			expectedUpserts:   []string{"key: trial, trial_id: 1, state: CANCELED, experiment_id: 1, workspace_id: 0"},
 			expectedDeletions: []string{},
 			terminationMsg:    "key: trial, trial_id: 1, state: CANCELED, experiment_id: 1, workspace_id: 0",
@@ -434,9 +433,25 @@ func TestTrialUpdate(t *testing.T) {
 	runUpdateTest(t, pgDB, testCases)
 }
 
+func TestMetricStartup(t *testing.T) {
+	metricUpsert := "key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0"
+
+	testCases := []startupTestCase{
+		{
+			description:       "metric subscription with nil known set",
+			startupMsg:        buildStartupMsg("1", nil, map[string]map[string][]int{MetricsUpsertKey: {TrialsUpsertKey: {1}}}),
+			expectedSync:      "key: sync_msg, sync_id: 1",
+			expectedUpserts:   []string{metricUpsert},
+			expectedDeletions: []string{},
+		},
+	}
+
+	runStartupTest(t, testCases)
+}
+
 func TestCheckpointStartup(t *testing.T) {
 	checkpointUpsert := "key: checkpoint, checkpoint_id: 2, state: COMPLETED, " +
-		"experiment_id: 1, trial_id: 2, workspace_id: 2"
+		"experiment_id: 1, trial_id: 2, workspace_id: 0"
 
 	testCases := []startupTestCase{
 		{
@@ -508,31 +523,136 @@ func TestMetricInsert(t *testing.T) {
 		MetricGroup   model.MetricGroup
 	}
 
-	newMetric := metric{
-		ID:            1,
+	genericMetric := metric{
+		ID:            2,
 		TrialID:       1,
 		TrialRunID:    1,
-		TotalBatches:  999999,
+		TotalBatches:  10,
 		EndTime:       time.Now(),
 		PartitionType: db.GenericMetric,
+		MetricGroup:   "generic",
+	}
+
+	validationMetric := metric{
+		ID:            3,
+		TrialID:       1,
+		TrialRunID:    1,
+		TotalBatches:  11,
+		EndTime:       time.Now(),
+		PartitionType: db.ValidationMetric,
+		MetricGroup:   "validation",
+	}
+
+	trainingMetric := metric{
+		ID:            4,
+		TrialID:       1,
+		TrialRunID:    1,
+		TotalBatches:  12,
+		EndTime:       time.Now(),
+		PartitionType: db.TrainingMetric,
+		MetricGroup:   "training",
+	}
+
+	newMetric1 := metric{
+		ID:            5,
+		TrialID:       1,
+		TrialRunID:    1,
+		TotalBatches:  13,
+		EndTime:       time.Now(),
+		PartitionType: db.TrainingMetric,
+		MetricGroup:   "training",
+	}
+
+	newMetric2 := metric{
+		ID:            6,
+		TrialID:       2,
+		TrialRunID:    2,
+		TotalBatches:  14,
+		EndTime:       time.Now(),
+		PartitionType: db.ValidationMetric,
+		MetricGroup:   "validation",
 	}
 
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
-				description:       "startup case for: insert metric while subscribed to relevant trial",
+				description:       "startup case for: insert generic metric while subscribed to relevant trial",
 				startupMsg:        buildStartupMsg("1", nil, map[string]map[string][]int{MetricsUpsertKey: {TrialsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
-				expectedUpserts:   []string{},
+				expectedUpserts:   []string{"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0"},
 				expectedDeletions: []string{},
 			},
 			description: "insert metric while subscribed to relevant trial",
 			queries: []streamdata.ExecutableQuery{
-				db.Bun().NewInsert().Model(&newMetric),
+				db.Bun().NewInsert().Model(&genericMetric),
 			},
-			// TODO (bugfix): expected upsert has workspace_id 0 because workspace_id is not being populated on db modify
 			expectedUpserts: []string{
 				"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+			},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description:  "startup case for: insert validation metric while subscribed to relevant trial",
+				startupMsg:   buildStartupMsg("1", nil, map[string]map[string][]int{MetricsUpsertKey: {TrialsUpsertKey: {1}}}),
+				expectedSync: "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{
+					"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+					"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+				},
+				expectedDeletions: []string{},
+			},
+			description: "insert metric while subscribed to relevant trial",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewInsert().Model(&validationMetric),
+			},
+			expectedUpserts: []string{
+				"key: metric, trial_id: 1, partition_type: VALIDATION, workspace_id: 0",
+			},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description:  "startup case for: insert validation metric while subscribed to relevant trial",
+				startupMsg:   buildStartupMsg("1", nil, map[string]map[string][]int{MetricsUpsertKey: {TrialsUpsertKey: {1}}}),
+				expectedSync: "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{
+					"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+					"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+					"key: metric, trial_id: 1, partition_type: VALIDATION, workspace_id: 0",
+				},
+				expectedDeletions: []string{},
+			},
+			description: "insert metric while subscribed to relevant trial",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewInsert().Model(&trainingMetric),
+			},
+			expectedUpserts: []string{
+				"key: metric, trial_id: 1, partition_type: TRAINING, workspace_id: 0",
+			},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description:  "startup case for: multiple metric inserts while subscribed to multiple trials",
+				startupMsg:   buildStartupMsg("1", nil, map[string]map[string][]int{MetricsUpsertKey: {TrialsUpsertKey: {1, 2}}}),
+				expectedSync: "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{
+					"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+					"key: metric, trial_id: 1, partition_type: GENERIC, workspace_id: 0",
+					"key: metric, trial_id: 1, partition_type: VALIDATION, workspace_id: 0",
+					"key: metric, trial_id: 1, partition_type: TRAINING, workspace_id: 0",
+				},
+				expectedDeletions: []string{},
+			},
+			description: "insert metric while subscribed to relevant trial",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewInsert().Model(&newMetric1),
+				db.Bun().NewInsert().Model(&newMetric2),
+			},
+			expectedUpserts: []string{
+				"key: metric, trial_id: 1, partition_type: TRAINING, workspace_id: 0",
+				"key: metric, trial_id: 2, partition_type: VALIDATION, workspace_id: 0",
 			},
 			expectedDeletions: []string{},
 		},
@@ -566,13 +686,13 @@ func TestCheckpointUpdate(t *testing.T) {
 					map[string]map[string][]int{CheckpointsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync: "key: sync_msg, sync_id: 1",
 				expectedUpserts: []string{"key: checkpoint, checkpoint_id: 2, state: COMPLETED, " +
-					"experiment_id: 1, trial_id: 2, workspace_id: 2"},
+					"experiment_id: 1, trial_id: 2, workspace_id: 0"},
 				expectedDeletions: []string{"key: checkpoints_deleted, deleted: "},
 			},
 			description: "update checkpoint while subscribed to its events",
 			queries:     []streamdata.ExecutableQuery{streamdata.GetUpdateCheckpointQuery(modCheckpoint)},
 			expectedUpserts: []string{"key: checkpoint, checkpoint_id: 1, state: DELETED, " +
-				"experiment_id: 1, trial_id: 1, workspace_id: 2"},
+				"experiment_id: 1, trial_id: 1, workspace_id: 0"},
 			expectedDeletions: []string{},
 		},
 		{
@@ -589,7 +709,7 @@ func TestCheckpointUpdate(t *testing.T) {
 				db.Bun().NewInsert().Model(&newCheckpoint),
 			},
 			expectedUpserts: []string{
-				"key: checkpoint, checkpoint_id: 3, state: COMPLETED, experiment_id: 1, trial_id: 3, workspace_id: 2",
+				"key: checkpoint, checkpoint_id: 3, state: COMPLETED, experiment_id: 1, trial_id: 3, workspace_id: 0",
 			},
 			expectedDeletions: []string{},
 		},
@@ -623,8 +743,8 @@ func TestCheckpointUpdate(t *testing.T) {
 				db.Bun().NewRaw("UPDATE projects SET workspace_id = 1 WHERE workspace_id = 2"),
 			},
 			expectedUpserts: []string{
-				"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, trial_id: 1, workspace_id: 1",
-				"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, trial_id: 2, workspace_id: 1",
+				"key: checkpoint, checkpoint_id: 1, state: DELETED, experiment_id: 1, trial_id: 1, workspace_id: 0",
+				"key: checkpoint, checkpoint_id: 2, state: COMPLETED, experiment_id: 1, trial_id: 2, workspace_id: 0",
 			},
 			expectedDeletions: []string{},
 		},

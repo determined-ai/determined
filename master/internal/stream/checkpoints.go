@@ -44,7 +44,7 @@ type CheckpointMsg struct {
 	Seq int64 `bun:"seq" json:"seq"`
 
 	// permission scope
-	WorkspaceID int `json:"workspace_id"`
+	WorkspaceID int `json:"workspace_id,omitempty"`
 
 	// TrialID
 	TrialID int `json:"trial_id"`
@@ -60,9 +60,12 @@ func (c *CheckpointMsg) SeqNum() int64 {
 
 // UpsertMsg creates a Checkpoint upserted prepared message.
 func (c *CheckpointMsg) UpsertMsg() stream.UpsertMsg {
+	// omit workspaceID since it wasn't part of the original row
+	exportedMsg := *c
+	exportedMsg.WorkspaceID = 0
 	return stream.UpsertMsg{
 		JSONKey: CheckpointsUpsertKey,
-		Msg:     c,
+		Msg:     &exportedMsg,
 	}
 }
 

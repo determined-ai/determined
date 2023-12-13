@@ -160,7 +160,6 @@ func (s *mockSocket) ReadUntilFound(
 	for _, s := range expected {
 		checklist[s] = struct{}{}
 	}
-	t.Logf("Checklist?: %q", checklist)
 
 	for len(checklist) > 0 {
 		s.ReadIncoming(t, &msg)

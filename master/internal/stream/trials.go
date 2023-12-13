@@ -48,7 +48,7 @@ type TrialMsg struct {
 	Seq int64 `bun:"seq" json:"seq"`
 
 	// permission scope
-	WorkspaceID int `json:"-"`
+	WorkspaceID int `json:"workspace_id,omitempty"`
 }
 
 // SeqNum gets the SeqNum from a TrialMsg.
@@ -58,9 +58,12 @@ func (tm *TrialMsg) SeqNum() int64 {
 
 // UpsertMsg creates a Trial stream upsert message.
 func (tm *TrialMsg) UpsertMsg() stream.UpsertMsg {
+	// omit workspaceID since it wasn't part of the original row
+	exportedMsg := *tm
+	exportedMsg.WorkspaceID = 0
 	return stream.UpsertMsg{
 		JSONKey: TrialsUpsertKey,
-		Msg:     tm,
+		Msg:     &exportedMsg,
 	}
 }
 
