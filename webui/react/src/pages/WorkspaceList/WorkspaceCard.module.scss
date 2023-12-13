@@ -1,5 +1,11 @@
-.base {
-  margin-top: auto;
+.archived {
+  opacity: 0.55;
+}
+.archivedBadge {
+  background-color: var(--theme-status-inactive);
+  border-radius: var(--theme-border-radius);
+  color: var(--theme-status-warning-on);
+  padding: 2px 4px;
 }
 .info {
   display: flex;
@@ -8,43 +14,4 @@
   justify-content: space-between;
   overflow: hidden;
   width: 100%;
-
-  .nameRow {
-    align-items: center;
-    display: flex;
-    gap: 6px;
-    height: min-content;
-    justify-content: space-between;
-    min-width: 0;
-
-    * {
-      margin-block-end: 0;
-    }
-  }
-  .projects {
-    margin: 8px 0;
-  }
-}
-.pinned {
-  font-size: 20px;
-  height: min-content;
-  width: min-content;
-}
-.avatarRow {
-  display: flex;
-  justify-content: space-between;
-
-  .archivedBadge {
-    background-color: var(--theme-status-inactive);
-    border-radius: var(--theme-border-radius);
-    color: var(--theme-status-warning-on);
-    opacity: 1;
-    padding: 2px 4px;
-  }
-}
-.archived .icon,
-.archived .nameRow,
-.archived .projects,
-.archived .avatar {
-  opacity: 0.55;
 }

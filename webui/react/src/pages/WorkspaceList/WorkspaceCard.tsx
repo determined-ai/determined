@@ -1,9 +1,10 @@
 import Avatar, { Size } from 'hew/Avatar';
 import Card from 'hew/Card';
+import Column from 'hew/Column';
 import Icon from 'hew/Icon';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
-import { Title, TypographySize } from 'hew/Typography';
+import { Label, Title, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React from 'react';
 
@@ -39,28 +40,30 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
       onDropdown={onClick}>
       <div className={workspace.archived ? css.archived : ''}>
         <Row>
-          <div className={css.icon}>
+          <Column width="hug">
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
-          </div>
-          <div className={css.info}>
-            <div className={css.nameRow}>
-              <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
-                {workspace.name}
-              </Title>
-              {workspace.pinned && <Icon name="pin" title="Pinned" />}
-            </div>
-            <p className={css.projects}>
-              {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
-            </p>
-            <div className={css.avatarRow}>
-              <div className={css.avatar}>
+          </Column>
+          <Column>
+            <div className={css.info}>
+              <Row width={215}>
+                <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
+                  {workspace.name}
+                </Title>
+                {workspace.pinned && <Icon name="pin" title="Pinned" />}
+              </Row>
+              <Row>
+                <Label>
+                  {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
+                </Label>
+              </Row>
+              <Row>
                 <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUser)}>
                   {Loadable.isLoaded(loadableUser) && <UserAvatar user={user} />}
                 </Spinner>
-              </div>
-              {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+                {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+              </Row>
             </div>
-          </div>
+          </Column>
         </Row>
       </div>
       {contextHolders}
