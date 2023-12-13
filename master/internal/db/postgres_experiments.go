@@ -460,6 +460,47 @@ func AddExperiment(
 	})
 }
 
+func upsertExperiment(
+	ctx context.Context, idb bun.IDB, rc *model.RunCollection, activeConfigBytes []byte,
+) (experimentExists bool, err error) {
+	if rc.ExternalRunCollectionID == nil { // TODO read code to validate this.
+		return false, fmt.Errorf("external run collection must be non nil to upsert")
+	}
+
+	var res struct {
+		bun.BaseModel `bun:"table:run_collections"`
+
+		RunCollectionID int
+		HasExperiment   bool
+	}
+	if err := idb.NewSelect().Model(&res).Column("id").
+		ColumnExpr("e.ID IS NOT NULL AS has_experiment").
+		Join("JOIN experiments_v2 e ON e.run_collection_id = run_collections.id").
+		Where("external_run_collection_id = ?", rc.ExternalRunCollectionID).
+		Scan(ctx, &res); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("looking up external_run_collection_id: %w", err)
+	}
+
+	if !res.HasExperiment {
+		return false, fmt.Errorf("tried to upsert experiment with external_run_collection_id %s. "+
+			"this ID exists for runCollectionID %d, but has no associated experiment",
+			*rc.ExternalRunCollectionID, res.RunCollectionID)
+	}
+
+	if _, err := idb.NewUpdate().Model(&model.ExperimentV2{}).
+		Set("config", "?", string(activeConfigBytes)).
+		Where("run_collection_id = ?", res.RunCollectionID).
+		Exec(ctx); err != nil {
+		return false, fmt.Errorf("updating external_run_collection_id experiment config: %w", err)
+	}
+
+	return true, nil
+}
+
 // AddExperimentTx adds the experiment to the database and sets its ID.
 func AddExperimentTx(
 	ctx context.Context, idb bun.IDB,
@@ -484,28 +525,38 @@ func AddExperimentTx(
 		return errors.Wrapf(err, "error inserting job %v", job)
 	}
 
-	q := idb.NewInsert().Model(experiment).
-		ExcludeColumn("id", "username").
-		Value("progress", "?", 0).
-		Value("config", "?", string(activeConfigStr)).
-		Returning("id")
+	rc, expV2 := experiment.ToRunCollectionAndExperimentV2()
 
+	// TODO(nick) rethink this upsert. This is a very literal way to update this code.
+	// TODO(nick) write tests.
+	experimentExists := false
 	if upsert {
-		// TODO(ilia): are there any fields user will expect us to update here?
-		// `config` field will cover the metadata: name, data, description, labels, etc.
-		// No-op SET for external_experiment_id is required for `RETURNING` clause to work.
-		q = q.On("CONFLICT (external_experiment_id) DO UPDATE").
-			Set("external_experiment_id = EXCLUDED.external_experiment_id").
-			Set("config = EXCLUDED.config")
-		// TODO(ilia): do something with the job we've already created.
-		// Option A) make jobs nullable/optional for unmanaged experiments.
-		// Option B) just delete it.
+		experimentExists, err = upsertExperiment(ctx, idb, rc, activeConfigStr)
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = q.Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment %v", experiment)
+	if !experimentExists {
+		if _, err := idb.NewInsert().Model(rc).
+			ExcludeColumn("id").
+			Value("progress", "?", 0).
+			Returning("id").
+			Exec(ctx); err != nil {
+			return fmt.Errorf("adding run collection model to the database: %w", err)
+		}
+		experiment.ID = rc.ID // This is needed since we modify the input experiment.
+
+		expV2.RunCollectionID = rc.ID
+		if _, err := idb.NewInsert().Model(expV2).
+			ExcludeColumn("username").
+			Value("config", "?", string(activeConfigStr)).
+			Returning("run_collection_id").
+			Exec(ctx); err != nil {
+			return fmt.Errorf("adding experiment v2 model to the database: %w", err)
+		}
 	}
+
 	if err = AddProjectHyperparameters(
 		ctx, idb, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
 		return errors.Wrapf(err, "error updating hyperparameters")

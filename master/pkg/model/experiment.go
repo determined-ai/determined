@@ -330,6 +330,48 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Database row types.
 
+// ExperimentV2 represents a row from the `run_collections` table.
+type RunCollection struct {
+	bun.BaseModel `bun:"table:run_collections"`
+
+	ID                      int        `bun:"id,pk"`
+	Name                    string     `bun:"name"`
+	State                   State      `bun:"state"`
+	Notes                   string     `bun:"notes"`
+	ProjectID               int        `bun:"project_id"`
+	OwnerID                 *UserID    `bun:"owner_id"` // TODO this doesn't need to be a ptr?
+	Progress                *float64   `bun:"progress"`
+	Archived                bool       `bun:"archived"`
+	StartTime               time.Time  `bun:"start_time"`
+	EndTime                 *time.Time `bun:"end_time"`
+	ExternalRunCollectionID *string    `bun:"external_run_collection_id"`
+}
+
+// ExperimentV2 represents a row from the `experiments_v2` table.
+type ExperimentV2 struct {
+	bun.BaseModel `bun:"table:experiments_v2"`
+
+	RunCollectionID int   `bun:"run_collection_id"`
+	JobID           JobID `bun:"job_id"`
+
+	// Offer a LegacyConfig rather than ExperimentConfig since most of the system is about querying
+	// experiments which ran some time in the past, which is exactly what LegacyConfig is for.
+	Config         expconf.LegacyConfig `bun:"config"`
+	OriginalConfig string               `bun:"original_config"`
+
+	// The model definition is stored as a .tar.gz file (raw bytes).
+	ModelDefinitionBytes []byte `bun:"model_definition"`
+	ParentID             *int   `bun:"parent_id"`
+	Username             string `bun:"username"`
+	Unmanaged            bool   `bun:"unmanaged"`
+
+	// TODO delete.
+	GitRemote     *string    `bun:"git_remote"`
+	GitCommit     *string    `bun:"git_commit"`
+	GitCommitter  *string    `bun:"git_committer"`
+	GitCommitDate *time.Time `bun:"git_commit_date"`
+}
+
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
 	ID    int    `db:"id" bun:"id,pk"`
@@ -358,6 +400,49 @@ type Experiment struct {
 	Unmanaged            bool       `db:"unmanaged"`
 	ExternalExperimentID *string    `db:"external_experiment_id"`
 	Progress             *float64
+}
+
+func runCollectionNameFromExperiment(e *Experiment) string {
+	if e.ExternalExperimentID != nil {
+		return fmt.Sprintf("experiment_id:%d, external_experiment_id:%s",
+			e.ID, *e.ExternalExperimentID)
+	}
+
+	return fmt.Sprintf("experiment_id:%d", e.ID)
+}
+
+func (e *Experiment) ToRunCollectionAndExperimentV2() (*RunCollection, *ExperimentV2) {
+	rc := &RunCollection{
+		ID:                      e.ID,
+		Name:                    runCollectionNameFromExperiment(e),
+		State:                   e.State,
+		Notes:                   e.Notes,
+		ProjectID:               e.ProjectID,
+		OwnerID:                 e.OwnerID,
+		Progress:                e.Progress,
+		Archived:                e.Archived,
+		StartTime:               e.StartTime,
+		EndTime:                 e.EndTime,
+		ExternalRunCollectionID: e.ExternalExperimentID,
+	}
+
+	expV2 := &ExperimentV2{
+		RunCollectionID:      e.ID,
+		JobID:                e.JobID,
+		Config:               e.Config,
+		OriginalConfig:       e.OriginalConfig,
+		ModelDefinitionBytes: e.ModelDefinitionBytes,
+		ParentID:             e.ParentID,
+		Username:             e.Username,
+		Unmanaged:            e.Unmanaged,
+
+		GitRemote:     e.GitRemote,
+		GitCommit:     e.GitCommit,
+		GitCommitter:  e.GitCommitter,
+		GitCommitDate: e.GitCommitDate,
+	}
+
+	return rc, expV2
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
