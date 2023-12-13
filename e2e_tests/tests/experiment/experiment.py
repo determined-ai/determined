@@ -30,7 +30,7 @@ def maybe_create_experiment(
     ]
 
     if model_def_file is not None:
-        command += model_def_file
+        command.append(model_def_file)
 
     if create_args is not None:
         command += create_args
