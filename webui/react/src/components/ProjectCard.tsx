@@ -51,7 +51,7 @@ const ProjectCard: React.FC<Props> = ({
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
         <Column>
-          <Row width={125}>
+          <Row justifyContent="space-between" width={125}>
             <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
               {project.name}
             </Title>
