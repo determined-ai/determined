@@ -306,7 +306,10 @@ func (a *apiServer) LaunchTensorboard(
 				RawPropagation:   ptrs.Ptr(expconf.DefaultSharedFSPropagation),
 			})
 			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
-			logBasePath = c.PathInContainer()
+			logBasePath, err = c.PathInContainer()
+			if err != nil {
+				return nil, status.Error(codes.InvalidArgument, err.Error())
+			}
 
 		case expconf.DirectoryConfig:
 			logBasePath = c.ContainerPath()

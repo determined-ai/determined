@@ -6,6 +6,7 @@ import tempfile
 import time
 from typing import Any, Dict, List, Set, Tuple
 
+import pexpect
 import pytest
 
 from determined import errors
@@ -115,8 +116,11 @@ def run_command_master_checkpoint_download(uuid: str) -> None:
         ]
 
         child = det_spawn(command)
+        child.expect(pexpect.EOF)
         child.wait()
         child.close()
+        if child.exitstatus != 0:
+            print(child.before.decode("ascii"), file=sys.stderr)
         assert child.exitstatus == 0
         assert os.path.exists(outdir + "/metadata.json")
 
@@ -345,7 +349,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             break
 
     cs_type = checkpoint_storage["type"]
-    if cs_type == "s3" or cs_type == "gcs":
+    if cs_type != "azure":
         assert type(last_checkpoint_uuid) == str
         run_command_master_checkpoint_download(str(last_checkpoint_uuid))
 
