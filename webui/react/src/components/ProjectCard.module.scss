@@ -1,19 +1,7 @@
 .base {
-  display: grid;
+  display: flex;
   gap: 16px;
-  grid-template:
-    'header header' auto
-    'workspace workspace' 20px
-    'footer footer' 20px / auto auto;
-  height: 100%;
 
-  :global(.ant-typography-single-line) {
-    grid-area: header;
-    max-width: 100%;
-  }
-  .workspaceContainer {
-    grid-area: workspace;
-  }
   .workspaceIcon {
     width: fit-content;
   }
