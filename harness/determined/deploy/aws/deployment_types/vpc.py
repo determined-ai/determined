@@ -40,12 +40,12 @@ class EFS(VPCBase):
     deployment_type = constants.deployment_types.EFS
 
 
-class Lore(VPCBase):
+class GenAI(VPCBase):
     template = "lore.yaml"
-    deployment_type = constants.deployment_types.LORE
+    deployment_type = constants.deployment_types.GENAI
 
     def before_deploy_print(self) -> None:
         super().before_deploy_print()
-        lore_tag = self.parameters[constants.cloudformation.LORE_VERSION] or "latest"
-        print(f"Lore Version: {lore_tag}")
-        print(f"Lore Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
+        genai_tag = self.parameters[constants.cloudformation.GENAI_VERSION] or "latest"
+        print(f"GenAI Version: {genai_tag}")
+        print(f"GenAI Image: determinedai/environments-dev:lore-backend-image-{genai_tag}")
