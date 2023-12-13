@@ -160,7 +160,7 @@ def login(
 @_require_singleton
 def create_experiment(
     config: Union[str, pathlib.Path, Dict],
-    model_dir: str,
+    model_dir: Optional[str] = None,
     includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
 ) -> Experiment:
     """Create an experiment with config parameters and model directory.

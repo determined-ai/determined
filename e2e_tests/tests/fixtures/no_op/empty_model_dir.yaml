@@ -1,0 +1,7 @@
+
+name: experiment_with_no_model_definition
+entrypoint: ls
+searcher:
+   name: single
+   metric: a
+   max_length: 1
