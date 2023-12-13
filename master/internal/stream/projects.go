@@ -148,7 +148,7 @@ func ProjectCollectStartupMsgs(
 
 		for x < len(appeared) {
 			if y >= len(data) {
-				log.Errorf("appeared checkpoints are not in scanned dataset")
+				log.Errorf("appeared projects are not in scanned dataset")
 				break
 			}
 			if appeared[x] == int64(data[y].ID) {
