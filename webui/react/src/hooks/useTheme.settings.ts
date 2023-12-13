@@ -1,20 +1,10 @@
-import { literal, union } from 'io-ts';
+import { type, TypeOf } from 'io-ts';
 
 import { Mode } from 'components/ThemeProvider';
-import { SettingsConfig } from 'hooks/useSettings';
+import { valueof } from 'utils/valueof';
 
-export interface Settings {
-  mode: Mode;
-}
-
-export const config: SettingsConfig<Settings> = {
-  settings: {
-    mode: {
-      defaultValue: Mode.System,
-      skipUrlEncoding: true,
-      storageKey: 'mode',
-      type: union([literal(Mode.Dark), literal(Mode.Light), literal(Mode.System)]),
-    },
-  },
-  storagePath: 'settings-theme',
-};
+export const settings = type({
+  mode: valueof(Mode),
+});
+export type Settings = TypeOf<typeof settings>;
+export const STORAGE_PATH = 'settings-theme';

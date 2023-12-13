@@ -6,7 +6,7 @@ import { notification } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -17,17 +17,16 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import useUI, { ThemeProvider } from 'components/ThemeProvider';
+import useUI, { Mode, ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
-import { useSettings } from 'hooks/useSettings';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
-import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme.settings';
+import { STORAGE_PATH, settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
@@ -44,6 +43,9 @@ import css from './App.module.scss';
 import 'antd/dist/reset.css';
 import '@hpe.com/glide-data-grid/dist/index.css';
 
+const updateThemeSetting = (mode: Mode) => userSettings.set(themeSettings, STORAGE_PATH, { mode });
+const themeSetting = userSettings.get(themeSettings, STORAGE_PATH);
+
 const AppView: React.FC = () => {
   const resize = useResize();
 
@@ -55,12 +57,7 @@ const AppView: React.FC = () => {
   const isServerReachable = useObservable(determinedStore.isServerReachable);
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
-  const {
-    settings,
-    isLoading: isSettingsLoading,
-    updateSettings,
-  } = useSettings<themeSettings>(themeConfig);
-  const [isSettingsReady, setIsSettingsReady] = useState(false);
+  const settings = useObservable(themeSetting);
   const { ui, actions: uiActions, theme, isDarkMode } = useUI();
 
   useEffect(() => {
@@ -136,17 +133,15 @@ const AppView: React.FC = () => {
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
-    if (isSettingsLoading) return;
+    settings.forEach((s) => {
+      const mode = s?.mode || Mode.System;
+      uiActions.setMode(mode);
+    });
+  }, [settings, uiActions]);
 
-    if (isSettingsReady) {
-      // We have read from the settings, going forward any mode difference requires an update.
-      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
-    } else {
-      // Initially set the mode from settings.
-      uiActions.setMode(settings.mode);
-      setIsSettingsReady(true);
-    }
-  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
+  useLayoutEffect(() => {
+    updateThemeSetting(ui.mode);
+  }, [ui.mode]);
 
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();

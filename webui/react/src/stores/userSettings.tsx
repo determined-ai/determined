@@ -118,8 +118,10 @@ export class UserSettingsStore extends PollingStore {
     // for good rendering performance.
     this.updateUserSetting(key, encodedValue);
     this.#settings.update((settings) => {
-      return Loadable.map(settings, (settings) => {
-        return settings.set(key, encodedValue);
+      return Loadable.flatMap(settings, (settingsMap) => {
+        return isEqual(encodedValue, settingsMap.get(key))
+          ? settings
+          : Loaded(settingsMap.set(key, encodedValue));
       });
     });
   }
@@ -160,12 +162,14 @@ export class UserSettingsStore extends PollingStore {
     // for good rendering performance.
     this.updateUserSetting(key, encodedValue);
     this.#settings.update((settings) => {
-      return Loadable.map(settings, (settings) => {
-        return settings.update(key, (oldValue) => {
+      return Loadable.flatMap(settings, (settingsMap) => {
+        const newValue = settingsMap.update(key, (oldValue) => {
           const old: JsonObject =
             oldValue && isJsonObject(oldValue) ? oldValue : ({} as JsonObject);
-          return { ...old, ...encodedValue };
+          const retVal = { ...old, ...encodedValue };
+          return isEqual(retVal, old) ? old : retVal;
         });
+        return newValue === settingsMap ? settings : Loaded(newValue);
       });
     });
   }
@@ -178,8 +182,8 @@ export class UserSettingsStore extends PollingStore {
    */
   public update<T>(type: t.Type<T, Json>, key: string, fn: (value: T | undefined) => T): void {
     this.#settings.update((settings) => {
-      return Loadable.map(settings, (settings) => {
-        return settings.update(key, (jsonValue) => {
+      return Loadable.flatMap(settings, (settingsMap) => {
+        const newValue = settingsMap.update(key, (jsonValue) => {
           let value: T | undefined = undefined;
           if (jsonValue !== undefined) {
             const attempt = type.decode(jsonValue);
@@ -198,6 +202,7 @@ export class UserSettingsStore extends PollingStore {
           this.updateUserSetting(key, newValue);
           return type.encode(newValue);
         });
+        return newValue === settingsMap ? settings : Loaded(newValue);
       });
     });
   }
