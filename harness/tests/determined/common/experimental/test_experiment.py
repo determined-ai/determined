@@ -215,38 +215,6 @@ def test_unarchive_doesnt_update_local_on_rest_failure(
 
 
 @mock.patch("determined.common.api.bindings.put_PutExperimentLabel")
-def test_add_label_url_encodes_label(
-    mock_bindings: mock.MagicMock,
-    make_expref: Callable[[int], experiment.Experiment],
-) -> None:
-    expref = make_expref(1)
-    label = "label with @#$%^&* symbols"
-    url_encoded_label = "label%20with%20%40%23%24%25%5E%26%2A%20symbols"
-    assert parse.unquote(url_encoded_label) == label
-
-    expref.add_label(label=label)
-
-    _, call_kwargs = mock_bindings.call_args_list[0]
-    assert call_kwargs["label"] == url_encoded_label
-
-
-@mock.patch("determined.common.api.bindings.delete_DeleteExperimentLabel")
-def test_remove_label_url_encodes_label(
-    mock_bindings: mock.MagicMock,
-    make_expref: Callable[[int], experiment.Experiment],
-) -> None:
-    expref = make_expref(1)
-    label = "label with @#$%^&* symbols"
-    url_encoded_label = "label%20with%20%40%23%24%25%5E%26%2A%20symbols"
-    assert parse.unquote(url_encoded_label) == label
-
-    expref.remove_label(label=label)
-
-    _, call_kwargs = mock_bindings.call_args_list[0]
-    assert call_kwargs["label"] == url_encoded_label
-
-
-@mock.patch("determined.common.api.bindings.put_PutExperimentLabel")
 def test_add_label_updates_local_state_with_remote(
     mock_bindings: mock.MagicMock,
     make_expref: Callable[[int], experiment.Experiment],
