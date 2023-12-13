@@ -7,7 +7,7 @@
     'footer footer' 20px / auto auto;
   height: 100%;
 
-  h1 {
+  :global(.ant-typography-single-line) {
     grid-area: header;
     max-width: 100%;
   }
