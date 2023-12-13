@@ -98,7 +98,9 @@ const CheckpointModalTrigger: React.FC<Props> = ({
         checkpoint={checkpoint}
         config={experiment.config}
         title={title}
-        onClose={() => registerModal.open()}
+        onClose={(reason?: ModalCloseReason) => {
+          if (reason === 'Ok') registerModal.open();
+        }}
       />
     </>
   );
