@@ -29,6 +29,7 @@ const (
 	metricChan     = "stream_metric_chan"
 	experimentChan = "stream_experiment_chan"
 	checkpointChan = "stream_checkpoint_chan"
+	projectChan    = "stream_project_chan"
 )
 
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
@@ -41,6 +42,7 @@ type PublisherSet struct {
 	Metrics     *stream.Publisher[*MetricMsg]
 	Experiments *stream.Publisher[*ExperimentMsg]
 	Checkpoints *stream.Publisher[*CheckpointMsg]
+	Projects    *stream.Publisher[*ProjectMsg]
 	// Experiments *stream.Publisher[*ExperimentMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
@@ -57,6 +59,7 @@ type SubscriptionSet struct {
 	Metrics     *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
 	Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 	Checkpoints *subscriptionState[*CheckpointMsg, CheckpointSubscriptionSpec]
+	Projects    *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
 	// Experiments *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 }
 
@@ -104,6 +107,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 		Metrics:     stream.NewPublisher[*MetricMsg](),
 		Experiments: stream.NewPublisher[*ExperimentMsg](),
 		Checkpoints: stream.NewPublisher[*CheckpointMsg](),
+		Projects:    stream.NewPublisher[*ProjectMsg](),
 		// Experiments: stream.NewPublisher[*ExperimentMsg](),
 		bootemChan: make(chan struct{}),
 		readyCond:  *sync.NewCond(&lock),
@@ -134,6 +138,8 @@ type KnownKeySet struct {
 	Metrics     string `json:"metrics"`
 	Experiments string `json:"experiments"`
 	Checkpoints string `json:"checkpoints"`
+	Projects    string `json:"projects"`
+	Workspaces  string `json:"workspaces"`
 	// Experiments string `json:"experiments"`
 }
 
@@ -143,6 +149,7 @@ type SubscriptionSpecSet struct {
 	Metrics     *MetricSubscriptionSpec     `json:"metrics"`
 	Experiments *ExperimentSubscriptionSpec `json:"experiments"`
 	Checkpoints *CheckpointSubscriptionSpec `json:"checkpoints"`
+	Projects    *ProjectSubscriptionSpec    `json:"projects"`
 	// Experiments *ExperimentSubscriptionSpec `json:"experiments"`
 }
 
@@ -163,6 +170,7 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 		ps.Metrics:     make(chan bool),
 		ps.Experiments: make(chan bool),
 		ps.Checkpoints: make(chan bool),
+		ps.Projects:    make(chan bool),
 		// ps.Experiments:make(chan bool),
 	}
 
@@ -188,6 +196,12 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 	eg.Go(
 		func(c context.Context) error {
 			return start(c, ps.DBAddress, checkpointChan, ps.Checkpoints, readyChannels[ps.Checkpoints])
+		},
+	)
+
+	eg.Go(
+		func(c context.Context) error {
+			return start(c, ps.DBAddress, projectChan, ps.Projects, readyChannels[ps.Projects])
 		},
 	)
 
@@ -642,6 +656,7 @@ func NewSubscriptionSet(
 	var metricSubscriptionState *subscriptionState[*MetricMsg, MetricSubscriptionSpec]
 	var experimentSubscriptionState *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 	var checkpointSubscriptionState *subscriptionState[*CheckpointMsg, CheckpointSubscriptionSpec]
+	var projectSubscriptionState *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
 
 	if spec.Trials != nil {
 		trialSubscriptionState = &subscriptionState[*TrialMsg, TrialSubscriptionSpec]{
@@ -691,11 +706,24 @@ func NewSubscriptionSet(
 		}
 	}
 
+	if spec.Projects != nil {
+		projectSubscriptionState = &subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Projects,
+				newPermFilter(ctx, user, ProjectMakePermissionFilter, &err),
+				newFilter(spec.Projects, ProjectMakeFilter, &err),
+			),
+			ProjectCollectStartupMsgs,
+		}
+	}
+
 	return SubscriptionSet{
 		Trials:      trialSubscriptionState,
 		Metrics:     metricSubscriptionState,
 		Experiments: experimentSubscriptionState,
 		Checkpoints: checkpointSubscriptionState,
+		Projects:    projectSubscriptionState,
 	}, err
 }
 
@@ -768,6 +796,13 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 			sub.Checkpoints, ss.Checkpoints.Subscription.Streamer.PrepareFn,
 		)
 	}
+	if ss.Projects != nil {
+		err = startup(
+			ctx, user, &msgs, err,
+			ss.Projects, known.Projects,
+			sub.Projects, ss.Projects.Subscription.Streamer.PrepareFn,
+		)
+	}
 
 	/*
 		if ss.Experiments != nil {
@@ -795,6 +830,9 @@ func (ss *SubscriptionSet) UnregisterAll() {
 	}
 	if ss.Checkpoints != nil {
 		ss.Checkpoints.Subscription.Unregister()
+	}
+	if ss.Projects != nil {
+		ss.Projects.Subscription.Unregister()
 	}
 	// ss.Experiments.Subscription.Unregister()
 }

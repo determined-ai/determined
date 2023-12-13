@@ -135,3 +135,18 @@ func GetDeleteExperimentQuery(id int) ExecutableQuery {
 func GetUpdateCheckpointQuery(checkpoint model.CheckpointV2) ExecutableQuery {
 	return db.Bun().NewUpdate().Model(&checkpoint).OmitZero().WherePK()
 }
+
+// GetAddProjectQuery constructs a query to create a new project in the db.
+func GetAddProjectQuery(proj model.Project) ExecutableQuery {
+	return db.Bun().NewInsert().Model(&proj)
+}
+
+// GetUpdateProjectQuery constructs a query to update a project.
+func GetUpdateProjectQuery(proj model.Project) ExecutableQuery {
+	return db.Bun().NewUpdate().Model(&proj).OmitZero().Where("id = ?", proj.ID)
+}
+
+// GetDeleteProjectQuery constructs a query to delete a project.
+func GetDeleteProjectQuery(proj model.Project) ExecutableQuery {
+	return db.Bun().NewDelete().Model(&proj).Where("id = ?", proj.ID)
+}
