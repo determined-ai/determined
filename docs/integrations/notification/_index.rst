@@ -8,6 +8,11 @@ Monitoring experiment status is a vital part of working with Determined. In orde
 Determined into your existing workflows, you can make use of webhooks to update other systems,
 receive emails, slack messages, and more when an experiment is updated.
 
+Webhooks such as tasklog webhooks are useful for real-time monitoring, debugging, custom
+notifications, and integration with other systems. For example, using ``Tasklog``, you could get
+updates as they happen rather than wait for the task to reach a final state such as ``Completed`` or
+``Error``.
+
 .. _webhook_security:
 
 *****************************
@@ -121,8 +126,10 @@ Below is an example of handling a signed payload in Python.
  Creating Webhooks
 *******************
 
-To create a webhook, navigate to ``/det/webhooks`` or click on the "Webhooks" item in navigation
-side menu, and click on the top right corner button "New Webhook".
+To create a webhook:
+
+-  Navigate to ``/det/webhooks`` or select **Webhooks** in the left-side navigation pane.
+-  Choose **New Webhook**.
 
 .. image:: /assets/images/webhook.png
    :width: 100%
@@ -130,38 +137,36 @@ side menu, and click on the top right corner button "New Webhook".
 
 .. note::
 
-   You must have the relevant permission to be able to view this page. Consult a system admin if you
-   are unsure about your permissions.
+   If you do not have sufficient permissions to view and create webhooks, consult with a systems
+   admin.
 
-At the modal input:
-
--  URL: webhook URL.
--  Type: ``Default`` or ``Slack``. The ``Slack`` type can automatically format message content for
-   better readability on Slack.
--  Trigger: the experiment state change you want to monitor, either ``Completed``, ``Error``, or
-   ``Tasklog``.
+-  URL: Supply the webhook URL.
+-  Type: Select a type, either ``Default`` or ``Slack``. The ``Slack`` type can automatically format
+   message content for better readability on Slack.
+-  Trigger: Select the experiment state change you want to monitor, either ``Completed``, ``Error``,
+   or ``Tasklog``.
 -  Regex: If the webhook is configured to trigger on Tasklog, define a regex using `Golang Regex
-   Syntax <https://pkg.go.dev/regexp/syntax>`
+   Syntax <https://pkg.go.dev/regexp/syntax>`_.
 
 .. image:: /assets/images/webhook_modal.png
    :width: 100%
    :alt: Webhook user interface showing the fields you will interact with.
 
-Once created, your webhook will begin executing for the chosen events.
+Once created, your webhook will begin executing for the selected events.
 
 ******************
  Testing Webhooks
 ******************
 
-To test a webhook, click on the triple dots on the right of webhook record to expand available
-actions.
+To test a webhook, select the more-options menu to the right of the webhook record to expand
+available actions.
 
 .. image:: /assets/images/webhook_action.png
    :width: 100%
    :alt: Webhooks interface showing where to find the actions menu
 
-Clicking on "Test Webhook" will trigger a test event to be sent to the defined webhook URL with a
-mock payload as stated below:
+Select **Test Webhook** to trigger a test event to be sent to the defined webhook URL with a mock
+payload as stated below:
 
 .. code::
 
@@ -181,12 +186,13 @@ mock payload as stated below:
  Deleting Webhooks
 *******************
 
-To delete a webhook, click on the triple dots on the right of webhook record to expand available
-actions.
+To delete a webhook, select the more-options menu to the right of the webhook record to expand
+available actions.
 
 .. note::
 
-   We do not support editing webhooks. You can delete and recreate webhooks if needed.
+   Determined does not support editing webhooks. Instead, you should delete and recreate the
+   webhook.
 
 .. toctree::
    :caption: Notification

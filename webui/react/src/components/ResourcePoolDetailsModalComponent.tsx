@@ -1,27 +1,28 @@
-import { Divider, Modal } from 'antd';
-import { useTheme } from 'hew/Theme';
-import React, { Fragment } from 'react';
+import { Divider } from 'antd';
+import { Modal } from 'hew/Modal';
+import React, { Fragment, useCallback } from 'react';
 
 import JsonGlossary from 'components/JsonGlossary';
 import { V1ResourcePoolDetail } from 'services/api-ts-sdk';
 import { JsonObject, ResourcePool } from 'types';
 import { camelCaseToSentence } from 'utils/string';
 
-import { PoolLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
-  finally?: () => void;
+  onCloseModal?: () => void;
   resourcePool: ResourcePool;
-  visible: boolean;
 }
 
-const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
+const ResourcePoolDetailsModalComponent: React.FC<Props> = ({
+  resourcePool: pool,
+  onCloseModal,
+}: Props) => {
   const { details, ...mainSection } = pool;
 
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
+  const handleClose = useCallback(() => {
+    if (onCloseModal) onCloseModal();
+  }, [onCloseModal]);
 
   for (const key in details) {
     if (details[key as keyof V1ResourcePoolDetail] === null) {
@@ -29,24 +30,8 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
     }
   }
 
-  const title = (
-    <div>
-      <PoolLogo type={pool.type} />
-      {' ' + pool.name}
-    </div>
-  );
-
   return (
-    <Modal
-      cancelButtonProps={{ style: { display: 'none' } }}
-      cancelText=""
-      mask
-      open={props.visible}
-      style={{ minWidth: '600px' }}
-      title={title}
-      wrapClassName={themeClass}
-      onCancel={props.finally}
-      onOk={props.finally}>
+    <Modal size="medium" title={pool.name} onClose={handleClose}>
       <JsonGlossary
         json={mainSection as unknown as JsonObject}
         translateLabel={camelCaseToSentence}
@@ -65,4 +50,4 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
   );
 };
 
-export default ResourcePoolDetails;
+export default ResourcePoolDetailsModalComponent;

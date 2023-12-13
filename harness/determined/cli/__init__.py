@@ -5,8 +5,9 @@ from determined.cli._util import (
     setup_session,
     require_feature_flag,
     login_sdk_client,
-    print_warnings,
+    print_launch_warnings,
     wait_ntsc_ready,
+    warn,
 )
 from determined.cli import (
     agent,

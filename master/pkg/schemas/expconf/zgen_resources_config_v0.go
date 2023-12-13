@@ -16,15 +16,15 @@ func (r *ResourcesConfigV0) SetSlots(val *int) {
 	r.RawSlots = val
 }
 
-func (r ResourcesConfigV0) IsSingleNode() bool {
-	if r.RawIsSingleNode == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .IsSingleNode")
+func (r ResourcesConfigV0) MustFitSingleNode() bool {
+	if r.RawMustFitSingleNode == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .MustFitSingleNode")
 	}
-	return *r.RawIsSingleNode
+	return *r.RawMustFitSingleNode
 }
 
-func (r *ResourcesConfigV0) SetIsSingleNode(val bool) {
-	r.RawIsSingleNode = &val
+func (r *ResourcesConfigV0) SetMustFitSingleNode(val bool) {
+	r.RawMustFitSingleNode = &val
 }
 
 func (r ResourcesConfigV0) MaxSlots() *int {

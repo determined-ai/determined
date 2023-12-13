@@ -25,7 +25,11 @@ import {
 } from 'types';
 import { deletePathList, getPathList, isNumber, setPathList, unflattenObject } from 'utils/data';
 
-type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) => boolean;
+type ExperimentChecker = (
+  experiment: ProjectExperiment,
+  trial?: TrialDetails,
+  erroredTrialCount?: number,
+) => boolean;
 
 type ExperimentPermissionSet = {
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -156,8 +160,9 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Fork]: isExperimentForkable,
 
-  [ExperimentAction.Retry]: (experiment) =>
-    erroredRunStates.has(experiment.state) &&
+  [ExperimentAction.Retry]: (experiment, _, erroredTrialCount) =>
+    (erroredRunStates.has(experiment.state) ||
+      (experiment.state === RunState.Completed && (erroredTrialCount ?? 0) > 0)) &&
     resumableSearcherTypes.includes(experiment.config.searcher.name),
 
   [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
@@ -180,19 +185,21 @@ export const canActionExperiment = (
   action: ExperimentAction,
   experiment: ProjectExperiment,
   trial?: TrialDetails,
+  erroredTrialCount?: number,
 ): boolean => {
-  return !!experiment && experimentCheckers[action](experiment, trial);
+  return !!experiment && experimentCheckers[action](experiment, trial, erroredTrialCount);
 };
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
   targets: ExperimentAction[],
   permissions: ExperimentPermissionSet,
+  erroredTrialCount?: number,
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
   const workspace = { id: experiment.workspaceId };
   return targets
-    .filter((action) => canActionExperiment(action, experiment))
+    .filter((action) => canActionExperiment(action, experiment, undefined, erroredTrialCount))
     .filter((action) => {
       switch (action) {
         case ExperimentAction.ContinueTrial:

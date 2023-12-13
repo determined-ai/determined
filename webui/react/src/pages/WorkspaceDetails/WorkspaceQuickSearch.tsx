@@ -1,40 +1,30 @@
-import { Modal, Tree } from 'antd';
-import Icon from 'hew/Icon';
-import Input from 'hew/Input';
-import Message from 'hew/Message';
-import Spinner from 'hew/Spinner';
-import { useTheme } from 'hew/Theme';
+import { useModal } from 'hew/Modal';
 import { Loadable } from 'hew/utils/loadable';
-import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import Link from 'components/Link';
-import { paths } from 'routes/utils';
 import { getWorkspaceProjects } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
-import { routeToReactUrl } from 'utils/routes';
 
-import css from './WorkspaceQuickSearch.module.scss';
+import WorkspaceQuickSearchModalComponent from './WorkspaceQuickSearchModalComponent';
 
 interface Props {
   children: React.ReactNode;
 }
 
 const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
-  const [searchText, setSearchText] = useState<string>('');
   const [workspaceMap, setWorkspaceMap] = useState<Map<Workspace, Project[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
+  const workspaceQuickSearchModal = useModal(WorkspaceQuickSearchModalComponent);
   const workspaceObservable = useObservable(workspaceStore.mutables);
   const workspaces = Loadable.getOrElse([], workspaceObservable);
 
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
+  useEffect(() => {
+    if (isModalVisible) workspaceQuickSearchModal.open();
+  }, [isModalVisible, workspaceQuickSearchModal]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -67,111 +57,21 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
     }
   }, [workspaces]);
 
-  const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
-  }, []);
-
   const onShowModal = useCallback(() => {
-    setIsModalVisible(true);
     fetchData();
+    setIsModalVisible(true);
   }, [fetchData]);
-
-  const onHideModal = useCallback(() => {
-    setIsModalVisible(false);
-    setSearchText('');
-  }, []);
-
-  const onClickProject = useCallback(
-    (project: Project) => {
-      routeToReactUrl(paths.projectDetails(project.id));
-      onHideModal();
-    },
-    [onHideModal],
-  );
-
-  const onClickWorkspace = useCallback(
-    (workspaceId: number) => {
-      routeToReactUrl(paths.workspaceDetails(workspaceId));
-      onHideModal();
-    },
-    [onHideModal],
-  );
-
-  const getNodesForProject = useCallback(
-    (projects: Project[], text: string) => {
-      const treeChildren: DefaultOptionType[] = projects
-        .filter((project) => project.name.toLocaleLowerCase().includes(text))
-        .map((project) => ({
-          key: `project-${project.id}`,
-          title: (
-            <div className={`${css.flexRow} ${css.ellipsis}`}>
-              <Icon decorative name="project" size="small" />
-              <Link onClick={() => onClickProject(project)}>{project.name}</Link>
-              <span>({project.numExperiments})</span>
-            </div>
-          ),
-        }));
-      return treeChildren;
-    },
-    [onClickProject],
-  );
-
-  const treeData: DefaultOptionType[] = useMemo(() => {
-    const text = searchText.toLocaleLowerCase();
-    const data: DefaultOptionType[] = Array.from(workspaceMap)
-      .map(([workspace, projects]) => {
-        const isWorkspaceNameIncluded = workspace.name.toLocaleLowerCase().includes(text);
-        const children = getNodesForProject(projects, text);
-        return {
-          children: children,
-          isWorkspaceIncluded:
-            searchText.length > 0 ? isWorkspaceNameIncluded || children.length > 0 : true,
-          key: `workspace-${workspace.id}`,
-          title: (
-            <div className={`${css.flexRow} ${css.ellipsis}`}>
-              <Icon name="workspaces" title="Workspace" />
-              <Link onClick={() => onClickWorkspace(workspace.id)}>{workspace.name}</Link>
-            </div>
-          ),
-        };
-      })
-      .filter((item) => item.isWorkspaceIncluded);
-    return data;
-  }, [getNodesForProject, onClickWorkspace, searchText, workspaceMap]);
 
   return (
     <>
       <div onClick={onShowModal}>{children}</div>
-      <Modal
-        closable={false}
-        footer={null}
-        open={isModalVisible}
-        title={
-          <Input
-            autoFocus
-            placeholder="Search workspace or project"
-            prefix={<Icon name="search" title="Search" />}
-            value={searchText}
-            onChange={onChange}
-          />
-        }
-        width={'clamp(520px, 50vw, 1000px)'}
-        wrapClassName={themeClass}
-        onCancel={onHideModal}>
-        <div className={css.modalBody}>
-          {isLoading ? (
-            <Spinner center spinning tip={'Loading...'} />
-          ) : (
-            <>
-              {treeData.length === 0 ? (
-                <Message icon="warning" title="No matching workspace or projects" />
-              ) : (
-                <Tree defaultExpandAll selectable={false} treeData={treeData} />
-              )}
-            </>
-          )}
-        </div>
-      </Modal>
+      {isModalVisible && (
+        <workspaceQuickSearchModal.Component
+          isLoading={isLoading}
+          workspaceMap={workspaceMap}
+          onModalClose={() => setIsModalVisible(false)}
+        />
+      )}
     </>
   );
 };
