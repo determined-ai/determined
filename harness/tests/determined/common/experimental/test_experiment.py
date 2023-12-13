@@ -3,7 +3,6 @@ import math
 import os
 from typing import Callable
 from unittest import mock
-from urllib import parse
 
 import pytest
 import requests
