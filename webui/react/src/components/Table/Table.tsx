@@ -1,9 +1,10 @@
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
 import Avatar from 'hew/Avatar';
 import Icon from 'hew/Icon';
 import Spinner from 'hew/Spinner';
 import { StateOfUnion } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
+import { Label } from 'hew/Typography';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -208,7 +209,7 @@ export const experimentNameRenderer = (
   value: string | number | undefined,
   record: ExperimentItem,
 ): React.ReactNode => (
-  <Typography.Text ellipsis={{ tooltip: true }}>
+  <Label truncate={{ tooltip: true }}>
     <Link path={paths.experimentDetails(record.id)}>
       {value === undefined ? '' : value}&nbsp;&nbsp;
       {record.unmanaged && (
@@ -217,7 +218,7 @@ export const experimentNameRenderer = (
         </Badge>
       )}
     </Link>
-  </Typography.Text>
+  </Label>
 );
 
 /* Model Table Column Renderers */

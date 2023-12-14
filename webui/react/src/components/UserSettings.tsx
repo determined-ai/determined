@@ -1,20 +1,23 @@
-import { Space } from 'antd';
 import Accordion from 'hew/Accordion';
 import Button from 'hew/Button';
+import Column from 'hew/Column';
 import Drawer from 'hew/Drawer';
 import Icon from 'hew/Icon';
 import InlineForm from 'hew/InlineForm';
 import Input from 'hew/Input';
 import InputShortcut, { KeyboardShortcut, shortcutToString } from 'hew/InputShortcut';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
+import { ShirtSize } from 'hew/Theme';
 import { useToast } from 'hew/Toast';
 import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
+import Grid from 'components/Grid';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import useUI, { Mode } from 'components/ThemeProvider';
@@ -326,10 +329,10 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     }
                     key={feature}
                     label={
-                      <Space>
+                      <Row>
                         {description.friendlyName}
                         <Icon name="info" showTooltip title={description.description} />
-                      </Space>
+                      </Row>
                     }
                     valueFormatter={(value) => (value ? 'On' : 'Off')}
                     onSubmit={(val) => {
@@ -346,33 +349,37 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
               </div>
             </Section>
             <Section title="Advanced">
-              <Body>
-                Advanced features are potentially dangerous and could require you to completely
-                reset your user settings if you make a mistake.
-              </Body>
-              <Accordion title="I know what I'm doing">
-                <Space>
-                  <Button
-                    danger
-                    type="primary"
-                    onClick={() =>
-                      confirm({
-                        content:
-                          'Are you sure you want to reset all user settings to their default values?',
-                        onConfirm: () => {
-                          setMode(Mode.System);
-                          userSettings.clear();
-                        },
-                        onError: handleError,
-                        title: 'Reset User Settings',
-                      })
-                    }>
-                    Reset to Default
-                  </Button>
-                  <Button onClick={() => UserSettingsModal.open()}>Edit Raw Settings (JSON)</Button>
-                  <UserSettingsModal.Component />
-                </Space>
-              </Accordion>
+              <Grid gap={ShirtSize.Medium} minItemWidth={400}>
+                <Body>
+                  Advanced features are potentially dangerous and could require you to completely
+                  reset your user settings if you make a mistake.
+                </Body>
+                <Accordion title="I know what I'm doing">
+                  <Column>
+                    <Button
+                      danger
+                      type="primary"
+                      onClick={() =>
+                        confirm({
+                          content:
+                            'Are you sure you want to reset all user settings to their default values?',
+                          onConfirm: () => {
+                            setMode(Mode.System);
+                            userSettings.clear();
+                          },
+                          onError: handleError,
+                          title: 'Reset User Settings',
+                        })
+                      }>
+                      Reset to Default
+                    </Button>
+                    <Button onClick={() => UserSettingsModal.open()}>
+                      Edit Raw Settings (JSON)
+                    </Button>
+                    <UserSettingsModal.Component />
+                  </Column>
+                </Accordion>
+              </Grid>
             </Section>
           </Drawer>
         );

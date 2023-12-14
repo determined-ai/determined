@@ -1,10 +1,10 @@
-import { Typography } from 'antd';
 import Form from 'hew/Form';
 import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
@@ -174,7 +174,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                   title={workspace.name}
                   value={workspace.id}>
                   <div>
-                    <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                    <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
                     {workspace.archived && <Icon name="archive" title="Archived" />}
                   </div>
                 </Option>
@@ -202,7 +202,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
                       title={project.name}
                       value={project.id}>
                       <div>
-                        <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
+                        <Label truncate={{ tooltip: true }}>{project.name}</Label>
                         {project.archived && <Icon name="archive" title="Archived" />}
                       </div>
                     </Option>

@@ -1,4 +1,4 @@
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -15,6 +15,7 @@ import { useModal } from 'hew/Modal';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import Toggle from 'hew/Toggle';
 import Tooltip from 'hew/Tooltip';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -418,8 +419,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const columns = useMemo(() => {
     const tagsRenderer = (_CHART_HEIGHTvalue: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
-        <Typography.Text
-          ellipsis={{
+        <Label
+          truncate={{
             tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
@@ -432,7 +433,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
               )}
             />
           </div>
-        </Typography.Text>
+        </Label>
       </div>
     );
 
