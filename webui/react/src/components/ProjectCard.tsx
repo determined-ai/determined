@@ -41,7 +41,7 @@ const ProjectCard: React.FC<Props> = ({
     workspaceArchived,
   });
 
-  const classnames = [css.base];
+  const classnames = [];
   if (project.archived) classnames.push(css.archived);
   if (project.workspaceId === 1) classnames.push(css.uncategorized);
 
