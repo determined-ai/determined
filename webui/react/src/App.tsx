@@ -58,7 +58,7 @@ const AppView: React.FC = () => {
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
   const settings = useObservable(themeSetting);
-  const [isThemeReady, setIsThemeReady] = useState(false);
+  const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { ui, actions: uiActions, theme, isDarkMode } = useUI();
 
   useEffect(() => {
@@ -134,16 +134,17 @@ const AppView: React.FC = () => {
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
-    settings.forEach((s) => {
-      const mode = s?.mode || Mode.System;
-      setIsThemeReady(true);
-      uiActions.setMode(mode);
-    });
-  }, [settings, uiActions]);
+    !isSettingsReady &&
+      settings.forEach((s) => {
+        const mode = s?.mode || Mode.System;
+        setIsSettingsReady(true);
+        uiActions.setMode(mode);
+      });
+  }, [settings, uiActions, isSettingsReady]);
 
-  useEffect(() => {
-    isThemeReady && updateThemeSetting(ui.mode);
-  }, [isThemeReady, ui.mode]);
+  useLayoutEffect(() => {
+    isSettingsReady && updateThemeSetting(ui.mode);
+  }, [isSettingsReady, ui.mode]);
 
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
