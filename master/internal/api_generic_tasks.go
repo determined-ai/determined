@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -38,7 +39,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-func combineTaskConfig(config []byte, forkedConfig []byte) model.GenericTaskConfig {
+func combineTaskConfig(config []byte, forkedConfig []byte) (model.GenericTaskConfig, error) {
 
 	combinedConfig := model.GenericTaskConfig{
 		Resources: expconf.ResourcesConfigV0{
@@ -57,21 +58,26 @@ func combineTaskConfig(config []byte, forkedConfig []byte) model.GenericTaskConf
 
 	// Don't throw errors; validation should happen elsewhere.
 	if len(forkedConfig) > 0 {
-		_ = yaml.Unmarshal(forkedConfig, &combinedConfig)
+		err := yaml.UnmarshalStrict(forkedConfig, &combinedConfig)
+		if err != nil {
+			return model.GenericTaskConfig{}, err
+		}
 	}
 	if len(config) > 0 {
-		_ = yaml.Unmarshal(config, &combinedConfig)
+		err := yaml.UnmarshalStrict(config, &combinedConfig)
+		if err != nil {
+			return model.GenericTaskConfig{}, err
+		}
 	}
 
-	return combinedConfig
+	return combinedConfig, nil
 }
 
 func (a *apiServer) getGenericTaskLaunchParameters(
 	ctx context.Context,
 	contextDirectory []*utilv1.File,
-	configYAML string,
 	projectID int,
-	forkedConfig []byte,
+	combinedTaskConfig model.GenericTaskConfig,
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
@@ -96,8 +102,6 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
-	combinedTaskConfig := combineTaskConfig([]byte(configYAML), forkedConfig)
 
 	// Validate the resource configuration.
 	resources := combinedTaskConfig.Resources
@@ -234,14 +238,22 @@ func (a *apiServer) CreateGenericTask(
 	if len(forkedConfig) == 0 && len(req.Config) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No config file nor forked task provided")
 	}
-	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
-		ctx, req.ContextDirectory, req.Config, projectID, forkedConfig,
-	)
-	if len(contextDirectoryBytes) == 0 {
-		contextDirectoryBytes = forkedContextDirectory
-	}
+	combinedTaskConfig, err := combineTaskConfig([]byte(req.Config), forkedConfig)
 	if err != nil {
 		return nil, err
+	}
+	configBytes, err := json.Marshal(combinedTaskConfig)
+	if err != nil {
+		return nil, err
+	}
+	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
+		ctx, req.ContextDirectory, projectID, combinedTaskConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(contextDirectoryBytes) == 0 {
+		contextDirectoryBytes = forkedContextDirectory
 	}
 
 	if err := check.Validate(genericTaskSpec.GenericTaskConfig); err != nil {
@@ -263,11 +275,6 @@ func (a *apiServer) CreateGenericTask(
 			OwnerID: &genericTaskSpec.Base.Owner.ID,
 		}); err != nil {
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
-		}
-
-		configBytes, err := yaml.YAMLToJSON([]byte(req.Config))
-		if err != nil {
-			return fmt.Errorf("handling experiment config %v: %w", req.Config, err)
 		}
 
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
