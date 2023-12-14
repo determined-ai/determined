@@ -2,7 +2,6 @@ package model
 
 import (
 	"crypto/sha512"
-	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -22,11 +21,6 @@ type SCIMName struct {
 	FamilyName string `json:"familyName"`
 }
 
-// Value implements sql.Valuer.
-func (e SCIMName) Value() (driver.Value, error) {
-	return json.Marshal(e)
-}
-
 // Scan implements sql.Scanner.
 func (e *SCIMName) Scan(value interface{}) error {
 	return scanJSON(value, e)
@@ -39,11 +33,6 @@ type SCIMEmail struct {
 	Primary bool   `json:"primary"`
 }
 
-// Value implements sql.Valuer.
-func (e SCIMEmail) Value() (driver.Value, error) {
-	return json.Marshal(e)
-}
-
 // Scan implements sql.Scanner.
 func (e *SCIMEmail) Scan(value interface{}) error {
 	return scanJSON(value, e)
@@ -51,11 +40,6 @@ func (e *SCIMEmail) Scan(value interface{}) error {
 
 // SCIMEmails is a list of emails in SCIM.
 type SCIMEmails []SCIMEmail
-
-// Value implements sql.Valuer.
-func (e SCIMEmails) Value() (driver.Value, error) {
-	return json.Marshal(e)
-}
 
 // Scan implements sql.Scanner.
 func (e *SCIMEmails) Scan(value interface{}) error {
@@ -96,21 +80,21 @@ func (s *SCIMUserSchemas) UnmarshalJSON(data []byte) error {
 
 // SCIMUser is a user in SCIM.
 type SCIMUser struct {
-	ID         UUID       `db:"id" json:"id"`
-	Username   string     `db:"username" json:"userName"`
-	ExternalID string     `db:"external_id" json:"externalId"`
-	Name       SCIMName   `db:"name" json:"name"`
-	Emails     SCIMEmails `db:"emails" json:"emails"`
-	Active     bool       `db:"active" json:"active"`
+	ID         UUID       `bun:"id"  json:"id"`
+	Username   string     `bun:"username" json:"userName"`
+	ExternalID string     `bun:"external_id" json:"externalId"`
+	Name       SCIMName   `bun:"name" json:"name"`
+	Emails     SCIMEmails `bun:"emails" json:"emails"`
+	Active     bool       `bun:"active" json:"active"`
 
-	PasswordHash null.String `db:"password_hash" json:"password_hash,omitempty"`
+	PasswordHash null.String `bun:"password_hash" json:"password_hash,omitempty"`
 
 	Password string          `json:"password,omitempty"`
 	Schemas  SCIMUserSchemas `json:"schemas"`
 	Meta     *SCIMUserMeta   `json:"meta"`
 
-	UserID        UserID                 `db:"user_id" json:"-"`
-	RawAttributes map[string]interface{} `db:"raw_attributes" json:"-"`
+	UserID        UserID                 `bun:"user_id" json:"-"`
+	RawAttributes map[string]interface{} `bun:"raw_attributes" json:"-"`
 }
 
 // Validate checks that external data satisfies the expected invariants.

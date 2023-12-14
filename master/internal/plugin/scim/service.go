@@ -28,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/plugin/oauth"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -114,7 +115,7 @@ func (s *service) GetUsers(c echo.Context) (interface{}, error) {
 		}
 	}
 
-	users, err := s.db.SCIMUserList(startIndex, count, username)
+	users, err := user.SCIMUserList(c.Request().Context(), startIndex, count, username)
 	if err != nil {
 		return nil, err
 	}
@@ -146,16 +147,16 @@ func (s *service) GetUser(c echo.Context) (interface{}, error) {
 		return nil, newNotFoundError(err)
 	}
 
-	user, err := s.db.SCIMUserByID(id)
+	u, err := user.SCIMUserByID(c.Request().Context(), db.Bun(), id)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := user.SetSCIMFields(s.locationRoot); err != nil {
+	if err := u.SetSCIMFields(s.locationRoot); err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return u, nil
 }
 
 // PostUser creates a new SCIM user.
@@ -165,28 +166,28 @@ func (s *service) PostUser(c echo.Context) (interface{}, error) {
 		return nil, newBadRequestError(err)
 	}
 
-	var user model.SCIMUser
-	if err = json.Unmarshal(body, &user); err != nil {
+	var u model.SCIMUser
+	if err = json.Unmarshal(body, &u); err != nil {
 		return nil, newBadRequestError(err)
 	}
-	if err = json.Unmarshal(body, &user.RawAttributes); err != nil {
+	if err = json.Unmarshal(body, &u.RawAttributes); err != nil {
 		return nil, newBadRequestError(err)
 	}
 
-	if err = check.Validate(user); err != nil {
+	if err = check.Validate(u); err != nil {
 		return nil, newBadRequestError(err)
-	} else if user.ID.Valid {
+	} else if u.ID.Valid {
 		return nil, newBadRequestError(errors.New("ID set"))
 	}
 
-	user.Sanitize()
+	u.Sanitize()
 
-	err = user.UpdatePasswordHash(user.Password)
+	err = u.UpdatePasswordHash(u.Password)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	added, err := s.db.AddSCIMUser(&user)
+	added, err := user.AddSCIMUser(c.Request().Context(), &u)
 	if err == db.ErrDuplicateRecord {
 		return nil, newConflictError(err)
 	} else if err != nil {
@@ -219,36 +220,30 @@ func (s *service) PutUser(c echo.Context) (interface{}, error) {
 		return nil, newBadRequestError(err)
 	}
 
-	var user model.SCIMUser
-	if err = json.Unmarshal(body, &user); err != nil {
+	var u model.SCIMUser
+	if err = json.Unmarshal(body, &u); err != nil {
 		return nil, newBadRequestError(err)
 	}
-	if err = json.Unmarshal(body, &user.RawAttributes); err != nil {
+	if err = json.Unmarshal(body, &u.RawAttributes); err != nil {
 		return nil, newBadRequestError(err)
 	}
 
-	if err = check.Validate(user); err != nil {
+	if err = check.Validate(u); err != nil {
 		return nil, newBadRequestError(err)
-	} else if user.ID.String() != req.ID {
+	} else if u.ID.String() != req.ID {
 		return nil, newBadRequestError(errors.New("ID does not match path"))
 	}
 
-	user.Sanitize()
+	u.Sanitize()
 
-	err = user.UpdatePasswordHash(user.Password)
+	err = u.UpdatePasswordHash(u.Password)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	updated, err := s.db.SetSCIMUser(req.ID, &user)
+	updated, err := user.SetSCIMUser(c.Request().Context(), req.ID, &u)
 	if err != nil {
 		return nil, err
-	}
-
-	if !updated.Active {
-		if err := s.db.DeleteSessionsForSCIMUser(updated); err != nil {
-			return nil, err
-		}
 	}
 
 	if err := updated.SetSCIMFields(s.locationRoot); err != nil {
@@ -350,15 +345,9 @@ func (s *service) PatchUser(c echo.Context) (interface{}, error) {
 		return nil, newBadRequestError(err)
 	}
 
-	updated, err := s.db.UpdateSCIMUser(req.ID, &changes, toUpdate)
+	updated, err := user.UpdateUserAndDeleteSession(c.Request().Context(), req.ID, &changes, toUpdate)
 	if err != nil {
 		return nil, err
-	}
-
-	if !updated.Active {
-		if err := s.db.DeleteSessionsForSCIMUser(updated); err != nil {
-			return nil, err
-		}
 	}
 
 	if err := updated.SetSCIMFields(s.locationRoot); err != nil {
