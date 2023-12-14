@@ -182,12 +182,12 @@ def default_load_dataset(
             datasets["validation"] = hf_datasets.load_dataset(
                 data_config.dataset_name,
                 data_config.dataset_config_name,
-                split=f"train[{data_config.validation_split_percentage}%:]",
+                split=f"train[:{data_config.validation_split_percentage}%]",
             )
             datasets["train"] = hf_datasets.load_dataset(
                 data_config.dataset_name,
                 data_config.dataset_config_name,
-                split=f"train[:{data_config.validation_split_percentage}%]",
+                split=f"train[{data_config.validation_split_percentage}%:]",
             )
     else:
         data_files = {}
@@ -266,7 +266,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
             )
 
     def check_hparams(self) -> None:
-        # We require hparams to be a AttrDict.
+        # We require hparams to be an AttrDict.
         if not isinstance(self.hparams, utils.AttrDict):
             self.hparams = utils.AttrDict(self.hparams)
 
