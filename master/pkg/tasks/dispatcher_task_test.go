@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"gotest.tools/assert"
@@ -98,7 +98,7 @@ func Test_getPortMappings(t *testing.T) {
 				RawImage:                &expconf.EnvironmentImageMapV0{},
 				RawEnvironmentVariables: &expconf.EnvironmentVariablesMapV0{},
 				RawProxyPorts:           &expconf.ProxyPortsConfigV0{},
-				RawRegistryAuth:         &types.AuthConfig{},
+				RawRegistryAuth:         &registry.AuthConfig{},
 				RawForcePullImage:       &disableImageCache,
 				RawPodSpec:              &expconf.PodSpec{},
 				RawAddCapabilities:      []string{},
@@ -251,7 +251,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				RawEnvironmentVariables: &expconf.EnvironmentVariablesMapV0{},
 				RawProxyPorts:           &expconf.ProxyPortsConfigV0{},
 				RawPorts:                map[string]int{},
-				RawRegistryAuth:         &types.AuthConfig{},
+				RawRegistryAuth:         &registry.AuthConfig{},
 				RawForcePullImage:       &tt.args.disableImageCache,
 				RawPodSpec:              &expconf.PodSpec{},
 				RawAddCapabilities:      tt.args.addCaps,
@@ -532,7 +532,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		wantData               []launcher.Data
 		errorContains          string
 		resourcesConfig        expconf.ResourcesConfig
-		registryAuth           *types.AuthConfig
+		registryAuth           *registry.AuthConfig
 		wantWarn               bool
 		warningContains        []string
 	}{
@@ -837,7 +837,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 		name                   string
 		containerRunType       string
 		resourcesConfig        expconf.ResourcesConfig
-		registryAuth           *types.AuthConfig
+		registryAuth           *registry.AuthConfig
 		userConfiguredPriority bool
 		wantWarn               bool
 		warningContains        []string
@@ -856,7 +856,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
 			},
-			registryAuth: &types.AuthConfig{
+			registryAuth: &registry.AuthConfig{
 				ServerAddress: "addr",
 				Email:         "email",
 			},
@@ -886,7 +886,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
 			},
-			registryAuth:           &types.AuthConfig{},
+			registryAuth:           &registry.AuthConfig{},
 			userConfiguredPriority: true,
 			wantWarn:               true,
 			warningContains: []string{
@@ -912,7 +912,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
 			},
-			registryAuth: &types.AuthConfig{
+			registryAuth: &registry.AuthConfig{
 				ServerAddress: "addr",
 			},
 			userConfiguredPriority: true,
@@ -941,7 +941,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawDevices:        nil,
 			},
 			userConfiguredPriority: false,
-			registryAuth:           &types.AuthConfig{},
+			registryAuth:           &registry.AuthConfig{},
 			wantWarn:               false,
 		},
 	}
@@ -997,7 +997,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 			RawCUDA: []string{"CUDA_ENV=CUDA_VAL"},
 			RawROCM: []string{"ROCM_ENV=ROCM_VAL"},
 		},
-		RawRegistryAuth: &types.AuthConfig{
+		RawRegistryAuth: &registry.AuthConfig{
 			Username:      "user",
 			Password:      "pwd",
 			ServerAddress: "addr",
