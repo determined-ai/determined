@@ -43,6 +43,7 @@ const ProjectCard: React.FC<Props> = ({
 
   const classnames = [css.base];
   if (project.archived) classnames.push(css.archived);
+  if (project.workspaceId === 1) classnames.push(css.uncategorized);
 
   return (
     <Card
@@ -58,7 +59,7 @@ const ProjectCard: React.FC<Props> = ({
           </Row>
           <Row>
             <div className={css.workspaceContainer}>
-              {showWorkspace && project.workspaceId !== 1 && (
+              {showWorkspace && (
                 <Tooltip content={project.workspaceName}>
                   <div className={css.workspaceIcon}>
                     <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
@@ -67,7 +68,7 @@ const ProjectCard: React.FC<Props> = ({
               )}
             </div>
           </Row>
-          <Row>
+          <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
               <div className={css.experiments}>
                 <Tooltip

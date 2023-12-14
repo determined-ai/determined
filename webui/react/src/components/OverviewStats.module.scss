@@ -1,7 +1,3 @@
-.info {
-  font-size: 13px;
-
-  &.clickable > :global(.ant-typography) {
-    color: var(--theme-ix-on-active);
-  }
+.clickable {
+  color: var(--theme-ix-on-active);
 }

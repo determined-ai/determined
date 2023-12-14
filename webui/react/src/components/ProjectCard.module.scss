@@ -2,15 +2,15 @@
   display: flex;
   gap: 16px;
 
-  .workspaceIcon {
-    width: fit-content;
+  &.uncategorized .workspaceContainer {
+    visibility: hidden;
   }
   .footerContainer {
     align-items: end;
     display: flex;
+    flex-grow: 1;
     font-size: 12px;
     gap: 6px;
-    grid-area: footer;
     justify-content: space-between;
 
     .experiments {

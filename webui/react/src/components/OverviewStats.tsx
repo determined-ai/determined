@@ -14,7 +14,7 @@ interface Props {
 }
 
 const OverviewStats: React.FC<Props> = (props: Props) => {
-  const childClasses = [css.info];
+  const childClasses = [];
   if (props.onClick) childClasses.push(css.clickable);
 
   return (
