@@ -241,18 +241,26 @@ func validateMsgs(
 	expectedDeletions []string,
 ) {
 	// sort expected & actual messages
-	sort.Slice(upserts, func(i, j int) bool {
-		return upserts[i] < upserts[j]
-	})
-	sort.Slice(expectedUpserts, func(i, j int) bool {
-		return expectedUpserts[i] < expectedUpserts[j]
-	})
-	sort.Slice(expectedDeletions, func(i, j int) bool {
-		return expectedUpserts[i] < expectedUpserts[j]
-	})
-	sort.Slice(deletions, func(i, j int) bool {
-		return deletions[i] < deletions[j]
-	})
+	if len(upserts) > 1 {
+		sort.Slice(upserts, func(i, j int) bool {
+			return upserts[i] < upserts[j]
+		})
+	}
+	if len(expectedUpserts) > 1 {
+		sort.Slice(expectedUpserts, func(i, j int) bool {
+			return expectedUpserts[i] < expectedUpserts[j]
+		})
+	}
+	if len(expectedDeletions) > 1 {
+		sort.Slice(expectedDeletions, func(i, j int) bool {
+			return expectedDeletions[i] < expectedDeletions[j]
+		})
+	}
+	if len(deletions) > 1 {
+		sort.Slice(deletions, func(i, j int) bool {
+			return deletions[i] < deletions[j]
+		})
+	}
 
 	switch {
 	// check if we received the correct number of trial messages

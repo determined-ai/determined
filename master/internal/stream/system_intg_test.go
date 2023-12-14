@@ -1020,3 +1020,215 @@ func TestProjectUpdate(t *testing.T) {
 
 	runUpdateTest(t, pgDB, testCases)
 }
+
+func TestUpdatesOutOfSpec(t *testing.T) {
+	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+	t.Cleanup(dbCleanup)
+
+	uid := 1
+	newExperiment3 := streamdata.Experiment{
+		ID:                   3,
+		JobID:                "test_job2",
+		ModelDefinitionBytes: []byte{},
+		OwnerID:              (*model.UserID)(&uid),
+		State:                model.CanceledState,
+		ProjectID:            2,
+	}
+
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: update experiments where one is not in subscription",
+				startupMsg: buildStartupMsg("1", map[string]string{"experiments": "1"}, map[string][]int{
+					"experiments": {1},
+				}),
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: experiments_deleted, deleted: "},
+			},
+			description: "update experiments where one is not in subscription",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetUpdateExperimentQuery(streamdata.Experiment{
+					ID:    2,
+					State: model.CanceledState,
+				}),
+				streamdata.GetUpdateExperimentQuery(streamdata.Experiment{
+					ID:    1,
+					State: model.CanceledState,
+				}),
+			},
+			expectedUpserts: []string{
+				// potential race condition where the test won't pick up a test failure.
+				// We're testing for updates to NOT be sent, but the way we check for this is
+				// that ONLY the second update appears. More often than not, this should be fine,
+				// but there is nothing preventing the second case from being processed and sent
+				// before the first.
+				"key: experiment, exp_id: 1, state: CANCELED, project_id: 2, job_id: test_job1",
+			},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: insert and delete untracked experiment + update existing",
+				startupMsg: buildStartupMsg("1", map[string]string{"experiments": "1"}, map[string][]int{
+					"experiments": {1},
+				}),
+				expectedSync:      "key: sync_msg, sync_id: 1",
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: experiments_deleted, deleted: "},
+			},
+			description: "insert untracked experiment + update existing",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetAddExperimentQuery(&newExperiment3),
+				streamdata.GetDeleteExperimentQuery(newExperiment3.ID),
+				streamdata.GetUpdateExperimentQuery(streamdata.Experiment{
+					ID:    1,
+					State: model.ErrorState,
+				}),
+			},
+			expectedUpserts: []string{
+				// potential race condition where the test won't pick up a test failure.
+				// We're testing for updates to NOT be sent, but the way we check for this is
+				// that ONLY the second update appears. More often than not, this should be fine,
+				// but there is nothing preventing the second case from being processed and sent
+				// before the first.
+				"key: experiment, exp_id: 1, state: ERROR, project_id: 2, job_id: test_job1",
+			},
+			expectedDeletions: []string{},
+		},
+	}
+
+	runUpdateTest(t, pgDB, testCases)
+}
+
+func TestOfflineChanges(t *testing.T) {
+	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+	t.Cleanup(dbCleanup)
+
+	uid := 1
+	newExperiment3 := streamdata.Experiment{
+		ID:                   3,
+		JobID:                "test_job2",
+		ModelDefinitionBytes: []byte{},
+		OwnerID:              (*model.UserID)(&uid),
+		State:                model.CanceledState,
+		ProjectID:            2,
+	}
+
+	taskJobID := model.JobID("test_job2")
+
+	queries := streamdata.GetAddTrialQueries(
+		&model.Task{
+			TaskID:    "3.1",
+			JobID:     &taskJobID,
+			TaskType:  "TRIAL",
+			StartTime: time.Now(),
+		},
+		&streamdata.Trial{
+			ID:           4,
+			ExperimentID: 3,
+			State:        model.ErrorState,
+			StartTime:    time.Now(),
+		})
+	addTaskQuery := queries[0]
+	addTrialQuery := queries[1]
+	addTrialTaskQuery := queries[2]
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: setup offline fall in trials",
+				startupMsg: buildStartupMsg(
+					"1",
+					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
+					map[string][]int{"experiments": {1, 2}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+			description: "setup offline fall in trials",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetAddExperimentQuery(&newExperiment3),
+				addTaskQuery,
+				addTrialQuery,
+				addTrialTaskQuery,
+			},
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "evaluate offline fall in trials",
+				startupMsg: buildStartupMsg(
+					"2",
+					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
+					map[string][]int{"experiments": {1, 2, 3}},
+				),
+				expectedSync: "key: sync_msg, sync_id: 2",
+				expectedUpserts: []string{
+					"key: experiment, exp_id: 3, state: CANCELED, project_id: 2, job_id: test_job2",
+					"key: trial, trial_id: 4, state: ERROR, experiment_id: 3, workspace_id: 0",
+				},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: setup offline fall out trials",
+				startupMsg: buildStartupMsg(
+					"2",
+					map[string]string{"experiments": "1"},
+					map[string][]int{"experiments": {1}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 2",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+				},
+			},
+			description: "setup offline fall in trials",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewRaw("DELETE FROM trials WHERE id = 4"),
+				db.Bun().NewRaw("DELETE FROM experiments WHERE id = 3"),
+			},
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "evaluate offline fall in trials",
+				startupMsg: buildStartupMsg(
+					"3",
+					map[string]string{"experiments": "1,2,3", "trials": "1,2,3,4"},
+					map[string][]int{"experiments": {1, 2, 3}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 3",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: 3",
+					"key: trials_deleted, deleted: 4",
+				},
+			},
+		},
+	}
+
+	runUpdateTest(t, pgDB, testCases)
+}
+
+// func TestOnlineChanges(t *testing.T) {
+//
+// }
+
+// tests to write:
+// offline fallin and fallout
+// online fallin and fallout
+// offline and online disappearance (RBAC only) - unnecessary
+// unrelated updates - check
+// multiple updates and subscriptions
+// updates out of spec - check
