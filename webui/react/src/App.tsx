@@ -6,7 +6,7 @@ import { notification } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -58,6 +58,7 @@ const AppView: React.FC = () => {
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
   const settings = useObservable(themeSetting);
+  const [isThemeReady, setIsThemeReady] = useState(false);
   const { ui, actions: uiActions, theme, isDarkMode } = useUI();
 
   useEffect(() => {
@@ -135,13 +136,14 @@ const AppView: React.FC = () => {
   useLayoutEffect(() => {
     settings.forEach((s) => {
       const mode = s?.mode || Mode.System;
+      setIsThemeReady(true);
       uiActions.setMode(mode);
     });
   }, [settings, uiActions]);
 
-  useLayoutEffect(() => {
-    updateThemeSetting(ui.mode);
-  }, [ui.mode]);
+  useEffect(() => {
+    isThemeReady && updateThemeSetting(ui.mode);
+  }, [isThemeReady, ui.mode]);
 
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
