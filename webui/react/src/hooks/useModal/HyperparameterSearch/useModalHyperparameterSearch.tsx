@@ -56,26 +56,26 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 interface SearchMethod {
-  displayName: string;
-  icon: React.ReactNode;
-  name: `${ExperimentSearcherName}`;
+  label: string;
+  icon: IconName;
+  id: `${ExperimentSearcherName}`;
 }
 
 const SEARCH_METHODS: Record<string, SearchMethod> = {
   ASHA: {
-    displayName: 'Adaptive',
     icon: 'searcher-adaptive',
-    name: 'adaptive_asha',
+    id: 'adaptive_asha',
+    label: 'Adaptive',
   },
   Grid: {
-    displayName: 'Grid',
     icon: 'searcher-grid',
-    name: 'grid',
+    id: 'grid',
+    label: 'Grid',
   },
   Random: {
-    displayName: 'Random',
     icon: 'searcher-random',
-    name: 'random',
+    id: 'random',
+    label: 'Random',
   },
 } as const;
 
@@ -99,7 +99,7 @@ const useModalHyperparameterSearch = ({
   const [trial, setTrial] = useState(trialIn);
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
-    Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
+    Object.values(SEARCH_METHODS).find((searcher) => searcher.id === experiment.searcherType) ??
       SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
@@ -140,7 +140,7 @@ const useModalHyperparameterSearch = ({
     baseConfig.name = (fields.name as string).trim();
     baseConfig.searcher.name = fields.searcher;
     baseConfig.searcher.max_trials =
-      fields.searcher === SEARCH_METHODS.Grid.name ? undefined : fields.max_trials;
+      fields.searcher === SEARCH_METHODS.Grid.id ? undefined : fields.max_trials;
     baseConfig.searcher.max_length = {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 16;
@@ -148,7 +148,7 @@ const useModalHyperparameterSearch = ({
     baseConfig.resources.slots_per_trial = fields.slots_per_trial;
 
     // Dealing with ASHA-specific settings
-    if (fields.searcher === SEARCH_METHODS.ASHA.name) {
+    if (fields.searcher === SEARCH_METHODS.ASHA.id) {
       baseConfig.searcher.bracket_rungs = baseConfig.searcher.bracket_rungs ?? [];
       baseConfig.searcher.stop_once = fields.stop_once ?? baseConfig.searcher.stop_once ?? false;
       baseConfig.searcher.max_rungs = baseConfig.searcher.max_rungs ?? 5;
@@ -190,7 +190,7 @@ const useModalHyperparameterSearch = ({
           const prevBase: number | undefined = baseConfig.hyperparameters[hpName]?.base;
           baseConfig.hyperparameters[hpName] = {
             base: hpInfo.type === HyperparameterType.Log ? prevBase ?? DEFAULT_LOG_BASE : undefined,
-            count: fields.searcher === SEARCH_METHODS.Grid.name ? hpInfo.count : undefined,
+            count: fields.searcher === SEARCH_METHODS.Grid.id ? hpInfo.count : undefined,
             maxval:
               hpInfo.type === HyperparameterType.Int
                 ? roundToPrecision(hpInfo.max ?? 0, 0)
@@ -332,7 +332,7 @@ const useModalHyperparameterSearch = ({
       const validMaxLength = max_length != null && max_length > 0;
       const validMaxConcurrentTrials = max_concurrent_trials != null && max_concurrent_trials >= 0;
       const validMaxTrials =
-        searcher === SEARCH_METHODS.Grid.name || (max_trials != null && max_trials > 0);
+        searcher === SEARCH_METHODS.Grid.id || (max_trials != null && max_trials > 0);
 
       setValidationError(
         !(
@@ -343,7 +343,7 @@ const useModalHyperparameterSearch = ({
           validMaxTrials &&
           pool != null &&
           length_units != null &&
-          (searcher !== SEARCH_METHODS.ASHA.name || (mode != null && isBoolean(stop_once)))
+          (searcher !== SEARCH_METHODS.ASHA.id || (mode != null && isBoolean(stop_once)))
         ),
       );
     }
@@ -356,10 +356,10 @@ const useModalHyperparameterSearch = ({
   const handleSelectSearcher = useCallback(
     (searcherName: string) => {
       const searcher =
-        Object.values(SEARCH_METHODS).find((searcher) => searcher.name === searcherName) ??
+        Object.values(SEARCH_METHODS).find((searcher) => searcher.id === searcherName) ??
         SEARCH_METHODS.ASHA;
       setSearcher(searcher);
-      form.setFieldValue('searcher', searcher.name);
+      form.setFieldValue('searcher', searcher.id);
     },
     [form],
   );
@@ -418,7 +418,7 @@ const useModalHyperparameterSearch = ({
       <div className={css.base}>
         {modalError && <Message icon="error" title={modalError} />}
         <Form.Item
-          initialValue={searcher.name}
+          initialValue={searcher.id}
           label={
             <div className={css.labelWithLink}>
               <p>Select search method</p>
@@ -434,12 +434,10 @@ const useModalHyperparameterSearch = ({
           }
           name="searcher">
           <RadioGroup
-            options={Object.values(SEARCH_METHODS).map((m) => {
-              return { icon: m.icon as IconName, id: m.name, label: m.displayName };
-            })}
+            options={Object.values(SEARCH_METHODS)}
             radioType="row"
-            value={searcher.name}
-            onChange={(value) => handleSelectSearcher(value as string)}
+            value={searcher.id}
+            onChange={handleSelectSearcher}
           />
         </Form.Item>
         <Form.Item
@@ -500,7 +498,7 @@ const useModalHyperparameterSearch = ({
             <InputNumber max={maxSlots} min={0} precision={0} />
           </Form.Item>
         </div>
-        {searcher.name === 'adaptive_asha' && (
+        {searcher.id === 'adaptive_asha' && (
           <Form.Item
             initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
             label={
@@ -522,7 +520,7 @@ const useModalHyperparameterSearch = ({
             </Select>
           </Form.Item>
         )}
-        {searcher.name === 'adaptive_asha' && (
+        {searcher.id === 'adaptive_asha' && (
           <Form.Item
             initialValue={experiment.configRaw.searcher?.stop_once ?? true}
             name="stop_once"

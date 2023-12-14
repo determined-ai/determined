@@ -42,7 +42,7 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
               { id: 30, label: '30 days' },
             ]}
             value={viewDays}
-            onChange={(value) => setViewDays(value as number)}
+            onChange={setViewDays}
           />
         }
         title="Avg Queue Time">
