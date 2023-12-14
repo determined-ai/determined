@@ -340,7 +340,7 @@ def default_parse_config_tokenizer_model_kwargs(
 
 
 def default_parse_optimizer_lr_scheduler_kwargs(
-    hparams: Union[Dict, utils.AttrDict],
+    hparams: Union[Dict, utils.AttrDict]
 ) -> Tuple[OptimizerKwargs, LRSchedulerKwargs]:
     """
     Parse hparams relevant for the optimizer and lr_scheduler and fills in with
