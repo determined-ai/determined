@@ -26,10 +26,10 @@ MODEL_MODES = {
 
 
 def build_using_auto(
-    config_kwargs: Dict,
-    tokenizer_kwargs: Dict,
+    config_kwargs: Union[Dict, utils.AttrDict],
+    tokenizer_kwargs: Union[Dict, utils.AttrDict],
     model_mode: str,
-    model_kwargs: Dict,
+    model_kwargs: Union[Dict, utils.AttrDict],
     use_pretrained_weights: bool = True,
 ) -> Tuple[
     transformers.PretrainedConfig,  # This is how it's named in transformers
@@ -182,7 +182,7 @@ def default_load_dataset(
             datasets["validation"] = hf_datasets.load_dataset(
                 data_config.dataset_name,
                 data_config.dataset_config_name,
-                split=f"train[:{data_config.validation_split_percentage}%]",
+                split=f"train[{data_config.validation_split_percentage}%:]",
             )
             datasets["train"] = hf_datasets.load_dataset(
                 data_config.dataset_name,
@@ -286,8 +286,8 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
 
         required_hps = ("use_apex_amp", "model_mode", "num_training_steps")
         for hp in required_hps:
-            assert hasattr(
-                self.hparams, hp
+            assert (
+                hp in self.hparams
             ), "{} is a required hyperparameter for BaseTransformerTrial".format(hp)
 
     def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Any:

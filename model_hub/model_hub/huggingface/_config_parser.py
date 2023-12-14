@@ -302,9 +302,11 @@ def parse_dict_to_dataclasses(
     return (*outputs,)
 
 
-def default_parse_config_tokenizer_model_kwargs(hparams: Dict) -> Tuple[Dict, Dict, Dict]:
+def default_parse_config_tokenizer_model_kwargs(
+    hparams: Union[Dict, utils.AttrDict],
+) -> Tuple[utils.AttrDict, utils.AttrDict, utils.AttrDict]:
     """
-    This function will provided hparams into fields for the transformers config, tokenizer,
+    This function converts hparams into fields for the transformers config, tokenizer,
     and model. See the defined dataclasses ConfigKwargs, TokenizerKwargs, and ModelKwargs for
     expected fields and defaults.
 
