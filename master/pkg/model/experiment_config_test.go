@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 
 	"gotest.tools/assert"
 )
@@ -79,7 +79,7 @@ func TestOverrideMasterConfigPullPolicy(t *testing.T) {
 
 func TestMasterConfigRegistryAuth(t *testing.T) {
 	masterDefault := &TaskContainerDefaultsConfig{
-		RegistryAuth: &types.AuthConfig{
+		RegistryAuth: &registry.AuthConfig{
 			Username: "best-user",
 			Password: "secret-password",
 		},
@@ -87,7 +87,7 @@ func TestMasterConfigRegistryAuth(t *testing.T) {
 	actual := DefaultEnvConfig(masterDefault)
 
 	expected := DefaultEnvConfig(nil)
-	expected.RegistryAuth = &types.AuthConfig{
+	expected.RegistryAuth = &registry.AuthConfig{
 		Username: "best-user",
 		Password: "secret-password",
 	}
@@ -97,7 +97,7 @@ func TestMasterConfigRegistryAuth(t *testing.T) {
 
 func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 	masterDefault := &TaskContainerDefaultsConfig{
-		RegistryAuth: &types.AuthConfig{
+		RegistryAuth: &registry.AuthConfig{
 			Username: "best-user",
 		},
 	}
@@ -107,7 +107,7 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 }`), &actual))
 
 	expected := DefaultEnvConfig(nil)
-	expected.RegistryAuth = &types.AuthConfig{
+	expected.RegistryAuth = &registry.AuthConfig{
 		Username: "worst-user",
 	}
 

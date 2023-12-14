@@ -1,6 +1,7 @@
 package queue_test
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"testing"
@@ -154,4 +155,46 @@ func TestQueueConcurrent(t *testing.T) {
 
 	wg.Wait()
 	require.Equal(t, in, out)
+}
+
+func TestQueueGetWithContext(t *testing.T) {
+	t.Run("queue has no entries", func(t *testing.T) {
+		q := queue.New[int]()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan struct{})
+		go func() {
+			_, err := q.GetWithContext(ctx)
+			require.ErrorIs(t, err, context.Canceled)
+			close(done)
+		}()
+
+		time.Sleep(100 * time.Millisecond)
+		cancel()
+
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Error("should've been canceled by now")
+		}
+	})
+
+	t.Run("queue has entries, but initial context is canceled", func(t *testing.T) {
+		q := queue.New[int]()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		done := make(chan struct{})
+		go func() {
+			_, err := q.GetWithContext(ctx)
+			require.ErrorIs(t, err, context.Canceled)
+			close(done)
+		}()
+
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Error("should've been canceled by now")
+		}
+	})
 }

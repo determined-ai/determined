@@ -6,7 +6,7 @@ import (
 	"path"
 
 	hclient "github.com/docker/docker-credential-helpers/client"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/pkg/errors"
 )
 
@@ -31,7 +31,7 @@ func getDockerConfigPath() (string, error) {
 
 // processDockerConfig reads a user's ~/.docker/config.json and returns
 // credential helpers configured and the "auths" section of the config.
-func processDockerConfig() (map[string]*credentialStore, map[string]types.AuthConfig, error) {
+func processDockerConfig() (map[string]*credentialStore, map[string]registry.AuthConfig, error) {
 	dockerConfigFile, err := getDockerConfigPath()
 	if err != nil {
 		return nil, nil, err
@@ -43,8 +43,8 @@ func processDockerConfig() (map[string]*credentialStore, map[string]types.AuthCo
 	}
 
 	var config struct {
-		CredentialHelpers map[string]string           `json:"credHelpers"`
-		Auths             map[string]types.AuthConfig `json:"auths"`
+		CredentialHelpers map[string]string              `json:"credHelpers"`
+		Auths             map[string]registry.AuthConfig `json:"auths"`
 	}
 	if err := json.Unmarshal(b, &config); err != nil {
 		return nil, nil, errors.Wrap(err, "can't parse docker config")
@@ -62,8 +62,8 @@ func processDockerConfig() (map[string]*credentialStore, map[string]types.AuthCo
 }
 
 // get executes the command to get the credentials from the native store.
-func (s *credentialStore) get() (types.AuthConfig, error) {
-	var ret types.AuthConfig
+func (s *credentialStore) get() (registry.AuthConfig, error) {
+	var ret registry.AuthConfig
 
 	creds, err := hclient.Get(s.store, s.registry)
 	if err != nil {

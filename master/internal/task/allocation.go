@@ -142,6 +142,9 @@ type allocation struct {
 	portsRegistered bool
 
 	closers []func()
+
+	// tracks if detach was called. If it was, the service won't try to clean us up as if we crashed.
+	detached bool
 }
 
 // newAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
@@ -222,7 +225,19 @@ func (a *allocation) run(ctx context.Context, sub *sproto.ResourcesSubscription)
 	defer sub.Close()
 	defer a.wg.Cancel() // Important if we panic, so awaitTermination can unblock.
 
-	for !a.HandleRMEvent(sub.Get()) {
+	for {
+		event, err := sub.GetWithContext(ctx)
+		if err != nil {
+			// The following block is only used by tests to simulate a master crash by calling detach().
+			// It follows, though, no one should ever call detach() or wg.Cancel() in the code unless you are
+			// implementing graceful shutdown.
+			return
+		}
+
+		done := a.HandleRMEvent(event)
+		if done {
+			return
+		}
 	}
 }
 
@@ -363,6 +378,23 @@ func (a *allocation) SetReady(_ context.Context) error {
 	return nil
 }
 
+func (a *allocation) PersistRendezvousComplete() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.persistRendezvousComplete()
+}
+
+func (a *allocation) persistRendezvousComplete() error {
+	if a.model.IsReady == nil || (a.model.IsReady != nil && !*a.model.IsReady) {
+		a.syslog.Info("all containers are connected successfully (task container state changed)")
+		a.model.IsReady = ptrs.Ptr(true)
+		if err := a.db.UpdateAllocationState(a.model); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SetResourcesAsDaemon marks the resources as daemons. If all non-daemon resources exit, the
 // allocation will kill the remaining daemon resources.
 func (a *allocation) SetResourcesAsDaemon(_ context.Context, rID sproto.ResourcesID) error {
@@ -475,23 +507,28 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "loading trial allocation")
 		}
-	} else {
-		// Insert new allocation.
-		a.syslog.Debug("requestResources add allocation")
 
-		a.setModelState(model.AllocationStatePending)
-		if err := a.db.AddAllocation(&a.model); err != nil {
-			return nil, errors.Wrap(err, "saving trial allocation")
+		sub, err := a.rm.Allocate(a.req)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to request allocation")
 		}
+		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Restoring %s (id: %s)", a.req.Name, a.req.AllocationID)})
+		return sub, nil
+	}
+
+	// Insert new allocation.
+	a.syslog.Debug("requestResources add allocation")
+
+	a.setModelState(model.AllocationStatePending)
+	if err := a.db.AddAllocation(&a.model); err != nil {
+		return nil, errors.Wrap(err, "saving trial allocation")
 	}
 
 	sub, err := a.rm.Allocate(a.req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to request allocation")
 	}
-	a.sendTaskLog(&model.TaskLog{
-		Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, a.req.AllocationID),
-	})
+	a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Scheduling %s (id: %s)", a.req.Name, a.req.AllocationID)})
 	return sub, nil
 }
 
@@ -504,6 +541,11 @@ func (a *allocation) Cleanup() {
 
 	// FYI, if we haven't exited something went terribly wrong (it is bug).
 	if a.exited != nil {
+		return
+	}
+	if a.detached {
+		// This path is only used by testing to simulate a master crash.
+		a.syslog.Warn("detached allocation")
 		return
 	}
 
@@ -711,8 +753,10 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		}
 
 		if a.rendezvous != nil && a.rendezvous.try() {
-			a.syslog.
-				Info("all containers are connected successfully (task container state changed)")
+			err := a.persistRendezvousComplete()
+			if err != nil {
+				a.syslog.Error(err)
+			}
 		}
 		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
 			a.resources[msg.ResourcesID].Rank == 0 {
@@ -876,7 +920,7 @@ func (a *allocation) tryExitOrTerminate(reason string, forcePreemption bool) {
 	}
 
 	switch {
-	case a.req.Preemptible && a.ready() || forcePreemption:
+	case a.req.Preemptible && coalesceBool(a.model.IsReady, false) || forcePreemption:
 		a.preempt(reason)
 	default:
 		a.kill(reason)
@@ -1238,7 +1282,7 @@ func (a *allocation) state() AllocationState {
 		Resources:  resources,
 		Addresses:  addresses,
 		Containers: containers,
-		Ready:      a.ready(),
+		Ready:      coalesceBool(a.model.IsReady, false),
 	}
 }
 
@@ -1255,13 +1299,6 @@ func (a *allocation) getModelState() model.AllocationState {
 		return model.AllocationStatePending
 	}
 	return *a.model.State
-}
-
-func (a *allocation) ready() bool {
-	// Most trials use `a.rendezvous` and the normal rendezvous APIs, and go through this path.
-	return (a.rendezvous != nil && a.rendezvous.ready()) ||
-		// And finally, of course, if the task explicitly called `AllocationReady` it is ready.
-		coalesceBool(a.model.IsReady, false)
 }
 
 func coalesceBool(x *bool, fallback bool) bool {
@@ -1298,4 +1335,11 @@ func (a *allocation) getPorts(exposedPorts map[string]int) (map[string]int, erro
 	}
 
 	return ports, nil
+}
+
+func (a *allocation) detach() {
+	a.mu.Lock()
+	a.detached = true
+	a.mu.Unlock()
+	a.wg.Close()
 }

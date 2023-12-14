@@ -283,10 +283,6 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if not args.no_preflight_checks:
         check_quotas(det_configs, deployment_object)
 
-    if args.dry_run:
-        print("Dry run complete. Exiting.")
-        return
-
     print("Starting Determined Deployment")
     try:
         deployment_object.deploy(args.yes, args.update_terminate_agents)
@@ -543,11 +539,6 @@ args_description = Cmd(
                     default="false",
                     help="whether task preemption is supported in the scheduler "
                     "(only configurable for priority scheduler).",
-                ),
-                Arg(
-                    "--dry-run",
-                    action="store_true",
-                    help="only validate flags and check quota. Do not deploy.",
                 ),
                 Arg(
                     "--cpu-env-image",

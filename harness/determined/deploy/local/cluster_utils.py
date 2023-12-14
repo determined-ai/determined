@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Typ
 import appdirs
 import docker
 
-from determined.common import util
+from determined.common import constants, util
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.healthcheck import wait_for_master
 
@@ -171,7 +171,12 @@ def master_up(
         make_temp_conf = True
 
     # Ensure checkpoint storage directory exists.
-    final_storage_host_path = master_conf.get("checkpoint_storage", {}).get("host_path")
+    storage_info = master_conf.get("checkpoint_storage", {})
+    final_storage_host_path = storage_info.get("host_path")
+    container_storage_path = (
+        storage_info.get("container_path") or constants.SHARED_FS_CONTAINER_PATH
+    )
+
     if final_storage_host_path is not None:
         final_storage_host_path = pathlib.Path(final_storage_host_path)
         if not final_storage_host_path.exists():
@@ -248,7 +253,10 @@ def master_up(
         exit_stack.enter_context(
             defer_cleanup(lambda: master_down(master_name, delete_db, cluster_name))  # type: ignore
         )
-        volumes = [f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml"]
+        volumes = [
+            f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml",
+            f"{final_storage_host_path}:{container_storage_path}",
+        ]
         client.containers.run(
             image=f"{image_repo_prefix}/determined-master:{version}",
             environment=env,

@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -54,6 +55,10 @@ func (as *allocationService) StartAllocation(
 	as.mu.Lock()
 	defer as.mu.Unlock()
 
+	if as.allocations[req.AllocationID] != nil {
+		return fmt.Errorf("allocation with ID %s already exists", req.AllocationID)
+	}
+
 	ref, err := newAllocation(logCtx, req, db, rm, specifier)
 	if err != nil {
 		return err
@@ -69,6 +74,8 @@ func (as *allocationService) StartAllocation(
 		as.mu.Unlock() // don't defer in case onExit calls back into the service
 
 		onExit(ref.exited)
+
+		as.syslog.Info("allocation cleaned up and removed from cache")
 	}()
 	return nil
 }
@@ -183,6 +190,10 @@ func (as *allocationService) WatchRendezvous(
 	case rsp := <-w.C:
 		if rsp.Err != nil {
 			return nil, rsp.Err
+		}
+		err := ref.PersistRendezvousComplete()
+		if err != nil {
+			as.syslog.Error(err)
 		}
 		return rsp.Info, nil
 	case <-ctx.Done():
@@ -321,6 +332,28 @@ func (as *allocationService) waitForRestore(
 		return nil, err
 	}
 	return ref, nil
+}
+
+// WaitForRestore waits until the allocation has been restored by the resource manager. The
+// allocation must exist otherwise this will return a not found error.
+func (as *allocationService) WaitForRestore(
+	ctx context.Context,
+	id model.AllocationID,
+) error {
+	_, err := as.waitForRestore(ctx, id)
+	return err
+}
+
+// detach "detaches" the allocation, letting go of the underlying resources without modifying their or its
+// own state in anyway. Useful for testing restart paths. Do not call this in real code unless you are implementing
+// graceful shutdown.
+func (as *allocationService) Detach(id model.AllocationID) error {
+	ref, err := as.getAllocation(id)
+	if err != nil {
+		return err
+	}
+	ref.detach()
+	return nil
 }
 
 // getAllocation returns allocation actor by allocation id.

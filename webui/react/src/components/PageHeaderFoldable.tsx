@@ -18,13 +18,18 @@ export interface Option {
   tooltip?: string;
 }
 
+export interface HeaderOption {
+  content: React.ReactNode;
+  key: string;
+  menuOptions: Option[];
+}
 interface Props {
   foldableContent?: React.ReactNode;
   leftContent: React.ReactNode;
-  options?: Option[];
+  options?: HeaderOption[];
 }
 
-const renderOptionLabel = (option: Option): React.ReactNode => {
+export const renderOptionLabel = (option: Option): React.ReactNode => {
   return option.tooltip ? (
     <Tooltip content={option.tooltip}>
       <span>{option.label}</span>
@@ -38,21 +43,38 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
   const [isExpanded, setIsExpanded] = useState(false);
 
   const dropdownClasses = [css.optionsDropdown];
+
   if (options?.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
   if (options?.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
   if (options?.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
 
-  const menu: MenuItem[] = (options ?? []).map((option) => ({
-    className: css.optionsDropdownItem,
-    disabled: option.disabled || !option.onClick,
-    key: option.key,
-    label: renderOptionLabel(option),
-  }));
+  const defaultClass: string = css.optionsDropdownItem;
+  const dropdownClassNames = [
+    css.optionsDropdownItemFirstChild,
+    css.optionsDropdownItemSecondChild,
+    css.optionsDropdownItemThirdChild,
+  ];
+  const menu: MenuItem[] = (options ?? [])
+    .map((option, index) => {
+      return option.menuOptions?.map((menuOption) => ({
+        className:
+          index < dropdownClassNames.length
+            ? `${defaultClass} ${dropdownClassNames[index]}`
+            : defaultClass,
+        disabled: menuOption.disabled || !menuOption.onClick,
+        key: menuOption.key,
+        label: renderOptionLabel(menuOption),
+      }));
+    })
+    .flat();
 
   const handleDropdown = useCallback(
     (key: string, e: DropdownEvent) => {
-      const option = options?.find((option) => option.key === key);
-      if (isMouseEvent(e)) option?.onClick?.(e);
+      const menuOption = options
+        ?.map((option) => option.menuOptions)
+        .flat()
+        .find((optionItem) => optionItem.key === key);
+      if (isMouseEvent(e)) menuOption?.onClick?.(e);
     },
     [options],
   );
@@ -79,14 +101,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
               <div className={css.optionsMainButton} key={option.key}>
-                <Button
-                  disabled={option.disabled || !option.onClick}
-                  icon={option?.icon}
-                  key={option.key}
-                  loading={option.isLoading}
-                  onClick={option.onClick}>
-                  {renderOptionLabel(option)}
-                </Button>
+                {option.content}
               </div>
             ))}
           </div>

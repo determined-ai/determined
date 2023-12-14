@@ -9,12 +9,14 @@ import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
+import { ShirtSize } from 'hew/Theme';
 import { useToast } from 'hew/Toast';
 import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
+import Grid from 'components/Grid';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import useUI, { Mode } from 'components/ThemeProvider';
@@ -346,33 +348,37 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
               </div>
             </Section>
             <Section title="Advanced">
-              <Body>
-                Advanced features are potentially dangerous and could require you to completely
-                reset your user settings if you make a mistake.
-              </Body>
-              <Accordion title="I know what I'm doing">
-                <Row>
-                  <Button
-                    danger
-                    type="primary"
-                    onClick={() =>
-                      confirm({
-                        content:
-                          'Are you sure you want to reset all user settings to their default values?',
-                        onConfirm: () => {
-                          setMode(Mode.System);
-                          userSettings.clear();
-                        },
-                        onError: handleError,
-                        title: 'Reset User Settings',
-                      })
-                    }>
-                    Reset to Default
-                  </Button>
-                  <Button onClick={() => UserSettingsModal.open()}>Edit Raw Settings (JSON)</Button>
-                  <UserSettingsModal.Component />
-                </Row>
-              </Accordion>
+              <Grid gap={ShirtSize.Medium} minItemWidth={400}>
+                <Body>
+                  Advanced features are potentially dangerous and could require you to completely
+                  reset your user settings if you make a mistake.
+                </Body>
+                <Accordion title="I know what I'm doing">
+                  <Row>
+                    <Button
+                      danger
+                      type="primary"
+                      onClick={() =>
+                        confirm({
+                          content:
+                            'Are you sure you want to reset all user settings to their default values?',
+                          onConfirm: () => {
+                            setMode(Mode.System);
+                            userSettings.clear();
+                          },
+                          onError: handleError,
+                          title: 'Reset User Settings',
+                        })
+                      }>
+                      Reset to Default
+                    </Button>
+                    <Button onClick={() => UserSettingsModal.open()}>
+                      Edit Raw Settings (JSON)
+                    </Button>
+                    <UserSettingsModal.Component />
+                  </Row>
+                </Accordion>
+              </Grid>
             </Section>
           </Drawer>
         );

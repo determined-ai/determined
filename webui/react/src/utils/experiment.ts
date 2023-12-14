@@ -40,6 +40,9 @@ type ExperimentPermissionSet = {
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
 };
 
+export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
+export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
+
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
   return 'config' in obj && 'archived' in obj;
@@ -131,7 +134,10 @@ export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
   trial?: TrialDetails,
 ): boolean =>
-  !experiment.archived && !experiment.parentArchived && (!!trial || experiment?.numTrials === 1);
+  !experiment.archived &&
+  !experiment.parentArchived &&
+  (!!trial || experiment?.numTrials === 1) &&
+  terminalRunStates.has(experiment.state);
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
@@ -298,4 +304,43 @@ export const runStateSortValues: Map<RunState, number> = new Map(
 
 export const runStateSorter = (a: RunState, b: RunState): number => {
   return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
+};
+
+export const getExperimentName = (config: RawJson): string => {
+  return config.name || '';
+};
+
+// For unitless searchers, this will return undefined.
+export const getMaxLengthType = (config: RawJson): string | undefined => {
+  return (Object.keys(config.searcher?.max_length || {}) || [])[0];
+};
+
+export const getMaxLengthValue = (config: RawJson): number => {
+  const value = (Object.keys(config.searcher?.max_length || {}) || [])[0];
+  return value
+    ? parseInt(config.searcher?.max_length[value])
+    : parseInt(config.searcher?.max_length);
+};
+
+export const trialContinueConfig = (
+  experimentConfig: RawJson,
+  trialHparams: TrialHyperparameters,
+  trialId: number,
+  workspaceName: string,
+  projectName: string,
+): RawJson => {
+  const newConfig = structuredClone(experimentConfig);
+  return {
+    ...newConfig,
+    hyperparameters: trialHParamsToExperimentHParams(trialHparams),
+    project: projectName,
+    searcher: {
+      max_length: experimentConfig.searcher.max_length,
+      metric: experimentConfig.searcher.metric,
+      name: 'single',
+      smaller_is_better: experimentConfig.searcher.smaller_is_better,
+      source_trial_id: trialId,
+    },
+    workspace: workspaceName,
+  };
 };

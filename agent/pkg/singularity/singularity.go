@@ -543,20 +543,20 @@ func (s *SingularityClient) waitOnContainer(
 	cont *SingularityContainer,
 	p events.Publisher[docker.Event],
 ) docker.ContainerWaiter {
-	wchan := make(chan dcontainer.ContainerWaitOKBody, 1)
+	wchan := make(chan dcontainer.WaitResponse, 1)
 	errchan := make(chan error)
 	s.wg.Go(func(ctx context.Context) {
 		defer close(wchan)
 		defer close(errchan)
 
-		var body dcontainer.ContainerWaitOKBody
+		var body dcontainer.WaitResponse
 		switch state, err := cont.Proc.Wait(); {
 		case ctx.Err() != nil && err == nil && state.ExitCode() == -1:
 			s.log.Trace("detached from container process")
 			return
 		case err != nil:
 			s.log.Tracef("proc %d for container %s exited: %s", cont.PID, id, err)
-			body.Error = &dcontainer.ContainerWaitOKBodyError{Message: err.Error()}
+			body.Error = &dcontainer.WaitExitError{Message: err.Error()}
 		default:
 			s.log.Tracef("proc %d for container %s exited with %d", cont.PID, id, state.ExitCode())
 			body.StatusCode = int64(state.ExitCode())

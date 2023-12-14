@@ -419,9 +419,6 @@ func NewExperiment(
 	projectID int,
 	unmanaged bool,
 ) (*Experiment, error) {
-	if len(modelDefinitionBytes) == 0 && !unmanaged {
-		return nil, errors.New("empty model definition")
-	}
 	if !(gitRemote == nil && gitCommit == nil && gitCommitter == nil && gitCommitDate == nil) &&
 		!(gitRemote != nil && gitCommit != nil && gitCommitter != nil && gitCommitDate != nil) {
 		return nil, errors.New(

@@ -1,8 +1,10 @@
-import { Typography } from 'antd';
 import Avatar, { Size } from 'hew/Avatar';
 import Card from 'hew/Card';
+import Column from 'hew/Column';
 import Icon from 'hew/Icon';
+import Row from 'hew/Row';
 import Tooltip from 'hew/Tooltip';
+import { Title, TypographySize } from 'hew/Typography';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
@@ -39,8 +41,9 @@ const ProjectCard: React.FC<Props> = ({
     workspaceArchived,
   });
 
-  const classnames = [css.base];
+  const classnames = [];
   if (project.archived) classnames.push(css.archived);
+  if (project.workspaceId === 1) classnames.push(css.uncategorized);
 
   return (
     <Card
@@ -48,42 +51,46 @@ const ProjectCard: React.FC<Props> = ({
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
-        <div className={css.headerContainer}>
-          <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
-            {project.name}
-          </Typography.Title>
-        </div>
-        <div className={css.workspaceContainer}>
-          {showWorkspace && project.workspaceId !== 1 && (
-            <Tooltip content={project.workspaceName}>
-              <div className={css.workspaceIcon}>
-                <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
+        <Column>
+          <Row justifyContent="space-between" width={125}>
+            <Title size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
+              {project.name}
+            </Title>
+          </Row>
+          <Row>
+            <div className={css.workspaceContainer}>
+              {showWorkspace && (
+                <div className={css.workspaceIcon}>
+                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
+                </div>
+              )}
+            </div>
+          </Row>
+          <Row justifyContent="space-between" width="fill">
+            <div className={css.footerContainer}>
+              <div className={css.experiments}>
+                <Tooltip
+                  content={
+                    `${project.numExperiments.toLocaleString()}` +
+                    ` experiment${project.numExperiments === 1 ? '' : 's'}`
+                  }>
+                  <Icon name="experiment" size="small" title="Number of experiments" />
+                  <span>{nearestCardinalNumber(project.numExperiments)}</span>
+                </Tooltip>
               </div>
-            </Tooltip>
-          )}
-        </div>
-        <div className={css.footerContainer}>
-          <div className={css.experiments}>
-            <Tooltip
-              content={
-                `${project.numExperiments.toLocaleString()}` +
-                ` experiment${project.numExperiments === 1 ? '' : 's'}`
-              }>
-              <Icon name="experiment" size="small" title="Number of experiments" />
-              <span>{nearestCardinalNumber(project.numExperiments)}</span>
-            </Tooltip>
-          </div>
-          {project.archived ? (
-            <div className={css.archivedBadge}>Archived</div>
-          ) : (
-            project.lastExperimentStartedAt && (
-              <TimeAgo
-                datetime={project.lastExperimentStartedAt}
-                tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
-              />
-            )
-          )}
-        </div>
+              {project.archived ? (
+                <div className={css.archivedBadge}>Archived</div>
+              ) : (
+                project.lastExperimentStartedAt && (
+                  <TimeAgo
+                    datetime={project.lastExperimentStartedAt}
+                    tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
+                  />
+                )
+              )}
+            </div>
+          </Row>
+        </Column>
       </div>
       {contextHolders}
     </Card>

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
@@ -102,7 +102,7 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 			CUDA: "docker://ubuntucuda",
 			ROCM: "docker://ubunturocm",
 		},
-		RegistryAuth: &types.AuthConfig{
+		RegistryAuth: &registry.AuthConfig{
 			Username:      "brad",
 			Password:      "password",
 			Auth:          "auth",
@@ -199,7 +199,7 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 					CUDA: "docker://ubuntucuda2",
 					ROCM: "docker://ubunturocm2",
 				},
-				RegistryAuth: &types.AuthConfig{
+				RegistryAuth: &registry.AuthConfig{
 					Username:      "brad2",
 					Password:      "password2",
 					Auth:          "auth2",
@@ -276,7 +276,7 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 					CUDA: "docker://ubuntucuda2",
 					ROCM: "docker://ubunturocm2",
 				},
-				RegistryAuth: &types.AuthConfig{
+				RegistryAuth: &registry.AuthConfig{
 					Username:      "brad2",
 					Password:      "password2",
 					Auth:          "auth2",

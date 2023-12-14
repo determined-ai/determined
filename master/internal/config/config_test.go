@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
@@ -464,7 +464,7 @@ task_container_defaults:
 			SegmentWebUIKey:  webuiSecret,
 		},
 		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-			RegistryAuth: &types.AuthConfig{
+			RegistryAuth: &registry.AuthConfig{
 				Username: "yo-yo-ma",
 				Password: registryAuthSecret,
 			},

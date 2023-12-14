@@ -28,9 +28,8 @@ def is_trial(info: det.ClusterInfo) -> bool:
 
 def download_context_directory(sess: api.Session, info: det.ClusterInfo) -> None:
     b64_tgz = bindings.get_GetTaskContextDirectory(sess, taskId=info.task_id).b64Tgz
-    if not is_trial(info) and len(b64_tgz) == 0:
+    if len(b64_tgz) == 0:
         return  # Non trials can have empty model defs.
-    assert len(b64_tgz) > 0
 
     tgz = base64.b64decode(b64_tgz)
     with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as context_directory:

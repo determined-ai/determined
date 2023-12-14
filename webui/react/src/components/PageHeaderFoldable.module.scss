@@ -84,7 +84,7 @@
   .optionsButtons :nth-child(1) {
     display: inherit !important;
   }
-  .optionsDropdownItem:nth-child(1) {
+  .optionsDropdownItemFirstChild {
     display: none !important;
   }
   .optionsDropdownOneChild {
@@ -96,7 +96,7 @@
   .optionsButtons :nth-child(2) {
     display: inherit !important;
   }
-  .optionsDropdownItem:nth-child(2) {
+  .optionsDropdownItemSecondChild {
     display: none !important;
   }
   .optionsDropdownTwoChild {
@@ -108,7 +108,7 @@
   .optionsButtons :nth-child(3) {
     display: inherit !important;
   }
-  .optionsDropdownItem:nth-child(3) {
+  .optionsDropdownItemThirdChild {
     display: none !important;
   }
   .optionsDropdownThreeChild {

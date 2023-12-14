@@ -1,4 +1,4 @@
-import { ModalFuncProps, Space, Typography } from 'antd';
+import { ModalFuncProps, Space } from 'antd';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
@@ -8,6 +8,7 @@ import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import RadioGroup from 'hew/RadioGroup';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
+import { Label, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -100,7 +101,7 @@ const useModalHyperparameterSearch = ({
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.id === experiment.searcherType) ??
-      SEARCH_METHODS.ASHA,
+    SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -710,9 +711,9 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>
+        <Label size={TypographySize.L} truncate={{ rows: 1, tooltip: true }}>
           {name}
-        </Typography.Title>
+        </Label>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
         <Select aria-labelledby="type" ref={typeRef} width={'100%'} onChange={handleTypeChange}>

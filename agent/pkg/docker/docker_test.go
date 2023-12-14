@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/docker/distribution/reference"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 
 	"github.com/determined-ai/determined/agent/pkg/events"
 
@@ -18,23 +18,23 @@ func TestGetDockerAuths(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dockerhubAuthConfig := types.AuthConfig{
+	dockerhubAuthConfig := registry.AuthConfig{
 		Username:      "username",
 		Password:      "password",
 		ServerAddress: "docker.io",
 	}
 
-	exampleDockerConfig := types.AuthConfig{
+	exampleDockerConfig := registry.AuthConfig{
 		Auth:          "token",
 		ServerAddress: "https://example.com",
 	}
 
-	noServerAuthConfig := types.AuthConfig{
+	noServerAuthConfig := registry.AuthConfig{
 		Username: "username",
 		Password: "password",
 	}
 
-	dockerAuthSection := map[string]types.AuthConfig{
+	dockerAuthSection := map[string]registry.AuthConfig{
 		"https://index.docker.io/v1/": {
 			Auth:          "dockerhubtoken",
 			ServerAddress: "docker.io",
@@ -47,18 +47,18 @@ func TestGetDockerAuths(t *testing.T) {
 
 	cases := []struct {
 		image       string
-		expconfReg  *types.AuthConfig
-		authConfigs map[string]types.AuthConfig
-		expected    types.AuthConfig
+		expconfReg  *registry.AuthConfig
+		authConfigs map[string]registry.AuthConfig
+		expected    registry.AuthConfig
 	}{
 		// No authentication passed in.
-		{"detai", nil, nil, types.AuthConfig{}},
+		{"detai", nil, nil, registry.AuthConfig{}},
 		// Correct server passed in for dockerhub.
 		{"detai", &dockerhubAuthConfig, nil, dockerhubAuthConfig},
 		// Correct server passed in for example.com.
 		{"example.com/detai", &exampleDockerConfig, nil, exampleDockerConfig},
 		// Different server passed than specified auth.
-		{"example.com/detai", &dockerhubAuthConfig, nil, types.AuthConfig{}},
+		{"example.com/detai", &dockerhubAuthConfig, nil, registry.AuthConfig{}},
 		// No server (behavior is deprecated).
 		{"detai", &noServerAuthConfig, nil, noServerAuthConfig},
 		{"example.com/detai", &noServerAuthConfig, nil, noServerAuthConfig},
@@ -73,7 +73,7 @@ func TestGetDockerAuths(t *testing.T) {
 			dockerAuthSection["example.com"],
 		},
 		// We don't return a result if we don't have that serveraddress.
-		{"determined.ai/detai", nil, dockerAuthSection, types.AuthConfig{}},
+		{"determined.ai/detai", nil, dockerAuthSection, registry.AuthConfig{}},
 	}
 
 	evs := make(chan Event, 100)
@@ -95,7 +95,7 @@ func TestGetDockerAuths(t *testing.T) {
 
 func TestRegistryToString(t *testing.T) {
 	// No auth just base64ed.
-	case1 := types.AuthConfig{
+	case1 := registry.AuthConfig{
 		Email:    "det@example.com",
 		Password: "password",
 	}
@@ -108,7 +108,7 @@ func TestRegistryToString(t *testing.T) {
 	// Auth gets split.
 	user, pass := "user", "pass"
 	auth := fmt.Sprintf("%s:%s", user, pass)
-	case2 := types.AuthConfig{
+	case2 := registry.AuthConfig{
 		Auth: base64.StdEncoding.EncodeToString([]byte(auth)),
 	}
 	expected = base64.URLEncoding.EncodeToString([]byte(fmt.Sprintf(

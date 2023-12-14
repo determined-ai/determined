@@ -7,7 +7,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -57,16 +57,16 @@ func (p PodSpec) WithDefaults() PodSpec {
 
 // EnvironmentConfigV0 configures the environment of a Determined command or experiment.
 //
-//go:generate ../gen.sh --import github.com/docker/docker/api/types
+//go:generate ../gen.sh --import github.com/docker/docker/api/types/registry
 type EnvironmentConfigV0 struct {
 	RawImage                *EnvironmentImageMapV0     `json:"image"`
 	RawEnvironmentVariables *EnvironmentVariablesMapV0 `json:"environment_variables"`
 	RawProxyPorts           *ProxyPortsConfigV0        `json:"proxy_ports"`
 
-	RawPorts          map[string]int    `json:"ports"`
-	RawRegistryAuth   *types.AuthConfig `json:"registry_auth"`
-	RawForcePullImage *bool             `json:"force_pull_image"`
-	RawPodSpec        *PodSpec          `json:"pod_spec"`
+	RawPorts          map[string]int       `json:"ports"`
+	RawRegistryAuth   *registry.AuthConfig `json:"registry_auth"`
+	RawForcePullImage *bool                `json:"force_pull_image"`
+	RawPodSpec        *PodSpec             `json:"pod_spec"`
 
 	RawAddCapabilities  []string `json:"add_capabilities"`
 	RawDropCapabilities []string `json:"drop_capabilities"`
