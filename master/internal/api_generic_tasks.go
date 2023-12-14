@@ -327,3 +327,48 @@ func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state
 		Exec(ctx)
 	return err
 }
+
+func (a *apiServer) KillGenericTask(
+	ctx context.Context, req *apiv1.KillGenericTaskRequest,
+) (*apiv1.KillGenericTaskResponse, error) {
+	rootID, err := a.FindRoot(ctx, model.TaskID(req.TaskId))
+	if err != nil {
+		return nil, err
+	}
+	err = a.PropagateTaskState(ctx, rootID, model.TaskStateStoppingCanceled)
+	if err != nil {
+		return nil, err
+	}
+	tasksToDelete, err := a.GetTaskChildren(ctx, rootID)
+	if err != nil {
+		return nil, err
+	}
+	for _, childTask := range tasksToDelete {
+		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
+			allocation_id, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			if err != nil {
+				return nil, err
+			}
+			task.DefaultService.Signal(model.AllocationID(allocation_id), task.KillAllocation, "user requested task kill")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return nil, nil
+}
+
+func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
+) (string, error) {
+	out := struct {
+		allocationId string
+	}{}
+	err := db.Bun().NewSelect().Model(&out).
+		Column("allocation_id").
+		Where("task_id = ?", taskID).
+		Where("state != 'TERMINATED' and state != 'TERMINATING'").Scan(ctx)
+	if err != nil {
+		return "", nil
+	}
+	return out.allocationId, nil
+}

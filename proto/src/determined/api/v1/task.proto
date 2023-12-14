@@ -294,3 +294,15 @@ message GetGenericTaskConfigResponse {
   // The config of the task
   string config = 1;
 }
+
+// Kills generic task
+message KillGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to KillGenericTaskRequest
+message KillGenericTaskResponse {}
