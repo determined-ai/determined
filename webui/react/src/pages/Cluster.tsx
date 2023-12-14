@@ -1,5 +1,4 @@
-import type { TabsProps } from 'antd';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -49,9 +48,9 @@ const Cluster: React.FC = () => {
     [basePath, navigate],
   );
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     type Unboxed<T> = T extends (infer U)[] ? U : T;
-    type TabType = Unboxed<TabsProps['items']>;
+    type TabType = Unboxed<PivotProps['items']>;
 
     const clusterOverview: Readonly<TabType> = {
       children: <ClusterOverview />,
@@ -68,7 +67,7 @@ const Cluster: React.FC = () => {
       key: TabType.Logs,
       label: 'Master Logs',
     };
-    const tabs: TabsProps['items'] = [];
+    const tabs: PivotProps['items'] = [];
 
     if (rbacEnabled) {
       tabs.push(clusterOverview);

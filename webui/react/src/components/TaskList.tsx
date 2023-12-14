@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -8,6 +7,7 @@ import {
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -599,7 +599,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <>
       <div className={css.options}>
-        <Space>
+        <Row>
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
@@ -607,7 +607,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
             enabled={workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC}
             workspace={workspace}
           />
-        </Space>
+        </Row>
       </div>
       <div className={css.base}>
         <TableBatch

@@ -1,5 +1,4 @@
-import type { TabsProps } from 'antd';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -66,8 +65,8 @@ const SettingsContent: React.FC = () => {
     [navigate],
   );
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
-    const items: TabsProps['items'] = [];
+  const tabItems: PivotProps['items'] = useMemo(() => {
+    const items: PivotProps['items'] = [];
 
     if (canAdministrateUsers) {
       Loadable.match(loadableUsers, {

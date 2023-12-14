@@ -1,6 +1,5 @@
 import Accordion from 'hew/Accordion';
 import Button from 'hew/Button';
-import Column from 'hew/Column';
 import Drawer from 'hew/Drawer';
 import Icon from 'hew/Icon';
 import InlineForm from 'hew/InlineForm';
@@ -355,7 +354,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   reset your user settings if you make a mistake.
                 </Body>
                 <Accordion title="I know what I'm doing">
-                  <Column>
+                  <Row>
                     <Button
                       danger
                       type="primary"
@@ -377,7 +376,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       Edit Raw Settings (JSON)
                     </Button>
                     <UserSettingsModal.Component />
-                  </Column>
+                  </Row>
                 </Accordion>
               </Grid>
             </Section>

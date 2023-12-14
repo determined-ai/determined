@@ -1,7 +1,6 @@
-import { SelectValue } from 'antd/lib/select';
 import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
-import Select, { Option } from 'hew/Select';
+import Select, { Option, SelectValue } from 'hew/Select';
 import { useToast } from 'hew/Toast';
 import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';

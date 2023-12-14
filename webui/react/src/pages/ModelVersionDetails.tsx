@@ -1,8 +1,8 @@
-import { Card, type TabsProps } from 'antd';
+import { Card } from 'antd';
 import Breadcrumb from 'hew/Breadcrumb';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
@@ -237,7 +237,7 @@ const ModelVersionDetails: React.FC = () => {
     }));
   }, [modelVersion?.checkpoint]);
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     if (!modelVersion) {
       return [];
     }

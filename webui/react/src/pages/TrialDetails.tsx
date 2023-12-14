@@ -1,6 +1,5 @@
-import type { TabsProps } from 'antd';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -130,7 +129,7 @@ const TrialDetailsComp: React.FC = () => {
     navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
   }, [basePath, navigate]);
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     if (!experiment || !trial) {
       return [];
     }

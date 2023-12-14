@@ -1,5 +1,5 @@
-import type { TabsProps } from 'antd';
 import Message from 'hew/Message';
+import type { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
@@ -82,12 +82,12 @@ const ProjectDetails: React.FC = () => {
     workspaceArchived: workspace?.archived,
   });
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     if (!project) {
       return [];
     }
 
-    const items: TabsProps['items'] = [
+    const items: PivotProps['items'] = [
       {
         children: (
           <div className={css.tabPane}>

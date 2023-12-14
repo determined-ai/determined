@@ -1,5 +1,4 @@
-import type { TabsProps } from 'antd';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import { string } from 'io-ts';
@@ -122,8 +121,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     workspace: { id: experiment.workspaceId },
   });
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
-    const items: TabsProps['items'] = [
+  const tabItems: PivotProps['items'] = useMemo(() => {
+    const items: PivotProps['items'] = [
       {
         children: (
           <React.Suspense fallback={<Spinner spinning tip="Loading experiment visualization..." />}>

@@ -1,12 +1,12 @@
-import { TabsProps } from 'antd';
-import Pivot, { PivotTabType } from 'hew/Pivot';
+import Pivot, { PivotProps, PivotTabType } from 'hew/Pivot';
 import _ from 'lodash';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-interface DynamicTabBarProps extends Omit<TabsProps, 'activeKey' | 'type'> {
+interface DynamicTabBarProps extends Omit<PivotProps, 'activeKey' | 'type'> {
   basePath: string;
   type?: PivotTabType;
+  children?: React.ReactNode;
 }
 
 type TabBarUpdater = (node?: JSX.Element) => void;

@@ -1,6 +1,5 @@
-import type { TabsProps } from 'antd';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
@@ -154,12 +153,12 @@ const WorkspaceDetails: React.FC = () => {
     workspace: workspace || undefined,
   });
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
     }
 
-    const items: TabsProps['items'] = [
+    const items: PivotProps['items'] = [
       {
         children: <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />,
         key: WorkspaceDetailsTab.Projects,

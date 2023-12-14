@@ -1,5 +1,4 @@
-import type { TabsProps } from 'antd';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loaded } from 'hew/utils/loadable';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
@@ -52,7 +51,7 @@ const Markdown: React.FC<Props> = ({
   onClick,
 }: Props) => {
   const resize = useResize();
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     return [
       {
         children: (

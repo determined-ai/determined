@@ -1,8 +1,7 @@
+import RadioGroup from 'hew/RadioGroup';
 import React, { useCallback } from 'react';
 
 import { ValueOf } from 'types';
-
-import RadioGroup from './RadioGroup';
 
 export const GridListView = {
   Grid: 'grid',
@@ -18,7 +17,7 @@ interface Props {
 
 const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
   const handleChange = useCallback(
-    (id: string) => {
+    (id: string | number) => {
       if (onChange) onChange(id as GridListView);
     },
     [onChange],

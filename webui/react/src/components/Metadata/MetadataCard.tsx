@@ -1,5 +1,6 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import Surface from 'hew/Surface';
 import { Title, TypographySize } from 'hew/Typography';
@@ -63,14 +64,14 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
         <div className={css.cardHeader}>
           <Title size={TypographySize.S}>Metadata</Title>
           {isEditing ? (
-            <div>
+            <Row>
               <Button size="small" onClick={cancelEditMetadata}>
                 Cancel
               </Button>
               <Button size="small" type="primary" onClick={saveMetadata}>
                 Save
               </Button>
-            </div>
+            </Row>
           ) : (
             disabled || (
               <Button
