@@ -60,11 +60,9 @@ const ProjectCard: React.FC<Props> = ({
           <Row>
             <div className={css.workspaceContainer}>
               {showWorkspace && (
-                <Tooltip content={project.workspaceName}>
-                  <div className={css.workspaceIcon}>
-                    <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
-                  </div>
-                </Tooltip>
+                <div className={css.workspaceIcon}>
+                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
+                </div>
               )}
             </div>
           </Row>

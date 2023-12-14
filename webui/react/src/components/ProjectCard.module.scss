@@ -10,7 +10,7 @@
     display: flex;
     flex-grow: 1;
     font-size: 12px;
-    gap: 6px;
+    gap: var(spacing-sm);
     justify-content: space-between;
 
     .experiments {
