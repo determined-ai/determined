@@ -481,7 +481,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
             label="Slots per trial"
             name="slots_per_trial"
-            rules={[{ max: maxSlots, min: 1, required: true, type: 'number' }]}
+            rules={[{ max: maxSlots, min: 0, required: true, type: 'number' }]}
             validateStatus={
               formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 1
                 ? 'error'
