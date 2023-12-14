@@ -267,7 +267,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.DOCKER_USER: args.docker_user,
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
         constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
-        constants.cloudformation.LORE_VERSION: args.genai_version,
+        constants.cloudformation.GENAI_VERSION: args.genai_version,
     }
 
     if args.master_config_template_path:

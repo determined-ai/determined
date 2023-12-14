@@ -216,9 +216,9 @@ Parameters:
     Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
     Default: 0
 
-  LoreVersion:
+  GenAIVersion:
     Type: String
-    Description: Lore version to deploy
+    Description: GenAI version to deploy
     Default: latest
 
   MountEFSId:
@@ -291,7 +291,7 @@ Parameters:
           key: /etc/determined/master.key
       {{ end }}
 
-      {{ if ne .lore_version "" }}
+      {{ if ne .genai_version "" }}
       __internal:
         proxied_servers:
           - destination: "http://lore-backend:9011/lore"
@@ -919,7 +919,7 @@ Resources:
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
             notebook_timeout: ${NotebookTimeout}
-            lore_version: ${LoreVersion}
+            genai_version: ${GenAIVersion}
 
             bind_mounts:
               - host_path: /mnt/efs
@@ -971,7 +971,7 @@ Resources:
 
             mount -t efs ${EFSVal}:/ /mnt/efs
 
-            if [ ! -z "${LoreVersion}" ]; then
+            if [ ! -z "${GenAIVersion}" ]; then
               docker run -d \
                 --name lore-backend \
                 --env DET_MASTER=http://determined-master:8080 \
@@ -980,12 +980,12 @@ Resources:
                 --env DB_PASSWORD=${DBPassword} \
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
-                --env LORE_DOCKER_TAG_SUFFIX="${LoreVersion}" \
+                --env LORE_DOCKER_TAG_SUFFIX="${GenAIVersion}" \
                 -p 9013:9013 \
                 -v /mnt/efs:/run/determined/workdir/shared_fs \
                 --network determined \
-                "determinedai/environments-dev:lore-backend-image-${LoreVersion}"
-              test $? -eq 0 || ( echo "Failed to launch lore container." && exit 1 )
+                "determinedai/environments-dev:lore-backend-image-${GenAIVersion}"
+              test $? -eq 0 || ( echo "Failed to launch GenAI container." && exit 1 )
             fi
 
             touch /usr/local/determined/etc/master.yaml
