@@ -252,5 +252,20 @@ func (a *apiServer) PostMaintenanceMessage(
 		return nil, permErr
 	}
 
-	return &apiv1.PostMaintenanceMessageResponse{}, nil
+	startTime := time.Unix(req.StartTime.Seconds, int64(req.StartTime.Nanos))
+	endTime := time.Unix(req.EndTime.Seconds, int64(req.EndTime.Nanos))
+	if endTime <= startTime {
+		return nil, status.Error(codes.InvalidArgument, "end time must be after start time")
+	}
+	if endTime <= time.Now() {
+		return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
+	}
+
+	resp := &apiv1.PostMaintenanceMessageResponse{}
+	if err := a.m.db.QueryProto("insert_maintenance_message", resp, u.ID, req.Message, startTime,
+		endTime); err != nil {
+		return nil, errors.Wrap(err, "error creating a server maintenance message")
+	}
+
+	return resp, nil
 }

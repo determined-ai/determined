@@ -5592,13 +5592,13 @@ export interface V1MaintenanceMessage {
      * @type {Date}
      * @memberof V1MaintenanceMessage
      */
-    startDate?: Date;
+    startTime?: Date;
     /**
      * Time to stop showing message.
      * @type {Date}
      * @memberof V1MaintenanceMessage
      */
-    endDate?: Date;
+    endTime?: Date;
 }
 /**
  * Mark some reservation as a daemon.
@@ -7080,13 +7080,13 @@ export interface V1PostMaintenanceMessageRequest {
      * @type {Date}
      * @memberof V1PostMaintenanceMessageRequest
      */
-    startDate: Date;
+    startTime: Date;
     /**
      * Time to stop showing message.
      * @type {Date}
      * @memberof V1PostMaintenanceMessageRequest
      */
-    endDate: Date;
+    endTime: Date;
 }
 /**
  * Response to PostMaintenanceMessageRequest.
@@ -7094,6 +7094,12 @@ export interface V1PostMaintenanceMessageRequest {
  * @interface V1PostMaintenanceMessageResponse
  */
 export interface V1PostMaintenanceMessageResponse {
+    /**
+     * Unique IDs of maintenance messages.
+     * @type {number}
+     * @memberof V1PostMaintenanceMessageResponse
+     */
+    id?: number;
 }
 /**
  * Request for creating a model in the registry.

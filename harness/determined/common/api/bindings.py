@@ -7637,53 +7637,53 @@ class v1LoginResponse(Printable):
 
 class v1MaintenanceMessage(Printable):
     """Active notice from the server admin."""
-    endDate: "typing.Optional[str]" = None
+    endTime: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
     message: "typing.Optional[str]" = None
-    startDate: "typing.Optional[str]" = None
+    startTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        endDate: "typing.Union[str, None, Unset]" = _unset,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
         message: "typing.Union[str, None, Unset]" = _unset,
-        startDate: "typing.Union[str, None, Unset]" = _unset,
+        startTime: "typing.Union[str, None, Unset]" = _unset,
     ):
-        if not isinstance(endDate, Unset):
-            self.endDate = endDate
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
         if not isinstance(id, Unset):
             self.id = id
         if not isinstance(message, Unset):
             self.message = message
-        if not isinstance(startDate, Unset):
-            self.startDate = startDate
+        if not isinstance(startTime, Unset):
+            self.startTime = startTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MaintenanceMessage":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
-        if "endDate" in obj:
-            kwargs["endDate"] = obj["endDate"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
         if "id" in obj:
             kwargs["id"] = obj["id"]
         if "message" in obj:
             kwargs["message"] = obj["message"]
-        if "startDate" in obj:
-            kwargs["startDate"] = obj["startDate"]
+        if "startTime" in obj:
+            kwargs["startTime"] = obj["startTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
-        if not omit_unset or "endDate" in vars(self):
-            out["endDate"] = self.endDate
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
         if not omit_unset or "id" in vars(self):
             out["id"] = self.id
         if not omit_unset or "message" in vars(self):
             out["message"] = self.message
-        if not omit_unset or "startDate" in vars(self):
-            out["startDate"] = self.startDate
+        if not omit_unset or "startTime" in vars(self):
+            out["startTime"] = self.startTime
         return out
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):
@@ -9730,29 +9730,56 @@ class v1PostMaintenanceMessageRequest(Printable):
     def __init__(
         self,
         *,
-        endDate: str,
+        endTime: str,
         message: str,
-        startDate: str,
+        startTime: str,
     ):
-        self.endDate = endDate
+        self.endTime = endTime
         self.message = message
-        self.startDate = startDate
+        self.startTime = startTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostMaintenanceMessageRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "endDate": obj["endDate"],
+            "endTime": obj["endTime"],
             "message": obj["message"],
-            "startDate": obj["startDate"],
+            "startTime": obj["startTime"],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "endDate": self.endDate,
+            "endTime": self.endTime,
             "message": self.message,
-            "startDate": self.startDate,
+            "startTime": self.startTime,
         }
+        return out
+
+class v1PostMaintenanceMessageResponse(Printable):
+    """Response to PostMaintenanceMessageRequest."""
+    id: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        id: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(id, Unset):
+            self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostMaintenanceMessageResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
         return out
 
 class v1PostModelRequest(Printable):
@@ -20051,7 +20078,7 @@ def patch_PostMaintenanceMessage(
     session: "api.Session",
     *,
     body: "v1PostMaintenanceMessageRequest",
-) -> None:
+) -> "v1PostMaintenanceMessageResponse":
     """Post new maintenance messages."""
     _params = None
     _resp = session._do_request(
@@ -20065,7 +20092,7 @@ def patch_PostMaintenanceMessage(
         stream=False,
     )
     if _resp.status_code == 200:
-        return
+        return v1PostMaintenanceMessageResponse.from_json(_resp.json())
     raise APIHttpError("patch_PostMaintenanceMessage", _resp)
 
 def post_PostModel(

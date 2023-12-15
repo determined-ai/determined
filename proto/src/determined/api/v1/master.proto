@@ -31,9 +31,9 @@ message MaintenanceMessage {
   // Text content of message.
   string message = 2;
   // Time to begin showing message.
-  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp start_time = 3;
   // Time to stop showing message.
-  google.protobuf.Timestamp end_date = 4;
+  google.protobuf.Timestamp end_time = 4;
 }
 
 // Get master information.
@@ -128,18 +128,20 @@ message PatchMasterConfigResponse {}
 // Post new maintenance messages.
 message PostMaintenanceMessageRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "message", "start_date", "end_date" ] }
+    json_schema: { required: [ "message", "start_time", "end_time" ] }
   };
   // Text content of message.
   string message = 1;
   // Time to begin showing message.
-  google.protobuf.Timestamp start_date = 2;
+  google.protobuf.Timestamp start_time = 2;
   // Time to stop showing message.
-  google.protobuf.Timestamp end_date = 3;
+  google.protobuf.Timestamp end_time = 3;
 }
-
 // Response to PostMaintenanceMessageRequest.
-message PostMaintenanceMessageResponse {}
+message PostMaintenanceMessageResponse {
+  // Unique IDs of maintenance messages.
+  int32 id = 1;
+}
 
 // Stream master logs.
 message MasterLogsRequest {

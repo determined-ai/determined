@@ -1,5 +1,6 @@
 import argparse
 from argparse import Namespace
+from datetime import datetime
 from typing import Any, List, Optional
 
 from determined import cli
@@ -70,12 +71,16 @@ def logs(args: Namespace) -> None:
     for response in responses:
         print(format_log_entry(response.logEntry))
 
+
 @authentication.required
-def message(args: Namespace) -> None:
-    bindings.post_MaintenanceMessage(cli.setup_session(args),
-        start=args.start,
-        end=args.end,
-        message=args.message)
+def maintain(args: Namespace) -> None:
+    body = bindings.v1PostMaintenanceMessageRequest(
+        startTime=args.start, endTime=args.end, message=args.message
+    )
+    bindings.patch_PostMaintenanceMessage(
+        cli.setup_session(args),
+        body=body,
+    )
 
 
 # fmt: off
@@ -126,9 +131,9 @@ args_description = [
                 "of the log (default is all)")
         ]),
         Cmd("maintain", maintain, "set maintenance message", [
-            Arg("-s", "--start", help="Timestamp to start displaying message (default is now)"),
-            Arg("-e", "--end", help="Timestamp to end displaying message")
-            Arg("-m", "--message", help="Text to display to users during maintenance time")
+            Arg("-s", "--start", default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), help="Timestamp to start displaying message (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'"),
+            Arg("-e", "--end", default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), help="Timestamp to end displaying message (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'"),
+            Arg("-m", "--message", default="Server is in maintenance mode", help="Text to display to users during maintenance time"),
         ]),
     ])
 ]  # type: List[Any]
