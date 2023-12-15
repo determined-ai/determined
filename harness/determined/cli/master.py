@@ -70,6 +70,13 @@ def logs(args: Namespace) -> None:
     for response in responses:
         print(format_log_entry(response.logEntry))
 
+@authentication.required
+def message(args: Namespace) -> None:
+    bindings.post_MaintenanceMessage(cli.setup_session(args),
+        start=args.start,
+        end=args.end,
+        message=args.message)
+
 
 # fmt: off
 
@@ -117,6 +124,11 @@ args_description = [
             Arg("--tail", type=int,
                 help="number of lines to show, counting from the end "
                 "of the log (default is all)")
+        ]),
+        Cmd("maintain", maintain, "set maintenance message", [
+            Arg("-s", "--start", help="Timestamp to start displaying message (default is now)"),
+            Arg("-e", "--end", help="Timestamp to end displaying message")
+            Arg("-m", "--message", help="Text to display to users during maintenance time")
         ]),
     ])
 ]  # type: List[Any]

@@ -125,6 +125,22 @@ message PatchMasterConfigRequest {
 // Response to PatchMasterConfigRequest.
 message PatchMasterConfigResponse {}
 
+// Post new maintenance messages.
+message PostMaintenanceMessageRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "message", "start_date", "end_date" ] }
+  };
+  // Text content of message.
+  string message = 1;
+  // Time to begin showing message.
+  google.protobuf.Timestamp start_date = 2;
+  // Time to stop showing message.
+  google.protobuf.Timestamp end_date = 3;
+}
+
+// Response to PostMaintenanceMessageRequest.
+message PostMaintenanceMessageResponse {}
+
 // Stream master logs.
 message MasterLogsRequest {
   // Skip the number of master logs before returning results. Negative values

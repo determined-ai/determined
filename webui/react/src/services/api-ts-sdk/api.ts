@@ -7064,6 +7064,38 @@ export interface V1PostCheckpointMetadataResponse {
     checkpoint?: V1Checkpoint;
 }
 /**
+ * Post new maintenance messages.
+ * @export
+ * @interface V1PostMaintenanceMessageRequest
+ */
+export interface V1PostMaintenanceMessageRequest {
+    /**
+     * Text content of message.
+     * @type {string}
+     * @memberof V1PostMaintenanceMessageRequest
+     */
+    message: string;
+    /**
+     * Time to begin showing message.
+     * @type {Date}
+     * @memberof V1PostMaintenanceMessageRequest
+     */
+    startDate: Date;
+    /**
+     * Time to stop showing message.
+     * @type {Date}
+     * @memberof V1PostMaintenanceMessageRequest
+     */
+    endDate: Date;
+}
+/**
+ * Response to PostMaintenanceMessageRequest.
+ * @export
+ * @interface V1PostMaintenanceMessageResponse
+ */
+export interface V1PostMaintenanceMessageResponse {
+}
+/**
  * Request for creating a model in the registry.
  * @export
  * @interface V1PostModelRequest
@@ -12099,6 +12131,44 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Post new maintenance messages.
+         * @param {V1PostMaintenanceMessageRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postMaintenanceMessage(body: V1PostMaintenanceMessageRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postMaintenanceMessage.');
+            }
+            const localVarPath = `/api/v1/master/maintenance_message`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -12450,6 +12520,25 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Post new maintenance messages.
+         * @param {V1PostMaintenanceMessageRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postMaintenanceMessage(body: V1PostMaintenanceMessageRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostMaintenanceMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).postMaintenanceMessage(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -12626,6 +12715,16 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          */
         patchMasterConfig(body: V1PatchMasterConfigRequest, options?: any) {
             return ClusterApiFp(configuration).patchMasterConfig(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Post new maintenance messages.
+         * @param {V1PostMaintenanceMessageRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postMaintenanceMessage(body: V1PostMaintenanceMessageRequest, options?: any) {
+            return ClusterApiFp(configuration).postMaintenanceMessage(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -12811,6 +12910,18 @@ export class ClusterApi extends BaseAPI {
      */
     public patchMasterConfig(body: V1PatchMasterConfigRequest, options?: any) {
         return ClusterApiFp(this.configuration).patchMasterConfig(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Post new maintenance messages.
+     * @param {V1PostMaintenanceMessageRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public postMaintenanceMessage(body: V1PostMaintenanceMessageRequest, options?: any) {
+        return ClusterApiFp(this.configuration).postMaintenanceMessage(body, options)(this.fetch, this.basePath)
     }
     
     /**

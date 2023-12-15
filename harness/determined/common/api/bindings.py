@@ -9724,6 +9724,37 @@ class v1PostCheckpointMetadataResponse(Printable):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
 
+class v1PostMaintenanceMessageRequest(Printable):
+    """Post new maintenance messages."""
+
+    def __init__(
+        self,
+        *,
+        endDate: str,
+        message: str,
+        startDate: str,
+    ):
+        self.endDate = endDate
+        self.message = message
+        self.startDate = startDate
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostMaintenanceMessageRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "endDate": obj["endDate"],
+            "message": obj["message"],
+            "startDate": obj["startDate"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "endDate": self.endDate,
+            "message": self.message,
+            "startDate": self.startDate,
+        }
+        return out
+
 class v1PostModelRequest(Printable):
     """Request for creating a model in the registry."""
     description: "typing.Optional[str]" = None
@@ -20015,6 +20046,27 @@ def post_PostCheckpointMetadata(
     if _resp.status_code == 200:
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
+
+def patch_PostMaintenanceMessage(
+    session: "api.Session",
+    *,
+    body: "v1PostMaintenanceMessageRequest",
+) -> None:
+    """Post new maintenance messages."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/master/maintenance_message",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("patch_PostMaintenanceMessage", _resp)
 
 def post_PostModel(
     session: "api.Session",
