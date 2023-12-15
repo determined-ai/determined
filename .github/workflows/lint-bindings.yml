@@ -39,7 +39,7 @@ jobs:
           make -C agent get-deps
       - name: Build
         run: make -C proto build
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: proto
           path: proto/build/
