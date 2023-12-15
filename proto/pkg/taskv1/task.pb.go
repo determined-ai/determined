@@ -117,6 +117,8 @@ const (
 	TaskType_TASK_TYPE_CHECKPOINT_GC TaskType = 6
 	// "GENERIC" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_GENERIC TaskType = 7
+	// "GENERIC" task type for the enum public.task_type in Postgres.
+	TaskType_TASK_TYPE_GENERIC TaskType = 7
 )
 
 // Enum value maps for TaskType.

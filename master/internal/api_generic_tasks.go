@@ -94,10 +94,11 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, err
 	}
 
+	combinedTaskConfig := combineTaskConfig([]byte(configYAML), forkedConfig)
+
 	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
 
-	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -116,9 +117,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	// Copy discovered (default) resource pool name and slot count.
 
-	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
+	fillTaskConfig(*resources.RawSlots, taskSpec, &taskConfig.Environment)
 	taskConfig.Resources.RawResourcePool = &poolName
-	taskConfig.Resources.RawSlots = &resources.Slots
+	taskConfig.Resources.RawSlots = resources.RawSlots
 
 	var contextDirectoryBytes []byte
 	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(
@@ -238,6 +239,9 @@ func (a *apiServer) CreateGenericTask(
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
 		ctx, req.ContextDirectory, projectID, configBytes,
 	)
+	if len(contextDirectoryBytes) == 0 {
+		contextDirectoryBytes = forkedContextDirectory
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -264,6 +268,11 @@ func (a *apiServer) CreateGenericTask(
 			OwnerID: &genericTaskSpec.Base.Owner.ID,
 		}); err != nil {
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
+		}
+
+		configBytes, err := yaml.YAMLToJSON([]byte(req.Config))
+		if err != nil {
+			return fmt.Errorf("handling experiment config %v: %w", req.Config, err)
 		}
 
 		configBytesJSON, err := yaml.YAMLToJSON(configBytes)
