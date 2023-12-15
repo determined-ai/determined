@@ -253,12 +253,15 @@ func (a *apiServer) PostMaintenanceMessage(
 	}
 
 	startTime := time.Unix(req.StartTime.Seconds, int64(req.StartTime.Nanos))
-	endTime := time.Unix(req.EndTime.Seconds, int64(req.EndTime.Nanos))
-	if endTime.Before(startTime) {
-		return nil, status.Error(codes.InvalidArgument, "end time must be after start time")
-	}
-	if endTime.Before(time.Now()) {
-		return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
+	var endTime time.Time
+	if req.EndTime != nil {
+		endTime = time.Unix(req.EndTime.Seconds, int64(req.EndTime.Nanos))
+		if endTime.Before(startTime) {
+			return nil, status.Error(codes.InvalidArgument, "end time must be after start time")
+		}
+		if endTime.Before(time.Now()) {
+			return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
+		}
 	}
 
 	resp := &apiv1.PostMaintenanceMessageResponse{}

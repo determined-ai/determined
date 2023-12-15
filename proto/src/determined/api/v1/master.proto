@@ -26,6 +26,10 @@ message SSOProvider {
 
 // Active notice from the server admin.
 message MaintenanceMessage {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "message", "start_time", "end_time" ] }
+  };
+
   // Unique ID.
   int32 id = 1;
   // Text content of message.

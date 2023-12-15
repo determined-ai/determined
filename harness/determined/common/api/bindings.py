@@ -7637,53 +7637,37 @@ class v1LoginResponse(Printable):
 
 class v1MaintenanceMessage(Printable):
     """Active notice from the server admin."""
-    endTime: "typing.Optional[str]" = None
-    id: "typing.Optional[int]" = None
-    message: "typing.Optional[str]" = None
-    startTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        endTime: "typing.Union[str, None, Unset]" = _unset,
-        id: "typing.Union[int, None, Unset]" = _unset,
-        message: "typing.Union[str, None, Unset]" = _unset,
-        startTime: "typing.Union[str, None, Unset]" = _unset,
+        endTime: str,
+        id: int,
+        message: str,
+        startTime: str,
     ):
-        if not isinstance(endTime, Unset):
-            self.endTime = endTime
-        if not isinstance(id, Unset):
-            self.id = id
-        if not isinstance(message, Unset):
-            self.message = message
-        if not isinstance(startTime, Unset):
-            self.startTime = startTime
+        self.endTime = endTime
+        self.id = id
+        self.message = message
+        self.startTime = startTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MaintenanceMessage":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "endTime": obj["endTime"],
+            "id": obj["id"],
+            "message": obj["message"],
+            "startTime": obj["startTime"],
         }
-        if "endTime" in obj:
-            kwargs["endTime"] = obj["endTime"]
-        if "id" in obj:
-            kwargs["id"] = obj["id"]
-        if "message" in obj:
-            kwargs["message"] = obj["message"]
-        if "startTime" in obj:
-            kwargs["startTime"] = obj["startTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "endTime": self.endTime,
+            "id": self.id,
+            "message": self.message,
+            "startTime": self.startTime,
         }
-        if not omit_unset or "endTime" in vars(self):
-            out["endTime"] = self.endTime
-        if not omit_unset or "id" in vars(self):
-            out["id"] = self.id
-        if not omit_unset or "message" in vars(self):
-            out["message"] = self.message
-        if not omit_unset or "startTime" in vars(self):
-            out["startTime"] = self.startTime
         return out
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):

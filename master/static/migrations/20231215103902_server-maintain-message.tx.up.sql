@@ -3,5 +3,5 @@ CREATE TABLE maintenance_messages (
   message TEXT NOT NULL,
   user_id INT REFERENCES public.users(id),
   start_time TIMESTAMP with time zone NOT NULL DEFAULT NOW(),
-  end_time TIMESTAMP with time zone NOT NULL DEFAULT NOW()
+  end_time TIMESTAMP with time zone DEFAULT NULL
 );

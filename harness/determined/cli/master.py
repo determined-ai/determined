@@ -134,10 +134,16 @@ args_description = [
                 "of the log (default is all)")
         ]),
         Cmd("maintain", maintain, "set maintenance message", [
-            Arg("-c", "--clear", action="store_true", default=False, help="Clear all maintenance messages"),
-            Arg("-s", "--start", default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), help="Timestamp to start displaying message (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'"),
-            Arg("-e", "--end", default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), help="Timestamp to end displaying message (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'"),
-            Arg("-m", "--message", default=None, help="Text to display to users during maintenance time"),
+            Arg("-c", "--clear", action="store_true", default=False,
+                help="Clear all maintenance messages"),
+            Arg("-s", "--start", default=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                help="Timestamp to start displaying message (RFC 3339 format), "
+                + "e.g. '2021-10-26T23:17:12Z'"),
+            Arg("-e", "--end", default=None,
+                help="Timestamp to end displaying message (RFC 3339 format), "
+                + "e.g. '2021-10-26T23:17:12Z'"),
+            Arg("-m", "--message", default=None,
+                help="Text to display to users during maintenance time"),
         ]),
     ])
 ]  # type: List[Any]

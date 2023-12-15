@@ -5587,25 +5587,25 @@ export interface V1MaintenanceMessage {
      * @type {number}
      * @memberof V1MaintenanceMessage
      */
-    id?: number;
+    id: number;
     /**
      * Text content of message.
      * @type {string}
      * @memberof V1MaintenanceMessage
      */
-    message?: string;
+    message: string;
     /**
      * Time to begin showing message.
      * @type {Date}
      * @memberof V1MaintenanceMessage
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * Time to stop showing message.
      * @type {Date}
      * @memberof V1MaintenanceMessage
      */
-    endTime?: Date;
+    endTime: Date;
 }
 /**
  * Mark some reservation as a daemon.
