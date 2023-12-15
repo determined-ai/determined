@@ -15977,6 +15977,32 @@ def delete_DeleteGroup(
         return
     raise APIHttpError("delete_DeleteGroup", _resp)
 
+def delete_DeleteMaintenanceMessage(
+    session: "api.Session",
+    *,
+    id: "typing.Optional[int]" = None,
+) -> None:
+    """Clear all maintenance messages.
+
+    - id: Unique ID of maintenance message.
+    """
+    _params = {
+        "id": id,
+    }
+    _resp = session._do_request(
+        method="DELETE",
+        path="/api/v1/master/maintenance_message",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteMaintenanceMessage", _resp)
+
 def delete_DeleteModel(
     session: "api.Session",
     *,

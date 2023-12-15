@@ -290,6 +290,16 @@ service Determined {
       tags: "Cluster"
     };
   }
+  // Clear all maintenance messages.
+  rpc DeleteMaintenanceMessage(DeleteMaintenanceMessageRequest)
+      returns (DeleteMaintenanceMessageResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/master/maintenance_message"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
   // Get a set of agents from the cluster.
   rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) {
     option (google.api.http) = {

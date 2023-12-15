@@ -143,6 +143,14 @@ message PostMaintenanceMessageResponse {
   int32 id = 1;
 }
 
+// Delete maintenance messages.
+message DeleteMaintenanceMessageRequest {
+  // Unique ID of maintenance message.
+  int32 id = 1;
+}
+// Response to DeleteMaintenanceMessageRequest.
+message DeleteMaintenanceMessageResponse {}
+
 // Stream master logs.
 message MasterLogsRequest {
   // Skip the number of master logs before returning results. Negative values

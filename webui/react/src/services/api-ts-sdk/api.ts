@@ -2401,6 +2401,13 @@ export interface V1DeleteExperimentsResponse {
 export interface V1DeleteGroupResponse {
 }
 /**
+ * Response to DeleteMaintenanceMessageRequest.
+ * @export
+ * @interface V1DeleteMaintenanceMessageResponse
+ */
+export interface V1DeleteMaintenanceMessageResponse {
+}
+/**
  * 
  * @export
  * @interface V1DeleteModelResponse
@@ -11661,6 +11668,41 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
     return {
         /**
          * 
+         * @summary Clear all maintenance messages.
+         * @param {number} [id] Unique ID of maintenance message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteMaintenanceMessage(id?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/master/maintenance_message`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (id !== undefined) {
+                localVarQueryParameter['id'] = id
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
          * @param {V1DisableAgentRequest} body
@@ -12289,6 +12331,25 @@ export const ClusterApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Clear all maintenance messages.
+         * @param {number} [id] Unique ID of maintenance message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteMaintenanceMessage(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteMaintenanceMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).deleteMaintenanceMessage(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
          * @param {V1DisableAgentRequest} body
@@ -12595,6 +12656,16 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
     return {
         /**
          * 
+         * @summary Clear all maintenance messages.
+         * @param {number} [id] Unique ID of maintenance message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteMaintenanceMessage(id?: number, options?: any) {
+            return ClusterApiFp(configuration).deleteMaintenanceMessage(id, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
          * @param {V1DisableAgentRequest} body
@@ -12765,6 +12836,18 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
  * @extends {BaseAPI}
  */
 export class ClusterApi extends BaseAPI {
+    /**
+     * 
+     * @summary Clear all maintenance messages.
+     * @param {number} [id] Unique ID of maintenance message.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public deleteMaintenanceMessage(id?: number, options?: any) {
+        return ClusterApiFp(this.configuration).deleteMaintenanceMessage(id, options)(this.fetch, this.basePath)
+    }
+    
     /**
      * 
      * @summary Disable the agent.
