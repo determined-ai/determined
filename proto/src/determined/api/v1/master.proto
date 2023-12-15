@@ -149,6 +149,7 @@ message SetMaintenanceMessageResponse {
 
 // Delete maintenance messages.
 message DeleteMaintenanceMessageRequest {}
+
 // Response to DeleteMaintenanceMessageRequest.
 message DeleteMaintenanceMessageResponse {}
 

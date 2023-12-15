@@ -350,3 +350,27 @@ func (a *apiServer) DeleteMaintenanceMessage(
 
 	return &apiv1.DeleteMaintenanceMessageResponse{}, nil
 }
+
+func (a *apiServer) DeleteMaintenanceMessage(
+	ctx context.Context,
+	req *apiv1.DeleteMaintenanceMessageRequest,
+) (*apiv1.DeleteMaintenanceMessageResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	holder := &apiv1.MaintenanceMessage{}
+	if err := a.m.db.QueryProto("delete_maintenance_message", holder, req.Id); err != nil {
+		return nil, errors.Wrap(err, "error deleting a server maintenance message")
+	}
+
+	return &apiv1.DeleteMaintenanceMessageResponse{}, nil
+}
