@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Any, Dict, Optional, Tuple, Union
 
-import attrdict
+from model_hub import utils
 
 
 class FlexibleDataclass:
@@ -272,7 +272,7 @@ class LRSchedulerKwargs:
 
 def parse_dict_to_dataclasses(
     dataclass_types: Tuple[Any, ...],
-    args: Union[Dict[str, Any], attrdict.AttrDict],
+    args: Union[Dict[str, Any], utils.AttrDict],
     as_dict: bool = False,
 ) -> Tuple[Any, ...]:
     """
@@ -295,18 +295,18 @@ def parse_dict_to_dataclasses(
         obj = dtype(**inputs)
         if as_dict:
             try:
-                obj = attrdict.AttrDict(obj.as_dict())
+                obj = utils.AttrDict(obj.as_dict())
             except AttributeError:
-                obj = attrdict.AttrDict(dataclasses.asdict(obj))
+                obj = utils.AttrDict(dataclasses.asdict(obj))
         outputs.append(obj)
     return (*outputs,)
 
 
 def default_parse_config_tokenizer_model_kwargs(
-    hparams: Union[Dict, attrdict.AttrDict]
-) -> Tuple[Dict, Dict, Dict]:
+    hparams: Union[Dict, utils.AttrDict],
+) -> Tuple[utils.AttrDict, utils.AttrDict, utils.AttrDict]:
     """
-    This function will provided hparams into fields for the transformers config, tokenizer,
+    This function converts hparams into fields for the transformers config, tokenizer,
     and model. See the defined dataclasses ConfigKwargs, TokenizerKwargs, and ModelKwargs for
     expected fields and defaults.
 
@@ -314,10 +314,10 @@ def default_parse_config_tokenizer_model_kwargs(
         hparams: hyperparameters to parse.
 
     Returns:
-        One dictionary each for the config, tokenizer, and model.
+        One AttrDict each for the config, tokenizer, and model.
     """
-    if not isinstance(hparams, attrdict.AttrDict):
-        hparams = attrdict.AttrDict(hparams)
+    if not isinstance(hparams, utils.AttrDict):
+        hparams = utils.AttrDict(hparams)
     config_args, tokenizer_args, model_args = parse_dict_to_dataclasses(
         (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, as_dict=True
     )
@@ -340,7 +340,7 @@ def default_parse_config_tokenizer_model_kwargs(
 
 
 def default_parse_optimizer_lr_scheduler_kwargs(
-    hparams: Union[Dict, attrdict.AttrDict]
+    hparams: Union[Dict, utils.AttrDict]
 ) -> Tuple[OptimizerKwargs, LRSchedulerKwargs]:
     """
     Parse hparams relevant for the optimizer and lr_scheduler and fills in with

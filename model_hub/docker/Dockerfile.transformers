@@ -4,7 +4,7 @@ FROM ${BASE_IMAGE}
 
 ARG TRANSFORMERS_VERSION
 ARG DATASETS_VERSION
-RUN pip install transformers==${TRANSFORMERS_VERSION} datasets==${DATASETS_VERSION} attrdict
+RUN pip install transformers==${TRANSFORMERS_VERSION} datasets==${DATASETS_VERSION}
 RUN pip install sentencepiece!=0.1.92 protobuf scikit-learn conllu seqeval
 
 
