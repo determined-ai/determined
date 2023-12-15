@@ -74,6 +74,8 @@ def logs(args: Namespace) -> None:
 
 @authentication.required
 def maintain(args: Namespace) -> None:
+    if args.message is None:
+        raise ValueError("Provide a message using the -m flag.")
     body = bindings.v1PostMaintenanceMessageRequest(
         startTime=args.start, endTime=args.end, message=args.message
     )
@@ -133,7 +135,7 @@ args_description = [
         Cmd("maintain", maintain, "set maintenance message", [
             Arg("-s", "--start", default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), help="Timestamp to start displaying message (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'"),
             Arg("-e", "--end", default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), help="Timestamp to end displaying message (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'"),
-            Arg("-m", "--message", default="Server is in maintenance mode", help="Text to display to users during maintenance time"),
+            Arg("-m", "--message", default=None, help="Text to display to users during maintenance time"),
         ]),
     ])
 ]  # type: List[Any]

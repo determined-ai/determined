@@ -77,6 +77,11 @@ def log_in_user(parsed_args: Namespace) -> None:
     token_store.set_token(username, token)
     token_store.set_active(username)
 
+    # check for maintenance messages
+    resp = bindings.get_GetMaster(setup_session(parsed_args))
+    for msg in resp.maintenanceMessages:
+        print("Maintenance message:\n{}".format(msg.message))
+
 
 def log_out_user(parsed_args: Namespace) -> None:
     if parsed_args.all:

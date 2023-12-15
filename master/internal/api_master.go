@@ -254,10 +254,10 @@ func (a *apiServer) PostMaintenanceMessage(
 
 	startTime := time.Unix(req.StartTime.Seconds, int64(req.StartTime.Nanos))
 	endTime := time.Unix(req.EndTime.Seconds, int64(req.EndTime.Nanos))
-	if endTime <= startTime {
+	if endTime.Before(startTime) {
 		return nil, status.Error(codes.InvalidArgument, "end time must be after start time")
 	}
-	if endTime <= time.Now() {
+	if endTime.Before(time.Now()) {
 		return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
 	}
 
