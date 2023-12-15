@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -31,53 +30,45 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-func combineTaskConfig(config []byte, forkedConfig []byte) (model.GenericTaskConfig, error) {
-
-	combinedConfig := model.GenericTaskConfig{
-		Resources: expconf.ResourcesConfigV0{
-			RawSlots:             ptrs.Ptr(1),
-			RawResourcePool:      ptrs.Ptr(""),
-			RawMustFitSingleNode: nil,
-			RawMaxSlots:          nil,
-			RawSlotsPerTrial:     nil,
-			RawWeight:            nil,
-			RawNativeParallel:    nil,
-			RawShmSize:           nil,
-			RawPriority:          nil,
-			RawDevices:           nil,
-		},
+func getConfigBytes(config []byte, forkedConfig []byte) ([]byte, error) {
+	if len(config) == 0 {
+		return forkedConfig, nil
+	}
+	if len(forkedConfig) == 0 {
+		return config, nil
+	}
+	var master map[string]interface{}
+	if err := yaml.Unmarshal(forkedConfig, &master); err != nil {
+		return nil, err
 	}
 
-	// Don't throw errors; validation should happen elsewhere.
-	if len(forkedConfig) > 0 {
-		err := yaml.UnmarshalStrict(forkedConfig, &combinedConfig)
-		if err != nil {
-			return model.GenericTaskConfig{}, err
-		}
-	}
-	if len(config) > 0 {
-		err := yaml.UnmarshalStrict(config, &combinedConfig)
-		if err != nil {
-			return model.GenericTaskConfig{}, err
-		}
+	var override map[string]interface{}
+	if err := yaml.Unmarshal(config, &override); err != nil {
+		return nil, err
 	}
 
-	return combinedConfig, nil
+	for k, v := range override {
+		master[k] = v
+	}
+
+	out, err := yaml.Marshal(master)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (a *apiServer) getGenericTaskLaunchParameters(
 	ctx context.Context,
 	contextDirectory []*utilv1.File,
 	projectID int,
-	combinedTaskConfig model.GenericTaskConfig,
+	configBytes []byte,
 ) (
 	*tasks.GenericTaskSpec, []pkgCommand.LaunchWarning, []byte, error,
 ) {
@@ -104,9 +95,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	}
 
 	// Validate the resource configuration.
-	resources := combinedTaskConfig.Resources
+	resources := model.ParseJustResources(configBytes)
 
-	poolName, launchWarnings, err := a.m.ResolveResources(*resources.RawResourcePool, *resources.RawSlots, int(proj.WorkspaceId))
+	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -117,15 +108,17 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	}
 
 	// Get the full configuration.
-	taskConfigDefaults := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
-	taskConfig := schemas.Merge(combinedTaskConfig, taskConfigDefaults)
+	taskConfig := model.DefaultConfigGenericTaskConfig(&taskSpec.TaskContainerDefaults)
+	if err := yaml.UnmarshalStrict(configBytes, &taskConfig, yaml.DisallowUnknownFields); err != nil {
+		return nil, nil, nil, fmt.Errorf("yaml unmarshaling generic task config: %w", err)
+	}
 	workDirInDefaults := taskConfig.WorkDir
 
 	// Copy discovered (default) resource pool name and slot count.
 
-	fillTaskConfig(*resources.RawSlots, taskSpec, &taskConfig.Environment)
+	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
 	taskConfig.Resources.RawResourcePool = &poolName
-	taskConfig.Resources.RawSlots = resources.RawSlots
+	taskConfig.Resources.RawSlots = &resources.Slots
 
 	var contextDirectoryBytes []byte
 	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(
@@ -238,16 +231,12 @@ func (a *apiServer) CreateGenericTask(
 	if len(forkedConfig) == 0 && len(req.Config) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No config file nor forked task provided")
 	}
-	combinedTaskConfig, err := combineTaskConfig([]byte(req.Config), forkedConfig)
-	if err != nil {
-		return nil, err
-	}
-	configBytes, err := json.Marshal(combinedTaskConfig)
+	configBytes, err := getConfigBytes([]byte(req.Config), forkedConfig)
 	if err != nil {
 		return nil, err
 	}
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
-		ctx, req.ContextDirectory, projectID, combinedTaskConfig,
+		ctx, req.ContextDirectory, projectID, configBytes,
 	)
 	if err != nil {
 		return nil, err
@@ -277,6 +266,10 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
 
+		configBytesJSON, err := yaml.YAMLToJSON(configBytes)
+		if err != nil {
+			return err
+		}
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
 			TaskID:     taskID,
 			TaskType:   model.TaskTypeGeneric,
@@ -284,7 +277,7 @@ func (a *apiServer) CreateGenericTask(
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 			ForkedFrom: req.ForkedFrom,
-			Config:     ptrs.Ptr(string(configBytes)),
+			Config:     ptrs.Ptr(string(configBytesJSON)),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
