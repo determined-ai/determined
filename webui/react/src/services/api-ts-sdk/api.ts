@@ -3671,6 +3671,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     strictJobQueueControl: boolean;
+    /**
+     * Active server maintenance messages.
+     * @type {Array<V1MaintenanceMessage>}
+     * @memberof V1GetMasterResponse
+     */
+    maintenanceMessages: Array<V1MaintenanceMessage>;
 }
 /**
  * Response to GetMeRequest.
@@ -5562,6 +5568,37 @@ export type V1LogLevel = ValueOf<typeof V1LogLevel>
  * @interface V1LogoutResponse
  */
 export interface V1LogoutResponse {
+}
+/**
+ * Active notice from the server admin.
+ * @export
+ * @interface V1MaintenanceMessage
+ */
+export interface V1MaintenanceMessage {
+    /**
+     * Unique ID.
+     * @type {number}
+     * @memberof V1MaintenanceMessage
+     */
+    id?: number;
+    /**
+     * Text content of message.
+     * @type {string}
+     * @memberof V1MaintenanceMessage
+     */
+    message?: string;
+    /**
+     * Time to begin showing message.
+     * @type {Date}
+     * @memberof V1MaintenanceMessage
+     */
+    startDate?: Date;
+    /**
+     * Time to stop showing message.
+     * @type {Date}
+     * @memberof V1MaintenanceMessage
+     */
+    endDate?: Date;
 }
 /**
  * Mark some reservation as a daemon.

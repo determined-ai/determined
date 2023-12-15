@@ -47,6 +47,9 @@ func (a *apiServer) GetMaster(
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
 	}
+	if err := a.m.db.QueryProto("get_maintenance_messages", &masterResp.MaintenanceMessages); err != nil {
+		return nil, errors.Wrap(err, "error fetching server maintenance messages")
+	}
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 
 	return masterResp, nil

@@ -24,6 +24,18 @@ message SSOProvider {
   string type = 3;
 }
 
+// Active notice from the server admin.
+message MaintenanceMessage {
+  // Unique ID.
+  int32 id = 1;
+  // Text content of message.
+  string message = 2;
+  // Time to begin showing message.
+  google.protobuf.Timestamp start_date = 3;
+  // Time to stop showing message.
+  google.protobuf.Timestamp end_date = 4;
+}
+
 // Get master information.
 message GetMasterRequest {}
 // Response to GetMasterRequest.
@@ -33,6 +45,7 @@ message GetMasterResponse {
       required: [
         "version",
         "master_id",
+        "maintenance_messages",
         "cluster_id",
         "cluster_name",
         "strict_job_queue_control"
@@ -74,6 +87,8 @@ message GetMasterResponse {
   bool user_management_enabled = 13;
   // Feature flag for strict job queue control.
   bool strict_job_queue_control = 14;
+  // Active server maintenance messages.
+  repeated MaintenanceMessage maintenance_messages = 15;
 }
 
 // Get telemetry information.

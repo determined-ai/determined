@@ -4647,6 +4647,7 @@ class v1GetMasterResponse(Printable):
         *,
         clusterId: str,
         clusterName: str,
+        maintenanceMessages: "typing.Sequence[v1MaintenanceMessage]",
         masterId: str,
         strictJobQueueControl: bool,
         version: str,
@@ -4662,6 +4663,7 @@ class v1GetMasterResponse(Printable):
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
+        self.maintenanceMessages = maintenanceMessages
         self.masterId = masterId
         self.strictJobQueueControl = strictJobQueueControl
         self.version = version
@@ -4689,6 +4691,7 @@ class v1GetMasterResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "clusterId": obj["clusterId"],
             "clusterName": obj["clusterName"],
+            "maintenanceMessages": [v1MaintenanceMessage.from_json(x) for x in obj["maintenanceMessages"]],
             "masterId": obj["masterId"],
             "strictJobQueueControl": obj["strictJobQueueControl"],
             "version": obj["version"],
@@ -4717,6 +4720,7 @@ class v1GetMasterResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "clusterId": self.clusterId,
             "clusterName": self.clusterName,
+            "maintenanceMessages": [x.to_json(omit_unset) for x in self.maintenanceMessages],
             "masterId": self.masterId,
             "strictJobQueueControl": self.strictJobQueueControl,
             "version": self.version,
@@ -7629,6 +7633,57 @@ class v1LoginResponse(Printable):
             "token": self.token,
             "user": self.user.to_json(omit_unset),
         }
+        return out
+
+class v1MaintenanceMessage(Printable):
+    """Active notice from the server admin."""
+    endDate: "typing.Optional[str]" = None
+    id: "typing.Optional[int]" = None
+    message: "typing.Optional[str]" = None
+    startDate: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        endDate: "typing.Union[str, None, Unset]" = _unset,
+        id: "typing.Union[int, None, Unset]" = _unset,
+        message: "typing.Union[str, None, Unset]" = _unset,
+        startDate: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(endDate, Unset):
+            self.endDate = endDate
+        if not isinstance(id, Unset):
+            self.id = id
+        if not isinstance(message, Unset):
+            self.message = message
+        if not isinstance(startDate, Unset):
+            self.startDate = startDate
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MaintenanceMessage":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "endDate" in obj:
+            kwargs["endDate"] = obj["endDate"]
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        if "message" in obj:
+            kwargs["message"] = obj["message"]
+        if "startDate" in obj:
+            kwargs["startDate"] = obj["startDate"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "endDate" in vars(self):
+            out["endDate"] = self.endDate
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
+        if not omit_unset or "message" in vars(self):
+            out["message"] = self.message
+        if not omit_unset or "startDate" in vars(self):
+            out["startDate"] = self.startDate
         return out
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):
