@@ -1221,14 +1221,91 @@ func TestOfflineChanges(t *testing.T) {
 	runUpdateTest(t, pgDB, testCases)
 }
 
-// func TestOnlineChanges(t *testing.T) {
-//
-// }
+func TestOnlineChanges(t *testing.T) {
+	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+	t.Cleanup(dbCleanup)
 
-// tests to write:
-// offline fallin and fallout
-// online fallin and fallout
+	uid := 1
+	newExperiment3 := streamdata.Experiment{
+		ID:                   3,
+		JobID:                "test_job2",
+		ModelDefinitionBytes: []byte{},
+		OwnerID:              (*model.UserID)(&uid),
+		State:                model.CanceledState,
+		ProjectID:            2,
+	}
+
+	taskJobID := model.JobID("test_job2")
+
+	queries := streamdata.GetAddTrialQueries(
+		&model.Task{
+			TaskID:    "2.1",
+			JobID:     &taskJobID,
+			TaskType:  "TRIAL",
+			StartTime: time.Now(),
+		},
+		&streamdata.Trial{
+			ID:           4,
+			ExperimentID: 2,
+			State:        model.ErrorState,
+			StartTime:    time.Now(),
+		})
+	addTaskQuery := queries[0]
+	addTrialQuery := queries[1]
+	addTrialTaskQuery := queries[2]
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online fall in trials",
+				startupMsg: buildStartupMsg(
+					"1",
+					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
+					map[string][]int{"experiments": {1, 2}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+			description: "setup offline fall in trials",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetAddExperimentQuery(&newExperiment3),
+				addTaskQuery,
+				addTrialQuery,
+				addTrialTaskQuery,
+			},
+			expectedUpserts:   []string{"key: trial, trial_id: 4, state: ERROR, experiment_id: 2, workspace_id: 0"},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online fall out trials",
+				startupMsg: buildStartupMsg(
+					"2",
+					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
+					map[string][]int{"experiments": {1, 2}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 2",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+			description: "online fall in trials",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewRaw("DELETE FROM trials WHERE id = 4"),
+			},
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
+		},
+	}
+
+	runUpdateTest(t, pgDB, testCases)
+}
+
+// TODO (eliu): additional tests to write:
 // offline and online disappearance (RBAC only) - unnecessary
-// unrelated updates - check
 // multiple updates and subscriptions
-// updates out of spec - check
