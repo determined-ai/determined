@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="determined",
-    version="0.26.7-rc1",
+    version="0.26.7",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
