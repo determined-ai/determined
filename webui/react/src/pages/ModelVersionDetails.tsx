@@ -3,9 +3,9 @@ import Glossary, { InfoRow } from 'hew/Glossary';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
+import Section from 'hew/Section';
 import Spinner from 'hew/Spinner';
 import Surface from 'hew/Surface';
-import { Title, TypographySize } from 'hew/Typography';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -248,12 +248,14 @@ const ModelVersionDetails: React.FC = () => {
         children: (
           <div className={css.base}>
             <Surface>
-              <Title size={TypographySize.S}>Model Checkpoint</Title>
-              <Glossary content={checkpointInfo} />
+              <Section title="Model Checkpoint">
+                <Glossary content={checkpointInfo} />
+              </Section>
             </Surface>
             <Surface>
-              <Title size={TypographySize.S}>Validation Metrics</Title>
-              <Glossary content={validationMetrics} />
+              <Section title="Validation Metrics">
+                <Glossary content={validationMetrics} />
+              </Section>
             </Surface>
             <MetadataCard
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}

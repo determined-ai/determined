@@ -10,7 +10,6 @@ import { Metadata } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 
 import EditableMetadata from './EditableMetadata';
-import css from './MetadataCard.module.scss';
 
 interface Props {
   disabled?: boolean;
@@ -59,19 +58,19 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
   }, [isEditing, metadataArray.length]);
 
   return (
-    <Surface elevationOverride={1}>
-      <div className={css.cardPadding}>
-        <div className={css.cardHeader}>
+    <Surface>
+      <div>
+        <Row justifyContent="space-between">
           <Title size={TypographySize.S}>Metadata</Title>
           {isEditing ? (
-            <Row>
+            <div>
               <Button size="small" onClick={cancelEditMetadata}>
                 Cancel
               </Button>
               <Button size="small" type="primary" onClick={saveMetadata}>
                 Save
               </Button>
-            </Row>
+            </div>
           ) : (
             disabled || (
               <Button
@@ -81,7 +80,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
               />
             )
           )}
-        </div>
+        </Row>
         <Surface>
           {showPlaceholder ? (
             <div
