@@ -1,5 +1,4 @@
 import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
-import { Space } from 'antd';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import Message from 'hew/Message';
@@ -379,7 +378,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -771,7 +770,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : error ? (
           <Error />
         ) : (
-          <Space className={css.space} direction="vertical">
+          <div className={css.paneWrapper}>
             <ComparisonView
               fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
               initialWidth={comparisonViewTableWidth}
@@ -825,7 +824,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 </Column>
               </Row>
             )}
-          </Space>
+          </div>
         )}
       </div>
     </>

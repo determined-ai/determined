@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import Button from 'hew/Button';
 import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
 import Dropdown from 'hew/Dropdown';
@@ -172,7 +171,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         onChange={handleSearch}
       />
       {totalColumns.length !== 0 ? (
-        <Space className={css.columnList} direction="vertical">
+        <div className={css.columns}>
           {filteredColumns.length > 0 ? (
             filteredColumns.map((col) => (
               <Checkbox
@@ -186,7 +185,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
           ) : (
             <Message description="No results" icon="warning" />
           )}
-        </Space>
+        </div>
       ) : (
         <Spinner spinning />
       )}

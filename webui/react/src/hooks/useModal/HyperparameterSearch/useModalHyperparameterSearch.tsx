@@ -1,4 +1,4 @@
-import { ModalFuncProps, Space } from 'antd';
+import { ModalFuncProps } from 'antd';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
@@ -7,6 +7,7 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import RadioGroup from 'hew/RadioGroup';
+import Row from 'hew/Row';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
 import { Label, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
@@ -101,7 +102,7 @@ const useModalHyperparameterSearch = ({
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.id === experiment.searcherType) ??
-      SEARCH_METHODS.ASHA,
+    SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -588,12 +589,12 @@ const useModalHyperparameterSearch = ({
       <div className={css.footer}>
         {currentPage > 0 && <Button onClick={handleBack}>Back</Button>}
         <div className={css.spacer} />
-        <Space>
+        <Row>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button disabled={validationError} type="primary" onClick={handleOk}>
             {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
           </Button>
-        </Space>
+        </Row>
       </div>
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);

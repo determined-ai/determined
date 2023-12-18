@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Icon from 'hew/Icon';
@@ -6,6 +5,7 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
@@ -470,14 +470,14 @@ const ExperimentContinueModalComponent = ({
           {isReactivate && !hideSimpleConfig && (
             <Form.Item
               label={
-                <Space>
+                <Row>
                   {`Additional ${maxLengthType}`}
                   <Icon
                     name="info"
                     showTooltip
                     title="Add additional training to the current trial."
                   />
-                </Space>
+                </Row>
               }
               name={ADDITIONAL_LENGTH}
               rules={[

@@ -1,13 +1,16 @@
-import { Space, Typography } from 'antd';
+import { Typography } from 'antd';
 import Button from 'hew/Button';
+import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
+import { Title } from 'hew/Typography';
 import React, { useCallback, useMemo } from 'react';
 
 import DeleteModelModal from 'components/DeleteModelModal';
@@ -62,7 +65,7 @@ const ModelHeader: React.FC<Props> = ({
             {(users) => {
               const user = users.find((user) => user.id === model.userId);
               return (
-                <Space>
+                <Row>
                   <Nameplate
                     alias={getDisplayName(user)}
                     compact
@@ -70,7 +73,7 @@ const ModelHeader: React.FC<Props> = ({
                     name={user?.username ?? 'Unavailable'}
                   />{' '}
                   on {formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}
-                </Space>
+                </Row>
               );
             }}
           </Spinner>
@@ -149,34 +152,34 @@ const ModelHeader: React.FC<Props> = ({
   );
 
   return (
-    <header className={css.base}>
-      {model.archived && (
-        <Message icon="warning" title="This model has been archived and is now read-only." />
-      )}
-      <div className={css.headerContent}>
-        <div className={css.mainRow}>
-          <Space className={css.nameAndIcon}>
-            <Icon name="model" size="big" title="Model name" />
-            <h1 className={css.name}>{model.name}</h1>
-          </Space>
-          <Space size="small">
-            <Dropdown
-              disabled={!canDeleteModelFlag && !canModifyModelFlag}
-              menu={menu}
-              onClick={handleDropdown}>
-              <Button
-                icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
-                type="text"
-              />
-            </Dropdown>
-          </Space>
-        </div>
+    <div className={css.base}>
+      <Column gap={16}>
+        {model.archived && (
+          <Message icon="warning" title="This model has been archived and is now read-only." />
+        )}
+        <Row justifyContent="space-between" width="fill">
+          <Column>
+            <Row>
+              <Icon name="model" size="big" title="Model name" />
+              <Title size="large">{model.name}</Title>
+            </Row>
+          </Column>
+          <Dropdown
+            disabled={!canDeleteModelFlag && !canModifyModelFlag}
+            menu={menu}
+            onClick={handleDropdown}>
+            <Button
+              icon={<Icon name="overflow-horizontal" size="small" title="Action menu" />}
+              type="text"
+            />
+          </Dropdown>
+        </Row>
         <Glossary content={infoRows} />
-      </div>
+      </Column>
       <deleteModelModal.Component model={model} redirectOnDelete />
       <modelMoveModal.Component model={model} />
       <modelEditModal.Component fetchModel={fetchModel} model={model} />
-    </header>
+    </div>
   );
 };
 

@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import Button from 'hew/Button';
 import Card from 'hew/Card';
 import Column from 'hew/Column';
@@ -123,7 +122,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,
@@ -416,7 +415,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             </Select>
           </Column>
           <Column align="right">
-            <Space wrap>
+            <Row wrap>
               {!workspace.archived && (
                 <Toggle
                   checked={settings.archived}
@@ -441,7 +440,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                     <Button onClick={handleProjectCreateClick}>New Project</Button>
                   )}
               </div>
-            </Space>
+            </Row>
           </Column>
         </Row>
       </Section>

@@ -1,9 +1,11 @@
-import { Button as AntdButton, Space } from 'antd';
+import { Button as AntdButton } from 'antd';
 import Button from 'hew/Button';
+import Column from 'hew/Column';
 import Dropdown from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
@@ -658,53 +660,55 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       <PageHeaderFoldable
         foldableContent={<Glossary content={foldableRows} />}
         leftContent={
-          <Space align="center" className={css.base}>
-            <Spinner spinning={isChangingState}>
-              <div className={css.stateIcon}>
-                {isActionableIcon(experiment.state) ? (
-                  <div className={classes.join(' ')} style={stateStyle}>
-                    {isPausable && (
-                      <AntdButton
-                        className={
-                          isShownAnimation(experiment.state)
-                            ? css.buttonWithAnimation
-                            : css.buttonPause
-                        }
-                        disabled={!canPausePlay}
-                        icon={returnStatusIcon(<Icon name="pause" size="large" title="Pause" />)}
-                        shape="circle"
-                        onClick={handlePauseClick}
-                      />
-                    )}
-                    {isPaused && (
-                      <AntdButton
-                        className={
-                          isShownAnimation(experiment.state)
-                            ? css.buttonWithAnimation
-                            : css.buttonPlay
-                        }
-                        disabled={!canPausePlay}
-                        icon={returnStatusIcon(<Icon name="play" size="large" title="Play" />)}
-                        shape="circle"
-                        onClick={handlePlayClick}
-                      />
-                    )}
-                    {!isTerminated && (
-                      <AntdButton
-                        className={css.buttonStop}
-                        disabled={!canPausePlay}
-                        icon={<Icon name="stop" size="large" title="Stop" />}
-                        shape="circle"
-                        onClick={ExperimentStopModal.open}
-                      />
-                    )}
-                    <label>{stateToLabel(experiment.state)}</label>
-                  </div>
-                ) : (
-                  <ExperimentIcons state={experiment.state} />
-                )}
-              </div>
-            </Spinner>
+          <Row align="center" wrap>
+            <Column>
+              <Spinner spinning={isChangingState}>
+                <div className={css.stateIcon}>
+                  {isActionableIcon(experiment.state) ? (
+                    <div className={classes.join(' ')} style={stateStyle}>
+                      {isPausable && (
+                        <AntdButton
+                          className={
+                            isShownAnimation(experiment.state)
+                              ? css.buttonWithAnimation
+                              : css.buttonPause
+                          }
+                          disabled={!canPausePlay}
+                          icon={returnStatusIcon(<Icon name="pause" size="large" title="Pause" />)}
+                          shape="circle"
+                          onClick={handlePauseClick}
+                        />
+                      )}
+                      {isPaused && (
+                        <AntdButton
+                          className={
+                            isShownAnimation(experiment.state)
+                              ? css.buttonWithAnimation
+                              : css.buttonPlay
+                          }
+                          disabled={!canPausePlay}
+                          icon={returnStatusIcon(<Icon name="play" size="large" title="Play" />)}
+                          shape="circle"
+                          onClick={handlePlayClick}
+                        />
+                      )}
+                      {!isTerminated && (
+                        <AntdButton
+                          className={css.buttonStop}
+                          disabled={!canPausePlay}
+                          icon={<Icon name="stop" size="large" title="Stop" />}
+                          shape="circle"
+                          onClick={ExperimentStopModal.open}
+                        />
+                      )}
+                      <label>{stateToLabel(experiment.state)}</label>
+                    </div>
+                  ) : (
+                    <ExperimentIcons state={experiment.state} />
+                  )}
+                </div>
+              </Spinner>
+            </Column>
             <div className={css.id}>Experiment {experiment.id}</div>
             <div className={css.name} role="experimentName">
               {experiment.name}
@@ -720,7 +724,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <div className={css.trial}>Trial {trial.id}</div>
               </>
             ) : null}
-          </Space>
+          </Row>
         }
         options={headerOptions.map((option) => ({
           content: option?.content

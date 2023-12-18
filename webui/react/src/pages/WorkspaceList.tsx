@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import Button from 'hew/Button';
 import Card from 'hew/Card';
 import Column from 'hew/Column';
@@ -356,7 +355,7 @@ const WorkspaceList: React.FC = () => {
             </Select>
           </Column>
           <Column align="right">
-            <Space wrap>
+            <Row wrap>
               <Toggle
                 checked={settings.archived}
                 label="Show Archived"
@@ -367,7 +366,7 @@ const WorkspaceList: React.FC = () => {
                 <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
               </Select>
               {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-            </Space>
+            </Row>
           </Column>
         </Row>
       </Section>

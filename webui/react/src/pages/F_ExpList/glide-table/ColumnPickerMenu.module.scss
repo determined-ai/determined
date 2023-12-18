@@ -1,7 +1,9 @@
 .base {
   width: 300px;
 
-  .columnList {
+  .columns {
+    display: flex;
+    flex-direction: column;
     margin-top: 8px;
     max-height: 360px;
     overflow: hidden auto;
