@@ -1,4 +1,3 @@
-import { ModalFuncProps, Space } from 'antd';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
@@ -45,11 +44,6 @@ interface Props {
   closeModal: (reason: ModalCloseReason) => void;
   experiment: ExperimentItem;
   onClose?: () => void;
-  trial?: TrialDetails | TrialItem;
-}
-
-export interface ShowModalProps {
-  initialModalProps?: ModalFuncProps;
   trial?: TrialDetails | TrialItem;
 }
 
@@ -576,16 +570,16 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
 
   const footer = useMemo(() => {
     return (
-      <div className={css.footer}>
+      <>
         {currentPage > 0 && <Button onClick={handleBack}>Back</Button>}
         <div className={css.spacer} />
-        <Space>
+        <div>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button disabled={validationError} type="primary" onClick={handleOk}>
             {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
           </Button>
-        </Space>
-      </div>
+        </div>
+      </>
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
