@@ -1,17 +1,35 @@
 codecov:
   require_ci_to_pass: yes
+  notify:
+    wait_for_ci: no
 
-# coverage of each PR must be at least 85% and must not be negative
+# Coverage of backend PRs must be at least 80% with 5% leeway.
 coverage:
   status:
     project:
       default:
         informational: true
+      backend:
+        target: 37%
+        threshold: 3%
+        flags: 
+          - backend
     patch:
       default:
         informational: true
+      backend: 
+        target: 80%
+        threshold: 5%
+        flags: 
+          - backend
 
+flags:
+  backend:
+    carryforward: true
+    
 github_checks:
   annotations: false
 
-comment: false
+comment: 
+  layout: "diff, flags, files"
+  behavior: default
