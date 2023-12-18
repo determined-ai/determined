@@ -290,7 +290,7 @@ func (a *apiServer) DeleteMaintenanceMessage(
 	}
 
 	holder := &apiv1.MaintenanceMessage{}
-	if err := a.m.db.QueryProto("delete_maintenance_message", holder, req.Id); err != nil {
+	if err := a.m.db.QueryProto("clear_maintenance_message", holder, req.Id); err != nil {
 		return nil, errors.Wrap(err, "error deleting a server maintenance message")
 	}
 
