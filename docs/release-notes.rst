@@ -17,17 +17,17 @@ Version 0.26.7
 
 **Breaking Changes**
 
--  CLI: Remove the ``--dry-run`` option for ``det deploy aws``. This option has no effect because
-   AWS CloudFormation does not provide a utility to preview staged changes.
+-  CLI: Remove the ``--dry-run`` option for ``det deploy aws``. The option had no effect because
+   AWS CloudFormation does not provide a way to preview staged changes.
 
 **New Features**
 
--  CLI: Modify ``det user ls`` ls to show only active users. Add a new flag ``--all`` to show all
+-  CLI: Modify ``det user ls`` to show only active users. Add a new flag ``--all`` to show all
    users.
 
 **Bug Fixes**
 
--  Fix an issue where master was unable to download checkpoints from s3 on buckets in the
+-  Master: Fix an issue where master was unable to download checkpoints from S3 buckets in the
    ``us-east-1`` region.
 
 Version 0.26.6
