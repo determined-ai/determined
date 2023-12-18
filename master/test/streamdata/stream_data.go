@@ -150,3 +150,17 @@ func GetUpdateProjectQuery(proj model.Project) ExecutableQuery {
 func GetDeleteProjectQuery(proj model.Project) ExecutableQuery {
 	return db.Bun().NewDelete().Model(&proj).Where("id = ?", proj.ID)
 }
+
+// Metric contains a subset of actual determined experiment fields and is used to test
+// streaming code without importing anything from determined/internal.
+type Metric struct {
+	bun.BaseModel `bun:"table:metrics"`
+	ID            int
+	TrialID       int
+	TrialRunID    int
+	Metrics       map[string]any
+	TotalBatches  int
+	EndTime       time.Time
+	PartitionType string
+	MetricGroup   string
+}

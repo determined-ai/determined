@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/uptrace/bun"
-
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 
 	"github.com/google/uuid"
@@ -187,9 +185,9 @@ func buildStartupMsg(
 				ExperimentIDs: subscriptionIDs[ExperimentsUpsertKey],
 				Since:         0,
 			}
-		case "projects":
+		case ProjectsUpsertKey:
 			subscriptionSpecSet.Projects = &ProjectSubscriptionSpec{
-				ProjectIDs:   subscriptionIDs["projects"],
+				ProjectIDs:   subscriptionIDs[ProjectsUpsertKey],
 				WorkspaceIDs: subscriptionIDs["workspaces"],
 				Since:        0,
 			}
@@ -511,65 +509,53 @@ func TestMetricInsert(t *testing.T) {
 	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
 	t.Cleanup(dbCleanup)
 
-	type metric struct {
-		bun.BaseModel `bun:"table:metrics"`
-		ID            int
-		TrialID       int
-		TrialRunID    int
-		Metrics       map[string]any
-		TotalBatches  int
-		EndTime       time.Time
-		PartitionType db.MetricPartitionType
-		MetricGroup   model.MetricGroup
-	}
-
-	genericMetric := metric{
+	genericMetric := streamdata.Metric{
 		ID:            2,
 		TrialID:       1,
 		TrialRunID:    1,
 		TotalBatches:  10,
 		EndTime:       time.Now(),
-		PartitionType: db.GenericMetric,
+		PartitionType: string(db.GenericMetric),
 		MetricGroup:   "generic",
 	}
 
-	validationMetric := metric{
+	validationMetric := streamdata.Metric{
 		ID:            3,
 		TrialID:       1,
 		TrialRunID:    1,
 		TotalBatches:  11,
 		EndTime:       time.Now(),
-		PartitionType: db.ValidationMetric,
+		PartitionType: string(db.ValidationMetric),
 		MetricGroup:   "validation",
 	}
 
-	trainingMetric := metric{
+	trainingMetric := streamdata.Metric{
 		ID:            4,
 		TrialID:       1,
 		TrialRunID:    1,
 		TotalBatches:  12,
 		EndTime:       time.Now(),
-		PartitionType: db.TrainingMetric,
+		PartitionType: string(db.TrainingMetric),
 		MetricGroup:   "training",
 	}
 
-	newMetric1 := metric{
+	newMetric1 := streamdata.Metric{
 		ID:            5,
 		TrialID:       1,
 		TrialRunID:    1,
 		TotalBatches:  13,
 		EndTime:       time.Now(),
-		PartitionType: db.TrainingMetric,
+		PartitionType: string(db.TrainingMetric),
 		MetricGroup:   "training",
 	}
 
-	newMetric2 := metric{
+	newMetric2 := streamdata.Metric{
 		ID:            6,
 		TrialID:       2,
 		TrialRunID:    2,
 		TotalBatches:  14,
 		EndTime:       time.Now(),
-		PartitionType: db.ValidationMetric,
+		PartitionType: string(db.ValidationMetric),
 		MetricGroup:   "validation",
 	}
 
@@ -924,40 +910,40 @@ func TestProjectStartup(t *testing.T) {
 	testCases := []startupTestCase{
 		{
 			description: "project subscription with project id",
-			startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
-				map[string][]int{"projects": {1, 2}}),
+			startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
+				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
 		{
 			description: "project subscription with excess project id",
-			startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2,3"},
-				map[string][]int{"projects": {1, 2, 3}}),
+			startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2,3"},
+				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
 		},
 		{
 			description: "project subscription with workspaces",
-			startupMsg: buildStartupMsg("3", map[string]string{"projects": "1,2"},
-				map[string][]int{"workspaces": {1, 2}}),
+			startupMsg: buildStartupMsg("3", map[string]string{ProjectsUpsertKey: "1,2"},
+				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
 		{
 			description: "project subscription with incomplete workspaces",
-			startupMsg: buildStartupMsg("4", map[string]string{"projects": "1,2"},
-				map[string][]int{"workspaces": {1}}),
+			startupMsg: buildStartupMsg("4", map[string]string{ProjectsUpsertKey: "1,2"},
+				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 4",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 2"},
 		},
 		{
 			description: "project subscription with incomplete workspaces",
-			startupMsg: buildStartupMsg("5", map[string]string{"projects": "1"},
-				map[string][]int{"workspaces": {1, 2}}),
+			startupMsg: buildStartupMsg("5", map[string]string{ProjectsUpsertKey: "1"},
+				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 5",
 			expectedUpserts:   []string{"key: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
@@ -989,8 +975,8 @@ func TestProjectUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: create project 3",
-				startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
-					map[string][]int{"projects": {1, 2, 3}}),
+				startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
+					map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
@@ -1003,8 +989,8 @@ func TestProjectUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: update project 3",
-				startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
-					map[string][]int{"projects": {1, 2, 3}}),
+				startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
+					map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
@@ -1019,8 +1005,8 @@ func TestProjectUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: delete project 3",
-				startupMsg: buildStartupMsg("1", map[string]string{"projects": "1,2"},
-					map[string][]int{"projects": {1, 2, 3}}),
+				startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
+					map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
