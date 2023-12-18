@@ -17,8 +17,8 @@ Version 0.26.7
 
 **Breaking Changes**
 
--  CLI: Remove the ``--dry-run`` option for ``det deploy aws``. The option had no effect because
-   AWS CloudFormation does not provide a way to preview staged changes.
+-  CLI: Remove the ``--dry-run`` option for ``det deploy aws``. The option had no effect because AWS
+   CloudFormation does not provide a way to preview staged changes.
 
 **New Features**
 
