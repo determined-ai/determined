@@ -4636,6 +4636,7 @@ class v1GetMasterResponse(Printable):
     externalLoginUri: "typing.Optional[str]" = None
     externalLogoutUri: "typing.Optional[str]" = None
     featureSwitches: "typing.Optional[typing.Sequence[str]]" = None
+    maintenanceMessage: "typing.Optional[v1MaintenanceMessage]" = None
     product: "typing.Optional[GetMasterResponseProduct]" = None
     rbacEnabled: "typing.Optional[bool]" = None
     ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None
@@ -4647,7 +4648,6 @@ class v1GetMasterResponse(Printable):
         *,
         clusterId: str,
         clusterName: str,
-        maintenanceMessages: "typing.Sequence[v1MaintenanceMessage]",
         masterId: str,
         strictJobQueueControl: bool,
         version: str,
@@ -4655,6 +4655,7 @@ class v1GetMasterResponse(Printable):
         externalLoginUri: "typing.Union[str, None, Unset]" = _unset,
         externalLogoutUri: "typing.Union[str, None, Unset]" = _unset,
         featureSwitches: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        maintenanceMessage: "typing.Union[v1MaintenanceMessage, None, Unset]" = _unset,
         product: "typing.Union[GetMasterResponseProduct, None, Unset]" = _unset,
         rbacEnabled: "typing.Union[bool, None, Unset]" = _unset,
         ssoProviders: "typing.Union[typing.Sequence[v1SSOProvider], None, Unset]" = _unset,
@@ -4663,7 +4664,6 @@ class v1GetMasterResponse(Printable):
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
-        self.maintenanceMessages = maintenanceMessages
         self.masterId = masterId
         self.strictJobQueueControl = strictJobQueueControl
         self.version = version
@@ -4675,6 +4675,8 @@ class v1GetMasterResponse(Printable):
             self.externalLogoutUri = externalLogoutUri
         if not isinstance(featureSwitches, Unset):
             self.featureSwitches = featureSwitches
+        if not isinstance(maintenanceMessage, Unset):
+            self.maintenanceMessage = maintenanceMessage
         if not isinstance(product, Unset):
             self.product = product
         if not isinstance(rbacEnabled, Unset):
@@ -4691,7 +4693,6 @@ class v1GetMasterResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "clusterId": obj["clusterId"],
             "clusterName": obj["clusterName"],
-            "maintenanceMessages": [v1MaintenanceMessage.from_json(x) for x in obj["maintenanceMessages"]],
             "masterId": obj["masterId"],
             "strictJobQueueControl": obj["strictJobQueueControl"],
             "version": obj["version"],
@@ -4704,6 +4705,8 @@ class v1GetMasterResponse(Printable):
             kwargs["externalLogoutUri"] = obj["externalLogoutUri"]
         if "featureSwitches" in obj:
             kwargs["featureSwitches"] = obj["featureSwitches"]
+        if "maintenanceMessage" in obj:
+            kwargs["maintenanceMessage"] = v1MaintenanceMessage.from_json(obj["maintenanceMessage"]) if obj["maintenanceMessage"] is not None else None
         if "product" in obj:
             kwargs["product"] = GetMasterResponseProduct(obj["product"]) if obj["product"] is not None else None
         if "rbacEnabled" in obj:
@@ -4720,7 +4723,6 @@ class v1GetMasterResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "clusterId": self.clusterId,
             "clusterName": self.clusterName,
-            "maintenanceMessages": [x.to_json(omit_unset) for x in self.maintenanceMessages],
             "masterId": self.masterId,
             "strictJobQueueControl": self.strictJobQueueControl,
             "version": self.version,
@@ -4733,6 +4735,8 @@ class v1GetMasterResponse(Printable):
             out["externalLogoutUri"] = self.externalLogoutUri
         if not omit_unset or "featureSwitches" in vars(self):
             out["featureSwitches"] = self.featureSwitches
+        if not omit_unset or "maintenanceMessage" in vars(self):
+            out["maintenanceMessage"] = None if self.maintenanceMessage is None else self.maintenanceMessage.to_json(omit_unset)
         if not omit_unset or "product" in vars(self):
             out["product"] = None if self.product is None else self.product.value
         if not omit_unset or "rbacEnabled" in vars(self):
@@ -12517,33 +12521,37 @@ class v1SetCommandPriorityResponse(Printable):
 
 class v1SetMaintenanceMessageRequest(Printable):
     """Set new maintenance message."""
+    endTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        endTime: str,
         message: str,
         startTime: str,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
-        self.endTime = endTime
         self.message = message
         self.startTime = startTime
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SetMaintenanceMessageRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "endTime": obj["endTime"],
             "message": obj["message"],
             "startTime": obj["startTime"],
         }
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "endTime": self.endTime,
             "message": self.message,
             "startTime": self.startTime,
         }
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
         return out
 
 class v1SetMaintenanceMessageResponse(Printable):

@@ -3679,11 +3679,11 @@ export interface V1GetMasterResponse {
      */
     strictJobQueueControl: boolean;
     /**
-     * Active server maintenance messages.
-     * @type {Array<V1MaintenanceMessage>}
+     * Active server maintenance message.
+     * @type {V1MaintenanceMessage}
      * @memberof V1GetMasterResponse
      */
-    maintenanceMessages: Array<V1MaintenanceMessage>;
+    maintenanceMessage?: V1MaintenanceMessage;
 }
 /**
  * Response to GetMeRequest.
@@ -9184,7 +9184,7 @@ export interface V1SetMaintenanceMessageRequest {
      * @type {Date}
      * @memberof V1SetMaintenanceMessageRequest
      */
-    endTime: Date;
+    endTime?: Date;
 }
 /**
  * Response to SetMaintenanceMessageRequest.

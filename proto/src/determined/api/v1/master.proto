@@ -91,8 +91,8 @@ message GetMasterResponse {
   bool user_management_enabled = 13;
   // Feature flag for strict job queue control.
   bool strict_job_queue_control = 14;
-  // Active server maintenance messages.
-  repeated MaintenanceMessage maintenance_messages = 15;
+  // Active server maintenance message.
+  MaintenanceMessage maintenance_message = 15;
 }
 
 // Get telemetry information.
@@ -132,14 +132,14 @@ message PatchMasterConfigResponse {}
 // Set new maintenance message.
 message SetMaintenanceMessageRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "message", "start_time", "end_time" ] }
+    json_schema: { required: [ "message", "start_time" ] }
   };
   // Text content of message.
   string message = 1;
   // Time to begin showing message.
   google.protobuf.Timestamp start_time = 2;
   // Time to stop showing message.
-  google.protobuf.Timestamp end_time = 3;
+  optional google.protobuf.Timestamp end_time = 3;
 }
 // Response to SetMaintenanceMessageRequest.
 message SetMaintenanceMessageResponse {
