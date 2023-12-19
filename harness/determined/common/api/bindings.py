@@ -20910,7 +20910,7 @@ def post_SetCommandPriority(
         return v1SetCommandPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetCommandPriority", _resp)
 
-def patch_SetMaintenanceMessage(
+def put_SetMaintenanceMessage(
     session: "api.Session",
     *,
     body: "v1SetMaintenanceMessageRequest",
@@ -20918,7 +20918,7 @@ def patch_SetMaintenanceMessage(
     """Post new maintenance messages."""
     _params = None
     _resp = session._do_request(
-        method="PATCH",
+        method="PUT",
         path="/api/v1/master/maintenance_message",
         params=_params,
         json=body.to_json(True),
@@ -20929,7 +20929,7 @@ def patch_SetMaintenanceMessage(
     )
     if _resp.status_code == 200:
         return v1SetMaintenanceMessageResponse.from_json(_resp.json())
-    raise APIHttpError("patch_SetMaintenanceMessage", _resp)
+    raise APIHttpError("put_SetMaintenanceMessage", _resp)
 
 def post_SetNotebookPriority(
     session: "api.Session",

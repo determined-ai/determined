@@ -283,7 +283,7 @@ service Determined {
   rpc SetMaintenanceMessage(SetMaintenanceMessageRequest)
       returns (SetMaintenanceMessageResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/master/maintenance_message"
+      put: "/api/v1/master/maintenance_message"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

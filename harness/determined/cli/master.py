@@ -83,7 +83,7 @@ def maintain(args: Namespace) -> None:
     body = bindings.v1SetMaintenanceMessageRequest(
         startTime=args.start, endTime=args.end, message=args.message
     )
-    bindings.patch_SetMaintenanceMessage(sess, body=body)
+    bindings.put_SetMaintenanceMessage(sess, body=body)
 
 
 # fmt: off

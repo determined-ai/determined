@@ -12296,7 +12296,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             const localVarPath = `/api/v1/master/maintenance_message`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
