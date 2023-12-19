@@ -47,11 +47,15 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
   closeModal,
   openModelModal,
   models,
-  modelName: selectedModelName,
+  modelName,
 }) => {
   const { openToast } = useToast();
   const { canCreateModelVersion } = usePermissions();
-  const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
+  const [modalState, setModalState] = useState<ModalState>({
+    ...INITIAL_MODAL_STATE,
+    selectedModelName: modelName,
+  });
+  const { selectedModelName } = modalState;
 
   const selectedModelNumVersions = useMemo(() => {
     return (
@@ -68,7 +72,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
 
   const registerModelVersion = useCallback(
     async (state: ModalState) => {
-      const { selectedModelName, versionDescription, tags, metadata, versionName } = state;
+      const { versionDescription, tags, metadata, versionName } = state;
       if (!selectedModelName || !checkpoints) return;
       try {
         if (checkpoints.length === 1) {
@@ -122,7 +126,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
         });
       }
     },
-    [checkpoints, selectedModelNumVersions, openToast],
+    [checkpoints, selectedModelNumVersions, selectedModelName, openToast],
   );
 
   const handleOk = useCallback(async () => {
