@@ -129,8 +129,8 @@ message PatchMasterConfigRequest {
 // Response to PatchMasterConfigRequest.
 message PatchMasterConfigResponse {}
 
-// Post new maintenance messages.
-message PostMaintenanceMessageRequest {
+// Set new maintenance message.
+message SetMaintenanceMessageRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "message", "start_time", "end_time" ] }
   };
@@ -141,9 +141,9 @@ message PostMaintenanceMessageRequest {
   // Time to stop showing message.
   google.protobuf.Timestamp end_time = 3;
 }
-// Response to PostMaintenanceMessageRequest.
-message PostMaintenanceMessageResponse {
-  // Unique IDs of maintenance messages.
+// Response to SetMaintenanceMessageRequest.
+message SetMaintenanceMessageResponse {
+  // Unique ID of maintenance message.
   int32 id = 1;
 }
 

@@ -9708,64 +9708,6 @@ class v1PostCheckpointMetadataResponse(Printable):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
 
-class v1PostMaintenanceMessageRequest(Printable):
-    """Post new maintenance messages."""
-
-    def __init__(
-        self,
-        *,
-        endTime: str,
-        message: str,
-        startTime: str,
-    ):
-        self.endTime = endTime
-        self.message = message
-        self.startTime = startTime
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostMaintenanceMessageRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "endTime": obj["endTime"],
-            "message": obj["message"],
-            "startTime": obj["startTime"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "endTime": self.endTime,
-            "message": self.message,
-            "startTime": self.startTime,
-        }
-        return out
-
-class v1PostMaintenanceMessageResponse(Printable):
-    """Response to PostMaintenanceMessageRequest."""
-    id: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        id: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(id, Unset):
-            self.id = id
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostMaintenanceMessageResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "id" in obj:
-            kwargs["id"] = obj["id"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "id" in vars(self):
-            out["id"] = self.id
-        return out
-
 class v1PostModelRequest(Printable):
     """Request for creating a model in the registry."""
     description: "typing.Optional[str]" = None
@@ -12571,6 +12513,64 @@ class v1SetCommandPriorityResponse(Printable):
         }
         if not omit_unset or "command" in vars(self):
             out["command"] = None if self.command is None else self.command.to_json(omit_unset)
+        return out
+
+class v1SetMaintenanceMessageRequest(Printable):
+    """Set new maintenance message."""
+
+    def __init__(
+        self,
+        *,
+        endTime: str,
+        message: str,
+        startTime: str,
+    ):
+        self.endTime = endTime
+        self.message = message
+        self.startTime = startTime
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetMaintenanceMessageRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "endTime": obj["endTime"],
+            "message": obj["message"],
+            "startTime": obj["startTime"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "endTime": self.endTime,
+            "message": self.message,
+            "startTime": self.startTime,
+        }
+        return out
+
+class v1SetMaintenanceMessageResponse(Printable):
+    """Response to SetMaintenanceMessageRequest."""
+    id: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        id: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(id, Unset):
+            self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetMaintenanceMessageResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
         return out
 
 class v1SetNotebookPriorityRequest(Printable):
@@ -20084,27 +20084,6 @@ def post_PostCheckpointMetadata(
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
-def patch_PostMaintenanceMessage(
-    session: "api.Session",
-    *,
-    body: "v1PostMaintenanceMessageRequest",
-) -> "v1PostMaintenanceMessageResponse":
-    """Post new maintenance messages."""
-    _params = None
-    _resp = session._do_request(
-        method="PATCH",
-        path="/api/v1/master/maintenance_message",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1PostMaintenanceMessageResponse.from_json(_resp.json())
-    raise APIHttpError("patch_PostMaintenanceMessage", _resp)
-
 def post_PostModel(
     session: "api.Session",
     *,
@@ -20930,6 +20909,27 @@ def post_SetCommandPriority(
     if _resp.status_code == 200:
         return v1SetCommandPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetCommandPriority", _resp)
+
+def patch_SetMaintenanceMessage(
+    session: "api.Session",
+    *,
+    body: "v1SetMaintenanceMessageRequest",
+) -> "v1SetMaintenanceMessageResponse":
+    """Post new maintenance messages."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/master/maintenance_message",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SetMaintenanceMessageResponse.from_json(_resp.json())
+    raise APIHttpError("patch_SetMaintenanceMessage", _resp)
 
 def post_SetNotebookPriority(
     session: "api.Session",

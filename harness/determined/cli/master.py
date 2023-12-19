@@ -80,10 +80,10 @@ def maintain(args: Namespace) -> None:
         return
     if args.message is None:
         raise ValueError("Provide a message using the -m flag.")
-    body = bindings.v1PostMaintenanceMessageRequest(
+    body = bindings.v1SetMaintenanceMessageRequest(
         startTime=args.start, endTime=args.end, message=args.message
     )
-    bindings.patch_PostMaintenanceMessage(sess, body=body)
+    bindings.patch_SetMaintenanceMessage(sess, body=body)
 
 
 # fmt: off
@@ -138,10 +138,10 @@ args_description = [
                 help="Clear all maintenance messages"),
             Arg("-s", "--start", default=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                 help="Timestamp to start displaying message (RFC 3339 format), "
-                + "e.g. '2021-10-26T23:17:12Z'"),
+                + "e.g. '2021-10-26T23:17:12Z'; default is now."),
             Arg("-e", "--end", default=None,
                 help="Timestamp to end displaying message (RFC 3339 format), "
-                + "e.g. '2021-10-26T23:17:12Z'"),
+                + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
             Arg("-m", "--message", default=None,
                 help="Text to display to users during maintenance time"),
         ]),

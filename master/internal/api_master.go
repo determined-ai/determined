@@ -236,10 +236,10 @@ func (a *apiServer) ResourceAllocationAggregated(
 	return a.m.fetchAggregatedResourceAllocation(req)
 }
 
-func (a *apiServer) PostMaintenanceMessage(
+func (a *apiServer) SetMaintenanceMessage(
 	ctx context.Context,
-	req *apiv1.PostMaintenanceMessageRequest,
-) (*apiv1.PostMaintenanceMessageResponse, error) {
+	req *apiv1.SetMaintenanceMessageRequest,
+) (*apiv1.SetMaintenanceMessageResponse, error) {
 	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ func (a *apiServer) PostMaintenanceMessage(
 		}
 	}
 
-	resp := &apiv1.PostMaintenanceMessageResponse{}
+	resp := &apiv1.SetMaintenanceMessageResponse{}
 	if err := a.m.db.QueryProto("insert_maintenance_message", resp, u.ID, req.Message, startTime,
 		endTime); err != nil {
 		return nil, errors.Wrap(err, "error creating a server maintenance message")
