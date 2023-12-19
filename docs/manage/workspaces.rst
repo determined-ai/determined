@@ -5,7 +5,7 @@
 #########################
 
 You can organize your experiments into *projects* and *workspaces*. A project is a collection of
-experiments, and a workspace is a collection of projects. :ref:`Experiment Configuration
+experiments, and a :ref:`workspace` is a collection of projects. :ref:`Experiment Configuration
 <experiment-configuration>` specifies the location of a newly created experiment. If a workspace and
 project are not specified, the experiment is created in the default, ``Uncategorized`` project.
 Experiments can be moved between projects, and projects can be moved between workspaces.
