@@ -38,11 +38,22 @@ export const useCheckpointFlow = ({
   const registerModal = useModal(RegisterCheckpointModal);
 
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
 
   const openCheckpoint = useCallback(() => {
     checkpointModal.open();
   }, [checkpointModal]);
+
+  const handleOnCloseCreateModel = useCallback(
+    (modelName?: string) => {
+      if (modelName) {
+        setSelectedModelName(modelName);
+        registerModal.open();
+      }
+    },
+    [setSelectedModelName, registerModal],
+  );
 
   const fetchModels = useCallback(async () => {
     try {
@@ -79,13 +90,15 @@ export const useCheckpointFlow = ({
     checkpointModalComponent: (
       <checkpointModal.Component checkpoint={checkpoint} config={config} title={title} />
     ),
-    modelCreateModalComponent: <modelCreateModal.Component />,
+    modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
     openCheckpoint,
     registerModalComponent: (
       <registerModal.Component
-        checkpoints={[]}
-        closeModal={() => registerModal.close('')}
+        checkpoints={checkpoint ? [checkpoint.uuid ?? ''] : []}
+        closeModal={registerModal.close}
+        modelName={selectedModelName}
         models={models}
+        openModelModal={modelCreateModal.open}
       />
     ),
   };

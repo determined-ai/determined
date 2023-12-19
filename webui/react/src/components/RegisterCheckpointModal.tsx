@@ -22,7 +22,7 @@ interface ModalProps {
   closeModal: (reason: ModalCloseReason) => void;
   models: Loadable<ModelItem[]>;
   modelName?: string;
-  openModelModal?: () => void;
+  openModelModal: () => void;
 }
 
 interface ModalState {
@@ -154,7 +154,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
   }, []);
 
   const launchNewModelModal = useCallback(() => {
-    openModelModal?.();
+    openModelModal();
     closeModal('ok');
   }, [openModelModal, closeModal]);
 

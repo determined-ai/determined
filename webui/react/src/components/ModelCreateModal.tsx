@@ -32,7 +32,7 @@ type FormInputs = {
 };
 
 interface Props {
-  onClose?: (checkpoints?: string[], modelName?: string) => void;
+  onClose?: (modelName?: string) => void;
   workspaceId?: number;
 }
 
@@ -77,6 +77,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         severity: 'Info',
         title: 'Model Created',
       });
+      onClose?.(response.name);
     } catch (e) {
       if (e instanceof DetError) {
         handleError(e, {

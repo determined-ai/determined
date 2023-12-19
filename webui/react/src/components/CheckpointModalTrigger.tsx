@@ -39,7 +39,18 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   const registerModal = useModal(RegisterCheckpointModal);
 
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
+
+  const handleOnCloseCreateModel = useCallback(
+    (modelName?: string) => {
+      if (modelName) {
+        setSelectedModelName(modelName);
+        registerModal.open();
+      }
+    },
+    [setSelectedModelName, registerModal],
+  );
 
   const fetchModels = useCallback(async () => {
     try {
@@ -90,10 +101,11 @@ const CheckpointModalTrigger: React.FC<Props> = ({
       </span>
       <registerModal.Component
         checkpoints={checkpoint.uuid ? [checkpoint.uuid] : []}
-        closeModal={(reason: ModalCloseReason) => registerModal.close(reason)}
+        closeModal={registerModal.close}
+        modelName={selectedModelName}
         models={models}
+        openModelModal={modelCreateModal.open}
       />
-      <modelCreateModal.Component />
       <checkpointModal.Component
         checkpoint={checkpoint}
         config={experiment.config}
@@ -102,6 +114,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
           if (reason === 'Ok') registerModal.open();
         }}
       />
+      <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
     </>
   );
 };

@@ -62,6 +62,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [isLoading, setIsLoading] = useState(true);
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
@@ -70,7 +71,15 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const modelCreateModal = useModal(ModelCreateModal);
   const registerModal = useModal(RegisterCheckpointModal);
 
-  const handleOnCloseCreateModel = () => {};
+  const handleOnCloseCreateModel = useCallback(
+    (modelName?: string) => {
+      if (modelName) {
+        setSelectedModelName(modelName);
+        registerModal.open();
+      }
+    },
+    [setSelectedModelName, registerModal],
+  );
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -397,9 +406,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
       <registerModal.Component
         checkpoints={(checkpoints ?? []).map((c) => c.uuid)}
-        closeModal={() => registerModal.close('ok')}
+        closeModal={registerModal.close}
+        modelName={selectedModelName}
         models={models}
-        openModelModal={() => modelCreateModal.open()}
+        openModelModal={modelCreateModal.open}
       />
     </>
   );

@@ -43,10 +43,21 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const [canceler] = useState(new AbortController());
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedModelName, setSelectedModelName] = useState<string>();
 
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
   const registerModal = useModal(RegisterCheckpointModal);
+
+  const handleOnCloseCreateModel = useCallback(
+    (modelName?: string) => {
+      if (modelName) {
+        setSelectedModelName(modelName);
+        registerModal.open();
+      }
+    },
+    [setSelectedModelName, registerModal],
+  );
 
   const fetchModels = useCallback(async () => {
     try {
@@ -105,14 +116,16 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             <registerModal.Component
               checkpoints={bestCheckpoint.uuid ? [bestCheckpoint.uuid] : []}
               closeModal={() => registerModal.close('ok')}
+              modelName={selectedModelName}
               models={models}
+              openModelModal={modelCreateModal.open}
             />
             <checkpointModal.Component
               checkpoint={bestCheckpoint}
               config={experiment.config}
               title="Best Checkpoint"
             />
-            <modelCreateModal.Component />
+            <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
           </>
         )}
       </Card.Group>
