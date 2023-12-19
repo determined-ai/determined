@@ -25,3 +25,6 @@ INSERT INTO trial_id_task_id (trial_id, task_id) VALUES (3, '1.3');
 
 INSERT INTO checkpoints_v2 (uuid, task_id, report_time, state) VALUES ('ae4fb7ae-887f-41fa-a70b-97c55c9b18d2', '1.1', '2023-07-25 16:44:23.610081+00', 'COMPLETED');
 INSERT INTO checkpoints_v2 (uuid, task_id, report_time, state) VALUES ('ae4fb7ae-887f-41fa-a70b-97c55c9b18d3', '1.2', '2023-07-25 16:44:23.610081+00', 'COMPLETED');
+
+INSERT INTO metrics (trial_id, end_time, metrics, total_batches, trial_run_id, archived, id, metric_group, partition_type)
+VALUES(1, now(), NULL, 999, 1, false, 1, '', 'GENERIC'::metric_partition_type);

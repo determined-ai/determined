@@ -52,10 +52,11 @@ func (mm *MetricMsg) SeqNum() int64 {
 // UpsertMsg creates a Metric stream upsert message.
 func (mm *MetricMsg) UpsertMsg() stream.UpsertMsg {
 	// omit workspaceID since it wasn't part of the original row
-	mm.WorkspaceID = 0
+	exportedMsg := *mm
+	exportedMsg.WorkspaceID = 0
 	return stream.UpsertMsg{
 		JSONKey: MetricsUpsertKey,
-		Msg:     mm,
+		Msg:     &exportedMsg,
 	}
 }
 

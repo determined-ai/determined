@@ -34,10 +34,10 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 			)
 		case *MetricMsg:
 			return fmt.Sprintf(
-				"key: %s, trial_id: %d, archived: %t, workspace_id: %d",
+				"key: %s, trial_id: %d, partition_type: %s, workspace_id: %d",
 				MetricsUpsertKey,
 				typedMsg.TrialID,
-				typedMsg.Archived,
+				typedMsg.PartitionType,
 				typedMsg.WorkspaceID,
 			)
 		case *CheckpointMsg:
@@ -150,24 +150,6 @@ func (s *mockSocket) ReadIncoming(t *testing.T, data *string) {
 	}
 }
 
-// ReadUntil reads until the terminationMsg has been read.
-func (s *mockSocket) ReadUntil(
-	t *testing.T,
-	data *[]string,
-	terminationMsg string,
-) {
-	msg := ""
-	for {
-		s.ReadIncoming(t, &msg)
-		*data = append(*data, msg)
-		if msg == terminationMsg {
-			break
-		} else {
-			t.Logf("ReadUntil()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, terminationMsg)
-		}
-	}
-}
-
 func (s *mockSocket) ReadUntilFound(
 	t *testing.T,
 	data *[]string,
@@ -185,7 +167,7 @@ func (s *mockSocket) ReadUntilFound(
 		if _, ok := checklist[msg]; ok {
 			delete(checklist, msg)
 		}
-		t.Logf("ReadUntil()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, expected)
+		t.Logf("ReadUntilFound()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, checklist)
 	}
 }
 

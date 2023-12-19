@@ -138,7 +138,12 @@ func GetUpdateCheckpointQuery(checkpoint model.CheckpointV2) ExecutableQuery {
 
 // GetAddProjectQuery constructs a query to create a new project in the db.
 func GetAddProjectQuery(proj model.Project) ExecutableQuery {
-	return db.Bun().NewInsert().Model(&proj)
+	return db.Bun().NewInsert().Model(&proj).ExcludeColumn(
+		"workspace_name",
+		"username",
+		"num_active_experiments",
+		"num_experiments",
+		"last_experiment_started_at")
 }
 
 // GetUpdateProjectQuery constructs a query to update a project.
@@ -149,4 +154,18 @@ func GetUpdateProjectQuery(proj model.Project) ExecutableQuery {
 // GetDeleteProjectQuery constructs a query to delete a project.
 func GetDeleteProjectQuery(proj model.Project) ExecutableQuery {
 	return db.Bun().NewDelete().Model(&proj).Where("id = ?", proj.ID)
+}
+
+// Metric contains a subset of actual determined experiment fields and is used to test
+// streaming code without importing anything from determined/internal.
+type Metric struct {
+	bun.BaseModel `bun:"table:metrics"`
+	ID            int
+	TrialID       int
+	TrialRunID    int
+	Metrics       map[string]any
+	TotalBatches  int
+	EndTime       time.Time
+	PartitionType string
+	MetricGroup   string
 }
