@@ -1225,6 +1225,15 @@ func TestOnlineChanges(t *testing.T) {
 	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
 	t.Cleanup(dbCleanup)
 
+	newProject3 := streamdata.Project{
+		Name:        "test project 3",
+		CreatedAt:   time.Now(),
+		Archived:    false,
+		WorkspaceID: 2,
+		UserID:      1,
+		State:       "UNSPECIFIED",
+	}
+
 	uid := 1
 	newExperiment3 := streamdata.Experiment{
 		ID:                   3,
@@ -1256,7 +1265,7 @@ func TestOnlineChanges(t *testing.T) {
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
-				description: "startup test case for: online create trial",
+				description: "startup test case for: online fall in trials",
 				startupMsg: buildStartupMsg(
 					"1",
 					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
@@ -1269,7 +1278,7 @@ func TestOnlineChanges(t *testing.T) {
 					"key: trials_deleted, deleted: ",
 				},
 			},
-			description: "online create trial",
+			description: "online fall in trials",
 			queries: []streamdata.ExecutableQuery{
 				streamdata.GetAddExperimentQuery(&newExperiment3),
 				addTaskQuery,
@@ -1281,7 +1290,7 @@ func TestOnlineChanges(t *testing.T) {
 		},
 		{
 			startupCase: startupTestCase{
-				description: "startup test case for: online fall out trial",
+				description: "startup test case for: online fall out trials",
 				startupMsg: buildStartupMsg(
 					"2",
 					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
@@ -1294,56 +1303,32 @@ func TestOnlineChanges(t *testing.T) {
 					"key: trials_deleted, deleted: ",
 				},
 			},
-			description: "online fall out trial",
-			queries: []streamdata.ExecutableQuery{
-				db.Bun().NewRaw("UPDATE trials SET experiment_id = 3 WHERE id = 4"),
-			},
-			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
-		},
-		{
-			startupCase: startupTestCase{
-				description: "startup test case for: online fall in trial",
-				startupMsg: buildStartupMsg(
-					"2",
-					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
-					map[string][]int{"experiments": {1, 2}},
-				),
-				expectedSync:    "key: sync_msg, sync_id: 2",
-				expectedUpserts: []string{},
-				expectedDeletions: []string{
-					"key: experiments_deleted, deleted: ",
-					"key: trials_deleted, deleted: ",
-				},
-			},
-			description: "online fall in trial",
-			queries: []streamdata.ExecutableQuery{
-				db.Bun().NewRaw("UPDATE trials SET experiment_id = 2 WHERE id = 4"),
-			},
-			expectedUpserts:   []string{"key: trial, trial_id: 4, state: ERROR, experiment_id: 2, workspace_id: 0"},
-			expectedDeletions: []string{},
-		},
-		{
-			startupCase: startupTestCase{
-				description: "startup test case for: online delete trials",
-				startupMsg: buildStartupMsg(
-					"2",
-					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
-					map[string][]int{"experiments": {1, 2}},
-				),
-				expectedSync:    "key: sync_msg, sync_id: 2",
-				expectedUpserts: []string{},
-				expectedDeletions: []string{
-					"key: experiments_deleted, deleted: ",
-					"key: trials_deleted, deleted: ",
-				},
-			},
-			description: "online delete trials",
+			description: "online fall out trials",
 			queries: []streamdata.ExecutableQuery{
 				db.Bun().NewRaw("DELETE FROM trials WHERE id = 4"),
 			},
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online create project",
+				startupMsg: buildStartupMsg(
+					"1",
+					map[string]string{"projects": "1,2"},
+					map[string][]int{"experiments": {1, 2}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 1",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+			description:       "online create project",
+			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(newProject3)},
+			expectedUpserts:   []string{"key: trial, trial_id: 4, state: ERROR, experiment_id: 2, workspace_id: 0"},
+			expectedDeletions: []string{},
 		},
 	}
 
