@@ -957,7 +957,7 @@ func TestProjectUpdate(t *testing.T) {
 	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
 	t.Cleanup(dbCleanup)
 
-	newProject3 := model.Project{
+	newProject3 := streamdata.Project{
 		Name:        "test project 3",
 		CreatedAt:   time.Now(),
 		Archived:    false,
@@ -966,7 +966,7 @@ func TestProjectUpdate(t *testing.T) {
 		State:       "UNSPECIFIED",
 	}
 
-	project3Mod := model.Project{
+	project3Mod := streamdata.Project{
 		ID:          3,
 		WorkspaceID: 1,
 	}
