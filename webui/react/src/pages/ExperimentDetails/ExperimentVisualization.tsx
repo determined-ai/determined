@@ -239,7 +239,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
             />
           ),
           key: ExperimentVisualizationType.HpParallelCoordinates,
-          label: 'HP Parallel Coordisnates',
+          label: 'HP Parallel Coordinates',
         },
         {
           children: (
