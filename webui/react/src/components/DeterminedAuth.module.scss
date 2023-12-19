@@ -6,12 +6,12 @@
   }
   button:focus,
   button:hover {
-    background-color: var(--theme-brand-weak);
-    border-color: var(--theme-brand-weak);
+    background-color: var(--theme-brand-weak) !important;
+    border-color: var(--theme-brand-weak) !important;
   }
   button:active {
-    background-color: var(--theme-brand-strong);
-    border-color: var(--theme-brand-strong);
+    background-color: var(--theme-brand-strong) !important;
+    border-color: var(--theme-brand-strong) !important;
   }
   .content > a {
     font-size: 12px;

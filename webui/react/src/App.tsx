@@ -1,4 +1,3 @@
-import { App as AntdApp } from 'antd';
 import Button from 'hew/Button';
 import Spinner from 'hew/Spinner';
 import UIProvider from 'hew/Theme';
@@ -162,23 +161,21 @@ const AppView: React.FC = () => {
           {isAuthChecked ? (
             <>
               {isServerReachable ? (
-                <AntdApp>
-                  <ConfirmationProvider>
-                    <Navigation>
-                      <JupyterLabGlobal
-                        enabled={
-                          Loadable.isLoaded(loadableUser) &&
-                          (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                        }
-                        workspace={workspace ?? undefined}
-                      />
-                      <Omnibar />
-                      <main>
-                        <Router routes={appRoutes} />
-                      </main>
-                    </Navigation>
-                  </ConfirmationProvider>
-                </AntdApp>
+                <ConfirmationProvider>
+                  <Navigation>
+                    <JupyterLabGlobal
+                      enabled={
+                        Loadable.isLoaded(loadableUser) &&
+                        (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                      }
+                      workspace={workspace ?? undefined}
+                    />
+                    <Omnibar />
+                    <main>
+                      <Router routes={appRoutes} />
+                    </main>
+                  </Navigation>
+                </ConfirmationProvider>
               ) : (
                 <PageMessage title="Server is Unreachable">
                   <p>
