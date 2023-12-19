@@ -1545,6 +1545,26 @@ Security-related configuration settings.
 Applies only to Determined Enterprise Edition. Specifies whether the SCIM service is enabled and the
 credentials for clients to use it.
 
+See also: :ref:`remote user <remote-users>` management.
+
+For example:
+
+   .. code:: yaml
+
+      scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
+        saml:
+          enabled: true
+          provider: "Okta"
+          idp_recipient_url: "http://xx.xxx.xxx.xx:8080/saml/sso"
+          idp_sso_url: "https://xxx/xxx/xxx0000/sso/saml/"
+          idp_sso_descriptor_url: "http://www.okta.com/xxx000"
+          idp_cert_path: "okta.cert"
+
 ``enabled``
 ===========
 

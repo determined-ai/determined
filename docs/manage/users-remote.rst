@@ -4,11 +4,13 @@
  Managing Remote Users
 #######################
 
-Determined lets you manage users and user provisioning remotely. Remote user provisioning lets you
-include and synchronize any information about the user stored in your IdP such as their username,
-display name, and groups. Once configured, you can manage remote users without having to manually
-modify the users or update them via SCIM. Each time the remote user accesses Determined, their
-information is synchronized.
+When using OIDC or SAML as your authentication protocol you can configure Determined to remote
+provision and manage your users.
+
+Remote user provisioning lets you include and synchronize any information about the user stored in
+your IdP such as their username, display name, and groups. Once configured, you can manage remote
+users without having to manually modify the users or update them via SCIM. Each time the remote user
+accesses Determined, their information is synchronized.
 
 .. include:: ../_shared/attn-enterprise-edition.txt
 

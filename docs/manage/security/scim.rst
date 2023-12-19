@@ -81,3 +81,14 @@ To configure Determined for this integration, update the :ref:`master configurat
        type: basic
        username: "determined"
        password: "password"
+
+******************************************
+ Automatically Update Users' Display Name
+******************************************
+
+You can automatically assign ``display_name`` without having to manually modify the attribute. To do
+this:
+
+-  Pass the claim name as ``display_name``
+
+This is already the default behavior for Okta.
