@@ -3,10 +3,10 @@
   overflow: hidden;
 
   .paneWrapper {
-    height: 100%;
-    width: 100%;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    width: 100%;
 
     & > *:first-child {
       min-height: 0;

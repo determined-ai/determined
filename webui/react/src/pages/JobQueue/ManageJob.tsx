@@ -175,7 +175,7 @@ const ManageJobModalComponent: React.FC<Props> = ({
   return (
     <Modal
       submit={{
-        handleError: () => { },
+        handleError: () => {},
         handler: onOk,
         text: 'Close',
       }}
