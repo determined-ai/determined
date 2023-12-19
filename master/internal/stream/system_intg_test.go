@@ -1256,7 +1256,7 @@ func TestOnlineChanges(t *testing.T) {
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
-				description: "startup test case for: online fall in trials",
+				description: "startup test case for: online create trial",
 				startupMsg: buildStartupMsg(
 					"1",
 					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
@@ -1269,7 +1269,7 @@ func TestOnlineChanges(t *testing.T) {
 					"key: trials_deleted, deleted: ",
 				},
 			},
-			description: "setup offline fall in trials",
+			description: "online create trial",
 			queries: []streamdata.ExecutableQuery{
 				streamdata.GetAddExperimentQuery(&newExperiment3),
 				addTaskQuery,
@@ -1281,7 +1281,7 @@ func TestOnlineChanges(t *testing.T) {
 		},
 		{
 			startupCase: startupTestCase{
-				description: "startup test case for: online fall out trials",
+				description: "startup test case for: online fall out trial",
 				startupMsg: buildStartupMsg(
 					"2",
 					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
@@ -1294,7 +1294,51 @@ func TestOnlineChanges(t *testing.T) {
 					"key: trials_deleted, deleted: ",
 				},
 			},
-			description: "online fall in trials",
+			description: "online fall out trial",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewRaw("UPDATE trials SET experiment_id = 3 WHERE id = 4"),
+			},
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: trials_deleted, deleted: 4"},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online fall in trial",
+				startupMsg: buildStartupMsg(
+					"2",
+					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
+					map[string][]int{"experiments": {1, 2}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 2",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+			description: "online fall in trial",
+			queries: []streamdata.ExecutableQuery{
+				db.Bun().NewRaw("UPDATE trials SET experiment_id = 2 WHERE id = 4"),
+			},
+			expectedUpserts:   []string{"key: trial, trial_id: 4, state: ERROR, experiment_id: 2, workspace_id: 0"},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online delete trials",
+				startupMsg: buildStartupMsg(
+					"2",
+					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
+					map[string][]int{"experiments": {1, 2}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 2",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: experiments_deleted, deleted: ",
+					"key: trials_deleted, deleted: ",
+				},
+			},
+			description: "online delete trials",
 			queries: []streamdata.ExecutableQuery{
 				db.Bun().NewRaw("DELETE FROM trials WHERE id = 4"),
 			},
@@ -1305,7 +1349,3 @@ func TestOnlineChanges(t *testing.T) {
 
 	runUpdateTest(t, pgDB, testCases)
 }
-
-// TODO (eliu): additional tests to write:
-// offline and online disappearance (RBAC only) - unnecessary
-// multiple updates and subscriptions
