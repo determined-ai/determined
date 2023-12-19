@@ -92,7 +92,7 @@ message GetMasterResponse {
   // Feature flag for strict job queue control.
   bool strict_job_queue_control = 14;
   // Active server maintenance message.
-  MaintenanceMessage maintenance_message = 15;
+  optional MaintenanceMessage maintenance_message = 15;
 }
 
 // Get telemetry information.

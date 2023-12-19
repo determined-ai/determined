@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -26,7 +28,7 @@ import (
 var masterLogsBatchMissWaitTime = time.Second
 
 func (a *apiServer) GetMaster(
-	_ context.Context, _ *apiv1.GetMasterRequest,
+	ctx context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
 	product := apiv1.GetMasterResponse_PRODUCT_UNSPECIFIED
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
@@ -46,10 +48,26 @@ func (a *apiServer) GetMaster(
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
+		MaintenanceMessage:    &apiv1.MaintenanceMessage{},
 	}
-	if err := a.m.db.QueryProto("get_maintenance_messages", &masterResp.MaintenanceMessages); err != nil {
+
+	query := db.Bun().NewSelect().
+		Model(masterResp.MaintenanceMessage).
+		Column("id").
+		Column("message").
+		ColumnExpr("proto_time(start_time) AS start_time").
+		ColumnExpr("proto_time(end_time) AS end_time").
+		Where("start_time <= NOW()").
+		Where("end_time < '1900-01-01' OR end_time >= NOW()").
+		OrderExpr("maintenance_message.start_time DESC").
+		Limit(1)
+	err := query.Scan(ctx)
+	if err == sql.ErrNoRows {
+		masterResp.MaintenanceMessage = nil
+	} else if err != nil {
 		return nil, errors.Wrap(err, "error fetching server maintenance messages")
 	}
+
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 
 	return masterResp, nil
@@ -289,9 +307,14 @@ func (a *apiServer) DeleteMaintenanceMessage(
 		return nil, permErr
 	}
 
-	holder := &apiv1.MaintenanceMessage{}
-	if err := a.m.db.QueryProto("clear_maintenance_message", holder, req.Id); err != nil {
-		return nil, errors.Wrap(err, "error deleting a server maintenance message")
+	_, err = db.Bun().NewUpdate().
+		Table("maintenance_messages").
+		Set("end_time = NOW()").
+		Where("start_time <= NOW()").
+		Where("end_time < '1900-01-01' OR end_time >= NOW()").
+		Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "error clearing the server maintenance message")
 	}
 
 	return &apiv1.DeleteMaintenanceMessageResponse{}, nil
