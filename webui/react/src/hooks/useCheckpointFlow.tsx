@@ -1,10 +1,9 @@
-import Button from 'hew/Button';
-import Icon from 'hew/Icon';
-import { ModalCloseReason, useModal } from 'hew/Modal';
+import { useModal } from 'hew/Modal';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isEqual } from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import CheckpointModalComponent from 'components/CheckpointModal';
 import ModelCreateModal from 'components/ModelCreateModal';
 import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import { getModels } from 'services/api';
@@ -12,35 +11,39 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import {
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
-  ExperimentBase,
+  ExperimentConfig,
   ModelItem,
 } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 
-import CheckpointModalComponent from './CheckpointModal';
-
-interface Props {
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
-  children?: React.ReactNode;
-  experiment: ExperimentBase;
-  title: string;
+interface Return {
+  checkpointModalComponent: React.ReactNode;
+  openCheckpoint: () => void;
+  modelCreateModalComponent: React.ReactNode;
+  registerModalComponent: React.ReactNode;
 }
 
-const CheckpointModalTrigger: React.FC<Props> = ({
+export const useCheckpointFlow = ({
   checkpoint,
-  experiment,
+  config,
   title,
-  children,
-}: Props) => {
+}: {
+  checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
+  config: ExperimentConfig;
+  title: string;
+}): Return => {
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
-
   const registerModal = useModal(RegisterCheckpointModal);
 
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
+
+  const openCheckpoint = useCallback(() => {
+    checkpointModal.open();
+  }, [checkpointModal]);
 
   const handleOnCloseCreateModel = useCallback(
     (modelName?: string) => {
@@ -83,40 +86,20 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     fetchModels();
   }, [fetchModels]);
 
-  const handleModalCheckpointClick = useCallback(() => {
-    checkpointModal.open();
-  }, [checkpointModal]);
-
-  return (
-    <>
-      <span onClick={handleModalCheckpointClick}>
-        {children !== undefined ? (
-          children
-        ) : (
-          <Button
-            aria-label="View Checkpoint"
-            icon={<Icon name="checkpoint" showTooltip title="View Checkpoint" />}
-          />
-        )}
-      </span>
+  return {
+    checkpointModalComponent: (
+      <checkpointModal.Component checkpoint={checkpoint} config={config} title={title} />
+    ),
+    modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
+    openCheckpoint,
+    registerModalComponent: (
       <registerModal.Component
-        checkpoints={checkpoint.uuid ? [checkpoint.uuid] : []}
+        checkpoints={checkpoint ? [checkpoint.uuid ?? ''] : []}
         closeModal={registerModal.close}
         modelName={selectedModelName}
         models={models}
         openModelModal={modelCreateModal.open}
       />
-      <checkpointModal.Component
-        checkpoint={checkpoint}
-        config={experiment.config}
-        title={title}
-        onClose={(reason?: ModalCloseReason) => {
-          if (reason === 'Ok') registerModal.open();
-        }}
-      />
-      <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-    </>
-  );
+    ),
+  };
 };
-
-export default CheckpointModalTrigger;

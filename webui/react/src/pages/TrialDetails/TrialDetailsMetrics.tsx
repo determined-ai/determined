@@ -7,7 +7,7 @@ import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
-import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -48,12 +48,16 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     [trial],
   );
 
-  const { contextHolders, openCheckpoint, modelCreateModalComponent, checkpointModalComponent } =
-    useCheckpointFlow({
-      checkpoint,
-      config: experiment.config,
-      title: `Best checkpoint for Trial ${trial?.id}`,
-    });
+  const {
+    openCheckpoint,
+    modelCreateModalComponent,
+    checkpointModalComponent,
+    registerModalComponent,
+  } = useCheckpointFlow({
+    checkpoint,
+    config: experiment.config,
+    title: `Best checkpoint for Trial ${trial?.id}`,
+  });
 
   const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
 
@@ -176,10 +180,8 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       ) : (
         <Spinner spinning />
       )}
-      {contextHolders.map((contextHolder, i) => (
-        <React.Fragment key={i}>{contextHolder}</React.Fragment>
-      ))}
       {modelCreateModalComponent}
+      {registerModalComponent}
       {checkpointModalComponent}
     </>
   );
