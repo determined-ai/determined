@@ -225,9 +225,7 @@ export const experimentNameRenderer = (
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
   <Row>
-    <div style={{ paddingInline: 4, wordBreak: 'break-word' }}>
-      <Icon name="model" size="medium" title="Model" />
-    </div>
+    <Icon name="model" size="medium" title="Model" />
     <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
   </Row>
 );
