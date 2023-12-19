@@ -79,8 +79,8 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     # check for maintenance messages
     resp = bindings.get_GetMaster(setup_session(parsed_args))
-    if len(resp.maintenanceMessage) > 0:
-        print("Maintenance message:\n{}".format(resp.maintenanceMessage))
+    if resp.maintenanceMessage is not None and len(resp.maintenanceMessage.message) > 0:
+        print("Maintenance message:\n{}".format(resp.maintenanceMessage.message))
 
 
 def log_out_user(parsed_args: Namespace) -> None:
