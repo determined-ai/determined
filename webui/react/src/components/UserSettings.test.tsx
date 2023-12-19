@@ -1,6 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { useInitApi } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
@@ -81,9 +82,11 @@ const setup = () =>
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
-        <ConfirmationProvider>
-          <Container />
-        </ConfirmationProvider>
+        <App>
+          <ConfirmationProvider>
+            <Container />
+          </ConfirmationProvider>
+        </App>
       </ThemeProvider>
     </UIProvider>,
   );

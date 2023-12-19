@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
@@ -38,11 +39,13 @@ const ModalTrigger: React.FC = () => {
 
 const setup = async () => {
   render(
-    <UIProvider theme={DefaultTheme.Light}>
-      <ThemeProvider>
-        <ModalTrigger />
-      </ThemeProvider>
-    </UIProvider>,
+    <App>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <ModalTrigger />
+        </ThemeProvider>
+      </UIProvider>
+    </App>,
   );
 
   await user.click(screen.getByRole('button'));
