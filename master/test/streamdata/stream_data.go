@@ -136,6 +136,7 @@ func GetUpdateCheckpointQuery(checkpoint model.CheckpointV2) ExecutableQuery {
 	return db.Bun().NewUpdate().Model(&checkpoint).OmitZero().WherePK()
 }
 
+// GetAddProjectQuery constructs a query to create a new project in the db.
 func GetAddProjectQuery(proj model.Project) ExecutableQuery {
 	return db.Bun().NewInsert().Model(&proj).ExcludeColumn(
 		"workspace_name",

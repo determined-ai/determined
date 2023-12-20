@@ -150,19 +150,17 @@ func buildStartupMsg(
 
 	// populate knownKeySet
 	for knownType, known := range knownsMap {
-		var typedSet *string
 		switch knownType {
 		case TrialsUpsertKey:
-			typedSet = &knownKeySet.Trials
+			knownKeySet.Trials = known
 		case ExperimentsUpsertKey:
-			typedSet = &knownKeySet.Experiments
+			knownKeySet.Experiments = known
 		case CheckpointsUpsertKey:
-			typedSet = &knownKeySet.Checkpoints
+			knownKeySet.Checkpoints = known
 		case ProjectsUpsertKey:
-			typedSet = &knownKeySet.Projects
+			knownKeySet.Projects = known
 			// no metrics, since append-only
 		}
-		*typedSet = known
 	}
 
 	// populate subscriptionSpec
@@ -957,7 +955,7 @@ func TestProjectUpdate(t *testing.T) {
 	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
 	t.Cleanup(dbCleanup)
 
-	newProject3 := streamdata.Project{
+	newProject3 := model.Project{
 		Name:        "test project 3",
 		CreatedAt:   time.Now(),
 		Archived:    false,
@@ -966,7 +964,7 @@ func TestProjectUpdate(t *testing.T) {
 		State:       "UNSPECIFIED",
 	}
 
-	project3Mod := streamdata.Project{
+	project3Mod := model.Project{
 		ID:          3,
 		WorkspaceID: 1,
 	}
@@ -1039,9 +1037,8 @@ func TestUpdatesOutOfSpec(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup test case for: update experiments where one is not in subscription",
-				startupMsg: buildStartupMsg("1", map[string]string{"experiments": "1"}, map[string][]int{
-					"experiments": {1},
-				}),
+				startupMsg: buildStartupMsg("1", map[string]string{ExperimentsUpsertKey: "1"},
+					map[string]map[string][]int{ExperimentsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: experiments_deleted, deleted: "},
@@ -1070,9 +1067,8 @@ func TestUpdatesOutOfSpec(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup test case for: insert and delete untracked experiment + update existing",
-				startupMsg: buildStartupMsg("1", map[string]string{"experiments": "1"}, map[string][]int{
-					"experiments": {1},
-				}),
+				startupMsg: buildStartupMsg("1", map[string]string{ExperimentsUpsertKey: "1"},
+					map[string]map[string][]int{ExperimentsUpsertKey: {ExperimentsUpsertKey: {1}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: experiments_deleted, deleted: "},
@@ -1139,8 +1135,11 @@ func TestOfflineChanges(t *testing.T) {
 				description: "startup test case for: setup offline fall in trials",
 				startupMsg: buildStartupMsg(
 					"1",
-					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
-					map[string][]int{"experiments": {1, 2}},
+					map[string]string{ExperimentsUpsertKey: "1,2", TrialsUpsertKey: "1,2,3"},
+					map[string]map[string][]int{
+						TrialsUpsertKey:      {ExperimentsUpsertKey: {1, 2}},
+						ExperimentsUpsertKey: {ExperimentsUpsertKey: {1, 2}},
+					},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 1",
 				expectedUpserts: []string{},
@@ -1164,8 +1163,11 @@ func TestOfflineChanges(t *testing.T) {
 				description: "evaluate offline fall in trials",
 				startupMsg: buildStartupMsg(
 					"2",
-					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
-					map[string][]int{"experiments": {1, 2, 3}},
+					map[string]string{ExperimentsUpsertKey: "1,2", TrialsUpsertKey: "1,2,3"},
+					map[string]map[string][]int{
+						TrialsUpsertKey:      {ExperimentsUpsertKey: {1, 2, 3}},
+						ExperimentsUpsertKey: {ExperimentsUpsertKey: {1, 2, 3}},
+					},
 				),
 				expectedSync: "key: sync_msg, sync_id: 2",
 				expectedUpserts: []string{
@@ -1183,8 +1185,10 @@ func TestOfflineChanges(t *testing.T) {
 				description: "startup test case for: setup offline fall out trials",
 				startupMsg: buildStartupMsg(
 					"2",
-					map[string]string{"experiments": "1"},
-					map[string][]int{"experiments": {1}},
+					map[string]string{ExperimentsUpsertKey: "1"},
+					map[string]map[string][]int{
+						ExperimentsUpsertKey: {ExperimentsUpsertKey: {1}},
+					},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 2",
 				expectedUpserts: []string{},
@@ -1205,8 +1209,11 @@ func TestOfflineChanges(t *testing.T) {
 				description: "evaluate offline fall in trials",
 				startupMsg: buildStartupMsg(
 					"3",
-					map[string]string{"experiments": "1,2,3", "trials": "1,2,3,4"},
-					map[string][]int{"experiments": {1, 2, 3}},
+					map[string]string{ExperimentsUpsertKey: "1,2,3", TrialsUpsertKey: "1,2,3,4"},
+					map[string]map[string][]int{
+						TrialsUpsertKey:      {ExperimentsUpsertKey: {1, 2, 3}},
+						ExperimentsUpsertKey: {ExperimentsUpsertKey: {1, 2, 3}},
+					},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 3",
 				expectedUpserts: []string{},
@@ -1225,7 +1232,7 @@ func TestOnlineChanges(t *testing.T) {
 	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
 	t.Cleanup(dbCleanup)
 
-	newProject3 := streamdata.Project{
+	newProject3 := model.Project{
 		Name:        "test project 3",
 		CreatedAt:   time.Now(),
 		Archived:    false,
@@ -1268,13 +1275,12 @@ func TestOnlineChanges(t *testing.T) {
 				description: "startup test case for: online fall in trials",
 				startupMsg: buildStartupMsg(
 					"1",
-					map[string]string{"experiments": "1,2", "trials": "1,2,3"},
-					map[string][]int{"experiments": {1, 2}},
+					map[string]string{ExperimentsUpsertKey: "1,2", TrialsUpsertKey: "1,2,3"},
+					map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1, 2}}},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 1",
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
-					"key: experiments_deleted, deleted: ",
 					"key: trials_deleted, deleted: ",
 				},
 			},
@@ -1293,13 +1299,12 @@ func TestOnlineChanges(t *testing.T) {
 				description: "startup test case for: online fall out trials",
 				startupMsg: buildStartupMsg(
 					"2",
-					map[string]string{"experiments": "1,2", "trials": "1,2,3,4"},
-					map[string][]int{"experiments": {1, 2}},
+					map[string]string{ExperimentsUpsertKey: "1,2", TrialsUpsertKey: "1,2,3,4"},
+					map[string]map[string][]int{TrialsUpsertKey: {ExperimentsUpsertKey: {1, 2}}},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 2",
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
-					"key: experiments_deleted, deleted: ",
 					"key: trials_deleted, deleted: ",
 				},
 			},
@@ -1314,20 +1319,63 @@ func TestOnlineChanges(t *testing.T) {
 			startupCase: startupTestCase{
 				description: "startup test case for: online create project",
 				startupMsg: buildStartupMsg(
-					"1",
-					map[string]string{"projects": "1,2"},
-					map[string][]int{"experiments": {1, 2}},
+					"3",
+					map[string]string{ProjectsUpsertKey: "2"},
+					map[string]map[string][]int{ProjectsUpsertKey: {"workspaces": {2}}},
 				),
-				expectedSync:    "key: sync_msg, sync_id: 1",
+				expectedSync:    "key: sync_msg, sync_id: 3",
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
-					"key: experiments_deleted, deleted: ",
-					"key: trials_deleted, deleted: ",
+					"key: projects_deleted, deleted: ",
 				},
 			},
 			description:       "online create project",
 			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(newProject3)},
-			expectedUpserts:   []string{"key: trial, trial_id: 4, state: ERROR, experiment_id: 2, workspace_id: 0"},
+			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
+			expectedDeletions: []string{},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online fall out project",
+				startupMsg: buildStartupMsg(
+					"4",
+					map[string]string{ProjectsUpsertKey: "2,3"},
+					map[string]map[string][]int{ProjectsUpsertKey: {"workspaces": {2}}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 4",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: projects_deleted, deleted: ",
+				},
+			},
+			description: "online fall out project",
+			queries: []streamdata.ExecutableQuery{streamdata.GetUpdateProjectQuery(model.Project{
+				ID:          3,
+				WorkspaceID: 1,
+			})},
+			expectedUpserts:   []string{},
+			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
+		},
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: online fall in project",
+				startupMsg: buildStartupMsg(
+					"5",
+					map[string]string{ProjectsUpsertKey: "2"},
+					map[string]map[string][]int{ProjectsUpsertKey: {"workspaces": {2}}},
+				),
+				expectedSync:    "key: sync_msg, sync_id: 5",
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: projects_deleted, deleted: ",
+				},
+			},
+			description: "online fall in project",
+			queries: []streamdata.ExecutableQuery{streamdata.GetUpdateProjectQuery(model.Project{
+				ID:          3,
+				WorkspaceID: 2,
+			})},
+			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
 	}
