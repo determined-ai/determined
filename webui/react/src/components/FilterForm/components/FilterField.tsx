@@ -245,8 +245,8 @@ const FilterField = ({
             )}
             {currentColumn?.type === V1ColumnType.NUMBER && (
               <InputNumber
-                className={css.fullWidth}
                 value={fieldValue != null ? Number(fieldValue) : undefined}
+                width="100%"
                 onChange={(val) => {
                   const value = val != null ? Number(val) : null;
                   updateFieldValue(field.id, value, true);

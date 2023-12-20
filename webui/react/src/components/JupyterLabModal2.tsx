@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Button from 'hew/Button';
 import CodeEditor from 'hew/CodeEditor';
 import Column from 'hew/Column';
 import Input from 'hew/Input';
+import InputNumber from 'hew/InputNumber';
 import { Modal } from 'hew/Modal';
-import Row from 'hew/Row';
 import Select, { OptGroup, Option } from 'hew/Select';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { XOR } from 'hew/utils/types';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
@@ -69,22 +67,13 @@ interface Props {
   workspace?: Workspace;
 }
 
-interface ConfigInputs {
-  config: string | Loadable<string>;
-  workspaceId: number;
-}
-
-interface WizardInputs {
+interface FormInputs {
   template?: string;
   name?: string;
   slots?: number;
   pool?: string;
   workspaceId: number;
 }
-
-type FormInputs = XOR<WizardInputs, ConfigInputs>;
-
-//const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const idPrefix = useId();
@@ -97,38 +86,44 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     .filter((workspace) => !workspace.archived && canCreateWorkspaceNSC({ workspace }));
 
   const {
-    register,
-    handleSubmit: handleWizardSubmit,
+    handleSubmit,
     watch,
     control,
-    setValue: setWizardValue,
+    setValue,
     formState: { isValid },
-  } = useForm<WizardInputs>();
+  } = useForm<FormInputs>();
 
-  const values = watch();
+  const formValues = watch();
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
 
   const handleModalClose = useCallback(() => {
-    updateDefaults(values);
-  }, [updateDefaults, values]);
+    updateDefaults(formValues);
+  }, [updateDefaults, formValues]);
 
   const fetchConfig = useCallback(async () => {
     setConfig(NotLoaded);
     try {
       const newConfig = await previewJupyterLab({
-        name: values.name,
-        pool: values.pool,
-        slots: values.slots,
-        template: values.template,
-        workspaceId: values.workspaceId,
+        name: formValues.name,
+        pool:
+          formValues.pool === [BASE_FORM_ID, 'defaultPool'].join('-') ? undefined : formValues.pool,
+        slots: formValues.slots,
+        template: formValues.template,
+        workspaceId: formValues.workspaceId,
       });
       setConfig(Loaded(yaml.dump(newConfig)));
     } catch (e) {
       setConfigError('Unable to fetch JupyterLab config.');
     }
-  }, [values.name, values.pool, values.slots, values.template, values.workspaceId]);
+  }, [
+    formValues.name,
+    formValues.pool,
+    formValues.slots,
+    formValues.template,
+    formValues.workspaceId,
+  ]);
 
   const handleSecondary = useCallback(() => {
     setShowFullConfig((show) => !show);
@@ -145,7 +140,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       } else {
         await launchJupyterLab({
           name: fields?.name,
-          pool: fields?.pool,
+          pool: fields?.pool === [BASE_FORM_ID, 'defaultPool'].join('-') ? undefined : fields?.pool,
           slots: fields?.slots,
           template: fields?.template,
           workspaceId: fields.workspaceId,
@@ -164,14 +159,12 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     }
   }, [fetchConfig, showFullConfig]);
 
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const resourcePools = useObservable(clusterStore.resourcePools).getOrElse([]);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find((pool) => pool.name === values.name);
+    const selectedPool = resourcePools.find((pool) => pool.name === formValues.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -189,14 +182,14 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [resourcePools, values.name]);
+  }, [resourcePools, formValues.pool]);
 
   useEffect(() => {
     if (resourceInfo.hasCompute) {
-      if (values.slots === undefined || isNaN(values.slots))
-        setWizardValue('slots', DEFAULT_SLOT_COUNT);
-    } else if (resourceInfo.hasAux) setWizardValue('slots', 0);
-  }, [resourceInfo, setWizardValue, values.slots]);
+      if (formValues.slots === undefined || isNaN(formValues.slots))
+        setValue('slots', DEFAULT_SLOT_COUNT);
+    } else if (resourceInfo.hasAux) setValue('slots', 0);
+  }, [resourceInfo, setValue, formValues.slots]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -220,10 +213,8 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   }, []);
 
   const isConfigValid = useMemo(() => {
-    return configError === undefined && (!!workspace || values.workspaceId);
-  }, [configError, values.workspaceId, workspace]);
-
-  //~~~~~~~~~~~~~~~~~~~~~~~
+    return configError === undefined && (!!workspace || formValues.workspaceId);
+  }, [configError, formValues.workspaceId, workspace]);
 
   return (
     <Modal
@@ -248,8 +239,8 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       }}
       title="Launch JupyterLab"
       onClose={handleModalClose}>
-      <form id={[idPrefix, BASE_FORM_ID].join('-')} onSubmit={handleWizardSubmit(onSubmit)}>
-        <Column>
+      <form id={[idPrefix, BASE_FORM_ID].join('-')} onSubmit={handleSubmit(onSubmit)}>
+        <Column align="stretch">
           <Controller
             control={control}
             defaultValue={workspace?.id}
@@ -286,13 +277,14 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
             <>
               <Controller
                 control={control}
-                defaultValue={defaults?.template}
+                defaultValue={defaults.template}
                 name="template"
                 render={({ field }) => (
                   <Select
                     allowClear
                     label="Template"
                     placeholder="No template (optional)"
+                    width="100%"
                     {...field}>
                     {templates.map((temp) => (
                       <Option key={temp.name} value={temp.name}>
@@ -302,23 +294,22 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
                   </Select>
                 )}
               />
-              <Row>
-                <label htmlFor="name">Name</label>
-                <Controller
-                  control={control}
-                  name="name"
-                  render={({ field }) => (
-                    <Input id="name" placeholder="Name (optional)" {...field} />
-                  )}
-                />
-              </Row>
               <Controller
                 control={control}
-                defaultValue={defaults?.pool ?? resourcePools[0]?.name}
+                name="name"
+                render={({ field }) => (
+                  <Input id="name" label="Name" placeholder="Name (optional)" {...field} />
+                )}
+              />
+              <Controller
+                control={control}
+                defaultValue={defaults.pool ?? [BASE_FORM_ID, 'defaultPool'].join('-')}
                 name="pool"
                 render={({ field }) => (
-                  <Select allowClear label="Pool" placeholder="Pick the best option" {...field}>
-                    <Option value="Default">Pick the best option</Option>
+                  <Select label="Pool" placeholder="Pick the best option" width="100%" {...field}>
+                    <Option value={[BASE_FORM_ID, 'defaultPool'].join('-')}>
+                      Pick the best option
+                    </Option>
                     <OptGroup label="Resource Pools">
                       {resourcePools.map((pool) => (
                         <Option key={pool.name} value={pool.name}>
@@ -329,16 +320,23 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
                   </Select>
                 )}
               />
-              <input
-                defaultValue={undefined}
-                type={resourceInfo.hasCompute ? 'number' : 'hidden'}
-                {...register('slots', {
-                  max:
-                    resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots,
-                  min: 0,
-                  valueAsNumber: true,
-                })}
-              />
+              {resourceInfo.hasCompute && (
+                <Controller
+                  control={control}
+                  defaultValue={defaults.slots}
+                  name="slots"
+                  render={({ field }) => (
+                    <InputNumber id="slots" label="Slots" width="100%" {...field} />
+                  )}
+                  rules={{
+                    max:
+                      resourceInfo.maxSlots === -1
+                        ? Number.MAX_SAFE_INTEGER
+                        : resourceInfo.maxSlots,
+                    min: 0,
+                  }}
+                />
+              )}
             </>
           )}
         </Column>
