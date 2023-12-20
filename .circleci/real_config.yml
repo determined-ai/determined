@@ -448,11 +448,6 @@ commands:
       - when:
           condition: <<parameters.model-hub>>
           steps:
-            - run:
-                name: Install mmdetection dependencies
-                command: |
-                  sudo apt-get update
-                  sudo apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
                 package-location: ~/project/model_hub
@@ -3169,27 +3164,6 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      # mmdetection tests
-      - request-mmdetection-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-mmdetection
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-mmdetection-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["mmdetection"]
-              mark: ["model_hub_mmdetection"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
       # packaging tests
       - request-packaging-tests:
           type: approval
@@ -3255,16 +3229,6 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-      - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet"]
-              mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
