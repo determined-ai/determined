@@ -84,6 +84,11 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const workspaces = useObservable(workspaceStore.workspaces)
     .getOrElse([])
     .filter((workspace) => !workspace.archived && canCreateWorkspaceNSC({ workspace }));
+  const resourcePools = useObservable(clusterStore.resourcePools).getOrElse([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  const { settings: defaults, updateSettings: updateDefaults } =
+    useSettings<JupyterLabOptions>(settingsConfig);
 
   const {
     handleSubmit,
@@ -95,8 +100,19 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
 
   const formValues = watch();
 
-  const { settings: defaults, updateSettings: updateDefaults } =
-    useSettings<JupyterLabOptions>(settingsConfig);
+  useEffect(() => workspaceStore.fetch(), []);
+
+  const fetchTemplates = useCallback(async () => {
+    try {
+      setTemplates(await getTaskTemplates({}));
+    } catch (e) {
+      handleError(e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   const handleModalClose = useCallback(() => {
     updateDefaults(formValues);
@@ -125,6 +141,13 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     formValues.workspaceId,
   ]);
 
+  // Fetch full config when showing advanced mode.
+  useEffect(() => {
+    if (showFullConfig) {
+      fetchConfig();
+    }
+  }, [fetchConfig, showFullConfig]);
+
   const handleSecondary = useCallback(() => {
     setShowFullConfig((show) => !show);
   }, []);
@@ -149,19 +172,6 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     },
     [config, showFullConfig, updateDefaults],
   );
-
-  useEffect(() => workspaceStore.fetch(), []);
-
-  // Fetch full config when showing advanced mode.
-  useEffect(() => {
-    if (showFullConfig) {
-      fetchConfig();
-    }
-  }, [fetchConfig, showFullConfig]);
-
-  const [templates, setTemplates] = useState<Template[]>([]);
-
-  const resourcePools = useObservable(clusterStore.resourcePools).getOrElse([]);
 
   const resourceInfo = useMemo(() => {
     const selectedPool = resourcePools.find((pool) => pool.name === formValues.pool);
@@ -190,18 +200,6 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
         setValue('slots', DEFAULT_SLOT_COUNT);
     } else if (resourceInfo.hasAux) setValue('slots', 0);
   }, [resourceInfo, setValue, formValues.slots]);
-
-  const fetchTemplates = useCallback(async () => {
-    try {
-      setTemplates(await getTaskTemplates({}));
-    } catch (e) {
-      handleError(e);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
 
   const validateConfig = useCallback((config: string) => {
     try {
