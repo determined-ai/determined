@@ -1,10 +1,12 @@
 import Button from 'hew/Button';
 import { shortcutToString } from 'hew/InputShortcut';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
-import JupyterLabModalComponent from 'components/JupyterLabModal2';
+import JupyterLabModalComponent from 'components/JupyterLabModal';
+import NewJupyterLabModalComponent from 'components/JupyterLabModal2';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
@@ -17,6 +19,7 @@ interface Props {
 
 const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
+  const NewJupyterLabModal = useModal(NewJupyterLabModalComponent);
   const {
     settings: { jupyterLab: jupyterLabShortcut },
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
@@ -24,9 +27,12 @@ const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   return (
     <>
       {enabled ? (
-        <Tooltip content={shortcutToString(jupyterLabShortcut)}>
-          <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
-        </Tooltip>
+        <Row>
+          <Tooltip content={shortcutToString(jupyterLabShortcut)}>
+            <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
+          </Tooltip>
+          <Button onClick={NewJupyterLabModal.open}>Launch JupyterLab (new form)</Button>
+        </Row>
       ) : (
         <Tooltip content="You do not have permission to launch JupyterLab" placement="leftBottom">
           <div>
@@ -35,6 +41,7 @@ const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
         </Tooltip>
       )}
       <JupyterLabModal.Component workspace={workspace} />
+      <NewJupyterLabModal.Component workspace={workspace} />
     </>
   );
 };
