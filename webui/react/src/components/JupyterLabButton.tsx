@@ -4,7 +4,7 @@ import { useModal } from 'hew/Modal';
 import Tooltip from 'hew/Tooltip';
 import React from 'react';
 
-import JupyterLabModalComponent from 'components/JupyterLabModal';
+import JupyterLabModalComponent from 'components/JupyterLabModal2';
 import shortCutSettingsConfig, {
   Settings as ShortcutSettings,
 } from 'components/UserSettings.settings';
