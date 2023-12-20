@@ -5605,7 +5605,7 @@ export interface V1MaintenanceMessage {
      * @type {Date}
      * @memberof V1MaintenanceMessage
      */
-    endTime: Date;
+    endTime?: Date;
 }
 /**
  * Mark some reservation as a daemon.

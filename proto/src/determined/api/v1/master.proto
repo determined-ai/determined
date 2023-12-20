@@ -27,7 +27,7 @@ message SSOProvider {
 // Active notice from the server admin.
 message MaintenanceMessage {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "message", "start_time", "end_time" ] }
+    json_schema: { required: [ "id", "message", "start_time" ] }
   };
 
   // Unique ID.
@@ -37,7 +37,7 @@ message MaintenanceMessage {
   // Time to begin showing message.
   google.protobuf.Timestamp start_time = 3;
   // Time to stop showing message.
-  google.protobuf.Timestamp end_time = 4;
+  optional google.protobuf.Timestamp end_time = 4;
 }
 
 // Get master information.

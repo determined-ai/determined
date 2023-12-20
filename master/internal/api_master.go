@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -282,13 +283,18 @@ func (a *apiServer) SetMaintenanceMessage(
 		}
 	}
 
-	resp := &apiv1.SetMaintenanceMessageResponse{}
-	if err := a.m.db.QueryProto("insert_maintenance_message", resp, u.ID, req.Message, startTime,
-		endTime); err != nil {
-		return nil, errors.Wrap(err, "error creating a server maintenance message")
+	mm := model.MaintenanceMessage{
+		CreatorID: int(u.ID),
+		Message:   req.Message,
+		StartTime: startTime,
+		EndTime:   endTime,
+	}
+	_, err = db.Bun().NewInsert().Model(&mm).Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "error setting the server maintenance message")
 	}
 
-	return resp, nil
+	return &apiv1.SetMaintenanceMessageResponse{}, nil
 }
 
 func (a *apiServer) DeleteMaintenanceMessage(
