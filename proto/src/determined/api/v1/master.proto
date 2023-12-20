@@ -148,10 +148,7 @@ message SetMaintenanceMessageResponse {
 }
 
 // Delete maintenance messages.
-message DeleteMaintenanceMessageRequest {
-  // Unique ID of maintenance message.
-  int32 id = 1;
-}
+message DeleteMaintenanceMessageRequest {}
 // Response to DeleteMaintenanceMessageRequest.
 message DeleteMaintenanceMessageResponse {}
 

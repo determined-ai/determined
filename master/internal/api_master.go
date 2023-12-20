@@ -59,7 +59,7 @@ func (a *apiServer) GetMaster(
 		ColumnExpr("proto_time(start_time) AS start_time").
 		ColumnExpr("proto_time(end_time) AS end_time").
 		Where("start_time <= NOW()").
-		Where("end_time < '1900-01-01' OR end_time >= NOW()").
+		Where("end_time IS NULL OR end_time >= NOW()").
 		OrderExpr("maintenance_message.start_time DESC").
 		Limit(1)
 	err := query.Scan(ctx)
@@ -272,6 +272,12 @@ func (a *apiServer) SetMaintenanceMessage(
 	}
 
 	startTime := req.StartTime.AsTime()
+	mm := model.MaintenanceMessage{
+		CreatorID: int(u.ID),
+		Message:   req.Message,
+		StartTime: &startTime,
+	}
+
 	var endTime time.Time
 	if req.EndTime != nil {
 		endTime = req.EndTime.AsTime()
@@ -281,14 +287,9 @@ func (a *apiServer) SetMaintenanceMessage(
 		if endTime.Before(time.Now()) {
 			return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
 		}
+		mm.EndTime = &endTime
 	}
 
-	mm := model.MaintenanceMessage{
-		CreatorID: int(u.ID),
-		Message:   req.Message,
-		StartTime: startTime,
-		EndTime:   endTime,
-	}
 	_, err = db.Bun().NewInsert().Model(&mm).Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error setting the server maintenance message")
@@ -316,8 +317,7 @@ func (a *apiServer) DeleteMaintenanceMessage(
 	_, err = db.Bun().NewUpdate().
 		Table("maintenance_messages").
 		Set("end_time = NOW()").
-		Where("start_time <= NOW()").
-		Where("end_time < '1900-01-01' OR end_time >= NOW()").
+		Where("end_time >= NOW() OR end_time IS NULL").
 		Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error clearing the server maintenance message")

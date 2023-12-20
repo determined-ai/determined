@@ -15975,16 +15975,9 @@ def delete_DeleteGroup(
 
 def delete_DeleteMaintenanceMessage(
     session: "api.Session",
-    *,
-    id: "typing.Optional[int]" = None,
 ) -> None:
-    """Clear all maintenance messages.
-
-    - id: Unique ID of maintenance message.
-    """
-    _params = {
-        "id": id,
-    }
+    """Clear all maintenance messages."""
+    _params = None
     _resp = session._do_request(
         method="DELETE",
         path="/api/v1/master/maintenance_message",

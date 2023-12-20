@@ -725,20 +725,9 @@ func local_request_Determined_SetMaintenanceMessage_0(ctx context.Context, marsh
 
 }
 
-var (
-	filter_Determined_DeleteMaintenanceMessage_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Determined_DeleteMaintenanceMessage_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteMaintenanceMessageRequest
 	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Determined_DeleteMaintenanceMessage_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := client.DeleteMaintenanceMessage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -748,13 +737,6 @@ func request_Determined_DeleteMaintenanceMessage_0(ctx context.Context, marshale
 func local_request_Determined_DeleteMaintenanceMessage_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteMaintenanceMessageRequest
 	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Determined_DeleteMaintenanceMessage_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := server.DeleteMaintenanceMessage(ctx, &protoReq)
 	return msg, metadata, err

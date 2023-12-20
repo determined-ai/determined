@@ -76,7 +76,7 @@ def logs(args: Namespace) -> None:
 def maintain(args: Namespace) -> None:
     sess = cli.setup_session(args)
     if args.clear:
-        bindings.delete_DeleteMaintenanceMessage(sess, id=0)
+        bindings.delete_DeleteMaintenanceMessage(sess)
         return
     if args.message is None:
         raise ValueError("Provide a message using the -m flag.")

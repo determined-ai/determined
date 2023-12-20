@@ -11669,11 +11669,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Clear all maintenance messages.
-         * @param {number} [id] Unique ID of maintenance message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteMaintenanceMessage(id?: number, options: any = {}): FetchArgs {
+        deleteMaintenanceMessage(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/maintenance_message`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
@@ -11686,10 +11685,6 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (id !== undefined) {
-                localVarQueryParameter['id'] = id
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12332,12 +12327,11 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Clear all maintenance messages.
-         * @param {number} [id] Unique ID of maintenance message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteMaintenanceMessage(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteMaintenanceMessageResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).deleteMaintenanceMessage(id, options);
+        deleteMaintenanceMessage(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteMaintenanceMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).deleteMaintenanceMessage(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12657,12 +12651,11 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         /**
          * 
          * @summary Clear all maintenance messages.
-         * @param {number} [id] Unique ID of maintenance message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteMaintenanceMessage(id?: number, options?: any) {
-            return ClusterApiFp(configuration).deleteMaintenanceMessage(id, options)(fetch, basePath);
+        deleteMaintenanceMessage(options?: any) {
+            return ClusterApiFp(configuration).deleteMaintenanceMessage(options)(fetch, basePath);
         },
         /**
          * 
@@ -12839,13 +12832,12 @@ export class ClusterApi extends BaseAPI {
     /**
      * 
      * @summary Clear all maintenance messages.
-     * @param {number} [id] Unique ID of maintenance message.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public deleteMaintenanceMessage(id?: number, options?: any) {
-        return ClusterApiFp(this.configuration).deleteMaintenanceMessage(id, options)(this.fetch, this.basePath)
+    public deleteMaintenanceMessage(options?: any) {
+        return ClusterApiFp(this.configuration).deleteMaintenanceMessage(options)(this.fetch, this.basePath)
     }
     
     /**
