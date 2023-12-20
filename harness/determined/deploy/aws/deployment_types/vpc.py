@@ -54,7 +54,7 @@ class Lore(VPCBase):
         print(f"GenAI Version: {lore_tag}")
         print(f"GenAI Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
 
-    def wait_for_genai(self, timeout: int = 60):
+    def wait_for_genai(self, timeout: int = 60) -> None:
         self.wait_for_master()
         cert = None
         if self.parameters[constants.cloudformation.MASTER_TLS_CERT]:
