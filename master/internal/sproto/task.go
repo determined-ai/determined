@@ -280,7 +280,7 @@ type (
 		ForcePreemption bool
 		ForceKill       bool
 	}
-	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
+	// ResourcesRuntimeInfo is all the information provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
 		Token        string
 		AgentRank    int
