@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -25,6 +26,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
+
+// MaintenanceMessageMaxLength caps the length of a server maintenance message.
+const MaintenanceMessageMaxLength = 250
 
 var masterLogsBatchMissWaitTime = time.Second
 
@@ -269,6 +273,11 @@ func (a *apiServer) SetMaintenanceMessage(
 		return nil, err
 	} else if permErr != nil {
 		return nil, permErr
+	}
+
+	if msgLen := utf8.RuneCountInString(req.Message); msgLen > MaintenanceMessageMaxLength {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"message must be at most %d characters; got %d", MaintenanceMessageMaxLength, msgLen)
 	}
 
 	startTime := req.StartTime.AsTime()
