@@ -79,6 +79,8 @@ type Task struct {
 	EndTime   *time.Time `db:"end_time"`
 	// LogVersion indicates how the logs were stored.
 	LogVersion TaskLogVersion `db:"log_version"`
+	// LogRetentionDays is the number of days to retain logs for.
+	LogRetentionDays *int16 `db:"log_retention_days"`
 
 	// Relations.
 	Job        *Job    `bun:"rel:belongs-to,join:job_id=job_id"`

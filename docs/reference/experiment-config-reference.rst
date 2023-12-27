@@ -319,6 +319,22 @@ Example configuration:
 These settings may also be specified at the cluster or resource pool level through task container
 defaults.
 
+.. _log-retention-days:
+
+``log_retention_days``
+======================
+
+Optional. Overrides the number of days to retain logs for a trial. If set to ``-1``, logs will be
+retained indefinitely. If set to ``0``, logs will be deleted during the next cleanup.
+
+Example configuration:
+
+.. code:: yaml
+
+   log_retention_days: 90
+
+This setting may also be specified as a cluster default.
+
 *******************
  Validation Policy
 *******************

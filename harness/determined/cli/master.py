@@ -72,6 +72,12 @@ def logs(args: Namespace) -> None:
         print(format_log_entry(response.logEntry))
 
 
+@authentication.required
+def cleanup_logs(args: Namespace) -> None:
+    response = bindings.post_CleanupLogs(cli.setup_session(args))
+    print(f"Deleted {response.removedCount} rows of log entries.")
+
+
 # fmt: off
 
 args_description = [
@@ -118,6 +124,9 @@ args_description = [
             Arg("--tail", type=int,
                 help="number of lines to show, counting from the end "
                 "of the log (default is all)")
+        ]),
+        Cmd("cleanup-logs", cleanup_logs, "cleanup expired task logs", [
+            Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
         ]),
     ])
 ]  # type: List[Any]
