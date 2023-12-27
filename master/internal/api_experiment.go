@@ -2495,7 +2495,8 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		sortDirection := sortByMap[paramDetail[1]]
 		switch {
 		case strings.HasPrefix(paramDetail[0], "hp."):
-			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp."), ".", "'->'")
+			param := strings.ReplaceAll(paramDetail[0], "'", "")
+			hps := strings.ReplaceAll(strings.TrimPrefix(param, "hp."), ".", "'->'")
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
 		case strings.Contains(paramDetail[0], "."):
