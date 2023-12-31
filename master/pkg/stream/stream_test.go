@@ -36,8 +36,37 @@ func (tm TestMsg) DeleteMsg() DeleteMsg {
 	}
 }
 
+// A second test message type to help test that msgs are being distinguished from each other.
+type TestMsgJr struct {
+	Seq int64
+	ID  int
+}
+
+func (em TestMsgJr) SeqNum() int64 {
+	return em.Seq
+}
+
+func (em TestMsgJr) UpsertMsg() UpsertMsg {
+	return UpsertMsg{}
+}
+
+func (em TestMsgJr) DeleteMsg() DeleteMsg {
+	return DeleteMsg{}
+}
+
 func alwaysTrue(msg TestMsg) bool {
 	return true
+}
+
+func alwaysTrueJr(msg TestMsgJr) bool {
+	return true
+}
+
+func trueAfterTwo(msg TestMsgJr) bool {
+	if msg.ID > 2 {
+		return true
+	}
+	return false
 }
 
 func alwaysFalse(msg TestMsg) bool {
@@ -117,4 +146,87 @@ func TestBroadcast(t *testing.T) {
 	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "1", deleteMsg.Deleted)
+}
+
+func TestBroadcastWithFilters(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+	publisher := NewPublisher[TestMsg]()
+	publisherTwo := NewPublisher[TestMsgJr]()
+	oneSub := NewSubscription[TestMsgJr](streamer, publisherTwo, alwaysTrueJr, trueAfterTwo)
+	falseSub := NewSubscription[TestMsg](streamer, publisher, alwaysTrue, alwaysFalse)
+	oneSub.Register()
+	falseSub.Register()
+
+	// TestMsgs should never be published in this case.
+	afterMsg := TestMsg{
+		Seq: 0,
+		ID:  0,
+	}
+	event := Event[TestMsg]{After: &afterMsg}
+	publisher.Broadcast([]Event[TestMsg]{event})
+
+	require.Equal(t, 0, len(streamer.Msgs), "upsert message was upserted")
+
+	beforeMsg := TestMsg{
+		Seq: 1,
+		ID:  1,
+	}
+	event = Event[TestMsg]{Before: &beforeMsg}
+	publisher.Broadcast([]Event[TestMsg]{event})
+	require.Equal(t, 0, len(streamer.Msgs), "delete message was upserted")
+
+	afterMsg = TestMsg{
+		Seq: 20,
+		ID:  20,
+	}
+	event = Event[TestMsg]{After: &afterMsg}
+	publisher.Broadcast([]Event[TestMsg]{event})
+
+	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
+
+	// TestMsgJr should be conditionally sent.
+	afterMsgJr := TestMsgJr{
+		Seq: 1,
+		ID:  1,
+	}
+	eventJr := Event[TestMsgJr]{After: &afterMsgJr}
+	publisherTwo.Broadcast([]Event[TestMsgJr]{eventJr})
+
+	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
+
+	beforeMsgJr := TestMsgJr{
+		Seq: 2,
+		ID:  2,
+	}
+	eventJr = Event[TestMsgJr]{Before: &beforeMsgJr}
+	publisherTwo.Broadcast([]Event[TestMsgJr]{eventJr})
+
+	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
+
+	afterMsgJr = TestMsgJr{
+		Seq: 3,
+		ID:  3,
+	}
+	eventJr = Event[TestMsgJr]{After: &afterMsgJr}
+	publisherTwo.Broadcast([]Event[TestMsgJr]{eventJr})
+
+	require.Equal(t, 1, len(streamer.Msgs), "upsert message was not upserted")
+
+	beforeMsgJr = TestMsgJr{
+		Seq: 4,
+		ID:  4,
+	}
+	eventJr = Event[TestMsgJr]{Before: &beforeMsgJr}
+	publisherTwo.Broadcast([]Event[TestMsgJr]{eventJr})
+
+	require.Equal(t, 2, len(streamer.Msgs), "upsert message was not upserted")
+
+	afterMsg = TestMsg{
+		Seq: 30,
+		ID:  30,
+	}
+	event = Event[TestMsg]{After: &afterMsg}
+	publisher.Broadcast([]Event[TestMsg]{event})
+
+	require.Equal(t, 2, len(streamer.Msgs), "upsert message was not upserted")
 }
