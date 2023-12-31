@@ -37,7 +37,6 @@ import {
 import { routeToReactUrl } from 'utils/routes';
 import { capitalizeWord } from 'utils/string';
 
-import css from './ExperimentContinueModal.module.scss';
 const FORM_ID = 'continue-experiment-form';
 
 export const ContinueExperimentType = {
@@ -492,7 +491,7 @@ const ExperimentContinueModalComponent = ({
                   },
                 },
               ]}>
-              <InputNumber className={css.fullWidth} />
+              <InputNumber width="100%" />
             </Form.Item>
           )}
         </Form>
