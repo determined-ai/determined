@@ -95,7 +95,7 @@ message Task {
   optional string config = 7;
   // ID of parent task (empty if root task)
   optional string parent_id = 8;
-  //
+  // State of task execution.
   optional string task_state = 9;
 }
 

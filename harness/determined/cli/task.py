@@ -156,6 +156,11 @@ def config(args: Namespace) -> None:
         print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
 
 
+@authentication.required
+def kill(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    resp = bindings.post_KillGenericTask(sess, taskId=args.task_id)
+
 common_log_options: List[Any] = [
     Arg(
         "-f",
@@ -311,6 +316,14 @@ args_description: List[Any] = [
                     ),
                 ],
             ),
+            Cmd (
+                "kill",
+                kill,
+                "kill task",
+                [
+                    Arg("task_id", type=str, help=""),
+                ]
+            )
         ],
     ),
 ]

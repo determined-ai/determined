@@ -6915,6 +6915,29 @@ class v1KillShellResponse(Printable):
             out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
 
+class v1KillGenericTaskRequest(Printable):
+    """Kill multiple experiments."""
+
+    def __init__(
+        self,
+        *,
+        taskId: int,
+    ):
+        self.taskId = taskId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillGenericTaskRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "taskId": obj["taskId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "taskId": self.taskId,
+        }
+        return out
+    
 class v1KillTensorboardResponse(Printable):
     """Response to KillTensorboardRequest."""
     tensorboard: "typing.Optional[v1Tensorboard]" = None
@@ -19058,6 +19081,30 @@ def post_KillShell(
     if _resp.status_code == 200:
         return v1KillShellResponse.from_json(_resp.json())
     raise APIHttpError("post_KillShell", _resp)
+
+def post_KillGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Kill the requested task.
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return None
+    raise APIHttpError("post_KillGenericTask", _resp)
 
 def post_KillTensorboard(
     session: "api.Session",

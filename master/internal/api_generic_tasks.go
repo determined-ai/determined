@@ -355,20 +355,17 @@ func (a *apiServer) KillGenericTask(
 			}
 		}
 	}
-	return nil, nil
+	return &apiv1.KillGenericTaskResponse{}, nil
 }
 
 func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
 ) (string, error) {
-	out := struct {
-		allocationId string
-	}{}
-	err := db.Bun().NewSelect().Model(&out).
-		Column("allocation_id").
-		Where("task_id = ?", taskID).
-		Where("state != 'TERMINATED' and state != 'TERMINATING'").Scan(ctx)
+	allocation := model.Allocation{}
+	err := db.Bun().NewSelect().Model(&allocation).
+		ColumnExpr("allocation_id").
+		Where("task_id = ?", taskID).Scan(ctx)
 	if err != nil {
 		return "", nil
 	}
-	return out.allocationId, nil
+	return string(allocation.AllocationID), nil
 }

@@ -395,6 +395,7 @@ type Task struct {
 	Config *string `protobuf:"bytes,7,opt,name=config,proto3,oneof" json:"config,omitempty"`
 	// ID of parent task (empty if root task)
 	ParentId *string `protobuf:"bytes,8,opt,name=parent_id,json=parentId,proto3,oneof" json:"parent_id,omitempty"`
+	// State of task execution.
 	TaskState *string `protobuf:"bytes,9,opt,name=task_state,json=taskState,proto3,oneof" json:"task_state,omitempty"`
 }
 

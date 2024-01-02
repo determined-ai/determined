@@ -2406,11 +2406,11 @@ service Determined {
     };
   }
 
-// Kill generic task
-rpc KillGenericTask(KillGenericTaskRequest)
-  returns (KillGenericTaskResponse) {
+  // Kill generic task
+  rpc KillGenericTask(KillGenericTaskRequest)
+      returns (KillGenericTaskResponse) {
     option (google.api.http) = {
-      get: "/api/v1/tasks/{task_id}/kill"
+      post: "/api/v1/tasks/{task_id}/kill"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
