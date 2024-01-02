@@ -118,7 +118,6 @@ source $HOME/.profile
 cd determined
 python3 -m venv $HOME/.virtualenvs/determined
 . $HOME/.virtualenvs/determined/bin/activate
-$HOME/.virtualenvs/determined/bin/python3.9 -m pip install --upgrade pip
 export PATH=$PATH:$HOME/go/bin
 make all
 ```
