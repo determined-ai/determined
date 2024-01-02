@@ -12,9 +12,6 @@ orbs:
   win: circleci/windows@5.0.0
 
 executors:
-  python-37:
-    docker:
-      - image: python:3.7-slim-buster
   python-38:
     docker:
       - image: python:3.8-slim-buster
@@ -2746,7 +2743,7 @@ workflows:
           matrix:
             parameters:
               executor-name:
-                ["python-37", "python-38", "python-39", "win/default"]
+                ["python-38", "python-39", "win/default"]
 
   test-unit:
     jobs:
