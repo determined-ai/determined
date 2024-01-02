@@ -330,7 +330,7 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Database row types.
 
-// ExperimentV2 represents a row from the `run_collections` table.
+// RunCollection represents a row from the `run_collections` table.
 type RunCollection struct {
 	bun.BaseModel `bun:"table:run_collections"`
 
@@ -411,6 +411,8 @@ func runCollectionNameFromExperiment(e *Experiment) string {
 	return fmt.Sprintf("experiment_id:%d", e.ID)
 }
 
+// ToRunCollectionAndExperimentV2 converts an experiment model
+// to a run collection and experiment model.
 func (e *Experiment) ToRunCollectionAndExperimentV2() (*RunCollection, *ExperimentV2) {
 	rc := &RunCollection{
 		ID:                      e.ID,

@@ -363,7 +363,7 @@ func DeleteExperiments(ctx context.Context,
 
 	var expChecks []deleteExperimentOKResult
 	query := db.Bun().NewSelect().
-		ModelTableExpr("experiments as e").
+		ModelTableExpr("run_collections as e").
 		Model(&expChecks).
 		Column("e.id").
 		ColumnExpr(ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
@@ -425,16 +425,26 @@ func DeleteExperiments(ctx context.Context,
 
 	var acceptedExperiments []*model.Experiment
 	if len(validIDs) > 0 {
-		_, err = db.Bun().NewUpdate().
-			ModelTableExpr("experiments as e").
+		// TODO(!!!) use the db package or a internal/experiments experpiments_postgres.go.
+		var updatedIDs []int
+		if _, err = db.Bun().NewUpdate().
+			Table("run_collections").
+			Model(&updatedIDs).
 			Set("state = ?", model.DeletingState).
 			Where("id IN (?)", bun.In(validIDs)).
-			Returning(`id, state, config, start_time, end_time, archived,
-				   owner_id, notes, job_id, '' as username, project_id`).
-			Model(&acceptedExperiments).
-			Exec(ctx)
-		if err != nil {
-			return nil, nil, err
+			Returning("id").
+			Exec(ctx); err != nil {
+			return nil, nil, fmt.Errorf(
+				"setting experiment ids %v state to deleted: %w", validIDs, err)
+		}
+
+		if err := db.Bun().NewSelect().Model(&acceptedExperiments).
+			Where("id IN (?)", bun.In(updatedIDs)).
+			Column("id", "state", "config", "start_time", "end_time", "archived",
+				"owner_id", "notes", "job_id", "project_id").
+			Scan(ctx, &acceptedExperiments); err != nil {
+			return nil, nil, fmt.Errorf(
+				"querying experiment ids %v that were marked as deleted: %w", updatedIDs, err)
 		}
 
 		for _, exp := range acceptedExperiments {

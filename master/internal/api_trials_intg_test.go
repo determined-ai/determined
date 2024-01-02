@@ -495,9 +495,9 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	})
 
 	t.Run("TrialsSample", func(t *testing.T) {
-		_, err := db.Bun().NewUpdate().Table("experiments").
+		_, err := db.Bun().NewUpdate().Table("experiments_v2").
 			Set("config = jsonb_set(config, '{searcher,name}', ?, true)", `"custom"`).
-			Where("id = ?", trial.ExperimentID).
+			Where("run_collection_id = ?", trial.ExperimentID).
 			Exec(ctx)
 		require.NoError(t, err)
 
@@ -823,9 +823,9 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	trial, task0 := createTestTrial(t, api, curUser)
 
-	_, err := db.Bun().NewUpdate().Table("experiments").
+	_, err := db.Bun().NewUpdate().Table("experiments_v2").
 		Set("best_trial_id = ?", trial.ID).
-		Where("id = ?", trial.ExperimentID).Exec(ctx)
+		Where("run_collection_id = ?", trial.ExperimentID).Exec(ctx)
 	require.NoError(t, err)
 
 	task1 := &model.Task{

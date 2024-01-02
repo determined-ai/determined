@@ -425,7 +425,7 @@ func (a *apiServer) DeleteExperiments(
 				log.WithError(err).Errorf("deleting experiment %d", id)
 			}
 			_, err = db.Bun().NewUpdate().
-				ModelTableExpr("experiments as e").
+				ModelTableExpr("run_collections as e").
 				Set("state = ?", model.DeleteFailedState).
 				Where("id IN (?)", bun.In(req.ExperimentIds)).
 				Exec(ctx)

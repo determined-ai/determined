@@ -36,6 +36,7 @@ func TestToRunCollection(t *testing.T) {
 		JobID: "job-id",
 		State: CompletedState,
 		Notes: "notes",
+		//nolint: exhaustruct
 		Config: expconf.LegacyConfig{
 			Searcher: expconf.LegacySearcher{
 				Name: "fake-searcher",

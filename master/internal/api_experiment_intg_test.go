@@ -231,7 +231,7 @@ func TestGetTaskContextDirectoryTask(t *testing.T) {
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
-	_, err := db.Bun().NewUpdate().Table("experiments").
+	_, err := db.Bun().NewUpdate().Table("run_collections").
 		Set("state = ?", model.CompletedState).
 		Where("id = ?", exp.ID).Exec(ctx)
 	require.NoError(t, err)
@@ -770,7 +770,7 @@ func TestSearchExperiments(t *testing.T) {
 	valMetrics := metrics[model.ValidationMetricGroup]
 
 	// Move experiment to our project.
-	_, err = db.Bun().NewUpdate().Table("experiments").
+	_, err = db.Bun().NewUpdate().Table("run_collections").
 		Set("project_id = ?", projectID).
 		Where("id = ?", metricTrial.ExperimentID).
 		Exec(ctx)
@@ -1683,7 +1683,7 @@ func TestDeleteExperiments(t *testing.T) {
 	var expIDs []int32
 	for i := 0; i < 3; i++ {
 		exp := createTestExp(t, api, curUser)
-		_, err := db.Bun().NewUpdate().Table("experiments").
+		_, err := db.Bun().NewUpdate().Table("run_collections").
 			Set("state = ?", model.CompletedState).
 			Where("id = ?", exp.ID).Exec(ctx)
 		require.NoError(t, err)
@@ -1754,7 +1754,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	var expIDs []int32
 	for i := 0; i < 3; i++ {
 		exp := createTestExp(t, api, curUser)
-		_, err := db.Bun().NewUpdate().Table("experiments").
+		_, err := db.Bun().NewUpdate().Table("run_collections").
 			Set("state = ?", model.CompletedState).
 			Where("id = ?", exp.ID).Exec(ctx)
 		require.NoError(t, err)

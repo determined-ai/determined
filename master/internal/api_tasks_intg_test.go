@@ -219,8 +219,8 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 	var m map[string]any
 	require.NoError(t, json.Unmarshal(v, &m))
 
-	_, err = db.Bun().NewUpdate().Table("experiments").
-		Where("id = ?", trial.ExperimentID).
+	_, err = db.Bun().NewUpdate().Table("experiments_v2").
+		Where("run_collection_id = ?", trial.ExperimentID).
 		Set("config = ?", m).
 		Exec(ctx)
 	require.NoError(t, err)
