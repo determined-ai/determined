@@ -459,7 +459,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             title="Workspace contains no projects. "
           />
         ) : (
-          <Message icon="warning" title="No projects matching the current filters" />
+          !isLoading && <Message icon="warning" title="No projects matching the current filters" />
         )}
       </Spinner>
       <ProjectCreateModal.Component workspaceId={workspace.id} />

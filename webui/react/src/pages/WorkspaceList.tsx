@@ -381,7 +381,9 @@ const WorkspaceList: React.FC = () => {
             title="No Workspaces"
           />
         ) : (
-          <Message icon="warning" title="No workspaces matching the current filters" />
+          !isLoading && (
+            <Message icon="warning" title="No workspaces matching the current filters" />
+          )
         )}
       </Spinner>
       <WorkspaceCreateModal.Component />
