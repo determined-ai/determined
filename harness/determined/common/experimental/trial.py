@@ -539,7 +539,6 @@ class TrialSortBy(enum.Enum):
     Specifies the field to sort a list of trials on.
     """
 
-    UNSPECIFIED = _tsb.UNSPECIFIED.value
     ID = _tsb.ID.value
     START_TIME = _tsb.START_TIME.value
     END_TIME = _tsb.END_TIME.value
