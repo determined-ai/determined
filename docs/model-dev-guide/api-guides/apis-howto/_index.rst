@@ -83,7 +83,6 @@ respectively:
 We also provide lightweight CPU-only counterparts:
 
 -  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.27.1``
--  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.2``
 -  ``determinedai/environments:py-3.8-tf-2.8-cpu-0.27.1``
 
 To change the container image used for an experiment, specify :ref:`environment.image
