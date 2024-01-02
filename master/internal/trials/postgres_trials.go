@@ -268,14 +268,13 @@ func UpdateUnmanagedExperimentStatesTx(
 		}
 		exp.State = mostProgressedTrialState
 
+		q := tx.NewUpdate().Table("run_collections").Where("id = ?", exp.ID).
+			Set("state = ?", mostProgressedTrialState)
 		if exp.State == oldState {
 			continue
 		}
-		columns := []string{"state"}
 
 		if model.TerminalStates[exp.State] {
-			columns = append(columns, "end_time")
-
 			var endTime *time.Time
 
 			for _, trial := range trials {
@@ -287,10 +286,11 @@ func UpdateUnmanagedExperimentStatesTx(
 				endTime = ptrs.Ptr(time.Now())
 			}
 			exp.EndTime = endTime
+			q = q.Set("end_time = ?", endTime)
 		}
 
-		if _, err := tx.NewUpdate().Model(exp).Column(columns...).WherePK().Exec(ctx); err != nil {
-			return err
+		if _, err := q.Exec(ctx); err != nil {
+			return fmt.Errorf("updating unmananged experiment state %d: %w", exp.ID, err)
 		}
 	}
 
@@ -318,7 +318,7 @@ func MarkLostTrials(ctx context.Context) error {
 			Returning("experiments.id, experiments.state, runs.id as trial_id").Exec(ctx)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("trying to mark trials as lost: %w", err)
 		} else if len(res) == 0 {
 			return nil
 		}

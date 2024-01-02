@@ -56,15 +56,15 @@ func TestMarkLostTrials(t *testing.T) {
 		experimentIds = append(experimentIds, e.ID)
 	}
 
-	_, err := db.Bun().NewUpdate().Model((*model.Experiment)(nil)).
-		Where("id IN (?)", bun.In(experimentIds)).
+	_, err := db.Bun().NewUpdate().Model((*model.ExperimentV2)(nil)).
+		Where("run_collection_id IN (?)", bun.In(experimentIds)).
 		Set("unmanaged = true").
 		Exec(ctx)
 
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		_, err := db.Bun().NewDelete().Model((*model.Experiment)(nil)).
+		_, err := db.Bun().NewDelete().Model((*model.RunCollection)(nil)).
 			Where("id IN (?)", bun.In(experimentIds)).
 			Exec(ctx)
 
