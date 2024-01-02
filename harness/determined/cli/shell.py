@@ -78,7 +78,7 @@ def open_shell(args: argparse.Namespace) -> None:
 
 @authentication.required
 def show_ssh_command(args: argparse.Namespace) -> None:
-    if "WSL" in os.uname().release:
+    if platform.system() == "Linux" and "WSL" in os.uname().release:
         cli.warn(
             "WSL remote-ssh integration is not supported in VSCode, which "
             "uses Windows openssh. For Windows VSCode integration, rerun this "
