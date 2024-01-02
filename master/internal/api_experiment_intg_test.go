@@ -189,6 +189,138 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+func TestExperimentPatch(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+
+	labels, err := structpb.NewList([]any{"a", "b", "c"})
+	require.NoError(t, err)
+
+	patchResp, err := api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
+		Experiment: &experimentv1.PatchExperiment{
+			Id:          int32(exp.ID),
+			Description: wrapperspb.String("newDesc"),
+			Labels:      labels,
+			Name:        wrapperspb.String("newName"),
+			Notes:       wrapperspb.String("newNotes"),
+			/* TODO(!!!) figure out a way to test this case with a mock.
+			Resources: &experimentv1.PatchExperiment_PatchResources{
+				MaxSlots: ptrs.Ptr(int32(17)),
+				Weight:   ptrs.Ptr(float64(3.0)),
+				Priority: ptrs.Ptr(int32(18)),
+			},
+			*/
+			CheckpointStorage: &experimentv1.PatchExperiment_PatchCheckpointStorage{
+				SaveExperimentBest: 12,
+				SaveTrialBest:      13,
+				SaveTrialLatest:    14,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+		ExperimentId: int32(exp.ID),
+	})
+	require.NoError(t, err)
+
+	names := []string{"patchResp", "getExperimentsResp"}
+	responses := []*experimentv1.Experiment{patchResp.Experiment, eResp.Experiment}
+	for i, e := range responses {
+		t.Run(names[i], func(t *testing.T) {
+			require.Equal(t, "newDesc", e.Description)
+			require.ElementsMatch(t, []string{"a", "b", "c"}, e.Labels)
+			require.Equal(t, "newName", e.Name)
+			require.Equal(t, "newNotes", e.Notes)
+
+			cs := e.Config.AsMap()["checkpoint_storage"].(map[string]any)
+			require.Equal(t, float64(12), cs["save_experiment_best"])
+			require.Equal(t, float64(13), cs["save_trial_best"])
+			require.Equal(t, float64(14), cs["save_trial_latest"])
+		})
+	}
+}
+
+func TestExperimentArchiveUnarchive(t *testing.T) {
+	// TODO(!!!) should add tests for failure cases.
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+	_, err := db.Bun().NewUpdate().Table("run_collections").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", exp.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	{
+		_, err = api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{
+			Id: int32(exp.ID),
+		})
+		require.NoError(t, err)
+
+		eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+			ExperimentId: int32(exp.ID),
+		})
+		require.NoError(t, err)
+		require.True(t, eResp.Experiment.Archived)
+	}
+
+	{
+		_, err = api.UnarchiveExperiment(ctx, &apiv1.UnarchiveExperimentRequest{
+			Id: int32(exp.ID),
+		})
+		require.NoError(t, err)
+
+		eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+			ExperimentId: int32(exp.ID),
+		})
+		require.NoError(t, err)
+		require.False(t, eResp.Experiment.Archived)
+	}
+}
+
+func TestExperimentArchiveUnarchiveBulk(t *testing.T) {
+	// TODO(!!!) should add tests for failure cases.
+	api, curUser, ctx := setupAPITest(t, nil)
+	exps := []*model.Experiment{
+		createTestExp(t, api, curUser),
+		createTestExp(t, api, curUser),
+	}
+	expIDs := []int32{int32(exps[0].ID), int32(exps[1].ID)}
+	_, err := db.Bun().NewUpdate().Table("run_collections").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(expIDs)).Exec(ctx)
+	require.NoError(t, err)
+
+	{
+		_, err = api.ArchiveExperiments(ctx, &apiv1.ArchiveExperimentsRequest{
+			ExperimentIds: expIDs,
+		})
+		require.NoError(t, err)
+
+		for _, expID := range expIDs {
+			eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+				ExperimentId: expID,
+			})
+			require.NoError(t, err)
+			require.True(t, eResp.Experiment.Archived)
+		}
+	}
+
+	{
+		_, err = api.UnarchiveExperiments(ctx, &apiv1.UnarchiveExperimentsRequest{
+			ExperimentIds: expIDs,
+		})
+		require.NoError(t, err)
+
+		for _, expID := range expIDs {
+			eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+				ExperimentId: expID,
+			})
+			require.NoError(t, err)
+			require.False(t, eResp.Experiment.Archived)
+		}
+	}
+}
+
 func TestGetTaskContextDirectoryExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 

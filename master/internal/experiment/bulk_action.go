@@ -529,10 +529,10 @@ func ArchiveExperiments(ctx context.Context,
 	if len(validIDs) > 0 {
 		var acceptedIDs []int32
 		_, err = db.Bun().NewUpdate().
-			ModelTableExpr("experiments as e").
+			ModelTableExpr("run_collections").
 			Set("archived = true").
 			Where("id IN (?)", bun.In(validIDs)).
-			Returning("e.id").
+			Returning("run_collections.id").
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {
@@ -621,10 +621,10 @@ func UnarchiveExperiments(ctx context.Context,
 	if len(validIDs) > 0 {
 		var acceptedIDs []int32
 		_, err = db.Bun().NewUpdate().
-			ModelTableExpr("experiments as e").
+			ModelTableExpr("run_collections").
 			Set("archived = false").
 			Where("id IN (?)", bun.In(validIDs)).
-			Returning("e.id").
+			Returning("run_collections.id").
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {

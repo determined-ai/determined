@@ -1170,10 +1170,29 @@ func (a *apiServer) PatchExperiment(
 			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
 		}
 
-		_, err = a.m.db.RawQuery(
-			"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
-		if err != nil {
-			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
+		// TODO(!!!) the following save should also be in a transcation with this.
+		// a.m.db.SaveExperimentConfig
+		if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			// TODO there is some weirdness between "experiment" name which is in
+			// the experiment config and run collection name which will be
+			// experiment_id:123. Maybe we should think about this.
+			if _, err := tx.NewUpdate().Model(&model.RunCollection{}).
+				Where("id = ?", exp.Id).
+				Set("notes = ?", exp.Notes).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("updating experiment notes: %w", err)
+			}
+
+			if _, err := tx.NewUpdate().Model(&model.ExperimentV2{}).
+				Where("run_collection_id = ?", exp.Id).
+				Set("config = config || ?", string(marshalledPatches)).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("updating experiment config fields: %w", err)
+			}
+
+			return nil
+		}); err != nil {
+			return nil, fmt.Errorf("updating experiment in database %d: %w", req.Experiment.Id, err)
 		}
 	}
 
@@ -1305,6 +1324,10 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	// include queued / pulling / starting / running state
+	exp, err = a.getExperiment(ctx, *curUser, int(req.Experiment.Id))
+	if err != nil {
+		return nil, err
+	}
 	if err = a.enrichExperimentState(exp); err != nil {
 		return nil, err
 	}
