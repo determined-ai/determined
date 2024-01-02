@@ -86,22 +86,6 @@ pytorch20_tf210_rocm56_0_hashed: {new: determinedai/environments:rocm-5.6-pytorc
 pytorch20_tf210_rocm56_0_versioned: {new: determinedai/environments:rocm-5.6-pytorch-2.0-tf-2.10-rocm-ompi-0.27.1}
 pytorch20_tf210_rocm56_1_hashed: {new: determinedai/environments:rocm-5.6-pytorch-2.0-tf-2.10-rocm-ompi-f66cbce}
 pytorch20_tf210_rocm56_1_versioned: {new: determinedai/environments:rocm-5.6-pytorch-2.0-tf-2.10-rocm-ompi-0.27.1}
-tf1_cpu_0_hashed: {new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca,
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a8b9c02}
-tf1_cpu_0_versioned: {new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.2,
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.1}
-tf1_cpu_1_hashed: {new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-6eceaca,
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-a8b9c02}
-tf1_cpu_1_versioned: {new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-0.21.2,
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-0.21.1}
-tf1_gpu_0_hashed: {new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-6eceaca,
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-a8b9c02}
-tf1_gpu_0_versioned: {new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2,
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.1}
-tf1_gpu_1_hashed: {new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-6eceaca,
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-a8b9c02}
-tf1_gpu_1_versioned: {new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-0.21.2,
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-0.21.1}
 tf24_cpu_0_hashed: {new: determinedai/environments:py-3.8-pytorch-1.9-tf-2.4-cpu-24586f0,
   old: determinedai/environments-dev:py-3.8-pytorch-1.9-tf-2.4-cpu-1c769fb}
 tf24_cpu_0_versioned: {new: determinedai/environments:py-3.8-pytorch-1.9-tf-2.4-cpu-0.19.10,
