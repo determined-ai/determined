@@ -159,7 +159,8 @@ def config(args: Namespace) -> None:
 @authentication.required
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    resp = bindings.post_KillGenericTask(sess, taskId=args.task_id)
+    bindings.post_KillGenericTask(sess, taskId=args.task_id)
+
 
 common_log_options: List[Any] = [
     Arg(
@@ -300,7 +301,7 @@ args_description: List[Any] = [
                         "--parent",
                         type=str,
                         help="task id of parent task",
-                    )
+                    ),
                 ],
             ),
             Cmd(
@@ -316,14 +317,14 @@ args_description: List[Any] = [
                     ),
                 ],
             ),
-            Cmd (
+            Cmd(
                 "kill",
                 kill,
                 "kill task",
                 [
                     Arg("task_id", type=str, help=""),
-                ]
-            )
+                ],
+            ),
         ],
     ),
 ]

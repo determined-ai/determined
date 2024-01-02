@@ -145,17 +145,26 @@ type AcceleratorData struct {
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState string
 
+// TaskState represents the state of a generic task.
 type TaskState string
 
 const (
-	TaskStateActive            TaskState = "ACTIVE"
-	TaskStateCanceled          TaskState = "CANCELED"
-	TaskStateCompleted         TaskState = "COMPLETED"
-	TaskStateError             TaskState = "ERROR"
-	TaskStatePaused            TaskState = "PAUSED"
-	TaskStateStoppingCanceled  TaskState = "STOPPING_CANCELED"
+	// TaskStateActive denotes that task is running.
+	TaskStateActive TaskState = "ACTIVE"
+	// TaskStateCanceled denotes that task is killed.
+	TaskStateCanceled TaskState = "CANCELED"
+	// TaskStateCompleted denotes that task has finished running.
+	TaskStateCompleted TaskState = "COMPLETED"
+	// TaskStateError denotes that task has exited with an error.
+	TaskStateError TaskState = "ERROR"
+	// TaskStatePaused denotes that task has been paused.
+	TaskStatePaused TaskState = "PAUSED"
+	// TaskStateStoppingCanceled denotes that the task is in the process of being canceled.
+	TaskStateStoppingCanceled TaskState = "STOPPING_CANCELED"
+	// TaskStateStoppingCompleted denotes that the task is in the process of being completed.
 	TaskStateStoppingCompleted TaskState = "STOPPING_COMPLETED"
-	TaskStateStoppingError     TaskState = "STOPPING_ERROR"
+	// TaskStateStoppingError denotes that the task is in the process of returning an error.
+	TaskStateStoppingError TaskState = "STOPPING_ERROR"
 )
 
 // TaskStats is the model for task stats in the database.

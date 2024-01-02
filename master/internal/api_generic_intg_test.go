@@ -6,9 +6,10 @@ package internal
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPropagateTaskState(t *testing.T) {
@@ -18,12 +19,12 @@ func TestPropagateTaskState(t *testing.T) {
 	child1ID := model.NewTaskID()
 	child2ID := model.NewTaskID()
 
-	parent_model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: parentID}
-	child1_model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child1ID, ParentID: &parentID}
-	child2_model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child2ID, ParentID: &parentID}
-	require.NoError(t, api.m.db.AddTask(parent_model))
-	require.NoError(t, api.m.db.AddTask(child1_model))
-	require.NoError(t, api.m.db.AddTask(child2_model))
+	parentModel := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: parentID}
+	child1Model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child1ID, ParentID: &parentID}
+	child2Model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child2ID, ParentID: &parentID}
+	require.NoError(t, api.m.db.AddTask(parentModel))
+	require.NoError(t, api.m.db.AddTask(child1Model))
+	require.NoError(t, api.m.db.AddTask(child2Model))
 
 	require.NoError(t, api.PropagateTaskState(ctx, parentID, model.TaskStateStoppingCanceled))
 
@@ -52,9 +53,9 @@ func TestFindRoot(t *testing.T) {
 	require.NoError(t, api.m.db.AddTask(child1))
 	require.NoError(t, api.m.db.AddTask(child2))
 
-	task_id, err := api.FindRoot(ctx, child1ID)
+	taskID, err := api.FindRoot(ctx, child1ID)
 	require.NoError(t, err)
-	require.Equal(t, parentID, task_id)
+	require.Equal(t, parentID, taskID)
 }
 
 func TestGetTaskChildren(t *testing.T) {
@@ -71,12 +72,12 @@ func TestGetTaskChildren(t *testing.T) {
 	require.NoError(t, api.m.db.AddTask(child1))
 	require.NoError(t, api.m.db.AddTask(child2))
 
-	task_set := map[model.TaskID]bool{parentID: true, child1ID: true, child2ID: true}
+	taskSet := map[model.TaskID]bool{parentID: true, child1ID: true, child2ID: true}
 
 	tasks, err := api.GetTaskChildren(ctx, parentID)
 	require.NoError(t, err)
 	for _, e := range tasks {
-		_, ok := task_set[e.TaskID]
+		_, ok := taskSet[e.TaskID]
 		require.Equal(t, true, ok)
 	}
 }

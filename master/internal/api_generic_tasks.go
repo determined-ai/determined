@@ -289,8 +289,14 @@ func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID) ([
 	if err != nil {
 		return nil, err
 	}
+	if rows.Err() != nil {
+		return nil, err
+	}
 	err = db.Bun().ScanRows(ctx, rows, &tasks)
-	return tasks, err
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
 func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
@@ -345,11 +351,11 @@ func (a *apiServer) KillGenericTask(
 	}
 	for _, childTask := range tasksToDelete {
 		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
-			allocation_id, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
 			}
-			task.DefaultService.Signal(model.AllocationID(allocation_id), task.KillAllocation, "user requested task kill")
+			err = task.DefaultService.Signal(model.AllocationID(allocationID), task.KillAllocation, "user requested task kill")
 			if err != nil {
 				return nil, err
 			}
@@ -365,7 +371,7 @@ func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.Ta
 		ColumnExpr("allocation_id").
 		Where("task_id = ?", taskID).Scan(ctx)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return string(allocation.AllocationID), nil
 }
