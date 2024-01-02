@@ -811,7 +811,7 @@ WHERE unmanaged = false AND state IN (
 // them to DELETE_FAILED.
 func (db *PgDB) FailDeletingExperiment() error {
 	if _, err := db.sql.Exec(`
-UPDATE experiments
+UPDATE run_collections
 SET state = 'DELETE_FAILED'
 WHERE state = 'DELETING'
 `); err != nil {
@@ -856,7 +856,7 @@ func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 
 	// Terminate experiment.
 	if _, err = tx.Exec(
-		`UPDATE experiments SET state=$1, end_time=$2, progress=NULL WHERE id=$3`, state, now, id,
+		`UPDATE run_collections SET state=$1, end_time=$2, progress=NULL WHERE id=$3`, state, now, id,
 	); err != nil {
 		return errors.Wrap(err, "terminating a stopping experiment")
 	}
@@ -873,9 +873,9 @@ func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 // SaveExperimentConfig saves the current experiment config to the database.
 func (db *PgDB) SaveExperimentConfig(id int, config expconf.ExperimentConfig) error {
 	query := `
-UPDATE experiments
+UPDATE experiments_v2
 SET config=$1
-WHERE id = $2`
+WHERE run_collection_id = $2`
 	_, err := db.sql.Exec(query, config, id)
 	return err
 }
@@ -883,7 +883,7 @@ WHERE id = $2`
 // SaveExperimentState saves the current experiment state to the database.
 func (db *PgDB) SaveExperimentState(experiment *model.Experiment) error {
 	query := `
-UPDATE experiments
+UPDATE run_collections
 SET state=:state, end_time=:end_time
 WHERE id = :id`
 	return db.namedExecOne(query, experiment)
@@ -894,11 +894,11 @@ WHERE id = :id`
 func (db *PgDB) TrySaveExperimentState(experiment *model.Experiment) error {
 	var newState, oldState model.State
 	if err := db.sql.QueryRowx(`
-UPDATE experiments e
+UPDATE run_collections rc
 SET state=$2
-FROM (SELECT state FROM experiments WHERE id = $1 FOR UPDATE) old
-WHERE e.id = $1
-RETURNING e.state, old.state
+FROM (SELECT state FROM run_collections WHERE id = $1 FOR UPDATE) old
+WHERE rc.id = $1
+RETURNING rc.state, old.state
 `, experiment.ID, experiment.State).Scan(&newState, &oldState); err != nil {
 		return errors.Wrap(err, "updating experiment state")
 	}
@@ -915,7 +915,7 @@ func (db *PgDB) SaveExperimentArchiveStatus(experiment *model.Experiment) error 
 	}
 
 	query := `
-UPDATE experiments
+UPDATE run_collections
 SET archived=:archived
 WHERE id = :id`
 	return db.namedExecOne(query, experiment)
@@ -939,7 +939,7 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 			return fmt.Errorf("deleting checkpoints (v2): %w", err)
 		}
 
-		if _, err := tx.NewDelete().Model(&model.Experiment{}).
+		if _, err := tx.NewDelete().Model(&model.RunCollection{}).
 			Where("id IN (?)", bun.In(ids)).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("deleting experiments table: %w", err)
@@ -971,7 +971,7 @@ EXISTS(
 
 // SaveExperimentProgress stores the progress for an experiment in the database.
 func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
-	res, err := db.sql.Exec(`UPDATE experiments SET progress = $1 WHERE id = $2`, progress, id)
+	res, err := db.sql.Exec(`UPDATE run_collections SET progress = $1 WHERE id = $2`, progress, id)
 	if err != nil {
 		return errors.Wrap(err, "saving experiment progress")
 	}

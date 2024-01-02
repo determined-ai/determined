@@ -812,5 +812,5 @@ searcher_metric_value_signed =
 (SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const)
 WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)
-	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
+	return errors.Wrapf(err, "error updating best validation for trial %d here really?", trialID)
 }

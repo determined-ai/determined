@@ -415,9 +415,9 @@ func TestExperimentBestSearcherValidation(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, float32(-5.0), val)
 
-	_, err = Bun().NewUpdate().Table("experiments").
+	_, err = Bun().NewUpdate().Table("experiments_v2").
 		Set("config = jsonb_set(config, '{searcher,smaller_is_better}', 'false'::jsonb)").
-		Where("id = ?", exp.ID).
+		Where("run_collection_id = ?", exp.ID).
 		Exec(ctx)
 	require.NoError(t, err)
 
@@ -508,8 +508,8 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	require.NoError(t, err)
 	var m map[string]any
 	require.NoError(t, json.Unmarshal(v, &m))
-	_, err = Bun().NewUpdate().Table("experiments").
-		Where("id = ?", exp.ID).
+	_, err = Bun().NewUpdate().Table("experiments_v2").
+		Where("run_collection_id = ?", exp.ID).
 		Set("config = ?", m).
 		Exec(ctx)
 	require.NoError(t, err)

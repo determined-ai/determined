@@ -174,12 +174,12 @@ RETURNING experiment_id`, bun.In(checkpoints)).Scan(ctx, &experimentIDs)
 	uniqueExpIDs := maps.Keys(set.FromSlice(experimentIDs))
 	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
 	err = idb.NewRaw(`
-UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+UPDATE run_collections SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
 	WHERE experiment_id IN (?)
 	GROUP BY experiment_id
 ) sub
-WHERE experiments.id = sub.experiment_id
+WHERE run_collections.id = sub.experiment_id
 RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
 	if err != nil {
 		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")

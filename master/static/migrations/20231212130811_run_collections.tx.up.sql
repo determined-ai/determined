@@ -101,3 +101,17 @@ SELECT
   rc.external_run_collection_id AS external_experiment_id
 FROM experiments_v2 e
 JOIN run_collections rc ON e.run_collection_id = rc.id;
+
+
+CREATE OR REPLACE FUNCTION autoupdate_exp_best_trial_metrics() RETURNS trigger AS $$
+BEGIN
+    WITH bt AS (
+        SELECT id, best_validation_id
+        FROM trials
+        WHERE experiment_id = NEW.experiment_id
+        ORDER BY searcher_metric_value_signed LIMIT 1)
+    UPDATE experiments_v2 SET best_trial_id = bt.id FROM bt
+    WHERE experiments_v2.run_collection_id = NEW.experiment_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
