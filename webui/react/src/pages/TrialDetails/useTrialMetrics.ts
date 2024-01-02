@@ -38,6 +38,9 @@ export interface TrialMetricData {
   selectedMetrics: Metric[];
 }
 
+export const TRAIN_PREFIX = /^(t_|train_|training_)/;
+export const VAL_PREFIX = /^(v_|val_|validation_)/;
+
 const summarizedMetricToSeries = (
   allDownsampledMetrics: MetricContainer[],
   selectedMetrics: Metric[],
@@ -83,8 +86,11 @@ const summarizedMetricToSeries = (
       data,
       name: `${metric.group}.${metric.name}`,
     };
-    if (metric.group === MetricType.Validation) series.color = VALIDATION_SERIES_COLOR;
-    if (metric.group === MetricType.Training) series.color = TRAINING_SERIES_COLOR;
+
+    if (metric.group === MetricType.Training || metric.name.match(TRAIN_PREFIX))
+      series.color = TRAINING_SERIES_COLOR;
+    if (metric.group === MetricType.Validation || metric.name.match(VAL_PREFIX))
+      series.color = VALIDATION_SERIES_COLOR;
 
     trialData[metricToKey(metric)] = series;
   });
