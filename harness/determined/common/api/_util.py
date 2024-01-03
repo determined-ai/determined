@@ -20,6 +20,9 @@ RETRY_STATUSES = [502, 503, 504]  # Bad Gateway, Service Unavailable, Gateway Ti
 # Default max number of times to retry a request.
 MAX_RETRIES = 5
 
+# Seconds to wait for an NTSC task to become ready before timeout.
+NTSC_TIMEOUT = 60 * 30
+
 
 # Not that read_paginated requires the output of get_with_offset to be a Paginated type to work.
 # The Paginated union type is generated based on response objects with a .pagination attribute.
@@ -125,5 +128,5 @@ def task_is_ready(
 
         return False, ""
 
-    err_msg = util.wait_for(_task_is_done_loading, timeout=300, interval=1)
+    err_msg = util.wait_for(_task_is_done_loading, timeout=NTSC_TIMEOUT, interval=1)
     return err_msg
