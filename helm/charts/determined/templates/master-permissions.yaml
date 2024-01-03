@@ -7,6 +7,17 @@ metadata:
      app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
 
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: genai-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+     app: genai-{{ .Release.Name }}
+     release: {{ .Release.Name }}
+
+
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
