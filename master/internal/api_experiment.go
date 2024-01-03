@@ -1170,12 +1170,12 @@ func (a *apiServer) PatchExperiment(
 			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
 		}
 
-		// TODO(!!!) the following save should also be in a transcation with this.
-		// a.m.db.SaveExperimentConfig
+		// TODO(!!!) the following save should also be in a transcation with
+		// a.m.db.SaveExperimentConfig.
 		if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// TODO there is some weirdness between "experiment" name which is in
-			// the experiment config and run collection name which will be
-			// experiment_id:123. Maybe we should think about this.
+			// Run collection name is different than experiment name that is user specified in
+			// config. Experiment's associated run collection name will be auto generated
+			// to experiment_id:180.
 			if _, err := tx.NewUpdate().Model(&model.RunCollection{}).
 				Where("id = ?", exp.Id).
 				Set("notes = ?", exp.Notes).
