@@ -1649,7 +1649,17 @@ The Single Sign-On (SSO) URL provided by the OIDC provider.
 ``authentication_claim``
 ========================
 
-The claim used for authentication in OIDC.
+The claim used for authentication in OIDC. This parameter specifies the unique identifier for the
+user.
+
+-  Set to ``email`` by default, assuming that email addresses are unique to users.
+
+.. important::
+
+   Enforcing uniqueness constraints can help avoid potential conflicts. In other words, the
+   ``authentication_claim`` parameter value should be unique for each user. It is recommended to
+   leave it as the default (``email``) for uniqueness. Other fields like ``username`` or
+   ``given_name`` may not be unique between users.
 
 ``scim_authentication_attribute``
 =================================
