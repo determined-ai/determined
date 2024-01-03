@@ -239,8 +239,14 @@ func (a *apiServer) CreateGenericTask(
 
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-		if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
-			syslog.WithError(err).Error("marking generic task complete")
+		if ae.FinalState.State == model.AllocationStateTerminated {
+			if err := a.m.db.KillGenericTask(taskID, time.Now().UTC()); err != nil {
+				syslog.WithError(err).Error("marking generic task canceled")
+			}
+		} else {
+			if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
+				syslog.WithError(err).Error("marking generic task complete")
+			}
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
 			syslog.WithError(err).Error("deleting group priority change registry")
@@ -275,14 +281,33 @@ func (a *apiServer) CreateGenericTask(
 	}, nil
 }
 
-func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID) ([]model.Task, error) {
-	query := fmt.Sprintf(`
+func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID, overrideTasks []model.TaskState) ([]model.Task, error) {
+	var query string
+	if len(overrideTasks) > 0 {
+		query = fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	`, taskID)
+		for i, overrideTask := range overrideTasks {
+			if i == 0 {
+				query += fmt.Sprintf(` WHERE t.task_state !='%s'`, overrideTask)
+			} else {
+				query += fmt.Sprintf(` AND t.task_state !='%s'`, overrideTask)
+			}
+		}
+		query += `)
+	SELECT task_id, task_state, parent_id, job_id FROM cte`
+	} else {
+		query = fmt.Sprintf(`
 	WITH RECURSIVE cte as (
 		SELECT * FROM tasks WHERE task_id='%s'
 		UNION ALL
 		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
 	)
 	SELECT task_id, task_state, parent_id, job_id FROM cte`, taskID)
+	}
 
 	var tasks []model.Task
 	rows, err := db.Bun().QueryContext(ctx, query)
@@ -299,14 +324,29 @@ func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID) ([
 	return tasks, nil
 }
 
-func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
-	query := fmt.Sprintf(`
+func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState, overrideStates []model.TaskState) error {
+	var query string
+	if len(overrideStates) > 0 {
+		query = fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	)
+	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id`, taskID, state)
+		for _, overrideState := range overrideStates {
+			query += fmt.Sprintf(` AND cte.task_state!='%s'`, overrideState)
+		}
+		query += ";"
+	} else {
+		query = fmt.Sprintf(`
 	WITH RECURSIVE cte as (
 		SELECT * FROM tasks WHERE task_id='%s'
 		UNION ALL
 		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
 	)
 	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id;`, taskID, state)
+	}
 	_, err := db.Bun().NewRaw(query).Exec(ctx)
 	return err
 }
@@ -341,11 +381,12 @@ func (a *apiServer) KillGenericTask(
 	if err != nil {
 		return nil, err
 	}
-	err = a.PropagateTaskState(ctx, rootID, model.TaskStateStoppingCanceled)
+	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
+	err = a.PropagateTaskState(ctx, rootID, model.TaskStateStoppingCanceled, overrideStates)
 	if err != nil {
 		return nil, err
 	}
-	tasksToDelete, err := a.GetTaskChildren(ctx, rootID)
+	tasksToDelete, err := a.GetTaskChildren(ctx, rootID, overrideStates)
 	if err != nil {
 		return nil, err
 	}

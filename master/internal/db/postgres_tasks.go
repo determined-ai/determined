@@ -119,6 +119,22 @@ WHERE task_id = $1
 	return nil
 }
 
+// KillGenericTask persists the termination of a task of type GENERIC
+func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
+	err := completeTask(db.sql, tID, endTime)
+	if err != nil {
+		return err
+	}
+	if _, err := db.sql.Exec(`
+UPDATE tasks
+SET task_state = $2
+WHERE task_id = $1
+	`, tID, model.TaskStateCanceled); err != nil {
+		return errors.Wrap(err, "killing task")
+	}
+	return nil
+}
+
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {
 	if _, err := ex.Exec(`
 UPDATE tasks
