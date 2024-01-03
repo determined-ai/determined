@@ -463,8 +463,8 @@ func AddExperiment(
 func upsertExperiment(
 	ctx context.Context, idb bun.IDB, rc *model.RunCollection, activeConfigBytes []byte,
 ) (experimentExists bool, err error) {
-	if rc.ExternalRunCollectionID == nil { // TODO read code to validate this.
-		return false, fmt.Errorf("external run collection must be non nil to upsert")
+	if rc.ExternalRunCollectionID == nil { // Can't conflict with a null key.
+		return false, nil
 	}
 
 	var res struct {
@@ -527,7 +527,6 @@ func AddExperimentTx(
 
 	rc, expV2 := experiment.ToRunCollectionAndExperimentV2()
 
-	// TODO(nick) rethink this upsert. This is a very literal way to update this code.
 	// TODO(nick) write tests.
 	experimentExists := false
 	if upsert {

@@ -360,7 +360,7 @@ func TestMoveExperimentsBulk(t *testing.T) {
 
 	for _, id := range expIDs {
 		eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
-			ExperimentId: int32(id),
+			ExperimentId: id,
 		})
 		require.NoError(t, err)
 		require.Equal(t, int32(projectID), eResp.Experiment.ProjectId)
