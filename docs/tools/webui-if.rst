@@ -66,6 +66,34 @@ use the WebUI to edit model metadata. To find out more, visit :ref:`organizing-m
 
 You can use the WebUI to view :ref:`historical-cluster-usage-data`.
 
+**************************
+ Viewing Cluster Topology
+**************************
+
+To view a resource pool's node and GPU distribution, as well as check which GPUs are currently in
+use, start by ensuring there's an active experiment running. Then, follow these steps:
+
+#. Navigate to Resource Pools.
+
+   From the left navigation pane, select **Cluster** to view **Resource Pools**.
+
+#. Check for the Topology section.
+
+   In the resource pool details page, you will find a **Topology** section visible if agents or
+   nodes are provisioned. If no agents or nodes are provisioned, the **Topology** section will not
+   be visible.
+
+#. View the Topology.
+
+   Under the **compute-pool** section, select the **Active slots** hyperlink to access the topology
+   view. This view displays a visual representation of each node, including its unique identifier,
+   and the number of available slots on each node.
+
+#. View Active and Used Slots.
+
+   In the topology visualization, all active or used slots will be highlighted in blue, making it
+   easy to distinguish between available and occupied resources.
+
 ***********************************
  Managing User Accounts and Groups
 ***********************************
