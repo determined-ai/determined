@@ -54,10 +54,11 @@ import ManageJobModalComponent from './ManageJob';
 
 interface Props {
   jobState: JobState;
+  refreshCluster?: () => void;
   selectedRp: ResourcePool;
 }
 
-const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
+const JobQueue: React.FC<Props> = ({ refreshCluster, selectedRp, jobState }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
@@ -79,6 +80,10 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
   const [pageState, setPageState] = useState<{ isLoading: boolean }>({ isLoading: true });
   const manageJobModal = useModal(ManageJobModalComponent);
   const pageRef = useRef<HTMLElement>(null);
+
+  useMemo(() => {
+    refreshCluster?.();
+  }, [total]);
 
   useEffect(() => {
     if (managingJob) {

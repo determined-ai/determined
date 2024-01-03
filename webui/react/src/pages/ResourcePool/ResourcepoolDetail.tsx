@@ -109,6 +109,10 @@ const ResourcepoolDetailInner: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const refreshCluster = useCallback(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   useEffect(() => {
     if (tab || !pool) return;
     const basePath = paths.resourcePool(pool.name);
@@ -162,12 +166,12 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     const tabItems: PivotProps['items'] = [
       {
-        children: <JobQueue jobState={JobState.SCHEDULED} selectedRp={pool} />,
+        children: <JobQueue jobState={JobState.SCHEDULED} selectedRp={pool} refreshCluster={refreshCluster} />,
         key: TabType.Active,
         label: `${poolStats?.stats.scheduledCount ?? ''} Active`,
       },
       {
-        children: <JobQueue jobState={JobState.QUEUED} selectedRp={pool} />,
+        children: <JobQueue jobState={JobState.QUEUED} selectedRp={pool} refreshCluster={refreshCluster} />,
         key: TabType.Queued,
         label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
       },
