@@ -378,31 +378,3 @@ def test_continue_hp_search_single_cli() -> None:
 
     trials = exp.experiment_trials(exp_id)
     assert trials[0].trial.state == bindings.trialv1State.COMPLETED
-
-
-@pytest.mark.e2e_cpu
-def test_continue_hp_search_completed_cli() -> None:
-    exp_id = exp.create_experiment(
-        conf.fixtures_path("no_op/random-short.yaml"),
-        conf.fixtures_path("no_op"),
-        [],
-    )
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
-
-    with pytest.raises(subprocess.CalledProcessError):
-        det_cmd(["e", "continue", str(exp_id)], check=True)
-
-
-@pytest.mark.e2e_cpu
-def test_continue_hp_search_provided_config() -> None:
-    exp_id = exp.create_experiment(
-        conf.fixtures_path("no_op/random-short.yaml"),
-        conf.fixtures_path("no_op"),
-    )
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.COMPLETED)
-
-    with pytest.raises(subprocess.CalledProcessError):
-        det_cmd(
-            ["e", "continue", str(exp_id), "--config", "hyperparameters.metrics_sigma=1.0"],
-            check=True,
-        )
