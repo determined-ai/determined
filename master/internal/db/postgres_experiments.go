@@ -462,9 +462,9 @@ func AddExperiment(
 
 func upsertExperiment(
 	ctx context.Context, idb bun.IDB, rc *model.RunCollection, activeConfigBytes []byte,
-) (experimentExists bool, err error) {
+) (expID int, experimentExists bool, err error) {
 	if rc.ExternalRunCollectionID == nil { // Can't conflict with a null key.
-		return false, nil
+		return 0, false, nil
 	}
 
 	var res struct {
@@ -473,32 +473,33 @@ func upsertExperiment(
 		RunCollectionID int
 		HasExperiment   bool
 	}
-	if err := idb.NewSelect().Model(&res).Column("id").
-		ColumnExpr("e.ID IS NOT NULL AS has_experiment").
+	if err := idb.NewSelect().Model(&res).
+		ColumnExpr("id AS run_collection_id").
+		ColumnExpr("e.run_collection_id IS NOT NULL AS has_experiment").
 		Join("JOIN experiments_v2 e ON e.run_collection_id = run_collections.id").
 		Where("external_run_collection_id = ?", rc.ExternalRunCollectionID).
 		Scan(ctx, &res); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
+			return 0, false, nil
 		}
 
-		return false, fmt.Errorf("looking up external_run_collection_id: %w", err)
+		return 0, false, fmt.Errorf("looking up external_run_collection_id: %w", err)
 	}
 
 	if !res.HasExperiment {
-		return false, fmt.Errorf("tried to upsert experiment with external_run_collection_id %s. "+
+		return 0, false, fmt.Errorf("tried to upsert experiment with external_run_collection_id %s. "+
 			"this ID exists for runCollectionID %d, but has no associated experiment",
 			*rc.ExternalRunCollectionID, res.RunCollectionID)
 	}
 
 	if _, err := idb.NewUpdate().Model(&model.ExperimentV2{}).
-		Set("config", "?", string(activeConfigBytes)).
+		Set("config = ?", string(activeConfigBytes)).
 		Where("run_collection_id = ?", res.RunCollectionID).
 		Exec(ctx); err != nil {
-		return false, fmt.Errorf("updating external_run_collection_id experiment config: %w", err)
+		return 0, false, fmt.Errorf("updating external_run_collection_id experiment config: %w", err)
 	}
 
-	return true, nil
+	return res.RunCollectionID, true, nil
 }
 
 // AddExperimentTx adds the experiment to the database and sets its ID.
@@ -527,13 +528,14 @@ func AddExperimentTx(
 
 	rc, expV2 := experiment.ToRunCollectionAndExperimentV2()
 
-	// TODO(nick) write tests.
 	experimentExists := false
 	if upsert {
-		experimentExists, err = upsertExperiment(ctx, idb, rc, activeConfigStr)
+		var expID int
+		expID, experimentExists, err = upsertExperiment(ctx, idb, rc, activeConfigStr)
 		if err != nil {
 			return err
 		}
+		experiment.ID = expID // This is needed since we modify the input experiment.
 	}
 
 	if !experimentExists {

@@ -390,6 +390,55 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
 }
 
+func TestAddExperimentTxUpsert(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	// Hack to get a config.
+	hackExp := RequireMockExperiment(t, db, user)
+	activeConfig, err := db.ActiveExperimentConfig(hackExp.ID)
+	require.NoError(t, err)
+
+	// Experiment persists with config.
+	externalID := uuid.New().String()
+	exp := &model.Experiment{
+		JobID:                model.NewJobID(),
+		ExternalExperimentID: &externalID,
+		State:                model.ActiveState,
+		StartTime:            time.Now().Add(-time.Hour),
+		ModelDefinitionBytes: []byte{1, 2},
+		OwnerID:              &user.ID,
+		Username:             user.Username,
+		ProjectID:            1,
+	}
+	require.NoError(t, AddExperimentTx(ctx, Bun(), exp, activeConfig, true))
+
+	firstSaveConfig, err := db.ActiveExperimentConfig(exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, activeConfig.Entrypoint(), firstSaveConfig.Entrypoint())
+
+	firstSaveID := exp.ID
+
+	// Upsert experiment with modified config.
+	exp.ID = 0
+	exp.JobID = model.NewJobID()
+
+	newEntrypoint := "newEntrypoint"
+	activeConfig.RawEntrypoint = &expconf.EntrypointV0{
+		RawEntrypoint: &newEntrypoint,
+	}
+	require.NoError(t, AddExperimentTx(ctx, Bun(), exp, activeConfig, true))
+	require.Equal(t, firstSaveID, exp.ID)
+
+	upsertConfig, err := db.ActiveExperimentConfig(exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, newEntrypoint, upsertConfig.Entrypoint().RawEntrypoint)
+}
+
 func TestExperimentBestSearcherValidation(t *testing.T) {
 	ctx := context.Background()
 
