@@ -4,6 +4,10 @@
         "url": "https://docs.determined.ai/latest/"
     },
     {
+        "version": "0.26.8",
+        "url": "https://docs.determined.ai/0.26.8/"
+    },
+    {
         "version": "0.26.7",
         "url": "https://docs.determined.ai/0.26.7/"
     },
