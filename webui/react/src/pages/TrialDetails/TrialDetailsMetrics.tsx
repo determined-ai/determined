@@ -20,7 +20,7 @@ import { glasbeyColor } from 'utils/color';
 import handleError from 'utils/error';
 import { metricSorter, metricToKey } from 'utils/metric';
 
-import { TRAIN_PREFIX, useTrialMetrics, VAL_PREFIX } from './useTrialMetrics';
+import { useTrialMetrics } from './useTrialMetrics';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -29,6 +29,9 @@ export interface Props {
 
 type XAxisVal = number;
 export type CheckpointsDict = Record<XAxisVal, CheckpointWorkloadExtended>;
+
+const TRAIN_PREFIX = /^(t_|train_|training_)/;
+const VAL_PREFIX = /^(v_|val_|validation_)/;
 
 const stripPrefix = (metricName: string): string => {
   return metricName.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, '');
