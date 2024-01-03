@@ -142,7 +142,8 @@ db:
   # scale.
   storageSize: 30Gi
   cpuRequest: 2
-  memRequest: 8Gi
+  # memRequest: 8Gi
+  memRequest: 1Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -225,7 +226,8 @@ maxSlotsPerPod:
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
 masterCpuRequest: 2
-masterMemRequest: 8Gi
+# masterMemRequest: 8Gi
+masterMemRequest: 1Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
@@ -320,3 +322,7 @@ resourcePools:
   - pool_name: default
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
+
+genai:
+  version: "latest"
+  port: 9011
