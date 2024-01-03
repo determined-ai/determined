@@ -81,8 +81,9 @@ const JobQueue: React.FC<Props> = ({ refreshCluster, selectedRp, jobState }) => 
   const manageJobModal = useModal(ManageJobModalComponent);
   const pageRef = useRef<HTMLElement>(null);
 
-  useMemo(() => {
+  useEffect(() => {
     refreshCluster?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [total]);
 
   useEffect(() => {
@@ -129,7 +130,7 @@ const JobQueue: React.FC<Props> = ({ refreshCluster, selectedRp, jobState }) => 
       // Process jobs response.
       if (firstJob && !_.isEqual(firstJob, topJob)) setTopJob(firstJob);
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
-      if (jobs.pagination.total) setTotal(jobs.pagination.total);
+      if (jobs.pagination.total !== undefined) setTotal(jobs.pagination.total);
 
       // Process job stats response.
       setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));

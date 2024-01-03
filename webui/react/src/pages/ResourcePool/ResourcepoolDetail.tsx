@@ -166,12 +166,20 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     const tabItems: PivotProps['items'] = [
       {
-        children: <JobQueue jobState={JobState.SCHEDULED} selectedRp={pool} refreshCluster={refreshCluster} />,
+        children: (
+          <JobQueue
+            jobState={JobState.SCHEDULED}
+            refreshCluster={refreshCluster}
+            selectedRp={pool}
+          />
+        ),
         key: TabType.Active,
         label: `${poolStats?.stats.scheduledCount ?? ''} Active`,
       },
       {
-        children: <JobQueue jobState={JobState.QUEUED} selectedRp={pool} refreshCluster={refreshCluster} />,
+        children: (
+          <JobQueue jobState={JobState.QUEUED} refreshCluster={refreshCluster} selectedRp={pool} />
+        ),
         key: TabType.Queued,
         label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
       },
@@ -196,7 +204,14 @@ const ResourcepoolDetailInner: React.FC = () => {
     }
 
     return tabItems;
-  }, [canManageResourcePoolBindings, pool, poolStats, renderPoolConfig, rpBindingFlagOn]);
+  }, [
+    canManageResourcePoolBindings,
+    pool,
+    poolStats,
+    renderPoolConfig,
+    rpBindingFlagOn,
+    refreshCluster,
+  ]);
 
   if (!pool || Loadable.isNotLoaded(resourcePools)) {
     return <Spinner center spinning />;
