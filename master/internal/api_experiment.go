@@ -1479,7 +1479,7 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	return bytes.([]byte), isSingle, nil
 }
 
-var errHPSearchAllTriesCompleted = status.Error(codes.FailedPrecondition,
+var errContinueHPSearchCompleted = status.Error(codes.FailedPrecondition,
 	"experiment has been completed, cannot continue this experiment")
 
 func (a *apiServer) ContinueExperiment(
@@ -1547,7 +1547,7 @@ func (a *apiServer) ContinueExperiment(
 				}
 			}
 			if !hasIncompleteTrials {
-				return errHPSearchAllTriesCompleted
+				return errContinueHPSearchCompleted
 			}
 		} else if isSingle && len(trialsResp.Trials) > 0 {
 			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.

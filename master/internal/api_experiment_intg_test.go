@@ -291,7 +291,7 @@ func TestHPSearchContinueCompletedError(t *testing.T) {
 	_, err = api.ContinueExperiment(ctx, &apiv1.ContinueExperimentRequest{
 		Id: int32(trial.ExperimentID),
 	})
-	require.ErrorIs(t, err, errHPSearchAllTriesCompleted)
+	require.ErrorIs(t, err, errContinueHPSearchCompleted)
 }
 
 func TestParseAndMergeContinueConfig(t *testing.T) {
