@@ -70,6 +70,7 @@ func TestAddSCIMUser(t *testing.T) {
 				require.Equal(t, dbUser.Active, u.Active)
 				require.Equal(t, dbUser.Username, u.Username)
 				require.Equal(t, dbUser.PasswordHash, u.ToUser().PasswordHash)
+				require.Equal(t, dbUser.DisplayName, u.DisplayName)
 			}
 		})
 	}
@@ -234,6 +235,7 @@ func TestUpdateUserAndDeleteSession(t *testing.T) {
 		{"simple-case-one-field", []string{"username"}, mockSCIMUser(t), true, ""},
 		{"multiple-fields", []string{"name", "emails", "username"}, mockSCIMUser(t), true, ""},
 		{"id-not-found", []string{"username"}, mockSCIMUser(t), false, "does not match updated user ID"},
+		{"id-not-found", []string{"display_name"}, mockSCIMUser(t), false, "does not match updated user ID"},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -272,6 +274,13 @@ func TestUpdateUserAndDeleteSession(t *testing.T) {
 						require.Equal(t, tt.updatedUser.Emails, scimUser.Emails)
 					case "name":
 						require.Equal(t, tt.updatedUser.Name, scimUser.Name)
+					case "display_name":
+						// Since display name isn't a column that exists in the SCIM User DB table,
+						// check that it's updated in the user table correctly.
+						u, err := ByID(ctx, scimUser.UserID)
+						require.NoError(t, err)
+						require.NotEqual(t, addedUser.DisplayName, u.DisplayName)
+						require.Equal(t, tt.updatedUser.DisplayName, u.DisplayName)
 					}
 				}
 			}
@@ -290,6 +299,7 @@ func mockSCIMUser(t *testing.T) *model.SCIMUser {
 func mockSCIMUserWithUsername(t *testing.T, username string) *model.SCIMUser {
 	user := &model.SCIMUser{
 		Username:     username,
+		DisplayName:  null.StringFrom(fmt.Sprintf("disp-%s", username)),
 		ExternalID:   fmt.Sprintf("external-id-%s", username),
 		Name:         model.SCIMName{GivenName: "John", FamilyName: username},
 		Emails:       []model.SCIMEmail{{Type: "personal", SValue: fmt.Sprintf("value-%s", username), Primary: true}},

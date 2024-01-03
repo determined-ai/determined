@@ -80,12 +80,13 @@ func (s *SCIMUserSchemas) UnmarshalJSON(data []byte) error {
 
 // SCIMUser is a user in SCIM.
 type SCIMUser struct {
-	ID         UUID       `bun:"id"  json:"id"`
-	Username   string     `bun:"username" json:"userName"`
-	ExternalID string     `bun:"external_id" json:"externalId"`
-	Name       SCIMName   `bun:"name" json:"name"`
-	Emails     SCIMEmails `bun:"emails" json:"emails"`
-	Active     bool       `bun:"active" json:"active"`
+	ID          UUID        `bun:"id" json:"id"`
+	Username    string      `bun:"username" json:"userName"`
+	ExternalID  string      `bun:"external_id" json:"externalId"`
+	Name        SCIMName    `bun:"name" json:"name"`
+	DisplayName null.String `bun:"display_name" json:"displayName"`
+	Emails      SCIMEmails  `bun:"emails" json:"emails"`
+	Active      bool        `bun:"active" json:"active"`
 
 	PasswordHash null.String `bun:"password_hash" json:"password_hash,omitempty"`
 

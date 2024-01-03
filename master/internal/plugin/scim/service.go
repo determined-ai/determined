@@ -298,9 +298,10 @@ func (s *service) PatchUser(c echo.Context) (interface{}, error) {
 	}
 
 	type Update struct {
-		Active json.RawMessage `json:"active"`
-		Emails json.RawMessage `json:"emails"`
-		Name   json.RawMessage `json:"name"`
+		Active      json.RawMessage `json:"active"`
+		Emails      json.RawMessage `json:"emails"`
+		Name        json.RawMessage `json:"name"`
+		DisplayName json.RawMessage `json:"displayName"`
 	}
 
 	var changes model.SCIMUser
@@ -330,6 +331,10 @@ func (s *service) PatchUser(c echo.Context) (interface{}, error) {
 		}
 
 		if err = parseField(u.Name, "name", &changes.Name); err != nil {
+			return nil, err
+		}
+
+		if err = parseField(u.DisplayName, "display_name", &changes.DisplayName); err != nil {
 			return nil, err
 		}
 	}

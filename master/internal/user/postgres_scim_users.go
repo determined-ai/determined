@@ -33,6 +33,7 @@ func AddSCIMUser(ctx context.Context, suser *model.SCIMUser) (*model.SCIMUser, e
 	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		userID, err := AddUserTx(ctx, tx, &model.User{
 			Username:     suser.Username,
+			DisplayName:  suser.DisplayName,
 			Active:       true,
 			PasswordHash: suser.PasswordHash,
 			Remote:       true,
@@ -90,7 +91,7 @@ func addSCIMUserTx(ctx context.Context, tx bun.IDB, user *model.SCIMUser) (model
 func SCIMUserList(ctx context.Context, startIndex, count int, username string) (*model.SCIMUsers, error) {
 	var users []*model.SCIMUser
 	q := db.Bun().NewSelect().TableExpr("users AS u, scim.users AS s").
-		ColumnExpr("s.id, u.username, s.external_id, s.name, s.emails, u.active").
+		ColumnExpr("s.id, u.username, u.display_name, s.external_id, s.name, s.emails, u.active").
 		Where("u.id = s.user_id").Order("id")
 	if username != "" {
 		q = q.Where("u.username = ?", username)
@@ -127,7 +128,7 @@ func SCIMUserList(ctx context.Context, startIndex, count int, username string) (
 func SCIMUserByID(ctx context.Context, tx bun.IDB, id model.UUID) (*model.SCIMUser, error) {
 	var suser model.SCIMUser
 	if err := tx.NewSelect().TableExpr("users AS u, scim.users AS s").
-		ColumnExpr("s.id, u.username, s.external_id, s.name, s.emails, u.active, s.raw_attributes").
+		ColumnExpr("s.id, u.username, u.display_name, s.external_id, s.name, s.emails, u.active, s.raw_attributes").
 		Where("u.id = s.user_id AND s.id = ?", id).Scan(ctx, &suser); errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.WithStack(db.ErrNotFound)
 	} else if err != nil {
@@ -141,7 +142,7 @@ func SCIMUserByID(ctx context.Context, tx bun.IDB, id model.UUID) (*model.SCIMUs
 func scimUserByAttribute(ctx context.Context, name string, value string) (*model.SCIMUser, error) {
 	var suser model.SCIMUser
 	if err := db.Bun().NewSelect().TableExpr("users u, scim.users s").
-		ColumnExpr("s.id, u.username, s.external_id, s.name, s.emails, u.active, s.raw_attributes").
+		ColumnExpr("s.id, u.username, u.display_name, s.external_id, s.name, s.emails, u.active, s.raw_attributes").
 		Where("u.id = s.user_id AND s.raw_attributes->>? = ?", name, value).
 		Scan(ctx, &suser); errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.WithStack(db.ErrNotFound)
@@ -156,7 +157,7 @@ func scimUserByAttribute(ctx context.Context, name string, value string) (*model
 func UserBySCIMAttribute(ctx context.Context, name string, value string) (*model.User, error) {
 	var user model.User
 	if err := db.Bun().NewSelect().TableExpr("users AS u, scim.users AS s").
-		ColumnExpr("u.id, u.username, u.active, u.password_hash, u.remote").
+		ColumnExpr("u.id, u.username, u.display_name, u.active, u.password_hash, u.remote").
 		Where("u.id = s.user_id AND s.raw_attributes->>?=?", name, value).
 		Scan(ctx, &user); errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.WithStack(db.ErrNotFound)
@@ -178,6 +179,7 @@ func SetSCIMUser(ctx context.Context, id string, user *model.SCIMUser) (*model.S
 			"username",
 			"password_hash",
 			"raw_attributes",
+			"display_name",
 		})
 }
 
@@ -236,6 +238,11 @@ func updateSCIMUser(ctx context.Context, tx bun.IDB, user *model.SCIMUser, field
 	if fieldSet.Contains("password_hash") {
 		userValues["password_hash"] = user.PasswordHash
 		fieldSet.Remove("password_hash")
+	}
+
+	if fieldSet.Contains("display_name") {
+		userValues["display_name"] = user.DisplayName
+		fieldSet.Remove("display_name")
 	}
 
 	if len(userValues) > 0 {
