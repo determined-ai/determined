@@ -1546,7 +1546,7 @@ func (a *apiServer) ContinueExperiment(
 		// Lock experiment state.
 		var expState model.State
 		if err = tx.
-			NewRaw(`SELECT state FROM experiments WHERE id = ? FOR UPDATE`, req.Id).
+			NewRaw(`SELECT state FROM run_collections WHERE id = ? FOR UPDATE`, req.Id).
 			Scan(ctx, &expState); err != nil {
 			return fmt.Errorf("getting / locking experiment state: %w", err)
 		}
@@ -1576,7 +1576,7 @@ func (a *apiServer) ContinueExperiment(
 			}
 		}
 
-		if _, err := tx.NewUpdate().Model(&model.Experiment{}).
+		if _, err := tx.NewUpdate().Model(&model.RunCollection{}).
 			Set("state = ?", model.PausedState). // Throw it in paused.
 			Set("progress = ?", 0.0).            // Reset progress.
 			Set("end_time = null").
@@ -1599,9 +1599,9 @@ func (a *apiServer) ContinueExperiment(
 		if err != nil {
 			return fmt.Errorf("unmarshaling exp config %v: %w", activeConfig, err)
 		}
-		if _, err := tx.NewUpdate().Model(&model.Experiment{}).
+		if _, err := tx.NewUpdate().Model(&model.ExperimentV2{}).
 			Set("config = ?", string(activeConfigStr)).
-			Where("id = ?", req.Id).
+			Where("run_collection_id = ?", req.Id).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("updating experiments config: %w", err)
 		}

@@ -726,10 +726,10 @@ func MoveExperiments(ctx context.Context,
 
 		var acceptedIDs []int32
 		_, err = tx.NewUpdate().
-			ModelTableExpr("experiments as e").
+			ModelTableExpr("run_collections").
 			Set("project_id = ?", destinationProjectID).
-			Where("e.id IN (?)", bun.In(validIDs)).
-			Returning("e.id").
+			Where("id IN (?)", bun.In(validIDs)).
+			Returning("id").
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {

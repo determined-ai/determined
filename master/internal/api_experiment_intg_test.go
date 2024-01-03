@@ -321,6 +321,52 @@ func TestExperimentArchiveUnarchiveBulk(t *testing.T) {
 	}
 }
 
+func TestMoveExperiment(t *testing.T) {
+	// TODO(!!!) should add tests for failure cases.
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	exp := createTestExp(t, api, curUser)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	_, err := api.MoveExperiment(ctx, &apiv1.MoveExperimentRequest{
+		ExperimentId:         int32(exp.ID),
+		DestinationProjectId: int32(projectID),
+	})
+	require.NoError(t, err)
+
+	eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+		ExperimentId: int32(exp.ID),
+	})
+	require.NoError(t, err)
+	require.Equal(t, int32(projectID), eResp.Experiment.ProjectId)
+}
+
+func TestMoveExperimentsBulk(t *testing.T) {
+	// TODO(!!!) should add tests for failure cases.
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	exps := []*model.Experiment{
+		createTestExp(t, api, curUser),
+		createTestExp(t, api, curUser),
+	}
+	expIDs := []int32{int32(exps[0].ID), int32(exps[1].ID)}
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	_, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+		ExperimentIds:        expIDs,
+		DestinationProjectId: int32(projectID),
+	})
+	require.NoError(t, err)
+
+	for _, id := range expIDs {
+		eResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+			ExperimentId: int32(id),
+		})
+		require.NoError(t, err)
+		require.Equal(t, int32(projectID), eResp.Experiment.ProjectId)
+	}
+}
+
 func TestGetTaskContextDirectoryExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
