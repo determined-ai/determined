@@ -306,3 +306,15 @@ message KillGenericTaskRequest {
 
 // Response to KillGenericTaskRequest
 message KillGenericTaskResponse {}
+
+// Pauses generic task
+message PauseGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to PauseGenericTaskRequest
+message PauseGenericTaskResponse {}

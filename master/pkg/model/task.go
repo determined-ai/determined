@@ -159,6 +159,8 @@ const (
 	TaskStateError TaskState = "ERROR"
 	// TaskStatePaused denotes that task has been paused.
 	TaskStatePaused TaskState = "PAUSED"
+	// TaskStatePaused denotes that task has been paused.
+	TaskStateStoppingPaused TaskState = "STOPPING_PAUSED"
 	// TaskStateStoppingCanceled denotes that the task is in the process of being canceled.
 	TaskStateStoppingCanceled TaskState = "STOPPING_CANCELED"
 	// TaskStateStoppingCompleted denotes that the task is in the process of being completed.

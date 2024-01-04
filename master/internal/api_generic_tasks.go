@@ -240,8 +240,8 @@ func (a *apiServer) CreateGenericTask(
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
 		if ae.FinalState.State == model.AllocationStateTerminated {
-			if err := a.m.db.KillGenericTask(taskID, time.Now().UTC()); err != nil {
-				syslog.WithError(err).Error("marking generic task canceled")
+			if err := a.m.db.TerminateGenericTask(taskID, time.Now().UTC()); err != nil {
+				syslog.WithError(err).Error("marking generic task canceled/paused")
 			}
 		} else {
 			if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
@@ -412,6 +412,33 @@ func (a *apiServer) KillGenericTask(
 		}
 	}
 	return &apiv1.KillGenericTaskResponse{}, nil
+}
+
+func (a *apiServer) PauseGenericTask(
+	ctx context.Context, req *apiv1.PauseGenericTaskRequest,
+) (*apiv1.PauseGenericTaskResponse, error) {
+	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted, model.TaskStatePaused}
+	err := a.PropagateTaskState(ctx, model.TaskID(req.TaskId), model.TaskStateStoppingPaused, overrideStates)
+	if err != nil {
+		return nil, err
+	}
+	tasksToDelete, err := a.GetTaskChildren(ctx, model.TaskID(req.TaskId), overrideStates)
+	if err != nil {
+		return nil, err
+	}
+	for _, childTask := range tasksToDelete {
+		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
+			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			if err != nil {
+				return nil, err
+			}
+			err = task.DefaultService.Signal(model.AllocationID(allocationID), task.TerminateAllocation, "user requested task kill")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return &apiv1.PauseGenericTaskResponse{}, nil
 }
 
 func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,

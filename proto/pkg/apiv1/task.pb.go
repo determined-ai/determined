@@ -1760,6 +1760,94 @@ func (*KillGenericTaskResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_task_proto_rawDescGZIP(), []int{29}
 }
 
+// Pauses generic task
+type PauseGenericTaskRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The id of the task.
+	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+}
+
+func (x *PauseGenericTaskRequest) Reset() {
+	*x = PauseGenericTaskRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_task_proto_msgTypes[30]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PauseGenericTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseGenericTaskRequest) ProtoMessage() {}
+
+func (x *PauseGenericTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_task_proto_msgTypes[30]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseGenericTaskRequest.ProtoReflect.Descriptor instead.
+func (*PauseGenericTaskRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_task_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *PauseGenericTaskRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+// Response to PauseGenericTaskRequest
+type PauseGenericTaskResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *PauseGenericTaskResponse) Reset() {
+	*x = PauseGenericTaskResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_task_proto_msgTypes[31]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PauseGenericTaskResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseGenericTaskResponse) ProtoMessage() {}
+
+func (x *PauseGenericTaskResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_task_proto_msgTypes[31]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseGenericTaskResponse.ProtoReflect.Descriptor instead.
+func (*PauseGenericTaskResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_task_proto_rawDescGZIP(), []int{31}
+}
+
 var File_determined_api_v1_task_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_task_proto_rawDesc = []byte{
@@ -2018,11 +2106,17 @@ var file_determined_api_v1_task_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x73, 0x6b, 0x49, 0x64, 0x3a, 0x0f, 0x92, 0x41,
 	0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x74, 0x61, 0x73, 0x6b, 0x5f, 0x69, 0x64, 0x22, 0x19, 0x0a,
 	0x17, 0x4b, 0x69, 0x6c, 0x6c, 0x47, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63, 0x54, 0x61, 0x73, 0x6b,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
-	0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62,
-	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x43, 0x0a, 0x17, 0x50, 0x61, 0x75, 0x73,
+	0x65, 0x47, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x74, 0x61, 0x73, 0x6b, 0x5f, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x73, 0x6b, 0x49, 0x64, 0x3a, 0x0f, 0x92, 0x41,
+	0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x74, 0x61, 0x73, 0x6b, 0x5f, 0x69, 0x64, 0x22, 0x1a, 0x0a,
+	0x18, 0x50, 0x61, 0x75, 0x73, 0x65, 0x47, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63, 0x54, 0x61, 0x73,
+	0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74,
+	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2037,7 +2131,7 @@ func file_determined_api_v1_task_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_task_proto_rawDescData
 }
 
-var file_determined_api_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_determined_api_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_determined_api_v1_task_proto_goTypes = []interface{}{
 	(*CreateGenericTaskRequest)(nil),        // 0: determined.api.v1.CreateGenericTaskRequest
 	(*CreateGenericTaskResponse)(nil),       // 1: determined.api.v1.CreateGenericTaskResponse
@@ -2069,35 +2163,37 @@ var file_determined_api_v1_task_proto_goTypes = []interface{}{
 	(*GetGenericTaskConfigResponse)(nil),    // 27: determined.api.v1.GetGenericTaskConfigResponse
 	(*KillGenericTaskRequest)(nil),          // 28: determined.api.v1.KillGenericTaskRequest
 	(*KillGenericTaskResponse)(nil),         // 29: determined.api.v1.KillGenericTaskResponse
-	nil,                                     // 30: determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry
-	(*utilv1.File)(nil),                     // 31: determined.util.v1.File
-	(LaunchWarning)(0),                      // 32: determined.api.v1.LaunchWarning
-	(*taskv1.Task)(nil),                     // 33: determined.task.v1.Task
-	(*taskv1.TaskLog)(nil),                  // 34: determined.task.v1.TaskLog
-	(logv1.LogLevel)(0),                     // 35: determined.log.v1.LogLevel
-	(*timestamp.Timestamp)(nil),             // 36: google.protobuf.Timestamp
-	(OrderBy)(0),                            // 37: determined.api.v1.OrderBy
-	(*checkpointv1.Checkpoint)(nil),         // 38: determined.checkpoint.v1.Checkpoint
-	(*AcceleratorData)(nil),                 // 39: determined.api.v1.AcceleratorData
-	(*taskv1.Allocation)(nil),               // 40: determined.task.v1.Allocation
-	(*taskv1.AllocationSummary)(nil),        // 41: determined.task.v1.AllocationSummary
+	(*PauseGenericTaskRequest)(nil),         // 30: determined.api.v1.PauseGenericTaskRequest
+	(*PauseGenericTaskResponse)(nil),        // 31: determined.api.v1.PauseGenericTaskResponse
+	nil,                                     // 32: determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry
+	(*utilv1.File)(nil),                     // 33: determined.util.v1.File
+	(LaunchWarning)(0),                      // 34: determined.api.v1.LaunchWarning
+	(*taskv1.Task)(nil),                     // 35: determined.task.v1.Task
+	(*taskv1.TaskLog)(nil),                  // 36: determined.task.v1.TaskLog
+	(logv1.LogLevel)(0),                     // 37: determined.log.v1.LogLevel
+	(*timestamp.Timestamp)(nil),             // 38: google.protobuf.Timestamp
+	(OrderBy)(0),                            // 39: determined.api.v1.OrderBy
+	(*checkpointv1.Checkpoint)(nil),         // 40: determined.checkpoint.v1.Checkpoint
+	(*AcceleratorData)(nil),                 // 41: determined.api.v1.AcceleratorData
+	(*taskv1.Allocation)(nil),               // 42: determined.task.v1.Allocation
+	(*taskv1.AllocationSummary)(nil),        // 43: determined.task.v1.AllocationSummary
 }
 var file_determined_api_v1_task_proto_depIdxs = []int32{
-	31, // 0: determined.api.v1.CreateGenericTaskRequest.context_directory:type_name -> determined.util.v1.File
-	32, // 1: determined.api.v1.CreateGenericTaskResponse.warnings:type_name -> determined.api.v1.LaunchWarning
-	33, // 2: determined.api.v1.GetTaskResponse.task:type_name -> determined.task.v1.Task
-	34, // 3: determined.api.v1.PostTaskLogsRequest.logs:type_name -> determined.task.v1.TaskLog
-	35, // 4: determined.api.v1.TaskLogsRequest.levels:type_name -> determined.log.v1.LogLevel
-	36, // 5: determined.api.v1.TaskLogsRequest.timestamp_before:type_name -> google.protobuf.Timestamp
-	36, // 6: determined.api.v1.TaskLogsRequest.timestamp_after:type_name -> google.protobuf.Timestamp
-	37, // 7: determined.api.v1.TaskLogsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	36, // 8: determined.api.v1.TaskLogsResponse.timestamp:type_name -> google.protobuf.Timestamp
-	35, // 9: determined.api.v1.TaskLogsResponse.level:type_name -> determined.log.v1.LogLevel
-	38, // 10: determined.api.v1.ReportCheckpointRequest.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
-	30, // 11: determined.api.v1.GetTasksResponse.allocation_id_to_summary:type_name -> determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry
-	39, // 12: determined.api.v1.GetTaskAcceleratorDataResponse.accelerator_data:type_name -> determined.api.v1.AcceleratorData
-	40, // 13: determined.api.v1.GetAllocationResponse.allocation:type_name -> determined.task.v1.Allocation
-	41, // 14: determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry.value:type_name -> determined.task.v1.AllocationSummary
+	33, // 0: determined.api.v1.CreateGenericTaskRequest.context_directory:type_name -> determined.util.v1.File
+	34, // 1: determined.api.v1.CreateGenericTaskResponse.warnings:type_name -> determined.api.v1.LaunchWarning
+	35, // 2: determined.api.v1.GetTaskResponse.task:type_name -> determined.task.v1.Task
+	36, // 3: determined.api.v1.PostTaskLogsRequest.logs:type_name -> determined.task.v1.TaskLog
+	37, // 4: determined.api.v1.TaskLogsRequest.levels:type_name -> determined.log.v1.LogLevel
+	38, // 5: determined.api.v1.TaskLogsRequest.timestamp_before:type_name -> google.protobuf.Timestamp
+	38, // 6: determined.api.v1.TaskLogsRequest.timestamp_after:type_name -> google.protobuf.Timestamp
+	39, // 7: determined.api.v1.TaskLogsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	38, // 8: determined.api.v1.TaskLogsResponse.timestamp:type_name -> google.protobuf.Timestamp
+	37, // 9: determined.api.v1.TaskLogsResponse.level:type_name -> determined.log.v1.LogLevel
+	40, // 10: determined.api.v1.ReportCheckpointRequest.checkpoint:type_name -> determined.checkpoint.v1.Checkpoint
+	32, // 11: determined.api.v1.GetTasksResponse.allocation_id_to_summary:type_name -> determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry
+	41, // 12: determined.api.v1.GetTaskAcceleratorDataResponse.accelerator_data:type_name -> determined.api.v1.AcceleratorData
+	42, // 13: determined.api.v1.GetAllocationResponse.allocation:type_name -> determined.task.v1.Allocation
+	43, // 14: determined.api.v1.GetTasksResponse.AllocationIdToSummaryEntry.value:type_name -> determined.task.v1.AllocationSummary
 	15, // [15:15] is the sub-list for method output_type
 	15, // [15:15] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
@@ -2474,6 +2570,30 @@ func file_determined_api_v1_task_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_task_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PauseGenericTaskRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_task_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PauseGenericTaskResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_task_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	file_determined_api_v1_task_proto_msgTypes[15].OneofWrappers = []interface{}{}
@@ -2483,7 +2603,7 @@ func file_determined_api_v1_task_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_task_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -119,18 +119,19 @@ WHERE task_id = $1
 	return nil
 }
 
-// KillGenericTask persists the termination of a task of type GENERIC.
-func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
-	err := completeTask(db.sql, tID, endTime)
-	if err != nil {
-		return err
-	}
+// TerminateGenericTask persists the termination of a task of type GENERIC.
+func (db *PgDB) TerminateGenericTask(tID model.TaskID, endTime time.Time) error {
 	if _, err := db.sql.Exec(`
-UPDATE tasks
-SET task_state = $2
-WHERE task_id = $1
-	`, tID, model.TaskStateCanceled); err != nil {
-		return errors.Wrap(err, "killing task")
+	UPDATE tasks
+	SET task_state = (
+	CASE WHEN task_state=$2 THEN $3::task_state
+	ELSE $4::task_state END),
+	end_time = (CASE WHEN task_state=$5 THEN $6::timestamp ELSE NULL END)
+	WHERE task_id = $1
+	`, tID, model.TaskStateStoppingPaused,
+		model.TaskStatePaused, model.TaskStateCanceled,
+		model.TaskStateStoppingCanceled, endTime); err != nil {
+		return errors.Wrap(err, "killing/pausing task")
 	}
 	return nil
 }
