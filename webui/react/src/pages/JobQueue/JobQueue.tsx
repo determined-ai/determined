@@ -21,20 +21,10 @@ import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
-import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
+import { cancelExperiment, getJobQ, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
-import {
-  DetailedUser,
-  FullJob,
-  Job,
-  JobAction,
-  JobState,
-  JobType,
-  ResourcePool,
-  RPStats,
-} from 'types';
+import { DetailedUser, FullJob, Job, JobAction, JobState, JobType, ResourcePool } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
   canManageJob,
@@ -54,24 +44,13 @@ import ManageJobModalComponent from './ManageJob';
 
 interface Props {
   jobState: JobState;
+  rpStats: Api.V1RPQueueStat[];
   selectedRp: ResourcePool;
 }
 
-const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
+const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
-  const resourcePools = useObservable(clusterStore.resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
-  const [rpStats, setRpStats] = useState<RPStats[]>(() => {
-    if (!Loadable.isLoaded(resourcePools)) return [];
-
-    return resourcePools.data.map(
-      (rp) =>
-        ({
-          resourcePool: rp.name,
-          stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
-        }) as RPStats,
-    );
-  });
   const [jobs, setJobs] = useState<Job[]>([]);
   const [topJob, setTopJob] = useState<Job>();
   const [total, setTotal] = useState(0);
@@ -92,24 +71,21 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
 
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
 
-  const fetchAll = useCallback(async () => {
+  const fetchJobsTable = useCallback(async () => {
     if (!settings) return;
 
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      const [jobs, stats] = await Promise.all([
-        getJobQ(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-            orderBy,
-            resourcePool: selectedRp.name,
-            states: jobState ? [jobState] : undefined,
-          },
-          { signal: canceler.signal },
-        ),
-        getJobQStats({}, { signal: canceler.signal }),
-      ]);
+      const jobs = await getJobQ(
+        {
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
+          orderBy,
+          resourcePool: selectedRp.name,
+          states: jobState ? [jobState] : undefined,
+        },
+        { signal: canceler.signal },
+      );
 
       const firstJobResp = await getJobQ(
         {
@@ -124,10 +100,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
       // Process jobs response.
       if (firstJob && !_.isEqual(firstJob, topJob)) setTopJob(firstJob);
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
-      if (jobs.pagination.total) setTotal(jobs.pagination.total);
-
-      // Process job stats response.
-      setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
+      if (jobs.pagination.total !== undefined) setTotal(jobs.pagination.total);
     } catch (e) {
       if ((e as DetError)?.publicMessage === 'offset out of bounds' && settings.tableOffset !== 0) {
         updateSettings({ tableOffset: 0 });
@@ -144,7 +117,7 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
     }
   }, [canceler.signal, selectedRp.name, settings, jobState, topJob, updateSettings]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  usePolling(fetchJobsTable, { rerunOnNewFn: true });
 
   const rpTotalJobCount = useCallback(
     (rpName: string) => {
@@ -200,18 +173,18 @@ const JobQueue: React.FC<Props> = ({ selectedRp, jobState }) => {
         if (!fn) return;
         triggers[action] = async () => {
           await fn();
-          await fetchAll();
+          await fetchJobsTable();
         };
       });
       return triggers;
     },
-    [selectedRp, isJobOrderAvailable, topJob, fetchAll],
+    [selectedRp, isJobOrderAvailable, topJob, fetchJobsTable],
   );
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
-    fetchAll();
-  }, [fetchAll]);
+    fetchJobsTable();
+  }, [fetchJobsTable]);
 
   useEffect(() => {
     if (!managingJob) return;
