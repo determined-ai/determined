@@ -173,7 +173,6 @@ func TestBroadcastWithFilters(t *testing.T) {
 	}
 	event := Event[TestMsg]{After: &afterMsg}
 	publisher.Broadcast([]Event[TestMsg]{event})
-
 	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
 
 	beforeMsg := TestMsg{
@@ -190,7 +189,6 @@ func TestBroadcastWithFilters(t *testing.T) {
 	}
 	event = Event[TestMsg]{After: &afterMsg}
 	publisher.Broadcast([]Event[TestMsg]{event})
-
 	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
 
 	// Msgs sent on publisherTwo should be conditionally sent.
@@ -200,7 +198,6 @@ func TestBroadcastWithFilters(t *testing.T) {
 	}
 	event = Event[TestMsg]{After: &afterMsg}
 	publisherTwo.Broadcast([]Event[TestMsg]{event})
-
 	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
 
 	beforeMsg = TestMsg{
@@ -209,7 +206,6 @@ func TestBroadcastWithFilters(t *testing.T) {
 	}
 	event = Event[TestMsg]{Before: &beforeMsg}
 	publisherTwo.Broadcast([]Event[TestMsg]{event})
-
 	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
 
 	afterMsg = TestMsg{
@@ -236,6 +232,7 @@ func TestBroadcastWithFilters(t *testing.T) {
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "4", deleteMsg.Deleted, "Deleted number incorrect")
 
+	// Msgs on publisher should not be sent
 	afterMsg = TestMsg{
 		Seq: 30,
 		ID:  30,
@@ -255,43 +252,15 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 	oneSub.Register()
 	falseSub.Register()
 
-	// Msgs sent on publisher should not be sent.
+	// Msgs sent on publisherTwo should be conditionally sent.
 	afterMsg := TestMsg{
-		Seq: 0,
-		ID:  0,
+		Seq: 1,
+		ID:  1,
 	}
 	event := Event[TestMsg]{After: &afterMsg}
-	publisher.Broadcast([]Event[TestMsg]{event})
-
-	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
-
-	beforeMsg := TestMsg{
-		Seq: 1,
-		ID:  1,
-	}
-	event = Event[TestMsg]{Before: &beforeMsg}
-	publisher.Broadcast([]Event[TestMsg]{event})
-
-	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
-
-	afterMsg = TestMsg{
-		Seq: 2,
-		ID:  2,
-	}
-	event = Event[TestMsg]{After: &afterMsg}
-	publisher.Broadcast([]Event[TestMsg]{event})
-
-	require.Equal(t, 0, len(streamer.Msgs), "picked up message we don't want")
-
-	// Msgs sent on publisherTwo should be conditionally sent.
-	afterMsg = TestMsg{
-		Seq: 1,
-		ID:  1,
-	}
-	event = Event[TestMsg]{After: &afterMsg}
 	publisherTwo.Broadcast([]Event[TestMsg]{event})
 
-	beforeMsg = TestMsg{
+	beforeMsg := TestMsg{
 		Seq: 2,
 		ID:  2,
 	}
@@ -324,6 +293,7 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "4", deleteMsg.Deleted, "Deleted number incorrect")
 
+	// Msgs on publisher should not be sent.
 	afterMsg = TestMsg{
 		Seq: 3,
 		ID:  3,
