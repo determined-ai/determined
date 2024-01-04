@@ -24,16 +24,7 @@ import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import userStore from 'stores/users';
-import {
-  DetailedUser,
-  FullJob,
-  Job,
-  JobAction,
-  JobState,
-  JobType,
-  ResourcePool,
-  RPStats,
-} from 'types';
+import { DetailedUser, FullJob, Job, JobAction, JobState, JobType, ResourcePool } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
   canManageJob,
@@ -53,7 +44,7 @@ import ManageJobModalComponent from './ManageJob';
 
 interface Props {
   jobState: JobState;
-  rpStats: RPStats[];
+  rpStats: Api.V1RPQueueStat[];
   selectedRp: ResourcePool;
 }
 

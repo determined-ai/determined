@@ -996,7 +996,6 @@ export const JobType = Api.Jobv1Type;
 export type JobType = Api.Jobv1Type;
 export const JobState = Api.Jobv1State;
 export type JobState = Api.Jobv1State;
-export type RPStats = Api.V1RPQueueStat;
 
 export const JobAction = {
   Cancel: 'Cancel',

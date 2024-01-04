@@ -21,14 +21,9 @@ import JobQueue from 'pages/JobQueue/JobQueue';
 import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import {
-  V1GetJobQueueStatsResponse,
-  V1ResourcePoolDetail,
-  V1RPQueueStat,
-  V1SchedulerType,
-} from 'services/api-ts-sdk';
+import { V1ResourcePoolDetail, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
-import { JobState, JsonObject, ResourceState, RPStats, ValueOf } from 'types';
+import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -80,7 +75,7 @@ const ResourcepoolDetailInner: React.FC = () => {
   const [canceler] = useState(new AbortController());
 
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
-  const [poolStats, setPoolStats] = useState<V1RPQueueStat>();
+  const [poolsStats, setPoolsStats] = useState<V1RPQueueStat[]>();
 
   const topologyAgentPool = useMemo(
     () => (poolname ? agents.filter(({ resourcePools }) => resourcePools.includes(poolname)) : []),
@@ -89,12 +84,9 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const promises = [getJobQStats({}, { signal: canceler.signal })] as [
-        Promise<V1GetJobQueueStatsResponse>,
-      ];
-      const [stats] = await Promise.all(promises);
-      const pool = stats.results.find((p) => p.resourcePool === poolname);
-      setPoolStats(pool);
+      const stats = await getJobQStats({}, { signal: canceler.signal });
+      const pool = stats.results;
+      setPoolsStats(pool);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -103,21 +95,23 @@ const ResourcepoolDetailInner: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [canceler.signal, poolname]);
+  }, [canceler.signal]);
 
   usePolling(fetchStats, { rerunOnNewFn: true });
 
-  const rpStats = useMemo<RPStats[]>(() => {
+  const rpStats = useMemo<V1RPQueueStat[]>(() => {
     if (!Loadable.isLoaded(resourcePools)) return [];
 
-    return resourcePools.data.map(
-      (rp) =>
-        ({
-          resourcePool: rp.name,
-          stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
-        }) as RPStats,
-    );
-  }, [resourcePools]);
+    return resourcePools.data.map((rp) => {
+      const matchStats = poolsStats?.find((p) => p.resourcePool === rp.name);
+      return {
+        resourcePool: rp.name,
+        stats: matchStats
+          ? matchStats.stats
+          : { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
+      } as V1RPQueueStat;
+    });
+  }, [resourcePools, poolsStats]);
 
   useEffect(() => {
     if (tab || !pool) return;
@@ -164,6 +158,11 @@ const ResourcepoolDetailInner: React.FC = () => {
       </>
     );
   }, [pool]);
+
+  const poolStats = useMemo(
+    () => poolsStats?.find((p) => p.resourcePool === poolname),
+    [poolsStats, poolname],
+  );
 
   const tabItems: PivotProps['items'] = useMemo(() => {
     if (!pool) {
