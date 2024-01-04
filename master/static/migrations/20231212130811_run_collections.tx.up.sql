@@ -8,7 +8,7 @@ CREATE TABLE run_collections (
   name text NOT NULL,
   state experiment_state NOT NULL,
   notes text NOT NULL,
-  project_id integer NOT NULL REFERENCES projects(id),
+  project_id integer NOT NULL DEFAULT 1 REFERENCES projects(id),
   owner_id integer NOT NULL REFERENCES users(id),
   progress double precision,
   archived bool NOT NULL DEFAULT false,
@@ -18,6 +18,8 @@ CREATE TABLE run_collections (
   checkpoint_count integer NOT NULL DEFAULT 0,
   external_run_collection_id TEXT UNIQUE NULL
 );
+
+CREATE INDEX ix_run_collections_project_id ON run_collections USING btree (project_id);
 
 INSERT INTO run_collections (
   id,
