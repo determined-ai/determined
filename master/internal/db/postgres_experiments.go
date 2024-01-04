@@ -476,7 +476,7 @@ func upsertExperiment(
 	if err := idb.NewSelect().Model(&res).
 		ColumnExpr("id AS run_collection_id").
 		ColumnExpr("e.run_collection_id IS NOT NULL AS has_experiment").
-		Join("JOIN experiments_v2 e ON e.run_collection_id = run_collections.id").
+		Join("LEFT JOIN experiments_v2 e ON e.run_collection_id = run_collections.id").
 		Where("external_run_collection_id = ?", rc.ExternalRunCollectionID).
 		Scan(ctx, &res); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -555,6 +555,16 @@ func AddExperimentTx(
 			Returning("run_collection_id").
 			Exec(ctx); err != nil {
 			return fmt.Errorf("adding experiment v2 model to the database: %w", err)
+		}
+
+		// Our name inserted is wrong since it has ID of 0.
+		// Update the name now that we know the experiment ID.
+		rcWithName, _ := experiment.ToRunCollectionAndExperimentV2()
+		if _, err := idb.NewUpdate().Model(rcWithName).
+			Column("name").
+			WherePK().
+			Exec(ctx); err != nil {
+			return fmt.Errorf("adding experiment run collection name: %w", err)
 		}
 	}
 

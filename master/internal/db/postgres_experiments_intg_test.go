@@ -423,6 +423,15 @@ func TestAddExperimentTxUpsert(t *testing.T) {
 
 	firstSaveID := exp.ID
 
+	// Check name is updated correctly.
+	var actualRC model.RunCollection
+	require.NoError(t, Bun().NewSelect().Model(&actualRC).
+		Where("id = ?", exp.ID).
+		Scan(ctx, &actualRC))
+	require.Equal(t,
+		fmt.Sprintf("experiment_id:%d, external_experiment_id:%s", exp.ID, externalID),
+		actualRC.Name)
+
 	// Upsert experiment with modified config.
 	exp.ID = 0
 	exp.JobID = model.NewJobID()
@@ -437,6 +446,19 @@ func TestAddExperimentTxUpsert(t *testing.T) {
 	upsertConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
 	require.Equal(t, newEntrypoint, upsertConfig.Entrypoint().RawEntrypoint)
+
+	// Try upserting a "run_collection" without an associated experiment.
+	// We should expect this to error.
+	_, err = Bun().NewDelete().
+		Table("experiments_v2").
+		Where("run_collection_id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	exp.ID = 0
+	exp.JobID = model.NewJobID()
+	require.ErrorContains(t, AddExperimentTx(ctx, Bun(), exp, activeConfig, true),
+		"no associated experiment")
 }
 
 func TestExperimentBestSearcherValidation(t *testing.T) {
