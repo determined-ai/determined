@@ -1,10 +1,11 @@
-import { Card } from 'antd';
 import Breadcrumb from 'hew/Breadcrumb';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
+import Section from 'hew/Section';
 import Spinner from 'hew/Spinner';
+import Surface from 'hew/Surface';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -246,12 +247,16 @@ const ModelVersionDetails: React.FC = () => {
       {
         children: (
           <div className={css.base}>
-            <Card title="Model Checkpoint">
-              <Glossary content={checkpointInfo} />
-            </Card>
-            <Card title="Validation Metrics">
-              <Glossary content={validationMetrics} />
-            </Card>
+            <Surface>
+              <Section title="Model Checkpoint">
+                <Glossary content={checkpointInfo} />
+              </Section>
+            </Surface>
+            <Surface>
+              <Section title="Validation Metrics">
+                <Glossary content={validationMetrics} />
+              </Section>
+            </Surface>
             <MetadataCard
               disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               metadata={modelVersion.metadata}
@@ -318,7 +323,7 @@ const ModelVersionDetails: React.FC = () => {
         : paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry),
     },
     {
-      breadcrumbName: `${modelVersion.model.name} (${modelId})`,
+      breadcrumbName: `${modelVersion.model.name} (${modelVersion.model.id})`,
       path: paths.modelDetails(modelVersion.model.id.toString()),
     },
     {

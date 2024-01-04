@@ -25,6 +25,7 @@ import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
+import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option, renderOptionLabel } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
@@ -32,7 +33,6 @@ import TimeDuration from 'components/TimeDuration';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
@@ -190,11 +190,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const ForkModal = useModal(ExperimentCreateModalComponent);
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ContinueTrialModal = useModal(ExperimentCreateModalComponent);
-
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
   const disabled =
     experiment?.parentArchived ||
@@ -236,10 +232,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       setIsChangingState(false);
     }
   }, [experiment.id, fetchExperimentDetails]);
-
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
 
   const fetchErroredTrial = useCallback(async () => {
     // No need to fetch errored trial count if it's single trial experiment or experiment is not completed.
@@ -377,7 +369,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             ) : (
               'Hyperparameter Search'
             ),
-            onClick: handleHyperparameterSearch,
+            onClick: HyperparameterSearchModal.open,
           },
         ],
       },
@@ -523,10 +515,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     continueExperimentOption,
     isRunningDelete,
     ExperimentDeleteModal,
-    handleHyperparameterSearch,
     ForkModal,
     ExperimentEditModal,
     ExperimentMoveModal,
+    HyperparameterSearchModal,
     isRunningTensorBoard,
     isRunningUnarchive,
     experiment,
@@ -750,7 +742,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         experimentName={experiment.name}
         onEditComplete={fetchExperimentDetails}
       />
-      {modalHyperparameterSearchContextHolder}
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+      />
     </>
   );
 };

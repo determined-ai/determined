@@ -6,7 +6,7 @@ hyperparameters:
   learning_rate: 1.0e-4
   learning_rate_decay: 1.0e-6
   layer1_dense_size: 16
-  global_batch_size: 32
+  global_batch_size: 16
 searcher:
   name: single
   metric: val_categorical_accuracy

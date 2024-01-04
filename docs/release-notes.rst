@@ -10,6 +10,26 @@
  Version 0.26
 **************
 
+Version 0.26.7
+==============
+
+**Release Date:** December 18, 2023
+
+**Breaking Changes**
+
+-  CLI: Remove the ``--dry-run`` option for ``det deploy aws``. The option had no effect because AWS
+   CloudFormation does not provide a way to preview staged changes.
+
+**New Features**
+
+-  CLI: Modify ``det user ls`` to show only active users. Add a new flag ``--all`` to show all
+   users.
+
+**Bug Fixes**
+
+-  Master: Fix an issue where master was unable to download checkpoints from S3 buckets in the
+   ``us-east-1`` region.
+
 Version 0.26.6
 ==============
 

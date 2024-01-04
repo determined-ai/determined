@@ -11,7 +11,7 @@ import React, { MouseEvent, useCallback, useMemo } from 'react';
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
 import {
@@ -85,20 +85,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const id = experiment.id;
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
   const confirm = useConfirm();
   const { openToast } = useToast();
-
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({
-    experiment,
-    onClose: () => onComplete?.(ExperimentAction.HyperparameterSearch, id),
-  });
-
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
 
   const handleEditComplete = useCallback(
     (data: Partial<ExperimentItem>) => {
@@ -227,7 +216,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             ExperimentMoveModal.open();
             break;
           case Action.HyperparameterSearch:
-            handleHyperparameterSearch();
+            HyperparameterSearchModal.open();
             break;
           case Action.Copy:
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -255,7 +244,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       ExperimentEditModal,
       ExperimentMoveModal,
       experiment.workspaceId,
-      handleHyperparameterSearch,
+      HyperparameterSearchModal,
       id,
       link,
       onComplete,
@@ -292,7 +281,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleMoveComplete}
       />
-      {modalHyperparameterSearchContextHolder}
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+      />
     </>
   );
 

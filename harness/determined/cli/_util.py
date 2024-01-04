@@ -126,7 +126,12 @@ def wait_ntsc_ready(session: api.Session, ntsc_type: api.NTSC_Kind, eid: str) ->
     """
     name = ntsc_type.value
     loading_animator = render.Animator(f"Waiting for {name} to become ready")
-    err_msg = api.task_is_ready(session, eid, loading_animator.next)
+    err_msg = api.task_is_ready(
+        session=session,
+        task_id=eid,
+        progress_report=loading_animator.next,
+        timeout=60 * 30,  # seconds
+    )
     msg = f"{name} (id: {eid}) is ready." if not err_msg else f"Waiting stopped: {err_msg}"
     loading_animator.clear(msg)
     if err_msg:

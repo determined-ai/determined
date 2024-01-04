@@ -1545,6 +1545,26 @@ Security-related configuration settings.
 Applies only to Determined Enterprise Edition. Specifies whether the SCIM service is enabled and the
 credentials for clients to use it.
 
+See also: :ref:`remote user <remote-users>` management.
+
+For example:
+
+   .. code:: yaml
+
+      scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
+        saml:
+          enabled: true
+          provider: "Okta"
+          idp_recipient_url: "http://xx.xxx.xxx.xx:8080/saml/sso"
+          idp_sso_url: "https://xxx/xxx/xxx0000/sso/saml/"
+          idp_sso_descriptor_url: "http://www.okta.com/xxx000"
+          idp_cert_path: "okta.cert"
+
 ``enabled``
 ===========
 
@@ -1629,7 +1649,17 @@ The Single Sign-On (SSO) URL provided by the OIDC provider.
 ``authentication_claim``
 ========================
 
-The claim used for authentication in OIDC.
+The claim used for authentication in OIDC. This parameter specifies the unique identifier for the
+user.
+
+-  Set to ``email`` by default, assuming that email addresses are unique to users.
+
+.. important::
+
+   Enforcing uniqueness constraints can help avoid potential conflicts. In other words, the
+   ``authentication_claim`` parameter value should be unique for each user. It is recommended to
+   leave it as the default (``email``) for uniqueness. Other fields like ``username`` or
+   ``given_name`` may not be unique between users.
 
 ``scim_authentication_attribute``
 =================================

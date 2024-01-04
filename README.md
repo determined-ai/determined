@@ -105,6 +105,9 @@ For installation details, visit the the cluster deployment guide for your enviro
 - [Kubernetes](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/k8s/overview.html)
 - [Slurm/PBS](https://docs.determined.ai/latest/setup-cluster/deploy-cluster/slurm/overview.html)
 
+# Examples
+Get familiar with Determined by exploring the 30+ examples in the [examples folder](https://github.com/determined-ai/determined/tree/main/examples) and the [determined-examples repo](https://github.com/determined-ai/determined-examples).
+
 # Documentation
 
 - [Documentation](https://docs.determined.ai)

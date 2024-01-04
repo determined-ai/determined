@@ -13,7 +13,7 @@ flake8==3.9.2 # Note: this should be kept in sync with the version in `.pre-comm
 flake8-bugbear>=19.8.0
 flake8-builtins>=1.5.3
 flake8-colors>=0.1.6
-flake8-commas==2.0.0
+flake8-commas==2.1.0
 flake8-comprehensions>=2.2.0
 flake8-docstrings>=1.4.0
 flake8-import-restrictions==1.1.1

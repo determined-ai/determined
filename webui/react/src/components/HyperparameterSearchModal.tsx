@@ -1,4 +1,3 @@
-import { ModalFuncProps } from 'antd';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
@@ -6,6 +5,7 @@ import Icon, { IconName } from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
+import { Modal, ModalCloseReason } from 'hew/Modal';
 import RadioGroup from 'hew/RadioGroup';
 import Row from 'hew/Row';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
@@ -15,7 +15,6 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -38,23 +37,15 @@ import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { validateLength } from 'utils/string';
 
-import css from './useModalHyperparameterSearch.module.scss';
+import css from './HyperparameterSearchModal.module.scss';
 
 const FORM_ID = 'create-hp-search-form';
 
 interface Props {
+  closeModal: (reason: ModalCloseReason) => void;
   experiment: ExperimentItem;
   onClose?: () => void;
   trial?: TrialDetails | TrialItem;
-}
-
-export interface ShowModalProps {
-  initialModalProps?: ModalFuncProps;
-  trial?: TrialDetails | TrialItem;
-}
-
-interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (props?: ShowModalProps) => void;
 }
 
 interface SearchMethod {
@@ -91,18 +82,12 @@ interface HyperparameterRowValues {
   value?: number | string;
 }
 
-const useModalHyperparameterSearch = ({
-  experiment,
-  onClose,
-  trial: trialIn,
-}: Props): ModalHooks => {
+const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JSX.Element => {
   const idPrefix = useId();
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
-  const [trial, setTrial] = useState(trialIn);
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.id === experiment.searcherType) ??
-      SEARCH_METHODS.ASHA,
+    SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
@@ -264,8 +249,8 @@ const useModalHyperparameterSearch = ({
   }, []);
 
   const handleCancel = useCallback(() => {
-    modalClose(ModalCloseReason.Cancel);
-  }, [modalClose]);
+    closeModal('Cancel');
+  }, [closeModal]);
 
   const handleSelectPool = useCallback(
     (value: SelectValue) => {
@@ -491,7 +476,7 @@ const useModalHyperparameterSearch = ({
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
             label="Slots per trial"
             name="slots_per_trial"
-            rules={[{ max: maxSlots, min: 1, required: true, type: 'number' }]}
+            rules={[{ max: maxSlots, min: 0, required: true, type: 'number' }]}
             validateStatus={
               formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 1
                 ? 'error'
@@ -586,7 +571,7 @@ const useModalHyperparameterSearch = ({
 
   const footer = useMemo(() => {
     return (
-      <div className={css.footer}>
+      <>
         {currentPage > 0 && <Button onClick={handleBack}>Back</Button>}
         <div className={css.spacer} />
         <Row>
@@ -595,46 +580,17 @@ const useModalHyperparameterSearch = ({
             {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
           </Button>
         </Row>
-      </div>
+      </>
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
-  const modalProps: Partial<ModalFuncProps> = useMemo(() => {
-    return {
-      className: css.modal,
-      closable: true,
-      content: (
-        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
-          {pages[currentPage]}
-          {footer}
-        </Form>
-      ),
-      icon: null,
-      maskClosable: true,
-      title: 'Hyperparameter Search',
-      width: 700,
-    };
-  }, [form, idPrefix, pages, currentPage, footer]);
-
-  const modalOpen = useCallback(
-    (props?: ShowModalProps) => {
-      setCurrentPage(0);
-      form.resetFields();
-      if (props?.trial) setTrial(props?.trial);
-      openOrUpdate({ ...modalProps, ...props?.initialModalProps });
-    },
-    [form, modalProps, openOrUpdate],
+  return (
+    <Modal footer={footer} title="Hyperparameter Search">
+      <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
+        {pages[currentPage]}
+      </Form>
+    </Modal>
   );
-
-  /*
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
-   */
-  useEffect(() => {
-    if (modalRef.current) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
-
-  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 interface RowProps {
@@ -835,4 +791,4 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   );
 };
 
-export default useModalHyperparameterSearch;
+export default HyperparameterSearchModal;
