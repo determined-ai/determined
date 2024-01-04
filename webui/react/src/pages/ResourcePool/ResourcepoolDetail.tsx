@@ -15,6 +15,7 @@ import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import ClusterQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import Topology from 'pages/ResourcePool/Topology';
@@ -27,7 +28,7 @@ import {
   V1SchedulerType,
 } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
-import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
+import { JobState, JsonObject, ResourceState, RPStats, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -104,14 +105,19 @@ const ResourcepoolDetailInner: React.FC = () => {
     }
   }, [canceler.signal, poolname]);
 
-  useEffect(() => {
-    fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  usePolling(fetchStats, { rerunOnNewFn: true });
 
-  const refreshCluster = useCallback(() => {
-    fetchStats();
-  }, [fetchStats]);
+  const rpStats = useMemo<RPStats[]>(() => {
+    if (!Loadable.isLoaded(resourcePools)) return [];
+
+    return resourcePools.data.map(
+      (rp) =>
+        ({
+          resourcePool: rp.name,
+          stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
+        }) as RPStats,
+    );
+  }, [resourcePools]);
 
   useEffect(() => {
     if (tab || !pool) return;
@@ -166,20 +172,12 @@ const ResourcepoolDetailInner: React.FC = () => {
 
     const tabItems: PivotProps['items'] = [
       {
-        children: (
-          <JobQueue
-            jobState={JobState.SCHEDULED}
-            refreshCluster={refreshCluster}
-            selectedRp={pool}
-          />
-        ),
+        children: <JobQueue jobState={JobState.SCHEDULED} rpStats={rpStats} selectedRp={pool} />,
         key: TabType.Active,
         label: `${poolStats?.stats.scheduledCount ?? ''} Active`,
       },
       {
-        children: (
-          <JobQueue jobState={JobState.QUEUED} refreshCluster={refreshCluster} selectedRp={pool} />
-        ),
+        children: <JobQueue jobState={JobState.QUEUED} rpStats={rpStats} selectedRp={pool} />,
         key: TabType.Queued,
         label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
       },
@@ -204,14 +202,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     }
 
     return tabItems;
-  }, [
-    canManageResourcePoolBindings,
-    pool,
-    poolStats,
-    renderPoolConfig,
-    rpBindingFlagOn,
-    refreshCluster,
-  ]);
+  }, [canManageResourcePoolBindings, pool, poolStats, renderPoolConfig, rpStats, rpBindingFlagOn]);
 
   if (!pool || Loadable.isNotLoaded(resourcePools)) {
     return <Spinner center spinning />;
