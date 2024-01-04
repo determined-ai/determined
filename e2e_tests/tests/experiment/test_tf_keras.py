@@ -55,7 +55,7 @@ def test_tf_keras_parallel(
     collect_trial_profiles(trials[0].trial.id)
 
     # Check on record/batch counts we emitted in logs.
-    validation_size = 32
+    validation_size = 30
     global_batch_size = config["hyperparameters"]["global_batch_size"]
     num_workers = config.get("resources", {}).get("slots_per_trial", 1)
     global_batch_size = config["hyperparameters"]["global_batch_size"]
