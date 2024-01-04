@@ -87,15 +87,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         label: 'Description',
-        value: (
-          <div>
-            {(modelVersion.comment ?? '') || (
-              <span>
-                N/A
-              </span>
-            )}
-          </div>
-        ),
+        value: <div>{(modelVersion.comment ?? '') || <span>N/A</span>}</div>,
       },
       {
         label: 'Tags',

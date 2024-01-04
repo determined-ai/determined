@@ -87,7 +87,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.id === experiment.searcherType) ??
-    SEARCH_METHODS.ASHA,
+      SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));

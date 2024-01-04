@@ -81,13 +81,7 @@ const ModelHeader: React.FC<Props> = ({
       { label: 'Updated', value: <TimeAgo datetime={new Date(model.lastUpdatedTime)} /> },
       {
         label: 'Description',
-        value: (
-          <div>
-            {(model.description ?? '') || (
-              <span>N/A</span>
-            )}
-          </div>
-        ),
+        value: <div>{(model.description ?? '') || <span>N/A</span>}</div>,
       },
       {
         label: 'Tags',
