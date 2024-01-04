@@ -38,9 +38,6 @@ ALTER TABLE experiments_v2 RENAME COLUMN run_collection_id TO id;
 
 ALTER TABLE experiments_v2 RENAME TO experiments;
 
--- TODO trials augument view needs down. But we should just delete this.
-
-
 CREATE OR REPLACE FUNCTION autoupdate_exp_best_trial_metrics() RETURNS trigger AS $$
 BEGIN
     WITH bt AS (

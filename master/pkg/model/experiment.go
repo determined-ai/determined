@@ -339,7 +339,7 @@ type RunCollection struct {
 	State                   State      `bun:"state"`
 	Notes                   string     `bun:"notes"`
 	ProjectID               int        `bun:"project_id"`
-	OwnerID                 *UserID    `bun:"owner_id"` // TODO this doesn't need to be a ptr?
+	OwnerID                 *UserID    `bun:"owner_id"`
 	Progress                *float64   `bun:"progress"`
 	Archived                bool       `bun:"archived"`
 	StartTime               time.Time  `bun:"start_time"`
@@ -365,7 +365,7 @@ type ExperimentV2 struct {
 	Username             string `bun:"username"`
 	Unmanaged            bool   `bun:"unmanaged"`
 
-	// TODO delete.
+	// TODO(DET-10034) delete these fields.
 	GitRemote     *string    `bun:"git_remote"`
 	GitCommit     *string    `bun:"git_commit"`
 	GitCommitter  *string    `bun:"git_committer"`

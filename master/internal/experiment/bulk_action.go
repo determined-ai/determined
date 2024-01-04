@@ -426,25 +426,31 @@ func DeleteExperiments(ctx context.Context,
 	var acceptedExperiments []*model.Experiment
 	if len(validIDs) > 0 {
 		// TODO(!!!) use the db package or a internal/experiments experpiments_postgres.go.
-		var updatedIDs []int
-		if _, err = db.Bun().NewUpdate().
-			Table("run_collections").
-			Model(&updatedIDs).
-			Set("state = ?", model.DeletingState).
-			Where("id IN (?)", bun.In(validIDs)).
-			Returning("id").
-			Exec(ctx); err != nil {
-			return nil, nil, fmt.Errorf(
-				"setting experiment ids %v state to deleted: %w", validIDs, err)
-		}
+		if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			var updatedIDs []int
+			if _, err = tx.NewUpdate().
+				Table("run_collections").
+				Model(&updatedIDs).
+				Set("state = ?", model.DeletingState).
+				Where("id IN (?)", bun.In(validIDs)).
+				Returning("id").
+				Exec(ctx); err != nil {
+				return fmt.Errorf(
+					"setting experiment ids %v state to deleted: %w", validIDs, err)
+			}
 
-		if err := db.Bun().NewSelect().Model(&acceptedExperiments).
-			Where("id IN (?)", bun.In(updatedIDs)).
-			Column("id", "state", "config", "start_time", "end_time", "archived",
-				"owner_id", "notes", "job_id", "project_id").
-			Scan(ctx, &acceptedExperiments); err != nil {
-			return nil, nil, fmt.Errorf(
-				"querying experiment ids %v that were marked as deleted: %w", updatedIDs, err)
+			if err := tx.NewSelect().Model(&acceptedExperiments).
+				Where("id IN (?)", bun.In(updatedIDs)).
+				Column("id", "state", "config", "start_time", "end_time", "archived",
+					"owner_id", "notes", "job_id", "project_id").
+				Scan(ctx, &acceptedExperiments); err != nil {
+				return fmt.Errorf(
+					"querying experiment ids %v that were marked as deleted: %w", updatedIDs, err)
+			}
+
+			return nil
+		}); err != nil {
+			return nil, nil, fmt.Errorf("updating experiment states to deleting: %w", err)
 		}
 
 		for _, exp := range acceptedExperiments {
