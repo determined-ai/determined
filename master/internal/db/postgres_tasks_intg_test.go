@@ -172,6 +172,27 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 	require.ElementsMatch(t, expected, actual)
 }
 
+func TestTaskCompleted(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	exists, err := TaskCompleted(ctx, "doesNotExist")
+	require.NoError(t, err)
+	require.False(t, exists)
+
+	task := RequireMockTask(t, db, ptrs.Ptr(model.UserID(1)))
+	exists, err = TaskCompleted(ctx, task.TaskID)
+	require.NoError(t, err)
+	require.False(t, exists)
+
+	require.NoError(t, db.CompleteTask(task.TaskID, time.Now()))
+	exists, err = TaskCompleted(ctx, task.TaskID)
+	require.NoError(t, err)
+	require.True(t, exists)
+}
+
 func TestNonExperimentTasksContextDirectory(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
