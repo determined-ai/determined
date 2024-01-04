@@ -168,9 +168,13 @@ def start_tensorboard(
                     raise_if_dead(tensorboard_process)
 
                     # Check if we have reached a timeout without downloading any files
-                    if tb_fetch_manager.get_num_fetched_files() == 0 and time.time() > stop_time:
-                        raise RuntimeError("No new files were fetched before the timeout.")
-
+                    if tb_fetch_manager.get_num_fetched_files() == 0:
+                        if time.time() > stop_time:
+                            raise RuntimeError("No new files were fetched before the timeout.")
+                        else:
+                            # TODO: This should trigger an actual task state change (DET-10001).
+                            # For now, just print a message to the logs.
+                            print("TensorBoard is waiting for metrics.", flush=True)
                     time.sleep(TICK_INTERVAL)
 
             finally:
