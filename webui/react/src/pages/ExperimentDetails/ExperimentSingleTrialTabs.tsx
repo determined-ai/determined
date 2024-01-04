@@ -347,6 +347,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       <div className={css.pivoter}>
         <Pivot
           activeKey={tabKey}
+          destroyInactiveTabPane
           items={tabItems}
           tabBarExtraContent={
             tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (

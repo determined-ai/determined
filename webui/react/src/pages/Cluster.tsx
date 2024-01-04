@@ -93,7 +93,12 @@ const Cluster: React.FC = () => {
       id="cluster"
       title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
       <div className={css.pivoter}>
-        <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
+        <Pivot
+          defaultActiveKey={tabKey}
+          destroyInactiveTabPane
+          items={tabItems}
+          onChange={handleTabChange}
+        />
       </div>
     </Page>
   );
