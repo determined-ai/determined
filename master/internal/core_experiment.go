@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -25,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -375,15 +373,8 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = owner
 
-	var commitDate *time.Time
-	pt, err := protoutils.ToTime(req.GitCommitDate)
-	if err == nil {
-		commitDate = &pt
-	}
-
 	dbExp, err := model.NewExperiment(
 		config, req.Config, modelBytes, parentID, false,
-		req.GitRemote, req.GitCommit, req.GitCommitter, commitDate,
 		int(p.Id), req.Unmanaged != nil && *req.Unmanaged,
 	)
 	if err != nil {
