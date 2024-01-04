@@ -47,8 +47,11 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
         <span className={css.nodeName}>{name}</span>
       )}
       <span className={css.nodeCluster} ref={slotsContainer}>
-        {slotsData.map(({ enabled }, idx) => (
-          <span className={`${styles.join(' ')} ${enabled ? css.active : ''}`} key={`slot${idx}`} />
+        {slotsData.map(({ container }, idx) => (
+          <span
+            className={`${styles.join(' ')} ${container ? css.active : ''}`}
+            key={`slot${idx}`}
+          />
         ))}
       </span>
     </div>
