@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import Button from 'hew/Button';
 import Dropdown, { MenuOption } from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
@@ -91,10 +90,9 @@ const ModelVersionHeader: React.FC<Props> = ({
         value: (
           <div>
             {(modelVersion.comment ?? '') || (
-              <Typography.Text
-                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}>
+              <span>
                 N/A
-              </Typography.Text>
+              </span>
             )}
           </div>
         ),

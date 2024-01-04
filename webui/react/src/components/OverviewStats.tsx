@@ -2,7 +2,7 @@ import Card from 'hew/Card';
 import Column from 'hew/Column';
 import Link from 'hew/Link';
 import Row from 'hew/Row';
-import { Body, Label, TypographySize } from 'hew/Typography';
+import { Label, TypographySize } from 'hew/Typography';
 import React from 'react';
 
 interface Props {
@@ -20,10 +20,8 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
           {props.title}
         </Label>
       </Row>
-      <Row>
-        <strong>
-          <Body truncate={{ rows: 1, tooltip: true }}>{props.children}</Body>
-        </strong>
+      <Row width="fill">
+        <Label strong truncate={{ rows: 1, tooltip: true }}>{props.children}</Label>
       </Row>
     </Column>
   );

@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import Button from 'hew/Button';
 import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
@@ -85,9 +84,7 @@ const ModelHeader: React.FC<Props> = ({
         value: (
           <div>
             {(model.description ?? '') || (
-              <Typography.Text disabled={model.archived || !canModifyModelFlag}>
-                N/A
-              </Typography.Text>
+              <span>N/A</span>
             )}
           </div>
         ),

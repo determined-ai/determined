@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
@@ -7,6 +6,7 @@ import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import Toggle from 'hew/Toggle';
+import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
@@ -219,13 +219,13 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
                   ) : undefined}
                 </Select>
               </Form.Item>
-              <Typography.Text type="secondary">
+              <Body inactive>
                 Users may have additional inherited global or workspace roles not reflected here.
                 &nbsp;
                 <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
                   Learn more
                 </Link>
-              </Typography.Text>
+              </Body>
             </>
           )}
         </Form>
