@@ -26,7 +26,8 @@ func TestPropagateTaskState(t *testing.T) {
 	require.NoError(t, api.m.db.AddTask(child1Model))
 	require.NoError(t, api.m.db.AddTask(child2Model))
 
-	require.NoError(t, api.PropagateTaskState(ctx, parentID, model.TaskStateStoppingCanceled))
+	overrideTasks := []model.TaskState{}
+	require.NoError(t, api.PropagateTaskState(ctx, parentID, model.TaskStateStoppingCanceled, overrideTasks))
 
 	parent, err := api.GetTask(ctx, &apiv1.GetTaskRequest{TaskId: parentID.String()})
 	require.NoError(t, err)
@@ -74,7 +75,8 @@ func TestGetTaskChildren(t *testing.T) {
 
 	taskSet := map[model.TaskID]bool{parentID: true, child1ID: true, child2ID: true}
 
-	tasks, err := api.GetTaskChildren(ctx, parentID)
+	overrideTasks := []model.TaskState{}
+	tasks, err := api.GetTaskChildren(ctx, parentID, overrideTasks)
 	require.NoError(t, err)
 	for _, e := range tasks {
 		_, ok := taskSet[e.TaskID]

@@ -103,7 +103,7 @@ func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)
 }
 
-// CompleteGenericTask persists the completion of a task of type GENERIC
+// CompleteGenericTask persists the completion of a task of type GENERIC.
 func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 	err := completeTask(db.sql, tID, endTime)
 	if err != nil {
@@ -119,7 +119,7 @@ WHERE task_id = $1
 	return nil
 }
 
-// KillGenericTask persists the termination of a task of type GENERIC
+// KillGenericTask persists the termination of a task of type GENERIC.
 func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
 	err := completeTask(db.sql, tID, endTime)
 	if err != nil {

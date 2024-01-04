@@ -281,7 +281,11 @@ func (a *apiServer) CreateGenericTask(
 	}, nil
 }
 
-func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID, overrideTasks []model.TaskState) ([]model.Task, error) {
+func (a *apiServer) GetTaskChildren(
+	ctx context.Context,
+	taskID model.TaskID,
+	overrideTasks []model.TaskState,
+) ([]model.Task, error) {
 	var query string
 	if len(overrideTasks) > 0 {
 		query = fmt.Sprintf(`
@@ -324,7 +328,12 @@ func (a *apiServer) GetTaskChildren(ctx context.Context, taskID model.TaskID, ov
 	return tasks, nil
 }
 
-func (a *apiServer) PropagateTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState, overrideStates []model.TaskState) error {
+func (a *apiServer) PropagateTaskState(
+	ctx context.Context,
+	taskID model.TaskID,
+	state model.TaskState,
+	overrideStates []model.TaskState,
+) error {
 	var query string
 	if len(overrideStates) > 0 {
 		query = fmt.Sprintf(`
