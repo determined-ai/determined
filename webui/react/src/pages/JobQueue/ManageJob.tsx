@@ -11,7 +11,7 @@ import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
-import { Job, JobType, RPStats } from 'types';
+import { Job, JobType } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { useObservable } from 'utils/observable';
@@ -23,7 +23,7 @@ interface Props {
   /** total number of jobs */
   jobCount: number;
   onFinish?: () => void;
-  rpStats: RPStats[];
+  rpStats: api.V1RPQueueStat[];
   schedulerType: api.V1SchedulerType;
 }
 
