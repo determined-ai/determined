@@ -653,7 +653,7 @@ func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperime
 	var experiment model.Experiment
 
 	if err := idb.NewRaw(`
-	SELECT e.id, state, config, model_definition, start_time, end_time, archived, owner_id, notes,
+	SELECT e.id, state, config, model_definition, start_time, end_time, archived,owner_id, notes,
 		job_id, u.username as username, project_id, unmanaged, external_experiment_id
 	FROM experiments e
 	JOIN users u ON (e.owner_id = u.id)
