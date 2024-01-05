@@ -43,5 +43,6 @@ class SimpleRDS(Simple):
         constants.cloudformation.SCHEDULER_TYPE,
         constants.cloudformation.SUBNET_ID_KEY,
         constants.cloudformation.DB_INSTANCE_TYPE,
+        constants.cloudformation.DB_SNAPSHOT,
         constants.cloudformation.DB_SIZE,
     ]
