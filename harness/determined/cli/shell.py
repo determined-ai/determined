@@ -18,7 +18,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
 @authentication.required
@@ -226,7 +226,7 @@ def _open_shell(
         print(colored(f"To reconnect, run: det shell open {shell['id']}", "green"))
 
 
-args_description = [
+args_description: ArgsDescription = [
     Cmd(
         "shell",
         None,
@@ -236,7 +236,8 @@ args_description = [
                 "list ls",
                 partial(command.list_tasks),
                 "list shells",
-                [
+                command.ls_sort_args
+                + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     Arg(
                         "--all",
@@ -386,4 +387,4 @@ args_description = [
             ),
         ],
     )
-]  # type: List[Any]
+]

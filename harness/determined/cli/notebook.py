@@ -1,7 +1,7 @@
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import Any, List, cast
+from typing import cast
 
 from termcolor import colored
 
@@ -10,7 +10,7 @@ from determined.cli import command, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_none
-from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
 @authentication.required
@@ -89,7 +89,7 @@ def open_notebook(args: Namespace) -> None:
     )
 
 
-args_description = [
+args_description: ArgsDescription = [
     Cmd(
         "notebook",
         None,
@@ -99,7 +99,8 @@ args_description = [
                 "list ls",
                 partial(command.list_tasks),
                 "list notebooks",
-                [
+                command.ls_sort_args
+                + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     Arg(
                         "--all",
@@ -206,4 +207,4 @@ args_description = [
             ),
         ],
     )
-]  # type: List[Any]
+]

@@ -1,8 +1,9 @@
 import base64
 import json
+import operator
 import re
 from argparse import Namespace
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from functools import reduce
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -12,7 +13,7 @@ from termcolor import colored
 import determined.cli.render
 from determined import cli
 from determined.cli import render
-from determined.common import api, context, util
+from determined.common import api, context, declarative_argparse, util
 from determined.common.api import authentication
 from determined.util import merge_dicts
 
@@ -130,20 +131,22 @@ RemoteTaskGetIDsFunc = {
 }
 
 
-Command = namedtuple(
-    "Command",
-    [
-        "id",
-        "owner",
-        "registered_time",
-        "config",
-        "state",
-        "addresses",
-        "exit_status",
-        "misc",
-        "agent_user_group",
-    ],
-)
+ls_sort_args: declarative_argparse.ArgsDescription = [
+    declarative_argparse.Arg(
+        "--sort-by",
+        type=str,
+        help="sort by the given field",
+        choices=list(CommandTableHeader.keys()) + ["startTime"],
+        default="startTime",
+    ),
+    declarative_argparse.Arg(
+        "--order-by",
+        type=str,
+        choices=["asc", "desc"],
+        default="asc",
+        help="order in either ascending or descending order",
+    ),
+]
 
 
 def expand_uuid_prefixes(
@@ -222,6 +225,8 @@ def list_tasks(args: Namespace) -> None:
             item["workspaceName"] = (
                 w_names[wId] if wId in w_names else f"missing workspace id {wId}"
             )
+
+    res.sort(key=operator.itemgetter(args.sort_by), reverse=args.order_by == "desc")
 
     if getattr(args, "json", None):
         determined.cli.render.print_json(res)

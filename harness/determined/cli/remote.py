@@ -1,7 +1,6 @@
 from argparse import ONE_OR_MORE, REMAINDER, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import Any, List
 
 from termcolor import colored
 
@@ -9,7 +8,7 @@ from determined import cli
 from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication
-from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
 @authentication.required
@@ -45,7 +44,7 @@ def run_command(args: Namespace) -> None:
         )
 
 
-args_description = [
+args_description: ArgsDescription = [
     Cmd(
         "command cmd",
         None,
@@ -55,7 +54,8 @@ args_description = [
                 "list ls",
                 partial(command.list_tasks),
                 "list commands",
-                [
+                command.ls_sort_args
+                + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     cli.workspace.workspace_arg,
                     Arg(
@@ -154,4 +154,4 @@ args_description = [
             ),
         ],
     )
-]  # type: List[Any]
+]

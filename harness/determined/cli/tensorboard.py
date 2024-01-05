@@ -95,7 +95,8 @@ args_description: ArgsDescription = [
                 "list ls",
                 partial(command.list_tasks),
                 "list TensorBoard instances",
-                [
+                command.ls_sort_args
+                + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     Arg(
                         "--all",
