@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3.0.0
+  codecov: codecov/codecov@3.3.0
   gcloud: circleci/gcp-cli@2.1.0
   gh: circleci/github-cli@2.0
   helm: circleci/helm@1.2.0
@@ -1673,6 +1673,9 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C master test-intg
+      - codecov/upload:
+          flags: "backend"
+          xtra_args: "-v"
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -1696,6 +1699,9 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
+      - codecov/upload:
+          flags: "backend"
+          xtra_args: "-v"
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
