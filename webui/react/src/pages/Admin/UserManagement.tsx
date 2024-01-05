@@ -385,7 +385,7 @@ const UserManagement: React.FC = () => {
         key: V1GetUsersRequestSortBy.ACTIVE,
         onCell: onRightClickableCell,
         render: (isActive: boolean) => <>{isActive ? 'Active' : 'Inactive'}</>,
-        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isActive, b.isActive),
+        sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(b.isActive, a.isActive),
         title: 'Status',
       },
       {
