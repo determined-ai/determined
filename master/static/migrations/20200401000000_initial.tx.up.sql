@@ -125,7 +125,12 @@ CREATE TABLE public.experiments (
     model_definition bytea NOT NULL,
     start_time timestamp with time zone NOT NULL,
     end_time timestamp with time zone,
+    model_packages bytea,
     archived boolean DEFAULT false NOT NULL,
+    git_remote character varying,
+    git_commit character varying,
+    git_committer character varying,
+    git_commit_date timestamp without time zone,
     parent_id integer,
     owner_id integer NOT NULL,
     progress double precision
