@@ -445,7 +445,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           </Column>
         </Row>
       </Section>
-      <Spinner spinning={isLoading}>
+      <Spinner conditionalRender spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
         ) : workspace.numProjects === 0 ? (
@@ -459,7 +459,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             title="Workspace contains no projects. "
           />
         ) : (
-          !isLoading && <Message icon="warning" title="No projects matching the current filters" />
+          <Message icon="warning" title="No projects matching the current filters" />
         )}
       </Spinner>
       <ProjectCreateModal.Component workspaceId={workspace.id} />

@@ -371,7 +371,7 @@ const WorkspaceList: React.FC = () => {
           </Column>
         </Row>
       </Section>
-      <Spinner spinning={isLoading}>
+      <Spinner conditionalRender spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
@@ -381,9 +381,7 @@ const WorkspaceList: React.FC = () => {
             title="No Workspaces"
           />
         ) : (
-          !isLoading && (
-            <Message icon="warning" title="No workspaces matching the current filters" />
-          )
+          <Message icon="warning" title="No workspaces matching the current filters" />
         )}
       </Spinner>
       <WorkspaceCreateModal.Component />
