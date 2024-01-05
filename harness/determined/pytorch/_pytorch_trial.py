@@ -494,15 +494,6 @@ class _PyTorchTrialController:
                 self.validation_loader = validation_data
 
     def _step_batch(self) -> None:
-        """Adjusts counters / executes callbacks after training on a batch.
-
-        Specifically,
-        1. Increments in self.state the number of batches trained
-        2. When an epoch is complete (as determined by epoch_len):
-            a. Performs epoch-end actions. Namely, this executes all the callbacks
-               (stored in self.callbacks) that happen when an epoch is finished.
-            b. Increments in self.state the number of epochs trained
-        """
         assert self.state
         self.state.batches_trained += 1
 
@@ -949,7 +940,7 @@ class _PyTorchTrialController:
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
 
-            idx = None
+            idx = -1
             for idx, batch in enumerate(iter(self.validation_loader)):
                 if self.context.experimental._auto_to_device:
                     batch = self.context.to_device(batch)
@@ -980,7 +971,7 @@ class _PyTorchTrialController:
                 if self.test_mode:
                     break
 
-            if idx is None:
+            if idx == -1:
                 raise RuntimeError("validation_loader is empty.")
 
             for callback in self.callbacks.values():
@@ -1037,7 +1028,8 @@ class _PyTorchTrialController:
                 # Gather a list of per-worker (num_inputs, num_batches) tuples.
                 input_counts = self.context.distributed.gather((num_inputs, idx + 1))
                 # Reshape and sum.
-                inputs_total, batches_total = [sum(n) for n in zip(*input_counts)]
+                # TODO: remove the type directive once we upgrade to mypy >= 1.7.0
+                inputs_total, batches_total = [sum(n) for n in zip(*input_counts)]  # type: ignore
                 step_duration = time.time() - step_start_time
                 logger.info(
                     det.util.make_timing_log(
@@ -1595,6 +1587,7 @@ class PyTorchTrial(det.LegacyTrial):
         """
         return pytorch.Reducer.AVG
 
+    @abstractmethod
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         """
         Calculate validation metrics on the entire validation dataset and
