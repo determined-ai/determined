@@ -215,7 +215,9 @@ could use the following configuration to launch a notebook:
 By default, launching a cluster by ``det deploy gcp up``, ``det deploy aws --deployment-type efs``,
 or ``det deploy aws --deployment-type fsx`` creates a Network file system that is shared by all the
 agents and is automatically mounted into notebook containers at
-``/run/determined/workdir/shared_fs/``.
+``/run/determined/workdir/shared_fs/``. To save your notebooks, set
+``work_dir:/run/determined/workdir/shared_fs/`` in your configuration file each time you launch
+JupyterLab. You can use a :ref:`configuration template <config-template>` to automate this.
 
 To launch a notebook with ``det deploy local cluster-up``, a user can add the ``--auto-work-dir``
 flag, which mounts the user's home directory into the task containers by default:
