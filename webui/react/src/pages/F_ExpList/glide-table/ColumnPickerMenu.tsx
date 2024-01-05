@@ -167,7 +167,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
       return (
-        <div key={col.column} className={css.rows} style={style}>
+        <div className={css.rows} key={col.column} style={style}>
           <Checkbox
             checked={checkedColumn.has(col.column)}
             id={col.column}
