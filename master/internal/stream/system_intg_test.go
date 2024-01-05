@@ -1033,6 +1033,11 @@ func TestUpdatesOutOfSpec(t *testing.T) {
 		ProjectID:            2,
 	}
 
+	// These tests are susceptible to a potential race condition where the test won't pick up
+	// a test failure. This test checks that updates are NOT sent by checking that ONLY the second
+	// update appears, which may be inaccurate due to the streamers being asynchronous.
+	// This issue is mitigated by unit tests on the Broadcast function.
+
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
@@ -1055,11 +1060,6 @@ func TestUpdatesOutOfSpec(t *testing.T) {
 				}),
 			},
 			expectedUpserts: []string{
-				// potential race condition where the test won't pick up a test failure.
-				// We're testing for updates to NOT be sent, but the way we check for this is
-				// that ONLY the second update appears. More often than not, this should be fine,
-				// but there is nothing preventing the second case from being processed and sent
-				// before the first.
 				"key: experiment, exp_id: 1, state: CANCELED, project_id: 2, job_id: test_job1",
 			},
 			expectedDeletions: []string{},
@@ -1083,11 +1083,6 @@ func TestUpdatesOutOfSpec(t *testing.T) {
 				}),
 			},
 			expectedUpserts: []string{
-				// potential race condition where the test won't pick up a test failure.
-				// We're testing for updates to NOT be sent, but the way we check for this is
-				// that ONLY the second update appears. More often than not, this should be fine,
-				// but there is nothing preventing the second case from being processed and sent
-				// before the first.
 				"key: experiment, exp_id: 1, state: ERROR, project_id: 2, job_id: test_job1",
 			},
 			expectedDeletions: []string{},
