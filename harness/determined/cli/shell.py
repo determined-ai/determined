@@ -226,78 +226,164 @@ def _open_shell(
         print(colored(f"To reconnect, run: det shell open {shell['id']}", "green"))
 
 
-# fmt: off
-
 args_description = [
-    Cmd("shell", None, "manage shells", [
-        Cmd("list ls", partial(command.list_tasks), "list shells", [
-            Arg("-q", "--quiet", action="store_true",
-                help="only display the IDs"),
-            Arg("--all", "-a", action="store_true",
-                help="show all shells (including other users')"),
-            cli.workspace.workspace_arg,
-            Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
-        ], is_default=True),
-        Cmd("config", partial(command.config),
-            "display shell config", [
-                Arg("shell_id", type=str, help="shell ID"),
-        ]),
-        Cmd("start", start_shell, "start a new shell", [
-            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
-            Arg("--config-file", default=None, type=argparse.FileType("r"),
-                help="command config file (.yaml)"),
-            cli.workspace.workspace_arg,
-            Arg("-v", "--volume", action="append", default=[],
-                help=command.VOLUME_DESC),
-            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
-            Arg(
-                "-i",
-                "--include",
-                default=[],
-                action="append",
-                type=Path,
-                help=command.INCLUDE_DESC
+    Cmd(
+        "shell",
+        None,
+        "manage shells",
+        [
+            Cmd(
+                "list ls",
+                partial(command.list_tasks),
+                "list shells",
+                [
+                    Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
+                    Arg(
+                        "--all",
+                        "-a",
+                        action="store_true",
+                        help="show all shells (including other users')",
+                    ),
+                    cli.workspace.workspace_arg,
+                    Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                ],
+                is_default=True,
             ),
-            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
-            Arg("-p", "--passphrase", action="store_true",
-                help="passphrase to encrypt the shell private key"),
-            Arg("--template", type=str,
-                help="name of template to apply to the shell configuration"),
-            Arg("-d", "--detach", action="store_true",
-                help="run in the background and print the ID"),
-            Arg("--show-ssh-command", action="store_true",
-                help="show ssh command (e.g. for use in IDE) when starting the shell"),
-        ]),
-        Cmd("open", open_shell, "open an existing shell", [
-            Arg("shell_id", help="shell ID"),
-            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
-            Arg("--show-ssh-command", action="store_true",
-                help="show ssh command (e.g. for use in IDE) when starting the shell"),
-        ]),
-        Cmd("show_ssh_command", show_ssh_cmd_legacy, argparse.SUPPRESS, [
-            Arg("shell_id", help="shell ID"),
-            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
-        ]),
-        Cmd("show-ssh-command", show_ssh_command, "print the ssh command", [
-            Arg("shell_id", help="shell ID"),
-            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
-        ]),
-        Cmd("logs", partial(task.logs),
-            "fetch shell logs", [
-            Arg("task_id", help="shell ID", metavar="shell_id"),
-            *task.common_log_options
-        ]),
-        Cmd("kill", partial(command.kill), "kill a shell", [
-            Arg("shell_id", help="shell ID", nargs=argparse.ONE_OR_MORE),
-            Arg("-f", "--force", action="store_true", help="ignore errors"),
-        ]),
-        Cmd("set", None, "set shell attributes", [
-            Cmd("priority", partial(command.set_priority), "set shell priority", [
-                Arg("shell_id", help="shell ID"),
-                Arg("priority", type=int, help="priority"),
-            ]),
-        ]),
-    ])
+            Cmd(
+                "config",
+                partial(command.config),
+                "display shell config",
+                [
+                    Arg("shell_id", type=str, help="shell ID"),
+                ],
+            ),
+            Cmd(
+                "start",
+                start_shell,
+                "start a new shell",
+                [
+                    Arg(
+                        "ssh_opts",
+                        nargs="*",
+                        help="additional SSH options when connecting to the shell",
+                    ),
+                    Arg(
+                        "--config-file",
+                        default=None,
+                        type=argparse.FileType("r"),
+                        help="command config file (.yaml)",
+                    ),
+                    cli.workspace.workspace_arg,
+                    Arg("-v", "--volume", action="append", default=[], help=command.VOLUME_DESC),
+                    Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+                    Arg(
+                        "-i",
+                        "--include",
+                        default=[],
+                        action="append",
+                        type=Path,
+                        help=command.INCLUDE_DESC,
+                    ),
+                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg(
+                        "-p",
+                        "--passphrase",
+                        action="store_true",
+                        help="passphrase to encrypt the shell private key",
+                    ),
+                    Arg(
+                        "--template",
+                        type=str,
+                        help="name of template to apply to the shell configuration",
+                    ),
+                    Arg(
+                        "-d",
+                        "--detach",
+                        action="store_true",
+                        help="run in the background and print the ID",
+                    ),
+                    Arg(
+                        "--show-ssh-command",
+                        action="store_true",
+                        help="show ssh command (e.g. for use in IDE) when starting the shell",
+                    ),
+                ],
+            ),
+            Cmd(
+                "open",
+                open_shell,
+                "open an existing shell",
+                [
+                    Arg("shell_id", help="shell ID"),
+                    Arg(
+                        "ssh_opts",
+                        nargs="*",
+                        help="additional SSH options when connecting to the shell",
+                    ),
+                    Arg(
+                        "--show-ssh-command",
+                        action="store_true",
+                        help="show ssh command (e.g. for use in IDE) when starting the shell",
+                    ),
+                ],
+            ),
+            Cmd(
+                "show_ssh_command",
+                show_ssh_cmd_legacy,
+                argparse.SUPPRESS,
+                [
+                    Arg("shell_id", help="shell ID"),
+                    Arg(
+                        "ssh_opts",
+                        nargs="*",
+                        help="additional SSH options when connecting to the shell",
+                    ),
+                ],
+            ),
+            Cmd(
+                "show-ssh-command",
+                show_ssh_command,
+                "print the ssh command",
+                [
+                    Arg("shell_id", help="shell ID"),
+                    Arg(
+                        "ssh_opts",
+                        nargs="*",
+                        help="additional SSH options when connecting to the shell",
+                    ),
+                ],
+            ),
+            Cmd(
+                "logs",
+                partial(task.logs),
+                "fetch shell logs",
+                [Arg("task_id", help="shell ID", metavar="shell_id"), *task.common_log_options],
+            ),
+            Cmd(
+                "kill",
+                partial(command.kill),
+                "kill a shell",
+                [
+                    Arg("shell_id", help="shell ID", nargs=argparse.ONE_OR_MORE),
+                    Arg("-f", "--force", action="store_true", help="ignore errors"),
+                ],
+            ),
+            Cmd(
+                "set",
+                None,
+                "set shell attributes",
+                [
+                    Cmd(
+                        "priority",
+                        partial(command.set_priority),
+                        "set shell priority",
+                        [
+                            Arg("shell_id", help="shell ID"),
+                            Arg("priority", type=int, help="priority"),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
 ]  # type: List[Any]
-
-# fmt: on
