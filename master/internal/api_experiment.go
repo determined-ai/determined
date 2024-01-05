@@ -1425,15 +1425,15 @@ func (a *apiServer) GetExperimentCheckpoints(
 }
 
 func (a *apiServer) createUnmanagedExperimentTx(
-	ctx context.Context, idb bun.IDB, dbExp *model.Experiment, activeConfig expconf.ExperimentConfigV0,
+	ctx context.Context, tx bun.Tx, dbExp *model.Experiment, activeConfig expconf.ExperimentConfigV0,
 	taskSpec *tasks.TaskSpec, user *model.User,
 ) (*apiv1.CreateExperimentResponse, error) {
-	e, _, err := newUnmanagedExperiment(ctx, idb, a.m, dbExp, activeConfig, taskSpec)
+	e, _, err := newUnmanagedExperiment(ctx, tx, a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make new unmanaged experiment: %w", err)
 	}
 
-	protoExp, err := a.getExperimentTx(ctx, idb, *user, e.ID)
+	protoExp, err := a.getExperimentTx(ctx, tx, *user, e.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get experiment: %w", err)
 	}
@@ -1708,7 +1708,18 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if req.Unmanaged != nil && *req.Unmanaged {
-		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, activeConfig, taskSpec, user)
+		var innerResp *apiv1.CreateExperimentResponse
+		if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			innerResp, err = a.createUnmanagedExperimentTx(ctx, tx, dbExp, activeConfig, taskSpec, user)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
+			return nil, fmt.Errorf("making an unmanaged experiment: %w", err)
+		}
+		return innerResp, nil
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
@@ -1775,9 +1786,14 @@ func (a *apiServer) PutExperiment(
 
 	dbExp.ExternalExperimentID = &req.ExternalExperimentId
 
-	innerResp, err = a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, activeConfig, taskSpec, user)
+	if err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		innerResp, err = a.createUnmanagedExperimentTx(ctx, tx, dbExp, activeConfig, taskSpec, user)
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
+		return nil
+	}); err != nil {
 		return nil, fmt.Errorf("failed to create unmanaged experiment: %w", err)
 	}
 

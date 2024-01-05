@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -390,6 +391,29 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"b", "c", "f"}, actualNames[model.MetricGroup("golabi")])
 }
 
+func TestTakeAdvisoryLock(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	lockID := uuid.New().String()
+	require.NoError(t, Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		require.NoError(t, takeAdvisoryLock(ctx, tx, lockID))
+
+		err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			ctx, cancel := context.WithTimeout(ctx, time.Millisecond*1000)
+			defer cancel()
+			return takeAdvisoryLock(ctx, tx, lockID)
+		})
+		// Bun loses the context deadline exceeded error but we get an io timeout.
+		require.ErrorContains(t, err, "timeout")
+
+		return nil
+	}))
+}
+
 func TestAddExperimentTxUpsert(t *testing.T) {
 	ctx := context.Background()
 
@@ -415,7 +439,9 @@ func TestAddExperimentTxUpsert(t *testing.T) {
 		Username:             user.Username,
 		ProjectID:            1,
 	}
-	require.NoError(t, AddExperimentTx(ctx, Bun(), exp, activeConfig, true))
+	require.NoError(t, Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return AddExperimentTx(ctx, tx, exp, activeConfig, true)
+	}))
 
 	firstSaveConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
@@ -440,7 +466,9 @@ func TestAddExperimentTxUpsert(t *testing.T) {
 	activeConfig.RawEntrypoint = &expconf.EntrypointV0{
 		RawEntrypoint: &newEntrypoint,
 	}
-	require.NoError(t, AddExperimentTx(ctx, Bun(), exp, activeConfig, true))
+	require.NoError(t, Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return AddExperimentTx(ctx, tx, exp, activeConfig, true)
+	}))
 	require.Equal(t, firstSaveID, exp.ID)
 
 	upsertConfig, err := db.ActiveExperimentConfig(exp.ID)
@@ -457,8 +485,11 @@ func TestAddExperimentTxUpsert(t *testing.T) {
 
 	exp.ID = 0
 	exp.JobID = model.NewJobID()
-	require.ErrorContains(t, AddExperimentTx(ctx, Bun(), exp, activeConfig, true),
-		"no associated experiment")
+	require.NoError(t, Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		require.ErrorContains(t, AddExperimentTx(ctx, tx, exp, activeConfig, true),
+			"no associated experiment")
+		return nil
+	}))
 }
 
 func TestExperimentBestSearcherValidation(t *testing.T) {

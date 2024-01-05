@@ -189,7 +189,7 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
-func TestExperimentPatch(t *testing.T) {
+func TestPatchExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
 

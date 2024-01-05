@@ -461,10 +461,14 @@ func AddExperiment(
 }
 
 func upsertExperiment(
-	ctx context.Context, idb bun.IDB, rc *model.RunCollection, activeConfigBytes []byte,
+	ctx context.Context, idb bun.Tx, rc *model.RunCollection, activeConfigBytes []byte,
 ) (expID int, experimentExists bool, err error) {
 	if rc.ExternalRunCollectionID == nil { // Can't conflict with a null key.
 		return 0, false, nil
+	}
+	if err := takeAdvisoryLock(ctx, idb, *rc.ExternalRunCollectionID); err != nil {
+		return 0, false, fmt.Errorf("locking around external_experiment_id %s: %w",
+			*rc.ExternalRunCollectionID, err)
 	}
 
 	var res struct {
@@ -502,9 +506,26 @@ func upsertExperiment(
 	return res.RunCollectionID, true, nil
 }
 
+// This function takes a bun.Tx instead of an bun.IDB intentionally.
+// bun.IDB would let people run this outside of a transcation by just doing
+// takeAdvisoryLock(ctx, db.Bun(), key) which would likely be a bug using this.
+// This also means functions that call this will need to do the same.
+func takeAdvisoryLock(ctx context.Context, tx bun.Tx, key string) error {
+	// Add an arbitrary limit so we won't get stuck here forever.
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*10)
+	defer cancel()
+
+	_, err := tx.NewRaw("SELECT pg_advisory_lock(hashtext(?))", key).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("getting advisory lock for key %s: %w", key, err)
+	}
+
+	return nil
+}
+
 // AddExperimentTx adds the experiment to the database and sets its ID.
 func AddExperimentTx(
-	ctx context.Context, idb bun.IDB,
+	ctx context.Context, tx bun.Tx,
 	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
 	upsert bool,
 ) (err error) {
@@ -522,7 +543,7 @@ func AddExperimentTx(
 		JobType: model.JobTypeExperiment,
 		OwnerID: experiment.OwnerID,
 	}
-	if _, err = idb.NewInsert().Model(&job).Exec(ctx); err != nil {
+	if _, err = tx.NewInsert().Model(&job).Exec(ctx); err != nil {
 		return errors.Wrapf(err, "error inserting job %v", job)
 	}
 
@@ -531,7 +552,7 @@ func AddExperimentTx(
 	experimentExists := false
 	if upsert {
 		var expID int
-		expID, experimentExists, err = upsertExperiment(ctx, idb, rc, activeConfigStr)
+		expID, experimentExists, err = upsertExperiment(ctx, tx, rc, activeConfigStr)
 		if err != nil {
 			return err
 		}
@@ -539,7 +560,7 @@ func AddExperimentTx(
 	}
 
 	if !experimentExists {
-		if _, err := idb.NewInsert().Model(rc).
+		if _, err := tx.NewInsert().Model(rc).
 			ExcludeColumn("id").
 			Value("progress", "?", 0).
 			Returning("id").
@@ -549,7 +570,7 @@ func AddExperimentTx(
 		experiment.ID = rc.ID // This is needed since we modify the input experiment.
 
 		expV2.RunCollectionID = rc.ID
-		if _, err := idb.NewInsert().Model(expV2).
+		if _, err := tx.NewInsert().Model(expV2).
 			ExcludeColumn("username").
 			Value("config", "?", string(activeConfigStr)).
 			Returning("run_collection_id").
@@ -560,7 +581,7 @@ func AddExperimentTx(
 		// Our name inserted is wrong since it has ID of 0.
 		// Update the name now that we know the experiment ID.
 		rcWithName, _ := experiment.ToRunCollectionAndExperimentV2()
-		if _, err := idb.NewUpdate().Model(rcWithName).
+		if _, err := tx.NewUpdate().Model(rcWithName).
 			Column("name").
 			WherePK().
 			Exec(ctx); err != nil {
@@ -569,7 +590,7 @@ func AddExperimentTx(
 	}
 
 	if err = AddProjectHyperparameters(
-		ctx, idb, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
+		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
 		return errors.Wrapf(err, "error updating hyperparameters")
 	}
 

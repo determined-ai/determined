@@ -196,7 +196,7 @@ func newExperiment(
 
 func newUnmanagedExperiment(
 	ctx context.Context,
-	idb bun.IDB,
+	tx bun.Tx,
 	m *Master,
 	expModel *model.Experiment,
 	activeConfig expconf.ExperimentConfig,
@@ -205,7 +205,7 @@ func newUnmanagedExperiment(
 	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := db.AddExperimentTx(ctx, idb, expModel, activeConfig, true); err != nil {
+	if err := db.AddExperimentTx(ctx, tx, expModel, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
 	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
