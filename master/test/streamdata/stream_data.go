@@ -6,11 +6,11 @@ package streamdata
 import (
 	"context"
 	"database/sql"
+	"testing"
+	"time"
 
 	// embed is only used in comments.
 	_ "embed"
-	"testing"
-	"time"
 
 	"github.com/uptrace/bun"
 
