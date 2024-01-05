@@ -125,8 +125,7 @@ func (db *PgDB) TerminateGenericTask(tID model.TaskID, endTime time.Time) error 
 	UPDATE tasks
 	SET task_state = (
 	CASE WHEN task_state=$2 THEN $3::task_state
-	ELSE $4::task_state END),
-	end_time = (CASE WHEN task_state=$5 THEN $6::timestamp ELSE NULL END)
+	ELSE $4::task_state END)
 	WHERE task_id = $1
 	`, tID, model.TaskStateStoppingPaused,
 		model.TaskStatePaused, model.TaskStateCanceled,

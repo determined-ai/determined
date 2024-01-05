@@ -169,7 +169,7 @@ def pause(args: Namespace) -> None:
 @authentication.required
 def resume(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    bindings.post_ResumeGenericTask(sess, taskId=args.task_id)
+    bindings.post_ResumeGenericTask(sess, taskId=args.task_id, projectId=args.project_id)
 
 common_log_options: List[Any] = [
     Arg(
@@ -348,6 +348,7 @@ args_description: List[Any] = [
                 "resume task",
                 [
                     Arg("task_id", type=str, help=""),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
                 ],
             ),
         ],

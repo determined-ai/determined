@@ -19134,12 +19134,16 @@ def post_ResumeGenericTask(
     session: "api.Session",
     *,
     taskId: str,
+    projectId: "typing.Optional[int]" = None,
 ) -> None:
     """Resume the requested task.
 
     - taskId: The id of the task.
+    - projectId: The id of the project associated with the task
     """
-    _params = None
+    _params = {
+        "projectId": projectId
+    }
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tasks/{taskId}/resume",

@@ -444,6 +444,12 @@ func (a *apiServer) PauseGenericTask(
 func (a *apiServer) ResumeGenericTask(
 	ctx context.Context, req *apiv1.ResumeGenericTaskRequest,
 ) (*apiv1.ResumeGenericTaskResponse, error) {
+	var projectID int
+	if req.ProjectId != nil {
+		projectID = int(*req.ProjectId)
+	} else {
+		projectID = model.DefaultProjectID
+	}
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
 	err := a.PropagateTaskState(ctx, model.TaskID(req.TaskId), model.TaskStateStoppingPaused, overrideStates)
 	if err != nil {
@@ -456,8 +462,11 @@ func (a *apiServer) ResumeGenericTask(
 	for _, childTask := range tasksToDelete {
 		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
 			genericTaskSpec, _, _, err := a.getGenericTaskLaunchParameters(
-				ctx, nil, *childTask.Config, 1,
+				ctx, nil, *childTask.Config, projectID,
 			)
+			if err != nil {
+				return nil, err
+			}
 			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
@@ -495,7 +504,8 @@ func (a *apiServer) ResumeGenericTask(
 					FittingRequirements: sproto.FittingRequirements{
 						SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
 					},
-					Restore: true,
+					Preemptible: true,
+					Restore:     true,
 				}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
 			if err != nil {
 				return nil, err
