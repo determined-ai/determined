@@ -117,7 +117,7 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const gasLinkOn = useFeature().isOn('GAS');
+  const gasLinkOn = useFeature().isOn('genai');
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
